@@ -1,0 +1,13 @@
+# ignore files
+/.metadata
+/.recommenders
+
+/tmp
+/log
+*.swp
+.project
+*.zxp
+.DS_Store
+*.p12
+*.psd
+

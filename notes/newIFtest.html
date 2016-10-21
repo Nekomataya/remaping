@@ -1,0 +1,154 @@
+﻿<html>
+<head>
+
+</head>
+<body>
+<!--	ログインパネル	-->
+<div class=loginPanel id=optionPanelLogin style="text-align:right;">
+	userID (or mail-address): <input type=text size=32></input><br>
+	password: <input type=password size=32></input><br>
+	<button>LOGIN</button><button>logout</button><hr>
+<span style="width:400;">
+	select repository:
+	<select
+	name="repositorySelector"
+	id="repBrowser"
+	title="リポジトリ選択"
+	style="width:400;text-align:right"
+>
+<option selected>[HOME]
+<option>会社/url
+<option>団体/url
+<option>プロジェクト/url
+</select>
+</span>
+</div>
+<!--	ログインパネル	-->
+<hr>
+<!--	ファイルブラウザ試験中	-->
+<div class=optionPanel id=optionPanelFile >
+<!-- りまぴん(新) ファイルブラウザインターフェース -->
+
+<!-- メニューバー と ロゴ -->
+<button onClick='alert(this.name);' name="button" value="最新の情報に更新"
+>Refresh</button><button onClick='alert(this.name);' name="button" value="読み込み"
+>Open</button><button onClick='alert(this.name);' name="button" value=" 保 存 "
+>Edit</button><button onClick='alert(this.name);' name="button" value=" 検 索 "
+>Search</button><button onClick='alert(this.name);' name="button" value=" 閉じる "
+>Close</button>
+select: 
+<input	type=text
+	name=fileTest
+	id=fileTest
+	size=16
+	value='title_Opus_c####'
+	onChange="chkValue(this.id);"
+	style="width:240;"
+>
+<br><select
+	name="cell_numbers"
+	id="cell"
+	size=6
+onClick='if(document.getElementById("single").checked) chkValue(this.id)'
+onDblClick='if (! document.getElementById("single").checked) chkValue(this.id)'
+>
+<option>ももたろう
+<option>浦島太郎
+<option>かちかちやま
+<option >タイトルセレクタ
+<option >（プロジェクトセレクタ）
+</select><select
+	name="fav"
+	id="fav"
+	size=6
+onClick='if(document.getElementById("single").checked) chkValue(this.id)'
+onDblClick='if (! document.getElementById("single").checked) chkValue(this.id)'
+>
+<option >＃０１
+<option >#02
+<option >#03
+<option >#04
+<option >#05
+<option >作品セレクタ
+
+</select><select
+	name="fav"
+	id="fav"
+	size=6
+onClick='if(document.getElementById("single").checked) chkValue(this.id)'
+onDblClick='if (! document.getElementById("single").checked) chkValue(this.id)'
+>
+<option >フィルタ
+<option >*(フィルタ解除)
+<option >0-99
+<option >100-199
+<option >200-299
+<option >300-399
+<option >400-499
+</select><select
+	name="fav"
+	id="fav"
+	size=6
+onClick='if(document.getElementById("single").checked) chkValue(this.id)'
+onDblClick='if (! document.getElementById("single").checked) chkValue(this.id)'
+>
+<option >カットセレクタ
+<option>001 (1+12)
+<option>002 (3+00)
+<option>003 (3+00)
+<option>004 (3+00)
+<option>005 (12+00)
+<option>006 (7+00)
+<option>007 (1+00)
+<option>008 (2+00)
+<option>009 (2+00)
+<option>010 (3+00)
+<option>011 (3+00)
+<option>012 (4+00)
+<option>013 (2+12)
+<option>014 (3+00)
+<option>015 (1+18)
+<option>016 (2+00)
+<option>017 (2+00)
+<option>018 (5+00)
+<option>019 (4+00)
+</select>
+<br>
+<br>
+<!-- </form> -->
+</div>
+<!--	ファイルブラウザ試験中	-->
+<hr>
+<!--	カットセレクタ	-->
+<div>
+title-00-subtitle
+<hr>
+<select
+	name="sciBlockSelector"
+	id="sciBlockSelector"
+	title="ブロック選択"
+	size= 8
+	style="width:72px;"
+onClick='var mySection=this.value.split("-");for '
+>
+<option selected>0-99
+<option>100-199
+<option>200-399
+<option>300-399
+<option>400-499
+</select>
+
+<select
+	name="sciBrowser"
+	id="sciBrowser"
+	title="作業カット選択"
+	size= 8
+	multiple
+	style="width:120px;"
+>
+<option>
+</select>
+
+</div>
+<!--	カットセレクタ	-->
+</body></html>

@@ -1,0 +1,147 @@
+﻿Api specs · last edited by 速水直人 about 10 hours ago New Page Page History Edit
+API仕様書
+概要
+本仕様書では主にJavascariptベースのりまぴんのフロントエンドにデータの永続性を与えるためにDBを保持するためのバックエンドとやり取りするためのAPIの仕様書をまとめます。やり取りするデータはすべてJSONで行います。
+API一覧
+
+
+作品一覧
+URL例
+
+http://remaping.scivone-dev.com/products.json
+データ項目
+
+名前	データ種	説明
+id	int	作品の一意なID
+name	string	作品の名前
+description	text	作品の説明
+url	string	詳細APIのURL
+JSON例
+
+[
+
+    {
+        "id": 1,
+        "name": "ddd",
+        "description": "fdasd",
+        "url": "http://localhost:3000/products/1.json"
+    }
+
+]
+
+
+作品詳細
+URL例
+
+http://remaping.scivone-dev.com/products/1.json
+データ項目
+
+名前	データ種	説明
+id	int	作品の一意なID
+name	string	作品の名前
+description	text	作品の説明
+created_at	datetime	作品の作成日時
+updated_at	datetime	作品の更新日時
+episodes	Array	作品内のエピソード一覧
+JSON例
+
+{
+
+    "id": 1,
+    "name": "ddd",
+    "description": "fdasd",
+    "created_at": "2016-07-14T10:33:49.000+09:00",
+    "updated_at": "2016-07-14T10:33:49.000+09:00",
+    "episodes": [
+        [
+            {
+                "name": "adfa",
+                "url": "/episodes/1.json"
+            }
+        ]
+    ]
+
+}
+
+＊＊作品のidとして整数のインデックスが与えられている.
+これは現在サービス（サーバ）内での固有IDだと思われるが、
+将来的にはサービス全域でユニークなIDを割りつける必要があると予想される。
+
+その際は、ユーザによって初期化される多数のタイトルに対して、ユニークなIDを割りつけて管理するサーバが必要となる。：注意：
+
+    テスト用プロダクト情報取得アドレス
+http://(サービスURL)/products.json
+    このアドレスでタイトル一覧を取得する
+    
+    各タイトルの詳細情報は以下のアドレスで取得
+http://(サービスURL)/products/(タイトルID).json
+    ＊＊正確には　上記の作品情報に含まれる詳細アドレスを参照
+    異なるサーバのアドレスの場合等　問題（セキュリティ等）が発生するか？？
+
+＞＞詳細情報にエピソード(opus)のリストが含まれている
+
+
+エピソード詳細
+URL例
+
+http://remaping.scivone-dev.com/episodes/1.json
+データ項目
+
+名前	データ種	説明
+id	int	エピソードの一意なID
+name	string	エピソードの名前
+description	text	エピソードの説明
+created_at	datetime	エピソードの作成日時
+updated_at	datetime	エピソードの更新日時
+episodes	Array	エピソード内のカット一覧
+JSON例
+
+{
+
+    "id": 1,
+    "name": "adfa",
+    "description": "dd",
+    "created_at": "2016-07-14T10:33:53.000+09:00",
+    "updated_at": "2016-07-14T10:33:53.000+09:00",
+    "cuts": [
+        [
+            {
+                "name": "test",
+                "url": "/cuts/12.json"
+            }
+        ]
+    ]
+
+}
+
+    各エピソードの情報は以下のアドレスで取得
+http://(サービスURL)/episodes/(話数ID).json
+    ＊＊正確には　上記の作品詳細情報に含まれるエピソード取得アドレス（相対）を参照
+    異なるサーバのアドレスの場合等　問題（セキュリティ等）が発生するか？？
+
+＞＞エピソード情報にカット(xps)のリストが含まれている
+
+名前に情報を打ち込む必要あり
+識別子を使う
+
+
+カット詳細
+URL例
+
+http://remaping.scivone-dev.com/cuts/1.json
+データ項目
+
+名前	データ種	説明
+id	int	カットの一意なID
+content	text	カットのデータ
+JSON例
+
+{
+
+    "id": 1,
+    "content": "nasTIME-SHEET 0.4\n##MAPPING_FILE=\n##TITLE=test\n##SUB_TITLE=test\n##OPUS=iiieieie'\n##SCENE=\n##CUT=000\n##TIME=6 + 00 .\n##TRIN=0 + 00 "
+
+}
+
+
+カット情報に関しては、これ自体がXPS本体データとなるのでその旨

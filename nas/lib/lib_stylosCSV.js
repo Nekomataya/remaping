@@ -1,0 +1,455 @@
+﻿/**
+ *    @fileoverview StylosCSV2XPS(CSVStream,spcFolder,dialogFolder)
+ *
+ *    stylos CSVファイルをXPS互換テキストにコンバートする
+ *    CLIP STUDIP PAINT(以下 CSPと略) CSV ファイルをサポートする
+ *    引き数は、CSVデータのテキストストリーム
+ *    書式は限定的で、スタイロスまたはCLIP STUDIO PAINT （以下CSP）の書き出す形式に準じていなくてはならない。
+ *    データフィールドは必ず二重引用符でくくる
+ *    データフィールド内に改行は含まれていてはならない
+ *    全てのレコードのフィールド数は一致していなくてなならない
+ *    spcFolderはタイムシートに含まれるどのステージを変換するかのパラメータ （複数可）
+ *    dialogFolderはタイムシートに含まれるどのステージをダイアログとして利用するか指定するパラメータ（複数可）
+ *
+ * CSP　のタイムシート出力は、スタイロスの形式を踏襲しているのでこのライブラリで処理する
+ * スタイロスよりも、柔軟性の高い仕様だと思われるので、スタイロス型を包括する広い判定が必要そう…
+ * レイヤフォルダ0は、スタイロスの場合は原画シートであるが、CSPの場合はレイヤセット配置に依存する
+ * 必ずしも原画シートになるとは限らないため　要注意
+ * ダイアログフォルダは存在するとは限らない
+ * XPSと異なりセリフを別ステージとして扱う必要あり
+ * 引数で明示的に指定された場合は、指定のフォルダを変換対象にする
+ * spcFolderが指定されてかつdialogFolderが指定されない場合は、フォルダ名を検索してダイアログトラックを取得する
+ * 発見できなかった場合は空白のダイアログトラックを１つ加える
+ *
+ * 引数が指定されない場合以下の手順で自動判定を行う
+ *
+ * フォルダ構成を判定する
+ * 変換可能なフォルダ数及び各タイムライン数を取得
+ * 指定のない場合または指定ファルダが存在しない場合　ドキュメント内にダイアログフォルダが存在するか否かを確認する
+ * １個以上のセリフ用フォルダを認識した場合全てのセリフ用フォルダ内のタイムラインを一まとめに扱う
+ * セリフ（音声）用のフォルダを認識＝フォルダ名が以下の場合
+ * stageLabel.match(/(N\.|セリフ|せりふ|台詞|dialog|sound)/i);//変更可能性あり
+ * これらはダイアログタイムライン群として優先解決する
+ * セリフ用フォルダに、2つ以上のタイムラインが存在する場合は、本体テーブル冒頭に音声タイムラインとして変換を行う
+ *
+ * 変換対象フォルダが指定された場合は、指定フォルダ内のタイムラインを全て変換する
+ * 指定のない場合または有効な指定がない場合は、構成中最も上のフォルダを変換対象にする
+ *
+ * 変換すべきタイムラインがない場合は、エラー終了
+ * 継続時間は、変換側のcsvから取得
+ *
+ * フレームレートを取得する方法は提供されていないので、変換後に手作業で設定変更が必要かもしれない
+ *
+ * フォルダ名称（≒ステージ識別子）での指定も可能 2015 09 13
+ * 関数呼び出し書式は
+ *
+ * StylosCSV2XPS(CSVStream[,spcFolder[,dialogFolder]])
+ * 引数    CSVStream    :スタイロスまたはCPSの書き出すタイムシートをテキストストリームで与える
+ * spcFolder    :省略可　読み込むフォルダをIDまたはフォルダ名で指定　複数指定の場合は配列で与える　省略時はいちばん上のフォルダ
+ * dialogFolder    :省略可　台詞として読み込むフォルダをIDまたはフォルダ名で指定　複数指定の場合は配列で与える　省略時は自動判定
+ *
+ * @param CSVStream
+ * @param spcFolder
+ * @param dialogFolder
+ * @returns {boolean}
+ */
+function StylosCSV2XPS(CSVStream, spcFolder, dialogFolder) {
+    /**
+     * データ冒頭のみチェックして明確に違うストリームの場合はエラーを返す
+     */
+    if (!CSVStream.match(/^\"Frame\",/)) {
+        return false;
+    }
+    /**
+     * CSVデータをオブジェクト化する
+     * @type {{}}
+     */
+    myStylosCSV = {};
+    /**
+     * ラインで分割して配列に取り込み
+     * ここではデータフィールドに改行は含まれないことを前提としているのでデータ形式に注意
+     * @type {Array}
+     */
+    myStylosCSV.SrcData = [];
+    if (CSVStream.match(/\r/)) {
+        CSVStream = CSVStream.replace(/\r\n?/g, ("\n"));
+    }
+    var CSVRecords = CSVStream.split("\n");
+    /**
+     * レコード数が3以下(=<2)の場合は、処理可能なフレームがないので不正データ
+     */
+    if (CSVRecords.length < 3) {
+        return false
+    }
+    /**
+     * 各ラインを更にテキストの配列に分解 空行のみのエントリを廃棄
+     * フィールド数が異なるレコードが含まれていた場合は、不正データとみなす
+     * @type {Number}
+     */
+    var fieldCount = CSVRecords[0].split(",").length;
+    for (var idx = 0; idx < CSVRecords.length; idx++) {
+        if (CSVRecords[idx].length == 0) {
+            continue;
+        }
+        myStylosCSV.SrcData.push(CSVRecords[idx].split(","));
+        if (myStylosCSV.SrcData[myStylosCSV.SrcData.length - 1].length != fieldCount) {
+            return false;
+        }
+    }
+    /**
+     * 第一第二レコードをチェックしてフォルダ情報テーブルを作る
+     * @type {Array}
+     */
+    myStylosCSV.folders = [];
+    myStylosCSV.folders.push([]);
+    myStylosCSV.folders[0].name = "";
+    var currentStageIdx = 0;//ここの一時インデックスは、上位フォルダからの仮インデックス
+    for (var fid = myStylosCSV.SrcData[0].length - 1; fid > 0; fid--) {
+        myStylosCSV.folders[currentStageIdx].push(fid);
+        if (eval(myStylosCSV.SrcData[0][fid]) != "") {
+            myStylosCSV.folders[currentStageIdx].name = eval(myStylosCSV.SrcData[0][fid]);
+            myStylosCSV.folders[currentStageIdx].reverse();
+            if (fid > 1) {
+                currentStageIdx++;//最後の一回分はエントリ追加不要
+                myStylosCSV.folders.push([]);
+                myStylosCSV.folders[currentStageIdx].name = "";
+            }
+        }
+    }
+    myStylosCSV.folders.reverse();
+    /**
+     * ！！タイムシートの左端から（タイムライン下から/ ドキュメント下から）順のテーブルにするために反転！！
+     * @type {number}
+     */
+    myStylosCSV.frameDuration = myStylosCSV.SrcData.length - 2;
+    /**
+     * フレーム継続数 全ライン数-(ヘッダ行,ラベル行)
+     * 引数を処理
+     * 変換対象テーブルを構築　フォルダラベルはステージ相当のため転記できないのでタイムラインのIDでスタックする
+     * ダイアログタイムラインの数を控える
+     */
+    myStylosCSV.convertTable = [];
+    myStylosCSV.dialogCount = 0;
+
+    var dialogTarget = [];
+    var timingTarget = [];
+
+    if (typeof dialogFolder != "undefined") {
+        if (!(dialogFolder instanceof Array)) {
+            dialogFolder = [dialogFolder];
+        }
+        dialogLoop:    for (var ix = 0; ix < dialogFolder.length; ix++) {
+            for (var fx = 0; fx < myStylosCSV.folders.length; fx++) {
+                if (dialogFolder[ix] == myStylosCSV.folders[fx].name) {
+                    //引数がラベル(文字列)の場合を優先する。ラベルの場合は完全一致が条件
+                    dialogTarget.push(fx);
+                    break dialogLoop;//ラベル文字列として一致したので処理を次のエントリへ
+                } else {
+                    //ラベルとして解決できなかったら、整数にパースしてインデックスで照合
+                    if (parseInt(dialogFolder[ix]) == fx) {
+                        dialogTarget.push(fx);
+                        break dialogLoop;//整数で一致　次のエントリへ
+                    }
+                }
+            }
+        }
+        /**
+         * 最終的にターゲットが存在しなかった場合(エントリ数 0)は自動変換モードへ移行
+         */
+    }
+    if (typeof spcFolder != "undefined") {
+        if (!(spcFolder instanceof Array)) {
+            spcFolder = [spcFolder];
+        }
+        timingLoop:    for (var ix = 0; ix < spcFolder.length; ix++) {
+            for (var fx = 0; fx < myStylosCSV.folders.length; fx++) {
+                if (spcFolder[ix] == myStylosCSV.folders[fx].name) {
+                    /**
+                     * 引数がラベル(文字列)の場合を優先する。ラベルの場合は完全一致が条件
+                     */
+                    timingTarget.push(fx);
+                    break timingLoop;//ラベル文字列として一致したので処理を次のエントリへ
+                } else {
+                    /**
+                     * ラベルとして解決できなかったら、整数にパースしてインデックスで照合
+                     */
+                    if (parseInt(spcFolder[ix]) == fx) {
+                        timingTarget.push(fx);
+                        break timingLoop;//整数で一致　次のエントリへ
+                    }
+                }
+            }
+        }
+        /**
+         * 最終的にターゲットが存在しなかった場合(エントリ数 0)は自動変換モードへ移行
+         */
+    }
+
+
+    if (dialogTarget.length == 0) {
+        var myDialogRegex = new RegExp("(N\\.?|セリフ|せりふ|台詞|dialog|sound)", "i");
+        /**
+         * 指定がないので自動検索でテーブルを作る
+         */
+        for (var fidx = 0; fidx < myStylosCSV.folders.length; fidx++) {
+            if (myStylosCSV.folders[fidx].name.match(myDialogRegex)) {
+                for (var tidx = 0; tidx < myStylosCSV.folders[fidx].length; tidx++) {
+                    myStylosCSV.convertTable.push(myStylosCSV.folders[fidx][tidx]);
+                    myStylosCSV.dialogCount++;
+                }
+            }
+        }
+    } else {
+        /**
+         * この時点では引数チェックは処理済みフォルダ名で指定を行った場合はここでなく事前にフォルダID配列(dialogTarget)に変換
+         */
+        for (var fidx = 0; fidx < dialogTarget.length; fidx++) {
+            var targetFolderIndex = dialogTarget[fidx];
+            for (var tidx = 0; tidx < myStylosCSV.folders[targetFolderIndex].length; tidx++) {
+                myStylosCSV.convertTable.push(myStylosCSV.folders[targetFolderIndex][tidx]);
+                myStylosCSV.dialogCount++;
+            }
+        }
+    }
+
+    /**
+     * フォルダIDまたはステージ名で指定されたエントリーをピックアップして加える
+     */
+    if (timingTarget.length == 0) {
+        /**
+         * 指定がないのでダイアログを除くタイムシート末尾のフォルダのタイムラインを取得
+         */
+        for (var fidx = myStylosCSV.folders.length - 1; fidx >= 0; fidx--) {
+            if (myStylosCSV.folders[fidx].name.match(myDialogRegex)) {
+                continue;
+            }
+            //skip
+            for (var tidx = 0; tidx < myStylosCSV.folders[fidx].length; tidx++) {
+                myStylosCSV.convertTable.push(myStylosCSV.folders[fidx][tidx]);
+            }
+            break;
+        }
+    } else {
+        /**
+         * 展開時点ではターゲットはフォルダIDの配列に変換済みであること
+         */
+        for (var fidx = 0; fidx < timingTarget.length; fidx++) {
+            var targetFolderIndex = timingTarget[fidx];
+            for (var tidx = 0; tidx < myStylosCSV.folders[targetFolderIndex].length; tidx++) {
+                myStylosCSV.convertTable.push(myStylosCSV.folders[targetFolderIndex][tidx]);
+            }
+        }
+    }
+
+    /**
+     * ラベル取得
+     * @type {Array}
+     */
+    myStylosCSV.layerLabel = [];//ラベル配列
+    for (var idx = 0; idx < myStylosCSV.convertTable.length; idx++) {
+        if ((myStylosCSV.dialogCount) && (idx == 0)) continue;
+        myStylosCSV.layerLabel.push(eval(myStylosCSV.SrcData[1][myStylosCSV.convertTable[idx]]));//ダイアログラベル取得
+    }
+    /**
+     * XPS互換ストリームに変換
+     * @returns {string}
+     */
+    myStylosCSV.toSrcString = function () {
+//	var myLineFeed=nas.GUI.LineFeed;
+        var myLineFeed = "\n";
+        var resultStream = "nasTIME-SHEET 0.4";
+        resultStream += myLineFeed;
+        resultStream += "#RETAS!Stylos and CLIP STUDIO PAINT CSV";
+        resultStream += myLineFeed;
+        resultStream += "##TIME=" + nas.Frm2FCT(this.frameDuration, 3, 0);
+        resultStream += myLineFeed;
+        resultStream += "##TRIN=0+00.,\x22\x22";
+        resultStream += myLineFeed;
+        resultStream += "##TROUT=0+00.,\x22\x22";
+        resultStream += myLineFeed;
+
+        /**
+         * タイムライン種別
+         * @type {string}
+         */
+        resultStream += "[option\t";
+        /**
+         * データ状況によってはダイアログ用タイムラインが存在しないので、dialigCount==0の場合は、空のダミータイムラインを作成する
+         */
+        if (this.dialogCount == 0) {
+            resultStream += "dialog\t";
+        }
+        for (idx = 0; idx < this.dialogCount; idx++) {
+            resultStream += "dialog\t";
+        }
+        for (idx = 0; idx < (this.convertTable.length - this.dialogCount); idx++) {
+            resultStream += "timing\t";
+        }
+        resultStream += "]";
+        resultStream += myLineFeed;
+        /**
+         * ラベル配置
+         * @type {string}
+         */
+        resultStream += "[CELL\tN\t";
+        for (idx = 0; idx < this.layerLabel.length; idx++) {
+            resultStream += this.layerLabel[idx] + "\t";
+        }
+        resultStream += "]";
+        resultStream += myLineFeed;
+
+        for (frm = 0; frm < this.frameDuration; frm++) {
+            resultStream += "\t";//行頭のカラデータ
+
+            if (this.dialogCount == 0) {
+                resultStream += "\t";
+            }
+            /**
+             * コンバートデータにダイアログが存在しない場合のダミー
+             */
+            if (false) {
+                //タイムラインデータを転記
+                for (var tlid = 0; tlid < this.convertTable.length; tlid++) {
+                    resultStream += eval(this.SrcData[frm + 2][this.convertTable[tlid]]);
+                    resultStream += "\t";
+                }
+            } else {
+                //タイムラインデータを転記
+                for (var tlid = 0; tlid < this.convertTable.length; tlid++) {
+
+                    if (frm == 0) {
+                        var currentValue = eval(this.SrcData[frm + 2][this.convertTable[tlid]]);
+                    } else {
+                        var currentValue = (this.SrcData[frm + 2][this.convertTable[tlid]] == this.SrcData[frm + 1][this.convertTable[tlid]]) ? "" : eval(this.SrcData[frm + 2][this.convertTable[tlid]]);
+                    }
+                    resultStream += (currentValue === 0) ? "X\t" : currentValue + "\t";
+                }
+            }
+            resultStream += myLineFeed;
+
+        }
+        resultStream += "[END]";
+        resultStream += myLineFeed;
+        resultStream += "Converted from celsys CSV";
+        return resultStream;
+    };
+
+    return myStylosCSV.toSrcString();
+}
+
+/**
+ * XPS2StylosCSV(myXPS,myReferenceXPS)
+ * @param myXPS
+ * @param myReferenceXPS
+ * @returns {*}
+ *
+ * 引数はオブジェクトでも、ストリームでも受け付ける。
+ * コンバートするXPSと必要な場合は参照用XPSを加えてスタイロスの書きだすCSVと同じ形式で書き出すことができる。
+ * 文字コードのコンバートは特にしていないので、必要なら何か別のコンバート手段を利用してShift-JISに変換されたし。
+ * このデータはスタイロスに書き戻せないので、りまぴんでの編集後に書き出す意味はあまりない。
+ * 互換データが欲しい場合のみ有効
+ */
+function XPS2StylosCSV(myXPS, myReferenceXPS) {
+    /**
+     * 引数がソースであっても処理する。XPSでない場合はfalse
+     */
+    if (myXPS instanceof Xps) {
+        var sourceXPS = myXPS;
+    } else {
+        if ((myXPS instanceof String) && (myXPS.match(/^nasTIME-SHEET/))) {
+            var sourceXPS = new Xps();
+            if (!sourceXPS.readIN(myXPS)) {
+                return false;
+            }
+        } else {
+            return false;
+        }
+    }
+    /**
+     * リファレンスXPSがない場合は、カラで親サイズのカラオブジェクトを作る（親XPSのコピーのほうが良いか？）
+     */
+    if (myReferenceXPS instanceof Xps) {
+        var referenceXPS = myReferenceXPS;
+    } else {
+        if ((myReferenceXPS instanceof String) && (myReferenceXPS.match(/^nasTIME-SHEET/))) {
+            var referenceXPS = new Xps();
+            if (!referenceXPS.readIN(myReferenceXPS)) {
+                return false;
+            }
+        } else {
+            var referenceXPS = myXPS;//複製
+            var referenceXPS = new Xps(myXPS.layers.length, myXPS.duration());//カラオブジェクト
+        }
+    }
+    /**
+     * リファレンスXPSのサイズが本体シートに満たない場合はサイズを拡張する
+     */
+    if ((myReferenceXPS.layers.length < myXPS.layers.length) ||
+        (myReferenceXPS.duration() < myXPS.duration())) {
+        myReferenceXPS.reInitBody(myXPS.xpsBody.length, myXPS.duration());
+    }
+    /**
+     * コンバートする
+     * @type {Array}
+     */
+    var myStylosCSV = [];
+    myStylosCSV.recordCunt = myXPS.layers.length * 2 + 2;//(レイヤ数×２＋フレームカウント＋セリフ)
+    /**
+     * 第一レコードを作る
+     * @type {Array}
+     */
+    var currentRecord = [];
+    currentRecord.push('"Frame"');
+    currentRecord.push('"原画"');
+    for (var LC = 0; LC < myXPS.layers.length - 1; LC++) {
+        currentRecord.push('""');
+    }
+    currentRecord.push('"台詞"');
+    currentRecord.push('"動画"');
+    for (var LC = 0; LC < myXPS.layers.length - 1; LC++) {
+        currentRecord.push('""');
+    }
+    myStylosCSV.push(currentRecord.join(","));
+    /**
+     * 第二レコードを作る
+     * @type {Array}
+     */
+    currentRecord = [];
+    currentRecord.push('""');
+    for (var LC = 0; LC < myXPS.layers.length; LC++) {
+        if (LC < referenceXPS.layers.length) {
+            currentRecord.push('"' + referenceXPS.layers[LC].name + '"');
+        } else {
+            currentRecord.push('""');
+        }
+    }
+    currentRecord.push('""');
+    for (var LC = 0; LC < myXPS.layers.length; LC++) {
+        currentRecord.push('"' + sourceXPS.layers[LC].name + '"');
+    }
+    myStylosCSV.push(currentRecord.join(","));
+
+    /**
+     * ボディデータを流し込む
+     */
+    for (var myFrame = 0; myFrame < myXPS.duration(); myFrame++) {
+        currentRecord = [];
+        currentRecord.push((myFrame + 1).toString(10));//フレームカウント
+        for (var LC = 0; LC < myXPS.layers.length; LC++) {
+            currentRecord.push('"' + referenceXPS.xpsBody[LC + 1][myFrame] + '"');//ダイアログフレームをとばす
+        }
+        for (var LC = 0; LC <= myXPS.layers.length; LC++) {
+            currentRecord.push('"' + sourceXPS.xpsBody[LC][myFrame] + '"');//メモ情報はコンバートできない。
+        }
+        myStylosCSV.push(currentRecord.join(","));
+    }
+
+    return myStylosCSV.join("\n");
+}
+/**
+ * 暫定的にXPSストリーム（ソース）で返しているが、オブジェクトのままのほうが良いかもしれない。一考の余地あり？
+ * この形式で各フォーマットのコンバータを作って一元化したいが、どうよ？
+ * 逆変換も欲しいね。
+ * CSPに準ずるために拡張が必要
+ * りまぴん的にはステージを指定して一括変換を行うのが良さそう
+ */

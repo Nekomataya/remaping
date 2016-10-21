@@ -1,0 +1,551 @@
+/*	remaping.css						*/
+/*	りまぴん のためのスタイルシート				*/
+/*	このスタイルシートを変更してデザインを調整できます。	*/
+/*	Nekomataya/kiyo 2013					*/
+/*		(新インターフェース調整)	(印刷用)	*/
+/*	$Id: remaping.css,v 1.35 2013/04/10 13:36:57 kiyo Exp $	*/
+/*========== タイムシート全体 ============*/
+/*		基本デザイン
+	情報量が多くて密度が低いのでフォントは小さめ
+	user-selectは基本的に禁止
+*/
+body {
+	font-size:11pt;
+	margin:0px 100px 4px 8px;
+	padding:0px 16px 0px 0px ;
+	overflow:scroll;
+	background-color:#dedede;
+	user-select:none;
+	-moz-user-select:none;
+	-khtml-user-select:none;
+	-webkit-user-select:none;
+}
+/*========== リンク ============*/
+a:link {color:#000066}
+a:visited {color:green}
+a:hover {color:red;background-color:snow}
+a:active {color:gray;background-color:snow}
+a:focus {color:#880000;background-color:snow}
+
+
+/*		固定ヘッダ
+	ウインドウ全体をUIに割り付け、UIのマージン等を取得するエレメント
+*/
+#fixedHeader {
+	width:100%;
+	position:fixed;
+}
+/*		デバッグ
+	AIR専用エレメントは取リわけ
+*/
+#debug {
+	display:none;
+}
+#airDbg {
+	display:none;
+}
+/*		各種UIテーブル
+	各エレメントの値は設定ファイルを読み込んで更新されるので、この値は仮値
+*/
+table {
+	border-color:#bbbbbb;
+	font-size:9pt;
+	margin:0px;
+	padding:0px;
+	border-width:2px 1px 0px 0px;
+	border-style:solid;
+	table-layout:fixed;
+}
+table.info	{
+	width:97%;
+	font-size:4pt;
+	height:10px;
+	border-width:0px;
+	table-layout:fixed;
+}
+table.sheet	{
+		z-index: 1;
+}
+table.toolbox {	
+
+	margin:0 0 0 0;
+	padding:0 0 0 0
+}
+/*		テーブル要素
+*/
+th {
+	text-align:center;
+	border-style:solid;
+	border-width:4px 1px 1px 0px;
+	font-size:9pt;
+}
+
+/*	シートヘッダビュー設定	*/
+td#edchg {width:6em;}
+th#opusLabel{width:4em;}
+th#titleLabel{width:12em;}
+th#scenecutLabel{width:6em;}
+th#timeLabel{width:18em;}
+th#nameLabel{width:8em;}
+
+/*		シート本体のビュー設定
+	時間スケール
+*/
+th.timelabel{
+	text-align:center;
+	border-style:solid;
+	border-width:0px 1px 3px 1px;
+	font-size:9pt;
+	width:4em;
+	}
+
+/*		リファレンス
+
+*/
+th.layerlabelR {
+	text-align:center;
+	border-style:solid;
+	color:gray;
+	border-width:4px 1px 3px 0px;
+	font-size:9pt;
+	width:2em;
+}
+/*		ダイアログ
+*/
+th.dialoglabel {
+	text-align:center;
+	border-style:solid;
+	border-width:1px 1px 3px 0px;
+	font-size:9pt;
+	width:4em;
+}
+
+/*		編集エリア
+*/
+th.layerlabel {
+	text-align:center;
+	border-style:solid;
+	border-width:4px 1px 3px 0px;
+	font-size:9pt;
+	width:3em;
+}
+/*		フレーム注釈
+	全体幅のクッションエリアとしても機能させるので
+	このエレメントは幅指定無し
+*/
+th.framenotelabel {
+	text-align:center;
+	border-style:solid;
+	border-width:0px 1px 3px 1px;
+	font-size:9pt;
+}
+/*		テーブルデータ基本
+*/
+td {
+	text-align:center;
+	vertical-align:middle;
+	border-style:solid;
+	border-width:0px 1px 1px 0px;
+	padding:0;
+	margin:0;
+	font-size:9pt;
+	white-space: nowrap
+}
+
+td.menu {
+	text-align:left;
+	border-style:none;
+	vertical-align:bottom;
+	font-size:11pt
+}
+
+td.toolbar {
+	text-align:left;
+	border-style:none;
+	vertical-align:top;
+	font-size:11pt
+}
+
+td.toolbarR {
+	text-align:right;
+	border-style:none;
+	vertical-align:top;
+	font-size:11pt
+}
+td.logo	{
+	text-align:center;
+	border-style:none;
+	vertical-align:bottom;
+	font-size:11pt
+}
+
+td.header {
+	background-color:#000000;
+	color:#f8f8f8;
+	text-align:center;
+	border-style:none;
+	vertical-align:middle;
+	font-weight:bold;
+	font-size:9pt
+}
+td.footer {
+	background-color:#000000;
+	color:#f8f8f8;
+	text-align:center;
+	border-style:none;
+	vertical-align:middle;
+	font-weight:bold;
+	font-size:11pt
+}
+td.layerOption {
+	color:#f8f8f8;
+	text-align:center;
+	border-style:none;
+	vertical-align:middle;
+	font-weight:bold;
+	font-size:8pt;
+	width:100px;
+}
+/*		UI　グラフィックアイコンボタン
+*/
+button.iconButton {
+	width:34px;
+	height:34px;
+}
+/*		UI　AEキー　コンバートスイッチ
+*/
+input.aekConvert {
+	width:72px;
+	text-align:center;
+}
+/*		UI　入力エリア
+*/
+input.iNputbOx {
+	text-align:right;
+	width:18em;
+}
+/*		UI　スピンコントロール
+*/
+input.spinCtl {
+	width:32px;
+}
+/*========== ページヘッダーテーブル ============*/
+.pageHeader {
+	display:none;
+}
+/*====スクロールスペーサーとしてブロックを確保する
+ */
+/*========== シートヘッダーテーブル ============
+	スクロールスペーサーを兼用をやめて分離
+ */
+.sheetHeader {
+	display:none;
+}
+
+/*	ツールボックスの部品*/
+input.toolTip	{
+	font-size:8pt;
+	height:15pt;
+	width:100%;
+}
+/*		UI.表示プロパティ
+
+*/
+div.optionPanel{
+	display:none;
+}
+/*	タイムシートの罫線　*/
+.Sep {background-color:red}
+/*タイムセパレータライン*/
+/*		左端*/
+.ltSep,.ltSep_Blank {
+	text-align:right;
+	border-style:solid;
+	vertical-align:bottom;
+	font-size:6pt;
+		border-width:0px 1px 3px 1px;
+}
+/*		通常データ*/
+.ntSep,.ntSep_Blank {
+		border-width:0px 1px 3px 0px;
+}
+/*		ダイアログ*/
+.dtSep,.dtSep_Blank {
+		border-width:0px 1px 3px 0px;
+}
+
+/*サブセパレータライン*/
+/*		左端*/
+.lsSep,.lsSep_Blank {
+	text-align:right;
+	border-style:solid;
+	vertical-align:bottom;
+	font-size:8pt;
+		border-width:0px 1px 2px 1px;
+}
+/*		通常データ*/
+.nsSep,.nsSep_Blank {
+		border-width:0px 1px 2px 0px;
+}
+/*		ダイアログ*/
+.dsSep,.dsSep_Blank {
+		border-width:0px 1px 0px 0px;
+}
+
+/*通常ライン*/
+/*		左端*/
+.lnSep,.lnSep_Blank {
+	text-align:right;
+	border-style:solid;
+	vertical-align:bottom;
+	font-size:6pt;
+	border-width:0px 1px 1px 1px;
+}
+/*		参照データ*/
+.rnSep,.rnSep_Blank {
+			border-width:0px 1px 1px 0px;
+			color:gray;
+}
+th.rnArea{
+		border-width:0px 1px 0px 0px;
+		width:144px;
+}
+/*		通常データ*/
+.nnSep,.nnSep_Blank {
+			border-width:0px 1px 1px 0px;
+}
+th.editArea {
+		border-width:0px 1px 0px 0px;
+		width:216px;
+}
+/*		ダイアログ*/
+.dnSep,.dnSep_Blank {
+		border-width:0px 1px 0px 0px;
+}
+.dialoglabel {
+		width:36px;
+}
+/*	カラムセパレータ	*/
+td.colSep {
+	border-style:none;
+}
+/*	border-width:1px 1px 1px 1px; */
+/*エンドセパレータ（未使用）*/
+/*		左端*/
+.leSep,.leSep_Blank {
+		border-width:0px 1px 4px 1px;
+}
+/*		通常データ*/
+.neSep,.neSep_Blank {
+		border-width:0px 1px 4px 0px;
+}
+/*		ダイアログ*/
+.deSep,.deSep_Blank {
+		border-width:0px 1px 4px 0px;
+}
+/*	時間表示	*/
+.timeguide {
+	text-align:left;
+	font-size:9pt;
+}
+/*	タイムシート上の入力ボックス	*/
+.IptBox {
+	background-color:#ffffff;
+	height:10pt;
+	font-size:9pt;
+	border-width:0px;
+	border-style:none;
+	text-align:center;
+	margin:0;
+	padding:0;
+}
+/*	ページノンブル	*/
+.pgNm {
+	font-size:9pt;
+}
+/*
+	background-color:#efffef;
+	background-color:#efffef;
+
+*/
+
+.infoTable {
+	width:100%;
+	text-align:center;
+	font-size:5pt
+}
+
+.headerTool {
+	width:100%;
+	top:64px;
+	z-index: 2;
+}
+.footerTool {
+	width:100%;
+	top:0px;
+	margin:0;
+}
+.toolTable {
+	width:99%;
+	text-align:center;
+	font-size:18pt;
+	border-style:solid;
+
+}
+.screenSpace{
+	width:97%;height:10px;
+}
+.printSpace {
+	display:none;
+}
+.pageBreak {
+	display:none;
+}
+/*form view*/
+
+input	{text-align:center;}
+select	{text-align:center;width:100%;}
+/*
+ * {
+  margin: 0; padding: 0;
+ }
+ #fixed {
+  position: fixed;
+ }
+ #sheet_view p {
+  margin:0;
+ }
+	*/
+
+/*タイムシートの文字飾り (例)*/
+.v_bar	{color:blue;}
+/* */
+td#title {
+	font-weight:900;
+	font-size:24px;
+}
+
+/*
+その他のエレメントid は、ソースを直接読むか、取扱説明書をご覧ください。
+*/
+
+
+#optionPanelTbx{
+    display:none;
+    position:absolute;
+    top:64px;
+    left:120px;
+    width:660px;
+    height:165px;
+    background-color:#efefef;
+    padding:0;
+    border-style:double;
+}
+#optionPanelTbx a.minimize{
+    position:absolute;
+    right:32px;
+    top:1px;
+}
+#optionPanelTbx a.close{
+    position:absolute;
+    right:8px;
+    top:1px;
+}
+#optionPanelTbx a.minimize img{
+    border:none;
+}
+#optionPanelTbx a.close img{
+    border:none;
+}
+/*
+#optionPanelTbx dl{
+    width:100%;
+    height:100%;
+    background:url("../images/toolbox.gif");
+    margin:0;
+}
+*/
+#optionPanelTbx dl dt{
+    height:25px;
+    line-height:25px;
+    text-indent:1em;
+    font-weight:bold;
+    cursor:move;
+}
+#optionPanelTbx dl dd{
+    margin:0;
+    padding:2em;
+    line-height:1.5;
+    text-indent:1em;
+}
+
+#optionPanelVer {
+    display:none;
+    width:480px;
+    height:340px;
+    background-color:#efefef;
+    padding:6px;
+    border-style:double;
+}
+#optionPanelPref {
+    display:none;
+    width:480px;
+    height:308px;
+    background-color:#efefef;
+    padding:6px;
+    border-style:double;
+}
+/*---------------- ドロップダウンメニュー*/
+
+#pMenu div{
+  z-index:3;
+  display:none;
+  margin:0;
+}
+
+#pMenu li {
+  position: relative;
+  float: left;
+  margin: 0;
+  padding: 0px;
+  width: 100px;
+  height: 15px;
+  border: solid 1px #ccc;
+  font-weight: bold;
+  list-style-type: none;
+}
+#pMenu li:hover {
+  color: #fff;
+  background: #333;
+  z-index: 5;
+}
+#pMenu li ul {
+  display: none;
+  position: absolute;
+  top: 16px;
+  left: -1px;
+  padding: 5px;
+  width: 150px;
+  background: #eee;
+  border: solid 1px #ccc;
+}
+#pMenu li ul li {
+  margin: 0;
+  padding: 0;
+  width: 150px;
+  border: none;
+}
+#pMenu li ul li a {
+  display: inline-block;
+  width: 150px;
+  height: 20px;
+}
+#pMenu li ul li a:hover {
+  background: #999;
+  color: #fff;
+}
+
+#pMenu li ul{
+	display:none;
+	position:absolute;
+}

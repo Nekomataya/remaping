@@ -1,0 +1,105 @@
+ｘUI　プロパティ／メソッド一覧
+
+	xUI.XPS	new Object();	//XPSを参照するオブジェクト(将来の拡張用)
+	xUI.spinValue	SpinValue;	//スピン量
+	xUI.spinSelect	SpinSelect;	//選択範囲でスピン指定するか否かのフラグ
+	xUI.sLoop	SLoop;	//スピンループ
+	xUI.cLoop	CLoop;	//カーソルループ
+	xUI.SheetLength	SheetLength;	//タイムシート1枚の秒数
+
+
+	xUI.PageLength	xUI.SheetLength*XPS.framerate;	//1ページのコマ数
+	xUI.cPageLength	1*XPS.framerate;	//カラム長だったけど一秒に変更
+
+	xUI.sheetSubSeparator	SheetSubSeparator;	//サブセパレータの間隔
+	xUI.PageCols	SheetPageCols;	//シートのカラム段数。実際問題としては１または２以外は使いづらくてダメ
+	xUI.fct0	Counter0;	//カウンタのタイプ
+	xUI.fct1	Counter1;	//
+	xUI.favoriteWords	FavoriteWords;	//お気に入り単語
+	xUI.footMark	FootMark;	//フットマーク機能フラグ
+	xUI.autoScroll	AutoScroll;	//自動スクロールフラグ
+	xUI.tabSpin	TabSpin;	//TABキーで確定操作のフラグ
+
+	xUI.noSync	NoSync;	//入力同期停止フラグ
+	xUI.blmtd	BlankMethod;	//カラセル方式デフォルト値["file","opacity","wipe","expression1","expression2"];
+	xUI.blpos	BlankPosition;	//カラセル位置デフォルト値["build","first","end","none"]
+
+	xUI.fpsF	FootageFramerate;	//フッテージのフレームレート
+	xUI.dfX	defaultSIZE.split(",")[0];	//コンポサイズが
+	xUI.dfY	defaultSIZE.split(",")[1];	//指定されない場合の標準値
+	xUI.dfA	defaultSIZE.split(",")[2];	//
+	xUI.timeShift	TimeShift;	//読み込みタイムシフト
+
+	xUI.yankBuf	"";	//		ヤンクバッファは、comma、改行区切りのデータストリームで
+	xUI.inputFlag	"nomal";	//入力フラグ["nomal","undo","redo"]
+	xUI.undoStack	new Array();	//アンドウスタック//データは [セレクト座標,セレクション,ボディ]
+//	xUI.undoStack.push([[0,1],[0,0],'']);//	座標と選択範囲は配列で、ボディはcomma、改行区切りで2次元のstream
+	xUI.undoPt=0;	//アンドウポインタ
+	xUI.Backupdata=new Array();//編集バックアップトレーラ
+	xUI.activeInput=null;//アクティブ入力ポインタ
+
+	xUI.activate	 function(target){xUI.activeInput=target;};
+
+	xUI.eXMode=0;	//ラピッドモード変数(0/1/2/3)
+	xUI.eXCode=0;	//ラピッドモード導入キー変数
+	xUI.eddt="";	//編集バッファ
+	xUI.edchg=false;	//編集フラグ
+
+	xUI.flushUndoBuf()	//undoバッファを初期化する。
+	xUI.SheetWidth() function(){return XPS.layers.length+2;};	//シートの幅(編集範囲)
+	xUI.edChg(ステータス)	//true || false //編集インジケータを切り換え
+	xUI.flush(データ)	//データですべてのシートセルを埋める。
+	xUI.reInitBody(newTimelines,newDuration)	//新タイムライン数、新継続時間でシートを再初期化
+	xUI.switchStage()	//まだないXPS対応後に
+	xUI.trTd(string)	//XPSボディデータをHTML表示用に整形
+
+	xUI.edChange()	//試験用現在未使用　というかロードしてない
+
+	xUI.getid(name)	//XPSのプロパティ要素を"_"でつないで返す(シート上のidに対応)//キーワードはSelectのみが有効
+	xUI.selectCell(ID)	//ID(セル)をアクティブ状態に　IDがカラならばNOP
+	xUI.focusCell(ID)	//ID(セル)にフォーカスを入れる（inputboxを作る）もう使ってないかも
+	xUI.changeColumn(ID,cols)	//カラム(Timeline)変更 タイムシート上のラベル用
+	xUI.selection (ID)	//シートセルID 現在のアクティブセルから指定位置までを選択状態に
+	xUI.selectionHi(Method)	//現在の選択範囲をハイライト。範囲が許容外だった場合は範囲を維持して操作無しMethodは["hilite","footmark","clear"]
+	xUI.spinHi(Method)//選択ポイントのハイライトおよびスピン範囲のハイライト["clear",""]
+	xUI.footstampClear()	//		足跡をクリア
+	xUI.footstampPaint()	//足跡をチェック。現在のカーソル位置を控えて全選択して解除、カーソル位置を戻す
+
+	xUI.headerView(pageNumber)
+		タイムシート本体のヘッダを返すメソッド(ページ単位)
+		引数はページ番号を整数で
+		第一ページ以外は省略形を返す
+		戻り値はページヘッダのHTMLテキスト
+	xUI.pageView(pageNumber)
+		タイムシート本体のHTMLを返すメソッド(ページ単位)
+		引数はページ番号を整数で
+		戻り値はページ内容のHTMLテキスト
+	xUI.packColumn(ID)	//表示を折り畳む
+	xUI.spin(vAlue)	//メソッド・ オプションは、数値 または、キーワード`[right/left/up/doun/fwd/back]//戻り値は、更新あとのspin値
+	xUI.dialogSpin(param)	//台詞欄用のスピン処理展開と文字置き換えが通常セルと異なる
+
+	xUI.getCurrent()	//現在のカレントセルの値をマップで評価して有効値で返す。
+	xUI.doRapid(param)	//paramをラピッドモードコマンドとして実行する
+	xUI.copy()	//選択範囲のデータをヤンクバッファへ送り込む
+	xUI.cut()	//選択範囲のデータをやんくバッファへ送り込み範囲をクリア
+	xUI.paste()	//選択範囲にヤンクバッファのデータを流し込む込む
+	xUI.yank()	//選択範囲のデータをヤンクバッファへ送り込む
+
+	xUI.undo()	
+	xUI.redo()	
+
+	xUI.actionRange(limit)	//操作範囲の抽出//引数は、制限範囲・省略可能 戻り値は配列return [[LayerStartAddress,FrameStartAddress],[LayerEndAddress,FrameEndAddress]]
+	xUI.getRange(range Array)	//範囲内のデータをストリームで返す。引数が省略された場合はactionRangeを参照
+
+	xUI.put(datastream)	//シートに値を流し込む。読み込みとかにもつかえるべし
+	xUI.bkup(Datas)	//編集中の一時バックアップデータ入出力method
+
+			この一群は内部処理用メソッド呼び出し禁止
+	xUI.keyDown(e)
+	xUI.keyUp(e)
+	xUI.keyPress(e)
+	xUI.Mouse(e)
+
+	xUI.openSW(name)	サブウィンドウ"name"を開く。現在["_tool"]のみ
+	xUI.closeSW()	サブウィンドウを閉じる
+	xUI.riseSW(name)	サブウィンドウをライズ

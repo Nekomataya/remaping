@@ -1,0 +1,22 @@
+//汎用性のあるクリップターゲット追従エクスプレッション
+/*
+	ターゲット取得部分は共通
+*/
+if((this.source.numLayers)&&(this.source.numLayers>2))
+{
+	var myTarget=this.source.layer(1);//第一レイヤを仮取得
+	if(!(myTarget.name.match(/camera|_clippingTarget|カメラ/i))){
+		for(var lidx=1;lidx<=this.source.numLayers;lidx++){if(myTarget.name.match(/camera|_clippingTarget|カメラ/i)){myTarget=this.source.layer(lidx);break;}}
+	}
+}else{
+	var myTarget=this;//カメラレイヤを取得
+}
+//anchorPoint
+myTarget.position
+//position
+[(myTarget.anchorPoint[0]*(thisComp.width/myTarget.width)),(myTarget.anchorPoint[1]*(thisComp.height/myTarget.height))];
+//scale
+mull([(100/myTarget.scale[0]*(thisComp.width/myTarget.width)),(100/myTarget.scale[1]*(thisComp.height/myTarget.height))],100);
+
+//rotation
+-myTarget.rotation

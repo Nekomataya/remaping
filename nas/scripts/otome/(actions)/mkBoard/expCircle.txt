@@ -1,0 +1,58 @@
+Adobe After Effects 8.0 Keyframe Data
+
+Effects	‰~ #1	’†S #2
+Expression Data
+[width/2,height/2]
+End of Expression Data
+
+Effects	‰~ #1	”¼Œa #3
+Expression Data
+height*0.3
+End of Expression Data
+
+Effects	‰~ #2	’†S #2
+Expression Data
+[height*0.2,height*0.2]
+End of Expression Data
+
+Effects	‰~ #2	”¼Œa #3
+Expression Data
+height*0.15
+
+End of Expression Data
+
+Effects	‰~ #3	’†S #2
+Expression Data
+[height*0.2,height*0.8]
+End of Expression Data
+
+Effects	‰~ #3	”¼Œa #3
+Expression Data
+height*0.15
+
+End of Expression Data
+
+Effects	‰~ #4	’†S #2
+Expression Data
+[width-height*0.2,height*0.2]
+End of Expression Data
+
+Effects	‰~ #4	”¼Œa #3
+Expression Data
+height*0.15
+
+End of Expression Data
+
+Effects	‰~ #5	’†S #2
+Expression Data
+[width-height*0.2,height*0.8]
+End of Expression Data
+
+Effects	‰~ #5	”¼Œa #3
+Expression Data
+height*0.15
+
+End of Expression Data
+
+
+End of Keyframe Data
