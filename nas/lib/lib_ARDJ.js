@@ -63,7 +63,8 @@ function ARDJ2XPS(myARDJ) {
     if (myARDJ.caption) {
         for (var lid = 0; lid < myLayers; lid++) {
             if (myARDJ.caption[lid]) {
-                myXps.layers[lid].name = myARDJ.caption[lid];
+//                myXps.layers[lid].name = myARDJ.caption[lid];
+                myXps.timeline(lid+1).id = myARDJ.caption[lid];
             }
         }
     }
@@ -72,12 +73,12 @@ function ARDJ2XPS(myARDJ) {
         for (var L = 0; L < myLayers; L++) {
             for (var K = 0; K < myARDJ.cells[L].length; K++) {
                 //	alert(K+" : "+myARDJ.cells[L][K]);
-                myXps.xpsBody[L + 1][myARDJ.cells[L][K][0]] = myARDJ.cells[L][K][1].toString();//ダイアログラインをよけてキーを配置
+                myXps.timeline(L + 1)[myARDJ.cells[L][K][0]] = myARDJ.cells[L][K][1].toString();//ダイアログラインをよけてキーを配置
             }
         }
     }
     if (xUI.errorCode == 0) {
-        myXps.memo = "converted from ARDJ data";
+        myXps.xpsTracks.noteText = "converted from ARDJ data";
         return myXps.toString();
     }
     return false;
@@ -142,21 +143,20 @@ function XPS2ARDJ(myXps) {
      * option="timing"のものだけpushしてIDを控える
      * @type {Array}
      */
-    var myTargetLayers = [];
-    for (var lid = 0; lid < sourceXPS.layers.length; lid++) {
-        //	if(sourceXPS.layers[lid].option=="timing"){}
-        if (sourceXPS.layers[lid].option.match(/(timing|still)/i)) {
-            myTargetLayers.push(lid);
-            myARDJ.caption.push(sourceXPS.layers[lid].name);
+    var myTarget = [];
+    for (var lid = 1; lid < sourceXPS.xpsTracks.length-1; lid++) {
+        if (sourceXPS.timeline(lid).option.match(/(replacement|timing|still)/i)) {
+            myTarget.push(lid);
+            myARDJ.caption.push(sourceXPS.timeline(lid).id);
         }
     }
-    myARDJ.cellCount = myTargetLayers.length;//セルカウントセット
+    myARDJ.cellCount = myTarget.length;//セルカウントセット
 
     /**
      * 変換するタイムラインを処理してキー配列を作成
      */
     for (var lid = 0; lid < myARDJ.cellCount; lid++) {
-        var buffDataArray = sourceXPS.getNormarizedStream(myTargetLayers[lid]);
+        var buffDataArray = sourceXPS.getNormarizedStream(myTarget[lid]-1);
         var keyDataArray = [];
         /**
          * 第一フレームセット

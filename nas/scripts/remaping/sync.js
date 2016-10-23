@@ -289,7 +289,7 @@ case	"trout":	;
 
 	break;
 case	"memo":
-	var memoText=XPS.memo.toString().replace(/(\r)?\n/g,"<br>");
+	var memoText=XPS.xpsTracks.noteText.toString().replace(/(\r)?\n/g,"<br>");
 	document.getElementById(prop).innerHTML=memoText;
 	if(document.getElementById("memo_prt")){document.getElementById("memo_prt").innerHTML=memoText;}
 	break;

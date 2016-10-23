@@ -377,23 +377,26 @@ function XPS2StylosCSV(myXPS, myReferenceXPS) {
                 return false;
             }
         } else {
-            var referenceXPS = myXPS;//複製
-            var referenceXPS = new Xps(myXPS.layers.length, myXPS.duration());//カラオブジェクト
+//            var referenceXPS = myXPS;//複製
+//            var referenceXPS = new Xps(myXPS.layers.length, myXPS.duration());//カラオブジェクト
+            var referenceXPS = new Xps(myXPS.xpsTracks.length-2, myXPS.duration());//カラオブジェクト
         }
     }
     /**
      * リファレンスXPSのサイズが本体シートに満たない場合はサイズを拡張する
      */
-    if ((myReferenceXPS.layers.length < myXPS.layers.length) ||
+    if ((myReferenceXPS.xpsTracks.length < myXPS.xpsTracks.length) ||
         (myReferenceXPS.duration() < myXPS.duration())) {
-        myReferenceXPS.reInitBody(myXPS.xpsBody.length, myXPS.duration());
+        myReferenceXPS.reInitBody(myXPS.xpsTracks.length, myXPS.duration());
     }
     /**
      * コンバートする
      * @type {Array}
      */
     var myStylosCSV = [];
-    myStylosCSV.recordCunt = myXPS.layers.length * 2 + 2;//(レイヤ数×２＋フレームカウント＋セリフ)
+//    myStylosCSV.recordCunt = myXPS.layers.length * 2 + 2;//(レイヤ数×２＋フレームカウント＋セリフ)
+    myStylosCSV.recordCunt = (myXPS.xpsTracks.length - 2) * 2 + 2;//(トラック数×２＋フレームカウント＋セリフ)
+    /*　ここは見直しが必要　タイミングトラックをそれぞれのXpsごとにカウントして処理するルーチンを書くこと　2016 10 23*/
     /**
      * 第一レコードを作る
      * @type {Array}
@@ -401,12 +404,12 @@ function XPS2StylosCSV(myXPS, myReferenceXPS) {
     var currentRecord = [];
     currentRecord.push('"Frame"');
     currentRecord.push('"原画"');
-    for (var LC = 0; LC < myXPS.layers.length - 1; LC++) {
+    for (var LC = 0; LC < myXPS.xpsTracks.length - 2; LC++) {
         currentRecord.push('""');
     }
     currentRecord.push('"台詞"');
     currentRecord.push('"動画"');
-    for (var LC = 0; LC < myXPS.layers.length - 1; LC++) {
+    for (var LC = 0; LC < myXPS.xpsTracks.length - 2; LC++) {
         currentRecord.push('""');
     }
     myStylosCSV.push(currentRecord.join(","));
@@ -416,16 +419,16 @@ function XPS2StylosCSV(myXPS, myReferenceXPS) {
      */
     currentRecord = [];
     currentRecord.push('""');
-    for (var LC = 0; LC < myXPS.layers.length; LC++) {
-        if (LC < referenceXPS.layers.length) {
-            currentRecord.push('"' + referenceXPS.layers[LC].name + '"');
+    for (var LC = 1; LC < myXPS.xpsTracks.length - 1; LC++) {
+        if (LC < referenceXPS.xpsTracks.length) {
+            currentRecord.push('"' + referenceXPS.timeline(LC).id + '"');
         } else {
             currentRecord.push('""');
         }
     }
-    currentRecord.push('""');
-    for (var LC = 0; LC < myXPS.layers.length; LC++) {
-        currentRecord.push('"' + sourceXPS.layers[LC].name + '"');
+    currentRecord.push('""');//セリフトラック分
+    for (var LC = 1; LC < myXPS.xpsTracks.length-1; LC++) {
+        currentRecord.push('"' + sourceXPS.timeline(LC).id + '"');
     }
     myStylosCSV.push(currentRecord.join(","));
 
@@ -435,11 +438,11 @@ function XPS2StylosCSV(myXPS, myReferenceXPS) {
     for (var myFrame = 0; myFrame < myXPS.duration(); myFrame++) {
         currentRecord = [];
         currentRecord.push((myFrame + 1).toString(10));//フレームカウント
-        for (var LC = 0; LC < myXPS.layers.length; LC++) {
-            currentRecord.push('"' + referenceXPS.xpsBody[LC + 1][myFrame] + '"');//ダイアログフレームをとばす
+        for (var LC = 1; LC < referenceXPS.xpsTracks.length - 1; LC++) {
+            currentRecord.push('"' + referenceXPS.timeline(LC)[myFrame] + '"');//ダイアログフレームをとばす
         }
-        for (var LC = 0; LC <= myXPS.layers.length; LC++) {
-            currentRecord.push('"' + sourceXPS.xpsBody[LC][myFrame] + '"');//メモ情報はコンバートできない。
+        for (var LC = 0; LC < myXPS.xpsTracks.length - 1 ; LC++) {
+            currentRecord.push('"' + sourceXPS.timeline(LC)[myFrame] + '"');//メモ情報はコンバートできない。
         }
         myStylosCSV.push(currentRecord.join(","));
     }

@@ -250,7 +250,7 @@ if(! n){n=xUI.Select[0]; }
 
 
 //リスト展開プロシージャ
-/*	nas_expdList(ListStr,rcl)
+/**
 引数:	ソース文字列　ListStr /  rcl
 戻値:	putメソッドの引数ストリーム
 	マクロ記法の文字列をputメソッドに引き渡し可能なストリームへ展開する
@@ -606,9 +606,12 @@ getReferenceData=function(myPage){
 	}
 	var myRef= new Array();
 	for (var frm=startCount;frm<endCount;frm++){
-		for(var col=1;col<=xUI.referenceXPS.layers.length;col++){
+		for(var col=1;col<=xUI.referenceXPS.xpsTracks.length-1;col++){
 			if(frm<xUI.referenceXPS.duration()){
-			myRef.push("\("+EncodePS2(xUI.referenceXPS.xpsTracks[col][frm])+")");
+              var currentData=xUI.referenceXPS.xpsTracks[col][frm];
+              if (currentData.match(/^[|｜:]$/)){currentData=""}
+              myRef.push("\("+EncodePS2(currentData)+")");
+//			myRef.push("\("+EncodePS2(xUI.referenceXPS.xpsTracks[col][frm])+")");
 			}
 		}
 	}
@@ -651,7 +654,7 @@ var pushEps= function (myTemplate){
 if(sWap.FrameRate%1 > 0){return false;}
 	sWap.PageLength = xUI.SheetLength;//１ページの秒数（フレーム数にあらず）
 	sWap.PageColumns = xUI.PageCols;//シートの段組はxUIを複写
-	sWap.ActionColumns =(xUI.referenceXPS.layers.length < 8)? 8 :XPS.layers.length;
+	sWap.ActionColumns =(xUI.referenceXPS.xpsTracks.length < 10)? 8 :XPS.xpsTracks.length-2;
 
 	sWap.DialogColumns =xUI.dialogSpan;//xUIのプロパティを作成するのでそれを参照
 
@@ -674,7 +677,7 @@ spanWord=({
 	for (var ix=0; ix<sWap.Columns;ix++){
 //	for (var ix=0; ix<sWap.TimingColumns;ix++){}
 		if(ix<xUI.timingSpan){
-		  SO.push( spanWord[XPS.layers[ix+xUI.dialogSpan-1].option] );
+		  SO.push( spanWord[XPS.xpsTracks[ix+xUI.dialogSpan-1].option] );
 		}else{
 		  SO.push('CellWidth');
 		};
@@ -683,7 +686,7 @@ spanWord=({
 	var SOC=[];
 	for (var ix=0; ix<sWap.camColumns;ix++){
 		if(ix<xUI.cameraSpan){
-		  SOC.push( spanWord[XPS.layers[ix+xUI.dialogSpan+xUI.timingSpan-1].option] );
+		  SOC.push( spanWord[XPS.xpsTracks[ix+xUI.dialogSpan+xUI.timingSpan-1].option] );
 		}else{
 		  SOC.push('CameraCellWidth');
 		};
@@ -705,8 +708,8 @@ spanWord=({
 
 	var ACL=[];
  for(var id = 0;id < 26; id++){
-	if(id < xUI.referenceXPS.layers.length){
-	 ACL.push("\("+EncodePS2(xUI.referenceXPS.layers[id].name)+")")
+	if(id < xUI.referenceXPS.xpsTracks.length-2){
+	 ACL.push("\("+EncodePS2(xUI.referenceXPS.xpsTracks[id+1].id)+")")
 	}else{
 	 ACL.push("\( )");
 	}
@@ -715,7 +718,7 @@ spanWord=({
 	var CL=[];
  for(var id = 0;id < 26; id++){
 	if(id < xUI.timingSpan){
-	 CL.push("\("+EncodePS2(XPS.layers[id + xUI.dialogSpan -1].name)+")");
+	 CL.push("\("+EncodePS2(XPS.xpsTracks[id + xUI.dialogSpan].id)+")");
 	}else{
 	 CL.push("\( )");
 	}
@@ -725,7 +728,7 @@ spanWord=({
 	var CCL=[];
  for(var id = 0;id < 26; id++){
 	if(id < xUI.cameraSpan){
-	 CCL.push("\("+EncodePS2(XPS.layers[id + xUI.timingSpan + xUI.dialogSpan -1].name)+")");
+	 CCL.push("\("+EncodePS2(XPS.xpsTracks[id + xUI.timingSpan + xUI.dialogSpan].id)+")");
 	}else{
 	 CCL.push("\( )");
 	}
@@ -738,8 +741,8 @@ spanWord=({
  sWap.DurationString = EncodePS2("\("+nas.Frm2FCT(XPS.time(),3)+")");
  sWap.UserName = EncodePS2(XPS.create_user);//
  sWap.xpsRef = "";//getReferenceData();
- sWap.refLayers = xUI.referenceXPS.layers.length;
- sWap.xpsTracks = "";//getBodyData();
+ sWap.refLayers = xUI.referenceXPS.xpsTracks.length-1;
+ sWap.xpsBody = "";//getBodyData();
  sWap.xpsLayers = XPS.xpsTracks.length;
  	var MT=XPS.memo.split("\n");
 
@@ -771,7 +774,7 @@ spanWord=({
 "PageCount",
 "xpsRef",
 "refLayers",
-"xpsTracks",
+"xpsBody",
 "xpsLayers",
 "transitionText",
 "memoText"
@@ -795,7 +798,7 @@ spanWord=({
 	sWap.PageCount= pageCount+1;
 
  sWap.xpsRef=getReferenceData(pageCount+1);
- sWap.xpsTracks=getBodyData(pageCount+1);
+ sWap.xpsBody=getBodyData(pageCount+1);
 
  epsBodys[pageCount]=myTemplate;
 

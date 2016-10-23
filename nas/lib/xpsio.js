@@ -226,21 +226,24 @@ function _getMapDefault(myOption) {
  ドキュメント記載のIDを与える
  初期化時にセッション限定のユニークIDを作成して与える
  等のケースとなる
+
+ オブジェクト初期化時は、デフォルトの音声トラック＋コメントトラックのみを初期化する
+ 必要に従って呼び出し側でクラスメソッドを用いてトラック編集を行う
  */
-XpsTrackCollection = function(parent,index,tracks,duration){
-	this.parentXps=parent;//固定情報
-	this.jobIndex=index;//固定情報
-	this.duration=frames;
+XpsTrackCollection = function(parent,index,duration){
+	this.parentXps=parent;//固定情報　親Xps
+	this.jobIndex=index;//固定情報　JobID
+	this.duration=duration;
 	this.noteText="";//property dopesheet note-text
 	//
-	this.length=tracks;//メンバーをundefinedで初期化する。
+	this.length=2;//メンバーをundefinedで初期化する。
 //	
 		this[0]=new XpsTimelineTrack("N","dialog",this,this.duration);
-	for (var ix=1;ix < this.length-1;ix++){
-	    var  myLabel=("ABCDEFGHIJKLMNOPQRSTUVWXYZ").charAt((ix-1)%26);
-		this[ix]=new XpsTimelineTrack(myLabel,"timing",this,this.duration);
-	}
-		this[tracks-1]=new XpsTimelineTrack("","memo",this,this.duration);
+//	for (var ix=1;ix < this.length-1;ix++){
+//	    var  myLabel=("ABCDEFGHIJKLMNOPQRSTUVWXYZ").charAt((ix-1)%26);
+//		this[ix]=new XpsTimelineTrack(myLabel,"timing",this,this.duration);
+//	}
+		this[1]=new XpsTimelineTrack("","comment",this,this.duration);
 }
 XpsTrackCollection.prototype = Array.prototype;
 XpsTrackCollection.prototype.constractor = XpsTrackCollection;
@@ -657,7 +660,7 @@ function Xps(Layers, Length) {
      * タイムライントラックコレクション配列
      */
     this.xpsTracks = this.newTracks(Layers, Length);
-
+    //コレクションの初期化で同時にシートメモが空文字列で初期化される
 }
 
 /**
@@ -676,23 +679,27 @@ function Xps(Layers, Length) {
 Xps.prototype.newTracks = function (layerCount,trackDuration) {
     var trackCount = layerCount+2;
     var camCount = 0;
+    var sfxCount = 0;
+    var cellCount = trackCount - camCount - sfxCount - 2 ;
     var myJobIndex=0;
-    
-//    var myTimelineTracks = new XpsTrackCollection(this,this.jobIndex,layerCount+2,trackDuration);//parent,index,tracks,duration
+if(true){    
+    var myTimelineTracks = new XpsTrackCollection(this,this.jobIndex,trackDuration);//parent,index,duration
+}else{
     var myTimelineTracks = [];
-    myTimelineTracks.push(new XpsTimelineTrack("N","dialog",this.xpsTracks,trackDuration,0));//default dialog track
+}
+//    myTimelineTracks.push(new XpsTimelineTrack("N","dialog",this.xpsTracks,trackDuration,0));//default dialog track
     var defaultNames = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-    var cellCount = trackCount - camCount - 2 ;
     for (var idx = 0; idx < cellCount; idx++) {
-        myTimelineTracks.push(new XpsTimelineTrack(defaultNames.charAt(idx % 26), "timing",this.xpsTracks,trackDuration,idx+1));
+        myTimelineTracks.splice( myTimelineTracks.length-1, 0, new XpsTimelineTrack(defaultNames.charAt(idx % 26), "timing",this.xpsTracks,trackDuration,idx+1));
     }
     for (var idx = 0; idx < camCount; idx++) {
-        myTimelineTracks.push(new XpsTimelineTrack("cam"+idx , "camera" ,this.xpsTracks,trackDuration,idx+1));
+        myTimelineTracks.splice( myTimelineTracks.length-1, 0, new XpsTimelineTrack("cam"+idx , "camera" ,this.xpsTracks,trackDuration,idx+1));
     }
     //レコード末尾にコメントトレーラを置く
-    myTimelineTracks.push(new XpsTimelineTrack("","comment",this.xpsTracks,trackDuration,cellCount+1));
+//    myTimelineTracks.push(new XpsTimelineTrack("","comment",this.xpsTracks,trackDuration,cellCount+1));
     //コレクションのプロパティとしてメモ欄の伝達事項を置く
-    myTimelineTracks.noteText="";
+//    myTimelineTracks.noteText="";
+
     //トラックのインデックス更新正規化
     myTimelineTracks.renumber();
 
@@ -865,6 +872,8 @@ Xps.prototype.duration = function () {
         return this.xpsTracks[0].length;
     }
 };
+Xps.prototype.getDuration =function () { return this.xpsTracks.duration; }
+
 /**
  * カット尺をフレーム数で返す
  * @returns {number}
@@ -904,35 +913,31 @@ Xps.prototype.getTC = function (mtd) {
  * @param myTimelines
  */
 Xps.prototype.insertTL = function (myId, myTimelines) {
-    if (!(myTimelines instanceof Array)) {
-        myTimelines = [myTimelines]
+    //引数が配列ではないまたは単独のタイムライントラックオブジェクトである場合配列化する
+    if ((myTimelines instanceof XpsTimelineTrack) || (!(myTimelines instanceof Array))) {
+        myTimelines = [myTimelines];
     }
     if ((!myId ) || (myId < 1) || ( myId >= this.xpsTracks.length - 2)) {
         myId = this.xpsTracks.length - 1
     }
-    var myBodys = [];
     for (var idx = 0; idx < myTimelines.length; idx++) {
         /**
-         * 挿入データの検査をする　
-         * 挿入データが文字列ならそのラベルを持つtimingタイムラインと置き換える
+         * 挿入データの検査
+         * 挿入データがタイムライントラック以外なら　挿入データをラベルを持つtimingタイムラインを作成する
          */
         if (!(myTimelines[idx] instanceof XpsTimelineTrack)) {
             if (myTimelines[idx]) {
-                myTimelines[idx] = new XpsTimelineTrack(myTimelines[idx], "timing",this.xpsTracks,"","");
+                myTimelines[idx] = new XpsTimelineTrack(myTimelines[idx], "timing",this.xpsTracks);
             } else {
-                myTimelines[idx] = new XpsTimelineTrack(nas.Zf(idx + myId, 2), "timing",this.xpsTracks,"","");
+                myTimelines[idx] = new XpsTimelineTrack(nas.Zf(idx + myId, 2), "timing",this.xpsTracks);
             }
-        }
-        myBodys[idx] = new XpsTimelineTrack(myId, this, this.xpsTracks[0].length);
-        for (var ix = 0; ix < this.xpsTracks[0].length; ix++) {
-            myBodys[idx][ix] = ""
         }
         /**
          * 挿入データを揃えて挿入
          */
-        this.xpsTracks.splice(myId + idx, 0, myBodys[idx]);
+        this.xpsTracks.splice(myId + idx, 0, myTimelines[idx]);
     }
-
+    return myTimelines;
 };
 //test insertTL(挿入点id,挿入するタイムラインオブジェクト配列)
 //var myNewTracks=new XpsTimelineTrack("ins1","timing",XPS.xpsTracks,"")
@@ -983,7 +988,7 @@ Xps.prototype.reInitBody = function (newTimelines, newDuration) {
     if (newTimelines < 3 || newDuration <= 0) {
         return false;
     }
-    var widthUp = (newTimelines > oldWidth) ? true : false;
+    var widthUp    = (newTimelines > oldWidth)   ? true : false;
     var durationUp = (newDuration > oldDuration) ? true : false;
 if(this.xpsTracks.duration){
     alert("reInitBody");
@@ -1773,7 +1778,8 @@ Xps.prototype.toString = function () {
      * メモ
      * @type {string|*}
      */
-    result += this.memo;
+//    result += this.memo;
+    result += this.xpsTracks.noteText;
 
     /**
      *  返す(とりあえず)
@@ -1852,7 +1858,7 @@ Xps.prototype.isSame = function (targetXps) {
     /**
      * メモ比較
      */
-    if (this.memo.replace(/¥s+/g, " ").replace(/¥n/g, "") != targetXps.memo.replace(/¥s+/g, " ").replace(/¥n/g, "")) {
+    if (this.xpsTracks.noteText.replace(/¥s+/g, " ").replace(/¥n/g, "") != targetXps.xpsTracks.noteText.replace(/¥s+/g, " ").replace(/¥n/g, "")) {
         return false
     }
     /**

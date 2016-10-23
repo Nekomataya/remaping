@@ -39,18 +39,6 @@ function TSH2XPS(TSHStream) {
     if (!TSHStream.match(/^\x22([^\x09]*\x09){25}[^\x09]*/)) {
         return false;
     }
-    if (false) {
-        /**
-         * @todo 仮コード　現状機能のラッパ　後で書きなおす
-         * @type {Xps}
-         */
-        var myXps = new Xps();
-        if (myXps.readIN(TSHStream)) {
-            return myXps.toString();
-        }
-        return false;
-        /* ============================================== 後で修正*/
-    }
     /**
      * CSVデータをオブジェクト化する
      * @type {{}}
@@ -202,10 +190,10 @@ function XPS2TSH(myXPS) {
      * プロパティをチェックして必要なタイムラインのIDを抽出する
      * @type {Array}
      */
-    var myTargetId = [];
-    for (var ix = 0; ix < myXPS.layers.length; ix++) {
-        if (myXPS.layers[ix].option.match(/(timing|still)/i)) {
-            myTargetId.push(ix + 1)
+    var myTarget = [];
+    for (var ix = 1; ix < myXPS.xpsTracks.length; ix++) {
+        if (myXPS.timeline(ix).option.match(/(replacement|timing|still)/i)) {
+            myTarget.push(ix);
         }
     }
 
@@ -222,8 +210,8 @@ function XPS2TSH(myXPS) {
     var currentRecord = "";
     var defaultNames = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
     for (var ct = 0; ct < myTSH.recordCount; ct++) {
-        if (ct < myTargetId.length) {
-            currentRecord += myXPS.layers[myTargetId[ct] - 1].name;
+        if (ct < myTarget.length) {
+            currentRecord += myXPS.timeline([myTarget[ct]]).id;
         } else {
             currentRecord += defaultNames.charAt(ct);
         }
@@ -243,10 +231,9 @@ function XPS2TSH(myXPS) {
     for (var myFrame = 0; myFrame < myXPS.duration(); myFrame++) {
         currentRecord = "";
         for (var LC = 0; LC <= myTSH.recordCount; LC++) {
-            if (LC < myXPS.layers.length) {
-            }
-            if (LC < myTargetId.length) {
-                var currentValue = dataCheck(myXPS.xpsBody[myTargetId[LC]][myFrame], myXPS.layers[myTargetId[LC] - 1].name);
+//            if (LC < myXPS.layers.length) {            }
+            if (LC < myTarget.length) {
+                var currentValue = dataCheck( myXPS.xpsTracks[myTarget[LC]][myFrame], myXPS.timeline(myTarget[LC]).id);
                 if (currentValue == "blank") {
                     currentValue = "0";
                 }

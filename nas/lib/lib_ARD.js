@@ -120,7 +120,8 @@ function ARD2XPS(ARDStream) {
     if (myARD.CellNames) {
         for (var lid = 0; lid < myARD.CellNames.length; lid++) {
             if (myARD.CellNames[lid]) {
-                myXps.layers[lid].name = myARD.CellNames[lid];
+//                myXps.layers[lid].name = myARD.CellNames[lid];
+                myXps.xpsTracks[lid+1].id = myARD.CellNames[lid];
             }
         }
     }
@@ -128,13 +129,14 @@ function ARD2XPS(ARDStream) {
     if (myARD.Cell) {
         for (var L = 0; L < myARD.CellNames.length; L++) {
             for (var K = 0; K < myARD.Cell[L].length; K++) {
-                myXps.xpsBody[L + 1][parseInt(myARD.Cell[L][K][0], 10) - 1] = myARD.Cell[L][K][1];//ダイアログラインをよけてキーを配置
+//                myXps.xpsBody[L + 1][parseInt(myARD.Cell[L][K][0], 10) - 1] = myARD.Cell[L][K][1];//ダイアログラインをよけてキーを配置
+                myXps.xpsTracks[L + 1][parseInt(myARD.Cell[L][K][0], 10) - 1] = myARD.Cell[L][K][1];//ダイアログラインをよけてキーを配置
             }
         }
     }
 
     if (xUI.errorCode == 0) {
-        myXps.memo = "converted from AERemap data";
+        myXps.xpsTracks.noteText = "converted from AERemap data";
         return myXps.toString();
     }
     return "";
@@ -172,10 +174,10 @@ function XPS2ARD(sourceXPS) {
      * プロパティをチェックして必要なタイムラインのIDを抽出する
      * @type {Array}
      */
-    var myTargetId = [];
-    for (var ix = 0; ix < sourceXPS.layers.length; ix++) {
-        if (sourceXPS.layers[ix].option.match(/(timing|still)/i)) {
-            myTargetId.push(ix + 1)
+    var myTarget = [];
+    for (var ix = 1; ix < (sourceXPS.xpsTracks.length-1); ix++) {
+        if (sourceXPS.xpsTracks[ix].option.match(/(replacement|timing|still)/i)) {
+            myTarget.push(ix);
         }
     }
 
@@ -186,12 +188,12 @@ function XPS2ARD(sourceXPS) {
     var myARD = {
         "LayerCount": 0,
         "FrameCount": sourceXPS.duration(),
-        "SrcWidth": sourceXPS.layers[myTargetId[0]].sizeX,
-        "SrcHeight": sourceXPS.layers[myTargetId[0]].sizeY,
+        "SrcWidth": sourceXPS.xpsTracks[myTarget[0]].sizeX,
+        "SrcHeight": sourceXPS.xpsTracks[myTarget[0]].sizeY,
         "PageFrame": (xUI) ? xUI.PageLength : 6 * sourceXPS.framerate,
         "CmpFps": sourceXPS.framerate,
         "SrcAspect": 1,
-        "CmpAspect": sourceXPS.layers[myTargetId[0]].aspect,
+        "CmpAspect": sourceXPS.xpsTracks[myTarget[0]].aspect,
         "EmptyCell": 0,
         "CellNames": [],
         "Cell": []
@@ -202,21 +204,17 @@ function XPS2ARD(sourceXPS) {
      * option="timing"のものだけpushしてIDを控える
      * @type {Array}
      */
-    var myTargetLayers = [];
-    for (var lid = 0; lid < sourceXPS.layers.length; lid++) {
-        //	if(sourceXPS.layers[lid].option=="timing"){}
-        if (sourceXPS.layers[lid].option.match(/(timing|still)/i)) {
-            myTargetLayers.push(lid);
-            myARD.CellNames.push(sourceXPS.layers[lid].name);
-        }
+//    var myTargetLayers = [];
+    for (var lid = 0; lid < myTarget.length; lid++) {
+        myARD.CellNames.push(sourceXPS.xpsTracks[lid].id);
     }
-    myARD.LayerCount = myTargetLayers.length;//セルカウントセット
+    myARD.LayerCount = myTarget.length;//セルカウントセット
 
     /**
      * 変換するタイムラインを処理してキー配列を作成
      */
     for (var lid = 0; lid < myARD.LayerCount; lid++) {
-        var buffDataArray = sourceXPS.getNormarizedStream(myTargetLayers[lid]);
+        var buffDataArray = sourceXPS.getNormarizedStream(myTarget[lid]-1);
         var keyDataArray = [];
         /**
          * 第一フレームセット

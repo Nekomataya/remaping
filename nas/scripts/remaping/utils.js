@@ -487,11 +487,11 @@ vxPrompt= function(msg,params){return prompt(msg,params);};
 
 addTimeline(kind,label)
 	kind　はタイムライン種別
-	dialog,still,timing,camera,effect いずれか
+	dialog,sound,still,timing,replacement,camera,effect いずれか
 	label　はタイムラインラベル
 	指定がない場合は以下の基準で命名
 	ダイアログ	指定順に N2 N3 N4 ～ナンバリング
-	タイミング	右端追加の場合のみAB順で次のラベル
+	タイミング	右端追加の場合のみABC順で次のラベル
 			それ以外の場合は現在のタイムラインラベルに数字を加算
 	カメラ/エフェクト	挿入後のタイムラインID　3番タイムラインでの指定時には必ず"04"
 */
@@ -530,9 +530,16 @@ default	:	myName=nas.Zf(insertPoint[0],2).toString();//挿入点のID　二桁�
 //現在のXPSの複製を作り
 //新しいタイムラインを作成して挿入位置に挿入
 //putメソッドでドキュメントを入れ替える
+/*
+	この一連の処理は書き直しが必要？
+	
+*/
+
 	var newXPS= new Xps();
 	newXPS.readIN(XPS.toString());
-	newXPS.insertTL(insertPoint[0],new XpsLayer(myName,myOpt));
+	var currentDuration=newXPS.duration();
+//	newXPS.insertTL(insertPoint[0],new XpsLayer(myName,myOpt));
+	newXPS.insertTL(insertPoint[0],new XpsTimelineTrack(myName,myOpt,newXPS.xpsTracks,currentDuration));
 //	nas_Rmp_Init();//リフレッシュ
 	xUI.put(newXPS);
 	xUI.selectCell(insertPoint.join("_"));

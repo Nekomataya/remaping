@@ -85,9 +85,10 @@ xUI.init    =function(XPS,referenceXps){
 for(var idx=0;idx<(XPS.xpsTracks.length-1);idx++){
     switch(XPS.xpsTracks[idx].option){
 //     case "comment": break;//末尾はコメント予約なので判定をスキップ
-     case "sound": this.dialogCount++;break;
+     case "sound" : ;
      case "dialog": this.dialogCount++;break;
      case "still" : this.stillCount++ ;break;
+     case "effect": ;
      case "sfx"   : this.sfxCount++   ;break;
      case "camera": this.cameraCount++;break;
      case "replacement": ;
@@ -96,8 +97,8 @@ for(var idx=0;idx<(XPS.xpsTracks.length-1);idx++){
     };
 //表示域左側で連続した音声トラックの数を控える（最初に出てきたsound/dialog以外のトラックの位置で判定 ）
     if((XPS.xpsTracks[idx].option!="dialog")&&(! this.dialogSpan)){this.dialogSpan=this.dialogCount};
-//フレームコメントの左側の連続したcamera/sfxトラックの数を控える(最後のcamera/sfx以外のトラックの位置から計算)
-    if((XPS.xpsTracks[idx].option != "camera")&&(XPS.xpsTracks[idx].option!="sfx")){this.cameraSpan=XPS.xpsTracks.length-idx-2};
+//フレームコメントの左側の連続したcamera/sfxトラックの数を控える(最後のcamera/sfx/effect以外のトラックの位置から計算)
+    if((XPS.xpsTracks[idx].option != "camera")&&(XPS.xpsTracks[idx].option!="sfx")&&(XPS.xpsTracks[idx].option!="effect")){this.cameraSpan=XPS.xpsTracks.length-idx-2};
 //カウントする、ただしこのルーチンはこの後プロパティに変換してレイヤ数が変わるたびにプロパティとして変更するように変更されるべき。
 }
 //
@@ -1243,7 +1244,8 @@ if(pageNumber==1){
 
         _BODY+='<div id="memo_prt">';
         if(XPS.memo.toString().length){
-            _BODY+=XPS.memo.toString().replace(/(\r)?\n/g,"<br>");
+//            _BODY+=XPS.memo.toString().replace(/(\r)?\n/g,"<br>");
+            _BODY+=XPS.xpsTracks.noteText.toString().replace(/(\r)?\n/g,"<br>");
         }else{
             _BODY+="<br><br><br><br>";
         };
