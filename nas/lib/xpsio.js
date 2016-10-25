@@ -914,7 +914,13 @@ Xps.prototype.getTC = function (mtd) {
  */
 Xps.prototype.insertTL = function (myId, myTimelines) {
     //引数が配列ではないまたは単独のタイムライントラックオブジェクトである場合配列化する
-    if ((myTimelines instanceof XpsTimelineTrack) || (!(myTimelines instanceof Array))) {
+    /**
+        XpsTimelineTrackが配列ベースのためか、通常の配列を　instanceof XpsTimelineTrack で判定すると trueが戻るので
+        プロパティで判定を行う
+        obj.id　(トラックラベル)があればタイムライントラック
+        typeof　obj.length　== "undefined"ならば 配列以外
+    */
+    if ((myTimelines.id) || (typeof myTimelines.length == "undefined")){
         myTimelines = [myTimelines];
     }
     if ((!myId ) || (myId < 1) || ( myId >= this.xpsTracks.length - 2)) {
@@ -923,13 +929,13 @@ Xps.prototype.insertTL = function (myId, myTimelines) {
     for (var idx = 0; idx < myTimelines.length; idx++) {
         /**
          * 挿入データの検査
-         * 挿入データがタイムライントラック以外なら　挿入データをラベルを持つtimingタイムラインを作成する
+         * 挿入データがタイムライントラック以外なら　挿入データをラベルに持つtimingタイムラインを作成する
          */
-        if (!(myTimelines[idx] instanceof XpsTimelineTrack)) {
+        if (!(myTimelines[idx].id)) {
             if (myTimelines[idx]) {
-                myTimelines[idx] = new XpsTimelineTrack(myTimelines[idx], "timing",this.xpsTracks);
+                myTimelines[idx] = new XpsTimelineTrack(myTimelines[idx], "timing",this.xpsTracks,this.duration());
             } else {
-                myTimelines[idx] = new XpsTimelineTrack(nas.Zf(idx + myId, 2), "timing",this.xpsTracks);
+                myTimelines[idx] = new XpsTimelineTrack(nas.Zf(idx + myId, 2), "timing",this.xpsTracks,this.duration());
             }
         }
         /**

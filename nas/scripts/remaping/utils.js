@@ -550,7 +550,6 @@ default	:	myName=nas.Zf(insertPoint[0],2).toString();//挿入点のID　二桁�
 	挿入するタイムラインはすべて"timing"
 	挿入位置及び挿入数指定は、選択範囲を使用
 	新規作成するタイムラインのラベルは自動作成したものを提示してユーザ編集
-	undoバッファは維持できないのでクリア
 	挿入と削除はXpsオブジェクトのメソッドを呼ぶ形に変更
  */
 insertColumns=function(newNames){
@@ -588,7 +587,7 @@ if(newNames!=null){
 
 	var newXPS=new Xps();
 	newXPS.readIN(XPS.toString());
-	newXPS.insertTL(insertPoint[0],newNames);
+	newXPS.insertTL(insertPoint[0],newNames);//配列渡し
 	xUI.put(newXPS);
 //	nas_Rmp_Init();//リフレッシュ put側で実行される
 
@@ -622,7 +621,7 @@ if(newNames==undefined){
 	var restNames=new Array();//削除後のラベル名格納配列
 //新規ラベルセット
 	for(var Lidx=1; Lidx<XPS.xpsTracks.length - 1 ;Lidx++){
-		if((Lidx<(deletePoint[0]-1)) || (Lidx >(deletePoint[0]+deleteLength-2)) ){restNames.push(XPS.xpsTracks[Lidx].id)};
+		if((Lidx<deletePoint[0]) || (Lidx >(deletePoint[0]+deleteLength-1)) ){restNames.push(XPS.xpsTracks[Lidx].id)};
 	};
 
 //	警告
@@ -647,7 +646,7 @@ if(newNames!=null){
 	xUI.put(newXPS);
 
 	// タイムライン削除後にラベルの指定があれば書きなおし(ダイアログ拡張が考慮されていないでの後で修正)
-	for(var Lidx=1;Lidx<newNames.length;Lidx++){if(XPS.xpsTracks[Lidx].id != newNames[Lidx]){XPS.xpsTracks[Lidx].id=newNames[Lidx]}};
+//	for(var Lidx=0;Lidx<restNames.length;Lidx++){		if(XPS.xpsTracks[Lidx+1].id != restNames[Lidx]){XPS.xpsTracks[Lidx+1].id=restNames[Lidx]}	};
 
 		sync("lbl");
 //	nas_Rmp_Init();//リフレッシュ

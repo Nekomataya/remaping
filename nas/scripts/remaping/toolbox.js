@@ -592,7 +592,8 @@ if(EXword.match(/\#/)){
 	xUI.spin("fwd");
 
 	break;
-case	"single":	break;
+case	"single":	;
+case	"TSXall":	break;
 default:	alert(id);return false;
 	}
 //	alert(id);

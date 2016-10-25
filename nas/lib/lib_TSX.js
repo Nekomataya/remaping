@@ -14,7 +14,7 @@ function init_TSXEx() {
     _body += "	title=\"TSXを書き出し\"";
     _body += ">ＴＳＸ書出</a> ";
     _body += "<input type=checkbox name=TSXall id=TSXall title='全シート同時書出' checked>";
-    _body += "<a href='javascript:void(0);' onclick='chg(\"TSX-all\");'>all</a>";
+    _body += "<a href='javascript:void(0);' onclick='chg(\"TSXall\");'>all</a>";
     _body += "<!--TSX 拡張-->";
 
 //	parent.info.document.getElementById("TSXUi").innerHTML=_body;
@@ -200,18 +200,17 @@ function writeTSX(obj, layerID) {
         var stID = layerID;
         var edID = layerID + 1;
     } else {
-        var stID = 0;
-        var edID = obj.layers.length;
+        var stID = 1;
+        var edID = obj.xpsTracks.length-1;
     }
     /**
      * objはXPSオブジェクトを与えること
      */
-
+//対象タイムラインがtiming系でない場合は、処理をスキップ
     for (column = stID; column < edID; column++) {
-        if (!obj.layers[column].option.match(/(timing|still)/i)) {
+        if (!obj.xpsTracks[column].option.match(/(replacement|timing|still)/i)) {
             continue
         }
-//対象タイムラインがtiming系でない場合は、処理をスキップ
 //for (LID=stID;LID<edID;LID++){}
         result = "";//リザルト初期化
 //	column=LID
@@ -220,7 +219,7 @@ function writeTSX(obj, layerID) {
          * シートボディ
          */
         for (line = 0; line < obj.duration(); line++) {
-            dCk = dataCheck(obj.xpsBody[column + 1][line], obj.layers[column].name, true);
+            dCk = dataCheck(obj.xpsTracks[column][line], obj.xpsTracks[column].id, true);
             switch (dCk) {
                 case    null    :
                     result += "";
@@ -234,7 +233,7 @@ function writeTSX(obj, layerID) {
 //		if((column+1)!=obj.layers.length){result+='\t'};//セパレータ
             result += '--' + (line + 1).toString();//行番号
             if (line == 0) {
-                result += "\t\[ " + obj.layers[column].name + " \]"
+                result += "\t\[ " + obj.xpsTracks[column].id + " \]"
             }
             //レイヤ名
             result += '\r\n';//改行
@@ -257,14 +256,14 @@ function writeTSX(obj, layerID) {
         wiOpt += column * 24;
         wiOpt += ",width=480,height=360,scrollbars=yes,menubar=yes";
 
-        _w = window.open("", obj.layers[column].name, wiOpt);
+        _w = window.open("", obj.xpsTracks[column].id, wiOpt);
 
         _w.document.open("text/plain");
         if (!MSIE && !Firefox)_w.document.write("<html><body><pre>");
         _w.document.write(result);
         if (!MSIE && !Firefox)_w.document.write("</pre></body></html>");
         _w.document.close();
-        _w.window.document.title = obj.layers[column].name.toString();
+        _w.window.document.title = obj.xpsTracks[column].id.toString();
     }
 //	return false;//リンクのアクションを抑制するためにfalseを返す
 }
@@ -416,7 +415,8 @@ function TSX2XPS(datastream) {
     myXps.create_time = SrcData.create_time;
     myXps.update_time = SrcData.update_time;
 
-    myXps.memo = SrcData.memo;
+//    myXps.memo = SrcData.memo;
+    myXps.xpsTracks.noteText = SrcData.memo;
 
     myXps.framerate = SrcData.framerate;
 
@@ -427,9 +427,10 @@ function TSX2XPS(datastream) {
      * 読み取りデータを調べて得たキーメソッドとブランク位置を転記
      */
     for (var lyr = 0; lyr < SrcData.layers.length; lyr++) {
-        myXps.layers[lyr].blmtd = SrcData.layers[lyr].blmtd;
-        myXps.layers[lyr].blpos = SrcData.layers[lyr].blpos;
-        myXps.layers[lyr].lot = SrcData.layers[lyr].lot;
+        var trackID=lyr+1;
+        myXps.xpsTracks[trackID].blmtd = SrcData.layers[lyr].blmtd;
+        myXps.xpsTracks[trackID].blpos = SrcData.layers[lyr].blpos;
+        myXps.xpsTracks[trackID].lot = SrcData.layers[lyr].lot;
     }
 
     /**
@@ -476,19 +477,19 @@ function TSX2XPS(datastream) {
                     RepeatBuf.length = 0;
                     repIdx = 0;
                 }
-                myXps.xpsBody[LayerCount + 1][LayerTime] = body_data;
+                myXps.xpsTrcks[LayerCount + 1][LayerTime] = body_data;
             } else {
                 if (body_data == "") {
                     if (RepeatBuf.length) {
-                        myXps.xpsBody[LayerCount + 1][LayerTime] = RepeatBuf[repIdx % RepeatBuf.length];
+                        myXps.xpsTrcks[LayerCount + 1][LayerTime] = RepeatBuf[repIdx % RepeatBuf.length];
                         repIdx++;
                     } else {
-                        myXps.xpsBody[LayerCount + 1][LayerTime] = body_data;
+                        myXps.xpsTrcks[LayerCount + 1][LayerTime] = body_data;
                     }
                 } else {
                     RepeatBuf = TSX_expdList(body_data);
                     repIdx = 0;
-                    myXps.xpsBody[LayerCount + 1][LayerTime] = RepeatBuf[repIdx];
+                    myXps.xpsTrcks[LayerCount + 1][LayerTime] = RepeatBuf[repIdx];
                     repIdx++;
                 }
 

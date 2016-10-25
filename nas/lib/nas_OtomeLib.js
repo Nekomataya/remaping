@@ -1381,7 +1381,8 @@ CompItem.prototype.applyXPS = function (myXps) {
      * 並び替え自体をアクション化することを検討
      * @type {Array}
      */
-    var stackList = new Array(myXps.layers.length + 2);//ID0/1を処理するために2つ加算
+//    var stackList = new Array(myXps.layers.length + 2);//ID0/1を処理するために2つ加算
+    var stackList = new Array(myXps.xpsTracks.length);//ID0/1を処理するために2つ加算
     for (var idx = 0; idx < stackList.length; idx++) {
         stackList[idx] = []
     }
@@ -1448,7 +1449,7 @@ CompItem.prototype.applyXPS = function (myXps) {
     }
 };
 /**
- * AVLayer.applyTimeline(親コンポ,ｍｙＸｐｓ,リンクID)
+ * AVLayer.applyTimeline(親コンポ,myXps,リンクID)
  * 引数
  * 親コンポ　AE7以降なら不要なのだがAE65での実行のために与える
  * XPSオブジェクト    必ず必要
@@ -1528,18 +1529,19 @@ AVLayer.prototype.applyTimeline = function (parentComp, myXps, linkID) {
      * offset減じてXPSのタイムラインIDを得る
      * @type {number}
      */
-    var myTimelineID = linkID - 2;
-    if (myXps.layers[myTimelineID]) {
+    var myTimelineID = linkID - 1;
+//    if (myXps.layers[myTimelineID]) {}
+    if (myXps.xpsTracks[myTimelineID) {
         /**
          * 乙女専用AEキー生成プロシジャ
          *
          * 将来、データツリー構造が拡張された場合、機能開始時点でツリーの仮構築必須 現在は、決め打ち
          * 内部処理に必要な環境を作成
          */
-        var layerDataArray = myXps.xpsBody[myTimelineID + 1];
-        layerDataArray.label = myXps.layers[myTimelineID].name;
-        var blank_method = myXps.layers[myTimelineID].blmtd;
-        var blank_pos = myXps.layers[myTimelineID].blpos;
+        var layerDataArray = myXps.xpsTracks[myTimelineID];
+        layerDataArray.label = myXps.xpsTracks[myTimelineID].id;
+        var blank_method = myXps.xpsTracks[myTimelineID].blmtd;
+        var blank_pos = myXps.xpsTracks[myTimelineID].blpos;
         if ((app.buildName.split(".")[0] * 1) > 7) {
             blank_method = "file";
             blank_pos = "end"
@@ -1549,8 +1551,8 @@ AVLayer.prototype.applyTimeline = function (parentComp, myXps, linkID) {
          * @type {string}
          */
         var key_method = KEYMethod;
-        var key_max_lot = (isNaN(myXps.layers[myTimelineID].lot)) ?
-            0 : myXps.layers[myTimelineID].lot;
+        var key_max_lot = (isNaN(myXps.xpsTracks[myTimelineID].lot)) ?
+            0 : myXps.xpsTracks[myTimelineID].lot;
 
         /**
          * ブランク処理フラグ
@@ -1564,9 +1566,9 @@ AVLayer.prototype.applyTimeline = function (parentComp, myXps, linkID) {
         if (isNaN(footageFramerate)) {
             footageFramerate = compFramerate
         }
-        var sizeX = myXps.layers[myTimelineID].sizeX;
-        var sizeY = myXps.layers[myTimelineID].sizeY;
-        var aspect = myXps.layers[myTimelineID].aspect;
+        var sizeX = myXps.xpsTracks[myTimelineID].sizeX;
+        var sizeY = myXps.xpsTracks[myTimelineID].sizeY;
+        var aspect = myXps.xpsTracks[myTimelineID].aspect;
 //alert("カラセル方式は :"+blank_method+"\n フーテージのフレームレートは :"+footageFramerate);
 
         /**
@@ -4403,18 +4405,18 @@ nas.otome.mkMapGroups = function () {
     if (myCellFolder) {
         for (var idx in myStore) {
             var myXPS = myStore[idx];
-            for (var idx = 0; idx < myXPS.layers.length; idx++) {
-                var targetComp = myCellFolder.items.getByName(myXPS.layers[idx].name);
+            for (var idx = 1; idx < myXPS.xpsTracks.length-1; idx++) {
+                var targetComp = myCellFolder.items.getByName(myXPS.xpsTracks[idx].id);
                 if ((!targetComp) || (!targetComp instanceof CompItem )) {
                     /**
                      * ターゲットのプリコンポはあるか？ないときは作成
                      */
                     targetComp = myCellFolder.items.addComp(
-                        myXPS.layers[idx].name,
-                        Math.round(myXPS.layers[idx].sizeX * 1),
-                        Math.round(myXPS.layers[idx].sizeY * 1),
-                        myXPS.layers[idx].aspect * 1,
-                        (isNaN(myXPS.layers[idx].lot) ) ? 1 : myXPS.layers[idx].lot / myXPS.framerate,
+                        myXPS.xpsTracks[idx].id,
+                        Math.round(myXPS.xpsTracks[idx].sizeX * 1),
+                        Math.round(myXPS.xpsTracks[idx].sizeY * 1),
+                        myXPS.xpsTracks[idx].aspect * 1,
+                        (isNaN(myXPS.xpsTracks[idx].lot) ) ? 1 : myXPS.xpsTracks[idx].lot / myXPS.framerate,
                         myXPS.framerate * 1
                     );
                     targetComp.duration = 1;
