@@ -77,7 +77,29 @@
  * Xps.newLayers= function(layerCount)://レイヤプロパティトレーラを作成して返す（削除されました）
  * Xps.newTracks= function(TrackCount);//タイムシートの本体オブジェクトを作成して戻す
  */
-
+/**
+Xpsをフルスペックに拡張するための基礎情報
+区間パースに必要な予約後の設定
+dialog
+    ダイアログセクション開ノード
+    ダイアログセクション閉ノード
+sound
+    サウンドセクション開ノード
+    サウンドセクション閉ノード
+timing
+replacement
+    プロパティサイン　原画、原画アタリ（参考）、中間値補間サイン、ブランクサイン
+camera
+camerawork
+    セクション開ノード
+    セクション閉ノード
+    中間値補間サイン
+effect
+sfx
+    セクション開ノード
+    セクション閉ノード
+    中間値補間サイン
+*/
 
 /**
  * @constructor XpsStageオブジェクトコンストラクタ
@@ -123,18 +145,18 @@ XpsStage.prototype.toString=function(){
  * @returns {*}
  */
 function _getMapDefault(myOption) {
-    var myGroup=this.parentXps.xMap.getElementByName(this.id);
+    var myGroup=this.xParent.parentXps.xMap.getElementByName(this.id);
     if(! myGroup){
-        myGroup=xMap.new_xMapElement(
+        myGroup=this.xParent.parentXps.xMap.new_xMapElement(
         this.id,
         this.type,
-        this.prentXps.xMap.currentJob
+        this.xParent.parentXps.xMap.currentJob
         )
     }
     
     if (myOption == undefined) {
         return myGroup.content;
-        myOption = this.type
+        myOption = this.type;
     }
     switch (myOption) {
         case "dialog":
@@ -293,9 +315,9 @@ function XpsTimelineTrack(myLabel, myType, myParent, myLength) {
     this.sections = new XpsTimelineSectionCollection();
 }
 
-XpsTimelineTrack.prototype.getDefaultValue = _getMapDefault;//
 XpsTimelineTrack.prototype = Array.prototype;
 XpsTimelineTrack.prototype.constructor = XpsTimelineTrack;
+XpsTimelineTrack.prototype.getDefaultValue = _getMapDefault;//
 
 /**
  * 削除メソッドをトラックオブジェクトに実装する	
@@ -411,7 +433,51 @@ XpsTimelineTrack.prototype.addSection = function (myValue) {
     return newSection;
 };
  */
+ 
+/**
+    タイムライントラックを走査してセクションの切れ目を探してそこまでのカウントを返す
+    内部処理用関数
+    前後のカウントができるようにする
+    計測開始点からダウンカウントでセクション開始フレームを検索
+    開始フレームからアップカウントでセクション終了フレームを抽出して差分で戻す仕様に
+*/
+XpsTimelineTrack.prototype.countSectionLength=function(startFrame){
+    if (typeof startFrame == "undefined" ) startFrame = 0;
+    var sectionStart = startFrame;
+    for (var myFrame = startFrame;myFrame >= 0 ;myFrame --){
+        switch(this.option){
+        case "camera":
+        case "camerawork":
 
+        case "sfx":
+        case "effect":
+        case "timing":
+        case "replacement":
+        case "dialog":
+        case "sound":
+        }
+    
+    }    
+    var myCount = ((this.option=="dialog")||(this.option=="sound"))? 0:1;//カウント初期値 1
+    for (var myFrame=startFrame+1;myFrame<this.length;myFrame ++){
+        if((this.option=="camera")||(this.option=="camerawork")){
+          if(this[myFrame].match(/^[▽▼]$|^\[[^\]]+\]$/)) break;//開始ノード又は値エントリで加算前ブレーク
+          myCount++;
+          if(this[myFrame].match(/^[△▲]$/)) break;//終了ノードで加算後ブレーク
+        }
+        else if((this.option=="effect")||(this.option=="sfx")){
+          myCount++;
+          if(this[myFrame].match(/^[△▲▽▼]$|^\][^\[]+\[$/)) break;//開始又は終了ノードで加算後ブレーク
+        }
+        else if((this.option=="dialog")||(this.option=="sound")){
+          if(this[myFrame].match(/[-_─━~]{2,}?/)) break;//開始又は終了ノードで加算前ブレーク
+          myCount++;
+        }
+    }
+    return myCount;
+}
+//test
+// XPS.xpsTracks[5].countSectionLength(1); 
 
 /**
  * @constructor XpsTimelineSectionCollection
@@ -433,8 +499,8 @@ XpsTimelineSectionCollection.prototype = Array.prototype;
  セクション追加の際の引数はタイムラインに必要な値オブジェクト
  値オブジェクトは、直接AnimationValueを持つオブジェクト又はxMapElementとして与える
  値のみが与えられた場合はエレメントなしで登録する。
- 中間値補間セクション    を初期化する場合 キーワード"interporation"
- 中間値補間サブセクションを初期化する場合 ValueInterporator Object を myValueとして与える。
+ 中間値補間セクション    を初期化する場合 キーワード"interpolation"を引数として与える
+ 中間値補間サブセクションを初期化する場合 ValueInterpolator Object を myValueとして与える
  エレメント新規作成が必要な場合はあらかじめ事前にエレメント新規作成を行って引数とする
  * @param myValue
  * @returns {XpsTimelineSection}
@@ -446,13 +512,13 @@ XpsTimelineSectionCollection.prototype.addSection = function (myValue) {
         newSection = new XpsTimelineSection(this.parent, 0 );
             newSection.mapElement = myValue;
             newSection.value = this.mapElement.content;
-    } else if(myValue == "iterporation"){
+    } else if(myValue == "interpolation"){
     //プライマリ中間値補間セクション
         newSection = new XpsTimelineSection(this.parent, 0, true);
         newSection.subSections=new XpsTimelineSectionCollection()
             newSection.mapElement;
-            newSection.value;   
-    } else if(myValue instanceof ValueInterporator){
+            newSection.value=null;//new nas.ValueInterpolator();   
+    } else if(myValue instanceof nas.ValueInterpolator){
     //中間値補間サブセクション
         newSection = new XpsTimelineSection(this.parent, 0 );
         newSection.mapElement;//エレメントは登録されない
@@ -463,7 +529,6 @@ XpsTimelineSectionCollection.prototype.addSection = function (myValue) {
         newSection.mapElement;//エレメントは登録されない
         newSection.value = myValue;
     }
-    
     this.push(newSection);
     return newSection;
 };
@@ -531,10 +596,10 @@ function _getSectionStartOffset() {
 XpsTimelineSection.valueプロパティはnas.xMapElement
  */
 
-function ValueInerpolator(myParent){
+nas.ValueInterpolator =function ValueInerpolator(myParent){
     this.parent=myParent;//interpSection
     this.valueOf=function(myProp){
-        var indexCount=this.parent.parent.sections.length;
+        var indexCount=parseInt(this.parent.length);
         var indexOffset=this.parent.id()
         var startValue=this.parent.parent.sections[currentIndex-1].value;
         var frameCount=this.parent.parent.duration;
@@ -547,7 +612,7 @@ function ValueInerpolator(myParent){
  * タイムラインセクションは使用の都度初期化される一時オブジェクト
  * セクションコレクションにトラックごとに変更フラグを設けて、変更がない限りは再ビルドを避ける
  * セクションオブジェクトはparentプロパティにコレクションを含むオブジェクトを持つ XpsTimelineTrack || XpsTimelineSection
- * 
+ * (直接メンバーとなるコレクションではなくコレクションを保持する上位オブジェクトで)
  *
  *  parentがXpsTimelineTrackの場合は、基礎セクション(有値セクション及び中間値補間セクション)となる
  *    　有値セクションは、セクションのvalueとしてnas.xMapElementのcontentプロパティを指し かつsectionsプロパティがundefinedとなる。
@@ -581,7 +646,7 @@ XpsTimelineSection.prototype.startOffset = _getSectionStartOffset;
     動画中割及びジオメトリ、コンポジットタイムラインの中間値を生成するオブジェクト
     区間内インデックスをもち
     親タイムライン上の先行するセクションの値と後方セクションの間の値を生成して返す
-    valueプロパティは　ValueInterpolator Object
+    valueプロパティは　nas.ValueInterpolator Object
 * parentにはセクションオブジェクトを与えて初期化する
    サブセクションはセクションオブジェクトを兼用？？　＞＞　兼用する
     
@@ -731,8 +796,8 @@ Xps.prototype.init = function (Tracks, Length) {
      * Xps標準のプロパティ設定
      * @type {string}
      */
-    this.xMap;//xMapの参照
-    this.mapfile = "";
+    this.xMap =new xMap();//参照用xMapを初期化
+//    if (this.mapfile);//Xps初期化手順に注意　初期化時にxMapを与えるのが正道
     this.opus = myOpus;
     this.title = myTitle;
     this.subtitle = mySubTitle;
@@ -2109,3 +2174,64 @@ XpsReplacement = function (name) {
  * return preSpc+string+postSpc;
  * }
  */
+/**
+ 以下は、別ソースでセットアップしたメソッドを導入するテストコード
+*/
+
+XpsTimelineTrack.prototype.parseSoundTrack=_parseSoundTrack;
+//XpsTimelineTrack.prototype.parseDialogTrack=_parseDialogTrack;
+
+//XpsTimelineTrack.prototype.parseKeyAnimationTrack=_parsekeyAnimationTrack;
+//XpsTimelineTrack.prototype.parseAnimationTrack=_parseAnimationTrack;
+XpsTimelineTrack.prototype.parseReplacementTrack=_parseReplacementTrack;
+
+XpsTimelineTrack.prototype.parseCameraworkTrack=_parseCameraworkTrack;
+
+XpsTimelineTrack.prototype.parseCompositeTrack=_parseCompositeTrack;//コンポジット
+
+//XpsTimelineTrack.prototype.parseTrack=_parseTrack;
+//XpsTimelineTrack.prototype.parseTrack=_parseTrack;
+/**
+
+    タイムラインをパースしてセクション及びその値を求めるxUIのメソッド
+    タイムライン種別ごとにパースするオブジェクトが異なるので
+    各オブジェクトに特化したパーサが必要
+    別々のパーサを作ってセクションパーサから呼び出して使用する
+    Sound
+        parseSoundTrack
+        *parseDialogTrack
+    Replacement
+        parseKyeDrawind(補間区間あり)
+        parseAnimationCell(確定タイムライン)
+    Geometry
+        parseCameraworkTrack
+    Composite
+        parseEffectTrack
+    各々のパーサは、データ配列を入力としてセクションコレクションを返す
+    各コレクションの要素はタイムラインセクションオブジェクト
+    値はタイムライン種別ごとに異なるがセクション自体は共通オブジェクトとなる
+*/
+XpsTimelineTrack.prototype.parseTimelineTrack = function(){
+    switch(this.option){
+        case "dialog":;
+//            return this.parseDialogTrack();
+//        break;
+        case "sound":;
+            return this.parseSoundTrack();
+        break;
+        case "cell":;
+        case "timing":;
+        case "replacement":;
+            return this.parseReplacementTrack();
+        break;
+        case "camerawork":;
+        case "camera":;
+            return this.parseCameraworkTrack();
+        break;
+        case "effect":;
+        case "sfx":;
+        case "composit":;
+            return this.parseCompositeTrack();
+        break;
+    }
+}

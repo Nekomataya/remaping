@@ -707,29 +707,121 @@ xUI.setReferenceXPS=function(myXps){
     }
 //////
 
-/*    テーブル表示用文字列置換
+/**
+    テーブル表示用文字列置換
         xUI.trTd(Str);
-    タグ等htmlで表示不能な文字を置き換え
+        xUI.trTd(HTMLTableCellElement)
+    タグ等htmlで表示不能な文字を置き換える
+    
     戻り値は変換後の文字列
+    文字列が与えられた場合は従来互換動作
+    テーブルセルがエレメントで与えられた場合は、セルの　innerHTMLを文字列として置換して、Graphicパーツ置換を同時に行う
 */
-xUI.trTd=function(Str){
-if(Str){
+xUI.trTd=function(){
+if(typeof arguments[0] =="undefined"){return false;}
+var target=arguments[0];
+if(target instanceof HTMLTableCellElement){
+    var tgtID=target.id.split("_").reverse();
+    var myXps=(tgtID.length==2)? this.XPS:this.referenceXPS;
+    var myStr = myXps.xpsTracks[tgtID[1]][tgtID[0]];
+/**
+    判定時にトラック種別を考慮する
+    ダイアログ、サウンド
+    リプレースメント
+    カメラ
+    エフェクト
+    それぞれに置き換え対象シンボルが異なるので注意
+    trTdの引数をidにして置き換えまで処理することを検討?
+20161028
+*/
+    var currentTrackOption=myXps.xpsTracks[tgtID[1]].option;
 
-//alert(Str+" : "+pos);
-    Str=Str.toString().replace( />/ig, "&gt;").replace(/</ig,"&lt;");//<>
-//    if(this.Select[0]>0 && this.Select[0]<(this.SheetWidth-1)) Str=Str.toString().replace(/[\|｜]/ig,'<span class=v_bar><br></span>');
-//    if(this.Select[0]>0 && this.Select[0]<(this.SheetWidth-1)) Str=Str.toString().replace(/[\|｜]/ig,'<div class=v_bar style="width:50%"><br></div>');
-    if(this.Select[0]>0 && this.Select[0]<(this.SheetWidth-1)) Str=Str.toString().replace(/[\|｜]/ig,'<img src="./images/ui/verticalline.png" class=v_wave >');
-//    if(this.Select[0]>0 && this.Select[0]<(this.SheetWidth-1)) Str=Str.toString().replace(/[\|｜]/ig,'<svg width="10" height="11" class=v_wave ><line x1="5" y1="0" x2="5" y2="14" stroke="blue" stroke-width="1" stroke-dasharray="2 4"/></svg>'  );
-//if(this.Select[0]>0 && this.Select[0]<(this.SheetWidth-1)) Str=Str.toString().replace(/[\|｜]/ig,'<svg width=10px height=14px class=v_wave><path stroke="blue" stroke-width="1" stroke-dasharray="2 3" fill="none" d="M 0,0 C 0,7 10,0 10,7 10,14 0,7 0,14" /> </path> </svg>' );
-    //    if(Str.match(/^([\|;])$/)) return "<span class=v_bar>RegExp.$0</span>";//セリフ用には使えないので注意
-    if(Str.match(/^[:：]$/)) return '<img src="./images/ui/waveline.png" class=v_wave >';
-//    if(Str.match(/^[:：]$/)) return '<svg width=10px height=14px class=v_wave><path stroke="blue" stroke-width="1" stroke-dasharray="2 3" fill="none" d="M 0,0 C 0,7 10,0 10,7 10,14 0,7 0,14" /> </path> </svg>' ;
-//    if(Str.match(/^[:：]$/)) return '<sapn class=v_wave > </span>';
-    if(Str.match(/[-_─━~]{2,}?/)) return "<hr>";
-return Str;
+//    xUI.Cgl.remove(target.id);//古いグラフパーツがあれば削除
+// グラフパーツの削除はセルエントリの消去時に行わないと画面が乱れるので注意
+    switch(currentTrackOption){
+        case "dialog":;
+            if (myStr.match(/[-_─━~]{2,}?/)){
+                xUI.Cgl.draw(target.id,"sound-section-open");
+                myStr="<br>";
+            };//あとでセクションパース版と置き換え
+        break;
+        case "sound":;
+break;
+        case "timing":;
+        case "replacement":;
+            if (myStr.match(/[\|｜]/)){
+                xUI.Cgl.draw(target.id,"line");
+                myStr="<br>";                
+            }
+            else if (myStr.match(/[:：]/)){
+                xUI.Cgl.draw(target.id,"wave");
+                myStr="<br>";                
+            }
+            else if (myStr.match(/\(([^\)]+)\)/)){
+                xUI.Cgl.draw(target.id,"circle");
+                myStr=RegExp.$1;
+           }
+           else if (myStr.match(/<([^>]+)>/)){
+                xUI.Cgl.draw(target.id,"triangle");
+                myStr=RegExp.$1;
+            }
+break;
+        case "camera":;
+        case "camerawork":;
+            if (myStr.match(/^[\|｜]$/)){
+                xUI.Cgl.draw(target.id,"line");
+                myStr="<br>";                
+            }
+            else if (myStr.match(/^[▼▽]$/)){
+                xUI.Cgl.draw(target.id,"section-open");
+                myStr="<br>";                
+           }
+            else if (myStr.match(/^[▲△]$/)){
+                xUI.Cgl.draw(target.id,"section-close");
+                myStr="<br>";                
+           }
+        
+break;
+        case "effect":;
+        case "sfx":;
+        //バルクで描画する場合は消去手順を考えないとあとで消えるのでなんか考える
+        //冒頭でなく末尾で描くか　又は　逆順処理が順当？
+            if (myStr.match(/^[\|｜]$/)){
+                myStr="<br>";                
+            }
+            else if (myStr.match(/^▼$/)){
+                if(myXps.xpsTracks[tgtID[1]][parseInt(tgtID[0])+1]=="|"){
+                xUI.Cgl.sectionDraw(target.id,"fo",myXps.xpsTracks[tgtID[1]].countSectionLength(parseInt(tgtID[0])));
+                }              
+                myStr="<br>";                
+           }
+            else if (myStr.match(/^▲$/)){
+                //この終端判定はあくまで仮判定なので注意　生き残らないように
+                if(myXps.xpsTracks[tgtID[1]][parseInt(tgtID[0])-1]=="|"){
+                var sectionCount = myXps.xpsTracks[tgtID[1]].countSectionLength(parseInt(tgtID[0]));
+                var startID = [tgtID[1],parseInt(tgtID[0])-sectionCount+1].join("_");
+                console.log([startID,"fi",sectionCount].join());
+                xUI.Cgl.sectionDraw(startID,"fi",sectionCount);
+                }
+                myStr="<br>";                
+           }
+            else if (myStr.match(/^\]([^\]]+)\[$/)){
+                if(myXps.xpsTracks[tgtID[1]][parseInt(tgtID[0])+1]=="|"){
+                xUI.Cgl.sectionDraw(target.id,"transition",myXps.xpsTracks[tgtID[1]].countSectionLength(parseInt(tgtID[0])));
+                }   
+                myStr="<br>";
+           }
+break;
+    }
+//    console.log(target.id+":"+currentTrackOption+":"+myXps.xpsTracks[tgtID[1]][tgtID[0]]+":"+myStr);
+//    target.innerHTML=myStr;
+    return myStr;
 }else{
-return "";
+    target=target.toString().replace( />/ig, "&gt;").replace(/</ig,"&lt;");//<>
+    if(this.Select[0]>0 && this.Select[0]<(this.SheetWidth-1)) target=target.toString().replace(/[\|｜]/ig,'|<br>');
+    if(target.match(/^[:：]$/)) return ':<br>';//波線
+    if(target.match(/[-_─━~]{2,}?/)) return "<hr>";//
+return target;
 }
 };
 //
@@ -1119,7 +1211,7 @@ xUI.spinHi = function(Method)
 {
 //選択ポイントのハイライトおよびスピン範囲のハイライト
 //    必ず
-//if(! document.getElementById(this.getid("Select"))) return;
+if(! document.getElementById(this.getid("Select"))){console.log(this.getid("Select")) ;return;};
 if(Method == "clear") {
     document.getElementById(this.getid("Select")).style.backgroundColor=this.footstampColor;
 }else{
@@ -1757,6 +1849,7 @@ BODY_ +='>';
     this.Select=[r,current_frame];
     if (this.referenceXPS.xpsTracks[r][current_frame]!=""){
         BODY_ += this.trTd(this.referenceXPS.xpsTracks[r][current_frame]);
+//        BODY_ += this.trTd(document.getElementById(["r",[r],[current_frame]].join("_")));
     }else{
         BODY_+='<br>';
     };
@@ -2364,6 +2457,9 @@ xUI.getRange    =function(Range)
     戻り値から書き換えに成功した範囲と書き換え前後のデータが取得できるのでその戻値を利用する
     このメソッド内では、選択範囲方向の評価を行わないためフォーカス／セレクションは事前・事後に調整を要する場合がある
     選択範囲によるクリップはオブジェクトメソッドに渡す前に行う必要あり
+    
+    グラフィックレイヤー拡張によりシート上の画像パーツを更新する操作を追加
+    Xps更新後に、xUI.syncSheetCell()メソッドで必要範囲を更新のこと
 */
 xUI.put    =function(datastream,direction){
   if(typeof datastream == "undefined") datastream="";
@@ -2646,15 +2742,16 @@ if(dbg){
 // 処理終了アドレスを配列で返す(使わなくなったような気がする)
 return lastAddress;
 };
-/*xUI.syncSheetCell(startAddress,endAddress)
+/*xUI.syncSheetCell(startAddress,endAddress,isReference)
     指定されたレンジのシートセルの内容を更新
     指定がない場合は、シート全て
     アドレス一致の場合は、一コマのみ
 */
-xUI.syncSheetCell=function(startAddress,endAddress){
+xUI.syncSheetCell=function(startAddress,endAddress,isReference){
+    var targetXps=(isReference)? this.referenceXPS:this.XPS;
     if((! startAddress)||(! endAddress)){
         startAddress=[0,0];
-        endAddress  =[XPS.xpsTracks.length,XPS.xpsTracks[0].length];
+        endAddress  =[targetXps.xpsTracks.length,targetXps.xpsTracks[0].length];
     }
     var TrackStartAddress =startAddress[0];
     var TrackEndAddress   =  endAddress[0];
@@ -2663,13 +2760,19 @@ xUI.syncSheetCell=function(startAddress,endAddress){
 //設定値に従って、表示を更新（別メソッドにしたい）
     for (r=TrackStartAddress;r<=TrackEndAddress;r++){
         for (f=FrameStartAddress;f<=FrameEndAddress;f++){
-if((r>=0)&&(r<XPS.xpsTracks.length)&&(f>=0)&&(f<XPS.xpsTracks[r].length)){
+if((r>=0)&&(r<targetXps.xpsTracks.length)&&(f>=0)&&(f<targetXps.xpsTracks.duration)){
+//シートデータを判別してGraphicシンボル置き換えを判定（単純置き換え）
 //        配置データが未設定ならば<br>に置き換え
-            var td=(XPS.xpsTracks[r][f]=='')?"<br>" : this.trTd(XPS.xpsTracks[r][f]) ;
-//        シートテーブル必要があれば書き換え
-            if (document.getElementById(r+"_"+f).innerHTML!= td){
-                document.getElementById(r+"_"+f).innerHTML=td;
-            };
+//            var td=(XPS.xpsTracks[r][f]=='')?"<br>" : this.trTd(XPS.xpsTracks[r][f]) ;
+            var sheetCell=(isReference)? document.getElementById(["r",r,f].join("_")):document.getElementById([r,f].join("_"));
+            if(sheetCell instanceof HTMLTableCellElement){
+                if(document.getElementById(sheetCell.id)){xUI.Cgl.remove(sheetCell.id);}
+                var td=(targetXps.xpsTracks[r][f]=='')? "<br>" : this.trTd(sheetCell) ;
+//        シートテーブルは必要があれば書き換え
+                if (sheetCell.innerHTML!= td){ sheetCell.innerHTML=td;}
+            }
+//本体シート処理の際のみフットスタンプ更新
+  if(! isReference){
 //空白以外のデータならフットスタンプ処理
     if (XPS.xpsTracks[r][f]!=''){
             lastAddress=[r,f] ;        //最終入力操作アドレス控え
@@ -2685,6 +2788,7 @@ if((r>=0)&&(r<XPS.xpsTracks.length)&&(f>=0)&&(f<XPS.xpsTracks[r].length)){
         if (document.getElementById(r+"_"+f).style.backgroundColor!=this.sheetbaseColor && this.footMark)
         document.getElementById(r+"_"+f).style.backgroundColor=this.sheetbaseColor; //踏み消す
     };
+  }
 }
         };
     };
@@ -3323,7 +3427,186 @@ onscrollの設定位置を一考
 }
    };
 //===========================================
+/**
+    画像パーツを描画するローレベルファンクション
+*/
+xUI.Cgl = new Object();
 
+xUI.Cgl.body={};
+
+xUI.Cgl.show=function(myId){
+	if(! this.body[myId]){	this.body[myId] = document.getElementById("cgl"+myId)	;}
+	if(this.body[myId]){$("#cgl"+myId).show();}else{delete this.body[myId];}
+}
+xUI.Cgl.hide=function(myId){
+	if(! this.body[myId]){	this.body[myId] = document.getElementById("cgl"+myId)	;}
+	if(this.body[myId]){$("#cgl"+myId).hide();}else{delete this.body[myId];}
+}
+xUI.Cgl.remove=function(myId){
+	if(! this.body[myId]){	this.body[myId] = document.getElementById("cgl"+myId)	;}
+	if(this.body[myId]){$("#cgl"+myId).remove();delete this.body[myId];}
+}
+/**
+	描画コマンド
+
+*/
+xUI.Cgl.draw=function addGraphElement(myId,myForm) {
+		if(! this.body[myId]){	this.body[myId] = document.getElementById("cgl"+myId)	;}
+		if( this.body[myId] ){
+			$("#cgl"+myId).remove();delete this.body[myId];
+		//二重描画防止の為すでにエレメントがあればクリアして描画
+		}
+	    var objTarget = document.getElementById(myId);//ターゲットシートセルを取得 
+		if((xUI.viewMode=="Compact")&&((myId.indexOf("r")==0)||(myId.split("_")[0]==0))){
+		    var targetParent = document.getElementById("UIheaderScrollV");//親は、表示モードで変更されるので注意
+		}else{
+		    var targetParent = document.getElementById("sheet_body");//親は、表示モードで変更されるので注意
+		}
+	    var targetRect=objTarget.getBoundingClientRect();
+	    var parentRect=targetParent.getBoundingClientRect();
+var myTop=targetRect.top-parentRect.top;
+var myLeft=targetRect.left-parentRect.left;
+
+	    var element = document.createElement('canvas'); 
+	    element.id = "cgl" + myId; 
+element.style.position="absolute";
+element.style.top=myTop+"px";
+element.style.left=myLeft+"px";
+
+	    element.width=targetRect.width;
+	    element.height=targetRect.height;
+	    var ctx = element.getContext("2d");
+switch(myForm){
+case "line":	    //vertical-line
+		var lineWidth  =3;
+		ctx.strokeStyle="rgb(0,0,0)";
+		ctx.strokeWidth=lineWidth;
+		ctx.moveTo(element.width*0.5, 0);
+		ctx.lineTo(element.width*0.5, element.height);
+	    ctx.stroke();
+//		ctx.moveTo(element.width*0.5, 0);
+//	    ctx.fillStyle="rgba(0,0,0,1)";
+//	    ctx.fillRect(Math.floor(targetRect.width*0.5 - 1),0, 2, targetRect.height);
+break;
+case "wave":;			//wave-line	 
+		var waveSpan  =5;		var lineWidth  =3;
+		ctx.strokeStyle="rgb(0,0,0)";
+		ctx.strokeWidth=lineWidth;
+		ctx.moveTo(element.width*0.5, 0);
+		if(parseInt(myId.split("_").reverse()[0]) % 2){	
+	ctx.bezierCurveTo(element.width*0.5-waveSpan, element.height*0.5,element.width*0.5-waveSpan, element.height*0.5,  element.width*0.5, element.height);
+		}else{
+	ctx.bezierCurveTo(element.width*0.5+waveSpan, element.height*0.5,element.width*0.5+waveSpan, element.height*0.5,  element.width*0.5, element.height);
+		}
+	    ctx.stroke();
+break;
+case "fi":;		//fade-in
+	var startValue = arguments[2]; var endValue= arguments[3];
+	    ctx.fillStyle="rgba(0,0,0,1)";
+		ctx.moveTo((1-startValue)*element.width*0.5, 0);
+		ctx.lineTo(element.width-(1-startValue)*element.width*0.5,0);
+		ctx.lineTo(element.width-(1-endValue)*element.width*0.5,element.height);
+		ctx.lineTo((1-endValue)*element.width*0.5,element.height);
+		ctx.fill();
+break;
+case "fo":;		//fade-out
+	var startValue = arguments[2]; var endValue= arguments[3];
+	    ctx.fillStyle="rgba(0,0,0,1)";
+		ctx.moveTo(startValue*element.width*0.5, 0);
+		ctx.lineTo(element.width-startValue*element.width*0.5,0);
+		ctx.lineTo(element.width-endValue*element.width*0.5,element.height);
+		ctx.lineTo(endValue*element.width*0.5,element.height);
+		ctx.fill();
+break;
+case "transition":;		//transition
+	var startValue = arguments[2]; var endValue= arguments[3];
+	    ctx.fillStyle="rgba(0,0,0,1)";
+		ctx.moveTo(startValue*element.width, 0);//
+		ctx.lineTo(element.width-startValue*element.width,0);
+		ctx.lineTo(element.width-endValue*element.width,element.height);
+		ctx.lineTo(endValue*element.width,element.height);
+		ctx.fill();
+break;
+case "circle":;		//circle
+		var phi  = .9;		var lineWidth  =3;
+		ctx.strokeStyle="rgb(0,0,0)";
+		ctx.strokeWidth=lineWidth;
+		ctx.arc(element.width * 0.5, element.height * 0.5, element.height*phi*0.5, 0, Math.PI*2, true);
+//context . arc(x, y, radius, startAngle, endAngle, anticlockwise)		ctx.lineTo(element.width*0.5, element.height);
+	    ctx.stroke();
+break;
+case "triangle":;		//triangle
+		var lineWidth  =4;
+		ctx.strokeStyle="rgb(0,0,0)";
+		ctx.strokeWidth=lineWidth;
+		ctx.moveTo(element.width*0.5, -1);
+		ctx.lineTo(element.width*0.5 + (element.height-2)/Math.sqrt(3), element.height-2);
+		ctx.lineTo(element.width*0.5 - (element.height-2)/Math.sqrt(3), element.height-2);
+		ctx.closePath();
+	    ctx.stroke();
+break;
+case "section-open":;		//section-open
+	var formFill = arguments[2];
+	    ctx.fillStyle="rgba(0,0,0,1)";
+		ctx.moveTo(element.width * 0.5 - element.height/Math.sqrt(3), 0);
+		ctx.lineTo(element.width * 0.5 + element.height/Math.sqrt(3), 0);
+		ctx.lineTo(element.width * 0.5 , element.height);
+		ctx.closePath();
+		if(formFill) {ctx.fill();}else{ctx.stroke();}
+break;
+case "section-close":;		//section-close
+	var formFill = arguments[2];
+	    ctx.fillStyle="rgba(0,0,0,1)";
+		ctx.moveTo(element.width * 0.5, 0);
+		ctx.lineTo(element.width * 0.5 + element.height/Math.sqrt(3), element.height);
+		ctx.lineTo(element.width * 0.5 - element.height/Math.sqrt(3), element.height);
+		ctx.closePath();
+		if(formFill) {ctx.fill();}else{ctx.stroke();}
+break;
+case "sound-section-open":;		//section-open
+	var lineWidth = 3;
+	    ctx.fillStyle="rgba(0,0,0,1)";
+		ctx.moveTo(0, element.height-lineWidth);
+		ctx.lineTo(element.width, element.height-lineWidth);
+		ctx.stroke();
+break;
+case "sound-section-close":;		//section-close
+	var lineWidth = 3;
+	    ctx.fillStyle="rgba(0,0,0,1)";
+		ctx.moveTo(0, lineWidth);
+		ctx.lineTo(element.width, lineWidth);
+		ctx.stroke();
+break;
+case "area-fill":;	//fill sheet cell
+		ctx.moveTo(0, 0);
+	    ctx.fillStyle="rgba(0,0,0,1)";
+	    ctx.fillRect(0, 0, targetRect.width, targetRect.height);
+break;
+}
+	    element=targetParent.appendChild(element); 
+	    element.style.zIndex=1;//シートに合わせて設定
+		element.style.pointerEvents='none';//イベントは全キャンセル
+		element.style.brendMode="multiply";//乗算
+		element.style.opacity="0.3";//30%
+this.body[myId]=element;
+this.body[myId].formProp=myForm;
+
+return element;
+}
+/**
+    セクションを一括描画するラッパー関数
+    この関数を使用する場合は直接Gcl.drawを呼ばないようにすること。
+*/
+xUI.Cgl.sectionDraw = function(myId,myForm,myDuration){
+    var Idx=myId.split("_").reverse();
+    for (var offset = 0;offset< myDuration;offset ++){
+        if(Idx.length==2){
+          this.draw(       [Idx[1],parseInt(Idx[0])+offset].join("_"),myForm,offset / myDuration, (offset+1) / myDuration);
+        }else{
+          this.draw([Idx[2],Idx[1],parseInt(Idx[0])+offset].join("_"),myForm,offset / myDuration, (offset+1) / myDuration);
+        }
+    }
+}
 
 //オブジェクト戻す
 return xUI;
@@ -3711,7 +3994,12 @@ document.getElementById("UIheader").style.display="none";
 //シートボディを締める
     document.getElementById("sheet_body").innerHTML=SheetBody+"<div class=\"screenSpace\"></div>";
 //"<div class=\"screenSpace\"></div>"+;
-
+// 初回ページレンダリングでグラフィックパーツを配置
+// setTimeoutで無名関数として実行
+window.setTimeout(function(){
+    xUI.syncSheetCell(0,0,false);//シートグラフィック置換
+    xUI.syncSheetCell(0,0,true);//referenceシートグラフィック置換
+},0);
 //書き出したら、セレクト関連をハイライト
 //
 //    XPS.selectionHi("hilite")

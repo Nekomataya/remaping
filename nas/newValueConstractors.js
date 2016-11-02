@@ -11,8 +11,16 @@
  *  置きかえタイムラインの値
  *  セル
  contentTextはｘMapの記述から前置のグループ情報・エレメント名及び空白文字を取り除いたもの
+
+    第一型式
+elementID   
+
+
  データ型式は 第一、第二型式を自動判別
  レコードデリミタは"\n"
+
+
+
 
  第二型式（プロパティ名＝値）型式の場合はそのまま使用
 
@@ -109,23 +117,23 @@ nas.AnimationReplacement.prototype.interpolate= function(endValue,indexCount,ind
 
 　*/
 _parseReplacementTrack=function(){
-    var blankRegex  = new RegExp("^(" + this.id + ")?\[?[\-_\]?[(\<]?\s?[ｘＸxX×〆0０]{1}\s?[\)\>]?\]?$");//システム変数として分離予定
-    var interpRegex = new RegExp("^[\-\+=○●*・a-zア-ン]$|^\[[^\]]+\]$");//同上
+    var blankRegex  = new RegExp("^(" + this.id + ")?\[?[\-_\]?[(\<]?\s?[ｘＸxX×〆0０]{1}\s?[\)\>]?\]?$");//カラ判定　システム変数として分離予定
+    var interpRegex = new RegExp("^[\-\+=○●*・a-zア-ン]$|^\[[^\]]+\]$");//中間値補間（動画記号）サイン　同上
     //自分自身(トラック)を親として新規セクションコレクションを作成
-    var myCollectionBlank = new XpsTimelineSectionCollection(this);
-    var myCollection      = new XpsTimelineSectionCollection(this);
+    var myCollectionBlank = new XpsTimelineSectionCollection(this);//ブランクベースコレクション
+    var myCollection      = new XpsTimelineSectionCollection(this);//ベースコレクション
     //継続時間０で値未定初期セクションを作成
     //値を持たないセクションをブランク値のオブジェクトとするか？
     var currentSection=myCollection.addSection(null);
     var currentSectionBlank=myCollectionBlank.addSection(null);
     var currentSubSection=null;
-    var currentValue=this.parent.getDefaultValue();
+    var currentValue=this.getDefaultValue();
     var isInterp = false;
     var isBlank  = ((currentValue != "blank")&&(currentValue))? false:true ;//第一フレームのブランク状態
 /**
     タイムライントラックのデフォルト値は、以下の手続きで取得
     タイムラインラベルが指定するグループがあらかじめ存在する場合は、そのグループオブジェクトが保持する値
-    存在しない場合は、新規にグループを作成する。その際にトラックの種別ごとのValueオブジェクトを初期値して登録するのでその値を使用
+    存在しない場合は、新規にグループを作成する。その際にトラックの種別ごとのValueオブジェクトを初期値として登録するのでその値を使用
     XpsTimelineTrack.getDefeultValue()側で調整
     Replacementの場合、基本ブランクだが必ずしもブランクとは限らないので要注意
     トラック上で明示的なブランクが指定された場合は、値にfalse/null/"blank"を与える。
@@ -150,7 +158,7 @@ _parseReplacementTrack=function(){
         */
         var blankDetect   = (currentCell[0].match(blankRegex))?  true:false;
         var interpDetect  = (currentCell[0].match(interpRegex))? true:false;//括弧つきの補間サインも同時検出へ
-        var detectedValue = this.map.getElementByName(currentCell);
+        var detectedValue = this.xParent.parentXps.xMap.getElementByName(currentCell);
         var valueDetect   = (detectedValue)? true:false;
         //ブランク処理判定
         if(blankDetect){
@@ -168,10 +176,10 @@ _parseReplacementTrack=function(){
                 //中間値補間区間開始　カレントセクションを切り替え サブセクションを登録
                 isInterp = true;
                 currentSection=myCollection.addSection("interopration");
-                currentSection.subSections.addSection(new ValueInterporator());
+                currentSection.subSections.addSection(new nas.ValueInterpolator());
                 //新規中間値補間セクションを立てる 以降は、モードを抜けるまでカレント固定
               }else{
-                currentSection.subSections.addSection(new ValueInterporator());
+                currentSection.subSections.addSection(new nas.ValueInterpolator());
                 //中間値補間モード内ではサブセクションを登録
               }
               continue;
@@ -195,20 +203,14 @@ _parseReplacementTrack=function(){
             }
             continue;
         }
-//判定を全て抜けたデータは本文又はラベル　ラベルは上書きで更新
-        if(currentSection.value){
-            if(this[fix]=="|") this[fix]="ー";
-            currentSound.bodyText+=this[fix];
-        }else{
-            currentSound.name=this[fix];
-        }
     }
-    this.sections=myCollection;
-    return myCollection.length;
+    this.sections       = myCollection;
+    this.sectionsBlank  = myCollectionBlank;
+    console.log("sections-length:"+myCollection.length +":"+myCollectionBlank.length)
+    return this.sections;//ブランク情報の返し方を考えたほうが良いかも
 }
 
 /*test
-MAP.new
 
 
 */
@@ -225,12 +227,12 @@ nas.AnimationGeometry =function(){
 //    this.formGeometry;//nas.AnimationFieldオブジェクト
     this.size=new nas.Size();//要素のサイズ
     this.position=new nas.Position();//要素を配置する位置
-    this.offset=new nas.GeometoryOffset();//要素の原点オフセット
+    this.offset=new nas.GeometryOffset();//要素の原点オフセット
     this.x = this.size.x;
     this.y = this.size.y;
     this.z = this.size.z;
-    this.t = nas.AnimationTimeing();
-    this.c = nas.AnimationCurve();
+    this.t = new nas.TimingCurve();
+    this.c = new nas.Curve();
     this.comment="";//コメント文字列
 }
 nas.AnimationGeometry.prototype.constractor=nas.AnimationField.constractor
@@ -240,6 +242,163 @@ nas.AnimationGeometry.prototype.interpolate= function(endValue,indexCount,indexO
     　 又はブランク状態のオブジェクトを返す return new nas.newAnimationReplacement("blank");
     */
 }
+/**
+    カメラワークトラックをパースしてセクションコレクションを返す
+    option:(camerawork|camera)
+    セクションの状態は
+    値：
+        あり>有値セクション
+            何らかの値オブジェクトを持つ値セクション　この継続時間中トラックの持つ値は変化しない最短で１フレーム
+        なし>中間値補間セクション
+            valueプロパティが空で値オブジェクトを持たない
+            中間値補間サブセクションコレクションを持つ
+    cameraworkタイムライントラックセクションの開始、終了判定
+    セクションは「値区間(セクション)」と「中間値補間区間(セクション)」の２種に分類される
+    中間値セクションは必ず前後に値セクションを持つ
+    値区間は連続することが可能
+    値区間は最低でも１フレームの継続時間を持ち、そのトラックの返す値nas.AnimationGeometryオブジェクトを保持する
+
+    補間区間は、値オブジェクトを持たず、サブセクションコレクションを持ち　前後の値区間の中間値を補間して戻す
+    サブセクションは値としてnas.ValueInterpolatorオブジェクトを持つ
+    
+    補間区間は補間区間開始ノードで開始され終了ノードで閉じる
+    
+    入力としては開始ノードと終了ノードはそれぞれ対応するサインを対で使用することが求められる
+    特定の開始ノードで初期化された補間区間は、明示的に開始ノードと対の終了ノードで閉じられるか又は
+    後続の値エントリが宣言されて値区間が開始されるまでの間継続される
+    中間値補間区間はその区間が閉じられるまでの間　基本的にすべての空白以外のエントリが副補間区間を初期化する。
+    開始ノードは必ず副補間区間を開始するが、終了ノードは副補間区間を開始するとは限らない。
+        
+    終了ノードが中間値補間ノードとなるかならないかの判定
+  　
+  　区間内の終了ノードを除く中間値生成ノードの数がdurationの整数分の１である（割り切れる）場合（＝ 均等フレーミング）の場合
+  　終了ノードは中間値を初期化しない。
+  　
+  　タイミングが乱れ打ちの中間値補間を行う場合は、終了ノードを利用せずにタイミング指定を行うものとする
+  　実際に開始ノードと終了ノードのみの区間があった場合は、中間値指定ノードでシートセルを埋めるように促すほうが良い
+*/
+_parseCameraworkTrack= function(){
+    var myCollection    = new XpsTimelineSectionCollection(this);//自分自身を親としてセクションコレクションを新作
+    var currentSection  = myCollection.addSection(false);//開始セクションを作成　継続時間０　値は保留
+    var currentEffect   = new nas.AnimationGeometry("");//コンテンツはカラで初期化も保留
+    var currentNodeSign = false;//否で初期化(確認用)
+    var valueDetect     = false;//否で初期化(確認用)
+    var startNodeRegex=new RegExp("^[▼▽↑●◯◎◆◇★☆]$");
+    var endNodes={
+        "▼":"▲",
+        "▽":"△",
+        "↑":"↓",
+        "●":"●",
+        "○":"◯",
+        "◎":"◎",
+        "◆":"◆",
+        "◇":"◇",
+        "☆":"☆",
+        "★":"★"
+    };
+    for (var fix=0;fix<this.length;fix++){
+        currentSection.duration ++;//currentセクションの継続長を加算
+//未記入データ　これが一番多いので最初に処理しておく
+        if(this[fix]==""){
+            continue;
+        }
+//中間値補間セクション終了ノード(対で処理する方)
+        if(this[fix]==currentNodeSign){
+            //補間サブセクションを初期化するかどうかを判定
+            if( currentSection.duration % currentSection.subSections.length ) {
+                currentSection.subSections.addSection(new nas.ValueInterpolator());//割り切れない場合サブセクションを初期化
+            }
+            currentNodeSign=false;//補間区間終了ノードクリア
+            currentSection=myCollection.addSection(false); // 新規値セクション追加
+            
+            continue;
+        } else
+/** この正規表現は仮でハードコーディング　あとで設定ファイルからの反映に変更予定*/
+        if(this[fix].match(startNodeRegex)){
+/**
+    予約開始ノードサイン検出
+予約語の開始ノードサインを検出したので対応する終了ノードをセットする
+第一区間が補間区間であった場合、トラックのデフォルト値を先行区間の値とする。
+第一区間は、値区間　補間区間のいずれでも良いので初期区間の値は保留されている
+検出したサインがカレントノードサインと一致していたら補間区間終了それ以外は副補間区間のエントリ初期化
+セクションノードサイン
+予約語
+    /^[▼▽↑●○◎◆◇★☆]$/
+    特殊ノードとして中間値補間区間を開き、同じサインで当該の区間を閉じる
+    予約語以外の中間値指定ノードには閉鎖機能がない
+    値指定ノード以外は基本的にすべて中間値指定ノードとする
+    空白エントリ・予約語以外の記述は値を指定するノードか否かを判定する。
+    明示的に値を生成するノードを切り分け　残るエントリはｘMapに問い合わせを行い値を持たないエントリを中間値発生ノードとして扱う
+*/
+            if(currentNodeSign==false){
+                currentNodeSign=endNodes[this[fix]];//予約語で開いたので終了ノードを設定する
+                if(fix == 0){
+                    currentSection.subSections=new XpsTimelineSectionCollection();//第一フレームだった場合のみ第一セクションを補間区間に変換
+                    currentSection.subSections.addSection(new nas.ValueInterpolator());//同時に第一サブセクションを初期化
+                }else{
+                    currentSection = myCollection.addSection("interpolation"); //それ以外は新規補間セクション追加
+                    console.log (currentSection.subSections.addSection)
+                }
+            } else {
+                currentSection.subSections.addSection(new nas.ValueInterpolator());
+            }
+        } else {
+//予約ノードサイン外
+/**
+valueDetect = fale;
+値指定ノード\[[^\]]+\]を検出した場合、セルエントリーの角括弧を払って評価値を得る　かつ　フラグを立てる　(valueDetect = true)
+それ以外はセルエントリーを評価値とする
+    xMapで評価値をエントリ検索
+    マップエントリがない場合でかつ　valueDetect == true なら　エントリを作成してそれを値として使用
+    エントリがあれば valueDetect = true なければ false
+valueDetect==true
+    カレントセクションが中間値補間セクションだった場合はカレントセクションをクロースして検出した値をもつ値セクションを初期化する
+    カレントセクションの値が未設定の場合、カレントセクションの値を設定
+    カレントセクションに値がある場合は新規の値セクションを初期化
+valueDetect==false
+    エントリがない場合は中間値指定ノードとなる
+    カレントセクションが中間値補間セクションだった場合は新規に副補間区間を初期化
+    値区間だった場合は新規に中間値補間セクションを初期化して第一副補間区間を初期化する
+    トラック内無効記述（コメント）は現在許可されない。
+*/
+    valueDetect = false;
+    if(this[fix].match(/^\[([^\]])\]$/)){
+        var checkValue=RegExp.$1;
+        valueDetect=true;
+    }else{
+        var checkValue= this[fix];
+    }
+    var currentEntry = this.xParent.parentXps.xMap.getElementByName(checkValue);//グループIDを加える
+    if((! currentEntry) && (valueDetect)){
+        //new_MapElement(name,Object xMapGroup,Object Job)
+//        currentEntry=xMap.new_xMapElement(checkValue,MAP.getElementByName(this.id),this.xParent.parentXps.currentJob);
+        currentEntry=checkValue;
+    }else{
+        valueDetect=(currentEntry)?true:false;
+    }
+            if(currentEntry){
+                if(currentNodeSign){
+                    currentSection.duration--;//閉鎖ノード無しで前セクションを閉じるので加算したdurationをキャンセル
+                    currentNodeSign = false;//補間区間終了ノードクリア
+                    currentSection = myCollection.addSection(currentEntry);//新規セクション追加
+                } else {
+                    if (currentSection.value){
+                        currentSection.duration--;//閉鎖ノード無しで前セクションを閉じるので加算したdurationをキャンセル
+                        currentSection = myCollection.addSection(currentEntry);//新規セクション追加
+                    }else{
+                        currentSection.value=currentEntry;//値を遅延設定
+                    }
+                }               
+            } else if(currentNodeSign) {
+               console.log("fix:"+fix);
+　　　         currentSection.subSections.addSection(new nas.ValueInterpolator());
+            }
+        }
+    }
+    this.sections=myCollection;
+    return this.sections;
+}
+
 /**
  *  コンポジットタイムラインの（区間）値
  *  エフェクト
@@ -251,8 +410,8 @@ nas.AnimationComposite =function(){
 //    this.formGeometry;//ソース内のオフセット情報　nas.AnimationFieldオブジェクト
     this.blendingMode="normal";
     this.strength;// ? 
-    this.t = nas.AnimationTimeing();
-    this.c = nas.AnimationCurve();
+    this.t = new nas.TimingCurve();
+    this.c = new nas.Curve();
     this.comments;//コメントコレクション配列 これは区間のプロパティか？
 }
 nas.AnimationComposite.prototype.interpolate= function(endValue,indexCount,indexOffset,frameCount,frameOffset,props){
@@ -261,15 +420,36 @@ nas.AnimationComposite.prototype.interpolate= function(endValue,indexCount,index
     return myResult;//コンポジットタイムラインの中間値は濃度値のみ
 
 }
-/*
+/**
     コンポジットトラックをパースしてセクションコレクションを返す
+    option:(effect|sfx|composite)
+    セクションの状態は
+    値：
+        あり>有値セクション
+            何らかの値オブジェクトを持つ値セクション　この継続時間中トラックの持つ値は変化しない最短で１フレーム
+        なし>中間値補間セクション
+            valueプロパティが空で値オブジェクトを持たない
+            中間値補間サブセクションコレクションを持つ
+    compositeタイムライントラックセクションの開始、終了判定
+    セクションは「値区間(セクション)」と「中間値補間区間(セクション)」の２種に分類される
+    中間値セクションは必ず前後に値セクションを持つ
+    値区間は連続することが可能
+    値区間は最低でも１フレームの継続時間を持ち、そのトラックの返す値を保持する
+    補間区間は、値オブジェクトを持たず、サブセクションコレクションを持ち　前後の値区間の中間値を補間して戻す
+    補間区間は補間区間開始セパレータで開始され終了セパレータで閉じる
+    入力としては開始セパレータと終了セパレータが同一のエントリを対で使用することが求められる
+    開始セパレータで宣言された補間区間は、明示的に開始セパレータと対の終了セパレータで閉じられるか又は
+    後続の値エントリを宣言して値区間を開始されくまでの間継続される
+    補間区間はその区間が閉じられるまでの間　すべての空白以外のエントリが副補間区間を開始する。
+    補間区間中すべてのエントリが空白であった場合に限り、空白区間がすべて副補間区間のエントリとなる
+    （＝補間区間に何も間に置かなかったトラックは１コマ撮りの補間区間となる）
 */
 _parseCompositeTrack=function(){
-    var myCollection=new XpsTimelineSectionCollection(this);//自分自身を親としてセクションコレクションを新作
-    //この実装では開始マーカーが０フレームにしか位置できないので必ずブランクセクションが発生する
-    //継続時間０で先に作成 同時にカラのサウンドObjectを生成
-    var currentSection=myCollection.addSection(false);
-    var currentEffect=new nas.AnimationComposit("");//コンテンツはカラで初期化も保留
+    var myCollection    = new XpsTimelineSectionCollection(this);//自分自身を親としてセクションコレクションを新作
+    var currentSection  = myCollection.addSection(false);//開始セクションを作成　継続時間０　値は保留
+    var currentEffect   = new nas.AnimationComposite("");//コンテンツはカラで初期化も保留
+    var currentNodeSign = false;//否で初期化(確認用)
+    var valueDetect     = false;//否で初期化(確認用)
     for (var fix=0;fix<this.length;fix++){
         currentSection.duration ++;//currentセクションの継続長を加算
         //未記入データ　これが一番多いので最初に処理しておく
@@ -277,30 +457,98 @@ _parseCompositeTrack=function(){
             continue;
         }
         //区間の値
-        //セクション開始セパレータ
-        if(this[fix].match(/開始セパレータ/)){
-            
-            if(currentSection.value){
-                currentSection.duration --;//加算した継続長をキャンセル
-                currentSection.value.contentText=currentSound.toString();//先の有値セクションをフラッシュして
-                currentSection=myCollection.addSection(false);//新規のカラセクションを作る
-                currentSection.duration ++;//キャンセル分を後方区間に加算
-                currentEffect=new nas.AnimationComposit("");//サウンドを新規作成
-            }else{
-                currentSection=myCollection.addSection(currentEffect);//新規有値セクション作成
+        //中間値補間セクション開始セパレータ(対で処理する方)
+        
+/** この正規表現は仮でハードコーディング　あとで設定ファイルからの反映に変更予定*/
+        if(this[fix].match(/^[▼▲▽△●○◎◆◇☆★]$|^\][^\]+]\[$|^\)[^\(+]\($/)){
+/**
+    ノードサイン検出
+第一区間が補間区間であった場合、トラックのデフォルト値を先行区間の値とする。
+第一区間は、値区間　補間区間のいずれでも良いので初期区間の値は保留されている
+currentNodeSignがfalseであった場合はセクション開始
+それ以外の場合、補間区間のエントリ中でのサイン検出
+検出したサインがカレントノードサインと一致していたら補間区間終了それ以外は副補間区間のエントリ初期化
+セクションノードサイン
+予約語
+    /^[▼▲▽△●○◎◆◇☆★]$|^\][^\]+]\[$|^\)[^\(+]\($/
+    特殊ノードとして中間値補間区間を開き、同じサインで当該の区間を閉じる
+    予約語以外の中間値指定ノードには閉鎖機能がない
+    値指定ノード以外は基本的にすべて中間値指定ノードとする
+    空白エントリ・予約語以外の記述は値を指定するノードか否かを判定する。
+    明示的に値を生成するノードを切り分け　残るエントリはｘMapに問い合わせを行い値を持たないエントリを中間値発生ノードとして扱う
+*/
+            if(currentNodeSign==false){
+                currentNodeSign=this[fix];//予約語で開いたのでノードを控える
+                if(fix==0){
+                    currentSection.subSections=new XpsTimelineSectionCollection();//第一フレームだった場合のみ第一セクションを補間区間に変換
+                    currentSection.subSections.addSection(new nas.ValueInterpolator());//同時に第一サブセクションを初期化
+                }else{
+                    currentSection = myCollection.addSection("interpolation"); //それ以外は新規補間セクション追加
+                }
+            } else if (currentNodeSign==this[fix]){
+                //開始ノードと一致
+                if( currentSection.duration % currentSection.subSections.length ) {
+                    currentSection.subSections.addSection(new nas.ValueInterpolator());//割り切れない場合サブセクションを初期化
+                }
+                currentNodeSign=false;//補間区間終了ノードクリア
+                currentSection = myCollection.addSection(false); // 新規セクション追加
+            } else {
+                currentSection.subSections.addSection(new nas.ValueInterpolator());
             }
-            continue;
-        }
-//判定を全て抜けたデータは本文又はラベル　ラベルは上書きで更新
-        if(currentSection.value){
-            if(this[fix]=="|") this[fix]="ー";
-            currentSound.bodyText+=this[fix];
-        }else{
-            currentSound.name=this[fix];
+        } else {
+//予約ノードサイン外
+/**
+valueDetect = fale;
+値指定ノード<[^>]+>を検出した場合、セルエントリー矢括弧を払って評価値を得る　かつ　フラグを立てる　(valueDetect = true)
+それ以外はセルエントリーを評価値とする
+    xMapで評価値をエントリ検索
+    マップエントリがない場合でかつ　valueDetect == true なら　エントリを作成してそれを値として使用
+    エントリがあれば valueDetect = true なければ false
+valueDetect==true
+    カレントセクションが中間値補間セクションだった場合はカレントセクションをクロースして検出した値をもつ値セクションを初期化する
+    カレントセクションの値が未設定の場合、カレントセクションの値を設定
+    カレントセクションに値がある場合は新規の値セクションを初期化
+valueDetect==false
+    エントリがない場合は中間値指定ノードとなる
+    カレントセクションが中間値補間セクションだった場合は新規に副補間区間を初期化
+    値区間だった場合は新規に中間値補間セクションを初期化して第一副補間区間を初期化する
+    トラック内無効記述（コメント）は現在許可されない。
+*/
+    valueDetect = false;
+    if(this[fix].match(/^<([^>])>$/)){
+        var checkValue=RegExp.$1;
+        valueDetect=true;
+    }else{
+        var checkValue= this[fix];
+    }
+    var currentEntry = this.xParent.parentXps.xMap.getElementByName(checkValue);
+    if((! currentEntry) && (valueDetect)){
+        //new_MapElement(name,Object xMapGroup,Object Job)
+//        currentEntry=xMap.new_xMapElement(checkValue,MAP.getElementByName(this.id),this.xParent.parentXps.currentJob);
+        currentEntry=checkValue;
+    }else{
+        valueDetect=(currentEntry)?true:false;
+    }
+            if(currentEntry){
+                if(currentNodeSign){
+                    currentSection.duration--;//閉鎖ノード無しで前セクションを閉じるので加算したdurationをキャンセル
+                    currentNodeSign = false;//補間区間終了ノードクリア
+                    currentSection = myCollection.addSection(currentEntry);//新規セクション追加
+                } else {
+                    if (currentSection.value){
+                        currentSection.duration--;//閉鎖ノード無しで前セクションを閉じるので加算したdurationをキャンセル
+                        currentSection = myCollection.addSection(currentEntry);//新規セクション追加
+                    }else{
+                        currentSection.value=currentEntry;//値を遅延設定
+                    }
+                }               
+            } else if(currentNodeSign) {
+　　　         currentSection.subSections.addSection(new nas.ValueInterpolator());
+            }
         }
     }
     this.sections=myCollection;
-    return myCollection.length;
+    return this.sections;
 }
 
 /*
@@ -417,7 +665,7 @@ if(startPt<this.bodyText.length){myResult+=this.bodyText.slice(startPt)};
         値として　無音区間の音響オブジェクト（値）を作るか又は現状のままfalse(null)等で処理するかは一考
 */
 _parseSoundTrack =function(){
-    var myCollection=new XpsTimelineSectionCollection(this);//自分自身を親としてセクションコレクションを新作
+    var myCollection = new XpsTimelineSectionCollection(this);//自分自身を親としてセクションコレクションを新作
     //この実装では開始マーカーが０フレームにしか位置できないので必ずブランクセクションが発生する
     //継続時間０で先に作成 同時にカラのサウンドObjectを生成
     var currentSection=myCollection.addSection(null);//区間値false
@@ -461,13 +709,27 @@ _parseSoundTrack =function(){
         }
     }
     this.sections=myCollection;
-    return this.sections.length;
+    return this.sections;
 }
 
 /** //test
 XpsTimelineTrack.prototype.parseSoundTrack=_parseSoundTrack;
 XPS.xpsTracks[0].parseSoundTrack();
 XPS.xpsTracks[0].sections[1].toString();
+
+XpsTimelineTrack.prototype.parseSoundTrack=_parseSoundTrack;
+//XpsTimelineTrack.prototype.parseDialogTrack=_parseDialogTrack;
+
+//XpsTimelineTrack.prototype.parseKeyAnimationTrack=_parsekeyAnimationTrack;
+//XpsTimelineTrack.prototype.parseAnimationTrack=_parseAnimationTrack;
+XpsTimelineTrack.prototype.parseReplacementTrack=_parseReplacementTrack;
+
+XpsTimelineTrack.prototype.parseCameraWorkTrack=_parseCameraworkTrack;
+
+XpsTimelineTrack.prototype.parseCompositeTrack=_parseCompositeTrack;//コンポジット
+
+//XpsTimelineTrack.prototype.parseTrack=_parseTrack;
+//XpsTimelineTrack.prototype.parseTrack=_parseTrack;
 */
 /**
 
@@ -488,4 +750,29 @@ XPS.xpsTracks[0].sections[1].toString();
     各々のパーサは、データ配列を入力としてセクションコレクションを返す
     各コレクションの要素はタイムラインセクションオブジェクト
     値はタイムライン種別ごとに異なるがセクション自体は共通オブジェクトとなる
+
+XpsTimelineTrack.prototype.parseTimelineTrack = function(){
+    switch(this.option){
+        case "dialog":;
+            return this.parseDialogTrack();
+        break;
+        case "sound":;
+            return this.parseSoundTrack();
+        break;
+        case "cell":;
+        case "timing":;
+        case "replacement":;
+            return this.parseReplacementTrack();
+        break;
+        case "camerawork":;
+        case "camera":;
+            return this.parseCameraworkTrack();
+        break;
+        case "effect":;
+        case "sfx":;
+        case "composit":;
+            return this.parseCompositeTrack();
+        break;
+    }
+}
 */

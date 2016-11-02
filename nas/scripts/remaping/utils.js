@@ -1058,12 +1058,16 @@ for(var idx=0;idx<currentContent.length;idx++){
 //	xUI.spin("fwd");
 }
 
-/*interpSign()
-引数なし
-選択範囲のない場合
-フォーカスのあるシートセルに、補間サインを入力してスピンする
-補間サインだった場合は補完サインの種別を変更してスピンを留保する
-種別ループに消去あり? > なし　消去はDELキー
+/**
+interpSign()
+引数:なし
+戻値:なし
+中間値補間サインをシート上に配置する
+
+選択範囲のない場合フォーカスのあるシートセルに、補間サインを入力してスピンする
+配置候補のシートセルがすでに補間サインだった場合は補完サインの種別を変更してスピンを留保する
+種別ループに消去あり? > なし
+消去はDELキー
 
 有効記述だった場合はNOP？
 
@@ -1076,12 +1080,9 @@ interpSign=function(){
 	var myValue = XPS.xpsTracks[xUI.Select[0]][xUI.Select[1]];
   if(xUI.Selection.join(",")=="0,0"){
 	if(myValue.match(interpRegex)){
-	//	alert(InterpolationSigns.indexOf(myValue));
 		var newValue=InterpolationSigns[((InterpolationSigns.indexOf(myValue))+1) % InterpolationSigns.length];
 		xUI.put(newValue);
-//		xUI.spin("fwd");
 	}else	if(true){
-//		xUI.put(InterpolationSigns[0]);//InterpolationSigns[InterpolationSigns.length-1];
 		xUI.put(nas_expdList(InterpolationSigns[0]));
 		xUI.spin("down");
 	}else{
@@ -1107,7 +1108,7 @@ interpSign=function(){
 複数列の場合はフォーカスのある一列に変更して
 その区間の全てのシートセルを処理
 動作は現在のところトグル
-<矢括弧>は、中間値補間として予約されているので中間値チェックにかかるため先に判定して抜ける
+<矢括弧>(=△囲み)は、中間値補間サインとして予約されているので中間値チェックにかかるため先に判定して抜ける
 */
 addCircle=function(kwd){
 	if(! kwd) kwd="circle";

@@ -826,10 +826,10 @@ nas.AnimationPegForm.prototype.toString=function(){return this.name;}
 nas.AnimationPegForm.prototype.valueOf=function(){return nas.AnimationPegForms[this.name];}
 
 nas.GeometryOffset=function(myPoint,myRotation){
-	this.position=myPoint;
+	this.position=(myPoint)?myPoint:new nas.Point();
 	this.x=this.position.x;
 	this.y=this.position.y;
-	this.rotation=myRotation;
+	this.rotation=(myRotation)?myRotation:new nas.Rotation();
 	this.r=this.rotation.rotationZ;
 }
 /*
