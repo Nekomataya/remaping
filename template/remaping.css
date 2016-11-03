@@ -2,13 +2,12 @@
 /*	りまぴん のためのスタイルシート							*/
 /*	このスタイルシートを変更してデザインを調整できます。	*/
 /*	Nekomataya/kiyo 2016									*/
-/*		縮小表示のためのcss									*/
 /*															*/
 
 /*========== タイムシート全体 ============*/
 /*		基本デザイン
-	情報量が多くて密度が低いのでフォントは小さめ
-	font-size:11pt;
+	情報量が多くて密度が低いのでフォントは小さめに
+	ユーザ選択は基本的に禁止
 */
 body {
 	margin:0px 100px 4px 0px;
@@ -22,14 +21,12 @@ body {
 	vertical-align:middle;
 	font-size:8pt;
 }
-/*=====================================================================basic font-size of Document
 /*========== リンク ============*/
 a:link		{color:#000066}
 a:visited	{color:green}
 a:hover		{color:red;background-color:snow}
 a:active	{color:gray;background-color:snow}
 a:focus		{color:#880000;background-color:snow}
-
 
 /*		固定ヘッダ
 	ウインドウ全体をUIに割り付け、UIのマージン等を取得するエレメント
@@ -64,7 +61,6 @@ iframe.UIhidden {
 }
 /*
 	table
- 	font-size:9pt;
 */
 table {
 	border-color:#bbbbbb;
@@ -323,18 +319,20 @@ button.iconButton {
     -moz-border-radius: 3px;
     -webkit-border-radius: 3px;
     border-radius: 3px;
- /*アイコンイメージ*/
-/* background-image: url(images/ui/ui-icons16px.png); */
-/* background-image: url(images/ui/ui-icons24px.png);*/
-background-image: url(images/ui/nas-ui-icons432x432px.png);
 
+/*アイコンイメージ*/
+
+background-image: url(images/ui/nas-ui-icons432x432px.png);
 }
+
 button.iconButton:hover {
 	background-color:#464646;
 }
+
 button.iconButton:disabled {
 	background-color:#b0b0b0;
 }
+
 /*	icon offsert positioning 27x27*/
 
 .iconButton-blank { background-position: 27px 27px; }

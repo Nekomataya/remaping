@@ -42,15 +42,18 @@ function new_xUI(){
 //    初期化メソッド 編集対象となるXpsオブジェクトを与えて初期化する。
 //    初期化時点の参照変数はconfig.js内で設定される値である
 xUI.init    =function(XPS,referenceXps){
-    this.dialogSpan    =SoundColumns;//シート上の配置に合わせてXPSを初期化する
-    this.timingSpan    =SheetLayers;//シートは便宜上サウンド/タイミング（セル）/カメラ の３エリアに分けられるが
-    this.cameraSpan    =CompositColumns;//実際は各タイムラインは混在可能である
+    this.hideSource    = false;  //グラフィック置き換え時にシートテキストを隠す
+    this.showGrphic    = true;   //置き換えグラフィックを非表示　＝　テキスト表示
 
-    this.dialogCount=SoundColumns;//タイムライン種別数控え
-    this.stillCount    =0;//背景を標準的に読み込み場合はここに数値を入れる
-    this.timingCount=SheetLayers;//
-    this.sfxCount    =0;//
-    this.cameraCount=CompositColumns;//空欄でも良いと思われるが
+    this.dialogSpan    = SoundColumns;//シート上の配置に合わせてXPSを初期化する
+    this.timingSpan    = SheetLayers;//シートは便宜上サウンド/タイミング（セル）/カメラ の３エリアに分けられるが
+    this.cameraSpan    = CompositColumns;//実際は各タイムラインは混在可能である
+
+    this.dialogCount   = SoundColumns;//タイムライン種別数控え
+    this.stillCount    = 0;//背景を標準的に読み込み場合はここに数値を入れる
+    this.timingCount   = SheetLayers;//
+    this.sfxCount      = 0;//
+    this.cameraCount   = CompositColumns;//空欄でも良いと思われるが
 
     this.XPS=XPS;//XPSを参照するオブジェクト(将来の拡張用)
     this.referenceXPS=new Xps(4,72);
@@ -720,7 +723,8 @@ xUI.setReferenceXPS=function(myXps){
 xUI.trTd=function(){
 if(typeof arguments[0] =="undefined"){return false;}
 var target=arguments[0];
-if(target instanceof HTMLTableCellElement){
+
+if((target instanceof HTMLTableCellElement)&&(this.showGrphic)){
     var tgtID=target.id.split("_").reverse();
     var myXps=(tgtID.length==2)? this.XPS:this.referenceXPS;
     var myStr = myXps.xpsTracks[tgtID[1]][tgtID[0]];
@@ -739,14 +743,13 @@ if(target instanceof HTMLTableCellElement){
 //    xUI.Cgl.remove(target.id);//古いグラフパーツがあれば削除
 // グラフパーツの削除はセルエントリの消去時に行わないと画面が乱れるので注意
     switch(currentTrackOption){
+        case "sound":;
         case "dialog":;
             if (myStr.match(/[-_─━~]{2,}?/)){
                 xUI.Cgl.draw(target.id,"sound-section-open");
                 myStr="<br>";
             };//あとでセクションパース版と置き換え
         break;
-        case "sound":;
-break;
         case "timing":;
         case "replacement":;
             if (myStr.match(/[\|｜]/)){
@@ -786,30 +789,33 @@ break;
         case "sfx":;
         //バルクで描画する場合は消去手順を考えないとあとで消えるのでなんか考える
         //冒頭でなく末尾で描くか　又は　逆順処理が順当？
-            if (myStr.match(/^[\|｜]$/)){
-                myStr="<br>";                
+            if (myStr.match(/^[\|｜↑↓\*＊]$/)){
+                if(this.hideSource) myStr="<br>";                
             }
             else if (myStr.match(/^▼$/)){
-                if(myXps.xpsTracks[tgtID[1]][parseInt(tgtID[0])+1]=="|"){
-                xUI.Cgl.sectionDraw(target.id,"fo",myXps.xpsTracks[tgtID[1]].countSectionLength(parseInt(tgtID[0])));
+                if(myXps.xpsTracks[tgtID[1]][parseInt(tgtID[0])-1]=="|"){
+                var sectionCount = myXps.xpsTracks[tgtID[1]].countSectionLength(parseInt(tgtID[0]));
+                var startID = [tgtID[1],parseInt(tgtID[0])-sectionCount+1].join("_");
+                xUI.Cgl.sectionDraw(startID,"fo",sectionCount);
                 }              
-                myStr="<br>";                
+                if(this.hideSource) myStr="<br>";                
            }
             else if (myStr.match(/^▲$/)){
                 //この終端判定はあくまで仮判定なので注意　生き残らないように
                 if(myXps.xpsTracks[tgtID[1]][parseInt(tgtID[0])-1]=="|"){
                 var sectionCount = myXps.xpsTracks[tgtID[1]].countSectionLength(parseInt(tgtID[0]));
                 var startID = [tgtID[1],parseInt(tgtID[0])-sectionCount+1].join("_");
-                console.log([startID,"fi",sectionCount].join());
                 xUI.Cgl.sectionDraw(startID,"fi",sectionCount);
                 }
-                myStr="<br>";                
+                if(this.hideSource) myStr="<br>";                
            }
             else if (myStr.match(/^\]([^\]]+)\[$/)){
-                if(myXps.xpsTracks[tgtID[1]][parseInt(tgtID[0])+1]=="|"){
-                xUI.Cgl.sectionDraw(target.id,"transition",myXps.xpsTracks[tgtID[1]].countSectionLength(parseInt(tgtID[0])));
+                if(myXps.xpsTracks[tgtID[1]][parseInt(tgtID[0])-1]=="|"){
+                var sectionCount = myXps.xpsTracks[tgtID[1]].countSectionLength(parseInt(tgtID[0]));
+                var startID = [tgtID[1],parseInt(tgtID[0])-sectionCount+1].join("_");
+                xUI.Cgl.sectionDraw(startID,"transition",sectionCount);
                 }   
-                myStr="<br>";
+                if(this.hideSource) myStr="<br>";
            }
 break;
     }

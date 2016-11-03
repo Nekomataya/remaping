@@ -175,11 +175,11 @@ _parseReplacementTrack=function(){
               if(! isInterp ){
                 //中間値補間区間開始　カレントセクションを切り替え サブセクションを登録
                 isInterp = true;
-                currentSection=myCollection.addSection("interopration");
-                currentSection.subSections.addSection(new nas.ValueInterpolator());
+                currentSection=myCollection.addSection("interpolation");
+                currentSection.subSections.addSection();
                 //新規中間値補間セクションを立てる 以降は、モードを抜けるまでカレント固定
               }else{
-                currentSection.subSections.addSection(new nas.ValueInterpolator());
+                currentSection.subSections.addSection();
                 //中間値補間モード内ではサブセクションを登録
               }
               continue;
@@ -280,6 +280,7 @@ nas.AnimationGeometry.prototype.interpolate= function(endValue,indexCount,indexO
 _parseCameraworkTrack= function(){
     var myCollection    = new XpsTimelineSectionCollection(this);//自分自身を親としてセクションコレクションを新作
     var currentSection  = myCollection.addSection(false);//開始セクションを作成　継続時間０　値は保留
+    var currentSubSection  = null;//操作サブセクションへの参照　値はカラ 処理中は操作対象オブジェクトへの参照
     var currentEffect   = new nas.AnimationGeometry("");//コンテンツはカラで初期化も保留
     var currentNodeSign = false;//否で初期化(確認用)
     var valueDetect     = false;//否で初期化(確認用)
@@ -298,6 +299,7 @@ _parseCameraworkTrack= function(){
     };
     for (var fix=0;fix<this.length;fix++){
         currentSection.duration ++;//currentセクションの継続長を加算
+        if( currentSubSection ) currentSubSection.duration ++;//currentセクションの継続長を加算
 //未記入データ　これが一番多いので最初に処理しておく
         if(this[fix]==""){
             continue;
@@ -306,11 +308,11 @@ _parseCameraworkTrack= function(){
         if(this[fix]==currentNodeSign){
             //補間サブセクションを初期化するかどうかを判定
             if( currentSection.duration % currentSection.subSections.length ) {
-                currentSection.subSections.addSection(new nas.ValueInterpolator());//割り切れない場合サブセクションを初期化
+                currentSubSection = currentSection.subSections.addSection();//割り切れない場合サブセクションを初期化
+                currentSubSection.duration = 1;//必ず1
             }
             currentNodeSign=false;//補間区間終了ノードクリア
             currentSection=myCollection.addSection(false); // 新規値セクション追加
-            
             continue;
         } else
 /** この正規表現は仮でハードコーディング　あとで設定ファイルからの反映に変更予定*/
@@ -333,15 +335,20 @@ _parseCameraworkTrack= function(){
             if(currentNodeSign==false){
                 currentNodeSign=endNodes[this[fix]];//予約語で開いたので終了ノードを設定する
                 if(fix == 0){
-                    currentSection.subSections=new XpsTimelineSectionCollection();//第一フレームだった場合のみ第一セクションを補間区間に変換
-                    currentSection.subSections.addSection(new nas.ValueInterpolator());//同時に第一サブセクションを初期化
+                    currentSection.subSections=new XpsTimelineSectionCollection(currentSection);//第一フレームだった場合のみ第一セクションを補間区間に変換
+                    currentSubSection=currentSection.subSections.addSection();//同時に第一サブセクションを初期化
+                    currentSubSection.duration = 1;
                 }else{
+                    currentSection.duration --;
                     currentSection = myCollection.addSection("interpolation"); //それ以外は新規補間セクション追加
-                    console.log (currentSection.subSections.addSection)
+                    currentSection.duration = 1;
+                    currentSubSection = currentSection.subSections.addSection();
+                    currentSubSection.duration = 1;
                 }
             } else {
-                currentSection.subSections.addSection(new nas.ValueInterpolator());
+                currentSubSection = currentSection.subSections.addSection();
             }
+            currentSubSection.duration = 1;
         } else {
 //予約ノードサイン外
 /**
@@ -381,17 +388,20 @@ valueDetect==false
                     currentSection.duration--;//閉鎖ノード無しで前セクションを閉じるので加算したdurationをキャンセル
                     currentNodeSign = false;//補間区間終了ノードクリア
                     currentSection = myCollection.addSection(currentEntry);//新規セクション追加
+                    currentSubSection = null;
                 } else {
                     if (currentSection.value){
                         currentSection.duration--;//閉鎖ノード無しで前セクションを閉じるので加算したdurationをキャンセル
                         currentSection = myCollection.addSection(currentEntry);//新規セクション追加
+                        currentSubSection = null;
                     }else{
                         currentSection.value=currentEntry;//値を遅延設定
                     }
                 }               
             } else if(currentNodeSign) {
-               console.log("fix:"+fix);
-　　　         currentSection.subSections.addSection(new nas.ValueInterpolator());
+//               console.log("fix:"+fix);
+　　　         currentSubSection = currentSection.subSections.addSection();
+　　　         currentSubSection.duration = 1;
             }
         }
     }
@@ -447,9 +457,11 @@ nas.AnimationComposite.prototype.interpolate= function(endValue,indexCount,index
 _parseCompositeTrack=function(){
     var myCollection    = new XpsTimelineSectionCollection(this);//自分自身を親としてセクションコレクションを新作
     var currentSection  = myCollection.addSection(false);//開始セクションを作成　継続時間０　値は保留
+    var currentSubSection  = null;//操作サブセクションへの参照　値はカラ 処理中は操作対象オブジェクトへの参照
     var currentEffect   = new nas.AnimationComposite("");//コンテンツはカラで初期化も保留
     var currentNodeSign = false;//否で初期化(確認用)
     var valueDetect     = false;//否で初期化(確認用)
+    
     for (var fix=0;fix<this.length;fix++){
         currentSection.duration ++;//currentセクションの継続長を加算
         //未記入データ　これが一番多いので最初に処理しておく
@@ -460,7 +472,7 @@ _parseCompositeTrack=function(){
         //中間値補間セクション開始セパレータ(対で処理する方)
         
 /** この正規表現は仮でハードコーディング　あとで設定ファイルからの反映に変更予定*/
-        if(this[fix].match(/^[▼▲▽△●○◎◆◇☆★]$|^\][^\]+]\[$|^\)[^\(+]\($/)){
+        if(this[fix].match(/^[▼▲▽△●○◎◆◇☆★]$|^\][^\]]+\[$|^\)[^\(]+\($/)){
 /**
     ノードサイン検出
 第一区間が補間区間であった場合、トラックのデフォルト値を先行区間の値とする。
@@ -480,20 +492,26 @@ currentNodeSignがfalseであった場合はセクション開始
             if(currentNodeSign==false){
                 currentNodeSign=this[fix];//予約語で開いたのでノードを控える
                 if(fix==0){
-                    currentSection.subSections=new XpsTimelineSectionCollection();//第一フレームだった場合のみ第一セクションを補間区間に変換
-                    currentSection.subSections.addSection(new nas.ValueInterpolator());//同時に第一サブセクションを初期化
+                    currentSection.subSections=new XpsTimelineSectionCollection(currentSection);//第一フレームだった場合のみ第一セクションを補間区間に変換
+                    currentSubSection=currentSection.subSections.addSection();//同時に第一サブセクションを初期化
+                    currentSubSection.duration = 1;
                 }else{
+                    currentSection.duration --;
                     currentSection = myCollection.addSection("interpolation"); //それ以外は新規補間セクション追加
+                    currentSection.duration = 1;
+                    currentSubSection = currentSection.subSections.addSection();
+                    currentSubSection.duration = 1;
                 }
+                currentSection.subSections.addSection();//オープンと同時に第一サブセクションを初期化
             } else if (currentNodeSign==this[fix]){
                 //開始ノードと一致
                 if( currentSection.duration % currentSection.subSections.length ) {
-                    currentSection.subSections.addSection(new nas.ValueInterpolator());//割り切れない場合サブセクションを初期化
+                    currentSection.subSections.addSection();//割り切れない場合サブセクションを初期化
                 }
                 currentNodeSign=false;//補間区間終了ノードクリア
-                currentSection = myCollection.addSection(false); // 新規セクション追加
+                currentSection = myCollection.addSection(false); // 新規セクション追加　終了ノードで閉じたので加算はなし
             } else {
-                currentSection.subSections.addSection(new nas.ValueInterpolator());
+                currentSection.subSections.addSection();
             }
         } else {
 //予約ノードサイン外
@@ -515,7 +533,7 @@ valueDetect==false
     トラック内無効記述（コメント）は現在許可されない。
 */
     valueDetect = false;
-    if(this[fix].match(/^<([^>])>$/)){
+    if(this[fix].match(/^<([^>]+)>$/)){
         var checkValue=RegExp.$1;
         valueDetect=true;
     }else{
@@ -543,7 +561,8 @@ valueDetect==false
                     }
                 }               
             } else if(currentNodeSign) {
-　　　         currentSection.subSections.addSection(new nas.ValueInterpolator());
+　　　         currentSubSection=currentSection.subSections.addSection();
+　　　         currentSubSection.duration = 1;
             }
         }
     }

@@ -312,7 +312,7 @@ function XpsTimelineTrack(myLabel, myType, myParent, myLength) {
     this.blpos = "end";//旧オブジェクト互換
     this.link = ".";
     this.parent = ".";//
-    this.sections = new XpsTimelineSectionCollection();
+    this.sections = new XpsTimelineSectionCollection(this);
 }
 
 XpsTimelineTrack.prototype = Array.prototype;
@@ -435,46 +435,21 @@ XpsTimelineTrack.prototype.addSection = function (myValue) {
  */
  
 /**
-    タイムライントラックを走査してセクションの切れ目を探してそこまでのカウントを返す
+    タイムライントラックを走査してプライマリセクションの切れ目を探してそこまでのカウントを返す
     内部処理用関数
-    前後のカウントができるようにする
-    計測開始点からダウンカウントでセクション開始フレームを検索
-    開始フレームからアップカウントでセクション終了フレームを抽出して差分で戻す仕様に
 */
 XpsTimelineTrack.prototype.countSectionLength=function(startFrame){
     if (typeof startFrame == "undefined" ) startFrame = 0;
-    var sectionStart = startFrame;
-    for (var myFrame = startFrame;myFrame >= 0 ;myFrame --){
-        switch(this.option){
-        case "camera":
-        case "camerawork":
-
-        case "sfx":
-        case "effect":
-        case "timing":
-        case "replacement":
-        case "dialog":
-        case "sound":
-        }
-    
-    }    
-    var myCount = ((this.option=="dialog")||(this.option=="sound"))? 0:1;//カウント初期値 1
-    for (var myFrame=startFrame+1;myFrame<this.length;myFrame ++){
-        if((this.option=="camera")||(this.option=="camerawork")){
-          if(this[myFrame].match(/^[▽▼]$|^\[[^\]]+\]$/)) break;//開始ノード又は値エントリで加算前ブレーク
-          myCount++;
-          if(this[myFrame].match(/^[△▲]$/)) break;//終了ノードで加算後ブレーク
-        }
-        else if((this.option=="effect")||(this.option=="sfx")){
-          myCount++;
-          if(this[myFrame].match(/^[△▲▽▼]$|^\][^\[]+\[$/)) break;//開始又は終了ノードで加算後ブレーク
-        }
-        else if((this.option=="dialog")||(this.option=="sound")){
-          if(this[myFrame].match(/[-_─━~]{2,}?/)) break;//開始又は終了ノードで加算前ブレーク
-          myCount++;
+    var mySections=this.parseTimelineTrack();
+    var mySectionId = 0;
+    for(var idx=0; idx < mySections.length ; idx ++){
+        var startOffset = mySections[idx].startOffset();
+        if (( startOffset<= startFrame)&&((mySections[idx].duration+startOffset)>startFrame) ){
+            return mySections[idx].duration;
+            break;
         }
     }
-    return myCount;
+    return false;
 }
 //test
 // XPS.xpsTracks[5].countSectionLength(1); 
@@ -488,9 +463,6 @@ XpsTimelineTrack.prototype.countSectionLength=function(startFrame){
  */
 function XpsTimelineSectionCollection(myParent) {
     this.parent = myParent;
-//    this.valueOf = function () {
-//        return this.parent.getDefaultValue().valueOf();
-//    }
 }
 XpsTimelineSectionCollection.prototype = Array.prototype;
 /**
@@ -500,14 +472,20 @@ XpsTimelineSectionCollection.prototype = Array.prototype;
  値オブジェクトは、直接AnimationValueを持つオブジェクト又はxMapElementとして与える
  値のみが与えられた場合はエレメントなしで登録する。
  中間値補間セクション    を初期化する場合 キーワード"interpolation"を引数として与える
- 中間値補間サブセクションを初期化する場合 ValueInterpolator Object を myValueとして与える
+ 中間値補間サブセクションを初期化する場合指定されたValueを無視して新規にValueInterpolator Objectを作成して初期化する
  エレメント新規作成が必要な場合はあらかじめ事前にエレメント新規作成を行って引数とする
  * @param myValue
  * @returns {XpsTimelineSection}
  */
 XpsTimelineSectionCollection.prototype.addSection = function (myValue) {
     var newSection = new XpsTimelineSection(this.parent, 0 );//親Collection、継続時間 0
-    if(myValue instanceof nas.xMapElement){
+    if(this.parent.subSections){
+//親が中間値補間セクションであった場合無条件でサブセクションを登録
+        newSection = new XpsTimelineSection(this.parent, 0 );
+        newSection.mapElement;//エレメントは登録されない
+        newSection.value = new nas.ValueInterpolator(newSection);
+        
+    } else if(myValue instanceof nas.xMapElement){
     //引数がxMapエレメントなのでそのまま有値セクション初期化
         newSection = new XpsTimelineSection(this.parent, 0 );
             newSection.mapElement = myValue;
@@ -515,14 +493,9 @@ XpsTimelineSectionCollection.prototype.addSection = function (myValue) {
     } else if(myValue == "interpolation"){
     //プライマリ中間値補間セクション
         newSection = new XpsTimelineSection(this.parent, 0, true);
-        newSection.subSections=new XpsTimelineSectionCollection()
+        newSection.subSections=new XpsTimelineSectionCollection(newSection);
             newSection.mapElement;
             newSection.value=null;//new nas.ValueInterpolator();   
-    } else if(myValue instanceof nas.ValueInterpolator){
-    //中間値補間サブセクション
-        newSection = new XpsTimelineSection(this.parent, 0 );
-        newSection.mapElement;//エレメントは登録されない
-        newSection.value = myValue;
     } else {
     //中間値補間サブセクション以外の
         newSection = new XpsTimelineSection(this.parent, 0 );
@@ -584,30 +557,31 @@ function _getSectionStartOffset() {
     }
 };
 /**
- * ValueInerpolatorは必要な情報を収集して、value プロパティに対して中間値を請求するオブジェクト
+ * ValueInterpolatorは必要な情報を収集して、value プロパティに対して中間値を請求するオブジェクト
  * 実際の計算は各値のValue自身が行い　仮のオブジェクトを作成して返す
  * 値エージェントとなるオブジェクト
  各valueプロパティには中間値補間
  startValue.interpolate(endValue,indexCount,indexOffset,frameCount,frameOffset,props)
  が実装される
  ただし、Sound等中間値補間の存在しないオブジェクトには当該メソッドは不用（undefined）
- そもそも補間区間を作らないので、ValueInerpolatorオブジェクトが作成されない
+ そもそも補間区間を作らないので、ValueInterpolatorオブジェクトが作成されない
 
 XpsTimelineSection.valueプロパティはnas.xMapElement
  */
 
-nas.ValueInterpolator =function ValueInerpolator(myParent){
-    this.parent=myParent;//interpSection
-    this.valueOf=function(myProp){
-        var indexCount=parseInt(this.parent.length);
+nas.ValueInterpolator =function ValueInterpolator(myParent){
+    this.parent=myParent;//interpolateSection
+}
+
+nas.ValueInterpolator.prototype.valueOf=function(myProp){
+        var indexCount=parseInt(this.parent.parent.subSections.length);//サブセクションの総数なので親の親のサブセクション
         var indexOffset=this.parent.id()
-        var startValue=this.parent.parent.sections[currentIndex-1].value;
+        var startValue=this.parent.parent.parent.sections[currentIndex-1].value;
         var frameCount=this.parent.parent.duration;
         var frameOffset=this.parent.startOffset();
-        var endValue=this.parent.parent.sections[currentIndex+1].value;
+        var endValue=this.parent.parent.parent.sections[currentIndex+1].value;
         return startValue.interpolate(endValue,indexCount,indexOffset,frameCount,frameOffset,myProp);
     }    
-}
 /**
  * タイムラインセクションは使用の都度初期化される一時オブジェクト
  * セクションコレクションにトラックごとに変更フラグを設けて、変更がない限りは再ビルドを避ける
@@ -618,14 +592,14 @@ nas.ValueInterpolator =function ValueInerpolator(myParent){
  *    　有値セクションは、セクションのvalueとしてnas.xMapElementのcontentプロパティを指し かつsectionsプロパティがundefinedとなる。
  *      中間値補間セクションは、valueを持たない(undefined)かつsectionsプロパティにメンバーを持つ
  *   parentがXpsTimelineSectionの場合は、サブセクション（中間値補間サブセクション）となる
- *       中間値補間サブセクションは valueプロパティとしてValueInerpolatorオブジェクトを持ちmapElementを持たない
+ *       中間値補間サブセクションは valueプロパティとしてValueInterpolatorオブジェクトを持ちmapElementを持たない
  */
 function XpsTimelineSection(myParent, myDuration, isInterp) {
     this.parent = myParent;
     this.duration = myDuration;
         if(myParent instanceof XpsTimelineSection){
-    this.mapElement;
-    this.value=new ValueInerpolator(this);
+    this.mapElement;//this.parent.
+    this.value=new nas.ValueInterpolator(this);
     this.subSections;//サブセクションコレクションを持たない
         }else{
     this.mapElement;//mapElementはxMapElementへの参照
