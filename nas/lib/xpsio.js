@@ -313,6 +313,7 @@ function XpsTimelineTrack(myLabel, myType, myParent, myLength) {
     this.link = ".";
     this.parent = ".";//
     this.sections = new XpsTimelineSectionCollection(this);
+    this.sectionTrust = false;//セクションコレクションが最新の場合のみtrueとなるインジケータ変数
 }
 
 XpsTimelineTrack.prototype = Array.prototype;
@@ -1205,6 +1206,7 @@ Xps.prototype.put = function (myAddress, myStream) {
                 //updatedRange.push([writeColumn,writeFrame]);
             }
         }
+        this.xpsTracks[c].sectionTrust=false;
     }
     /**
      * 戻り値は、書き込みに成功したレンジ
@@ -2186,26 +2188,29 @@ XpsTimelineTrack.prototype.parseCompositeTrack=_parseCompositeTrack;//コンポ�
     値はタイムライン種別ごとに異なるがセクション自体は共通オブジェクトとなる
 */
 XpsTimelineTrack.prototype.parseTimelineTrack = function(){
+    var myResult = false;
     switch(this.option){
         case "dialog":;
-//            return this.parseDialogTrack();
+//            myResult =  this.parseDialogTrack();
 //        break;
         case "sound":;
-            return this.parseSoundTrack();
+            myResult =  this.parseSoundTrack();
         break;
         case "cell":;
         case "timing":;
         case "replacement":;
-            return this.parseReplacementTrack();
+            myResult =  this.parseReplacementTrack();
         break;
         case "camerawork":;
         case "camera":;
-            return this.parseCameraworkTrack();
+            myResult =  this.parseCameraworkTrack();
         break;
         case "effect":;
         case "sfx":;
         case "composit":;
-            return this.parseCompositeTrack();
+            myResult =  this.parseCompositeTrack();
         break;
     }
+    if (myResult){this.sectionTrust=true;}
+    return myResult;
 }

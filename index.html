@@ -140,14 +140,7 @@ script src=javascript/jslb_ajax.js
 	onSelectStart="return false"
 	onScroll="xUI.onScroll()"
 >
-
-
-<!--	簡易UIヘッダ
-style="background-color:#ffffee;position:absolute;"
-style="background-color:#eeffee;position:absolute;"
-style="background-color:#ffeeee;position:absolute;"
-	-->
-
+<div id=overlayHeadline >
 <div class=fixedHeadline id=UIheader>
 <div class=fixedHeadline id=UIheaderScrollV
 	onMouseDown =" return xUI.Mouse(event)"
@@ -163,7 +156,7 @@ style="background-color:#ffeeee;position:absolute;"
 	onMouseOver =" xUI.Mouse(event)"
 > </div>
 <div class=fixedHeadline id=UIheaderFix > </div>
-</div>
+</div></div>
 
 <!--	簡易UIヘッダ	-->
 
@@ -653,7 +646,7 @@ style="background-color:#ffeeee;position:absolute;"
 </div>
 <!-- dropdown menu for brouser ブラウザ用ドロップダウンメニュー　-->
 
-<div class=server-info style="text-align:right;"> login : <button onclick='sWitchPanel("Login");return false' title="ユーザ切り替え">ユーザID</button> / 
+<div class=server-info > login : <button onclick='sWitchPanel("Login");return false' title="ユーザ切り替え">ユーザID</button> / 
 	repository : 
 	<select
 	name="repositorySelector"
@@ -706,7 +699,7 @@ style="background-color:#ffeeee;position:absolute;"
 <!--	ログインパネル	-->
 
 <!--	ツールバー/toolbarHeader	-->
-<div id=toolbarHeader style="float:left;width:100%;background-color:#a0a0a0;">
+<div id=toolbarHeader>
 <!--	ツールバーボタン/toolIcons	-->
  <span id="severMenu" >
 	<button
@@ -1327,7 +1320,7 @@ style="background-color:#ffeeee;position:absolute;"
 <!--    トラックラベルセレクタ  -->
 
 
-<!-- FCT増減 -->
+<!-- 増減 -->
 <div id=TCIFTemplate >
 <hr><div style="text-align:right;"><button
 onclick='nas.incrFCTonHTMLInput(document.getElementById("nas_modalInput"),"1+0")'
@@ -1393,11 +1386,11 @@ onclick='nas.incrFCTonHTMLInput(document.getElementById("editTC"),"-(1)")'
 <input type=button class=toolTip value="改行"
 	onClick='document.getElementById("rEsult").insert("\n");' /><br>
 <input type=button class=toolTip value="リセット"
-	onClick='document.getElementById("rEsult").value=XPS.memo;' /><br>
+	onClick='document.getElementById("rEsult").value=XPS.xpsTracks.noteText;' /><br>
 <input type=button class=toolTip value="更新"
-	onClick='XPS.memo=document.getElementById("rEsult").value;xUI.setStored("force");sync("memo");' /><br>
+	onClick='XPS.xpsTracks.noteText=document.getElementById("rEsult").value;xUI.setStored("force");sync("memo");' /><br>
 <input type=button class=toolTip value="閉じる"
-	onClick='if(XPS.memo!=document.getElementById("rEsult").value){if(confirm("内容が変更されています。\n更新しますか?")){XPS.memo=document.getElementById("rEsult").value;xUI.setStored("force");sync("memo");}};sWitchPanel("clear");' /><br>
+	onClick='if(XPS.xpsTracks.noteText!=document.getElementById("rEsult").value){if(confirm("内容が変更されています。\n更新しますか?")){XPS.xpsTracks.noteText=document.getElementById("rEsult").value;xUI.setStored("force");sync("memo");}};sWitchPanel("clear");' /><br>
 </td>
 <td>タイムシートコメントを編集します。<br>
 <textarea name=rEsult id=rEsult cols=48 rows=8 >
@@ -1510,9 +1503,9 @@ onclick='nas.incrFCTonHTMLInput(document.getElementById("editTC"),"-(1)")'
 </div>
 <hr>
 <div align=right></div>
-<span style="text-align:center"><!-- 
+<span style="text-align:center">
+<!-- 
 /*
-暫定的に動作可能にナリマシタ。2005/03/30
 	このテキストエリアにXPSデータをペーストして
 	[取り込み]ボタンをクリックすると、シートに
 	取り込むことができます。

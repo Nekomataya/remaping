@@ -3,50 +3,67 @@
 /*	このスタイルシートを変更してデザインを調整できます。	*/
 /*	Nekomataya/kiyo 2016									*/
 /*															*/
-/*			(印刷用)										*/
 
 /*========== タイムシート全体 ============*/
 /*		基本デザイン
 	情報量が多くて密度が低いのでフォントは小さめに
 	ユーザ選択は基本的に禁止
 */
-
-@page { size: A3 }           /* A3タテ */
-
 body {
 	margin:0px 100px 4px 0px;
 	padding:0px 16px 0px 0px ;
 	overflow:scroll;
-	background-color:white;
+	background-color:#dedede;
 	user-select:none;
 	-moz-user-select:none;
 	-khtml-user-select:none;
 	-webkit-user-select:none;
 	vertical-align:middle;
-	font-size:6pt;
+	font-size:8pt;
 }
-/*========== リンク ============
+/*========== リンク ============*/
 a:link		{color:#000066}
 a:visited	{color:green}
 a:hover		{color:red;background-color:snow}
 a:active	{color:gray;background-color:snow}
 a:focus		{color:#880000;background-color:snow}
-*/
+
 /*		固定ヘッダ
 	ウインドウ全体をUIに割り付け、UIのマージン等を取得するエレメント
 */
 #fixedHeader {
-	width:100%;
-	position:fixed;
-	z-index:3;
+	display:none;
 }
+#UIheaderScrollV {
+	display:none;
+}
+#UIheaderScrollH {
+	display:none;
+}
+#UIheaderFix {
+	display:none;
+}
+
+
+
+/* アプリケーションヘッダーライン
+	印刷時は非表示
+*/
+div.server-info {
+  display:none;
+}
+div #toolbarHeader{
+	display:none;
+}
+
+
 /*		デバッグ
 	AIR専用エレメントは取リわけ
 */
-#debug {
+div #debug {
 	display:none;
 }
-#airDbg {
+div #airDbg {
 	display:none;
 }
 /*		各種UIテーブル/エレメント
@@ -85,12 +102,16 @@ table.UItable{
 }
 
 table.info	{
-		display:none;
+	width:97%;
+	height:10px;
+	border-width:0px;
+	table-layout:fixed;
 }
 table.sheet	{
-		width:100%;
+		z-index: 1;
+transform: matrix(1, 0, 0, 1, 0, 0);}
 }
-table.toolbox {
+table.toolbox {	
 	margin:0 0 0 0;
 	padding:0 0 0 0
 }
@@ -235,6 +256,7 @@ th.framenotelabel {
 */
 /*	font-size:9pt;*/
 td {
+	position:relative;
 	text-align:center;
 	vertical-align:middle;
 	border-style:solid;
@@ -804,7 +826,7 @@ button.subControl {
 	スクロールスペーサーを兼用をやめて分離
  */
 .sheetHeader {
-	display:none;
+	width:100%;
 }
 
 /*	ツールボックスの部品*/
@@ -816,9 +838,8 @@ input.toolTip	{
 /*		UI.表示プロパティ
 
 */
-optionPanel{
+div.optionPanel{
 	display:none;
-	margin:0px 0px 0px 16px 
 }
 div.optionPanelModal{
 	display:none;
@@ -952,7 +973,6 @@ td.colSep {
 .footerTool {
 	display:none;
 }
-
 .screenSpace{
 	display:none;
 }
@@ -960,7 +980,7 @@ td.colSep {
 	width:100%;
 }
 .pageBreak {
-	display:none;
+		page-break-before:always;
 }
 /*form view*/
 
@@ -1074,60 +1094,31 @@ div.application_status {
     padding:6px;
     border-style:double;
 }
-/*---------------- ドロップダウンメニュー*/
+/*---------------- ドロップダウンメニュー
+印刷時はすべて非表示
+*/
 
 #pMenu div{
-  z-index:8;
   display:none;
-  margin:0;
 }
 
 #pMenu li {
-  position: relative;
-  float: left;
-  margin: 0;
-  padding: 0px;
-  width: 64px;
-  height: 16px;
-  border: solid 1px #ccc;
-  font-weight: bold;
-  list-style-type: none;
-}
-#pMenu li:hover {
-  color: #fff;
-  background: #333;
-  z-index: 9;
+  display:none;
 }
 #pMenu li ul {
   display: none;
-  position: absolute;
-  top: 16px;
-  left: -1px;
-  padding: 5px;
-  width: 150px;
-  background: #eee;
-  border: solid 1px #ccc;
 }
 #pMenu li ul li {
-  margin: 0;
-  padding: 0;
-  width: 150px;
-  border: none;
+  display:none;
 }
 #pMenu li ul li a {
-  display: inline-block;
-  width: 150px;
-  height: 20px;
-}
-#pMenu li ul li a:hover {
-  background: #999;
-  color: #fff;
+  display: none;
 }
 
 #pMenu li ul{
 	display:none;
-	position:absolute;
 }
+
 input{
 	vertical-align:middle;
 }

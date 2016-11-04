@@ -1180,8 +1180,8 @@ if(pageNumber==1){
 	_BODY+='</span>';
 
 		_BODY+='<div id="memo_prt">';
-		if(XPS.memo.toString().length){
-			_BODY+=XPS.memo.toString().replace(/(\r)?\n/g,"<br>");
+		if(XPS.xpsTracks.noteText.toString().length){
+			_BODY+=XPS.xpsTracks.noteText.toString().replace(/(\r)?\n/g,"<br>");
 		}else{
 			_BODY+="<br><br><br><br>";
 		};

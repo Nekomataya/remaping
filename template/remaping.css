@@ -36,6 +36,30 @@ a:focus		{color:#880000;background-color:snow}
 	position:fixed;
 	z-index:3;
 }
+#UIheaderScrollV {
+	display:inline;
+}
+#UIheaderScrollH {
+	display:inline;
+}
+#UIheaderFix {
+	display:inline;
+	z-index:;
+}
+
+
+/* アプリケーションヘッダーライン
+	印刷時は非表示
+*/
+div.server-info {
+  text-align:right;
+}
+div #toolbarHeader {
+	float:left;
+	width:100%;
+	background-color:#a0a0a0;
+}
+
 /*		デバッグ
 	AIR専用エレメントは取リわけ
 */
@@ -235,6 +259,7 @@ th.framenotelabel {
 */
 /*	font-size:9pt;*/
 td {
+	position:relative;
 	text-align:center;
 	vertical-align:middle;
 	border-style:solid;

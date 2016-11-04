@@ -143,9 +143,9 @@ case	"memo":	;//memo edit start
 			document.getElementById("myWords").innerHTML=putMyWords();
 		}
 		myTarget.show();
-		document.getElementById("rEsult").value=XPS.memo;
+		document.getElementById("rEsult").value=XPS.xpsTracks.noteText;
 	}else{
-		XPS.memo=document.getElementById("rEsult").value;
+		XPS.xpsTracks.noteText=document.getElementById("rEsult").value;
 		sync("memo");
 		myTarget.hide();
 	};
@@ -744,7 +744,7 @@ spanWord=({
  sWap.refLayers = xUI.referenceXPS.xpsTracks.length-1;
  sWap.xpsBody = "";//getBodyData();
  sWap.xpsLayers = XPS.xpsTracks.length;
- 	var MT=XPS.memo.split("\n");
+ 	var MT=XPS.xpsTracks.noteText.split("\n");
 
 	var MTR=[];
  for(var id = 0 ;id < MT.length ; id++ ){MTR.push("\("+EncodePS2(MT[id])+")")};

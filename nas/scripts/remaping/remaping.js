@@ -43,7 +43,7 @@ function new_xUI(){
 //    初期化時点の参照変数はconfig.js内で設定される値である
 xUI.init    =function(XPS,referenceXps){
     this.hideSource    = false;  //グラフィック置き換え時にシートテキストを隠す
-    this.showGrphic    = true;   //置き換えグラフィックを非表示　＝　テキスト表示
+    this.showGraphic    = true;   //置き換えグラフィックを非表示　＝　テキスト表示
 
     this.dialogSpan    = SoundColumns;//シート上の配置に合わせてXPSを初期化する
     this.timingSpan    = SheetLayers;//シートは便宜上サウンド/タイミング（セル）/カメラ の３エリアに分けられるが
@@ -709,25 +709,21 @@ xUI.setReferenceXPS=function(myXps){
         sync("reference")
     }
 //////
-
 /**
-    テーブル表示用文字列置換
-        xUI.trTd(Str);
-        xUI.trTd(HTMLTableCellElement)
-    タグ等htmlで表示不能な文字を置き換える
-    
-    戻り値は変換後の文字列
-    文字列が与えられた場合は従来互換動作
-    テーブルセルがエレメントで与えられた場合は、セルの　innerHTMLを文字列として置換して、Graphicパーツ置換を同時に行う
+        xUI.drawSheetCell(HTMLTableCellElement)
+    テーブルセルを引数で与えてグラフィック置換及びテキスト置換を行う
+    trTdから分離して機能調整
 */
-xUI.trTd=function(){
-if(typeof arguments[0] =="undefined"){return false;}
-var target=arguments[0];
+xUI.drawSheetCell = function (myElement){
+if(typeof myElement =="undefined"){return false;}
+var target=myElement;
 
-if((target instanceof HTMLTableCellElement)&&(this.showGrphic)){
+if(this.showGraphic){
     var tgtID=target.id.split("_").reverse();
     var myXps=(tgtID.length==2)? this.XPS:this.referenceXPS;
     var myStr = myXps.xpsTracks[tgtID[1]][tgtID[0]];
+    var drawForm=false;
+    var sectionCount=0;
 /**
     判定時にトラック種別を考慮する
     ダイアログ、サウンド
@@ -735,85 +731,83 @@ if((target instanceof HTMLTableCellElement)&&(this.showGrphic)){
     カメラ
     エフェクト
     それぞれに置き換え対象シンボルが異なるので注意
-    trTdの引数をidにして置き換えまで処理することを検討?
-20161028
 */
-    var currentTrackOption=myXps.xpsTracks[tgtID[1]].option;
-
-//    xUI.Cgl.remove(target.id);//古いグラフパーツがあれば削除
+    var currentTrackOption  = myXps.xpsTracks[tgtID[1]].option;
+//    var currentSectionID    = 
+//    xUI.Cgl.remove(target.id);//古いグラフパーツがあれば削除↓
 // グラフパーツの削除はセルエントリの消去時に行わないと画面が乱れるので注意
     switch(currentTrackOption){
         case "sound":;
         case "dialog":;
             if (myStr.match(/[-_─━~]{2,}?/)){
-                xUI.Cgl.draw(target.id,"sound-section-open");
-                myStr="<br>";
+               myStr=(this.showGraphic)?"<br>":"<hr>";
+               drawForm = "sound-section-open";
             };//あとでセクションパース版と置き換え
         break;
         case "timing":;
         case "replacement":;
             if (myStr.match(/[\|｜]/)){
-                xUI.Cgl.draw(target.id,"line");
-                myStr="<br>";                
+                myStr=(this.showGraphic)?"<br>":"｜";                
+                drawForm = "line";
             }
             else if (myStr.match(/[:：]/)){
-                xUI.Cgl.draw(target.id,"wave");
-                myStr="<br>";                
+                myStr=(this.showGraphic)?"<br>":":";                
+                drawForm = "wave";
             }
             else if (myStr.match(/\(([^\)]+)\)/)){
-                xUI.Cgl.draw(target.id,"circle");
-                myStr=RegExp.$1;
+                myStr=(this.showGraphic)?RegExp.$1:myStr;
+                drawForm = "circle";
            }
            else if (myStr.match(/<([^>]+)>/)){
-                xUI.Cgl.draw(target.id,"triangle");
-                myStr=RegExp.$1;
+                myStr=(this.showGraphic)?RegExp.$1:myStr;
+                drawForm = "triangle";
             }
 break;
         case "camera":;
         case "camerawork":;
             if (myStr.match(/^[\|｜]$/)){
-                xUI.Cgl.draw(target.id,"line");
-                myStr="<br>";                
+                myStr=(this.showGraphic)?"<br>":"｜";                
+                drawForm = "line";
             }
             else if (myStr.match(/^[▼▽]$/)){
-                xUI.Cgl.draw(target.id,"section-open");
-                myStr="<br>";                
+                myStr=(this.showGraphic)?"<br>":myStr;                
+                drawForm = "section-open";
            }
             else if (myStr.match(/^[▲△]$/)){
-                xUI.Cgl.draw(target.id,"section-close");
-                myStr="<br>";                
+                myStr=(this.showGraphic)?"<br>":myStr;                
+                drawForm = "section-close";
            }
         
 break;
         case "effect":;
         case "sfx":;
-        //バルクで描画する場合は消去手順を考えないとあとで消えるのでなんか考える
-        //冒頭でなく末尾で描くか　又は　逆順処理が順当？
+//        myXps.xpsTracks[tgtID[1]].sections[] tgtID[0]
             if (myStr.match(/^[\|｜↑↓\*＊]$/)){
                 if(this.hideSource) myStr="<br>";                
-            }
-            else if (myStr.match(/^▼$/)){
+            } else if (myStr.match(/^▼$/)){
+                //この終端判定はあくまで仮判定なので注意　生き残らないように
                 if(myXps.xpsTracks[tgtID[1]][parseInt(tgtID[0])-1]=="|"){
-                var sectionCount = myXps.xpsTracks[tgtID[1]].countSectionLength(parseInt(tgtID[0]));
+                sectionCount = myXps.xpsTracks[tgtID[1]].countSectionLength(parseInt(tgtID[0]));
                 var startID = [tgtID[1],parseInt(tgtID[0])-sectionCount+1].join("_");
-                xUI.Cgl.sectionDraw(startID,"fo",sectionCount);
+                drawForm = "fo";
                 }              
                 if(this.hideSource) myStr="<br>";                
            }
             else if (myStr.match(/^▲$/)){
                 //この終端判定はあくまで仮判定なので注意　生き残らないように
                 if(myXps.xpsTracks[tgtID[1]][parseInt(tgtID[0])-1]=="|"){
-                var sectionCount = myXps.xpsTracks[tgtID[1]].countSectionLength(parseInt(tgtID[0]));
+                sectionCount = myXps.xpsTracks[tgtID[1]].countSectionLength(parseInt(tgtID[0]));
                 var startID = [tgtID[1],parseInt(tgtID[0])-sectionCount+1].join("_");
-                xUI.Cgl.sectionDraw(startID,"fi",sectionCount);
+                drawForm = "fi";
                 }
                 if(this.hideSource) myStr="<br>";                
            }
             else if (myStr.match(/^\]([^\]]+)\[$/)){
+                //この終端判定はあくまで仮判定なので注意　生き残らないように
                 if(myXps.xpsTracks[tgtID[1]][parseInt(tgtID[0])-1]=="|"){
-                var sectionCount = myXps.xpsTracks[tgtID[1]].countSectionLength(parseInt(tgtID[0]));
+                sectionCount = myXps.xpsTracks[tgtID[1]].countSectionLength(parseInt(tgtID[0]));
                 var startID = [tgtID[1],parseInt(tgtID[0])-sectionCount+1].join("_");
-                xUI.Cgl.sectionDraw(startID,"transition",sectionCount);
+                drawForm = "transition";
                 }   
                 if(this.hideSource) myStr="<br>";
            }
@@ -821,14 +815,33 @@ break;
     }
 //    console.log(target.id+":"+currentTrackOption+":"+myXps.xpsTracks[tgtID[1]][tgtID[0]]+":"+myStr);
 //    target.innerHTML=myStr;
-    return myStr;
-}else{
-    target=target.toString().replace( />/ig, "&gt;").replace(/</ig,"&lt;");//<>
-    if(this.Select[0]>0 && this.Select[0]<(this.SheetWidth-1)) target=target.toString().replace(/[\|｜]/ig,'|<br>');
-    if(target.match(/^[:：]$/)) return ':<br>';//波線
-    if(target.match(/[-_─━~]{2,}?/)) return "<hr>";//
-return target;
+target.innerHTML=myStr;
+if(this.showGraphic){
+    if(sectionCount){
+        setTimeout(function(){xUI.Cgl.sectionDraw(startID,drawForm,sectionCount);},0);
+    }else{
+        setTimeout(function(){xUI.Cgl.draw(target.id,drawForm)},0);
+    }
 }
+    return myStr;
+}
+}
+/**
+    テーブル表示用文字列置換
+        xUI.trTd(Str);
+    タグ等htmlで表示不能な文字を置き換える
+    戻り値は変換後の文字列
+*/
+xUI.trTd=function(){
+if(typeof arguments[0] =="undefined"){return false;}
+var target=arguments[0];
+
+    target=target.toString().replace( />/ig, "&gt;").replace(/</ig,"&lt;");//<>
+//    if(this.Select[0]>0 && this.Select[0]<(this.SheetWidth-1)) target=target.toString().replace(/[\|｜]/ig,'|<br>');
+//    if(target.match(/^[:：]$/)) return ':<br>';//波線
+//    if(target.match(/[-_─━~]{2,}?/)) return "<hr>";//
+return target;
+
 };
 //
 /*    XPSのプロパティの配列要素を"_"でつないで返す(シート上のidに対応)
@@ -1341,8 +1354,7 @@ if(pageNumber==1){
     _BODY+='</span>';
 
         _BODY+='<div id="memo_prt">';
-        if(XPS.memo.toString().length){
-//            _BODY+=XPS.memo.toString().replace(/(\r)?\n/g,"<br>");
+        if(XPS.xpsTracks.noteText.toString().length){
             _BODY+=XPS.xpsTracks.noteText.toString().replace(/(\r)?\n/g,"<br>");
         }else{
             _BODY+="<br><br><br><br>";
@@ -2773,9 +2785,10 @@ if((r>=0)&&(r<targetXps.xpsTracks.length)&&(f>=0)&&(f<targetXps.xpsTracks.durati
             var sheetCell=(isReference)? document.getElementById(["r",r,f].join("_")):document.getElementById([r,f].join("_"));
             if(sheetCell instanceof HTMLTableCellElement){
                 if(document.getElementById(sheetCell.id)){xUI.Cgl.remove(sheetCell.id);}
-                var td=(targetXps.xpsTracks[r][f]=='')? "<br>" : this.trTd(sheetCell) ;
+this.drawSheetCell(sheetCell);//関数内でシートセルを書き換える
+//                var td=(targetXps.xpsTracks[r][f]=='')? "<br>" : this.trTd(targetXps.xpsTracks[r][f]) ;
 //        シートテーブルは必要があれば書き換え
-                if (sheetCell.innerHTML!= td){ sheetCell.innerHTML=td;}
+//                if (sheetCell.innerHTML!= td){ console.log(sheetCell.innerHTML);sheetCell.innerHTML=td;}
             }
 //本体シート処理の際のみフットスタンプ更新
   if(! isReference){
@@ -3453,7 +3466,8 @@ xUI.Cgl.remove=function(myId){
 	if(this.body[myId]){$("#cgl"+myId).remove();delete this.body[myId];}
 }
 /**
-	描画コマンド
+	セル画像部品描画コマンド
+位置計算をブラウザに任せるため　絶対座標でなく相対座標で各テーブルセル自体にCANVASをアタッチする
 
 */
 xUI.Cgl.draw=function addGraphElement(myId,myForm) {
@@ -3462,17 +3476,23 @@ xUI.Cgl.draw=function addGraphElement(myId,myForm) {
 			$("#cgl"+myId).remove();delete this.body[myId];
 		//二重描画防止の為すでにエレメントがあればクリアして描画
 		}
-	    var objTarget = document.getElementById(myId);//ターゲットシートセルを取得 
+	    var objTarget = document.getElementById(myId);//ターゲットシートセルを取得
 		if((xUI.viewMode=="Compact")&&((myId.indexOf("r")==0)||(myId.split("_")[0]==0))){
 		    var targetParent = document.getElementById("UIheaderScrollV");//親は、表示モードで変更されるので注意
 		}else{
 		    var targetParent = document.getElementById("sheet_body");//親は、表示モードで変更されるので注意
 		}
+		var targetParent=objTarget;
 	    var targetRect=objTarget.getBoundingClientRect();
 	    var parentRect=targetParent.getBoundingClientRect();
+if(true){
 var myTop=targetRect.top-parentRect.top;
 var myLeft=targetRect.left-parentRect.left;
-
+}else{
+//各テーブルセルにアタッチするので原点が[0,0]
+var myTop=0;
+var myLeft=0;
+}
 	    var element = document.createElement('canvas'); 
 	    element.id = "cgl" + myId; 
 element.style.position="absolute";
@@ -3593,14 +3613,14 @@ break;
 	    element.style.zIndex=1;//シートに合わせて設定
 		element.style.pointerEvents='none';//イベントは全キャンセル
 		element.style.brendMode="multiply";//乗算
-		element.style.opacity="0.3";//30%
+		element.style.opacity="0.2";//30%
 this.body[myId]=element;
 this.body[myId].formProp=myForm;
 
 return element;
 }
 /**
-    セクションを一括描画するラッパー関数
+    トランジション系セクションを一括描画するラッパー関数
     この関数を使用する場合は直接Gcl.drawを呼ばないようにすること。
 */
 xUI.Cgl.sectionDraw = function(myId,myForm,myDuration){
