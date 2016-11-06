@@ -122,6 +122,7 @@ table.toolbox {
 		テーブル要素
 */
 th {
+	border-color:#bbbbbb;
 	text-align:center;
 	border-style:solid;
 	border-width:4px 1px 1px 0px;
@@ -151,6 +152,7 @@ th.tcSpan {
 	
 */
 th.timelabel{
+	color:gray;
 	text-align:center;
 	border-style:solid;
 	border-width:0px 1px 3px 1px;
@@ -204,7 +206,7 @@ th.stillSpan {
 th.stilllabel {
 	text-align:center;
 	border-style:solid;
-	border-width:1px 1px 3px 0px;
+	border-width:3px 1px 3px 0px;
 /*	font-size:9pt;*/
 }
 //timing
@@ -216,7 +218,7 @@ th.timingSpan {
 th.timinglabel {
 	text-align:center;
 	border-style:solid;
-	border-width:1px 1px 3px 0px;
+	border-width:3px 1px 3px 0px;
 }
 //sfx
 th.sfxSpan {
@@ -226,7 +228,7 @@ th.sfxSpan {
 th.sfxlabel {
 	text-align:center;
 	border-style:solid;
-	border-width:1px 1px 3px 0px;
+	border-width:3px 1px 3px 0px;
 /*	font-size:9pt;*/
 }
 //camera
@@ -237,7 +239,7 @@ th.cameraSpan {
 th.cameralabel {
 	text-align:center;
 	border-style:solid;
-	border-width:1px 1px 3px 0px;
+	border-width:3px 1px 3px 0px;
 /*	font-size:9pt;*/
 }
 
@@ -259,6 +261,7 @@ th.framenotelabel {
 */
 /*	font-size:9pt;*/
 td {
+	border-color:#bbbbbb;
 	position:relative;
 	text-align:center;
 	vertical-align:middle;
@@ -863,6 +866,7 @@ div.optionPanelFloat{
 /*タイムセパレータライン*/
 /*		左端*/
 .ltSep,.ltSep_Blank {
+	color:gray;
 	text-align:right;
 	border-style:solid;
 	vertical-align:bottom;
@@ -881,6 +885,7 @@ div.optionPanelFloat{
 /*サブセパレータライン*/
 /*		左端*/
 .lsSep,.lsSep_Blank {
+	color:gray;
 	text-align:right;
 	border-style:solid;
 	vertical-align:bottom;
@@ -899,6 +904,7 @@ div.optionPanelFloat{
 /*通常ライン*/
 /*		左端*/
 .lnSep,.lnSep_Blank {
+	color:gray;
 	text-align:right;
 	border-style:solid;
 	vertical-align:bottom;
@@ -907,11 +913,15 @@ div.optionPanelFloat{
 	height:5px;
 }
 /*		参照データ*/
+.ref {
+		color:gray;
+}
 .rnSep,.rnSep_Blank {
-			border-width:0px 1px 1px 0px;
-			color:gray;
+		border-width:0px 1px 1px 0px;
+		color:gray;
 }
 th.rnArea{
+		color:gray;
 		border-width:2px 1px 0px 0px;
 		width:144px;
 }

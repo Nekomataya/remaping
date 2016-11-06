@@ -117,8 +117,9 @@ nas.AnimationReplacement.prototype.interpolate= function(endValue,indexCount,ind
 
 　*/
 _parseReplacementTrack=function(){
-    var blankRegex  = new RegExp("^(" + this.id + ")?\[?[\-_\]?[(\<]?\s?[ｘＸxX×〆0０]{1}\s?[\)\>]?\]?$");//カラ判定　システム変数として分離予定
+    var blankRegex  = new RegExp("^[ｘＸxX×〆0０]$");//カラ判定　システム変数として分離予定
     var interpRegex = new RegExp("^[\-\+=○●*・a-zア-ン]$|^\[[^\]]+\]$");//中間値補間（動画記号）サイン　同上
+    var valueRegex  = new RegExp("^[\(<]?[0-9]+[>\)]?$");//無条件有効値 同上
     //自分自身(トラック)を親として新規セクションコレクションを作成
     var myCollectionBlank = new XpsTimelineSectionCollection(this);//ブランクベースコレクション
     var myCollection      = new XpsTimelineSectionCollection(this);//ベースコレクション
@@ -126,10 +127,12 @@ _parseReplacementTrack=function(){
     //値を持たないセクションをブランク値のオブジェクトとするか？
     var currentSection=myCollection.addSection(null);
     var currentSectionBlank=myCollectionBlank.addSection(null);
+
     var currentSubSection=null;
     var currentValue=this.getDefaultValue();
     var isInterp = false;
-    var isBlank  = ((currentValue != "blank")&&(currentValue))? false:true ;//第一フレームのブランク状態
+    var isBlank  = ((currentValue != "blank")&&(currentValue))? false:true ;//第一フレームのブランク状態を設定
+    var valueDetect = false;
 /**
     タイムライントラックのデフォルト値は、以下の手続きで取得
     タイムラインラベルが指定するグループがあらかじめ存在する場合は、そのグループオブジェクトが保持する値
@@ -140,38 +143,34 @@ _parseReplacementTrack=function(){
 */
     for (var fix=0;fix<this.length;fix++){
         var currentCell=Xps.sliceReplacementLabel(new String(this[fix]));//記述をラベルとエントリに分解
-        if( currentCell[1]=="" ){ currentCell[1]=this.parent.id; }
+        if( currentCell.length == 1 ){ currentCell.push(this.id); }
         //グループラベル付き・なしを判定する機能が必要
         currentSection.duration ++; //
-        currentSectionBlank.duration ++;     //セクション長加算
-        
+        currentSectionBlank.duration ++;     //セクション長加算        
         //未記入データ　これが一番多いので最初に処理しておく(処理高速化のため)
         if(currentCell[0].match(/^([\|｜;]|\s+)$/)||currentCell.length==0) continue;
         //ブランク判定
         /*
             値処理に先立ってブランク関連の処理はすべて終了する
-            ブランク切り替え判定 カレントを切り替えて新規セクションを積む
-            blankDetect  && (! isBlank)  changeBlankMode true;
-            interpDetect && (! isInterp) changeMode isInterp=true;
-                valueDetect  && (isBlank)    changeBlankMode false;
-                valueDetect  && (isInterp)   changeMode isInterp=false;
+            ブランク状態切り替え判定 カレントを切り替えて新規セクションを積む
         */
-        var blankDetect   = (currentCell[0].match(blankRegex))?  true:false;
-        var interpDetect  = (currentCell[0].match(interpRegex))? true:false;//括弧つきの補間サインも同時検出へ
-        var detectedValue = this.xParent.parentXps.xMap.getElementByName(currentCell);
         var valueDetect   = (detectedValue)? true:false;
+        var blankDetect   = (new String(currentCell[0]).match(blankRegex))?  true:false;
+        var interpDetect  = (new String(currentCell[0]).match(interpRegex))? true:false;//括弧つきの補間サインも同時検出へ
+//        console.log(fix+":"+this[fix]+" interp:"+interpDetect + "  blank: " + blankDetect);
+        var detectedValue = this.xParent.parentXps.xMap.getElementByName(currentCell);
         //ブランク処理判定
         if(blankDetect){
                 if(! isBlank){
                     isBlank=true;
                     currentSectionBlank=myCollectionBlank.addSection("blank");
-                    continue;
                 }
+                continue;
         }
         //中間値補間サインを検出したら中間値処理モード
         //既定値以外の補間サイン検出が必要
         if(interpDetect){
-              if( isBalnk ){ isBlank = false;}
+              if( isBlank ){ isBlank = false;}
               if(! isInterp ){
                 //中間値補間区間開始　カレントセクションを切り替え サブセクションを登録
                 isInterp = true;
@@ -184,29 +183,37 @@ _parseReplacementTrack=function(){
               }
               continue;
         }
-        //区間の値を検出
-        var currentElement=MAP.getElementByName([this.parent.id,currentCell].join("-"));
+        //区間値を処理
+/**
+    既存エントリがない場合、エントリ文字列が条件を満たせば新規エントリとしてxMapにグループとエントリを登録して使用する
+    それ以外は、無効エントリとなる
+*/
+        var currentElement = this.xParent.parentXps.xMap.getElementByName(currentCell.reverse().join("-"));
         if(currentElement) {
-            
-        }
-        //グループラベルの無条件連結は問題アリ
-        //セクション開始セパレータ
-        if(this[fix].match(/^[]$/)){
-            if(currentSection.value){
-                currentSection.duration --;//加算した継続長をキャンセル
-                currentSection.value.contentText=currentSound.toString();//先の有値セクションをフラッシュして
-                currentSection=myCollection.addSection(false);//新規のカラセクションを作る
-                currentSection.duration ++;//キャンセル分を後方区間に加算
-                currentEffect=new nas.AnimationComposit("");//サウンドを新規作成
-            }else{
-                currentSection=myCollection.addSection(currentEffect);//新規有値セクション作成
+            valueDetect=true;
+        }else{
+            if(currentCell[0].match(valueRegex)){
+                valueDetect = true;
+                currentElement=this.pushEntry(currentCell[0],currentCell[1])
             }
-            continue;
         }
+        if(valueDetect){
+            if(isBlank){
+                isBlank = false;
+                currentSectionBlank.duration --;
+            }
+            if(isInterp){
+                isInterp = false;
+                currentSection.duration --;
+                currentSection = myCollection.addSection(currentElement.value);
+                currentSection.duration ++;
+            }
+        }
+        continue
     }
     this.sections       = myCollection;
     this.sectionsBlank  = myCollectionBlank;
-    console.log("sections-length:"+myCollection.length +":"+myCollectionBlank.length)
+    console.log("sections-length:"+myCollection.length +":blank:"+myCollectionBlank.length)
     return this.sections;//ブランク情報の返し方を考えたほうが良いかも
 }
 

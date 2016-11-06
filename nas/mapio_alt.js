@@ -154,7 +154,7 @@ group   "B"
 name    "B-1"
         "001"
         "B001"
-        "1"     //ここまで同一セルとして許される表記
+        "1"     //これらは同一セルとして許される表記
 
         "B-2a"
         "B_3カブセ"
@@ -283,6 +283,7 @@ xMap.prototype.new_xMapElement = function (myName,myOption,myLink,contentSource)
 	if(!(myOption.toString().match(/(camera|cell|effect|sound|system)/))) myOption = "cell";
 	var newElement=new nas.xMapGroup(myName,myOption,myLink);
 	this.elementGroups.push(newElement);
+	
 	switch(myOption){
 		case "xps":
 			newElement.content=new nas.XpsAgent();
@@ -304,6 +305,7 @@ xMap.prototype.new_xMapElement = function (myName,myOption,myLink,contentSource)
 	newElement.content.comments=new String("");
 		break;
 		case "sound":
+		case "dialog":
 			if( contentSource instanceof nas.AnimationSound ){
 			    newElement.content=contentSource;
 			}else{
@@ -311,6 +313,7 @@ xMap.prototype.new_xMapElement = function (myName,myOption,myLink,contentSource)
 			}
 		break;
 		case "effect":
+		case "sfx":
 			if( contentSource instanceof nas.AnimationEffect ){
     			newElement.content=contentSource;
     		}else{
@@ -318,6 +321,7 @@ xMap.prototype.new_xMapElement = function (myName,myOption,myLink,contentSource)
 			}
 		break;
 		case "camera":
+		case "camerawork":
 			if( contentSource instanceof nas.ClippingFrame ){
     			newElement.content=contentSource;
     		}else{
@@ -325,6 +329,7 @@ xMap.prototype.new_xMapElement = function (myName,myOption,myLink,contentSource)
     		}
 		break;
 		case "cell":
+		case "replacement":
 		default:
 			if( contentSource instanceof nas.AnimationReplacement ){
     			newElement.content=contentSource;
@@ -1082,12 +1087,12 @@ xMapに対してxMapエレメントを請求するメソッドを作成する
 存在しない場合は、そのエントリを「新規」に「空の値」で作成して返す
 エントリは、順次作成されてセッションユニークなIDが与えられる（恒常性は無い）
 
-エントリにIDでアクセスすることも可能
+セッション中はエントリにIDでアクセスすることも可能
 
 エントリは、タイミングを調整してXPS側からクリンアップを行うことが可能
 保存前処理として終了前には必ずクリンアップが行なわれる。
 
-シート上に一度も使用されないエントリを抽出して、値が空のままのエントリは自動さ削除され、記録には残らない。
+シート上に一度も使用されないエントリを抽出して、値が空のままのエントリは自動削除され、記録には残らない。
 値が与えられたエントリは記録される
 ユーザ判断によるクリンアップのルートは作成する
 

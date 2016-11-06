@@ -1021,7 +1021,7 @@ Xps.prototype.deleteTL = function (args) {
  * 元あったデータ内容は可能な限り保存
  * 切り捨て分はなくなる。
  * 新たに出来たレコードは、ヌルストリングデータで埋める。
- * 
+ * セクションキャッシュはすべて無効
  * @param newTimelines
  * @param newDuration
  * @returns {boolean}
@@ -1058,7 +1058,7 @@ if(this.xpsTracks.duration){
         for (var i = oldWidth; i < newTimelines; i++) {
  //           this.xpsTracks[i] = new Array(newDuration);
 //	XpsTimelineTrack(myLabel, myType, myParent, myLength, myIndex)
-            this.xpsTracks[i] = new XpsTimelineTrack(i,option,this.xpsTrack,newDuration,i);
+            this.xpsTracks[i] = new XpsTimelineTrack(i,option,this.xpsTracks,newDuration,i);
 //if(durationUp)
             for (var f = 0; f < newDuration; f++) {
                 this.xpsTracks[i][f] = '';
@@ -1085,18 +1085,18 @@ if(this.xpsTracks.duration){
 	this.xpsTracks.length = newTimelines;
     if (widthUp) {
         for (i = oldWidth - 2; i < (newTimelines - 2); i++) {
-            this["layers"][i] = [];//これ、今はarrayだけど後でコンストラクタ書くこと
+            this.xpsTracks[i] = new XpsTimelineTrack(i,"timing",this.xpsTracks,newDuration);//myLabel, myType, myParent, myLength
 
-            this["layers"][i]["id"] = ("00" + i).slice(-2);
-            this["layers"][i]["sizeX"] = this["layers"][oldWidth - 3]["sizeX"];
-            this["layers"][i]["sizeY"] = this["layers"][oldWidth - 3]["sizeY"];
-            this["layers"][i]["aspect"] = this["layers"][oldWidth - 3]["aspect"];
-            this["layers"][i]["lot"] = this["layers"][oldWidth - 3]["lot"];
-            this["layers"][i]["blmtd"] = this["layers"][oldWidth - 3]["blmtd"];
-            this["layers"][i]["blpos"] = this["layers"][oldWidth - 3]["blpos"];
-            this["layers"][i]["option"] = this["layers"][oldWidth - 3]["option"];
-            this["layers"][i]["link"] = this["layers"][oldWidth - 3]["link"];
-            this["layers"][i]["parent"] = this["layers"][oldWidth - 3]["parent"];
+            this.xpsTracks[i]["id"] = ("00" + i).slice(-2);
+            this.xpsTracks[i]["sizeX"] = this.xpsTracks[oldWidth - 3]["sizeX"];
+            this.xpsTracks[i]["sizeY"] = this.xpsTracks[oldWidth - 3]["sizeY"];
+            this.xpsTracks[i]["aspect"] = this.xpsTracks[oldWidth - 3]["aspect"];
+            this.xpsTracks[i]["lot"] = this.xpsTracks[oldWidth - 3]["lot"];
+            this.xpsTracks[i]["blmtd"] = this.xpsTracks[oldWidth - 3]["blmtd"];
+            this.xpsTracks[i]["blpos"] = this.xpsTracks[oldWidth - 3]["blpos"];
+            this.xpsTracks[i]["option"] = this.xpsTracks[oldWidth - 3]["option"];
+            this.xpsTracks[i]["link"] = this.xpsTracks[oldWidth - 3]["link"];
+            this.xpsTracks[i]["parent"] = this.xpsTracks[oldWidth - 3]["parent"];
 
         }
     }
@@ -1195,8 +1195,9 @@ Xps.prototype.put = function (myAddress, myStream) {
      */
     //var updatedRange=new Array();
     for (var c = 0; c < srcData.length; c++) {
+        var writeColumn = c + myAddress[0];
+        this.xpsTracks[writeColumn].sectionTrust=false;
         for (var f = 0; f < srcData[0].length; f++) {
-            var writeColumn = c + myAddress[0];
             var writeFrame = f + myAddress[1];
             if (
                 (writeColumn >= 0) && (writeColumn < this.xpsTracks.length) &&
@@ -1206,7 +1207,6 @@ Xps.prototype.put = function (myAddress, myStream) {
                 //updatedRange.push([writeColumn,writeFrame]);
             }
         }
-        this.xpsTracks[c].sectionTrust=false;
     }
     /**
      * 戻り値は、書き込みに成功したレンジ
@@ -2186,6 +2186,10 @@ XpsTimelineTrack.prototype.parseCompositeTrack=_parseCompositeTrack;//コンポ�
     各々のパーサは、データ配列を入力としてセクションコレクションを返す
     各コレクションの要素はタイムラインセクションオブジェクト
     値はタイムライン種別ごとに異なるがセクション自体は共通オブジェクトとなる
+
+    セクションパースは、非同期で実行される場合がありそうなので、重複リクエストを排除するためにキュー列を作って運用する必要ありそう
+    その場合は、このルーチンがコントロールとなる?1105memo
+    もう一つ外側（トラックコレクション又はXps側）に必要かも
 */
 XpsTimelineTrack.prototype.parseTimelineTrack = function(){
     var myResult = false;
@@ -2213,4 +2217,40 @@ XpsTimelineTrack.prototype.parseTimelineTrack = function(){
     }
     if (myResult){this.sectionTrust=true;}
     return myResult;
+}
+/**
+フレームを指定してタイムライントラック上のセクションを返す
+セクションバッファが最新でない場合は、セクションパースを実施する
+*/
+XpsTimelineTrack.prototype.getSectionByFrame = function(myFrame){
+    var myResult =false;
+    if(typeof myFrame == "undefined") myFrame = 0 ;
+    if(! this.sectionTrust){this.parseTimelineTrack();}
+    //ここは非同期実行不可
+    for (var ix=0;ix<this.sections.length;ix ++){
+        if(myFrame < (this.sections[ix].startOffset()+this.sections[ix].duration)){
+            myResult = this.sections[ix];
+            break;
+        }
+    }
+    return myResult;
+}
+/**
+ * xMap getElementByName/new_xMapElementをラップするタイムライントラックのメソッド
+ * 既存のエレメントを指定した場合は、当該エレメントを返し
+ * 存在しないエレメントを指定した場合は、エレメントを作成して返す
+ * 同一の手続きが多いため補助関数を作成
+ 引数はエレメント名、グループ名
+ 
+ */
+XpsTimelineTrack.prototype.pushEntry = function (elementName,groupName){
+    var myGroup= this.getElementByName(groupName);
+    var myElement= this.getElementByName([groupName,elementName].join(""));//請求するターゲットジョブ処理は保留
+    if(!myElement){
+        if(!myGroup){;//new_xMapElement(name,type,Object Job)
+            myGroup = this.new_xMapElement(groupName,this.option,this.xParent.parentXps.xMap.currentJob);
+        }
+        myElement = this.new_xMapElement(elementName,myGroup,this.xParent.parentXps.xMap.currentJob);
+    }
+    return myElement;
 }

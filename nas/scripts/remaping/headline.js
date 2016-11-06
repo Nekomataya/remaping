@@ -99,9 +99,9 @@ default	:return;
 		if(oldduration>duration){
 			xUI.selectCell ("1_"+(duration-1).toString());
 		};
-//ターゲットカラ複製を作って編集
+//ターゲットから複製を作ってサイズを調整
 	var newXPS=new Xps();
-	newXPS.readIN( XPS.toString());
+	newXPS.readIN( xUI.XPS.toString());
 
 	for (i=0;i<newXPS.xpsTracks.length;i++)
 	{
@@ -157,19 +157,20 @@ function chgValue(id)
 	switch (id)
 	{
 case	"memo"	:
+case	"noteText"	:
 //		XPS["memo"]=myTarget.value;
-		xUI.put(["memo",myTarget.value]);
+		xUI.put(["noteText.xpsTracks",myTarget.value]);
 		break;
 		
 case	"blmtd"	:
 //		XPS["layers"][xUI.Select[0]-1][id]=myTarget.value;
-		xUI.put([[id,xUI.Select[0]-1,"layers"].join("."),myTarget.value]);
+		xUI.put([[id,xUI.Select[0],"xpsTracks"].join("."),myTarget.value]);
 		chkPostat();
 		break;
 
 case	"blpos"	:
 //		XPS["layers"][xUI.Select[0]-1][id]=myTarget.value;
-		xUI.put([[id,xUI.Select[0]-1,"layers"].join("."),myTarget.value]);
+		xUI.put([[id,xUI.Select[0],"xpsTracks"].join("."),myTarget.value]);
 		break;
 
 case	"aeVersion"	:
@@ -192,7 +193,7 @@ case	"cut"	:	xUI.cut();break;
 case	"paste"	:	xUI.paste();break;
 case	"keyArea"	:
 	var Lvl=xUI.Select[0];
-	if(Lvl>0&&Lvl<=(XPS.layers.length+1))
+	if(Lvl>0 && Lvl<=(XPS.xpsTracks.length-1))
 	{	writeAEKey(Lvl) }
 	;break;
 case	"areaXPS"	:

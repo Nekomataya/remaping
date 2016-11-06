@@ -79,24 +79,26 @@ xUI.init    =function(XPS,referenceXps){
     this.cLoop    =CLoop;    //カーソルループ
     this.SheetLength    =SheetLength;    //タイムシート1枚の表示上の秒数 コンパクトモードではシート長が収まる秒数に強制される
 //コンパクトモード時はこのプロパティとcolsの値を無視するように変更
-    this.SheetWidth= XPS.xpsTracks.length;//シートの幅(編集範囲)
-
+    this.SheetWidth= this.XPS.xpsTracks.length;//シートの幅(編集範囲)
     this._checkProp=function(){
 //XPSをチェックしてxUIのシートビュープロパティを更新
     this.dialogCount=0;this.stillCount=0;this.timingCount=0;this.sfxCount=0;this.cameraCount=0;
     this.dialogSpan=0;this.cameraSpan=0;
-for(var idx=0;idx<(XPS.xpsTracks.length-1);idx++){
-    switch(XPS.xpsTracks[idx].option){
-//     case "comment": break;//末尾はコメント予約なので判定をスキップ
+for(var idx=0;idx<(this.XPS.xpsTracks.length-1);idx++){
+//for(var idx=0;idx<this.XPS.xpsTracks.length;idx++){}
+    this.XPS.xpsTracks[idx].sectionTrust=false;
+    switch(this.XPS.xpsTracks[idx].option){
+     case "comment": break;//末尾はコメント予約なので判定をスキップ
      case "sound" : ;
      case "dialog": this.dialogCount++;break;
      case "still" : this.stillCount++ ;break;
      case "effect": ;
      case "sfx"   : this.sfxCount++   ;break;
+     case "camerawork":;
      case "camera": this.cameraCount++;break;
      case "replacement": ;
-     case "timing": ;
-     default:       this.timingCount++;break;
+     case "timing": this.timingCount++;break;
+     default:       ;// NOP
     };
 //表示域左側で連続した音声トラックの数を控える（最初に出てきたsound/dialog以外のトラックの位置で判定 ）
     if((XPS.xpsTracks[idx].option!="dialog")&&(! this.dialogSpan)){this.dialogSpan=this.dialogCount};
@@ -427,17 +429,19 @@ xUI.getFileName=function(myFileName){
         xUI.flush(content)
         現在のシートの入力領域をすべてcontentで埋める
         戻り値は常にtrue
+        これは試験用関数：実用性は無い　確かもう使ってない　20161106
 */
 //
 xUI.flush=function(content){
     if(! content){content=""};
 //強制的にnullデータで全レイヤ・全フレームを書き換え
-    var myDuration=XPS.duration();
+    var myDuration = this.XPS.duration();
 //    タイムラインループ
-    for (T=0;T<XPS.xpsTracks.length;T++){
+    for (T=0;T< this.XPS.xpsTracks.length;T++){
+        this.XPS.xpsTracks[T].sectionTrust=false;
 //        フレームループ
-        for(F=0;F<myDuration;F++){
-            try {XPS.xpsTracks[T][F]=content}catch(e) {alert(e);return;};
+        for(F=0;F < myDuration;F++){
+            try {this.XPS.xpsTracks[T][F]=content;this.syncSheetCell();}catch(e) {alert(e);return;};
         };
     };
     return true;
@@ -722,8 +726,9 @@ if(this.showGraphic){
     var tgtID=target.id.split("_").reverse();
     var myXps=(tgtID.length==2)? this.XPS:this.referenceXPS;
     var myStr = myXps.xpsTracks[tgtID[1]][tgtID[0]];
-    var drawForm=false;
-    var sectionCount=0;
+    var drawForm = false;
+    var sectionDraw = false;
+    var mySection = myXps.xpsTracks[tgtID[1]].getSectionByFrame(tgtID[0]);
 /**
     判定時にトラック種別を考慮する
     ダイアログ、サウンド
@@ -781,44 +786,34 @@ break;
 break;
         case "effect":;
         case "sfx":;
+        var drawForms ={"▲":"fi","▼":"fo","]><[":"transition"};//この配分は仮ルーチン　良くない
 //        myXps.xpsTracks[tgtID[1]].sections[] tgtID[0]
             if (myStr.match(/^[\|｜↑↓\*＊]$/)){
                 if(this.hideSource) myStr="<br>";                
             } else if (myStr.match(/^▼$/)){
-                //この終端判定はあくまで仮判定なので注意　生き残らないように
-                if(myXps.xpsTracks[tgtID[1]][parseInt(tgtID[0])-1]=="|"){
-                sectionCount = myXps.xpsTracks[tgtID[1]].countSectionLength(parseInt(tgtID[0]));
-                var startID = [tgtID[1],parseInt(tgtID[0])-sectionCount+1].join("_");
-                drawForm = "fo";
-                }              
                 if(this.hideSource) myStr="<br>";                
            }
             else if (myStr.match(/^▲$/)){
-                //この終端判定はあくまで仮判定なので注意　生き残らないように
-                if(myXps.xpsTracks[tgtID[1]][parseInt(tgtID[0])-1]=="|"){
-                sectionCount = myXps.xpsTracks[tgtID[1]].countSectionLength(parseInt(tgtID[0]));
-                var startID = [tgtID[1],parseInt(tgtID[0])-sectionCount+1].join("_");
-                drawForm = "fi";
-                }
                 if(this.hideSource) myStr="<br>";                
            }
             else if (myStr.match(/^\]([^\]]+)\[$/)){
-                //この終端判定はあくまで仮判定なので注意　生き残らないように
-                if(myXps.xpsTracks[tgtID[1]][parseInt(tgtID[0])-1]=="|"){
-                sectionCount = myXps.xpsTracks[tgtID[1]].countSectionLength(parseInt(tgtID[0]));
-                var startID = [tgtID[1],parseInt(tgtID[0])-sectionCount+1].join("_");
-                drawForm = "transition";
-                }   
                 if(this.hideSource) myStr="<br>";
            }
+//        if(((mySection.startOffset()+mySection.duration-1) == tgtID[0])&&(mySection.subSections)){}
+        if((mySection.startOffset()+mySection.duration-1) == tgtID[0]){
+            var formStr = myXps.xpsTracks[tgtID[1]][mySection.startOffset()];
+            drawForm = drawForms[formStr];
+            sectionDraw = true;
+        }
 break;
     }
 //    console.log(target.id+":"+currentTrackOption+":"+myXps.xpsTracks[tgtID[1]][tgtID[0]]+":"+myStr);
 //    target.innerHTML=myStr;
 target.innerHTML=myStr;
 if(this.showGraphic){
-    if(sectionCount){
-        setTimeout(function(){xUI.Cgl.sectionDraw(startID,drawForm,sectionCount);},0);
+    if(sectionDraw){
+        console.log([tgtID[1],mySection.startOffset()].join("_")+":"+formStr+":"+drawForm+":"+mySection.duration);
+        setTimeout(function(){xUI.Cgl.sectionDraw([tgtID[1],mySection.startOffset()].join("_"),drawForm,mySection.duration);},0);
     }else{
         setTimeout(function(){xUI.Cgl.draw(target.id,drawForm)},0);
     }
@@ -912,7 +907,7 @@ if(ID instanceof Array){
         paintColor=this.sheetbaseColor;
     };
 //この辺まとめた方が良さそう?
-    if(XPS.xpsTracks[xUI.Select[0]][xUI.Select[1]]=='') paintColor=this.sheetbaseColor;
+    if(this.XPS.xpsTracks[xUI.Select[0]][xUI.Select[1]]=='') paintColor=this.sheetbaseColor;
 
 //足跡ぺったら
     document.getElementById(this.getid("Select")).style.backgroundColor=paintColor;
@@ -1748,8 +1743,11 @@ BODY_ += '_';
 BODY_ += cols.toString();
  switch (XPS.xpsTracks[r].option){
 case "still" :BODY_ +='" class="stilllabel" ' ;break;
+case "effect":
 case "sfx"   :BODY_ +='" class="sfxlabel" '   ;break;
+case "camerawork":
 case "camera":BODY_ +='" class="cameralabel" ';break;
+case "replacement":
 case "timing":
 case "dialog":
 case "sound":
@@ -1803,20 +1801,20 @@ if(restFrm==(Math.ceil(XPS.framerate)-1)){
 //秒セパレータ
     var tH_border= 'class=ltSep';
     var dL_border= 'class=dtSep';
-    var sC_border= 'class=ntSep';
+    var sC_border= 'class="ntSep';
     var mO_border= 'class=ntSep';
 }else{
     if (n%this.sheetSubSeparator==(this.sheetSubSeparator-1)){
 //    サブセパレータ
         var tH_border= 'class=lsSep';
         var dL_border= 'class=dsSep';
-        var sC_border= 'class=nsSep';
+        var sC_border= 'class="nsSep';
         var mO_border= 'class=nsSep';
     }else{
 //    ノーマル(通常)指定なし
         var tH_border= 'class=lnSep';
         var dL_border= 'class=dnSep';
-        var sC_border= 'class=nnSep';
+        var sC_border= 'class="nnSep';
         var mO_border= 'class=nnSep';
     };
 };
@@ -1856,9 +1854,9 @@ BODY_ +='<td ';
 BODY_ += 'id=\"r_';
 BODY_ +=r.toString()+'_'+ current_frame.toString();
 BODY_ +='" ';
-BODY_ +=sC_border+cellClassExtention;
+BODY_ +=sC_border+cellClassExtention + ' ref"';
     }else{
-BODY_ +=sC_border+"_Blank";
+BODY_ +=sC_border+'_Blank"';
 };
 BODY_ +='>';
         if (current_frame>=this.referenceXPS.xpsTracks[r].length){
@@ -1917,7 +1915,7 @@ BODY_ +=r.toString()+'_'+ current_frame.toString();
 BODY_ +='" ';
 //BODY_ +='onclick="xUI.Mouse(event)" ';
     };
-BODY_ +=sC_border+cellClassExtention;
+BODY_ +=sC_border+cellClassExtention +'"';
 BODY_ +='>';
 //        if((current_frame==null)||(current_frame>=XPS.duration())){}
         if (isBlankLine){
@@ -2312,7 +2310,7 @@ if(! dup){
     }
 //オブジェクトメソッドで書き換え
     for(var ix=0;ix<bulk.length;ix++){bulk[ix]=bulk[ix].join(",")};
-    var putResult=XPS.put([left,top],bulk.join("\n"));
+    var putResult=this.XPS.put([left,top],bulk.join("\n"));
 //if(putResult){dbgPut(putResult[0].join("\n")+"\n"+putResult[1].join("\n")+"\n"+putResult[2].join("\n"))}
 //UNDO配列を設定
 //Selection互換のため[left,top]いずれかが負数の時は右下を仮のフォーカスとして与える
@@ -2558,49 +2556,51 @@ if(datastream instanceof Xps){
     prevXPS.readIN(XPS.toString());
     UNDO[2]=prevXPS;
 //入力データをXPSに設定（複製か？）
-    XPS.readIN(datastream.toString());
+    this.XPS.readIN(datastream.toString());
+//新規のXpsのサイズを確認して    
     nas_Rmp_Init();//画面全体更新
 }else if(datastream instanceof Array){
-/*    引数が配列の場合は、XPS本体のプロパティを編集する
+/*    引数が配列の場合は、Xps のプロパティを編集する
 形式:    [kEyword,vAlue]
     キーワード列とプロパティの対応リストは以下を参照
     キーワードは基本的にプロパティ文字列　"parent""stage"等
-    レイヤーコレクションの内包プロパティは　"name.1.xpsTracks"等の"."接続した倒置アドレスで指定
+    タイムラインコレクションの個別プロパティは　"id.1.xpsTracks"等の"."接続した倒置アドレスで指定
 
 //        Xps標準のプロパティ設定
-    parent        ;//親Xps参照用プロパティ　初期値はnull（参照無し）編集可
-    stage        ;//初期化の際に設定する　編集不可
-    mapfile        ;//初期化の際に設定する　編集不可
-    opus        ://編集対象
-    title        ;//編集対象
-    subtitle        ;//編集対象
-    scene        ;//編集対象
-    cut        ;//編集対象
+    parent      ;//親Xps参照用プロパティ　初期値はnull（参照無し）編集可
+    stage       ;//初期化の際に設定する　編集不可
+    mapfile     ;//初期化の際に設定する　編集不可
+    opus        ;//編集対象
+    title       ;//編集対象
+    subtitle    ;//編集対象
+    scene       ;//編集対象
+    cut         ;//編集対象
     trin        ;//編集対象(ドキュメント構成変更)
-    trout        ;//編集対象(ドキュメント構成変更)
+    trout       ;//編集対象(ドキュメント構成変更)
     rate        ;//編集対象(ドキュメント構成変更)
-    framerate        ;//編集対象(ドキュメント構成変更)
-    create_time    ;//システムハンドリング　編集不可
-    create_user    ;//システムハンドリング　編集不可
-    update_time    ;//システムハンドリング　編集不可
-    update_user    ;//システムハンドリング　編集不可
+    framerate   ;//編集対象(ドキュメント構成変更)
+    create_time ;//システムハンドリング　編集不可
+    create_user ;//システムハンドリング　編集不可
+    update_time ;//システムハンドリング　編集不可
+    update_user ;//システムハンドリング　編集不可
 
-    layers        ;レイヤコレクション　構成変更のケースと内容変更の両ケースあり
-            ;レイヤコレクションのエントリ数が変更になる場合は全て構成変更　それ以外は内容編集
+    xpsTracks   ;タイムラインコレクション　構成変更のケースと内容変更の両ケースあり
+                ;コレクションのエントリ数が変更になる場合は全て構成変更　それ以外は内容編集
 
-TimelineTrackオブジェクトのプロパティ
-    id    ;//識別用タイムラインラベル　編集対象
-    sizeX    ;//デフォルト幅 point    編集対象（編集価値低）
-    sizeY    ;//デフォルト高 point    編集対象（編集価値低）
-    aspect    ;//デフォルトのpixelAspect　編集対象（編集価値低）
-    lot    ;//map接続データ　編集禁止（編集価値低）
-    blmtd    ;//セレクター利用　
-    blpos    ;//セレクター利用　
-    option    ;//セレクター利用　
+xpsTimelineTrackオブジェクトのプロパティ
+    noteText    ;//編集対象
+    
+    id      ;//識別用タイムラインラベル　編集対象
+    sizeX   ;//デフォルト幅 point    編集対象（編集価値低）
+    sizeY   ;//デフォルト高 point    編集対象（編集価値低）
+    aspect  ;//デフォルトのpixelAspect　編集対象（編集価値低）
+    lot     ;//map接続データ　編集禁止（編集価値低）
+    blmtd   ;//セレクター利用　
+    blpos   ;//セレクター利用　
+    option  ;//セレクター利用 トラック種別変更時はセクションキャッシュをクリア
     link    ;//セレクター利用　
-    parent    ;//セレクター利用　
+    parent  ;//セレクター利用　
 
-    memo        ;//編集対象
 
 */
     var myTarget= datastream[0].split(".");
@@ -2610,11 +2610,12 @@ TimelineTrackオブジェクトのプロパティ
 //ターゲットの要素数が1以上の場合はタイムラインプロパティの変更
 //        UNDO[2]=[入力ターゲット複製,現在値];
         UNDO[2]=[datastream[0],XPS.xpsTracks[myTarget[1]][myTarget[0]]];
-        XPS.xpsTracks[myTarget[1]][myTarget[0]]=datastream[1];//入力値を設定
+        this.XPS.xpsTracks[myTarget[1]][myTarget[0]]=datastream[1];//入力値を設定
+        if(myTarget[0] =="option"){this.XPS.xpsTracks[myTarget[1]].sectionTrust = false;}
     }else{
 //単独プロパティ変更
-        UNDO[2]=[datastream[0],XPS[myTarget[0]]];
-        XPS[myTarget[0]]=datastream[1];
+        UNDO[2]=[datastream[0],this.XPS[myTarget[0]]];
+        this.XPS[myTarget[0]]=datastream[1];
     }
     nas_Rmp_Init();//sync系で置き換えが望ましい
 
@@ -2654,8 +2655,8 @@ TimelineTrackオブジェクトのプロパティ
 //シート第2象限とソースデータの幅 の小さいほうをとる
         var TrackEndAddress=((xUI.SheetWidth-this.Select[0])<sdWidth)?
     (this.SheetWidth-1):(TrackStartAddress+sdWidth)    ;//    右端
-        var FrameEndAddress=((XPS.duration()-this.Select[1])<sdHeight)?
-    (XPS.duration()-1):(FrameStartAddress+sdHeight)    ;//    下端
+        var FrameEndAddress=((this.XPS.duration()-this.Select[1])<sdHeight)?
+    (this.XPS.duration()-1):(FrameStartAddress+sdHeight)    ;//    下端
     };
 //バックアップは遅延処理に変更・入力クリップをここで行う
         var Tracklimit=TrackEndAddress-TrackStartAddress+1;
@@ -2674,12 +2675,12 @@ TimelineTrackオブジェクトのプロパティ
     switch(this.inputFlag){
     case "redo":
     case "undo":
-//        var putReslt=XPS.put(undoTarget[0],srcData.join("\n"));
+//        var putReslt=this.XPS.put(undoTarget[0],srcData.join("\n"));
 //    this.syncSheetCell([TrackStartAddress,FrameStartAddress],[TrackEndAddress,FrameEndAddress]);
 //    break;
     default:
         this.selectionHi("clear");//選択範囲のハイライトを払う
-        var putResult=XPS.put([TrackStartAddress,FrameStartAddress],srcData.join("\n"));
+        var putResult=this.XPS.put([TrackStartAddress,FrameStartAddress],srcData.join("\n"));
     this.syncSheetCell([TrackStartAddress,FrameStartAddress],[TrackEndAddress,FrameEndAddress]);
     }
 //設定値に従って、表示を更新（別メソッドにしてフォーカスを更新）
@@ -2781,7 +2782,7 @@ xUI.syncSheetCell=function(startAddress,endAddress,isReference){
 if((r>=0)&&(r<targetXps.xpsTracks.length)&&(f>=0)&&(f<targetXps.xpsTracks.duration)){
 //シートデータを判別してGraphicシンボル置き換えを判定（単純置き換え）
 //        配置データが未設定ならば<br>に置き換え
-//            var td=(XPS.xpsTracks[r][f]=='')?"<br>" : this.trTd(XPS.xpsTracks[r][f]) ;
+//            var td=(this.XPS.xpsTracks[r][f]=='')?"<br>" : this.trTd(this.XPS.xpsTracks[r][f]) ;
             var sheetCell=(isReference)? document.getElementById(["r",r,f].join("_")):document.getElementById([r,f].join("_"));
             if(sheetCell instanceof HTMLTableCellElement){
                 if(document.getElementById(sheetCell.id)){xUI.Cgl.remove(sheetCell.id);}
@@ -3477,6 +3478,7 @@ xUI.Cgl.draw=function addGraphElement(myId,myForm) {
 		//二重描画防止の為すでにエレメントがあればクリアして描画
 		}
 	    var objTarget = document.getElementById(myId);//ターゲットシートセルを取得
+	    if(! objTarget){return false;};//シートセルが存在しない場合は操作失敗
 		if((xUI.viewMode=="Compact")&&((myId.indexOf("r")==0)||(myId.split("_")[0]==0))){
 		    var targetParent = document.getElementById("UIheaderScrollV");//親は、表示モードで変更されるので注意
 		}else{
