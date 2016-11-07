@@ -137,14 +137,17 @@ case	"Utl":	;//ユーティリテーメニューパネル
 	break;
 case	"memo":	;//memo edit start
 	myTarget=$("#optionPanelMemo");//置き換え
+	hideTarget=$("#memo");
 	if(! myTarget.is(':visible')){
 		sWitchPanel("clear");
 		if((document.getElementById("myWords").innerHTML=="word table")&&(myWords)){
 			document.getElementById("myWords").innerHTML=putMyWords();
 		}
+		hideTarget.hide();
 		myTarget.show();
 		document.getElementById("rEsult").value=XPS.xpsTracks.noteText;
 	}else{
+		hideTarget.show();
 		XPS.xpsTracks.noteText=document.getElementById("rEsult").value;
 		sync("memo");
 		myTarget.hide();

@@ -670,6 +670,21 @@ xUI.adjustScale=function(myScale){
     }
 }
 //xUI.adjustScale(1,0.65);
+xUI.zoomSwitch =function(){
+    var scalePresets=[
+        [1,1],
+        [1,0.75],
+        [0.75,0.66666],
+        [0.5,0.5],
+        [0.3333,0.3333],
+        [0.25,0.25],
+        [1.5,1.5],
+        [2,2]
+    ];
+    this.zoomSwitch.currentPreset=(this.zoomSwitch.currentPreset+1)%scalePresets.length;
+    this.adjustScale(scalePresets[this.zoomSwitch.currentPreset]);
+}
+xUI.zoomSwitch.currentPreset=0;
 /*        xUI.reInitBody(newTimelines,newDuration);
 引数:
     newTimelines    Number 新規トラック数
@@ -3726,7 +3741,6 @@ break;
 default :
     if(TSXEx){
         try{datastream=TSX2XPS(datastream)}catch(err){alert(err);return false}
-//        xUI.put(datastream);return true;
     }
 //元の判定ルーチンと同じ
 //データ内容での判別がほぼ不可能なので、拡張オプションがあってかつ他の判定をすべてすり抜けたデータを暫定的にTSXデータとみなす

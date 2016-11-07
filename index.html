@@ -548,12 +548,12 @@ script src=javascript/jslb_ajax.js
 <hr>
 <li>  <A	id=pM615
 	HREF='javascript:void(0);'
-	onclick='xUI.adjustScale(0.6);return false'
-	title="zoomOut60%"
->60%</A></li>
+	onclick='xUI.zoomSwitch();return false'
+	title="zoomChange"
+>zoom</A></li>
 <li>  <A	id=pM616
 	HREF='javascript:void(0);'
-	onclick='xUI.adjustScale();return false'
+	onclick='xUI.zoomSwitch.currentPreset=0;xUI.adjustScale();return false'
 	title="zoom100%"
 >100%</A></li>
 <hr>
@@ -909,7 +909,12 @@ script src=javascript/jslb_ajax.js
 	title="やり直しのやり直し[ctr]+[Y]"
 >
 </button>
-
+<button
+    class='iconButton iconButton-cat'
+	name=zoom
+	id=zoomButton
+	 onclick="xUI.zoomSwitch();"
+> </button>
 </span>
 
 <!--	ツールバーボタン/toolIcons	-->
@@ -1372,38 +1377,6 @@ onclick='nas.incrFCTonHTMLInput(document.getElementById("editTC"),"-(1)")'
 <br><hr>
 </div>
 <!--	プログレスパネル	-->
-<!--	コメント編集	-->
-<div class=optionPanel id=optionPanelMemo >
-<table>
-<tr>
-<td>
-<input type=button class=toolTip value="全選択"
-	onClick='document.getElementById("rEsult").select();' /><br>
-<input type=button class=toolTip value="消去"
-	onClick='document.getElementById("rEsult").value="";' /><br>
-<input type=button class=toolTip value="TAB"
-	onClick='document.getElementById("rEsult").insert("\t");' /><br>
-<input type=button class=toolTip value="改行"
-	onClick='document.getElementById("rEsult").insert("\n");' /><br>
-<input type=button class=toolTip value="リセット"
-	onClick='document.getElementById("rEsult").value=XPS.xpsTracks.noteText;' /><br>
-<input type=button class=toolTip value="更新"
-	onClick='XPS.xpsTracks.noteText=document.getElementById("rEsult").value;xUI.setStored("force");sync("memo");' /><br>
-<input type=button class=toolTip value="閉じる"
-	onClick='if(XPS.xpsTracks.noteText!=document.getElementById("rEsult").value){if(confirm("内容が変更されています。\n更新しますか?")){XPS.xpsTracks.noteText=document.getElementById("rEsult").value;xUI.setStored("force");sync("memo");}};sWitchPanel("clear");' /><br>
-</td>
-<td>タイムシートコメントを編集します。<br>
-<textarea name=rEsult id=rEsult cols=48 rows=8 >
-</textarea></td>
-</tr><tr>
-<td colspan=2>
-<span id=myWords
-	onClick="editMemo(event);document.getElementById('rEsult').focus();"
->word table</span>
-</td>
-</tr></table>
-</div>
-<!--	コメント編集	-->
 <!--	AEキー変換	-->
 <div class=optionPanel id=optionPanelAEK >
 <table>
@@ -2628,14 +2601,50 @@ onDblClick='if (! document.getElementById("single").checked) chkValue(this.id)'
 </div>
 <!--	ラベル付き音響編集	-->
 
-<!-- メモ欄　-->
+   <div id=memo_header ><a	href="javascript:void(0);"
+	onclick='sWitchPanel("memo");return false;'
+><span>▶</span>MEMO : </a> <span id="transit_data"></span>
+   </div>
+<!--	コメント編集	-->
+<div class=optionPanel id=optionPanelMemo >
+<table>
+<tr>
+<td>
+<input type=button class=toolTip value="全選択"
+	onClick='document.getElementById("rEsult").select();' /><br>
+<input type=button class=toolTip value="消去"
+	onClick='document.getElementById("rEsult").value="";' /><br>
+<input type=button class=toolTip value="TAB"
+	onClick='document.getElementById("rEsult").insert("\t");' /><br>
+<input type=button class=toolTip value="改行"
+	onClick='document.getElementById("rEsult").insert("\n");' /><br>
+<input type=button class=toolTip value="リセット"
+	onClick='document.getElementById("rEsult").value=XPS.xpsTracks.noteText;' /><br>
+<input type=button class=toolTip value="更新"
+	onClick='XPS.xpsTracks.noteText=document.getElementById("rEsult").value;xUI.setStored("force");sync("memo");' /><br>
+<input type=button class=toolTip value="閉じる"
+	onClick='if(XPS.xpsTracks.noteText!=document.getElementById("rEsult").value){if(confirm("内容が変更されています。\n更新しますか?")){XPS.xpsTracks.noteText=document.getElementById("rEsult").value;xUI.setStored("force");sync("memo");}};sWitchPanel("clear");' /><br>
+</td>
+<td>タイムシートコメントを編集します。<br>
+<textarea name=rEsult id=rEsult cols=96 rows=8 >
+</textarea></td>
+</tr><tr>
+<td colspan=2>
+<span id=myWords
+	onClick="editMemo(event);document.getElementById('rEsult').focus();"
+>word table</span>
+</td>
+</tr></table>
+</div>
+<!--	コメント編集	-->
+<!-- メモ欄表示欄
    <div id=memo_header >
 ▲<a	href="javascript:void(0);"
 	onclick='sWitchPanel("memo");return false;'
 >MEMO : </a> <span id="transit_data"></span>
-   </div>
+   </div>　-->
    <div id=memo></div>
-<!-- メモ欄　-->
+<!-- メモ表示欄　-->
 <!-- /div -->
 <div class=application_status id=app_status><br></div>
 </div>
