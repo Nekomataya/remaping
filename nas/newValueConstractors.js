@@ -213,7 +213,7 @@ _parseReplacementTrack=function(){
     }
     this.sections       = myCollection;
     this.sectionsBlank  = myCollectionBlank;
-    console.log("sections-length:"+myCollection.length +":blank:"+myCollectionBlank.length)
+//    console.log("sections-length:"+myCollection.length +":blank:"+myCollectionBlank.length);
     return this.sections;//ブランク情報の返し方を考えたほうが良いかも
 }
 

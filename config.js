@@ -329,8 +329,8 @@ var ViewMode="WordProp"	;	//UIモード  コンパクトCompat/ シートワー�
 メモ欄
     一般表示メニューの順と一致　メニューが変わると変更あり
 */
-var UIViewIdList=["pMenu","optionPanelTbx","toolbarHeader","sheetHeaderTable","optionPanelUtl","memo_header"]
-var ToolView="101101";
+var UIViewIdList=["pMenu","optionPanelTbx","toolbarHeader","sheetHeaderTable","optionPanelUtl","memo_Area"]
+var ToolView="101100";
 //--
 /*
 ラピッドモードコマンド

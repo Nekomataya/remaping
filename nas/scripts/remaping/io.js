@@ -154,12 +154,10 @@ case	"memo":	;//memo edit start
 	};
 	break;
 case	"memoArea": ;//メモエリア切り替え
-	if($("#memo_header").is(":visible")){
-		$("#memo_header").hide()
-		$("#memo").hide()
+	if($("#memoArea").is(":visible")){
+		$("#memoArea").hide()
 	}else{
-		$("#memo_header").show()
-		$("#memo").show()
+		$("#memoArea").show()
 	};
 //		xUI.adjustSpacer();
 break;

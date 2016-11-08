@@ -9,6 +9,14 @@
 	今回(2016)の改修で全て削除される予定です。
 	XPSはグローバルに同じオブジェクトがあります。
 	直接呼んでください。
+	
+	データ保存のためのリポジトリを複数扱えるように考慮すること
+	サーバ（アドレス）を作品（タイトル）毎に記録するようにする？
+	
+	サーバリストを持つ
+	
+	
+	
 */
 /**
 サーバ保存用　仮ルーチン
@@ -49,13 +57,13 @@ episode_id,cut_idに関しては、データ内に専用のプロパティを置
 		success : function(data) {
 			xUI.setStored("current");//UI上の保存ステータスをセット
 			sync();//保存ステータスを同期
-			console.log();
+//			console.log();
 		},
 		error : function(data) {
 
 			// Error
-			console.log("error");
-			console.log(data);
+//			console.log("error");
+//			console.log(data);
 		}
 	});
 

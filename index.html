@@ -841,6 +841,14 @@ script src=javascript/jslb_ajax.js
 	onclick='sWitchPanel("Tbx");'
 	title="ツールボックス"
 >
+</button><button
+	id=ibM23
+	class='iconButton  iconButton-pen_3'
+	name=toolBar
+	id=toolBar
+	onclick='sWitchPanel("memoArea");'
+	title="メモ欄"
+>
 </button>
 <!--
 <button
@@ -1539,7 +1547,7 @@ onclick='nas.incrFCTonHTMLInput(document.getElementById("editTC"),"-(1)")'
 <!--	シート取り込み	-->
 <!--	タイムシート情報(scene)
  画面表示的にレイヤ詳細の配置を変更する。
-ドキュメント的には、スクロールを有効にすべきかもしれないので一考の余地あり
+的には、スクロールを有効にすべきかもしれないので一考の余地あり
 2013.03.30
 	新規タイムシート/タイムシート内容の編集 
 -->
@@ -1813,11 +1821,38 @@ onclick='nas.incrFCTonHTMLInput(document.getElementById("editTC"),"-(1)")'
 </span> 
 <hr>
 </span>
+<!-- メニューバー と ロゴ -->
+<button
+ onClick='alert(this.innerHTML);'
+ class='documentPanelButton'
+ title="最新の情報に更新"
+>Refresh</button><button
+ onClick='alert(this.innerHTML);'
+ class='documentPanelButton'
+ title="登録"
+>new</button><button
+ onClick='alert(this.innerHTML);'
+ class='documentPanelButton'
+ title=" カットを開く "
+>open</button><button
+ onClick='alert(this.innerHTML);'
+ class='documentPanelButton'
+ title=" 情報を更新 "
+>reload</button>
+<input type='text' id='documentSearch' size=20 ><button
+ onClick='alert(this.innerHTML);'
+ title=" 検 索 "
+>🔍</button><button
+ onClick='sWitchPanel("File");'
+ class='documentPanelButton'
+ title=" 閉じる "
+>close</button>
+
 <br><select
 	name="opus_numbers"
 	id="opusSelect"
-	size=6
-	style="width:40%;text-align:right;"
+	size=8
+	style="width:60%;text-align:right;"
 onClick='if(document.getElementById("single").checked) chkValue(this.id)'
 onDblClick='if (! document.getElementById("single").checked) chkValue(this.id)'
 >
@@ -1831,8 +1866,8 @@ onDblClick='if (! document.getElementById("single").checked) chkValue(this.id)'
 </select><select
 	name="cutList"
 	id="cutList"
-	size=6
-	style="width:40%;text-align:right;"
+	size=8
+	style="width:40%;text-align:left;"
 onClick='if(document.getElementById("single").checked) chkValue($("#cutList option:selected").text())'
 onDblClick='if (! document.getElementById("single").checked) chkValue(this.id)'
 >
@@ -1841,45 +1876,45 @@ onDblClick='if (! document.getElementById("single").checked) chkValue(this.id)'
 <option>002 (3+00)
 <option>003 (3+00)
 <option>004 (3+00)
-<option>005 (12+00)
+<option>005 (12+00) / 011 (3+00) / 014 (3+00)
 <option>006 (7+00)
 <option>007 (1+00)
 <option>008 (2+00)
 <option>009 (2+00)
 <option>010 (3+00)
-<option>011 (3+00)
+<option>005 (12+00) / 011 (3+00) / 014 (3+00)
 <option>012 (4+00)
 <option>013 (2+12)
-<option>014 (3+00)
+<option>005 (12+00) / 011 (3+00) / 014 (3+00)
 <option>015 (1+18)
 <option>016 (2+00)
 <option>017 (2+00)
 <option>018 (5+00)
 <option>019 (4+00)
-</select><select
-	name="cutFilter"
-	id="cutFilter"
-	size=6
-	style="width:20%;text-align:right;"
-onClick='if(document.getElementById("single").checked) chkValue(this.id)'
-onDblClick='if (! document.getElementById("single").checked) chkValue(this.id)'
->
-<option >フィルタ
-<option >*(フィルタ解除)
-<option >0-99
-<option >100-199
-<option >200-299
-<option >300-399
-<option >400-499
-</select><br>
-<!-- メニューバー と ロゴ -->
-<button onClick='alert(this.name);' name="button" value="最新の情報に更新"
->Refresh</button><button onClick='alert(this.name);' name="button" value="登録"
->登録</button><button onClick='alert(this.name);' name="button" value=" カットを開く "
->開く</button><button onClick='alert(this.name);' name="button" value=" 情報を更新 "
->更新</button><button onClick='alert(this.name);' name="button" value=" 検 索 "
->検索</button><button onClick='sWitchPanel("File");' name="button" value=" 閉じる "
->閉じる</button>
+</select>
+<div align=right>
+
+<button
+class=numberFilter
+onclick="alert(this.innerHTML);"
+    >( * )</button><button
+class=numberFilter
+onclick="alert(this.innerHTML);"
+    >1-100</button><button
+class=numberFilter
+onclick="alert(this.innerHTML);"
+    >-200</button><button
+class=numberFilter
+onclick="alert(this.innerHTML);"
+    >-300</button><button
+class=numberFilter
+onclick="alert(this.innerHTML);"
+    >-400</button><button
+class=numberFilter
+onclick="alert(this.innerHTML);"
+    >-500
+</button></div>
+
 </div>
 <!--	ファイルブラウザ試験中	-->
 
@@ -2600,10 +2635,14 @@ onDblClick='if (! document.getElementById("single").checked) chkValue(this.id)'
 </form>
 </div>
 <!--	ラベル付き音響編集	-->
-
-   <div id=memo_header ><a	href="javascript:void(0);"
+<div id=memoArea>
+   <div id=memo_header >
+   <a href="javascript:void(0);"
+    onclick='sWitchPanel("memoArea");'
+   ><span>▶</span></a>
+   <a href="javascript:void(0);"
 	onclick='sWitchPanel("memo");return false;'
-><span>▶</span>MEMO : </a> <span id="transit_data"></span>
+>MEMO : </a> <span id="transit_data"></span>
    </div>
 <!--	コメント編集	-->
 <div class=optionPanel id=optionPanelMemo >
@@ -2637,44 +2676,19 @@ onDblClick='if (! document.getElementById("single").checked) chkValue(this.id)'
 </tr></table>
 </div>
 <!--	コメント編集	-->
-<!-- メモ欄表示欄
-   <div id=memo_header >
-▲<a	href="javascript:void(0);"
-	onclick='sWitchPanel("memo");return false;'
->MEMO : </a> <span id="transit_data"></span>
-   </div>　-->
+<!-- メモ欄表示欄     -->
    <div id=memo></div>
+</div>
 <!-- メモ表示欄　-->
-<!-- /div -->
 <div class=application_status id=app_status><br></div>
 </div>
-
-
-
 <div id=sheet_view>
  <div class=headerTool>
   <div id="scrollSpaceHd" class="screenSpace"></div>
-<!--
-   <div id=memo_header >
-<a	href="javascript:void(0);"
-	onclick='sWitchPanel("memo");return false;'
->MEMO : </a> <span id="transit_data"></span>
-   </div>
-   <div id=memo></div>
--->
 </div>
 <!-- ここまで印刷時に非表示　-->
 
-<!-- モーダルダイアログは別ルートで作成
-イベントドリブン万能じゃないよと
-<span id="xUIPrompt">
-<span id=promptMsg></span><br />
-<input type="text" size="20" value="" id="promptInput"/><br />
-<button style="width:5em;" onclick="dbgPut(xUI.undoPt)" id=yes>UndoPt</button>
-<button style="width:5em;" onclick="dbgPut(xUI.storePt)" id=no>StorePt</button>
-<button style="width:5em;" onclick="dbgPut(eval(document.getElementById('promptInput').value))" id=cancel>cancel</button>
-</span>
--->
+<!--   以降シート本体     -->
     <div id=sheet_body
 	onMouseDown =" return xUI.Mouse(event)"
 	onMouseUp =" return xUI.Mouse(event)"

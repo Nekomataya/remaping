@@ -1060,6 +1060,9 @@ div.application_status {
 }
 /*	オプションパネル
 */
+
+
+
 #optionPanelLogin{
     display:none;
 }
@@ -1127,6 +1130,14 @@ div.application_status {
     background-color:#efefef;
     padding:6px;
     border-style:double;
+}
+/*	ドキュメントブラウザ関連
+*/
+.numberFilter {
+	width:48px;
+}
+.documentPanelButton {
+	 width:64px;
 }
 /*---------------- ドロップダウンメニュー*/
 

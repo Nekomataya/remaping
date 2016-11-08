@@ -1219,7 +1219,7 @@ buildActionSheet =function(){
  */
 pageZoom = function(){
 	var xScale=1;var yScale =1;
-	return xUI.adjustScale(xScale,yScale);
+	return xUI.adjustScale([xScale,yScale]);
 }
 /*
 	タイムラインをセクションへ変換する関数

@@ -677,9 +677,7 @@ xUI.zoomSwitch =function(){
         [0.75,0.66666],
         [0.5,0.5],
         [0.3333,0.3333],
-        [0.25,0.25],
-        [1.5,1.5],
-        [2,2]
+        [0.25,0.25]
     ];
     this.zoomSwitch.currentPreset=(this.zoomSwitch.currentPreset+1)%scalePresets.length;
     this.adjustScale(scalePresets[this.zoomSwitch.currentPreset]);
@@ -827,7 +825,7 @@ break;
 target.innerHTML=myStr;
 if(this.showGraphic){
     if(sectionDraw){
-        console.log([tgtID[1],mySection.startOffset()].join("_")+":"+formStr+":"+drawForm+":"+mySection.duration);
+//        if(console) console.log([tgtID[1],mySection.startOffset()].join("_")+":"+formStr+":"+drawForm+":"+mySection.duration);
         setTimeout(function(){xUI.Cgl.sectionDraw([tgtID[1],mySection.startOffset()].join("_"),drawForm,mySection.duration);},0);
     }else{
         setTimeout(function(){xUI.Cgl.draw(target.id,drawForm)},0);
@@ -1240,7 +1238,7 @@ xUI.spinHi = function(Method)
 {
 //選択ポイントのハイライトおよびスピン範囲のハイライト
 //    必ず
-if(! document.getElementById(this.getid("Select"))){console.log(this.getid("Select")) ;return;};
+if(! document.getElementById(this.getid("Select"))){if(dbg) dbgPut(this.getid("Select")) ;return;};
 if(Method == "clear") {
     document.getElementById(this.getid("Select")).style.backgroundColor=this.footstampColor;
 }else{
@@ -3454,12 +3452,8 @@ onscrollの設定位置を一考
 2015.04.22
 */
    xUI.onScroll=function() {
-//dbgPut("kb");return false;
-//dbgPut($(document.body).offset().top);
-//if(this.viewMode=="Compact"){}
-{     $('#UIheaderScrollV').offset( { top : $('#qdr4').offset().top} );
+     $('#UIheaderScrollV').offset( { top : $('#qdr4').offset().top} );
      $('#UIheaderScrollH').offset( { left : $('#qdr4').offset().left} );
-}
    };
 //===========================================
 /**
@@ -3494,30 +3488,13 @@ xUI.Cgl.draw=function addGraphElement(myId,myForm) {
 		}
 	    var objTarget = document.getElementById(myId);//ターゲットシートセルを取得
 	    if(! objTarget){return false;};//シートセルが存在しない場合は操作失敗
-		if((xUI.viewMode=="Compact")&&((myId.indexOf("r")==0)||(myId.split("_")[0]==0))){
-		    var targetParent = document.getElementById("UIheaderScrollV");//親は、表示モードで変更されるので注意
-		}else{
-		    var targetParent = document.getElementById("sheet_body");//親は、表示モードで変更されるので注意
-		}
-		var targetParent=objTarget;
-	    var targetRect=objTarget.getBoundingClientRect();
-	    var parentRect=targetParent.getBoundingClientRect();
-if(true){
-var myTop=targetRect.top-parentRect.top;
-var myLeft=targetRect.left-parentRect.left;
-}else{
-//各テーブルセルにアタッチするので原点が[0,0]
-var myTop=0;
-var myLeft=0;
-}
 	    var element = document.createElement('canvas'); 
 	    element.id = "cgl" + myId; 
-element.style.position="absolute";
-element.style.top=myTop+"px";
-element.style.left=myLeft+"px";
-
-	    element.width=targetRect.width;
-	    element.height=targetRect.height;
+        element.style.position="absolute";
+        element.style.top  = "0px";
+        element.style.left = "0px";
+	    element.width  = objTarget.clientWidth;
+	    element.height = objTarget.clientHeight;
 	    var ctx = element.getContext("2d");
 switch(myForm){
 case "line":	    //vertical-line
@@ -3527,9 +3504,6 @@ case "line":	    //vertical-line
 		ctx.moveTo(element.width*0.5, 0);
 		ctx.lineTo(element.width*0.5, element.height);
 	    ctx.stroke();
-//		ctx.moveTo(element.width*0.5, 0);
-//	    ctx.fillStyle="rgba(0,0,0,1)";
-//	    ctx.fillRect(Math.floor(targetRect.width*0.5 - 1),0, 2, targetRect.height);
 break;
 case "wave":;			//wave-line	 
 		var waveSpan  =5;		var lineWidth  =3;
@@ -3575,7 +3549,6 @@ case "circle":;		//circle
 		ctx.strokeStyle="rgb(0,0,0)";
 		ctx.strokeWidth=lineWidth;
 		ctx.arc(element.width * 0.5, element.height * 0.5, element.height*phi*0.5, 0, Math.PI*2, true);
-//context . arc(x, y, radius, startAngle, endAngle, anticlockwise)		ctx.lineTo(element.width*0.5, element.height);
 	    ctx.stroke();
 break;
 case "triangle":;		//triangle
@@ -3626,7 +3599,7 @@ case "area-fill":;	//fill sheet cell
 	    ctx.fillRect(0, 0, targetRect.width, targetRect.height);
 break;
 }
-	    element=targetParent.appendChild(element); 
+	    element=objTarget.appendChild(element); 
 	    element.style.zIndex=1;//シートに合わせて設定
 		element.style.pointerEvents='none';//イベントは全キャンセル
 		element.style.brendMode="multiply";//乗算
@@ -4171,8 +4144,7 @@ default:
     $("#subtitle").hide();
     $("#update_user").hide();
 //メモエリア
-    $("#memo_header").hide();
-    $("#memo").hide();
+    $("#memoArea").hide();
 //タイムラインヘッダ
     $("#UIheader").show();
     if(document.getElementById("UIheaderScrollV").innerHTML==""){document.getElementById("UIheaderScrollV").innerHTML=xUI.paveView(-2);};
@@ -4198,8 +4170,7 @@ default:
     $("#subtitle").show();
     $("#update_user").show();
 //メモエリア
-    $("#memo_header").show();
-    $("#memo").show();
+    $("#memoArea").show();
 //タイムラインヘッダ
     $("#UIheader").hide();
     $("#UIheaderScrollV").html("");

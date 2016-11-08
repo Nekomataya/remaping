@@ -438,7 +438,7 @@ document.getElementById("scnNewSheet").checked=false;//新規フラグダウン
 //変換不要パラメータ
 	var names=[
 "mapfile","title","subtitle","opus","scene","cut","framerate",
-"create_time","create_user","update_time","update_user","memo"
+"create_time","create_user","update_time","update_user","noteText.xpsTracks"
 ];
 //
 	var ids=[

@@ -132,6 +132,7 @@ nas.Pm.lines.addLine("composite"      ,["コンポジット"    ,"撮影"    ,"A
  */
 nas.Pm.titles.addTitle("TVshowSample"	,["0000"	,"名称未設定"	,"未定"	,"_UN"	,"24FPS"	,"21:00:00"	,"10in-HDTV"	,"HDTV-720p"]);
 nas.Pm.titles.addTitle("kachi"		,["0001"	,"かちかちやま"	,"か"	,"_KT"	,"24FPS"	,"20:12:00"	,"10in-HDTV"	,"HDTV-720p"]);
+nas.Pm.titles.addTitle("kachi"		,["0002"	,"ももたろう"	,"も"	,"_MT"	,"24FPS"	,"19:21:00"	,"10in-HDTV"	,"HDTV-720p"]);
 
 /*
  *	メディアDB
