@@ -146,7 +146,7 @@ XpsStage.prototype.toString=function(){
  */
 function _getMapDefault(myOption) {
     var myGroup=this.xParent.parentXps.xMap.getElementByName(this.id);
-    if(! myGroup){
+    if((typeof myGroup == "undefined")||(! myGroup)){
         myGroup=this.xParent.parentXps.xMap.new_xMapElement(
         this.id,
         this.type,

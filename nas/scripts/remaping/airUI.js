@@ -1,4 +1,4 @@
-/*
+﻿/*
 	AIR用の入出力サンプル
 	基本的にはnas-htmlで使用する場合nas.File オブジェクトをつくってラップするのがよさそう
 	nas-File はラッピングオブジェクトとしてファイルアクセスを提供
@@ -17,13 +17,24 @@ AdobeExtension上の CSX/CEP　(互換なしプラットフォームが異なる
 //	if(navigator.userAgent.match(/AIR/))
 	switch (appHost.platform){
 case "AIR":
+//参照用オブジェクトを作成
+var Folder =new Object;
+	Folder.nas=(appHost.os=="Win")?
+		new air.File(air.File.userDirectory.url+'/AppData/Roaming/nas'):
+		new air.File(air.File.userDirectory.url+'/Library/Application%20Support/nas');
+	Folder.script=(appHost.os=="Win")?
+		new air.File(air.File.userDirectory.url+'/AppData/Roaming/nas/scripts'):
+		new air.File(air.File.userDirectory.url+'/Library/Application%20Support/nas');
+
+
+//終了前イベント受信
 	onClosingEvent=function(event){
 		if(xUI.isStored()){return}
 		var msg="ファイルが保存されていません。\n保存しないで終了しますか？";
 		if(!(confirm(msg))){event.preventDefault()};
 		return;
 	}
-//終了前イベント受信
+
 	window.nativeWindow.addEventListener(air.Event.CLOSING, onClosingEvent);
 //ドラグドロップ初期化
 	document.designMode="on";//.contenteditable
@@ -174,15 +185,17 @@ return;
 			}
 			/**
 			 * readContent カレントファイルを読み込み内容を返す
+			 ファイルが存在しない場合のトラップがいる
 			 */
 			fileBox.readContent = function(){
+				if(! fileBox.currentFile.exists){return false}
 				this.stream = new air.FileStream();
 				try
 				{
 					fileBox.contentText="";//データバッファテキストクリア
 					var tmpBuff="";//一時バッファ確保
 					this.stream.open(fileBox.currentFile, air.FileMode.READ);//ファイルストリーム開く(同期)
-				  if(fileBox.currentFile.extension.match(/(xps|te?xt|ardj)/)){
+				  if(fileBox.currentFile.extension.match(/(xps|te?xt|ardj|json)/)){
 					var str = this.stream.readUTFBytes(this.stream.bytesAvailable);//UTFテキストとして読み込み
 				  }else{
 					var str = this.stream.readMultiByte(this.stream.bytesAvailable,"shift_jis");//s-JISテキストとして読み込み
@@ -267,6 +280,28 @@ return;
 				fileBox.saveFile();
 			}
 
+/*
+ * fileBox.saveContent();
+ *	シンプルに内容をカレントファイルに保存する　ダイアログ類は全て省略
+ 事前にfileBox.contenText .currentFileを設定しておくこと
+ */
+	fileBox.saveContent=function(){
+				if (fileBox.currentFile == null){
+					return false
+				} else {
+					try 
+					{
+						this.stream = new air.FileStream();
+						this.stream.open(fileBox.currentFile, air.FileMode.WRITE);
+						//var outData=fileBox.contentText;
+//						alert("writeFile :\n"+fileBox.contentText);
+						this.stream.writeUTFBytes(fileBox.contentText);
+						this.stream.close();
+					} catch(error) {
+						ioErrorHandler();
+					}
+				}		
+	}
 			/**
 			 * Opens and saves a file with the data in the mainText textArea element. 
 			 * Newline (\n) characters in the text are replaced with the 
@@ -274,6 +309,7 @@ return;
 			 * line-feed character on Mac OS and the carriage return character followed by the 
 			 * line-feed character on Windows.
 			 */
+	
 			fileBox.saveFile=function () {
 				if (fileBox.currentFile == null) 
 				{
@@ -935,6 +971,14 @@ break;
 case	"CEP":
 //	window.parent.psHtmlDispatch();//CEP環境の際のみイベントをディスパッチしてパネルの再ロードを抑制する
 case	"CSX":
+//参照用オブジェクトを作成
+	var Folder=new Object;
+if(appHost.platform=="CSX"){
+				Folder.nas=_Adobe.JSXInterface.call("eval","Folder.userData.fullName")+"/nas";
+}else{
+			window.__adobe_cep__.evalScript("Folder.userData.fullName",function(myResult){Folder.nas=(myResult)?myResult+"/nas":null;});
+}
+
 
 /*	ファイルハンドリングオブジェクト
 	Adobe機能拡張用　ファイルは暫定的にフルパスのURIフォーム
@@ -1052,7 +1096,7 @@ if(appHost.platform=="CSX"){
 
 			myEx +=	"var myOpenfile = new File('"+fileBox.currentFile+"');";
 	//拡張子でテキストエンコーディングを設定
-		if(fileBox.currentFile.match(/\.(xps|te?xt|ardj)$/)){
+		if(fileBox.currentFile.match(/\.(xps|te?xt|ardj|json)$/)){
 			myEx +=	"myOpenfile.encoding='UTF8';";
 		}else{
 			myEx +=	"myOpenfile.encoding='CP932';";
@@ -1086,7 +1130,7 @@ if(appHost.platform=="CSX"){}
 			var myEx =	"";
 			myEx +=	"var myOpenfile = new File('"+encodeURI(fileBox.currentFile)+"');";
 	//拡張子でテキストフォーマットを判別
-		if(fileBox.currentFile.match(/\.(xps|te?xt|ardj)$/)){
+		if(fileBox.currentFile.match(/\.(xps|te?xt|ardj|json)$/)){
 			myEx +=	"myOpenfile.encoding='UTF8';";
 		}else{
 			myEx +=	"myOpenfile.encoding='CP932';";
@@ -1183,6 +1227,44 @@ if(appHost.platform=="CSX"){
 				fileBox.saveFile();
 			}
 
+/*
+ * fileBox.saveContent();
+ *	シンプルに内容をカレントファイルに保存する　ダイアログ類は全て省略
+ 事前にfileBox.contenText .currentFileを設定しておくこと
+ */
+ 	fileBox.saveContent=function(){
+				if (fileBox.currentFile == null) {
+					return false;
+				} else {
+
+			var myEx = "";
+			myEx +=	"var myOpenfile = new File('"+encodeURI(fileBox.currentFile)+"');";
+	//拡張子でテキストフォーマットを判別
+		if(fileBox.currentFile.match(/\.(xps|te?xt|ardj|json)$/)){
+			myEx +=	"myOpenfile.encoding='UTF8';";
+		}else{
+			myEx +=	"myOpenfile.encoding='CP932';";
+		}
+						var outData = fileBox.contentText;
+
+			myEx += "var tempText = decodeURI('"+ encodeURI(outData) +"');";
+			myEx +=	"myOpenfile.open('w');";
+			myEx +=	"var res = myOpenfile.write(tempText);";
+			myEx +=	"myOpenfile.close();";
+			myEx +=	"res;";
+
+if(appHost.platform =="CSX"){
+			return _Adobe.JSXInterface.call("eval",myEx);
+					
+					//モードに従ってオープン
+}else{
+	window.__adobe_cep__.evalScript(myEx,function(res){alert(res)});
+}
+				}
+		
+	}
+
+
 			/**
 			 * Opens and saves a file with the data in the mainText textArea element. 
 			 * Newline (\n) characters in the text are replaced with the 
@@ -1201,7 +1283,7 @@ if(appHost.platform=="CSX"){
 			var myEx = "";
 			myEx +=	"var myOpenfile = new File('"+encodeURI(fileBox.currentFile)+"');";
 	//拡張子でテキストフォーマットを判別
-		if(fileBox.currentFile.match(/\.(xps|te?xt|ardj)$/)){
+		if(fileBox.currentFile.match(/\.(xps|te?xt|ardj|json)$/)){
 			myEx +=	"myOpenfile.encoding='UTF8';";
 		}else{
 			myEx +=	"myOpenfile.encoding='CP932';";
@@ -1318,7 +1400,7 @@ if(content.length==1){
 			var myEx = "";
 			myEx +=	'var myOpenfile = new File("'+encodeURI(fileBox.currentFile)+'");';
 	//拡張子でテキストフォーマットを判別
-		if(fileBox.currentFile.match(/\.(xps|te?xt|ardj|html|htm)$/)){
+		if(fileBox.currentFile.match(/\.(xps|te?xt|ardj|html|htm|json)$/)){
 			myEx +=	'myOpenfile.encoding="UTF8";';
 		}else{
 			myEx +=	'myOpenfile.encoding="CP932";';

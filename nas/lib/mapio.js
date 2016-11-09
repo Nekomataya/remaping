@@ -7,18 +7,18 @@
 
 
 /**
- * Mapオブジェクトは、ProductionTitel/ProductionUnit　の配下に入り基礎データの継承を行う
+ * xMapオブジェクトは、ProductionTitel/ProductionUnit　の配下に入り基礎データの継承を行う
  *
  * 実装上の継承はプロトタイプチェーンではなく、プロパティの複製で処理する
  *
- * これは、Mapの配下に入りプロダクション中及びプロダクション後のリソース流用に対してデータの独立性を保つための処置である
+ * これは、xMapの配下に入りプロダクション中及びプロダクション後のリソース流用に対してデータの独立性を保つための処置である
  *
  * 製作期間中は、タイトル・管理単位の間では同じプロパティを共有
  *
- * Mapを初期化する手順（2015 12 19）
+ * xMapを初期化する手順（2015 12 19）
  *
- * コンストラクタでMapオブジェクトを初期化
- * new Map([リプレースメントセルグループ数])
+ * コンストラクタでxMapオブジェクトを初期化
+ * new xMap([リプレースメントセルグループ数])
  * 戻り値は空のマップオブジェクト
  *
  * 引数は、セルのグループ数。省略可能。省略時は、グループ数1で初期化?
@@ -72,12 +72,12 @@
  * this.trailer=targetFolder;//ターゲットフォルダアイテムを指定して初期化
  *
  * (元設計)
- * Map.getElementByName("ラベル","エントリ")    戻り値：Number(整数)or "blank" or null
+ * xMap.getElementByName("ラベル","エントリ")    戻り値：Number(整数)or "blank" or null
  *
  * (拡張新設計)
  * 以前の置きかえタイミングのみのサポートでなく全種のトラックに対応するために拡張を行う。
- * Mapに対してのエントリ要求は、同名のメソッドで行われる。
- * Map.getElementByName(name,group[,[job]][,stage])    戻り値：Object or Null
+ * xMapに対してのエントリ要求は、同名のメソッドで行われる。
+ * xMap.getElementByName(name,group[,[job]][,stage])    戻り値：Object or Null
  *
  * 要求されたエントリが、リプレースメントの場合は当該のオブジェクトまたはNull
  * 要求されたエントリが、カメラワークの場合は当該のオブジェクトまたはNull
@@ -85,9 +85,9 @@
  * 要求されたエントリが、サウンドの場合は当該のオブジェクトまたはNull
  *
  * 前設計では置きかえタイミングで存在しないエントリが要求された場合はブランクが戻るが、今設計ではNullとなる
- * ブランクの置き換えはMapへの問い合わせでなくタイムシートを制御する側で行われるように
+ * ブランクの置き換えはxMapへの問い合わせでなくタイムシートを制御する側で行われるように
  *
- * トラックの基底データとして持つオブジェクトをシステムオブジェクトでMap内に持つことは従来のまま
+ * トラックの基底データとして持つオブジェクトをシステムオブジェクトでxMap内に持つことは従来のまま
  *
  * *****ステージ拡張
  * 制作進捗状況の把握管理のためにステージとステージ内のジョブを拡張実装する
@@ -108,7 +108,7 @@
  *
  * そういう仕様で設計するが、要求側で同設計のもとフルネームをビルドして要素を指定するものとしたほうが良い
  * 要求された要素が存在しない場合は、
- * Map側で「要求された要素」＞「要求された要素に近い代替要素」＞「前ステージにさかのぼって推定される同名の要素」＞Null　
+ * xMap側で「要求された要素」＞「要求された要素に近い代替要素」＞「前ステージにさかのぼって推定される同名の要素」＞Null　
  * と戻り値をフォールダウンさせることができるように作りたい
  */
 
@@ -136,7 +136,7 @@ function xMap(myParent, cellCount) {
      * 標準値は、現在の実装ではconfig.jsから読み込んでいるが
      * これはProductionParams等の親オブジェクトから継承する形にできるようにしておく
      * 具体的には、参照用のプロパティを置いてそこから取得する？
-     * Mapの親プロパティSubTitel.Title.Production
+     * xMapの親プロパティSubTitel.Title.Production
      *
      * @type {Window}
      */
@@ -196,7 +196,7 @@ function xMap(myParent, cellCount) {
  * 各メソッド
  * @returns {string}
  */
-Map.prototype.init = function () {
+xMap.prototype.init = function () {
     return "ここで初期化するぞー!(してないけど)";
 };
 
@@ -205,7 +205,7 @@ Map.prototype.init = function () {
  * @param prop
  * @returns {*}
  */
-Map.prototype.getgeometry = function (id, prop) {
+xMap.prototype.getgeometry = function (id, prop) {
     if (!id) id = 0;
     if (!prop) prop = "all";
     switch (prop) {
@@ -244,7 +244,7 @@ Map.prototype.getgeometry = function (id, prop) {
  * @param id
  * @returns {*}
  */
-Map.prototype.getmaxlot = function (id) {
+xMap.prototype.getmaxlot = function (id) {
     if (this.mapBody[id] == "=AUTO=") {
         return "=AUTO="
     } else {
@@ -253,7 +253,7 @@ Map.prototype.getmaxlot = function (id) {
 };
 
 /**
- * @desc Mapコンストラクタ終了
+ * @desc xMapコンストラクタ終了
  */
 
 /**
@@ -303,12 +303,12 @@ function initMAP() {
 }
 
 /**
- * Map用各種メソッド
+ * xMap用各種メソッド
  * @returns {string}
  */
-Map.prototype.toString = function () {
+xMap.prototype.toString = function () {
     /**
-     * Mapデータを保存形式で
+     * xMapデータを保存形式で
      * @type {Date}
      */
     var Now = new Date();
@@ -484,7 +484,7 @@ function dataCheck(str, label, bflag) {
      * 大容量のデータを必要とする素材は全て外部へのリンク情報である
      *
      * オブジェクトが自律的に自身のリンク解決ができる方が良いか？
-     * この関数を利用しているポイント自体を Map.getElementByName()に置き換える方向で
+     * この関数を利用しているポイント自体を xMap.getElementByName()に置き換える方向で
      */
     if (!label) {
         label = null
@@ -611,7 +611,7 @@ _getIdx = function (Lname, targetTrailer) {
 //以下は 上のエントリの置換え用関数
 
 /**
- * Map.dataCheck(myStr,tlLabel[,blFlag])
+ * xMap.dataCheck(myStr,tlLabel[,blFlag])
  *
  * 引数    : セルエントリ,タイムラインラベル,ブランクフラグ
  * 戻り値    : 有効エントリID　/"blank"/ null

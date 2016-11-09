@@ -44,7 +44,7 @@ function new_xUI(){
 xUI.init    =function(XPS,referenceXps){
     this.hideSource    = false;  //グラフィック置き換え時にシートテキストを隠す
     this.showGraphic    = true;   //置き換えグラフィックを非表示　＝　テキスト表示
-
+if(appHost.platform=="AIR")this.showGraphic    = false;
     this.dialogSpan    = SoundColumns;//シート上の配置に合わせてXPSを初期化する
     this.timingSpan    = SheetLayers;//シートは便宜上サウンド/タイミング（セル）/カメラ の３エリアに分けられるが
     this.cameraSpan    = CompositColumns;//実際は各タイムラインは混在可能である
@@ -56,7 +56,8 @@ xUI.init    =function(XPS,referenceXps){
     this.cameraCount   = CompositColumns;//空欄でも良いと思われるが
 
     this.XPS=XPS;//XPSを参照するオブジェクト(将来の拡張用)
-    this.referenceXPS=new Xps(4,72);
+    this.referenceXPS=new Xps();
+    this.referenceXPS.init(4,72);
     //引数に参照オブジェクトが渡されていたら、優先して解決
     //マルチステージ拡張実装後、直接指定された参照ステージは、初期化時のみ優先
     if ((typeof referenceXps != "undefined") && (referenceXps instanceof Xps)){
@@ -157,7 +158,7 @@ for(var idx=0;idx<(this.XPS.xpsTracks.length-1);idx++){
     this.timeShift    =TimeShift;    //読み込みタイムシフト
 
 //yank関連
-    this.yankBuf={body:"",selection:""};    //ヤンクバッファは、comma、改行区切りのデータストリームで
+    this.yankBuf={body:"",direction:""};    //ヤンクバッファは、comma、改行区切りのデータストリームで
         this.yankBuf.valueOf=function(){return this.body;}
 //undo関連
     this.flushUndoBuf();
@@ -3489,10 +3490,11 @@ xUI.Cgl.draw=function addGraphElement(myId,myForm) {
 	    var objTarget = document.getElementById(myId);//ターゲットシートセルを取得
 	    if(! objTarget){return false;};//シートセルが存在しない場合は操作失敗
 	    var element = document.createElement('canvas'); 
-	    element.id = "cgl" + myId; 
-        element.style.position="absolute";
-        element.style.top  = "0px";
-        element.style.left = "0px";
+	    element.id      = 'cgl' + myId; 
+	    element.className   = 'cgl'; 
+//        element.style.position="absolute";
+//        element.style.top  = (document.getElementById("scrollSpaceHd").clientHeight+ objTarget.offsetTop)+ "px";
+//        element.style.left = objTarget.offsetLeft+"px";
 	    element.width  = objTarget.clientWidth;
 	    element.height = objTarget.clientHeight;
 	    var ctx = element.getContext("2d");
@@ -3600,10 +3602,10 @@ case "area-fill":;	//fill sheet cell
 break;
 }
 	    element=objTarget.appendChild(element); 
-	    element.style.zIndex=1;//シートに合わせて設定
-		element.style.pointerEvents='none';//イベントは全キャンセル
-		element.style.brendMode="multiply";//乗算
-		element.style.opacity="0.2";//30%
+//	    element.style.zIndex=1;//シートに合わせて設定
+//		element.style.pointerEvents='none';//イベントは全キャンセル
+//		element.style.brendMode="multiply";//乗算
+//		element.style.opacity="0.2";//30%
 this.body[myId]=element;
 this.body[myId].formProp=myForm;
 
