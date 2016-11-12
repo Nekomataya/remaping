@@ -44,7 +44,7 @@ function new_xUI(){
 xUI.init    =function(XPS,referenceXps){
     this.hideSource    = false;  //グラフィック置き換え時にシートテキストを隠す
     this.showGraphic    = true;   //置き換えグラフィックを非表示　＝　テキスト表示
-if(appHost.platform=="AIR")this.showGraphic    = false;
+//if(appHost.platform=="AIR") this.showGraphic    = false;
     this.dialogSpan    = SoundColumns;//シート上の配置に合わせてXPSを初期化する
     this.timingSpan    = SheetLayers;//シートは便宜上サウンド/タイミング（セル）/カメラ の３エリアに分けられるが
     this.cameraSpan    = CompositColumns;//実際は各タイムラインは混在可能である
@@ -3487,14 +3487,36 @@ xUI.Cgl.draw=function addGraphElement(myId,myForm) {
 			$("#cgl"+myId).remove();delete this.body[myId];
 		//二重描画防止の為すでにエレメントがあればクリアして描画
 		}
-	    var objTarget = document.getElementById(myId);//ターゲットシートセルを取得
+	    var objTarget  = document.getElementById(myId);//ターゲットシートセルを取得
 	    if(! objTarget){return false;};//シートセルが存在しない場合は操作失敗
+/**
+    以下の場合分けは、ノーマル時の処理とAIR環境のバグ回避コード
+    先の処理のほうがオーバヘッドが小さいので推奨だが、AIRで正常に処理されない
+- td配下に置いたcanvasエレメントが、position=absoluteを指定するとページ全体又はテーブルを包括するdivの原点をベースに描画される。
+- element.top/.left で指定した座標が反映されないことがある　element.style.top/.left は正常
+ 動作異状の検出ルーチンはまだ組んでいない。ビルド毎にAIRに当該のバグがあるか否か確認が必要
+ 2016.11.12
+*/	    
+if(appHost.platform != "AIR"){
+        var objParent = objTarget;
+        var myTop     = "0px";
+        var myLeft    = "0px";
+}else{
+        var objParent  = ((xUI.viewMode=="Compact")&&(myId.indexOf("r")==0))?
+                    document.getElementById("UIheaderScrollV"):
+                    document.getElementById("qdr4");
+//        var targetRect = objTarget.getBoundingClientRect();
+//        var parentRect = document.getElementById("sheet_body").getBoundingClientRect();
+        var myTop     = objTarget.offsetTop  + "px";
+        var myLeft      = objTarget.offsetLeft + "px";
+}
 	    var element = document.createElement('canvas'); 
 	    element.id      = 'cgl' + myId; 
-	    element.className   = 'cgl'; 
+	    element.className   = 'cgl';
+	    
 //        element.style.position="absolute";
-//        element.style.top  = (document.getElementById("scrollSpaceHd").clientHeight+ objTarget.offsetTop)+ "px";
-//        element.style.left = objTarget.offsetLeft+"px";
+        element.style.top  = myTop
+        element.style.left = myLeft;
 	    element.width  = objTarget.clientWidth;
 	    element.height = objTarget.clientHeight;
 	    var ctx = element.getContext("2d");
@@ -3601,7 +3623,10 @@ case "area-fill":;	//fill sheet cell
 	    ctx.fillRect(0, 0, targetRect.width, targetRect.height);
 break;
 }
-	    element=objTarget.appendChild(element); 
+	    element=objParent.appendChild(element); 
+//	    element=objTarget.appendChild(objParent);
+//	    element.top = myTop;
+//	    element.left= myLeft;
 //	    element.style.zIndex=1;//シートに合わせて設定
 //		element.style.pointerEvents='none';//イベントは全キャンセル
 //		element.style.brendMode="multiply";//乗算

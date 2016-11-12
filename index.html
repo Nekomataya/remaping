@@ -40,10 +40,10 @@
 </script>
 
 <!-- この部分はAIR用のデバッグコードです -->
- <!--
+
 		<script type="text/javascript" src="./lib/AIR/AIRIntrospector.js"></script>
 		<script type="text/javascript" src="./lib/AIR/AIRSourceViewer.js"></script>
--->
+<!-- -->
 
 <script src=./config.js></script>
 
@@ -65,9 +65,9 @@
 <script src=./nas/lib/postscriptConvert.js></script>
 
 <script src=./nas/scripts/remaping/dbg_.js></script>
-<!--
 <script src=./nas/lib/mapio.js></script>
- new test code -->
+<!-- new test code -->
+
         <script src=./nas/pmio.js></script>
         <script src=./nas/configPM.js></script>
         <script src=./nas/mapio_alt.js></script>
@@ -107,6 +107,7 @@
 <script src=./nas/scripts/localStorage.js></script>
 <!-- /*  開発用テストコード   2016.07.16  追加*/ -->
 <script src=./nas/scripts/serverio_test.js></script>
+<script src=./nas/filePanelTest.js></script>
 <!-- /*  開発用テストコード   2016.07.16  追加*/ -->
 
 <script src=./nas/lib/nas_locale.js></script>
@@ -1784,7 +1785,7 @@ onclick='nas.incrFCTonHTMLInput(document.getElementById("editTC"),"-(1)")'
     value="(opus)"
 ><input type=text
     id = subtitleInput
-    size=24
+    size=32
     value="(subtitle)"
 ><input	type=text
 	name=fileTest
@@ -1853,23 +1854,22 @@ onclick='nas.incrFCTonHTMLInput(document.getElementById("editTC"),"-(1)")'
 	id="opusSelect"
 	size=8
 	style="width:60%;text-align:right;"
-onClick='if(document.getElementById("single").checked) chkValue(this.id)'
-onDblClick='if (! document.getElementById("single").checked) chkValue(this.id)'
+onChange='setProduct();'
 >
-<option>ももたろう#01
+<option>ももたろう#12[キジ参戦！ももたろう地獄模様！！]
 <option>浦島太郎#01
 <option>浦島太郎#02
 <option>かちかちやま#10
 <option>かちかちやま#11
-<option >タイトルセレクタ
-<option >（プロジェクトセレクタ）
+<option>源氏物語＃二十三帖「初音」
+<option>Goldilocks and the Three Bears #001 "too hot to eat"
+<option>
 </select><select
 	name="cutList"
 	id="cutList"
 	size=8
 	style="width:40%;text-align:left;"
-onClick='if(document.getElementById("single").checked) chkValue($("#cutList option:selected").text())'
-onDblClick='if (! document.getElementById("single").checked) chkValue(this.id)'
+	onChange="slectSCi();"
 >
 <option >カットリスト
 <option>001 (1+12)

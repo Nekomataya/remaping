@@ -36,6 +36,7 @@ a:focus		{color:#880000;background-color:snow}
 	position:fixed;
 	z-index:3;
 }
+/* スクロール領域*/
 #UIheaderScrollV {
 	display:inline;
 }
@@ -44,7 +45,10 @@ a:focus		{color:#880000;background-color:snow}
 }
 #UIheaderFix {
 	display:inline;
-	z-index:;
+	z-index:4;
+}
+#qdr4 {
+	position:relative;
 }
 
 
@@ -1224,9 +1228,7 @@ transform-origin: 0 0;transform:scale(1,1);
 */
 	.cgl {
 		position: absolute;
-		z-index: 1;
-		left:0px;
-		top:0px;
+		z-index: 3;
 		pointer-events: none;
 		brend-mode: multiply;
 		opacity:0.4;
