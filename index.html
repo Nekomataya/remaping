@@ -172,7 +172,7 @@ script src=javascript/jslb_ajax.js
 <ul>
 <li> <A	id=pM01
 	href='javascript:void()'
-	onclick='myScenePref.open();document.getElementById("scnNewSheet").checked=true;return false;'
+	onclick='sWitchPanel("File");return false;//myScenePref.open();document.getElementById("scnNewSheet").checked=true;return false;'
 	title="シートの新規作成と変更"
 >New</A></li>
 <li id=dMcgi><A	id=pM02
@@ -706,7 +706,7 @@ script src=javascript/jslb_ajax.js
 	<button
 	id=ibMs01
 		class='iconButton iconButton-xps'
-		onclick='myScenePref.open();'
+		onclick='sWitchPanel("File");return false;'
 		title="newXPS"
 	>
 	</button><button
@@ -1778,20 +1778,24 @@ onclick='nas.incrFCTonHTMLInput(document.getElementById("editTC"),"-(1)")'
 <input type=text
     id = titleInput
     size=32
+	disabled=true
     value="(title)"
 ><input type=text
     id = opusInput
     size=8
+	disabled=true
     value="(opus)"
 ><input type=text
     id = subtitleInput
     size=32
+	disabled=true
     value="(subtitle)"
 ><input	type=text
 	name=fileTest
 	id=cutInput
 	size=12
 	value='(c#)'
+	disabled=true
 	onChange="chkValue(this.id);"
 ><input	type=text
 	name=fileTest
@@ -1799,6 +1803,7 @@ onclick='nas.incrFCTonHTMLInput(document.getElementById("editTC"),"-(1)")'
 	class=timeControl
 	size=8
 	value='3+00'
+	disabled=true
 	onChange="alert(this.value);"
 ><span style="position:relative;height:24px;width:64px;"><button
     class='subControl subControl-incrS subControl-left-top'
@@ -1869,7 +1874,7 @@ onChange='setProduct();'
 	id="cutList"
 	size=8
 	style="width:40%;text-align:left;"
-	onChange="slectSCi();"
+	onChange="selectSCi();"
 >
 <option >カットリスト
 <option>001 (1+12)
@@ -1882,25 +1887,54 @@ onChange='setProduct();'
 <option>008 (2+00)
 <option>009 (2+00)
 <option>010 (3+00)
-<option>005 (12+00) / 011 (3+00) / 014 (3+00)
+<option>011 (3+00) / 005 (12+00) / 014 (3+00)
 <option>012 (4+00)
 <option>013 (2+12)
-<option>005 (12+00) / 011 (3+00) / 014 (3+00)
+<option>014 (3+00) / 005 (12+00) / 011 (3+00)
 <option>015 (1+18)
 <option>016 (2+00)
 <option>017 (2+00)
 <option>018 (5+00)
 <option>019 (4+00)
 </select>
-<div align=right>
+<div>
+<span align=left>
+<button
+class=productFilter
+onclick="alert(this.innerHTML);"
+    >sort</button><button
+class=productFilter
+onclick="alert(this.innerHTML);"
+    >reverse</button><button
+class=productFilter
+onclick="alert(this.innerHTML);"
+    >add</button><button
+class=productFilter
+onclick="alert(this.innerHTML);"
+    >remove</button><input
+id = productFilterText
+class = productFilter
+type = text
+size =12
+style="height:20px;"
+value=".*"
+    ></input><button
+class=productFilter
+onclick="alert(this.innerHTML);"
+    >apply</button><button
+class=productFilter
+onclick='document.getElementById("productFilterText").value=".*";'
+    >reset</button>
+    </span>
+<span style="float:right;">
 
 <button
 class=numberFilter
 onclick="alert(this.innerHTML);"
-    >( * )</button><button
+    >(reset)</button><button
 class=numberFilter
 onclick="alert(this.innerHTML);"
-    >1-100</button><button
+    >-100</button><button
 class=numberFilter
 onclick="alert(this.innerHTML);"
     >-200</button><button
@@ -1913,7 +1947,7 @@ onclick="alert(this.innerHTML);"
 class=numberFilter
 onclick="alert(this.innerHTML);"
     >-500
-</button></div>
+</button></span></div>
 
 </div>
 <!--	ファイルブラウザ試験中	-->

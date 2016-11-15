@@ -276,11 +276,11 @@ rewriteValueByEvt=function(e){
 	break;
 	case "trin":
 		msg="トランシット情報。時間は括弧で括って、キャプションとの間は空白。\n書式:caption (timecode) /例: c10-c11 wipe. (1+12.)";
-		currentValue=XPS.trin[1]+"\ \("+nas.Frm2FCT(XPS.trin[0],3,0)+"\)";
+		currentValue=this.XPS.trin[1]+"\ \("+nas.Frm2FCT(this.XPS.trin[0],3,0)+"\)";
 	break;
 	case "trout":
 		msg="トランシット情報。時間は括弧で括って、キャプションとの間は空白。\n書式:caption (timecode) /例: c10-c11 wipe. (1+12.)";
-		currentValue=XPS.trout[1]+"\ \("+nas.Frm2FCT(XPS.trout[0],3,0)+"\)";
+		currentValue=this.XPS.trout[1]+"\ \("+nas.Frm2FCT(this.XPS.trout[0],3,0)+"\)";
 	break;
 	case "scene_cut":
  		msg="シーン・カットナンバーを変更します。データは 空白区切。\nひとつだとカット番号";
@@ -293,6 +293,7 @@ rewriteValueByEvt=function(e){
 	break;
 		case "title":
  		msg="タイトルを変更します。\n";
+ 		currentValue=this.XPS.title;
 	break;
 		case "subtitle":
  		msg="サブタイトルを変更します。\n";

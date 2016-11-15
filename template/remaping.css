@@ -1137,8 +1137,11 @@ div.application_status {
 }
 /*	ドキュメントブラウザ関連
 */
-.numberFilter {
+.productFilter {
 	width:48px;
+}
+.numberFilter {
+	width:40px;
 }
 .documentPanelButton {
 	 width:64px;
