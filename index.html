@@ -40,10 +40,10 @@
 </script>
 
 <!-- この部分はAIR用のデバッグコードです -->
-
+<!--
 		<script type="text/javascript" src="./lib/AIR/AIRIntrospector.js"></script>
 		<script type="text/javascript" src="./lib/AIR/AIRSourceViewer.js"></script>
-<!-- -->
+ -->
 
 <script src=./config.js></script>
 
@@ -105,6 +105,7 @@
 <script src=./nas/scripts/remaping/airUI.js></script>
 
 <script src=./nas/scripts/localStorage.js></script>
+<script src=./nas/serviceAgent.js></script>
 <!-- /*  開発用テストコード   2016.07.16  追加*/ -->
 <script src=./nas/scripts/serverio_test.js></script>
 <script src=./nas/filePanelTest.js></script>
@@ -135,7 +136,7 @@ script src=javascript/jslb_ajax.js
 -->
 </head>
 <body 
-	onload="startupTooltip();var nRS = setTimeout('nas_Rmp_Startup()',10);nas.LangPack.chgLocale('ja');"
+	onload="startupTooltip();var nRS = setTimeout('nas_Rmp_Startup()',10);nas.LangPack.chgLocale('ja');documentDepot.init();"
 	onbeforeunload="return nas_Rmp_reStart();"
 	onContextMenu	=" return true"
 	onSelectStart="return false"
@@ -1779,76 +1780,80 @@ onclick='nas.incrFCTonHTMLInput(document.getElementById("editTC"),"-(1)")'
     id = titleInput
     size=32
 	disabled=true
-    value="(title)"
+    value='(*--title--*)'
+	onChange="documentDepot.currentDocument=documentDepot.buildIdentifier();"
 ><input type=text
     id = opusInput
     size=8
 	disabled=true
-    value="(opus)"
+    value='(*--opus--*)'
+	onChange="documentDepot.currentDocument=documentDepot.buildIdentifier();"
 ><input type=text
     id = subtitleInput
     size=32
 	disabled=true
-    value="(subtitle)"
+    value='(*--subtitle--*)'
+	onChange="documentDepot.currentDocument=documentDepot.buildIdentifier();"
 ><input	type=text
 	name=fileTest
 	id=cutInput
 	size=12
-	value='(c#)'
+	value='(*--c#--*)'
 	disabled=true
-	onChange="chkValue(this.id);"
+	onChange="documentDepot.currentDocument=documentDepot.buildIdentifier();"
 ><input	type=text
 	name=fileTest
 	id=timeInput
 	class=timeControl
 	size=8
-	value='3+00'
+	value='3 + 0 .'
 	disabled=true
-	onChange="alert(this.value);"
+	onChange="documentDepot.currentDocument=documentDepot.buildIdentifier();"
 ><span style="position:relative;height:24px;width:64px;"><button
     class='subControl subControl-incrS subControl-left-top'
-    onclick='document.getElementById("timeInput").value=nas.Frm2FCT(nas.FCT2Frm(document.getElementById("timeInput").value)+24,3)'> 
+    onclick='document.getElementById("timeInput").value=nas.Frm2FCT(nas.FCT2Frm(document.getElementById("timeInput").value)+24,3);document.getElementById("timeInput").onChange();'> 
 </button><button
     class='subControl subControl-decrS subControl-left-bottom'
-    onclick='document.getElementById("timeInput").value=nas.Frm2FCT(nas.FCT2Frm(document.getElementById("timeInput").value)-24,3)'>
+    onclick='document.getElementById("timeInput").value=nas.Frm2FCT(nas.FCT2Frm(document.getElementById("timeInput").value)-24,3);document.getElementById("timeInput").onChange();'>
 </button><button
     class='subControl subControl-incr6 subControl-mid-top'
-    onclick='document.getElementById("timeInput").value=nas.Frm2FCT(nas.FCT2Frm(document.getElementById("timeInput").value)+6,3)'> 
+    onclick='document.getElementById("timeInput").value=nas.Frm2FCT(nas.FCT2Frm(document.getElementById("timeInput").value)+6,3);document.getElementById("timeInput").onChange();'> 
 </button><button
     class='subControl subControl-decr6 subControl-mid-bottom'
-    onclick='document.getElementById("timeInput").value=nas.Frm2FCT(nas.FCT2Frm(document.getElementById("timeInput").value)-6,3)'>
+    onclick='document.getElementById("timeInput").value=nas.Frm2FCT(nas.FCT2Frm(document.getElementById("timeInput").value)-6,3);document.getElementById("timeInput").onChange();'>
 </button><button
     class='subControl subControl-incr subControl-right-top'
-    onclick='document.getElementById("timeInput").value=nas.Frm2FCT(nas.FCT2Frm(document.getElementById("timeInput").value)+1,3)'>
+    onclick='document.getElementById("timeInput").value=nas.Frm2FCT(nas.FCT2Frm(document.getElementById("timeInput").value)+1,3);document.getElementById("timeInput").onChange();'>
 </button><button
     class='subControl subControl-decr subControl-right-bottom'
-    onclick='document.getElementById("timeInput").value=nas.Frm2FCT(nas.FCT2Frm(document.getElementById("timeInput").value)-1,3)'>
+    onclick='document.getElementById("timeInput").value=nas.Frm2FCT(nas.FCT2Frm(document.getElementById("timeInput").value)-1,3);document.getElementById("timeInput").onChange();'>
 </button>
 </span> 
 <hr>
 </span>
 <!-- メニューバー と ロゴ -->
 <button
- onClick='alert(this.innerHTML);'
+ id='ddp-refresh'
+ onClick='documentDepot.init();'
  class='documentPanelButton'
  title="最新の情報に更新"
 >Refresh</button><button
- onClick='alert(this.innerHTML);'
+ id='ddp-open'
+ onClick='console.log("open :"+decodeURIComponent(documentDepot.currentDocument));'
  class='documentPanelButton'
- title="登録"
->new</button><button
- onClick='alert(this.innerHTML);'
+ title="タイムシートを開く"
+>Open</button><button
+ id='ddp-newdocument'
+ onClick='console.log("new document :"+decodeURIComponent(documentDepot.currentDocument));'
  class='documentPanelButton'
- title=" カットを開く "
->open</button><button
- onClick='alert(this.innerHTML);'
- class='documentPanelButton'
- title=" 情報を更新 "
->reload</button>
-<input type='text' id='documentSearch' size=20 ><button
+ title="新規作成"
+>New</button>
+<input type='text' id='ddp-searchtext' size=20 ><button
+ id='ddp-search'
  onClick='alert(this.innerHTML);'
  title=" 検 索 "
 >🔍</button><button
+ id='ddp-close'
  onClick='sWitchPanel("File");'
  class='documentPanelButton'
  title=" 閉じる "
@@ -1857,27 +1862,32 @@ onclick='nas.incrFCTonHTMLInput(document.getElementById("editTC"),"-(1)")'
 <br><select
 	name="opus_numbers"
 	id="opusSelect"
+	class="document-selector"
 	size=8
 	style="width:60%;text-align:right;"
 onChange='setProduct();'
 >
-<option>ももたろう#12[キジ参戦！ももたろう地獄模様！！]
+<option selected>(*-- new title --*)
+<!--
+<option selected>ももたろう#12[キジ参戦！ももたろう地獄模様！！]
 <option>浦島太郎#01
 <option>浦島太郎#02
 <option>かちかちやま#10
 <option>かちかちやま#11
 <option>源氏物語＃二十三帖「初音」
 <option>Goldilocks and the Three Bears #001 "too hot to eat"
-<option>
+<option>-->
 </select><select
 	name="cutList"
 	id="cutList"
+	class="document-selector"
 	size=8
 	style="width:40%;text-align:left;"
 	onChange="selectSCi();"
 >
-<option >カットリスト
-<option>001 (1+12)
+<option > (*-- new document --*)
+<!--
+<option idc=>001 (1+12)
 <option>002 (3+00)
 <option>003 (3+00)
 <option>004 (3+00)
@@ -1895,23 +1905,20 @@ onChange='setProduct();'
 <option>016 (2+00)
 <option>017 (2+00)
 <option>018 (5+00)
-<option>019 (4+00)
+<option>019 (4+00) -->
 </select>
 <div>
 <span align=left>
 <button
 class=productFilter
-onclick="alert(this.innerHTML);"
+onclick="documentDepot.products.sort();documentDepot.updateOpusSelector();"
     >sort</button><button
 class=productFilter
-onclick="alert(this.innerHTML);"
+onclick="documentDepot.products.reverse();documentDepot.updateOpusSelector();"
     >reverse</button><button
 class=productFilter
 onclick="alert(this.innerHTML);"
-    >add</button><button
-class=productFilter
-onclick="alert(this.innerHTML);"
-    >remove</button><input
+    >hide</button><input
 id = productFilterText
 class = productFilter
 type = text

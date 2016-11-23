@@ -197,6 +197,7 @@ nas.Pm.Opus = function Opus(myID,myOpus,mySubtitle,myTitle){
 	this.toString=function(){return this.name} 
 	this.valueOf=function(){return this.id} 
 }
+
 /*制作管理用	Assetオブジェクト
  *アセットベースの管理を行う
  *このシステム上のアセットは、通常XPSを介して時間／空間的に配置された再利用可能データ群を指す

@@ -1136,15 +1136,23 @@ div.application_status {
     border-style:double;
 }
 /*	ドキュメントブラウザ関連
+
 */
+	.document-selector {
+	  height:75%;
+	}
+
 .productFilter {
-	width:48px;
+	height:24px;
+	width:64px;
 }
 .numberFilter {
-	width:40px;
+	
+	height:24px;
+	width:48px;
 }
 .documentPanelButton {
-	 width:64px;
+	 width:84px;
 }
 /*---------------- ドロップダウンメニュー*/
 
@@ -1225,6 +1233,7 @@ transform-origin: 0 0;transform:scale(1,1);
     margin: 0;
     padding: 5px 10px;
   }
+
 /**
 	cellGraphicLayer
 	canvas object

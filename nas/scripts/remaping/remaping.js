@@ -3459,6 +3459,7 @@ onscrollの設定位置を一考
 //===========================================
 /**
     画像パーツを描画するローレベルファンクション
+    bodyコレクションは、描画したテーブルセル内の画像エレメントへの参照が格納される
 */
 xUI.Cgl = new Object();
 
@@ -3475,6 +3476,12 @@ xUI.Cgl.hide=function(myId){
 xUI.Cgl.remove=function(myId){
 	if(! this.body[myId]){	this.body[myId] = document.getElementById("cgl"+myId)	;}
 	if(this.body[myId]){$("#cgl"+myId).remove();delete this.body[myId];}
+}
+xUI.Cgl.init=function(){
+    for (var prp in this.body){
+        $("#cgl"+prp).remove();
+        delete this.body[prp];
+    }
 }
 /**
 	セル画像部品描画コマンド
@@ -3981,7 +3988,7 @@ document.getElementById("iNputbOx").focus();
 function nas_Rmp_Init(){
 //プロパティのリフレッシュ
     xUI._checkProp();
-
+    xUI.Cgl.init();
 /*　表示モード増設 
 Compactモード時は強制的に
   表示１列　コンテの継続時間とページ長を一致させる
