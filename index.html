@@ -249,7 +249,7 @@ script src=javascript/jslb_ajax.js
 <hr>
 <li id=dMsvc><a id=pM0g
 	href="javascript:void(0);"
-	onclick="if(document.getElementById('backend_variables')) window.location=(window.location).toString().split('/').slice(0,3).join('/')+'/cuts?episode_id='+$('#backend_variables').attr('data-episode_id');return false;"
+	onclick="return backToDocumentList();"
 	title="カット一覧へ戻る"
 >カット一覧</a></li>
 </ul>
@@ -714,8 +714,8 @@ script src=javascript/jslb_ajax.js
 	<button
 	id=ibMs00
 		class='iconButton iconButton-blank'
-		onclick="if(document.getElementById('backend_variables')) window.location=(window.location).toString().split('/').slice(0,3).join('/')+'/cuts?episode_id='+$('#backend_variables').attr('data-episode_id');"
-		title="backCuts"
+		onclick="return backToDocumentList();"
+		title="ドキュメントリストへ戻る"
 	>
 	</button><button
 	id=ibMs01
