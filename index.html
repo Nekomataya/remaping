@@ -246,6 +246,12 @@ script src=javascript/jslb_ajax.js
 	onclick="pushStore();return false;"
 	title="ファイルをサーバに保存"
 >サーバに保存</a></li>
+<hr>
+<li id=dMsvc><a id=pM0g
+	href="javascript:void(0);"
+	onclick="if(document.getElementById('backend_variables')) window.location=(window.location).toString().split('/').slice(0,3).join('/')+'/cuts?episode_id='+$('#backend_variables').attr('data-episode_id');return false;"
+	title="カット一覧へ戻る"
+>カット一覧</a></li>
 </ul>
 </li>
 
@@ -703,18 +709,25 @@ script src=javascript/jslb_ajax.js
 <!--	ツールバー/toolbarHeader	-->
 <div id=toolbarHeader>
 <!--	ツールバーボタン/toolIcons	-->
+	</button> </span>
  <span id="severMenu" >
 	<button
+	id=ibMs00
+		class='iconButton iconButton-blank'
+		onclick="if(document.getElementById('backend_variables')) window.location=(window.location).toString().split('/').slice(0,3).join('/')+'/cuts?episode_id='+$('#backend_variables').attr('data-episode_id');"
+		title="backCuts"
+	>
+	</button><button
 	id=ibMs01
 		class='iconButton iconButton-xps'
 		onclick='sWitchPanel("File");return false;'
-		title="newXPS"
+		title="documentSlecter"
 	>
 	</button><button
 	id=ibMs02
 		class='iconButton  iconButton-openX'
 		onclick="if(document.getElementById('optionPanelData').style.display!='inline'){sWitchPanel('Data')};document.getElementById('loadShortcut').value='body';document.getElementById('myCurrentFile').click();"
-		title="file Open"
+		title="importDocument"
 	>
 	</button><button
 	id=ibMs03

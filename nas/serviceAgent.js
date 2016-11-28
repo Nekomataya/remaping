@@ -3,9 +3,17 @@
     一旦このモジュールを通すことで異なる種別のリポジトリ操作を統一する
     サービスエージェントは、ログインの管理も行う
     
+test data:
+
+    var username = kiyo@nekomataya.info
+    var password = 'devTest'
+    var client_id = "b115aead773388942473e77c1e014f4d7d38e4d4829ae4fd1fa0e48e1347b4cd";
+    var client_secret = "54c0f02c38175436df16a058cc0c0e037038c82d3cc9ce4c212e3e4afe0449dd";
+
+http://remaping.scivone-dev.com/oauth/token?
 Object ServiceAgent
     .servers    サーバコレクション
-    .repositories リポジトリオブジェクトコレクション
+    .repositories リポジトリコレクション
     .currentRepository  現在選択されているリポジトリへの参照
 
 
@@ -20,7 +28,7 @@ Object ServiceAgent
 そうする場合は、ローカルリポジトリはセレクタに入れずに表示にマーキングをする
 とくに現在開いている（又は開いていない）リポジトリのカットとカブっている場合
 
-    リポジトリ分類 
+    リポジトリ分類 kiyo
 以下のような段階的な差を付けてアカウントを取得してもらう＋制作会社に有料サービスを販売しやすくしたい
 
     ローカルリポジトリ
@@ -115,9 +123,45 @@ ServiceNode=function(serviceName,serviceURL,uID){
     this.uid  = uID;//uid ログインユーザID パスワードは控えない　必要時に都度請求
     this.lastAuthorized = "";//最期に認証したタイミング
     this.accessToken="";//アクセストークン
+//    this.username = kiyo@nekomataya.info
+//    this.password = 'devTest'
+    this.client_id = "b115aead773388942473e77c1e014f4d7d38e4d4829ae4fd1fa0e48e1347b4cd";
+    this.client_secret = "54c0f02c38175436df16a058cc0c0e037038c82d3cc9ce4c212e3e4afe0449dd";
 }
+/**
+認証手続きはノードのメソッド　ノード自身が認証と必要なデータの記録を行う
+パスワードは記録しない
+認証毎にパスワードをユーザに要求する
+引数：パスワード
+myService.authorize()
+    パスワードがカラの場合は、標準手続きで請求
+
+*/
 ServiceNode.prototype.authorize=function(myPassword){
-    //認証手続きをノードに置く
+    that = this;
+    $.ajax({
+		type : 'post',
+		grant_type : 'password',
+		url : this.url+'/oauth/token',
+		username : this.uid,
+		password : 'devTest',
+        client_id : this.client_id,
+        client_secret : this.client_secret,
+		contentType: 'application/JSON',
+		dataType : 'JSON',
+		scriptCharset: 'utf-8',
+		success : function(result) {
+		    console.log(result)
+//            that.accsessToken = result.access_token;
+//            that.lastAuthorized = new Date().toString();
+		},
+		error : function(result) {            
+			// Error
+			console.log("error");
+			console.log(result);
+		}
+	});
+
 }
 
 
@@ -166,6 +210,21 @@ info.nekomataya.remaping.dataStore
 0//0//0
 0:本線//1:レイアウト//2:演出検査
  
+    ラインID
+ラインが初期化される毎に通番で増加 整数
+0   本線　primaryライン
+1   本線から最初に分岐したライン
+1-1 ライン１から分岐したライン
+2   本線から分岐した２番めのライン
+
+    ステージID
+各ラインを結んで全通番になる作業ステージID
+0//0
+0//1
+0//2    1//2
+0//3    1//3
+
+
     エントリの識別子自体にドキュメントの情報を埋め込めばサーバ側のパースの必要がない。
     ネットワークストレージをリポジトリとして使う場合はそのほうが都合が良い
     管理DBの支援は受けられないが、作業の管理情報が独立性を持てる
@@ -728,22 +787,32 @@ serviceAgent = {
     currentServer:null,
     currentRepository:null
 };
-
-serviceAgent.switchService = function(){
-return null;
+/**
+    サーバを切り替える
+サーバ名・URL・ID　またはキーワードで指定
+キーワードと同名のサーバは基本的に禁止？
+サーバにログインしていない場合は
+*/
+serviceAgent.switchService = function(myServer){
+return currentServer;
 };
-
-serviceAgent.switchRepository = function(){
-return null;
+/**
+    リポジトリを切り替える
+*/
+serviceAgent.switchRepository = function(myRepository){
+    
+return currentRepository;
 };
 
 /**
-    引数を判定して動作を決定　実際のリポジトリの操作を呼び出す
-    myRepository    対象リポジトリ名指定 文字列による指定がない場合は検索
-    myIdentifier    カット識別子完全状態で指定されなかった場合は、検索で補う
-    isReferenece    リファレンスとして呼び込むか否かのフラグ指定がなければ自動判定
-    callback    コールバック関数の指定が可能コールバックは以下の型式
-        function(xpsSourceText){    }
+    引数を判定して動作を決定　カレントリポジトリの操作を呼び出す
+    myRepository    対象リポジトリ　名前又はオブジェクト　指定がない場合はカレント
+    myIdentifier    カット識別子　完全状態で指定されなかった場合は、検索で補う
+    isReferenece    リファレンスとして呼び込むか否かのフラグ　指定がなければ自動判定
+    callback    コールバック関数　指定が可能コールバックは以下の型式で
+        function(xpsSourceText,callbackArguments){    }
+    コールバックの指定がない場合は指定データをアプリケーションに読み込む
+    コールバック関数以降の引数はコールバックに渡される
 */
 serviceAgent.getEntry = function(myRepository,myIdentifier,isReferenece,callback){
 
@@ -752,9 +821,6 @@ serviceAgent.getEntry = function(myRepository,myIdentifier,isReferenece,callback
 
 //Test code
 /**
-var serviceA=new ServiceNode("SCIVONE",'http://remaping.scivone-dev.com','kiyo@nekomataya.info');
-var Repos=new NetworkRepository("HOME",serviceA);
-console.log(Repos.productsData.length);
 
 Repos.getProducts();//一度初期化する
 console.log(Repos.productsData);

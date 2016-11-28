@@ -1155,3 +1155,15 @@ transform-origin: 0 0;transform:scale(1,1);
     margin: 0;
     padding: 5px 10px;
   }
+  
+/**
+	cellGraphicLayer
+	canvas object
+*/
+	.cgl {
+		position: absolute;
+		z-index: 3;
+		pointer-events: none;
+		brend-mode: multiply;
+		opacity:0.4;
+	}

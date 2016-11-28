@@ -25,31 +25,38 @@
 //サーバへプッシュ
 //この関数名で
 function pushStore(){
+  if(document.getElementById('backend_variables')){
 	var episode_id = $('#backend_variables').attr('data-episode_id');
+	var cut_id = $('#backend_variables').attr('data-cut_id');
+	var method_type = '';
+	var target_url = '';
+
 	json_data = {
-			 		content: XPS.toString(),
+			 		content: targetObj.XPS.toString(),
 		     		episode_id: episode_id,
-			 		cut_id: gon.cut_id
+			 		cut_id: cut_id
 				};
-/*
-	json_data = {
-			 		content: XPS.toString(),
-		     		episode_id: XPS.episode_id,
-			 		cut_id: XPS.cut_id
-				};
-*/
+
+
+	if ( cut_id == '' ){
+		method_type = 'POST';
+		target_url = '/cuts.json';
+	}else{
+		method_type = 'PUT';
+		target_url = '/cuts/' + cut_id + '.json'
+	}
 
 /*
 episode_id,cut_idに関しては、データ内に専用のプロパティを置いて記録するのが良いと思います。
 
-				
 開発中の　制作管理DB/MAP/XPS　で共通で使用可能なnas.SCInfoオブジェクトを作成中です。
-これが、作品（制作単位）ごとの情報を保持します。
-
+これに一意のIDを持たせる予定です。
 */
+
+	console.log('dddddddddddddddddddddddddddddddd');
 	$.ajax({
-		type : 'post',
-		url : '/cuts.json',
+		type : method_type,
+		url : target_url,
 		data : JSON.stringify(json_data),
 		contentType: 'application/JSON',
 		dataType : 'JSON',
@@ -57,16 +64,25 @@ episode_id,cut_idに関しては、データ内に専用のプロパティを置
 		success : function(data) {
 			xUI.setStored("current");//UI上の保存ステータスをセット
 			sync();//保存ステータスを同期
-//			console.log();
+
+			if( method_type == 'POST'){
+				console.log("new cut!");
+				$('#backend_variables').data('cut_id', data['id']);
+			}else{
+				console.log('existing cut!');
+			}
+
 		},
 		error : function(data) {
 
 			// Error
-//			console.log("error");
-//			console.log(data);
+			console.log("error");
+			console.log(data);
 		}
 	});
-
+  }else{
+  	alert('no network service');
+  }
 };
 //サーバから取込
 function pullStore(){
@@ -78,6 +94,20 @@ function pullStore(){
 
 };
 
+/**
+	 同エピソードのカット一覧へロケーションを移す
+変更フラグが立っている場合は、ロケーション移動の警告を行う
+
+*/
+function backToDocumentList(){
+	if(document.getElementById('backend_variables')){
+		var backLocation = '/cuts?episode_id='+$('#backend_variables').attr('data-episode_id');
+	 	window.location= backLocation;
+	 }else{
+	 	return false;	
+	 }
+}
+// backToDocumentList()
 //暫定
 
 
