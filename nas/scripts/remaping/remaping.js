@@ -4050,11 +4050,10 @@ document.getElementById("UIheader").style.display="none";
 　       serviceAgent.currentStatus='online';
 　       document.getElementById('loginstatus_button').innerHTML = '=ONLINE=';
 　       document.getElementById('loginstatus_button').disabled  = true;
-　       /*if(
+　       if(
 　           ($("#backend_variables").attr("data-episode_id").length==0)&&
 　           ($("#backend_variables").attr("data-cut_id").length==0)
-　       ){}*/
-　       if(false){
+　       ){
 //ドキュメント拘束モードへ移行
 　           serviceAgent.currentStatus='online-single';
 　           $('#server-info').hide();
