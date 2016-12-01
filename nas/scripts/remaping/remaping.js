@@ -4045,7 +4045,7 @@ document.getElementById("UIheader").style.display="none";
     };
 }
 //サーバーオンサイトであるか否かを判定して表示を更新
-　   if(document.getElementById('backend_variables')==null){
+　   if(document.getElementById('backend_variables')){
 　       xUI.onSite = window.location.toString().split('/').slice(0,3).join('/');
 　       serviceAgent.currentStatus='online';
 　       document.getElementById('loginstatus_button').innerHTML = '=ONLINE=';
