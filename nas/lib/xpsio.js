@@ -661,7 +661,13 @@ function Xps(Layers, Length) {
      addLine又はbranch,add(new)Stage,add(new)Job,
      */
     this.parent;//親Xps参照用プロパティ　初期値は undefined（参照無し）
+    /**
+    Xpsの　stageオブジェクトは　xMap共用の　Pm.Issueオブジェクトと置換する
+    Issueオブジェクトの文字列化メソッドは標準で　xMap記録文字列
+    オプションでXps文字列・カット識別子文字列の切り替え
+    */
     this.stage = new XpsStage(this, "", "");
+    this.stage = new nas.Pm.Issue(this, "", "");
     /**
      * オブジェクトでないほうが良いかも　＞　line/stage/job のオブジェクトに変更予定
      * ファイルパスでなく参照オブジェクトに変更予定　オブジェクト側に参照可能なパスがあるものとする

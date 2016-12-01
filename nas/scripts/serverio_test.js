@@ -30,9 +30,23 @@ function pushStore(){
 	var cut_id = $('#backend_variables').attr('data-cut_id');
 	var method_type = '';
 	var target_url = '';
-
+ var title_name = encodeURIComponent(xUI.XPS.title);
+ var opus_name = encodeURIComponent(xUI.XPS.opus) + (xUI.XPS.subtitle)?
+  '['+encodeURIComponent(xUI.XPS.subtitle)+']' : '';
+ var cut_name = ((xUI.XPS.scene)? 'S'+encodeURIComponent(xUI.XPS.scene):'S-' )+'C'+encodeURIComponent(xUI.XPS.cut);
+  decodeURIComponent([title_name+'#'+opus_name,cut_name].join('//'))+'//0//0//0//';
+/**
+	保存時に送り出すデータに
+		タイトル・エピソード番号（文字列）・サブタイトル
+		カット番号+カット尺
+	を加えて送出する
+	型式をきめこむ
+	サーバ側では、これが保存状態と異なる場合は、エラーを返すか又は新規タイトルとして保存する必要がある。
+	アプリケーション側は、この文字列が異なる送出を抑制して警告を出す？
+	
+*/
 	json_data = {
-			 		content: targetObj.XPS.toString(),
+			 		content: xUI.XPS.toString(),
 		     		episode_id: episode_id,
 			 		cut_id: cut_id
 				};

@@ -44,7 +44,6 @@ opusが同じでもリポジトリが異なる場合は、同エントリ内で�
 //良くない
 
 documentDepot = {
-    repositories:[],
     products    :[],
     documents   :[],
     currentProduct:null,
@@ -56,8 +55,8 @@ documentDepot.documentsUpdate=function(){
     var myProducts  =[];
     var myDocuments =[];
 /*======*/
-    for (var idx = 0 ; idx < this.repositories.length ; idx ++ ){
-        myDocuments=myDocuments.concat(this.repositories[idx].entryList);
+    for (var idx = 0 ; idx < serviceAgent.repositories.length ; idx ++ ){
+        myDocuments=myDocuments.concat(serviceAgent.repositories[idx].entryList);
     }
     for (var idx = 0 ; idx < myDocuments.length ; idx ++ ){
         var currentProduct=myDocuments[idx].toString().split( '//' )[0];
@@ -134,7 +133,7 @@ documentDepot.updateDocumentSelector=function(myRegexp){
     読み出して編集エリアに取り込む
 */
 documentDepot.getEntry =function(myIdentifier){
-    for (var rid = 0;rid < this.repositories.length ; rid ++){
+    for (var rid = 0;rid < serviceAgent.repositories.length ; rid ++){
         
     }
 }
@@ -155,21 +154,24 @@ documentDepot.buildIdentifier = function(){
     result += '( '+nas.Frm2FCT(nas.FCT2Frm(document.getElementById('timeInput').value),3)+' )';
     return result;
 }
-//オブジェクトを初期化
-documentDepot.init= function(){
-    this.repositories=[];
+/**
+    ドキュメントリストを更新する
+    ローカルリポジトリに加えて、アクティブなリポジトリの内容を取得して合成したリストをブラウザの保持リストとして更新する
+    先に存在するリストは破棄
+*/
+documentDepot.rebuildList=function(){
     this.products    =[];
     this.documents   =[];
     this.currentDocument=null
     this.currentReferenece=null
 /*=============*/
-    this.repositories.push(localRepository);
-var serviceA=new ServiceNode("SCIVONE",'http://remaping.scivone-dev.com','kiyo@nekomataya.info');
-var Home=new NetworkRepository("HOME",serviceA);
-    this.repositories.push(Home);
+serviceAgent.repositories[0].getList();
 
-for(var idr=0 ;idr < this.repositories.length; idr ++){this.repositories[idr].getList();}
-    
+  if ( serviceAgent.repositories.length > 0 ){
+     for(var idr=1 ;idr < serviceAgent.repositories.length; idr ++){serviceAgent.repositories[idr].getList();}
+  }
+//  テスト中はこれで良いが、後はあまり良くない 
+
 }
 /**
 読み出し・請求

@@ -136,7 +136,7 @@ script src=javascript/jslb_ajax.js
 -->
 </head>
 <body 
-	onload="startupTooltip();var nRS = setTimeout('nas_Rmp_Startup()',10);nas.LangPack.chgLocale('ja');documentDepot.init();"
+	onload="startupTooltip();var nRS = setTimeout('nas_Rmp_Startup()',10);nas.LangPack.chgLocale('ja');serviceAgent.init();"
 	onbeforeunload="return nas_Rmp_reStart();"
 	onContextMenu	=" return true"
 	onSelectStart="return false"
@@ -172,8 +172,8 @@ script src=javascript/jslb_ajax.js
 <li><span id=pM00>Document</span>
 <ul>
 <li> <A	id=pM01
-	href='javascript:void()'
-	onclick='sWitchPanel("File");return false;//myScenePref.open();document.getElementById("scnNewSheet").checked=true;return false;'
+	href = 'javascript:void()'
+	onclick = 'sWitchPanel("File");return false;//myScenePref.open();document.getElementById("scnNewSheet").checked=true;return false;'
 	title="シートの新規作成と変更"
 >New</A></li>
 <li id=dMcgi><A	id=pM02
@@ -223,12 +223,12 @@ script src=javascript/jslb_ajax.js
 >Import/Export</a></li>
 <li id=dMsvc><hr><a id=pM0d
 	href="javascript:void(0);"
-	onclick="alert('まだ機能しません');return false;"
+	onclick="sWitchPanel('Login');return false;"
 	title="サインイン"
 >Sign IN</a></li>
 <li id=dMsvc><a id=pM0e
 	href="javascript:void(0);"
-	onclick="alert('まだ機能しません');return false;"
+	onclick="serviceAgent.authorize();return false;"
 	title="サインアウト"
 >Sign Out</a></li>
 <li id=dMsvc><hr><a id=pM0b
@@ -653,14 +653,25 @@ script src=javascript/jslb_ajax.js
 </ul>
 </div>
 <!-- dropdown menu for brouser ブラウザ用ドロップダウンメニュー　-->
-
-<div class=server-info > login : <button onclick='sWitchPanel("Login");return false' title="ユーザ切り替え">ユーザID</button> / 
+<div>
+<div    class = 'server-info'
+        id    = 'server-onsite'
+        style ='display:none'
+        >onsite information</div>
+<div    class=server-info
+        id = server-info
+        current_user=''
+        current_server=''
+        current_token=''
+        last_authrized=''
+> <span id=loginuser ></span> : <button id='loginstatus_button' onclick='sWitchPanel("Login");return false' title="ユーザ切り替え"> =OFFLINE= </button> / 
 	repository : 
 	<select
 	name="repositorySelector"
-	id="repBrowser"
+	id="repositorySelector"
 	title="リポジトリ選択"
 	style="width:200;text-align:right"
+	onchange="serviceAgent.switchRepository(this.value)"
 >
 <option selected>[HOME]
 <option>会社/url
@@ -700,12 +711,12 @@ script src=javascript/jslb_ajax.js
 
 <!--	ログインパネル	-->
 <div class=loginPanel id=optionPanelLogin style="text-align:right;">
-<hr>	userID (or mail-address) : <input type=text size=32>
-	password : <input type=password size=32>
-	<button>LOGIN / logout</button><hr>
+<hr>	userID (or mail-address) : <input id='current_user_id' type=text size=32 value='kiyo@nekomataya.info'>
+	password : <input id='current_user_password' type=password size=32 value='devTest'>
+	<button id='login_button' onclick='serviceAgent.authorize();'>SIGNIN / signout</button><hr>
 </div>
 <!--	ログインパネル	-->
-
+</div>
 <!--	ツールバー/toolbarHeader	-->
 <div id=toolbarHeader>
 <!--	ツールバーボタン/toolIcons	-->
@@ -1847,7 +1858,7 @@ onclick='nas.incrFCTonHTMLInput(document.getElementById("editTC"),"-(1)")'
 <!-- メニューバー と ロゴ -->
 <button
  id='ddp-refresh'
- onClick='documentDepot.init();'
+ onClick='documentDepot.rebuildList();'
  class='documentPanelButton'
  title="最新の情報に更新"
 >Refresh</button><button

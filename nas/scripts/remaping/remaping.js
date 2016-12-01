@@ -72,7 +72,11 @@ xUI.init    =function(XPS,referenceXps){
     //キーワード:"all"=["replacement","timing","camerawork","effect","still","dialog","sound"],"cell(スチル含む)"=["timing","still"]
     //"replacement","timing","camerawork","effect","still","dialog","sound"
     this.referenceLabels=new Array();//表示させる数（後で初期化）　
+/** 
+    以下UI動作制御変数
+*/
     this.viewMode    =ViewMode;    //表示モード Compact/WordProp
+    this.onSite     = false;    //サーバ動作中は
 
     this.spinValue    =SpinValue;    //スピン量
     this.spinSelect =SpinSelect;    //選択範囲でスピン指定
@@ -4040,6 +4044,11 @@ document.getElementById("UIheader").style.display="none";
         SheetBody+= xUI.pageView(Page);
     };
 }
+//サーバーオンサイトであるか否かを判定して表示を更新
+　   if(document.getElementById('backend_variables')){
+　       $('#server-info').hide();
+　       $('#server-onsite').show();
+　   }
 //シートボディを締める
     document.getElementById("sheet_body").innerHTML=SheetBody+"<div class=\"screenSpace\"></div>";
 //"<div class=\"screenSpace\"></div>"+;

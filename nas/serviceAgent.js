@@ -113,55 +113,94 @@ W    書き込み
 /**
     サービスモードオブジェクト
     複数あるサーバ（ログイン先）の必要な情報を保持するオブジェクト
-    サービス認証を何処か一つにしてしまうならば、複数のログイン情報を抱える必要はない
-    その場合最初に認証したノード一つで運用
-    トークンはリポジトリ毎の発行か？
+    複数のサービス情報をプログラム内に保持しないようにドキュメント内の属性として監理する
+    同時に記録する認証は一つ、複数のログイン情報を抱える必要はない
+    最期に認証したノード一つで運用　トークンは毎に再取得
 */
-ServiceNode=function(serviceName,serviceURL,uID){
+ServiceNode=function(serviceName,serviceURL){
     this.name = serviceName;//識別名称
     this.url  = serviceURL;//ベースになるURL
-    this.uid  = uID;//uid ログインユーザID パスワードは控えない　必要時に都度請求
-    this.lastAuthorized = "";//最期に認証したタイミング
-    this.accessToken="";//アクセストークン
+//    this.uid  = '';//uid ログインユーザID パスワードは控えない　必要時に都度請求
+//    this.lastAuthorized = "";//最期に認証したタイミング
+//    this.accessToken="";//アクセストークン
 //    this.username = kiyo@nekomataya.info
 //    this.password = 'devTest'
+//  以下の情報は、テスト用に埋め込み　あとで分離処置
     this.client_id = "b115aead773388942473e77c1e014f4d7d38e4d4829ae4fd1fa0e48e1347b4cd";
     this.client_secret = "54c0f02c38175436df16a058cc0c0e037038c82d3cc9ce4c212e3e4afe0449dd";
 }
 /**
-認証手続きはノードのメソッド　ノード自身が認証と必要なデータの記録を行う
-パスワードは記録しない
-認証毎にパスワードをユーザに要求する
-引数：パスワード
-myService.authorize()
-    パスワードがカラの場合は、標準手続きで請求
-
+    リクエストのヘッダにトークンを載せる
+    トークンの期限が切れていた場合は、再度のトークン取得（再ログイン）を促す
 */
-ServiceNode.prototype.authorize=function(myPassword){
-    that = this;
+ServiceNode.prototype.setHeader = function(xhr){
+    var myToken = $('#server-info').attr('current_token')
+    if(myToken.length==0) return false;
+//    console.log(myToken)
+    xhr.setRequestHeader('Authorization', ( "Bearer " + myToken));    
+//    console.log(xhr);
+    return true;
+}
+/**
+    データ取得
+    参考コード　実際にはコールされない
+*/
+ServiceNode.prototype.getFromServer = function getFromServer(url, msg){
+    that=this;
     $.ajax({
-		type : 'post',
-		grant_type : 'password',
-		url : this.url+'/oauth/token',
-		username : this.uid,
-		password : 'devTest',
-        client_id : this.client_id,
-        client_secret : this.client_secret,
-		contentType: 'application/JSON',
-		dataType : 'JSON',
-		scriptCharset: 'utf-8',
-		success : function(result) {
+        url: this.url + url,
+        type: 'GET',
+        dataType: 'json',
+        success: function(res) {
+            console.log(msg);
+            console.log(res);
+        },
+        beforeSend: this.setHeader
+    });
+}
+
+/**
+    認証手続きはノードのメソッド　ノード自身が認証と必要なデータの記録を行う
+    パスワードは記録しない
+    認証毎にパスワードをユーザに要求する
+        myService.authorize()
+    パスワードとUIDは、ページ上のフォームから読む
+ 
+*/
+ServiceNode.prototype.authorize=function(){
+    var noW =new Date();
+    var myUserId   = document.getElementById('current_user_id').value;
+    var myPassword = document.getElementById('current_user_password').value;
+    if ((myUserId.length<1) || (myPassword.length<1)) return false;
+//    if((this.accessToken.length)&&(new Date(this.lastAuthorized) < new Date())){return true}
+    var data = {
+        username: myUserId,
+        password: myPassword,
+        client_id: this.client_id,
+        client_secret: this.client_secret,
+        grant_type: 'password'
+    };
+
+    $.ajax({
+        type: "POST",
+        url: this.url+"/oauth/token.json",
+        data: data,
+		success : (function(result) {
 		    console.log(result)
-//            that.accsessToken = result.access_token;
-//            that.lastAuthorized = new Date().toString();
-		},
-		error : function(result) {            
-			// Error
-			console.log("error");
-			console.log(result);
+		    console.log(this)
+            $('#server-info').attr('current_token'  , result.access_token);
+            $('#server-info').attr('last_authrized' , new Date().toString());
+            serviceAgent.authorized('success');
+		}).bind(this),
+		error : function(result) {
+		    /**
+		        認証失敗 トークンと必要情報をクリアして表示を変更する
+		    */            
+            $('#server-info').attr('current_token'  , '');
+            $('#server-info').attr('last_authrized' , '');
+            serviceAgent.authorized('false');
 		}
 	});
-
 }
 
 
@@ -531,11 +570,20 @@ NetworkRepository=function(repositoryName,myServer){
 */
 NetworkRepository.prototype.getProducts = function (){
     this.productsData.length = 0;
-    that = this;
-    $.getJSON((this.url+'/products.json'),function(result){
-		    that.productsData=result;
-		    that.productsUpdate();
-	});
+ //   that = this;
+    $.ajax({
+        url: this.url+'/api/v1/products.json',
+        type: 'GET',
+        dataType: 'json',
+        success: (function(result) {
+//            console.log(msg);
+            console.log(result);
+		    this.productsData=result;
+		    this.productsUpdate();
+        }).bind(this),
+        beforeSend: (this.service.setHeader).bind(this)
+    });
+
 }
 /**
     タイトルごとの詳細（エピソードリスト含む）を取得してタイトルに関連付ける
@@ -543,15 +591,23 @@ NetworkRepository.prototype.getProducts = function (){
     
 */
 NetworkRepository.prototype.productsUpdate = function(){
-    that = this;
     for(var idx = 0 ;idx < this.productsData.length ;idx ++){
-        $.getJSON(that.productsData[idx].url,function(result){
-            for(var idx = 0 ;idx < that.productsData.length ;idx ++){
+//        console.log("get:"+this.productsData[idx].id)
+    $.ajax({
+        url: this.url+'/api/v1/products/'+this.productsData[idx].id+'.json',
+        type: 'GET',
+        dataType: 'json',
+        success: (function(result) {
+            for(var idx = 0 ;idx < this.productsData.length ;idx ++){
                 //プロダクトデータを詳細データに「入替」
-		        if(result.id == that.productsData[idx].id){that.productsData[idx]=result ; break;}
+		        if(result.id == this.productsData[idx].id){this.productsData[idx]=result ; break;}
 		    }
-		    that.episodesUpdate(idx);
-	    });
+//    console.log(this.productsData);
+		    this.episodesUpdate(idx);
+        }).bind(this),
+        beforeSend: (this.service.setHeader).bind(this)
+    });
+
     }
 }
 /**
@@ -560,16 +616,17 @@ NetworkRepository.prototype.productsUpdate = function(){
     エピソードIDを指定して内部リストにコンバート
  */
 NetworkRepository.prototype.episodesUpdate = function (pid) {
-    that = this;
+//    that = this;
         for( var eid = 0 ; eid < this.productsData[pid].episodes[0].length ; eid ++){
-            
             if( typeof this.productsData[pid].episodes[0][eid].id == "undefined" ){
                 //未取得の場合はurlを参照
                var targetURL = this.url+this.productsData[pid].episodes[0][eid].url;
  	        }else{
 	            //取得済みの場合は更新
-                var targetURL = this.url+'/episodes/'+this.productsData[pid].episodes[0][eid].id + '.json';
+                var targetURL = this.url+'/api/v1/episodes/'+this.productsData[pid].episodes[0][eid].id + '.json';
 	        }
+    console.log(targetURL);
+/*
                 $.getJSON (targetURL,function(result){
                     searchLoop:{
                     for( var idx = 0 ; idx < that.productsData.length ; idx ++){
@@ -584,7 +641,30 @@ NetworkRepository.prototype.episodesUpdate = function (pid) {
                         }
                     }}
                     that.getList();
-	            });
+	            });*/
+	            $.ajax({
+                    url: targetURL,
+                    type: 'GET',
+                    dataType: 'json',
+                    success: (function(result) {
+//                        console.log(result);
+                      searchLoop:{
+                        for( var idx = 0 ; idx < this.productsData.length ; idx ++){
+                            if((typeof this.productsData[idx].episodes == 'undefined')||(this.productsData[idx].episodes[0].length == 0)) continue;//エピソード数０の際は処理スキップ
+                            for( var eid = 0 ; eid < this.productsData[idx].episodes[0].length ; eid ++){
+                                if (typeof this.productsData[idx].episodes[0][eid].id == 'undefined') {
+                                    var myID = (this.productsData[idx].episodes[0][eid].url).split('/').reverse()[0].split('.')[0];
+                                }else{
+                                    var myID = this.productsData[idx].episodes[0][eid].id;
+                                }
+                                if( result.id == myID ){ this.productsData[idx].episodes[0][eid] = result;break searchLoop;};
+                            }
+                        }
+                      }
+                     this.getList();
+                    }).bind(this),
+                    beforeSend: (this.service.setHeader).bind(this)
+                });
 	    }
 };
 /**
@@ -613,12 +693,15 @@ NetworkRepository.prototype.getList = function (){
                 for(var cid = 0 ; cid < currentEpisode.cuts[0].length ;cid ++){
                 //現在のサーバエントリ情報はサブタイトルと秒数なし 管理情報は[0,0,0]固定で　これは保存時にアプリ側から送る仕様にする
                 //兼用カット情報はペンディング
-                var myCutId=currentEpisode.cuts[0][cid].url.split('/').reverse()[0].split('.')[0];
+                var myCutId=(typeof currentEpisode.cuts[0][cid].id == 'undefined')?
+                    currentEpisode.cuts[0][cid].url.split( '/' ).reverse()[0].split( '.' )[0]:
+                    currentEpisode.cuts[0][cid].id;//これは修正予定
                 var entryArray = [
                     encodeURIComponent(currentTitle.name)+'#'+encodeURIComponent(currentEpisode.name) ,
                     'S-C'+encodeURIComponent(currentEpisode.cuts[0][cid].name),
                     0,0,0
                 ];
+
                 var myEntry=entryArray.slice(0,2).join( "//" );//管理情報を外してSCi部のみ抽出
                 var hasEntry = false;
                 var currentEntryID =false;
@@ -701,13 +784,23 @@ NetworkRepository.prototype.getEntry = function (myIdentifier,isReferenece,callb
     }
 */
   
-    that=this;
+//    that=this;
 if(callback instanceof Function){
-  $.getJSON ( this.url + myIssue.url, callback );
+//  $.getJSON ( this.url + myIssue.url, callback );
+    $.ajax({
+        url: this.url + myIssue.url,
+        type: 'GET',
+        dataType: 'json',
+        success: (function(result) {
+            var myContent=result.content;
+            callback(myContent);
+        }).bind(this),
+        beforeSend: (this.service.setHeader).bind(this)
+    });
 }else if(targetArray.length < 4){}
     if(isReference){
     //データ単独で現在のセッションのリファレンスを置換
-    
+/**  
   $.getJSON ( this.url + myIssue.url, function (result){
 	var myContent=result.content;//XPSソーステキストをセット
 	documentDepot.currentDocument=new Xps();
@@ -724,12 +817,41 @@ if(callback instanceof Function){
 	    if(xUI.XPS.readIN(myContent)){xUI.init(xUI.XPS);nas_Rmp_Init();}
 	}
   });
+*/
+    $.ajax({
+        url: this.url + refIssue.url,
+        type: 'GET',
+        dataType: 'json',
+        success: (function(result) {
+        	var myContent=result.content;//XPSソーステキストをセット
+	        documentDepot.currentReference=new Xps();
+	        documentDepot.currentReference.readIN(myContent);
+	        xUI.init(documentDepot.currentDocument,documentDepot.currentReference);
+	        nas_Rmp_Init();
+        }).bind(this),
+        beforeSend: (this.service.setHeader).bind(this)
+    });
+
 }else{
+/**
     $.getJSON ( this.url + myIssue.url, function (result){
         var myContent=result.content;//XPSソーステキストをセット
 	    documentDepot.currentReference=new Xps();
 	    documentDepot.currentReference.readIN(myContent);
 	    xUI.setReferenceXPS(documentDepot.currentReference);
+    });
+*/
+    $.ajax({
+        url: this.url + refIssue.url,
+        type: 'GET',
+        dataType: 'json',
+        success: (function(result) {
+            var myContent=result.content;//XPSソーステキストをセット
+	        documentDepot.currentReference=new Xps();
+	        documentDepot.currentReference.readIN(myContent);
+	        xUI.setReferenceXPS(documentDepot.currentReference);
+        }).bind(this),
+        beforeSend: (this.service.setHeader).bind(this)
     });
 }
   return null;
@@ -778,30 +900,127 @@ NetworkRepository.prototype.pushEntry = function (myXps){
 
 ログインするサーバを選んでログイン処理をする
 ログイン情報を保持して
+状態は　offline/onnline/online-single の3状態
+モードによっては機能が制限される
+UI上モードを表示するシンボルが必要
+
+servers ServiceNode
 */
 
 
 serviceAgent = {
     servers     :[],
     repositories:[],
-    currentServer:null,
-    currentRepository:null
+    currentStatus       :'offlline',
+    currentServer       :null,
+    currentRepository   :null
 };
+/**
+    サービスエージェントの初期化(テスト版)
+ リポジトリの初期化は　最終的には作業記録とサーバからの受信情報でアプリケーション初期化のタイミングで組む
+*/
+serviceAgent.init= function(){
+    this.repositories=[];
+
+    this.repositories.push(localRepository);//ローカルリポジトリを0番として加える
+//var xUI.onSite==true
+    var serviceA=new ServiceNode("SCIVONE",'http://remaping.scivone-dev.com');
+    var serviceA=new ServiceNode("SCIVONE",'http://remaping.scivone-dev.com');
+
+    this.servers.push(serviceA);
+    this.currentServer = serviceA;
+    var Home=new NetworkRepository("HOME",serviceA);
+    this.repositories.push(Home);
+/**
+    組んだリポジトリでリポジトリリストを更新する
+    ローカルリポジトリはすべての状況で利用可能
+*/
+    var myContents="";
+    myContents +='<option selected value=0> = no selected =';
+    for(var idr=1; idr < this.repositories.length;idr ++){
+        myContents +='<option value="'+idr+'" >'+this.repositories[idr].name; 
+    }
+    document.getElementById('repositorySelector').innerHTML = myContents;
+
+    this.switchRepository(0);
+}
+/**
+    ユーザ認証
+カレントサービスを認証又は解除する
+
+カレントサービスが"0:=no selected="の場合は,
+単純にすべてのサービスからログアウトする
+
+ */
+serviceAgent.authorize = function(){
+    switch (this.currentStatus){
+    case 'online-single':
+        return false;
+    break;
+    case 'online':
+//            this.currentServer     = null;
+//            this.currentRepository = null;
+            this.authorized(false);
+        return 'offline';
+    break;
+    case 'offline':
+    default:
+        if(this.currentServer) this.currentServer.authorize();
+        return 'online';
+    }
+}
+/**
+    認証/解除時の画面処理
+*/
+serviceAgent.authorized = function(status){
+    if (status == 'success'){
+        this.currentStatus = 'online';   
+            document.getElementById('loginuser').innerHTML = document.getElementById('current_user_id').value;
+            document.getElementById('loginstatus_button').innerHTML = "=ONLINE=";
+            document.getElementById('login_button').innerHTML = "signin \\ SIGNOUT";
+    }else{
+        this.currentStatus = 'offline';
+            document.getElementById('loginuser').innerHTML = '';
+            document.getElementById('loginstatus_button').innerHTML = "=OFFLINE=";
+            document.getElementById('login_button').innerHTML = "SIGNIN / signout";
+    }
+}
 /**
     サーバを切り替える
 サーバ名・URL・ID　またはキーワードで指定
 キーワードと同名のサーバは基本的に禁止？
-サーバにログインしていない場合は
+サーバにログインしていない場合は、各サーバごとの認証を呼ぶ
+既にサービスにログインしている場合は、その認証を解除してから次のサービスを認証する
+
+内部的にはともかくユーザ視点での情報の輻輳を避けるため　サーバ/リポジトリを多層構造にせず　
+リポジトリに対する認証のみをUIで扱う
+リポジトリの切り替えに対してログイン/ログアウトを行うUI仕様とする。
+サービスの切り替えは内部での呼び出しのみになるので引数は整理する
 */
 serviceAgent.switchService = function(myServer){
 return currentServer;
 };
 /**
     リポジトリを切り替える
-*/
-serviceAgent.switchRepository = function(myRepository){
+    UIから直接呼び出されるのはこちら
+    カレントのリポジトリを切り替え、
+    リポジトリに関連付けられたサービスをカレントにする
+    サービスが現在のログイン先と異なる場合も認証は実際のアクセスまで保留
+    （解除前にもとのサービスに戻った際に再ログインを行わないため）
+    引数は、現在のリポジトリID
+    リポジトリIDは以下のように決定
     
-return currentRepository;
+    0:ローカルリポジトリ固定
+    1~ 以降登録順
+*/
+serviceAgent.switchRepository = function(myRepositoryID){
+    this.currentRepository=this.repositories[myRepositoryID];
+    if((myRepositoryID > 0)&&(myRepositoryID<this.repositories.length)){
+        this.currentServer=this.currentRepository.service;
+    } else {
+        this.currentServer     = null;
+    }
+    if(document.getElementById('repositorySelector').value != myRepositoryID) document.getElementById('repositorySelector').value=myRepositoryID;
 };
 
 /**
