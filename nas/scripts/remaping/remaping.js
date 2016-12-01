@@ -728,7 +728,8 @@ xUI.switchStage=function(){
 
 xUI.setReferenceXPS=function(myXps){
         this.referenceXPS=myXps;
-        sync("reference")
+        nas_Rmp_Init();
+        //sync("reference");//書き直しの少ない穏やかな同期をあとで書く2016
     }
 //////
 /**

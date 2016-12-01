@@ -366,6 +366,7 @@ A
 
 
 localRepository={
+    name:'localStrageStore',
 //    currentProduct:"",
 //    currentSC:"",
 //    currentLine:"",
@@ -448,7 +449,7 @@ localRepository.pushEntry=function(myXps){
     識別子に管理情報があればそれをポイントして、なければ最も最新のデータを返す
     コールバックを渡す
 */
-localRepository.getEntry=function(myIdentifier,isReferenece,callback){
+localRepository.getEntry=function(myIdentifier,isReference,callback){
     if(typeof isReference == 'undefined'){isReference = false;}
     //引数の識別子を分解して配列化
     var targetArray = String(myIdentifier).split( '//' );//引数検査は行わない
@@ -479,7 +480,7 @@ localRepository.getEntry=function(myIdentifier,isReferenece,callback){
     // 構成済みの情報を判定 (リファレンス置換 or 新規セッションか)
     if(targetArray.length == 6) isReference = true ;//指定データが既Fixなので自動的にリファレンス読み込みに移行
     // ソースデータ取得
-    alert(targetArray.join( '//' ));
+    console.log(targetArray.join( '//' ));
     myXpsSource=localStorage.getItem(this.keyPrefix+targetArray.join( '//' ));
     if(myXpsSource){
         if(isReference){
@@ -740,18 +741,18 @@ NetworkRepository.prototype.getList = function (){
 判定はブラウザ又はサービスエージェントの同名関数が行う
 引数の自動補完もしない
 */
-NetworkRepository.prototype.getEntry = function (myIdentifier,isReferenece,callback){
+NetworkRepository.prototype.getEntry = function (myIdentifier,isReference,callback){
     if(typeof isReference == 'undefined'){isReference = false;}
     //引数の識別子を分解して配列化
-    var targetArray     = String(myIdentifier).split('//');
+    var targetArray     = String(myIdentifier).split( '//' );
     var myProductUnit   = targetArray.slice(0,2).join('//');
     var myIssue = false;
     var refIssue = false;
     checkProduct:{
         for (var ix=0;ix<this.entryList.length;ix++){
-            if ( myProductUnit == this.entryList[ix].toString() ) break;
+            if ( myProductUnit == this.entryList[ix].toString() ) break checkProduct;
         }
-        return false ;//プロダクトが無い
+        return "noProduct :"+ myProductUnit;//プロダクトが無い
     }
     if( targetArray.length == 2 ){
     //ターゲットに管理部分がないので、最新のissueとして補う
@@ -765,15 +766,16 @@ NetworkRepository.prototype.getEntry = function (myIdentifier,isReferenece,callb
             for (var cx = (this.entryList[ix].issues.length-1) ; cx <= 0 ;cx--){
                 if ( this.entryList[ix].issues[cx].join('//') == targetIssue ){ myIssue = this.entryList[ix].issues[cx]; break checkIssues; }
             }
-        if (! myIssue) return false;//ターゲットのデータが無い
+        if (! myIssue) return 'no target data'+ targetIssue ;//ターゲットのデータが無い
             }
     }
     // 構成済みの情報を判定 (リファレンス置換 or 新規セッションか)
     if(targetArray.length == 6) isReference = true ;//指定データが既Fixなので自動的にリファレンス読み込みに移行
     //
 
-//     myIssue; これがカットへのポインタ　episode.cuts配列のエントリ myIssue.url　にアドレスあり
-
+//      myIssue; これがカットへのポインタ　episode.cuts配列のエントリ myIssue.url　にアドレスあり
+//      urlプロパティが無い場合はid があるのでidからurlを作成する
+    var targetURL=(myIssue.url)? myIssue.url: '/cuts/'+myIssue.cutID.toString()+'.json';
 /*
     if( myIssue[2] > 0 ){
         for (var cx=0;cx<this.entryList[ix].issues.length;cx++){
@@ -783,12 +785,12 @@ NetworkRepository.prototype.getEntry = function (myIdentifier,isReferenece,callb
         refIssue = [myIssue[0],myIsseu[1]-1,0];
     }
 */
+    console.log(targetURL);
   
 //    that=this;
 if(callback instanceof Function){
-//  $.getJSON ( this.url + myIssue.url, callback );
     $.ajax({
-        url: this.url + myIssue.url,
+        url: this.url + targetURL,
         type: 'GET',
         dataType: 'json',
         success: (function(result) {
@@ -797,9 +799,13 @@ if(callback instanceof Function){
         }).bind(this),
         beforeSend: (this.service.setHeader).bind(this)
     });
-}else if(targetArray.length < 4){}
-    if(isReference){
-    //データ単独で現在のセッションのリファレンスを置換
+/**
+    以下コールバック指定なし（標準処理）
+    
+ */
+}else
+// if(targetArray.length < 4){}
+    if(! isReference){
 /**  
   $.getJSON ( this.url + myIssue.url, function (result){
 	var myContent=result.content;//XPSソーステキストをセット
@@ -819,20 +825,23 @@ if(callback instanceof Function){
   });
 */
     $.ajax({
-        url: this.url + refIssue.url,
+        url: this.url + targetURL,
         type: 'GET',
         dataType: 'json',
         success: (function(result) {
         	var myContent=result.content;//XPSソーステキストをセット
-	        documentDepot.currentReference=new Xps();
-	        documentDepot.currentReference.readIN(myContent);
-	        xUI.init(documentDepot.currentDocument,documentDepot.currentReference);
+console.log("road :"+myContent);
+	        //documentDepot.currentDocument=new Xps();
+	        //documentDepot.currentDocument.readIN(myContent);//カレントドキュメントを設定
+	        XPS.readIN(myContent)
+	        xUI.init(XPS);
 	        nas_Rmp_Init();
         }).bind(this),
         beforeSend: (this.service.setHeader).bind(this)
     });
 
 }else{
+    //データ単独で現在のセッションのリファレンスを置換
 /**
     $.getJSON ( this.url + myIssue.url, function (result){
         var myContent=result.content;//XPSソーステキストをセット
@@ -842,11 +851,12 @@ if(callback instanceof Function){
     });
 */
     $.ajax({
-        url: this.url + refIssue.url,
+        url: this.url + targetURL,
         type: 'GET',
         dataType: 'json',
         success: (function(result) {
             var myContent=result.content;//XPSソーステキストをセット
+console.log('import Reference'+myContent);
 	        documentDepot.currentReference=new Xps();
 	        documentDepot.currentReference.readIN(myContent);
 	        xUI.setReferenceXPS(documentDepot.currentReference);
@@ -1028,13 +1038,13 @@ serviceAgent.switchRepository = function(myRepositoryID){
     引数を判定して動作を決定　カレントリポジトリの操作を呼び出す
     myRepository    対象リポジトリ　名前又はオブジェクト　指定がない場合はカレント
     myIdentifier    カット識別子　完全状態で指定されなかった場合は、検索で補う
-    isReferenece    リファレンスとして呼び込むか否かのフラグ　指定がなければ自動判定
+    isReference    リファレンスとして呼び込むか否かのフラグ　指定がなければ自動判定
     callback    コールバック関数　指定が可能コールバックは以下の型式で
         function(xpsSourceText,callbackArguments){    }
     コールバックの指定がない場合は指定データをアプリケーションに読み込む
     コールバック関数以降の引数はコールバックに渡される
 */
-serviceAgent.getEntry = function(myRepository,myIdentifier,isReferenece,callback){
+serviceAgent.getEntry = function(myRepository,myIdentifier,isReference,callback){
 
 };
 

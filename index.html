@@ -1863,12 +1863,12 @@ onclick='nas.incrFCTonHTMLInput(document.getElementById("editTC"),"-(1)")'
  title="最新の情報に更新"
 >Refresh</button><button
  id='ddp-open'
- onClick='console.log("open :"+decodeURIComponent(documentDepot.currentDocument));'
+ onClick='console.log( "open :" + decodeURIComponent(documentDepot.currentSelection));serviceAgent.currentRepository.getEntry(documentDepot.currentSelection);'
  class='documentPanelButton'
  title="タイムシートを開く"
 >Open</button><button
  id='ddp-newdocument'
- onClick='console.log("new document :"+decodeURIComponent(documentDepot.currentDocument));'
+ onClick='console.log("new document :"+decodeURIComponent(documentDepot.currentSelection));'
  class='documentPanelButton'
  title="新規作成"
 >New</button>

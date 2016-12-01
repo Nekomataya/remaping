@@ -47,6 +47,7 @@ documentDepot = {
     products    :[],
     documents   :[],
     currentProduct:null,
+    currentSelection:null,
     currentDocument:null,
     currentReferenece:null
 };
@@ -122,7 +123,7 @@ documentDepot.updateDocumentSelector=function(myRegexp){
             myContents += '<option';
             myContents += ' value="';
             myContents += myDocuments[dlid];
-            myContents += (this.currentDocument == myDocuments[dlid])? '" selected>':'">';
+            myContents += (this.currentSelection == myDocuments[dlid])? '" selected>':'">';
             myContents += currentText;
         }
     }
@@ -162,8 +163,10 @@ documentDepot.buildIdentifier = function(){
 documentDepot.rebuildList=function(){
     this.products    =[];
     this.documents   =[];
-    this.currentDocument=null
-    this.currentReferenece=null
+    this.currentProduct     =null;
+    this.currentSelection   =null;
+    this.currentDocument    =null;
+    this.currentReferenece  =null;
 /*=============*/
 serviceAgent.repositories[0].getList();
 
@@ -400,14 +403,14 @@ function selectSCi(sciName){
             document.getElementById(myInputText[tidx]).disabled = false;
         }
         document.getElementById("ddp-newdocument").disabled  = false;
-        documentDepot.currentDocument = documentDepot.buildIdentifier();//現在のテキスト入力状態から識別子をビルドする。
+        documentDepot.currentSelection = documentDepot.buildIdentifier();//現在のテキスト入力状態から識別子をビルドする。
     }else{
         document.getElementById("ddp-open").disabled         = false;
         for ( var tidx = 0 ; tidx < myInputText.length ; tidx ++ ){
             document.getElementById(myInputText[tidx]).disabled = true;
         }
         document.getElementById("ddp-newdocument").disabled  = true ;
-        documentDepot.currentDocument = document.getElementById("cutList").options[document.getElementById("cutList").selectedIndex].value;
+        documentDepot.currentSelection = document.getElementById("cutList").options[document.getElementById("cutList").selectedIndex].value;
     }
 }
 
