@@ -180,10 +180,10 @@ ServiceNode.prototype.authorize=function(){
         client_secret: this.client_secret,
         grant_type: 'password'
     };
-
+    var oauthURL=this.url.split('/').slice(0,3).join('/');
     $.ajax({
         type: "POST",
-        url: this.url+"/oauth/token.json",
+        url: oauthURL+"/oauth/token.json",
         data: data,
 		success : (function(result) {
 		    console.log(result)
@@ -570,9 +570,9 @@ NetworkRepository=function(repositoryName,myServer){
 */
 NetworkRepository.prototype.getProducts = function (){
     this.productsData.length = 0;
- //   that = this;
+ //   that = this; /api/v1
     $.ajax({
-        url: this.url+'/api/v1/products.json',
+        url: this.url+'/products.json',
         type: 'GET',
         dataType: 'json',
         success: (function(result) {
@@ -592,9 +592,9 @@ NetworkRepository.prototype.getProducts = function (){
 */
 NetworkRepository.prototype.productsUpdate = function(){
     for(var idx = 0 ;idx < this.productsData.length ;idx ++){
-//        console.log("get:"+this.productsData[idx].id)
+//        console.log("get:"+this.productsData[idx].id) ; /api/v1
     $.ajax({
-        url: this.url+'/api/v1/products/'+this.productsData[idx].id+'.json',
+        url: this.url+'/products/'+this.productsData[idx].id+'.json',
         type: 'GET',
         dataType: 'json',
         success: (function(result) {
@@ -622,8 +622,8 @@ NetworkRepository.prototype.episodesUpdate = function (pid) {
                 //未取得の場合はurlを参照
                var targetURL = this.url+this.productsData[pid].episodes[0][eid].url;
  	        }else{
-	            //取得済みの場合は更新
-                var targetURL = this.url+'/api/v1/episodes/'+this.productsData[pid].episodes[0][eid].id + '.json';
+	            //取得済みの場合は更新 /api/v1
+                var targetURL = this.url+'/episodes/'+this.productsData[pid].episodes[0][eid].id + '.json';
 	        }
     console.log(targetURL);
 /*
@@ -923,10 +923,11 @@ serviceAgent.init= function(){
     this.repositories=[];
 
     this.repositories.push(localRepository);//ローカルリポジトリを0番として加える
-//var xUI.onSite==true
+if(xUI.onSite){
     var serviceA=new ServiceNode("SCIVONE",'http://remaping.scivone-dev.com');
-    var serviceA=new ServiceNode("SCIVONE",'http://remaping.scivone-dev.com');
-
+}else{
+    var serviceA=new ServiceNode("SCIVONE-v1",'http://remaping.scivone-dev.com/api/v1');
+}
     this.servers.push(serviceA);
     this.currentServer = serviceA;
     var Home=new NetworkRepository("HOME",serviceA);

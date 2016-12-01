@@ -1,5 +1,4 @@
-/**
- *  pmio.js
+﻿ *  pmio.js
  *  production managemaent io
  *
  *  nas.Pm　は　管理情報を分離するためのオブジェクト群

@@ -31,7 +31,7 @@ function pushStore(){
 	var method_type = '';
 	var target_url = '';
  var title_name = encodeURIComponent(xUI.XPS.title);
- var opus_name = encodeURIComponent(xUI.XPS.opus) + (xUI.XPS.subtitle)?
+ var episode_name = encodeURIComponent(xUI.XPS.opus) + (xUI.XPS.subtitle)?
   '['+encodeURIComponent(xUI.XPS.subtitle)+']' : '';
  var cut_name = ((xUI.XPS.scene)? 'S'+encodeURIComponent(xUI.XPS.scene):'S-' )+'C'+encodeURIComponent(xUI.XPS.cut);
   decodeURIComponent([title_name+'#'+opus_name,cut_name].join('//'))+'//0//0//0//';
@@ -48,7 +48,10 @@ function pushStore(){
 	json_data = {
 			 		content: xUI.XPS.toString(),
 		     		episode_id: episode_id,
-			 		cut_id: cut_id
+			 		cut_id: cut_id,
+			 		title_name: title_name,
+			 		episode_name: episode_name,
+			 		cut_name: cut_name
 				};
 
 
@@ -114,8 +117,10 @@ function pullStore(){
 
 */
 function backToDocumentList(){
-	if(document.getElementById('backend_variables')){
-		var backLocation = '/cuts?episode_id='+$('#backend_variables').attr('data-episode_id');
+	if(xUI.onSite){
+		var backLocation =　(serviceAgent.currentStatus == 'online-single')?
+			'/cuts?episode_id='+$('#backend_variables').attr('data-episode_id'):
+			'/'	;
 	 	window.location= backLocation;
 	 }else{
 	 	return false;	

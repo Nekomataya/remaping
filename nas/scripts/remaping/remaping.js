@@ -76,7 +76,7 @@ xUI.init    =function(XPS,referenceXps){
     以下UI動作制御変数
 */
     this.viewMode    =ViewMode;    //表示モード Compact/WordProp
-    this.onSite     = false;    //サーバ動作中は
+    this.onSite     = false;    //Railsサーバでの動作じはtrue
 
     this.spinValue    =SpinValue;    //スピン量
     this.spinSelect =SpinSelect;    //選択範囲でスピン指定
@@ -1685,7 +1685,7 @@ BODY_ +=' ><span class=timeguide> TIME </span></th>';
 /*********** Action Ref *************/
 BODY_ +='<th colspan="'+this.referenceLabels.length+ '" id="rnArea" class="rnArea" ondblclick=alert(this.id)';
 //　ここは参照ステージ名に置き換え予定
-BODY_ +=' >Action</th>';
+BODY_ +=' >Reference</th>';
 /*********** Dialog Area*************/
 BODY_ +='<th rowspan=2 class="dialoglabel" ';
 //ダイアログの幅は可変
@@ -1700,7 +1700,7 @@ BODY_ +='>台<BR>詞</th>';
 /*********** Edit Area 1 (timing) *************/
 BODY_ +='<th colspan='+xUI.timingSpan+' id=editArea class=editArea ondblclick="alert(this.id)"; '
 //ここは編集中のステージ名に置き換え予定
-BODY_ +='>CELL</th>';
+BODY_ +='>Animation</th>';
 
 /*********** Edit Area 2 (camera+sfx) *************/
 if(xUI.cameraSpan>0){
@@ -4045,9 +4045,22 @@ document.getElementById("UIheader").style.display="none";
     };
 }
 //サーバーオンサイトであるか否かを判定して表示を更新
-　   if(document.getElementById('backend_variables')){
-　       $('#server-info').hide();
-　       $('#server-onsite').show();
+　   if(document.getElementById('backend_variables')==null){
+　       xUI.onSite = window.location.toString().split('/').slice(0,3).join('/');
+　       serviceAgent.currentStatus='online';
+　       document.getElementById('loginstatus_button').innerHTML = '=ONLINE=';
+　       document.getElementById('loginstatus_button').disabled  = true;
+　       /*if(
+　           ($("#backend_variables").attr("data-episode_id").length==0)&&
+　           ($("#backend_variables").attr("data-cut_id").length==0)
+　       ){}*/
+　       if(false){
+//ドキュメント拘束モードへ移行
+　           serviceAgent.currentStatus='online-single';
+　           $('#server-info').hide();
+　           $('#server-onsite').show();
+            document.getElementById('toolbarHeader').style.backgroundColor='#ddbbbb';
+　       }
 　   }
 //シートボディを締める
     document.getElementById("sheet_body").innerHTML=SheetBody+"<div class=\"screenSpace\"></div>";

@@ -6,6 +6,7 @@
  * 2015.06.12 Xps及びMap関連オブジェクトをnas.配下に移動
  * 2016.04.15 psAxe系とりまぴん系のマージ
  * 2016.08.20 データ構造の変更　Xps.layersとXps.xpsBodyをXps.xpsTracksに統合
+ * 2016.12.01 オブジェクトに Line/Stage/Jobのプロパティを増設　パーサと出力も対応
  * Xpsオブジェクト初期化手順
  * Xpsオブジェクトの新規作成
  * コンストラクタ
@@ -120,6 +121,7 @@ sfx
  * @param myParent
  * @param myStage
  * @param myJob
+ ラインを含めて統合された　nas.PmU オブジェクトと置換する予定
  */
 function XpsStage(myParent, myStage, myJob) {
     this.body = myParent;//ステージ・ジョブストリームを記録する配列
@@ -666,8 +668,8 @@ function Xps(Layers, Length) {
     Issueオブジェクトの文字列化メソッドは標準で　xMap記録文字列
     オプションでXps文字列・カット識別子文字列の切り替え
     */
-    this.stage = new XpsStage(this, "", "");
-    this.stage = new nas.Pm.Issue(this, "", "");
+//    this.stage = new XpsStage(this, "", "");
+//    this.stage = new nas.Pm.Issue(this, "", "");
     /**
      * オブジェクトでないほうが良いかも　＞　line/stage/job のオブジェクトに変更予定
      * ファイルパスでなく参照オブジェクトに変更予定　オブジェクト側に参照可能なパスがあるものとする
@@ -1306,12 +1308,9 @@ Xps.prototype.parseXps = function (datastream) {
             //なぜだかナゾなぜに一文字多いのか?
 
             /**
-             * データ処理中に含まれていた他フォーマットの解析部分は、
-             * 別ライブラリで吸収するのでこのソースからは削除
-             * TSX AEK 部分は未処理　2013.0405
-             * どうしましょったら、どーしましょ まだ思案中 シアンは赤の補色です。
+             *  データ処理中に含まれていた他フォーマットの解析部分は、別ライブラリで吸収
              */
-            if (SrcData[l].match(/^nasTIME-SHEET\ 0\.[1-4]$/)) {
+            if (SrcData[l].match(/^nasTIME-SHEET\ 0\.[1-5]$/)) {
                 SrcData.startLine = l;//データ開始行
                 break;
             } else {

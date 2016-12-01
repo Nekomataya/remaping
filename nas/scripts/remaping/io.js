@@ -36,6 +36,12 @@ $("#optionPanelFile").dialog({
 	title	:"ドキュメント",
 });
 
+$("#optionPanelProg").dialog({
+	autoOpen:false,
+	modal	:true,
+	width	:720,
+	title	:"処理中",
+});
 }
 
 
@@ -69,6 +75,7 @@ Utl	#optionPanelUtl	//ユーティリティーコマンドバー(共)排他か�
 */
 function sWitchPanel(status){
 //一括クリアするパネルのリスト
+//	"#optionPanelProg",
 var myPanels=["#optionPanelMemo",
 	"#optionPanelLogin",
 	"#optionPanelData",
@@ -76,7 +83,6 @@ var myPanels=["#optionPanelMemo",
 	"#optionPanelScn",
 	"#optionPanelPref",
 	"#optionPanelVer",
-	"#optionPanelProg",
 	"#optionPanelSnd"
 ];
 /*
@@ -105,7 +111,8 @@ switch(status){
 case	"Ver":	;//バージョンパネル
 case	"Pref":	;//環境設定
 case	"Scn":	;//ドキュメント設定
-case	"File":	;//ファイルブラウザ(まだデザインのみ)
+case	"File":	;//ファイルブラウザ
+case	"Prog":	;//プログレスパネル
 	var myStatus=(myTarget.is(':visible'))? true:false;
 		sWitchPanel("clear");
 		if(myStatus){myTarget.dialog("close")}else{myTarget.dialog("open")};
@@ -114,7 +121,6 @@ case	"File":	;//ファイルブラウザ(まだデザインのみ)
 case	"Login":;//ログインパネル
 case	"Data":	;//データパネル
 case	"Dbg":	;//デバッグパネル
-case	"Prog":	;//プログレスパネル
 case	"Snd":	;//音声編集パネル
 	var myStatus=(myTarget.is(':visible'))? true:false;
 		sWitchPanel("clear");
