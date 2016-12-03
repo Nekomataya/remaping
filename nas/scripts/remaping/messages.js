@@ -34,7 +34,7 @@ nas.LangPack.ja=[
 ["pM0c","title","ドキュメントを再読込"],
 ["pM0d","innerHTML","認証パネル"],
 ["pM0d","title","認証パネルを開／閉"],
-["pM0e","innerHTML","認証"],
+["pM0e","innerHTML","認証/解除"],
 ["pM0e","title","認証/解除"],
 ["pM0f","innerHTML","保存"],
 ["pM0f","title","ドキュメントを保存"],

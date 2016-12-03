@@ -108,10 +108,11 @@ var myPanels=["#optionPanelMemo",
 //ターゲットが存在しないことがあるがそれはヨシ？
 switch(status){
 //ダイアログ
+case	"File":	;//ファイルブラウザ
+	if(documentDepot.documents.length==0){documentDepot.rebuildList();}
 case	"Ver":	;//バージョンパネル
 case	"Pref":	;//環境設定
 case	"Scn":	;//ドキュメント設定
-case	"File":	;//ファイルブラウザ
 case	"Prog":	;//プログレスパネル
 	var myStatus=(myTarget.is(':visible'))? true:false;
 		sWitchPanel("clear");

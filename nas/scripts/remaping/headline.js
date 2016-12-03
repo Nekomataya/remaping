@@ -270,6 +270,7 @@ rewriteValueByEvt=function(e){
 	var myPrp=TargeT.id;
 	var msg="";
 	var currentValue=null;
+	if ($('#'+myPrp).attr('lock')=="yes") {return false;}
 	switch(myPrp){
 	case "time":
 		msg="カットの時間を入力してください。\n";

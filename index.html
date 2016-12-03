@@ -1098,13 +1098,13 @@ script src=javascript/jslb_ajax.js
 					<OPTION>仕上
 				</select>
 
-</td><td id=opus >
+</td><td id=opus lock="yes" >
 	#00
-</td><td id=title >
+</td><td id=title lock="yes" >
 	TITLE-TEXT
-</td><td id=subtitle >
+</td><td id=subtitle lock="yes" >
 	subTITLE
-</td><td id=scene_cut >
+</td><td id=scene_cut lock="yes">
 	S-C
 </td><td id=time >
 	(00+00)
@@ -1112,7 +1112,7 @@ script src=javascript/jslb_ajax.js
 	---
 </td><td id=trout >
 	---
-</td><td id=update_user >
+</td><td id=update_user lock="yes">
 	name
 </td></tr>
 
@@ -1832,7 +1832,7 @@ onclick='nas.incrFCTonHTMLInput(document.getElementById("editTC"),"-(1)")'
 	size=8
 	value='3 + 0 .'
 	disabled=true
-	onChange="documentDepot.currentDocument=documentDepot.buildIdentifier();"
+	onChange="function(){documentDepot.currentDocument=documentDepot.buildIdentifier();"
 ><span style="position:relative;height:24px;width:64px;"><button
     class='subControl subControl-incrS subControl-left-top'
     onclick='document.getElementById("timeInput").value=nas.Frm2FCT(nas.FCT2Frm(document.getElementById("timeInput").value)+24,3);document.getElementById("timeInput").onChange();'> 
@@ -1974,11 +1974,7 @@ onclick="alert(this.innerHTML);"
     >-300</button><button
 class=numberFilter
 onclick="alert(this.innerHTML);"
-    >-400</button><button
-class=numberFilter
-onclick="alert(this.innerHTML);"
-    >-500
-</button></span></div>
+    >-400</button></span></div>
 
 </div>
 <!--	ファイルブラウザ試験中	-->

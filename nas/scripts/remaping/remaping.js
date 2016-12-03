@@ -4052,8 +4052,8 @@ document.getElementById("UIheader").style.display="none";
 　       document.getElementById('loginstatus_button').innerHTML = '=ONLINE=';
 　       document.getElementById('loginstatus_button').disabled  = true;
 　       if(
-　           ($("#backend_variables").attr("data-episode_id").length==0)&&
-　           ($("#backend_variables").attr("data-cut_id").length==0)
+　           ($("#backend_variables").attr("data-episode_id").length > 0)&&
+　           ($("#backend_variables").attr("data-cut_id").length > 0)
 　       ){
 //ドキュメント拘束モードへ移行
 　           serviceAgent.currentStatus='online-single';

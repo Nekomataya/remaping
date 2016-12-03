@@ -132,11 +132,20 @@ documentDepot.updateDocumentSelector=function(myRegexp){
 }
 /**
     読み出して編集エリアに取り込む
+    識別子が指定されない場合は、セレクタの値を見る
+    ドキュメントリストに識別子が存在しない場合は、falseを返す
 */
 documentDepot.getEntry =function(myIdentifier){
-    for (var rid = 0;rid < serviceAgent.repositories.length ; rid ++){
-        
+    if(typeof myIdentifier == 'undefined'){
+        myIdentifier = this.currentSelection;
     }
+    for (var did = 0;did < this.documents.length ; did ++){
+        if (this.documents[did].toString() == myIdentifier){
+            this.documents[did].parent.getEntry(myIdentifier);
+            return true;
+        }
+    }
+    return false
 }
 /**
     現在のテキスト入力状態から識別子をビルドする。
@@ -173,7 +182,7 @@ serviceAgent.repositories[0].getList();
   if ( serviceAgent.repositories.length > 0 ){
      for(var idr=1 ;idr < serviceAgent.repositories.length; idr ++){serviceAgent.repositories[idr].getList();}
   }
-//  テスト中はこれで良いが、後はあまり良くない 
+//  テスト中はこれで良いが、その後はあまり良くない 
 
 }
 /**
