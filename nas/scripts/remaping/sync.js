@@ -88,11 +88,29 @@ about_	;//セット変更 りまぴんについて
 data_	;//
 dbg_	;//
 winTitle;//ウィンドウタイトル文字列
+productStatus	;//制作ステータス 
 */
 function sync(prop)
 {
 	switch (prop)
 	{
+case	"productStatus":;
+{
+	document.getElementById('pmcui_line').innerHTML  = xUI.XPS.line.id.join('-')  + ':(' +xUI.XPS.line.name + ')';
+	document.getElementById('pmcui_stage').innerHTML = xUI.XPS.stage.id + ':'  +xUI.XPS.stage.name ;
+	document.getElementById('pmcui_job').innerHTML   = xUI.XPS.job.id   + ':'  +xUI.XPS.job.name ;
+	document.getElementById('pmcui_status').innerHTML= xUI.XPS.currentStatus;
+	document.getElementById('pmcui_documentWriteable').innerHTML= (xUI.viewOnly)?'[編集不可]':'';
+	switch (xUI.uiMode){
+		case 'production':
+	document.getElementById('pmcui').style.backgroundColor = '#bbbbbdd';break;
+		case 'management':
+	document.getElementById('pmcui').style.backgroundColor = '#ddbbbb';break;
+		case 'brousing':
+	document.getElementById('pmcui').style.backgroundColor = '#bbddbb';break;
+	}
+}
+break;
 case	"fct":	;
 {
 //フレームの移動があったらカウンタを更新
@@ -356,7 +374,7 @@ default	:	if(dbg){dbgPut(prop+" :ソレは知らないプロパティなので�
 }
 function syncInput(entry)
 {
-	if(xUI.noSync) return;
+	if((xUI.noSync)||(xUI.viewOnly)) return;
 //カーソル入力同期
 //		ヘッドライン更新
 	if (document.getElementById("iNputbOx").value!=entry)

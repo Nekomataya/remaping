@@ -1245,3 +1245,15 @@ transform-origin: 0 0;transform:scale(1,1);
 		brend-mode: multiply;
 		opacity:0.4;
 	}
+/**
+	.pmcui
+*/
+.pmcui	{
+	margin-top:8px;
+	background-color:#bbbbdd;
+	border-width:1px;
+	border-style:inset;
+}
+span.pmcui_ {
+		font-style:strong;
+	}

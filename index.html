@@ -171,6 +171,11 @@ script src=javascript/jslb_ajax.js
 <ul id=pMenu>
 <li><span id=pM00>Document</span>
 <ul>
+<li>Open</li>
+<li>Activate</li>
+<li>Deactivate</li>
+<li>FIX</li>
+<li><hr></li>
 <li> <A	id=pM01
 	href = 'javascript:void()'
 	onclick = 'sWitchPanel("File");return false;//myScenePref.open();document.getElementById("scnNewSheet").checked=true;return false;'
@@ -496,7 +501,7 @@ script src=javascript/jslb_ajax.js
 	title=""
 ></A></li>
 -->
-<li	id=pM41>cmd</li>
+<li><span id=pM41><a href='/'>cmd</a></span></li>
 </ul>
 </li>
 
@@ -1066,6 +1071,15 @@ script src=javascript/jslb_ajax.js
 </button>
 </span>
 </div>
+<!-- 管理IDコントロール UI-->
+<div id =pmcui class=pmcui>
+　> :  <span id=pmcui_line class=pmcui_> 0:(本線) </span>
+// <span id=pmcui_stage class=pmcui_> 2:原画 </span> 
+// <span id=pmcui_job class=pmcui_> 1:(原画) </span>
+// <span id=pmcui_status class=pmcui_> Active </span>
+// <span id=pmcui_documentWriteable class=pmcui_> [保存不可] </span>
+<hr></div>
+<!-- 管理IDコントロール UI-->
 <!-- シートヘッダテーブル　編集機能あり縮小UIの際は非表示または縮小表示に -->
 <div id=sheetHeaderTable>
 <!-- コンパクトビューの時は　インジケータ　カット番号　時間　を残して非表示-->
@@ -1091,11 +1105,9 @@ script src=javascript/jslb_ajax.js
 <td rowspan=2>
 
 <select name=stageSelect id=stageSelect onChange='xUI.switchStage(this.value);'  style="width:100%;margin:0;padding:0;text-align:center;">
-					<OPTION>コンテ
-					<OPTION>レイアウト
+					<OPTION style='font-color:reg;'>レイアウト
 					<OPTION>原画
-					<OPTION>動画
-					<OPTION>仕上
+					<OPTION>演出検査
 				</select>
 
 </td><td id=opus lock="yes" >
@@ -1853,6 +1865,7 @@ onclick='nas.incrFCTonHTMLInput(document.getElementById("editTC"),"-(1)")'
     onclick='document.getElementById("timeInput").value=nas.Frm2FCT(nas.FCT2Frm(document.getElementById("timeInput").value)-1,3);document.getElementById("timeInput").onChange();'>
 </button>
 </span> 
+<div id=current_identifier></div>
 <hr>
 </span>
 <!-- メニューバー と ロゴ -->
@@ -2173,12 +2186,12 @@ id=prefDfY VALUE="---" onChange="myPref.chgdfSIZE(this.id)">:<input type=text
 このコンテンツは、Javascriptによるアプリケーションです。<br />
 Javascriptを有効にした状態でご使用ください。<br />
 <br /><hr />
-<B>Adobe After Effects<br>タイムリマップキー入力支援 </B><br />
-jquery 導入中<br />
+<B>Univarsal Animation Timesheet<br>汎用タイムシートエディタ</B><br />
+　試験版<br />
 <img src=images/remaping.gif border=0 width=256 height=127 onClick='document.getElementById("optionPanelVer").style.display="none";'/><br />
 <span 
 	style="font-size:x-small;color:red"
-> （超）暫定TVPcsv対応版 </span><br />
+> WEB APPLICATION </span><br />
 <span style="font-size:small" id=versionString>
  $Id: index.html 2016/  kiyo Exp $ <br />
 <span id=myVer0></span> <span id=myServer0>[no-server]</span><br />

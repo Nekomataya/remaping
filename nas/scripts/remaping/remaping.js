@@ -41,10 +41,17 @@ function new_xUI(){
 
 //    初期化メソッド 編集対象となるXpsオブジェクトを与えて初期化する。
 //    初期化時点の参照変数はconfig.js内で設定される値である
+//  動作モードを実装
+/**
+モードは以下三態
+    productionMode
+    managementMode
+    browsingMode
+
+        各モード内では作業条件によっては 更に内部モードでread onlyの状態がある
+*/
 xUI.init    =function(XPS,referenceXps){
-    this.hideSource    = false;  //グラフィック置き換え時にシートテキストを隠す
-    this.showGraphic    = true;   //置き換えグラフィックを非表示　＝　テキスト表示
-//if(appHost.platform=="AIR") this.showGraphic    = false;
+    
     this.dialogSpan    = SoundColumns;//シート上の配置に合わせてXPSを初期化する
     this.timingSpan    = SheetLayers;//シートは便宜上サウンド/タイミング（セル）/カメラ の３エリアに分けられるが
     this.cameraSpan    = CompositColumns;//実際は各タイムラインは混在可能である
@@ -74,15 +81,24 @@ xUI.init    =function(XPS,referenceXps){
     this.referenceLabels=new Array();//表示させる数（後で初期化）　
 /** 
     以下UI動作制御変数
+    viewMode    ページ単位表示か又は全体を1ページ1カラムで表示させるかのフラグ
+    uiMode      編集/管理/閲覧モードのフラグ
+    viewOnly    編集禁止（データのreadonlyではなくUI上の編集ブロック）
 */
-    this.viewMode    =ViewMode;    //表示モード Compact/WordProp
-    this.onSite     = false;    //Railsサーバでの動作じはtrue
+    this.viewMode    = ViewMode;    //表示モード Compact/WordProp
+    this.uiMode      = 'porduction';// ui基本動作モード production/management/browsing
+    this.viewOnly    = false;       //編集禁止フラグ
+    this.hideSource  = false;       //グラフィック置き換え時にシートテキストを隠す
+    this.showGraphic = true;        //置き換えグラフィックを非表示　＝　テキスト表示
+//if(appHost.platform=="AIR") this.showGraphic    = false;
 
-    this.spinValue    =SpinValue;    //スピン量
-    this.spinSelect =SpinSelect;    //選択範囲でスピン指定
-    this.sLoop    =SLoop;    //スピンループ
-    this.cLoop    =CLoop;    //カーソルループ
-    this.SheetLength    =SheetLength;    //タイムシート1枚の表示上の秒数 コンパクトモードではシート長が収まる秒数に強制される
+    this.onSite      = false;       //Railsサーバ動作時　true
+
+    this.spinValue   = SpinValue;    //スピン量
+    this.spinSelect  = SpinSelect;    //選択範囲でスピン指定
+    this.sLoop       = SLoop;          //スピンループ
+    this.cLoop       = CLoop;          //カーソルループ
+    this.SheetLength    = SheetLength;    //タイムシート1枚の表示上の秒数 コンパクトモードではシート長が収まる秒数に強制される
 //コンパクトモード時はこのプロパティとcolsの値を無視するように変更
     this.SheetWidth= this.XPS.xpsTracks.length;//シートの幅(編集範囲)
     this._checkProp=function(){
@@ -2167,6 +2183,7 @@ xUI.dialogSpin=function(param)
         syncInput(entry);
     if(!this.edchg)this.edChg(true);
     };
+
     return false;
 };
 //
@@ -2497,6 +2514,7 @@ xUI.getRange    =function(Range)
     Xps更新後に、xUI.syncSheetCell()メソッドで必要範囲を更新のこと
 */
 xUI.put    =function(datastream,direction){
+  if(xUI.viewOnly) return false;
   if(typeof datastream == "undefined") datastream="";
   if(typeof direction  == "undefined") direction=[0,0];
 // var Cexpand=true;//コンマ展開フラグ 不使用
@@ -4001,6 +4019,12 @@ Compactモード時は強制的に
   タイトルヘッドラインの縮小
 */
 
+/** 動作モードを新設
+production/management/browsing
+managementモードではシート編集はブロック
+viewOnly
+*/
+sync('productStatus');
 //xUI.PageCols=(xUI.viewMode=="Compact")? 1:2;
 //xUI.SheetLength=(xUI.viewMode=="Compact")?(Math.floor(XPS.duration()/nas.FRATE)):6;
 //タイムシートテーブルボディ幅の算出

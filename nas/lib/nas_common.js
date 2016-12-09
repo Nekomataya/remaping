@@ -1976,15 +1976,44 @@ nas.mInverse = function (Matrix) {
  * 行列の転置
  * @param Matrix
  * @returns {*}
- */
+ 
+    引数は以下の型式を受け入れる
+    '1,0,0,1','1,0,0,0,1,0,0,0,1' ,'1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1'
+コンマ区切り文字列リストただしコンマ区切りの要素数が4,9,16(それぞれ2,3,4次の正方行列)のみ
+    ['1,0','0,1'],['1,0,0','0,1,0','0,0,1'],['1,0,0,0','0,1,0,0','0,0,1,0','0,0,0,1']
+コンマ区切りリスト文字列を要素とする１次配列　同上それぞれ2,3,4次の正方行列のみ
+    [[1,2,3],[4,5,6],[7,8,9],[10,11,12]]
+２次元配列　要素数は自由　引数配列の要素すべてが配列でなければならない　次数は自由
+内包要素の次数はすべて揃っている必要がある。
+戻り値は配列に変更
+
+*/
 nas.transMatrix = function (Matrix) {
+    var dx = 0;var dy = 0;
     if (Matrix instanceof Array) {
-        Matrix = Matrix.toString().split(',')
+        if(Matrix[0] instanceof Array){
+            dy=Matrix.length;
+            dx=Matrix[0].length;
+            //２次元配列なら要素数を検査して不整合があればリジェクト
+            for (var idx=0;idx<dy;idx++){
+                if(Matrix[idx].length != dx){return false;}
+            }
+        }
+        Matrix = Matrix.toString().split(',');
     } else {
         Matrix = Matrix.split(',')
     }
-    if (Matrix.length != 4 && Matrix.length != 9 && Matrix.length != 16) {
+    if ((dx == 0) && (dy == 0) &&
+    (Matrix.length != 4 && Matrix.length != 9 && Matrix.length != 16)
+    ) {
         return null;
+    } else {
+            /**
+     * 行列の次数を取得
+     * @type {number}
+     */
+        dx = Math.sqrt(Matrix.length);
+        dy = dx;
     }
     /**
      * 転置配列の初期化
@@ -1992,20 +2021,16 @@ nas.transMatrix = function (Matrix) {
      */
     var tranposedMatrix = [];
     /**
-     * 行列の次数を取得
-     * @type {number}
-     */
-    var D = Math.sqrt(Matrix.length);
-    /**
      * 転置
      */
-    for (j = 0; j < D; j++) {
-        for (i = 0; i < D; i++) {
-            tranposedMatrix.push(Matrix[i * D + j]);
+    for (var j = 0; j < dx; j++) {
+        for (var i = 0; i < dy; i++) {
+            tranposedMatrix.push(Matrix[i * dx + j]);
         }
     }
-    return tranposedMatrix.toString();
+    return tranposedMatrix;
 };
+// nas.transMatrix([[1,2,3],[4,5,6],[7,8,9]]);
 /**
  * 行列の転置終わり
  * 行列関数群終わり

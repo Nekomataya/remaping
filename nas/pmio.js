@@ -52,7 +52,7 @@ nas.Pm._getTemplate=function(keyword){
  *　制作管理オブジェクトは、それぞれの管理単位（PmUnit=カット袋）についての制作管理部分を抽出したオブジェクトである。
  * BANK等の管理移管時データ独立性を持たせるために分離される
  * ラインごとに各PmUnitのプロパティとして登録され、ラインの開始条件及び終了条件の判定を含む
- *
+ * 
  */
 nas.Pm.PmNode=function PmNode(targetAsset,myName){
 	this.target = targetAsset;//管理単位のゴールを設定
@@ -62,7 +62,7 @@ nas.Pm.PmNode=function PmNode(targetAsset,myName){
 	this.stageID;
 	this.stages=[];
 	this.lineID;
-	this.lines=[];
+	this.line;
 }
 /*
 Pmuコンストラクタ
@@ -78,7 +78,7 @@ PMU= new PmUnit(scObjects);
 素材DBは、
 */
 
-nas.Pm.PmNode=function(mySCs){
+nas.Pm.PmUnit=function(mySCs){
 	//初期パラメータの中の第一要素の情報で識別名を作る
 	this.body	=	mySCs;//
 	this.cut	=	this.body[0].cut;//
@@ -91,9 +91,10 @@ nas.Pm.PmNode=function(mySCs){
 	this.pmNode=new nas.PmNode();
 }
 
-nas.Pm.PmNode.prototype.toString=function(){
-	return this.body.reverse().join("_");
+nas.Pm.PmUnit.prototype.toString=function(){
+	return this.body.reverse().join("//");
 //toString()メソッドは、出力用に調整する
+//
 }
 //制作管理用　WorkTitelオブジェクト
 /*
@@ -263,10 +264,10 @@ nas.Pm.assets.getAsset=nas.Pm._getTemplate;
  *	type	Number:typeID 0:init/1:primary/2~:check/　当該Jobのタイプ
  *	id	Number:Index ステージ内でのユニークID　自己アクセスのための配列インデックスを内部保持
  * jobId生成規則
- * 管理単位内部でユニークな整数ID　重複不可　飛び番等は許容される
+ * 管理単位所属ステージ内部でユニークな整数ID　重複不可　飛び番等は許容される
  * DB連結時はDBへの照合プロパティになるので初期化時には引数として外部から与えるのが基本
  * 引数が与えられない（＝DB連結が無い）場合は、その場での自動生成を行う
- *　その際のルールは、同PmUnit内部での出現順連番 
+ *　その際のルールは、同PmStage内部での出現順連番 0はStartupJobとして予約 
  *	currentStatus	String:ステータス　startup|active<>hold|fixed
  *	createUser	String:UID
  *	createDate	String:DATE
@@ -326,8 +327,8 @@ nas.Pm.ProductionJob.prototype.toString=function(){
  *	description	String	ステージの説明	ユーザのために必用
  *	output	Asset	ステージの出力アセット
 */
-nas.Pm.ProductionStage=function(){
-	this.line=nas.Pm.lines("null");
+nas.Pm.ProductionStage=function(myLine){
+	this.line=myLine;
 	this.name;
 	this.code;
 	this.shortName;

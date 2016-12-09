@@ -346,9 +346,9 @@ function setProduct(productName){
     }
     prductName=productName.toString();//明示的にストリング変換する
     if(productName.length <= 0){return false;}
-    if(productName.match(/^(.+)(\[[^\]]+\]|「[^」]+」|\"[^\"]+\"|\'[^\']+\')$/)){
+    if(productName.match(/^(.+)(\[([^\]]+)\]|「([^」]+)」|\"([^\"]+)\"|\'([^\']+)\')$/)){
         productName = RegExp.$1;
-        var subTitle = RegExp.$2; 
+        var subTitle = RegExp.$3; 
     }else{
         var subTitle = "";   
     }
@@ -379,7 +379,7 @@ function setProduct(productName){
 function selectSCi(sciName){
     if(typeof sciName == "undefined"){
     //カット名が引数で与えられない場合はセレクタの値をとる
-    //選択さ　れたアイテムがない場合は、デフォルト値を使用してフリー要素を選択する
+    //選択されたアイテムがない場合は、デフォルト値を使用してフリー要素を選択する
     if ( document.getElementById("cutList").selectedIndex >= 0 ){
         sciName = document.getElementById("cutList").options[document.getElementById("cutList").selectedIndex].text;
     }else{

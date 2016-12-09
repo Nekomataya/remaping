@@ -123,6 +123,7 @@ sfx
  * @param myJob
  ラインを含めて統合された　nas.PmU オブジェクトと置換する予定
  */
+/*
 function XpsStage(myParent, myStage, myJob) {
     this.body = myParent;//ステージ・ジョブストリームを記録する配列
     this.name = myStage;//String　ステージ識別名称（任意文字列）
@@ -133,6 +134,63 @@ function XpsStage(myParent, myStage, myJob) {
 XpsStage.prototype.toString=function(){
     return "["+this.name+"][["+this.job+"]]";//?
 }
+*/
+/**
+    ライン記述を与えてオブジェクトを初期化する
+    '(本線):0','(背景3D-build):1:1'等
+     識別名の(括弧)は払う
+*/
+function XpsLine (lineString){
+    this.id   =[0]; this.name ='primary';
+    var prpArray=lineString.split(':');
+    if(prpArray.length > 0){
+        this.name = prpArray[0].replace(/^\(|\)$/g,"");
+        if(prpArray.length > 1) this.id = prpArray.slice(1);
+    }
+}
+XpsLine.prototype.toString = function(opt){
+    if(opt)     return [this.id.join('-'),'(' + this.name +')'].join(':');
+    return ['(' + this.name +')',this.id.join(':')].join(':');
+}
+
+/*
+    ステージ記述を与えてプロパティを設定する
+    "1:原画" , "原画:1" どちらの型式でも良い
+    ':' は省略不可
+    記録時は後方型式
+*/
+function XpsStage (stageString){
+    this.id = 0 ;this.name = '';
+    var prpArray=stageString.split(':');
+    if(prpArray.length){
+        if(prpArray[0].match(/^\d+$/)){prpArray.reverse();}
+        this.id=prpArray[1];
+        this.name=prpArray[0];
+    }
+}
+XpsStage.prototype.toString=function(opt){
+    if(opt)     return [this.id,this.name].join(':');
+    return [this.name,this.id].join(':');
+}
+
+/**
+    XPS上では特にJobがサブステージとしての傾向が強いのでオブジェクトごと兼用でも良い
+    今コードが同じ…
+    だが、IDのインクリメントが違うか…
+
+function XpsJob (jobString){
+    this.id = 0 ;this.name = '';
+    var prpArray=jobString.split(':');
+    if(prpArray.length){
+        if(prpArray[0].match(/^\d+$/)){prpArray.reverse();}
+        this.id=prpArray[1];
+        this.name=prpArray[0];
+    }
+}
+XpsJob.prototype.toString=function(){
+    return [this.name,this.id].join(':');
+}
+*/
 /**
  * タイムライントラックの標準値を取得するメソッド
  *  タイムラインラベルが指定するグループがあらかじめ存在する場合は、そのグループオブジェクトが保持する値
@@ -670,6 +728,10 @@ function Xps(Layers, Length) {
     */
 //    this.stage = new XpsStage(this, "", "");
 //    this.stage = new nas.Pm.Issue(this, "", "");
+    this.line  = new XpsLine("(本線):0");
+    this.stage = new XpsStage("layout:0");
+    this.job   = new XpsStage('init:0');
+    this.currentStatus = 'Startup';
     /**
      * オブジェクトでないほうが良いかも　＞　line/stage/job のオブジェクトに変更予定
      * ファイルパスでなく参照オブジェクトに変更予定　オブジェクト側に参照可能なパスがあるものとする
@@ -878,7 +940,7 @@ Xps.prototype.getMap = function (MAP) {
 };
 
 /**
- * カット識別子を返す
+ * カット識別子を返すオブジェクトメソッド
  * Xps.getIdentifier(識別オプション)
  * カット識別文字列を返す
  * カット識別子は　タイトル、制作番号、シーン、カット番号　の各情報をセパレータ"_"で結合した文字列
@@ -1309,6 +1371,7 @@ Xps.prototype.parseXps = function (datastream) {
 
             /**
              *  データ処理中に含まれていた他フォーマットの解析部分は、別ライブラリで吸収
+             *  バージョンは 0.5 まで拡張
              */
             if (SrcData[l].match(/^nasTIME-SHEET\ 0\.[1-5]$/)) {
                 SrcData.startLine = l;//データ開始行
@@ -1354,7 +1417,14 @@ Xps.prototype.parseXps = function (datastream) {
         "CREATE_USER",
         "UPDATE_USER",
         "CREATE_TIME",
-        "UPDATE_TIME"
+        "UPDATE_TIME",
+        "Line",
+        "LineStatus",
+        "Stage",
+        "StageStatus",
+        "Job",
+        "JobStatus",
+        "CurrentStatus"
     ];
     /**
      * @type {string[]}
@@ -1373,7 +1443,14 @@ Xps.prototype.parseXps = function (datastream) {
         "create_user",
         "update_user",
         "create_time",
-        "update_time"
+        "update_time",
+        "line",
+        "lineStatus",
+        "stage",
+        "stageStatus",
+        "job",
+        "jobStatus",
+        "currentStatus"
     ];
     var props = new Array(varNames.length);
     for (i = 0; i < varNames.length; i++) {
@@ -1440,6 +1517,17 @@ Xps.prototype.parseXps = function (datastream) {
                     SrcData[props[nAme]] = tm;
 
                     break;
+                    /**
+                     * 管理情報　シングルステージドキュメントの際のみ処理
+                     *
+                     */
+                　case   "Line":;
+                　   SrcData[props[nAme]] = new XpsLine(vAlue);
+                　  break;
+                　case   "Stage":;
+                　case   "Job":;
+                　   SrcData[props[nAme]] = new XpsStage(vAlue);
+                　  break;
                 default:
                     /**
                      * 時間関連以外
@@ -1452,7 +1540,7 @@ Xps.prototype.parseXps = function (datastream) {
             }
         }
         /**
-         * レイヤヘッダまたは終了識別にマッチ
+         * タイムラインプロパティまたは終了識別にマッチ
          */
         if (SrcData[line].match(/^\[(([a-zA-Z]+)\t?.*)\]$/)) {
             /**
@@ -1747,7 +1835,8 @@ Xps.prototype.toString = function () {
      * ヘッダで初期化
      * @type {string}
      */
-    var result = 'nasTIME-SHEET 0.4';//出力変数初期化
+//    var result = 'nasTIME-SHEET 0.4';//出力変数初期化(旧バージョン)
+    var result = 'nasTIME-SHEET 0.5';//出力変数初期化
     /**
      * 共通プロパティ変数設定
      * @type {string}
@@ -1766,6 +1855,10 @@ Xps.prototype.toString = function () {
     result += '\n##CREATE_TIME=' + this.create_time;
     result += '\n##UPDATE_TIME=' + Now.toNASString();
     result += '\n##FRAME_RATE=' + this.framerate;
+    result += '\n##Line='+this.line.toString();
+    result += '\n##Stage='+this.stage.toString();
+    result += '\n##Job='+this.job.toString();
+    result += '\n##CurrentStatus='+this.currentStatus;
 //result+='\n##FOCUS='	+11//
 //result+='\n##SPIN='	+S3//
 //result+='\n##BLANK_SWITCH='	+File//
@@ -1969,6 +2062,31 @@ Xps.sliceReplacementLabel = function (myStr){
     }
     console.log(myResult);
 */
+/**
+     Xpsオブジェクトから識別子を作成するクラスメソッド
+     名前を変更するか又はオブジェクトメソッドに統合
+     この
+*/
+Xps.getIdentifier=function(myXps){
+//この識別子作成は実験コードです　近々にXps.getIdentifier() メソッドと置換されます。2016.11.14
+    var myIdentifier=[
+            encodeURIComponent(myXps.title)+
+        "#"+encodeURIComponent(myXps.opus)+
+        "["+encodeURIComponent(myXps.subtitle)+"]",
+            encodeURIComponent(
+                "S" + ((myXps.scene)? myXps.scene : "-" )+
+                "C" + myXps.cut) +
+                "(" + myXps.time() +")",
+            encodeURIComponent(myXps.line.toString(true)),
+            encodeURIComponent(myXps.stage.toString(true)),
+            encodeURIComponent(myXps.job.toString(true)),
+            encodeURIComponent(myXps.currentStatus)
+    ].join("//");
+//識別子を作成してネットワークリポジトリに送信する　正常に追加・更新ができた場合はローカルリストの更新を行う（コールバックで）
+    return myIdentifier;
+}
+
+
 /** =====================================機能分割 20130221
  * レイヤストリームを正規化する
  * 内部処理用

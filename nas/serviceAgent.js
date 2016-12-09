@@ -146,15 +146,14 @@ ServiceNode.prototype.setHeader = function(xhr){
     参考コード　実際にはコールされない
 */
 ServiceNode.prototype.getFromServer = function getFromServer(url, msg){
-    that=this;
     $.ajax({
         url: this.url + url,
         type: 'GET',
         dataType: 'json',
-        success: function(res) {
+        success: (function(res) {
             console.log(msg);
             console.log(res);
-        },
+        }).bind(this),
         beforeSend: this.setHeader
     });
 }
@@ -205,18 +204,6 @@ ServiceNode.prototype.authorize=function(){
 
 
 
-/**
-    ローカルリポジトリ
-    主に最近の作業データをキャッシュする役目
-    カットのデータを履歴付きで保持できる
-    複数カットを扱う　制限カット数内のリングバッファ動作
-    xUIから見るとサーバの一種として働く
-    ローカルストレージを利用して稼働する
-
-保存形式
-info.nekomataya.remaping.dataStore
-内部にオブジェクト保存
-*/
 /*
     履歴構造の実装には、XPSのデータを簡易パースする機能が必要
     プロパティを取得するのみ？
@@ -225,9 +212,9 @@ info.nekomataya.remaping.dataStore
     
     アプリケーションがパースした情報を識別情報として記録してこれを送り返す
     
-(タイトル)[#＃№](番号)[(サブタイトル)]//S##C####(##+##)/S##C####(##+##)/S##C####(##+##)/不定数…//lineID//stageID//jobID//
+(タイトル)[#＃№](番号)[(サブタイトル)]//S##C####(##+##)/S##C####(##+##)/S##C####(##+##)/不定数…//lineID//stageID//jobID//documentStatus
     例:
-ももたろう#SP-1[鬼ヶ島の休日]//SC123 ( 3 + 12 .)//0//0//1
+ももたろう#SP-1[鬼ヶ島の休日]//SC123 ( 3 + 12 .)//0//0//1//hold
  
 タイトル/話数/サブタイトル/カット番号等の文字列は、少なくともリポジトリ内/そのデータ階層でユニークであることが要求される
 例えば現存のタイトルと同じと判別されるタイトルが指定された場合は、新規作品ではなく同作品として扱う
@@ -263,6 +250,16 @@ info.nekomataya.remaping.dataStore
 0//2    1//2
 0//3    1//3
 
+    ジョブID
+ステージごとに初期化される作業ID
+0//0//0
+0//0//1
+0//0//2
+0//1//0
+0//1//1
+
+    ステータス
+作業状態を表すキーワード
 
     エントリの識別子自体にドキュメントの情報を埋め込めばサーバ側のパースの必要がない。
     ネットワークストレージをリポジトリとして使う場合はそのほうが都合が良い
@@ -274,8 +271,10 @@ info.nekomataya.remaping.dataStore
  //将来は以下で置き換え予定CSオブジェクト未実装
     myXps.sci.getIdentifier();
 */
-//比較関数　3要素の管理情報配列　issuesを比較して先行の管理ノード順位を評価する関数
-
+/**
+比較関数　管理情報3要素の管理情報配列　issuesを比較して先行の管理ノード順位を評価する関数
+ライン拡張時は追加処理が必要
+*/
 issuesSorter =function(val1,val2){
     return (parseInt(val1[0].split(':')[0]) * 10000 + parseInt(val1[1].split(':')[0]) * 100 + parseInt(val1[2].split(':')[0])) - ( parseInt(val2[0].split(':')[0]) * 10000 + parseInt(val2[1].split(':')[0]) * 100 + parseInt(val2[2].split(':')[0]));
 };
@@ -287,7 +286,7 @@ issuesSorter =function(val1,val2){
     parent  リポジトリへの参照
     product 作品と話数
     sci     カット番号（兼用情報含む）
-    issues  管理情報　一次元配列
+    issues  管理情報　４要素一次元配列 [line,stage,job,status]
     実際のデータファイルはissueごとに記録される
     いずれも　URIエンコードされた状態で格納されているので画面表示の際は、デコードが必要
 
@@ -299,10 +298,11 @@ issuesSorter =function(val1,val2){
 */
 listEntry=function(myIdentifier){
     var dataArray=myIdentifier.split("//");
-    this.parent;
+    this.parent;//初期化時にリポジトリへの参照を設定
     this.product = dataArray[0];
     this.sci     = dataArray[1];
     this.issues  = [dataArray.slice(2)];
+    // this.status  = (dataArray[5])?dataArray[5]:'fixed';
 if(arguments.length>1) {
         this.titleID    = arguments[1];
         this.episodeID  = arguments[2];
@@ -312,6 +312,10 @@ if(arguments.length>1) {
 /**
     エントリは引数が指定されない場合、管理情報を除いたSCI情報分のみを返す
     引数があれば引数分の管理履歴をさかのぼって識別子を戻す
+    このメソッド全体がIssues配列の並びが発行順であることを期待している
+    リスト取得の際にソートをかけることで解決
+    ライン拡張後はソートで解決できなくなるので要注意
+    方針としては、各ラインをまたがずに開始点まで遡れるように設定する
 */
 listEntry.prototype.toString=function(myIndex){
     if(typeof myIndex == "undefined"){myIndex = -1;}
@@ -329,7 +333,7 @@ listEntry.prototype.toString=function(myIndex){
 /**
     識別子を引数にして管理情報をサブリストにプッシュする
     管理情報のみが与えられた場合は無条件で追加
-    フルサイズの識別子が与えられた場合は　SCI部分が一致しなければ操作失敗
+    フルサイズの識別子が与えられた場合は　SCI部分までが一致しなければ操作失敗
     追加成功時は管理情報部分を配列で返す
     
     
@@ -360,11 +364,29 @@ listEntry.prototype.push=function(myIdentifier){
         return this.issues;
 }
 /**
-A=new listEntry("%E3%81%8B%E3%81%A1%E3%81%8B%E3%81%A1%E5%B1%B1Max#%E3%81%8A%E3%81%9F%E3%82%81%E3%81%97[%E3%82%B5%E3%83%B3%E3%83%97%E3%83%AB%E3%82%AB%E3%83%83%E3%83%88]//S-C10(72)//0//0//1");
+A=new listEntry("%E3%81%8B%E3%81%A1%E3%81%8B%E3%81%A1%E5%B1%B1Max#%E3%81%8A%E3%81%9F%E3%82%81%E3%81%97[%E3%82%B5%E3%83%B3%E3%83%97%E3%83%AB%E3%82%AB%E3%83%83%E3%83%88]//S-C10(72)//0:primary//1:layout//1://");
 A
 */
+/**
+    エントリのステータスを取得する
+    記録位置は、最終ジョブ
+*/
+listEntry.prototype.getStatus=function(){
+    return this.issues[this.issues.length-1][3];
+}
+/**
+    ローカルリポジトリ
+    主に最近の作業データをキャッシュする役目
+    カットのデータを履歴付きで保持できる
+    複数カットを扱う　制限カット数内のリングバッファ動作
+    xUIから見るとサーバの一種として働く
+    ローカルストレージを利用して稼働する
 
+保存形式
+info.nekomataya.remaping.dataStore
+内部にオブジェクト保存
 
+*/
 localRepository={
     name:'localStrageStore',
 //    currentProduct:"",
@@ -428,26 +450,45 @@ localRepository.getList=function(){
     与えられたXpsオブジェクトから識別子を自動生成
     識別子にkeyPrefixを追加してこれをキーにしてデータを格納する
     後日識別子の正式なフォーマットを出してメソッドに変更予定
+    ここでステータスの解決を行う？
     キーが同名の場合は自動で上書きされるのでクリアは行わない
     エントリ数の制限を行う
     エントリ数は、キーの総数でなく識別子の第一、第二要素を結合してエントリとして認識する
 */
 localRepository.pushEntry=function(myXps){
-//この識別子作成は実験コードです　近々にXps.getIdentifier() メソッドと置換されます。2016.11.14
-    var myIdentifier=[encodeURIComponent(myXps.title)+"#"+encodeURIComponent(myXps.opus)+"["+encodeURIComponent(myXps.subtitle)+"]",encodeURIComponent("S"+((myXps.scene)?myXps.scene:"-")+"C"+myXps.cut)+"("+myXps.time()+")",0,0,0].join("//");
+//識別子取得
+    var myIdentifier=Xps.getIdentifier(myXps);
+//識別子に相当するアイテムがローカルストレージに存在するかどうかをチェック
+    var targetArray = String(myIdentifier).split( '//' );//ここでは必ず6要素ある
+    var myProductUnit   = targetArray.slice(0,2).join( '//' );//プロダクトユニットを抽出
+    for (var pid=0;pid<this.entryList.length;pid++){
+        if(this.entryList[pid].toString() == myProductUnit){
+            //既存のエントリが有るのでストレージとリストにpushして終了
+            this.entryList[pid].push(myIdentifier);
+            localStorage.setItem(this.keyPrefix+myIdentifier,myXps.toString());
+            return this.entryList[pid];
+        };
+    };
+//既存エントリが無いので新規エントリを追加
+    localStorage.setItem(this.keyPrefix+myIdentifier,myXps.toString());
+    this.entryList.push(new listEntry(myIdentifier))
+
     if(this.entryList.length>this.maxEntry){
-    　//設定制限値をオーバーしたら、ローカルストレージから最も古いエントリを削除して　新しいエントリを追加する
-        for (var iid=0;iid<this.entryList[0].issues.length;iid++){ localStorage.removeItem(this.keyPrefix+this.entryList[0].this.entryList[0].issues[iid]);};
+    　//設定制限値をオーバーしたら、ローカルストレージから最も古いエントリを削除
+        for (var iid=0;iid<this.entryList[0].issues.length;iid++){
+             localStorage.removeItem(this.keyPrefix+this.entryList[0].this.entryList[0].issues[iid]);
+        };
         this.entryList=this.entryList.slice(1);
     }
-    localStorage.setItem(this.keyPrefix+myIdentifier,myXps.toString());
+    this.getList();
+    return this.entryList[this.entryList.length-1];
 }
 
 /**
     識別子を引数にしてリスト内を検索
     一致したデータをローカルストレージから取得してXpsオブジェクトで戻す
     識別子に管理情報があればそれをポイントして、なければ最も最新のデータを返す
-    コールバックを渡す
+    コールバック渡し
 */
 localRepository.getEntry=function(myIdentifier,isReference,callback){
     if(typeof isReference == 'undefined'){isReference = false;}
@@ -464,11 +505,11 @@ localRepository.getEntry=function(myIdentifier,isReference,callback){
     }
     if( targetArray.length == 2){
    //引数に管理部分がないので、最新のissueとして補う
-    var cx = this.entryList[ix].issues.length-1;
-    myIssue = this.entryList[ix].issues[cx]; 
-        targetArray=(myProductUnit.split('//')).concat(myIssue);//更新する
+    var cx = this.entryList[ix].issues.length-1;//最新のissue
+    myIssue = this.entryList[ix].issues[cx];//配列で取得
+        targetArray=(myProductUnit.split('//')).concat(myIssue);//連結更新
     } else {
-    //指定管理部分からissueを特定する 連結して比較（後方から検索)リスト内に指定エントリがなければ失敗
+    //指定管理部分からissueを特定する 連結して文字列比較（後方から検索) リスト内に指定エントリがなければ失敗
         var targetIssue =  targetArray.splice(2).join('//');//
         checkIssues:{
             for (var cx = (this.entryList[ix].issues.length-1) ; cx <= 0 ;cx--){
@@ -522,6 +563,287 @@ localRepository.getEntry=function(myIdentifier,isReference,callback){
         return false;
     }
 }
+/**
+    識別子を指定してローカルリポジトリから相当エントリを消去する
+    リストは再構築
+    ローカルリポジトリに関しては、各ユーザは編集権限を持つ
+    
+    また、ステータス変更のため内部ルーチンがこのメソッドを呼ぶ
+    直接要素編集をしても良い？
+*/
+localRepository.removeEntry=function(myIdentifier){
+    var targetArray = String(myIdentifier).split( '//' );
+    var myProductUnit   = targetArray.slice(0,2).join( '//' );//プロダクトユニットを抽出
+    for (var pid=0;pid<this.entryList.length;pid++){
+        if(this.entryList[pid].toString() == myProductUnit){
+    　  //関連するエントリをすべて削除
+            for (var iid=0;iid<this.entryList[pid].issues.length;iid++){
+                localStorage.removeItem(this.keyPrefix+this.entryList[pid].toString(iid));
+            };
+            var removedEntry = this.entryList.splice(pid,1);
+            this.getList();
+            return removedEntry;
+        }
+    }    
+}
+/**
+    エントリリストを検索して該当するリストエントリを返す
+    操作が多いのでメソッド可する
+    issuesは受取先で評価
+*/
+localRepository.entry=function(myIdentifier){
+    var targetArray     = String(myIdentifier).split( '//' );
+    var myProductUnit   = targetArray.slice(0,2).join( '//' );//プロダクトユニットを抽出
+//    var myIssues        = if( targetArray.length == 2)? null :targetArray.slice(2,6).join( '//' );
+    for (var pid=0;pid<this.entryList.length;pid++){
+        if(this.entryList[pid].toString() == myProductUnit){
+                return this.entryList[pid]
+        }
+    }
+    return null;        
+}
+/**
+    リポジトリに対してコマンドを発行してデータを取得／保存／更新する
+    コマンドはエントリのステータスを変更する
+    ステータス変更対象は最終ジョブ
+    
+    ステータス変更は以下の場合に発生
+    
+    checkin Startup > Active (一方通行)
+    
+    deactivate    Active > Hold
+    
+    activate    Hold > Active
+    
+    close   Active > Fixed
+    checkout/fix
+        Hold > Fixed
+    
+    open    Fixed > Active  条件分岐あり
+    
+Abort > 最終JobのステータスをAbortに変更して保存する
+ストレージタイプの場合、同内容でステータスの異なるデータを保存して成功時に先行データを削除して更新する
+サービス型の場合は変更リクエストを発行して終了
+
+この場合の違いを吸収するためにRepositry.changeStatus() メソッドを実装する
+エントリステータスの変更は単純な変更にならない　かつ　リポジトリの先のデータ更新にかかわるのでエントリのメソッドにはしない
+
+    checkin(開く)
+Startup/Fixed > Active
+新規ジョブを開始
+データ読出を伴う
+
+    checkout(fix)(閉じる)
+Active > Fixed
+カレントジョブを終了
+データ書込を伴う　
+
+    activate(再開)
+Hold/Fixed > Active
+カレントジョブの状態を変更
+データ読出を伴う
+データをActiveにできるのは、updateユーザのみ
+
+    deactivate(保留)
+Acive > Hold   
+カレントジョブの状態を変更
+データ書込を伴う
+
+===================　ここまでproductionMode　での操作
+ドキュメントブラウザパネルの表示は
+[ CHECKIN][CHECKOUT][ACTIVATE][DEACTIVATE]
+[開く][閉じる][再開][保留]
+となる
+===================　
+
+    receipt(検収)
+fixed > Startup
+新規ステージを開始(管理者権限)
+データ読出を伴う　データロックなし
+
+＊管理者権限での作業時はステータスの遷移を抑制する
+=読み出してもactiveにならない？
+
+    abort(中断)
+*   > Aborted
+エントリの制作を中断(管理者権限)
+すべての状態から移行可能性あり
+データ読出/書込を伴わない
+
+状況遷移を単純化するために、読み込まれていないデータの状況遷移を抑制する。
+基本的にユーザのドキュメント操作の際に状況の遷移が自動で発生する。
+
+
+*/
+
+localRepository.activateEntry=function(myIdentifier){
+    var currentEntry = this.entry(myIdentifier);
+    if(! currentEntry) return false;
+    switch (currentEntry.getStatus()){
+        case 'active':
+        case 'Active':
+        case 'startup':
+        case 'Startup':
+            //NOP return
+            return false;
+        break;
+        case 'hold':
+        case 'Hold':
+        case 'fixed':
+        case 'Fixed':
+            //ユーザが同一の場合のみアクティブに変更可能(reactive)
+        var newXps = new Xps();
+        var currentContents = localStorage.getItem(this.keyPrefix+currentEntry.toString(0));
+        if (currentContents) { newXps.readIN(currentContents); }else {return false;}
+        //ここ判定違うけど保留 あとでフォーマット整備 USERNAME:uid@domain(mailAddress)　 型式で暫定的に記述　':'が無い場合は、メールアドレスを使用
+        if ((newXps)&&(newXps.update_user.split(':').reverse[0] == document.getElementById('current_user_id').value)){
+            　//同内容でステータスを変更したエントリを作成 新規に保存して成功したら先のエントリを消す
+            newXps.currentStatus = 'Active';
+            var result = localStorage.setItem(this.keyPrefix+Xps.getIdentifier(newXps),newXps.toString());
+            if(result){ localStorage.removeItem(this.keyPrefix+currentEntry.toString(0));}else{delete newXps ; return false;}
+            xUI.XPS=newXps;xUI.init(XPS);nas_Rmp_Init();
+        }else{ return false ;}
+        break;
+    }
+}
+localRepository.deactivateEntry=function(myIdentifier){
+    var currentEntry = this.entry(myIdentifier);
+    if(! currentEntry) return "noCurrentEntry";
+    switch (currentEntry.getStatus()){
+        case 'startup':
+        case 'Startup':
+        case 'hold':
+        case 'Hold':
+        case 'fixed':
+        case 'Fixed':
+            //NOP
+            return currentEntry.getStatus();
+        break;
+        case 'active':
+        case 'Active':
+            //Active > Holdへ
+        var newXps = new Xps();
+        var currentContents = xUI.XPS.toString();
+        newXps.readIN(currentContents);
+        //ユーザ判定は不用
+        if (newXps){
+            　//同内容でステータスを変更したエントリを作成 新規に保存して成功したら先のエントリを消す
+            newXps.currentStatus = 'Hold';
+            var result = localStorage.setItem(this.keyPrefix+Xps.getIdentifier(newXps),newXps.toString());
+            if(result){ localStorage.removeItem(this.keyPrefix+currentEntry.toString(0));}else{delete newXps ; return 'noResult';}
+            //データをホールドしたので、編集対象をクリアしてUIを初期化
+            XPS=new Xps(5,144);xUI.init(XPS);nas_Rmp_Init();
+        }else{ return "no newXps" ;}
+        break;
+    }
+}
+localRepository.checkinEntry=function(myIdentifier,jobName){
+    var currentEntry = this.entry(myIdentifier);
+alert (currentEntry.getStatus());
+    if(! currentEntry) return false;
+    var jobIDoffset = 0;
+    switch (currentEntry.getStatus()){
+        case 'active':
+        case 'Active':
+        case 'hold':
+        case 'Hold':
+            //NOP return
+            return false;
+        break;
+        case 'fixed':
+        case 'Fixed':
+          jobIDoffset = 1;//この行の位置を確認
+        case 'startup':
+        case 'Startup':
+            //次のJobへチェックイン　読み出したデータでXpsを初期化
+        var newXps = new Xps();
+        var currentContents = localStorage.getItem(this.keyPrefix+currentEntry.toString(0));
+        if (currentContents) { newXps.readIN(currentContents); }else {return false;}
+        //　ユーザ判定不用（権利チェックは後ほど実装）
+        if (newXps){
+            　//同内容でステータスを変更したエントリを作成 新規に保存
+            　//保存成功したら　JobIDが繰り上がらない場合は先行データを削除して編集開始
+            newXps.currentStatus = 'Active';
+            if(typeof jobName == 'undefined'){ jobName = document.getElementById('current_user_id').value.split('@')[0];}
+//jobName指定がない場合は、ユーザ名を挿入            
+            newXps.job=new XpsStage(jobName+':'+(newXps.job.id+jobIDoffset));
+            var result = localStorage.setItem(this.keyPrefix+Xps.getIdentifier(newXps),newXps.toString());
+            if((result)&&(jobIDoffset = 0)){ localStorage.removeItem(this.keyPrefix+currentEntry.toString(0));}else{delete newXps ; return false;}
+            xUI.XPS=newXps;xUI.init(XPS);nas_Rmp_Init();
+        }else{ return false ;}
+        break;
+    }
+}
+localRepository.checkoutEntry=function(myIdentifier){
+    var currentEntry = this.entry(myIdentifier);
+    if(! currentEntry) return false;
+    switch (currentEntry.getStatus()){
+        case 'startup':
+        case 'Startup':
+        case 'hold':
+        case 'Hold':
+        case 'fixed':
+        case 'Fixed':
+            //NOP
+            return false;
+        break;
+        case 'active':
+        case 'Active':
+            //Active > Fixed
+        var newXps = new Xps();
+        var currentContents = xUI.XPS.toString();
+        newXps.readIN(currentContents);
+        //ユーザ判定は不用
+        if (newXps){
+            　//同内容でステータスを変更したエントリを作成 新規に保存して成功したら先のエントリを消す
+            newXps.currentStatus = 'Fixed';
+            var result = localStorage.setItem(this.keyPrefix+Xps.getIdentifier(newXps),newXps.toString());
+            if(result){ localStorage.removeItem(this.keyPrefix+currentEntry.toString(0));}else{delete newXps ; return false;}
+            //データをFixしたので、編集対象をクリアしてUIを初期化
+            XPS=new Xps(5,144);xUI.init(XPS);nas_Rmp_Init();
+        }else{ return false ;}
+        break;
+    }
+}
+localRepository.receiptEntry=function(myIdentifier){
+    var currentEntry = this.entry(myIdentifier);
+    if(! currentEntry) return false;
+    switch (currentEntry.getStatus()){
+        case 'startup':
+        case 'Startup':
+        case 'active':
+        case 'Active':
+        case 'hold':
+        case 'Hold':
+            //条件付きで処理
+        break;
+        case 'fixed':
+        case 'Fixed':
+            //処理
+        break;
+    }
+}
+
+localRepository.abortEntry=function(myIdentifier){
+    var currentEntry = this.entry(myIdentifier);
+    if(! currentEntry) return false;
+    switch (currentEntry.getStatus()){
+        case 'startup':
+        case 'Startup':
+        case 'hold':
+        case 'Hold':
+        case 'fixed':
+        case 'Fixed':
+        case 'active':
+        case 'Active':
+            //管理モード下でのみ処理　このメソッドのコール自体が管理モード下でのみ可能にする
+            //リポジトリに対して
+            this.parent.
+            this.issues[this.issues.length-1][3]='Aborted';
+        break;
+    }
+}
+
 
 /*  test data 
     localRepository.currentProduct = "ももたろう#12[キジ参戦！ももたろう地獄模様！！]";
@@ -692,7 +1014,7 @@ NetworkRepository.prototype.getList = function (){
                 }
                 if( currentEpisode.cuts[0].length == 0 ) continue;
                 for(var cid = 0 ; cid < currentEpisode.cuts[0].length ;cid ++){
-                //現在のサーバエントリ情報はサブタイトルと秒数なし 管理情報は[0,0,0]固定で　これは保存時にアプリ側から送る仕様にする
+                //現在のサーバエントリ情報はサブタイトルと秒数なし 管理情報は[0,0,0,'fixed']固定で　これは保存時にアプリ側から送る仕様にする
                 //兼用カット情報はペンディング
                 var myCutId=(typeof currentEpisode.cuts[0][cid].id == 'undefined')?
                     currentEpisode.cuts[0][cid].url.split( '/' ).reverse()[0].split( '.' )[0]:
@@ -700,7 +1022,7 @@ NetworkRepository.prototype.getList = function (){
                 var entryArray = [
                     encodeURIComponent(currentTitle.name)+'#'+encodeURIComponent(currentEpisode.name) ,
                     'S-C'+encodeURIComponent(currentEpisode.cuts[0][cid].name),
-                    0,0,0
+                    0,0,0,'fixd'
                 ];
 
                 var myEntry=entryArray.slice(0,2).join( "//" );//管理情報を外してSCi部のみ抽出
@@ -897,12 +1219,131 @@ function(result){
 */
 
 NetworkRepository.prototype.pushEntry = function (myXps){
-//この識別子作成は実験コードです　近々にXps.getIdentifier() メソッドと置換されます。2016.11.14
-    var myIdentifier=[encodeURIComponent(myXps.title)+"#"+encodeURIComponent(myXps.opus)+"["+encodeURIComponent(myXps.subtitle)+"]",encodeURIComponent("S"+((myXps.scene)?myXps.scene:"-")+"C"+myXps.cut)+"("+myXps.time()+")",0,0,0].join("//");
-//識別子を作成してネットワークリポジトリに送信する　正常に追加・更新ができた場合はローカルリストの更新を行う（コールバックで）
+//識別子取得
+    var myIdentifier=Xps.getIdentifier(myXps);
+//識別子に相当するアイテムがリポジトリに存在するかどうかをチェック
+    var targetArray = String(myIdentifier).split( '//' );//ここでは必ず6要素ある
+    var myProductUnit   = targetArray.slice(0,2).join( '//' );//プロダクトユニットを抽出
+    for (var pid=0;pid<this.entryList.length;pid++){
+        if(this.entryList[pid].toString() == myProductUnit){
+            //既存のエントリが有るのでストレージとリストにpushして処理終了
+            var currentEntry=this.entryList[pid].push(myIdentifier);
+            
+            this.pushData(currentEntry,myXps.toString());
+            return this.entryList[pid];
+        };
+    };
+//既存エントリが無いので新規エントリを追加
+    var newEntry = this.entryList.push(new listEntry(myIdentifier))
+    this.pushData(newEntry,myXps.toString());
+    this.getList();
+    return this.entryList[this.entryList.length-1];
 
-}
+};
+/**
+    実際にサーバにデータを送る
+    
+*/
+NetworkRepository.prototype.pushData = function (myEntry,myContents){
+    console.log(myEntry);
+//    var targetArray = myIdentifier.split('//');
+	var episode_id  = myEntry.episodeID;
+	var lastIssue   = myEntry.issues[myEntry.issues.length-1];
+	var cut_id      = lastIssue.cutID;
+	var method_type = '';
+	var target_url  = '';
+ var title_name     = myEntry.product.split('#')[0];
+ var episode_name   = myEntry.product.split('#')[1];
+ var cut_name       = myEntry.product.sci;
+ var line_id        = lastIssue[0];
+ var stage_id       = lastIssue[1];
+ var job_id         = lastIssue[2];
+ var status         = lastIssue[3];
+/**
+  if(document.getElementById('backend_variables')){
+	var episode_id = $('#backend_variables').attr('data-episode_id');
+	var cut_id = $('#backend_variables').attr('data-cut_id');
+	var method_type = '';
+	var target_url = '';
+  }else{
+  	alert('no network service');
+  }
 
+	保存時に送り出すデータに
+		タイトル・エピソード番号（文字列）・サブタイトル
+		カット番号+カット尺
+	を加えて送出する
+	型式をきめこむ
+	サーバ側では、これが保存状態と異なる場合は、エラーを返すか又は新規タイトルとして保存する必要がある。
+	アプリケーション側は、この文字列が異なる送出を抑制して警告を出す？
+	
+*/
+	json_data = {
+			 		content: myContent,
+		     		episode_id: episode_id,
+			 		cut_id: cut_id,
+			 		title_name: title_name,
+			 		episode_name: episode_name,
+			 		cut_name: cut_name,
+			 		line_id: line_id,
+			 		stage_id: stage_id,
+			 		job_id: job_id,
+			 		status: status
+				};
+
+
+	if ((typeof cut_id == 'undefined')||( cut_id == '' )){
+		method_type = 'POST';
+		target_url = '/cuts.json';
+	}else{
+		method_type = 'PUT';
+		target_url = '/cuts/' + cut_id + '.json'
+	}
+
+/*
+episode_id,cut_idに関しては、データ内に専用のプロパティを置いて記録するのが良いと思います。
+
+開発中の　制作管理DB/MAP/XPS　で共通で使用可能なnas.SCInfoオブジェクトを作成中です。
+これに一意のIDを持たせる予定です。
+*/
+
+	console.log(method_type+' :'+this.url+target_url +'\n' +JSON.stringify(json_data));
+	$.ajax({
+		type : method_type,
+		url : this.url+target_url,
+		data : JSON.stringify(json_data),
+		contentType: 'application/JSON',
+		dataType : 'JSON',
+		scriptCharset: 'utf-8',
+		success : function(data) {
+			xUI.setStored("current");//UI上の保存ステータスをセット
+			sync();//保存ステータスを同期
+
+			if( method_type == 'POST'){
+				console.log("new cut!");
+				$('#backend_variables').data('cut_id', data['id']);
+			}else{
+				console.log('existing cut!');
+			}
+
+		},
+		error : function(data) {
+
+			// Error
+			console.log("error");
+			console.log(data);
+		}
+	});
+
+};
+
+/**
+    ネットワークリポジトリのエントリをアプリケーションから削除することは無いので以下のメソッドは不用
+*/
+NetworkRepository.prototype.removeEntry = function (myIdentifier){
+//
+//識別子 からエントリを特定して削除する？
+};
 
 
 /**
@@ -1045,7 +1486,7 @@ serviceAgent.switchRepository = function(myRepositoryID){
     コールバック関数以降の引数はコールバックに渡される
 */
 serviceAgent.getEntry = function(myRepository,myIdentifier,isReference,callback){
-
+    alert('test');
 };
 
 
