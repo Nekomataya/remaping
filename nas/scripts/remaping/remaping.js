@@ -86,7 +86,7 @@ xUI.init    =function(XPS,referenceXps){
     viewOnly    編集禁止（データのreadonlyではなくUI上の編集ブロック）
 */
     this.viewMode    = ViewMode;    //表示モード Compact/WordProp
-    this.uiMode      = 'porduction';// ui基本動作モード production/management/browsing
+    this.uiMode      = 'production';// ui基本動作モード production/management/browsing
     this.viewOnly    = false;       //編集禁止フラグ
     this.hideSource  = false;       //グラフィック置き換え時にシートテキストを隠す
     this.showGraphic = true;        //置き換えグラフィックを非表示　＝　テキスト表示
@@ -333,14 +333,135 @@ if(! this.SWap){
 //    xUIオブジェクト初期化終了 以下メソッド
 //
 /* ============================================================================ */
-
-
+/**
+    xUI.setDocumentStatus(myCommnad)
+    ドキュメントのステータスを変更する
+    引数：キーワード　activate/deactivate/checkin/checkput/abort/reseipt
+    ステータス変更成功時は、モードにあわせてアプリケーションのモードを設定
+    引数がカラの場合は、現在のステータスを返す
+    非同期のサービスレスポンス待ちなのでコールバック渡し
+*/
+xUI.setDocumentStatus = function(myCommand){
+    if (typeof myCommand == 'undefined') return this.XPS.currentStatus;
+    switch (myCommand){
+        case 'activate':
+        //activate / 再開する
+            if((this.XPS.currentStatus.match(/Fixed|Hold/i))&&
+            //activate
+            (this.XPS.update_user.split(':').reverse()[0] == document.getElementById('current_user_id').value)){
+            //Fixed/Holdからアクティベートする場合は、ジョブID/名称の変更はなし
+                serviceAgent.currentRepository.activateEntry(function(){
+                    //成功時はドキュメントのステータスを更新してアプリモードをproductへ変更
+                    xUI.XPS.job=newJob;
+                    xUI.XPS.currentStatus='Active';
+                    xUI.viewOnly=false;
+                    xUI.setUImode('production');sync('productStatus');
+                },function(result){console.log('fail checkin:');console.log(result);});
+            }
+        break;
+        case 'deavtivate':
+            //deactivate / 保留
+            if(this.XPS.currentStatus.match(/Active/i)){
+                serviceAgent.currentRepository.deactivateEntry(function(){
+                    //成功時はドキュメントのステータスを更新してアプリモードをproductへ変更
+                    xUI.XPS.currentStatus='Hold';
+                    xUI.viewOnly=true;
+                    xUI.setUImode('browsing');sync('productStatus');
+                },function(result){console.log('fail checkin:');console.log(result);});
+            }
+        break;
+        case 'checkin':
+            //check-in / 開く
+            if(this.XPS.currentStatus.match(/Startup|Fixed/i)){
+            //現テータスがStartup/Fixedの場合新しいジョブの名称が必要　ジョブ名は第二引数で置く　ジョブIDは繰り上がる 
+                     　var newJobName = (arguments[1])? arguments[1]:xUI.XPS.update_user.split(':')[0];
+                       var newJob = new XpsStage([parseInt(xUI.XPS.job.id)+1,newJobName].join(':'));
+                serviceAgent.currentRepository.checkinEntry(newJob,function(){
+                    //成功時はドキュメントのステータスを更新してアプリモードをproductへ変更
+                    xUI.XPS.job=newJob;
+                    xUI.XPS.currentStatus='Active';
+                    xUI.viewOnly=false;
+                    xUI.setUImode('production');sync('productStatus');
+                },function(result){console.log('fail checkin:');console.log(result);});
+            }
+        break;
+        case 'checkout':
+            //check-out / 閉じる
+            if(this.XPS.currentStatus.match(/active/i)){
+                serviceAgent.currentRepository.checkoutEntry(function(){
+                    //成功時はドキュメントのステータスを更新してアプリモードをproductへ変更
+                    xUI.XPS.currentStatus='Fixed';
+                    xUI.viewOnly=true;
+                    xUI.setUImode('browsing');sync('productStatus');
+                },function(result){console.log('fail checkout:');console.log(result);});
+            }
+        break;
+        case 'Startup':
+            //receipt / 検収
+            if(this.XPS.currentStatus.match(/fixed/i)){
+                serviceAgent.currentRepository.checkoutEntry(Xps.getIdentifier(this.XPS),function(){
+                    //成功時はドキュメントのステータスを更新してアプリモードをproductへ変更
+                    xUI.XPS.currentStatus='Hold';
+                    xUI.viewOnly=true;
+                    xUI.setUImode('browsing');
+                    sync('productStatus');
+                });
+            }
+        break;
+    }    
+}
+    
+/**
+    xUI.setUImode(newMode)
+    uiMode変更　引数がなければ変更なし
+    引数がモードキーワード以外ならが、モードを順次切り替えて
+    現在のモード値を返す
+    production
+    management
+    browsing
+*/
+xUI.setUImode = function (myMode){
+    if(typeof myMode == 'undefined') myMode='current';
+    switch (myMode){
+        case 'current':;//NOP return
+            return xUI.uiMode;
+            break;
+        case 'production':;
+            //メニュー切替
+            　xUI.viewOnly = false;
+            //インジケータカラー変更
+            $('#pmcui').css('background-color','#bbbbdd');
+            $('#pmcui').css('color','#666688');
+            break;
+        case 'management':;
+            //メニュー切替
+            　xUI.viewOnly = true;
+            //インジケータカラー変更
+            $('#pmcui').css('background-color','#ddbbbb');
+            $('#pmcui').css('color','#886666');
+            break;
+        case 'browsing':;
+            //メニュー切替
+            　xUI.viewOnly = true;
+            //インジケータカラー変更
+            $('#pmcui').css('background-color','#bbddbb');
+            $('#pmcui').css('color','#668866');
+            xUI.uiMode=myMode;
+            break;
+        default:;
+            var nextMode = ['production','management','browsing'].indexOf(xUI.uiMode);
+            console.log(nextMode);
+            return this.setUImode(['browsing','production','management'][nextMode]);
+    }
+    xUI.uiMode=myMode;
+    return xUI.uiMode;
+}
 
 /*    xUI.edChg(status boolean)
     セル編集フラグ 切り替えと同時に表示を調整
 */
 xUI.edChg=function(status){
-
+    if(this.viewOnly) return false;
     this.edchg=status;
     document.getElementById("edchg").style.backgroundColor=
     (this.edchg)?
@@ -1357,7 +1478,7 @@ if(pageNumber>1){
     _BODY+='<td class=pgHeader id="title'+pageNumber+'">'+XPS.title+XPS.subtitle+'</td>';
     _BODY+='<td class=pgHeader id="scene_cut'+pageNumber+'">'+XPS.scene+XPS.cut+'</td>';
     _BODY+='<td class=pgHeader id="time'+pageNumber+'">'+nas.Frm2FCT(XPS.time(),3)+'</td>';
-    _BODY+='<td class=pgHeader id="update_user'+pageNumber+'">'+XPS.update_user+'</td>';
+    _BODY+='<td class=pgHeader id="update_user'+pageNumber+'">'+XPS.update_user.split(":")[0]+'</td>';
 //シート番号終了表示
 if(pageNumber==Pages){
     _BODY+='<td class=pgHeader >'+'end / '+Pages+'</td>';
@@ -3744,7 +3865,7 @@ convertXps=function(datastream){
 //この分岐処理は、互換性維持のための分岐
 switch(true)
 {
-case    (/^nasTIME-SHEET\ 0\.[1-4]/).test(datastream):
+case    (/^nasTIME-SHEET\ 0\.[1-5]/).test(datastream):
 //    判定ルーチン内で先にXPSをチェックしておく（先抜け）
 break;
 case    (/^UTF\-8\,\ TVPaint\,\ \"CSV 1\.[01]\"/).test(datastream):
@@ -3779,7 +3900,7 @@ default :
     }
         return datastream;
 }
-
+//クラスメソッドを上書き
 XPS.readIN=function(datastream){
     xUI.errorCode=0;//読み込みメソッドが呼ばれたので最終のエラーコードを捨てる。
     if(! datastream.toString().length ){
@@ -4018,7 +4139,7 @@ Compactモード時は強制的に
 表示モードにしたがって
   タイトルヘッドラインの縮小
 */
-
+    xUI.setUImode('browsing');
 /** 動作モードを新設
 production/management/browsing
 managementモードではシート編集はブロック

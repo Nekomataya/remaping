@@ -216,8 +216,6 @@ case	"subtitle":	;
 case	"opus":	;
 case	"create_time":	;
 case	"update_time":	;//?これは要らない
-case	"create_user":	;
-case	"update_user":	;
 	document.getElementById(prop).innerHTML=
 	(XPS[prop])? XPS[prop] : "<br />";
 if(xUI.viewMode != "Compact"){
@@ -225,7 +223,16 @@ if(xUI.viewMode != "Compact"){
 		document.getElementById(prop+pg).innerHTML=(XPS[prop])? XPS[prop] : "<br />";
 }
 	}
-
+	break;
+case	"create_user":	;
+case	"update_user":	;
+	document.getElementById(prop).innerHTML=
+	(XPS[prop])? XPS[prop].split(':')[0] : "<br />";
+if(xUI.viewMode != "Compact"){
+	for (pg=1;pg<=Math.ceil(XPS.duration()/xUI.PageLength);pg++){
+		document.getElementById(prop+pg).innerHTML=(XPS[prop])? XPS[prop].split(':')[0] : "<br />";
+}
+	}
 	break;
 case	"scene":	;
 case	"cut":	;

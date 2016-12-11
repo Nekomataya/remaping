@@ -265,7 +265,7 @@ function chg(id)
 rewriteValueByEvt=function(e){
 //ターゲットがクリックされた時、イベントから引数を組み立てて関数を呼ぶ
 //alert(e);
-
+if(xUI.viewOnly) return false;
 	var TargeT=e.target;var Bt=e.which;//ターゲットオブジェクト取得
 	var myPrp=TargeT.id;
 	var msg="";

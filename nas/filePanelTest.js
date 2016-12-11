@@ -87,7 +87,7 @@ documentDepot.updateOpusSelector=function(myRegexp){
     if(typeof myRegexp != "RegExp"){ myRegexp = new RegExp(".+");}
 // ここで正規表現フィルタを引数にする
     var myContents = ""
-    myContents += '<option value="==newTitle=="> (*-- new title --*) ';
+    myContents += '<option value="==newTitle==">（*-- no title selected --*）';
     for( var opid = 0 ; opid < this.products.length ; opid ++){
         var currentText = decodeURIComponent(this.products[opid]);
 //console.log(currentText);
@@ -116,7 +116,7 @@ documentDepot.updateDocumentSelector=function(myRegexp){
 //console.log()
 //  正規表現フィルタで抽出してHTMLを組む
     var myContents = ""
-    myContents += '<option value="==newDocument=="> (*-- new document --*)';
+    myContents += '<option value="==newDocument==">（*-- no document selected--*）';
     for ( var dlid = 0 ; dlid < myDocuments.length ; dlid ++){
         var currentText = decodeURIComponent(myDocuments[dlid].toString(0).split('//')[1]);
         if(currentText.match(myRegexp)){
@@ -379,46 +379,63 @@ function setProduct(productName){
 function selectSCi(sciName){
     if(typeof sciName == "undefined"){
     //カット名が引数で与えられない場合はセレクタの値をとる
+    //セレクタの値の場合は、ドキュメントリストの対応するエントリを取得
     //選択されたアイテムがない場合は、デフォルト値を使用してフリー要素を選択する
     if ( document.getElementById("cutList").selectedIndex >= 0 ){
         sciName = document.getElementById("cutList").options[document.getElementById("cutList").selectedIndex].text;
+        var myEntry = serviceAgent.currentRepository.entry(document.getElementById("cutList").options[document.getElementById("cutList").selectedIndex].value);
     }else{
         document.getElementById("cutList").selectedIndex = 0;
         sciName = "(*--c#--*)";
+        var myEntry = null;
     }
     }
     sciName=sciName.toString();//明示的にストリング変換する
     if(sciName.length <= 0){return false;}
-    var sciArray=sciName.split( "/" );//セパレータ "/"で分離
-    //代表カット番号 sciArray[0]
+    var sciArray=sciName.split( "/" );//セパレータ"/"で兼用カットを分離
+    //代表カット番号 はsciArray[0]
     
     if(sciArray[0].match(/^\s*(.+)\s*\(([^\)]+)\)\s*$/)){
         var cutNumber = RegExp.$1;
         var cutTime  = parseInt(nas.FCT2Frm(RegExp.$2)); 
     }else{
         var cutNumber = sciArray[0];
-        var cutTime   =  0;  
+        var cutTime   =  6*nas.FRATE;//６秒分フレーム
     }
 
 //  状態更新
 //　パネルテキスト更新
     document.getElementById("cutInput").value    = (cutNumber.length)? cutNumber:"(*--c#--*)";
-    document.getElementById("timeInput").value     = (cutTime)? nas.Frm2FCT(cutTime,3):"3 + 00 .";
+    document.getElementById("timeInput").value     = (cutTime)? nas.Frm2FCT(nas.FCT2Frm(cutTime),3):"6 + 00 .";
+if(myEntry){
+    document.getElementById("statusInput").value = decodeURIComponent(myEntry.issues[myEntry.issues.length-1]);
+}else{
+    document.getElementById("statusInput").value = '#:---,#---,#---,(status)';
+}
+//UIボタンの更新
+    var myInputText=["titleInput","opusInput","subtitleInput","cutInput","timeInput","statusInput"];
 
-    var myInputText=["titleInput","opusInput","subtitleInput","cutInput","timeInput"];
-    if (document.getElementById("cutList").selectedIndex <= 0){
-        document.getElementById("ddp-open").disabled         = true;
+    if (document.getElementById("cutList").selectedIndex <= 0){}
+    if (! myEntry){
+//選択されたドキュメントがリスト内に無い　
+        document.getElementById("ddp-checkin").disabled     = true;
+        document.getElementById("ddp-activate").disabled    = true;
+        document.getElementById("ddp-readout").disabled     = true;
+        document.getElementById("ddp-reference").disabled   = true;
+
         for ( var tidx = 0 ; tidx < myInputText.length ; tidx ++ ){
             document.getElementById(myInputText[tidx]).disabled = false;
         }
-        document.getElementById("ddp-newdocument").disabled  = false;
         documentDepot.currentSelection = documentDepot.buildIdentifier();//現在のテキスト入力状態から識別子をビルドする。
     }else{
-        document.getElementById("ddp-open").disabled         = false;
+//リポジトリ内に指定データが存在する
+        document.getElementById("ddp-checkin").disabled     = false;
+        document.getElementById("ddp-activate").disabled    = false;
+        document.getElementById("ddp-readout").disabled     = false;
+        document.getElementById("ddp-reference").disabled   = false;
         for ( var tidx = 0 ; tidx < myInputText.length ; tidx ++ ){
             document.getElementById(myInputText[tidx]).disabled = true;
         }
-        document.getElementById("ddp-newdocument").disabled  = true ;
         documentDepot.currentSelection = document.getElementById("cutList").options[document.getElementById("cutList").selectedIndex].value;
     }
 }

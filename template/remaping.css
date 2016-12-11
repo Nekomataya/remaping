@@ -1141,6 +1141,14 @@ div.application_status {
 	.document-selector {
 	  height:75%;
 	}
+	.document-selector-opus {
+	  width:60%;
+	  text-align:right;
+	}
+	.document-selector-cut {
+	  width:40%;
+	  text-align:left;
+	}
 
 .productFilter {
 	height:24px;
@@ -1251,6 +1259,7 @@ transform-origin: 0 0;transform:scale(1,1);
 .pmcui	{
 	margin-top:8px;
 	background-color:#bbbbdd;
+	color:#666688;
 	border-width:1px;
 	border-style:inset;
 }

@@ -41,7 +41,7 @@ function keyDown(e){
 	var interpKey=110;
 
 
-
+//console.log('press :'+key)
 
 
 	switch(key) {
@@ -112,12 +112,12 @@ case	40	:		//[shift]+時はセレクションの調整 [ctrl]+時はさらにス
 		if(key==38){xUI.spin("up")}else{xUI.spin("down")};
 	}	;return false;	break;
 case	39	:		//右
-	if (! xUI.edchg) {xUI.spin("right")	;return false;
+	if ((! xUI.edchg)||(xUI.viewOnly)) {xUI.spin("right")	;return false;
 	}else{
 	return true;
 	};	break;
 case	37	:		//左?
-	if (! xUI.edchg) {xUI.spin("left")	;return false;
+	if ((! xUI.edchg)||(xUI.viewOnly)) {xUI.spin("left")	;return false;
 	}else{
 	return true;
 	};	break;
@@ -218,7 +218,7 @@ function keyPress(e)
 //	フォーカスされたテーブル上の入力ボックスのキープレスを検出して
 //	動作コントロールのために戻り値を調整
 	key = getKEYCODE(e);//キーコードを取得
-//dbgPut("press :"+key)
+//console.log("press :"+key);
 /*		フロートモード判定
 	フロート（ブロック移動/セクション編集）モードでは、キー動作の入力が制限される。
 	最初にモード内動作を判定して処理
@@ -404,6 +404,7 @@ case  45:	;	//ins
 case  46:	;	//del
 case  144:	;	//clear(NumLock)
 //case  :	;	//
+	if(xUI.viewOnly) return false;
 	if(!xUI.edchg) document.getElementById("iNputbOx").select();
 //	if(!xUI.edchg) document.getElementById("iNputbOx").focus();
 //	syncInput(document.getElementById("iNputbOx").value);
