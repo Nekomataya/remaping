@@ -53,12 +53,16 @@ documentDepot = {
 };
 
 documentDepot.documentsUpdate=function(){
+//既存データをクリア
     var myProducts  =[];
     var myDocuments =[];
-/*======*/
+/*======
     for (var idx = 0 ; idx < serviceAgent.repositories.length ; idx ++ ){
         myDocuments=myDocuments.concat(serviceAgent.repositories[idx].entryList);
-    }
+    } 
+*/
+    myDocuments = serviceAgent.currentRepository.entryList;//カレントリポジトリのリストのみ
+    
     for (var idx = 0 ; idx < myDocuments.length ; idx ++ ){
         var currentProduct=myDocuments[idx].toString().split( '//' )[0];
         var hasProduct =false;
@@ -134,6 +138,7 @@ documentDepot.updateDocumentSelector=function(myRegexp){
     読み出して編集エリアに取り込む
     識別子が指定されない場合は、セレクタの値を見る
     ドキュメントリストに識別子が存在しない場合は、falseを返す
+    読み込み成功時はセレクタが開いていたら閉じる
 */
 documentDepot.getEntry =function(myIdentifier){
     if(typeof myIdentifier == 'undefined'){
@@ -166,7 +171,8 @@ documentDepot.buildIdentifier = function(){
 }
 /**
     ドキュメントリストを更新する
-    ローカルリポジトリに加えて、アクティブなリポジトリの内容を取得して合成したリストをブラウザの保持リストとして更新する
+    カレントリポジトリの内容を取得
+    得たリストをブラウザの保持リストとして更新する
     先に存在するリストは破棄
 */
 documentDepot.rebuildList=function(){
@@ -177,11 +183,11 @@ documentDepot.rebuildList=function(){
     this.currentDocument    =null;
     this.currentReferenece  =null;
 /*=============*/
-serviceAgent.repositories[0].getList();
-
-  if ( serviceAgent.repositories.length > 0 ){
-     for(var idr=1 ;idr < serviceAgent.repositories.length; idr ++){serviceAgent.repositories[idr].getList();}
-  }
+// serviceAgent.repositories[0].getList();
+    
+//  if ( serviceAgent.repositories.length > 0 ){}
+//  for(var idr=1 ;idr < serviceAgent.repositories.length; idr ++){serviceAgent.repositories[idr].getList();}
+    serviceAgent.currentRepository.getList();
 //  テスト中はこれで良いが、その後はあまり良くない 
 
 }

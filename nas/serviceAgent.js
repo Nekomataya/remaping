@@ -132,12 +132,16 @@ ServiceNode=function(serviceName,serviceURL){
 /**
     リクエストのヘッダにトークンを載せる
     トークンの期限が切れていた場合は、再度のトークン取得（再ログイン）を促す
+v1向けのコーデーデングは考慮しない
 */
 ServiceNode.prototype.setHeader = function(xhr){
-    var myToken = $('#server-info').attr('current_token')
-    if(myToken.length==0) return false;
-//    console.log(myToken)
-    xhr.setRequestHeader('Authorization', ( "Bearer " + myToken));    
+    var oauth_token = $('#server-info').attr('oauth_token');
+    var organizationToken = (serviceAgent.currentRepository)? serviceAgent.currentRepository.token:false;
+//    console.log(organizationToken)
+    if(oauth_token.length==0) return false;
+        xhr.setRequestHeader('Access-Control-Allow-Origin', '*' );//?
+        xhr.setRequestHeader('Authorization', ( "Bearer " + oauth_token));    
+        if(organizationToken) xhr.setRequestHeader('OrganizationToken', organizationToken );
 //    console.log(xhr);
     return true;
 }
@@ -146,6 +150,7 @@ ServiceNode.prototype.setHeader = function(xhr){
     参考コード　実際にはコールされない
 */
 ServiceNode.prototype.getFromServer = function getFromServer(url, msg){
+//V1
     $.ajax({
         url: this.url + url,
         type: 'GET',
@@ -156,15 +161,41 @@ ServiceNode.prototype.getFromServer = function getFromServer(url, msg){
         }).bind(this),
         beforeSend: this.setHeader
     });
+//V2    
+        $.ajax({
+          url: this.url + url,
+          type: 'GET',
+          dataType: 'json',
+          success: function(res) {
+            console.log(msg);
+            console.log(res);
+
+            if( url == '/api/v2/organizations.json' ){
+              organization_token = res[0]["token"];
+              $('#organization_needed').fadeIn("slow");
+              $('#organization_name').text(res[0]["name"]);
+            }else if ( msg == '作品一覧取得'){
+              product_token = res[0]["token"]
+            }else if (msg == 'エピソード一覧取得'){
+              episode_token = res[0]["token"]
+            }else if (msg == 'カット一覧取得'){
+              cut_token = res[0]["token"]
+            }
+
+
+          },
+          beforeSend: setHeader
+        });
 }
 
 /**
-    認証手続きはノードのメソッド　ノード自身が認証と必要なデータの記録を行う
+    認証手続きはサービスノードのメソッド　ノード自身が認証と必要なデータの記録を行う
     パスワードは記録しない
     認証毎にパスワードをユーザに要求する
         myService.authorize()
     パスワードとUIDは、ページ上のフォームから読む
  
+    
 */
 ServiceNode.prototype.authorize=function(){
     var noW =new Date();
@@ -187,23 +218,55 @@ ServiceNode.prototype.authorize=function(){
 		success : (function(result) {
 		    console.log(result)
 		    console.log(this)
-            $('#server-info').attr('current_token'  , result.access_token);
+            $('#server-info').attr('oauth_token'  , result.access_token);
             $('#server-info').attr('last_authrized' , new Date().toString());
             serviceAgent.authorized('success');
+            this.getRepositories();
 		}).bind(this),
 		error : function(result) {
 		    /**
 		        認証失敗 トークンと必要情報をクリアして表示を変更する
 		    */            
-            $('#server-info').attr('current_token'  , '');
+            $('#server-info').attr('oauth_token'  , '');
             $('#server-info').attr('last_authrized' , '');
             serviceAgent.authorized('false');
 		}
 	});
 }
+/**
+    リポジトリ（TEAM）一覧を取得してUIを更新する
+*/
+ServiceNode.prototype.getRepositories=function(){
+    if(false){
+//v1code 不用
+        this.repositories.splice(1);//localRepositoryを残してクリア
+        this.repositories.push(new NetworkRepository('*',this,this.url+'/v1'));
+      }
+        $.ajax({
+          url : this.url + '/organizations.json',
+          type : 'GET',
+          dataType : 'json',
+          success : (function(result) {
+            console.log(result);
+            serviceAgent.repositories.splice(1);//ローカルリポジトリを残してクリア(要素数１)
+            for( var rix=0 ; rix<result.length ; rix ++){
+                serviceAgent.repositories.push(new NetworkRepository(result[rix].name,this));
+                serviceAgent.repositories[serviceAgent.repositories.length - 1].token = result[rix].token;
+            };
+            var myContents="";
+    myContents += '<option selected value=0> = local Repository =' ;
+    for(var idr=1; idr < serviceAgent.repositories.length;idr ++){
+        myContents +='<option value="'+idr+'" >'+serviceAgent.repositories[idr].name; 
+    }
+    document.getElementById('repositorySelector').innerHTML = myContents;
 
-
-
+          }).bind(this),
+          error : function(result){
+            console.log(result);
+          },
+          beforeSend: (this.setHeader).bind(this)
+        });
+}
 /*
     履歴構造の実装には、XPSのデータを簡易パースする機能が必要
     プロパティを取得するのみ？
@@ -581,6 +644,7 @@ localRepository.getEntry=function(myIdentifier,isReference,callback){
             console.log(documentDepot.currentReference);
             　XPS=documentDepot.currentDocument;xUI.init(XPS,documentDepot.currentReference);nas_Rmp_Init();
             　xUI.setUImode('browsing');sync("productStatus");
+            　sWitchPanel('File');
         }
     } else { 
         return false;
@@ -919,17 +983,24 @@ localRepository.getEntry(localRepository.entryList[0]);
 一応オブジェクトはわけておく
 
 */
-NetworkRepository=function(repositoryName,myServer){
+NetworkRepository=function(repositoryName,myServer,repositoryURI){
     this.name = repositoryName;
     this.service = myServer;//リポジトリの所属するサーバ
-    this.url=this.service.url;//サーバとurlが異なる場合はこれを上書きする
-//今のところリポジトリオブジェクト内部にエントリのポインタを置く必要がないリストのみがあれば良さそう
+    this.url=(typeof repositoryURI == 'undefined')?this.service.url:repositoryURI;//サーバとurlが異なる場合は上書き
+    this.token=null;//nullで初期化
+//サーバ内にTeamが実装　Teamをリポジトリとして扱うのでその切り分けを作成　12/13
 //リストは素早いリポジトリの切り替えやリポジトリ同士のマージ処理に不可欠なのでここで保持
 //    this.currentProduct;
 //    this.currentSC;
 //    this.currentLine;
 //    this.currentStage;
 //    this.currentJob;
+//    this.product_token      = $('#server-info').attr('product_token');
+//    this.episode_token      = $('#server-info').attr('episode_token');
+//    this.cut_token          = $('#server-info').attr('cut_token');
+// ?idの代替なので要らないか？ 
+
+
     this.curentIssue;
     this.productsData=[];
     this.entryList=[];
@@ -939,7 +1010,6 @@ NetworkRepository=function(repositoryName,myServer){
 */
 NetworkRepository.prototype.getProducts = function (){
     this.productsData.length = 0;
- //   that = this; /api/v1
     $.ajax({
         url: this.url+'/products.json',
         type: 'GET',
@@ -961,18 +1031,18 @@ NetworkRepository.prototype.getProducts = function (){
 */
 NetworkRepository.prototype.productsUpdate = function(){
     for(var idx = 0 ;idx < this.productsData.length ;idx ++){
-//        console.log("get:"+this.productsData[idx].id) ; /api/v1
+        console.log("get:"+this.productsData[idx].token) ;
     $.ajax({
-        url: this.url+'/products/'+this.productsData[idx].id+'.json',
+        url: this.url+'/products/'+this.productsData[idx].token+'.json' ,
         type: 'GET',
         dataType: 'json',
         success: (function(result) {
             for(var idx = 0 ;idx < this.productsData.length ;idx ++){
                 //プロダクトデータを詳細データに「入替」
-		        if(result.id == this.productsData[idx].id){this.productsData[idx]=result ; break;}
+		            if(result.token == this.productsData[idx].token){this.productsData[idx]=result ; break;}
 		    }
-//    console.log(this.productsData);
-		    this.episodesUpdate(idx);
+    console.log(this.productsData);
+		    this.getEpisodes(idx);
         }).bind(this),
         beforeSend: (this.service.setHeader).bind(this)
     });
@@ -980,53 +1050,78 @@ NetworkRepository.prototype.productsUpdate = function(){
     }
 }
 /**
+    プロダクトごとにエピソード一覧を再取得してデータ内のエピソード一覧を更新
+*/
+NetworkRepository.prototype.getEpisodes = function (pid) {
+        console.log("getEpisodeList for :"+this.productsData[pid].name) ;
+        
+    $.ajax({
+        url: this.url+'/episodes.json?product_token='+this.productsData[pid].token ,
+        type: 'GET',
+        dataType: 'json',
+        success: (function(result) {
+                //プロダクトデータのエピソード一覧を「入替」
+		            if(result) this.productsData[pid].episodes[0]=result ;
+  console.log('get Episodes :'+this.productsData[pid].name);
+   console.log(this.productsData);
+		    this.episodesUpdate(pid);
+        }).bind(this),
+        beforeSend: (this.service.setHeader).bind(this)
+    });
+}
+/**
     プロダクトリストのIDを指定してエピソード詳細を取得
-    カットリストを得る
     エピソードIDを指定して内部リストにコンバート
  */
 NetworkRepository.prototype.episodesUpdate = function (pid) {
-//    that = this;
         for( var eid = 0 ; eid < this.productsData[pid].episodes[0].length ; eid ++){
-            if( typeof this.productsData[pid].episodes[0][eid].id == "undefined" ){
-                //未取得の場合はurlを参照
-               var targetURL = this.url+this.productsData[pid].episodes[0][eid].url;
- 	        }else{
-	            //取得済みの場合は更新 /api/v1
-                var targetURL = this.url+'/episodes/'+this.productsData[pid].episodes[0][eid].id + '.json';
-	        }
-    console.log(targetURL);
-/*
-                $.getJSON (targetURL,function(result){
-                    searchLoop:{
-                    for( var idx = 0 ; idx < that.productsData.length ; idx ++){
-                        if(that.productsData[idx].episodes[0].length == 0) continue;//エピソード数０の際は処理スキップ
-                        for( var eid = 0 ; eid < that.productsData[idx].episodes[0].length ; eid ++){
-                            if (typeof that.productsData[idx].episodes[0][eid].id == 'undefined') {
-                                var myID = (that.productsData[idx].episodes[0][eid].url).split('/').reverse()[0].split('.')[0];
-                            }else{
-                                var myID = that.productsData[idx].episodes[0][eid].id;
-                            }
-                            if( result.id == myID ){ that.productsData[idx].episodes[0][eid] = result;break searchLoop;};
-                        }
-                    }}
-                    that.getList();
-	            });*/
+	            // /api/v2
+                var targetURL = this.url+ '/episodes/'+this.productsData[pid].episodes[0][eid].token +'.json';
+//    console.log(targetURL);
 	            $.ajax({
                     url: targetURL,
                     type: 'GET',
                     dataType: 'json',
                     success: (function(result) {
-//                        console.log(result);
+                        console.log('episode:');
+                        console.log(result);
                       searchLoop:{
                         for( var idx = 0 ; idx < this.productsData.length ; idx ++){
                             if((typeof this.productsData[idx].episodes == 'undefined')||(this.productsData[idx].episodes[0].length == 0)) continue;//エピソード数０の際は処理スキップ
                             for( var eid = 0 ; eid < this.productsData[idx].episodes[0].length ; eid ++){
-                                if (typeof this.productsData[idx].episodes[0][eid].id == 'undefined') {
-                                    var myID = (this.productsData[idx].episodes[0][eid].url).split('/').reverse()[0].split('.')[0];
-                                }else{
-                                    var myID = this.productsData[idx].episodes[0][eid].id;
-                                }
-                                if( result.id == myID ){ this.productsData[idx].episodes[0][eid] = result;break searchLoop;};
+                                    var myToken = this.productsData[idx].episodes[0][eid].token;
+                                if( result.token == myToken ){ this.productsData[idx].episodes[0][eid] = result;break searchLoop;};
+                            }
+                        }
+                      }
+                      this.getSCi(myToken);
+//                     this.getList();
+                    }).bind(this),
+                    beforeSend: (this.service.setHeader).bind(this)
+                });
+	    }
+};
+/**
+    エピソード毎にカットリストを再取得
+    エピソード詳細の内部情報にコンバート
+ */
+NetworkRepository.prototype.getSCi = function (epToken) {
+                var targetURL = this.url+ '/cuts.json?episode_token='+epToken ;
+	            $.ajax({
+                    url: targetURL,
+                    type: 'GET',
+                    dataType: 'json',
+                    success: (function(result) {
+                        console.log('episode:'+epToken);
+                        console.log(result);
+                      searchLoop:{
+                        for( var idx = 0 ; idx < this.productsData.length ; idx ++){
+                            if((typeof this.productsData[idx].episodes == 'undefined')||(this.productsData[idx].episodes[0].length == 0)) continue;//エピソード数０の際は処理スキップ
+                            for( var eid = 0 ; eid < this.productsData[idx].episodes[0].length ; eid ++){
+                                if(epToken == this.productsData[idx].episodes[0][eid].token ){
+                                    this.productsData[idx].episodes[0][eid].cuts.push(result);//cuts[1] としてアクセス
+                                    break searchLoop;
+                                };
                             }
                         }
                       }
@@ -1034,8 +1129,8 @@ NetworkRepository.prototype.episodesUpdate = function (pid) {
                     }).bind(this),
                     beforeSend: (this.service.setHeader).bind(this)
                 });
-	    }
 };
+
 /**
 リポジトリ内のentryListを更新する
 */
@@ -1058,16 +1153,18 @@ NetworkRepository.prototype.getList = function (){
                     this.episodesUpdate(idx);
                     return;//中断
                 }
-                if( currentEpisode.cuts[0].length == 0 ) continue;
-                for(var cid = 0 ; cid < currentEpisode.cuts[0].length ;cid ++){
+                if( currentEpisode.cuts.length==1){this.getSCi(currentEpisode.token);return;}
+                if( currentEpisode.cuts[1].length == 0 ) continue;
+                for(var cid = 0 ; cid < currentEpisode.cuts[1].length ;cid ++){
                 //現在のサーバエントリ情報はサブタイトルと秒数なし 管理情報は[0,0,0,'fixed']固定で　これは保存時にアプリ側から送る仕様にする
                 //兼用カット情報はペンディング
-                var myCutId=(typeof currentEpisode.cuts[0][cid].id == 'undefined')?
-                    currentEpisode.cuts[0][cid].url.split( '/' ).reverse()[0].split( '.' )[0]:
-                    currentEpisode.cuts[0][cid].id;//これは修正予定
+//                var myCutId=(typeof currentEpisode.cuts[0][cid].id == 'undefined')?
+ //                   currentEpisode.cuts[0][cid].url.split( '/' ).reverse()[0].split( '.' )[0]:
+  //                  currentEpisode.cuts[0][cid].id;//これは修正予定
+                var myCutToken = currentEpisode.cuts[1][cid].token;
                 var entryArray = [
                     encodeURIComponent(currentTitle.name)+'#'+encodeURIComponent(currentEpisode.name) ,
-                    'S-C'+encodeURIComponent(currentEpisode.cuts[0][cid].name),
+                    'S-C'+encodeURIComponent(currentEpisode.cuts[1][cid].name),
                     0,0,0,'fixd'
                 ];
 
@@ -1080,12 +1177,10 @@ NetworkRepository.prototype.getList = function (){
                 }
                 if((hasEntry)&&(currentEntryID)){
                     //登録済みプロダクトなので管理情報を追加
-                    //this.entryList[currentEntryID].issues.push(entryArray.slice(2).join("//"));
-                    //console.log(this.entryList[currentEntryID]);
-                    this.entryList[currentEntryID].push(entryArray.slice(2).join("//"),currentTitle.id,currentEpisode.id,myCutId);
+                    this.entryList[currentEntryID].push(entryArray.slice(2).join("//"),currentTitle.token,currentEpisode.token,myCutToken);
                 }else{
                     //未登録新規プロダクトなのでエントリ追加
-                    var newEntry = new listEntry(entryArray.join('//'),currentTitle.id,currentEpisode.id,myCutId)
+                    var newEntry = new listEntry(entryArray.join('//'),currentTitle.token,currentEpisode.token,myCutToken)
                     newEntry.parent = this;
                     this.entryList.push(newEntry);
                 }
@@ -1204,6 +1299,7 @@ console.log("road :"+myContent);
 	        XPS.readIN(myContent)
 	        xUI.init(XPS);
 	        nas_Rmp_Init();
+            sWitchPanel('File');
         }).bind(this),
         beforeSend: (this.service.setHeader).bind(this)
     });
@@ -1228,6 +1324,7 @@ console.log('import Reference'+myContent);
 	        documentDepot.currentReference=new Xps();
 	        documentDepot.currentReference.readIN(myContent);
 	        xUI.setReferenceXPS(documentDepot.currentReference);
+	        sWitchPanel('File');
         }).bind(this),
         beforeSend: (this.service.setHeader).bind(this)
     });
@@ -1433,30 +1530,31 @@ serviceAgent = {
  リポジトリの初期化は　最終的には作業記録とサーバからの受信情報でアプリケーション初期化のタイミングで組む
 */
 serviceAgent.init= function(){
-    this.repositories=[];
-
-    this.repositories.push(localRepository);//ローカルリポジトリを0番として加える
+    this.repositories=[localRepository];　//ローカルリポジトリを0番として加える
+    
 if(xUI.onSite){
     var serviceA=new ServiceNode("SCIVONE",'http://remaping.scivone-dev.com');
 }else{
-    var serviceA=new ServiceNode("SCIVONE-v1",'http://remaping.scivone-dev.com/api/v1');
+//    var serviceA=new ServiceNode("SCIVONE-v1",'http://remaping.scivone-dev.com/api/v1');
+    var serviceA=new ServiceNode("SCIVONE-v2",'http://remaping.scivone-dev.com/api/v2');
 }
     this.servers.push(serviceA);
-    this.currentServer = serviceA;
-    var Home=new NetworkRepository("HOME",serviceA);
-    this.repositories.push(Home);
+
+//    var Home=new NetworkRepository("HOME",serviceA);
+//    this.repositories.push(Home);
 /**
     組んだリポジトリでリポジトリリストを更新する
     ローカルリポジトリはすべての状況で利用可能
 */
     var myContents="";
-    myContents +='<option selected value=0> = no selected =';
+    myContents +='<option selected value=0> = local Repository =';
     for(var idr=1; idr < this.repositories.length;idr ++){
         myContents +='<option value="'+idr+'" >'+this.repositories[idr].name; 
     }
     document.getElementById('repositorySelector').innerHTML = myContents;
 
     this.switchRepository(0);
+    this.currentServer = serviceA;
 }
 /**
     ユーザ認証
@@ -1501,6 +1599,7 @@ serviceAgent.authorized = function(status){
 }
 /**
     サーバを切り替える
+引数: myServer / Object ServiceNode
 サーバ名・URL・ID　またはキーワードで指定
 キーワードと同名のサーバは基本的に禁止？
 サーバにログインしていない場合は、各サーバごとの認証を呼ぶ
@@ -1512,6 +1611,7 @@ serviceAgent.authorized = function(status){
 サービスの切り替えは内部での呼び出しのみになるので引数は整理する
 */
 serviceAgent.switchService = function(myServer){
+    if(myServer instanceof ServiceNode ) currentServer = myServer; 
 return currentServer;
 };
 /**
@@ -1526,6 +1626,8 @@ return currentServer;
     
     0:ローカルリポジトリ固定
     1~ 以降登録順
+    
+     リポジトリ切替時にドキュメントリストの更新をバックグラウンドで行う
 */
 serviceAgent.switchRepository = function(myRepositoryID){
     this.currentRepository=this.repositories[myRepositoryID];
@@ -1535,6 +1637,8 @@ serviceAgent.switchRepository = function(myRepositoryID){
         this.currentServer     = null;
     }
     if(document.getElementById('repositorySelector').value != myRepositoryID) document.getElementById('repositorySelector').value=myRepositoryID;
+    /*== ドキュメントリスト更新 ==*/
+    documentDepot.rebuildList();
 };
 
 /**

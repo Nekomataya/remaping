@@ -686,9 +686,11 @@ script src=javascript/jslb_ajax.js
         >onsite information</div>
 <div    class=server-info
         id = server-info
+        client_id='b115aead773388942473e77c1e014f4d7d38e4d4829ae4fd1fa0e48e1347b4cd'
+        client_secret='54c0f02c38175436df16a058cc0c0e037038c82d3cc9ce4c212e3e4afe0449dd'
         current_user=''
         current_server=''
-        current_token=''
+        oauth_token=''
         last_authrized=''
 > <span id=loginuser ></span> : <button id='loginstatus_button' onclick='sWitchPanel("Login");return false' title="ユーザ切り替え"> =OFFLINE= </button> / 
 	repository : 
@@ -747,36 +749,38 @@ script src=javascript/jslb_ajax.js
 <div id=toolbarHeader>
 <!--	ツールバーボタン/toolIcons	-->
 	</button> </span>
+
+
  <span id="severMenu" >
 	<button
 	id=ibMs00
-		class='iconButton iconButton-blank'
+		class='iconButton iconButton-eject'
 		onclick="return backToDocumentList();"
-		title="ドキュメントリストへ戻る"
+		title="戻る"
 	>
 	</button><button
 	id=ibMs01
-		class='iconButton iconButton-xps'
+		class='iconButton iconButton-selector'
 		onclick='sWitchPanel("File");return false;'
 		title="documentSlecter"
 	>
 	</button><button
 	id=ibMs02
-		class='iconButton  iconButton-openX'
+		class='iconButton  iconButton-deactivate'
 		onclick="if(document.getElementById('optionPanelData').style.display!='inline'){sWitchPanel('Data')};document.getElementById('loadShortcut').value='body';document.getElementById('myCurrentFile').click();"
-		title="importDocument"
+		title="作業保留"
 	>
 	</button><button
 	id=ibMs03
-		class='iconButton  iconButton-cgiStore'
-		onclick="callEcho();"
-		title="シートをCGI経由でファイルに保存します。"
+		class='iconButton  iconButton-acutivate'
+		onclick=";"
+		title="作業再開"
 	>
 	</button><button
 	id=ibMs04
-		class='iconButton  iconButton-pull'
-		onclick=""
-		title="サーバから読み出し"
+		class='iconButton  iconButton-checkout'
+		onclick="alert('checkout')"
+		title="作業終了"
 	>
 	</button><button
 	id=ibMs05
@@ -786,6 +790,32 @@ script src=javascript/jslb_ajax.js
 	>
 	</button>
  </span>
+<!--
+    ドキュメント操作
+    open(readonly)/
+        読出専用で開く
+    close/
+        開いているドキュメントを閉じる
+        この際、ドキュメント状態に従ってステータスの変更が発生する
+        UI的にはどこにも所属しない空シートを作り、browsingモードを設定する
+        このドキュメントは、基本的に操作不能（モード遷移をできないようにする）
+    checkin/
+        現在のドキュメントにチェックイン
+    checkout/
+        現在のドキュメントからチェックアウト
+    activate/
+        現在のドキュメントを有効化
+    deactivate/
+        現在のドキュメントを無効化
+    reseipt/
+        fixedのドキュメントをstartupに
+        同時にラインの分岐を選択できる
+        専用UIが必要
+    abort/
+        中断処理
+
+-->
+
  <span id="cgiMenu">
 	<button
 	id=ibM01

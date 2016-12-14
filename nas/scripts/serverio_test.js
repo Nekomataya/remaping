@@ -121,6 +121,7 @@ function backToDocumentList(){
 		var backLocation =　(serviceAgent.currentStatus == 'online-single')?
 			'/cuts?episode_id='+$('#backend_variables').attr('data-episode_id'):
 			'/'	;
+		sWitchPanel('Prog');
 	 	window.location= backLocation;
 	 }else{
 	 	return false;	
