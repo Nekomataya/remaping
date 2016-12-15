@@ -726,6 +726,9 @@ function Xps(Layers, Length) {
     Issueオブジェクトの文字列化メソッドは標準で　xMap記録文字列
     オプションでXps文字列・カット識別子文字列の切り替え
     */
+
+    this.xMap =new xMap();//参照用xMapを初期化
+
 //    this.stage = new XpsStage(this, "", "");
 //    this.stage = new nas.Pm.Issue(this, "", "");
     this.line  = new XpsLine("(本線):0");
@@ -759,12 +762,12 @@ function Xps(Layers, Length) {
 
     var Now = new Date();
     this.create_time = (!nas) ? Now.toString() : Now.toNASString();
-    this.create_user = myName;
-    this.update_time = "";
-    this.update_user = myName;
+    this.create_user = new UserInfo (myName);
+    this.update_time = '';
+    this.update_user = '';
 
-    this.memo = "";
-    //メモはトラックコレクションのプロパティへ移行予定　プロパティ名は　Xps.xpsTracks.noteText
+//  this.memo = "";
+    //メモはトラックコレクションのプロパティへ移行　プロパティ名は　Xps.xpsTracks.noteText
 
     /**
      * タイムライントラックコレクション配列
@@ -860,7 +863,7 @@ Xps.prototype.init = function (Tracks, Length) {
     this.update_time = "";
     this.update_user = myName;
 
-    this.memo = "";
+//    this.memo = "";
 
     /**
      * タイムライントレーラー作成

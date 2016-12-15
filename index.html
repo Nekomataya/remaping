@@ -176,25 +176,40 @@ script src=javascript/jslb_ajax.js
 	href = 'javascript:void()'
 	onclick = 'sWitchPanel("File");return false;//myScenePref.open();document.getElementById("scnNewSheet").checked=true;return false;'
 	title="ドキュメントを選択"
->Open/Activate</A></li>
+>開く</A></li>
 <li><A	id=pM0i
 	href = 'javascript:void()'
-	onclick = 'serviceAgent.currentRepository.deactivateEntry(Xps.getIdentifier(xUI.XPS));return false;'
-	title="作業保留"
->deActivate</A></li>
+	onclick = 'serviceAgent.currentRepository.checkinEntry(Xps.getIdentifier(xUI.XPS));return false;'
+	title="作業開始"
+>check-in</A></li>
 <li><A	id=pM0j
 	href = 'javascript:void()'
-	onclick = 'console.log(serviceAgent.currentRepository.fixEntry());return false;'
+	onclick = 'serviceAgent.currentRepository.checkoutEntry(Xps.getIdentifier(xUI.XPS));return false;'
 	title="作業終了"
->Fix</A></li>
+>check-out</A></li>
+<li><A	id=pM0k
+	href = 'javascript:void()'
+	onclick = 'serviceAgent.currentRepository.activateEntry(Xps.getIdentifier(xUI.XPS));return false;'
+	title="作業再開"
+>activate</A></li>
+<li><A	id=pM0l
+	href = 'javascript:void()'
+	onclick = 'serviceAgent.currentRepository.deactivateEntry(Xps.getIdentifier(xUI.XPS));return false;'
+	title="作業中断"
+>deactivate</A></li>
+<li><A	id=pM0m
+	href = 'javascript:void()'
+	onclick = 'documentDepot.closeEntry();return false;'
+	title="閉じる"
+>close</A></li>
+<li><A	id=pM0n
+	href = 'javascript:void()'
+	onclick = 'return false;'
+	title="送信"
+>push</A></li>
 <hr>
 <!-- 制作管理用ドキュメントメニュー -->
-<li>書類</li>
-<li>次の工程を開く</li>
-<li>カットを閉じる（完成）</li>
-<li>ライン分岐</li>
-<li>検収メニュー</li>
-<li>終了</li>
+<li><span id=pM0o-d>制作管理</span></li>
 <hr>
 <!-- 旧ドキュメントメニュー -->
 <li> <A	id=pM01
@@ -766,24 +781,12 @@ script src=javascript/jslb_ajax.js
 	>
 	</button><button
 	id=ibMs02
-		class='iconButton  iconButton-deactivate'
-		onclick="if(document.getElementById('optionPanelData').style.display!='inline'){sWitchPanel('Data')};document.getElementById('loadShortcut').value='body';document.getElementById('myCurrentFile').click();"
-		title="作業保留"
+		class='iconButton  iconButton-close'
+		onclick="documentDepot.closeEntry();"
+		title="ドキュメントを閉じる"
 	>
 	</button><button
 	id=ibMs03
-		class='iconButton  iconButton-acutivate'
-		onclick=";"
-		title="作業再開"
-	>
-	</button><button
-	id=ibMs04
-		class='iconButton  iconButton-checkout'
-		onclick="alert('checkout')"
-		title="作業終了"
-	>
-	</button><button
-	id=ibMs05
 		class='iconButton  iconButton-push'
 		onclick=""
 		title="サーバへ保存"
@@ -1124,6 +1127,31 @@ script src=javascript/jslb_ajax.js
 </div>
 <!-- 管理IDコントロール UI-->
 <div id =pmcui class=pmcui>
+<button
+	id=pmcui-bt01
+		class='jobControl jobControl-checkin'
+		onclick="serviceAgent.currentRepository.checkinEntry(Xps.getIdentifier(xUI.XPS));"
+		title="チェックイン"
+	>作業開始
+	</button><button
+	id=pmcui-bt02
+		class='jobControl  jobControl-checkout'
+		onclick="serviceAgent.currentRepository.checkoutEntry(Xps.getIdentifier(xUI.XPS));"
+		title="チェックアウト"
+	>作業終了
+	</button><button
+	id=pmcui-bt03
+		class='jobControl  jobControl-activate'
+		onclick="serviceAgent.currentRepository.activateEntry(Xps.getIdentifier(xUI.XPS));"
+		title="作業再開"
+	>保留解除
+	</button><button
+	id=pmcui-bt04
+		class='jobControl  jobControl-deactivate'
+		onclick="serviceAgent.currentRepository.deactivateEntry(Xps.getIdentifier(xUI.XPS));"
+		title="作業保留"
+	>作業保留
+	</button>
 　> :  <span id=pmcui_line class=pmcui_> 0:(本線) </span>
 // <span id=pmcui_stage class=pmcui_> 2:原画 </span> 
 // <span id=pmcui_job class=pmcui_> 1:(原画) </span>
@@ -1933,27 +1961,28 @@ onclick='nas.incrFCTonHTMLInput(document.getElementById("editTC"),"-(1)")'
  onClick='documentDepot.rebuildList();'
  class='productFilter'
  title="リストを最新の情報に更新"
->Refresh</button><button
- id='ddp-checkin'
- onClick='console.log( "open :" + decodeURIComponent(documentDepot.currentSelection));xUI.setDocumentStatus("checkin");'
+>Refresh</button>
+<button
+ id='ddp-reference'
+ onClick='console.log("read to reference :" + decodeURIComponent(documentDepot.currentSelection));serviceAgent.currentRepository.getEntry(documentDepot.currentSelection,true);'
  class='documentPanelButton'
- title="作業開始 xUI.setDocumentStatus('checkin')"
->check-in</button><button
- id='ddp-activate'
- onClick='console.log("new document :"+decodeURIComponent(documentDepot.currentSelection));xUI.setDocumentStatus("activate");'
- class='documentPanelButton'
- title="保留解除 xUI.setDocumentStatus('activate')"
->activate</button><button
+ title="参照読出  readout - reference"
+>reference</button><button
  id='ddp-readout'
  onClick='console.log("read :" + decodeURIComponent(documentDepot.currentSelection));serviceAgent.currentRepository.getEntry(documentDepot.currentSelection);'
  class='documentPanelButton'
  title="読出 readout"
 >readonly</button><button
- id='ddp-reference'
- onClick='console.log("read to reference :" + decodeURIComponent(documentDepot.currentSelection));serviceAgent.currentRepository.getEntry(documentDepot.currentSelection,true);'
+ id='ddp-checkin'
+ onClick='console.log( "open :" + decodeURIComponent(documentDepot.currentSelection));xUI.setDocumentStatus("checkin");'
  class='documentPanelButton'
- title="参照読出  readout - reference"
->reference</button>
+ title="読み出して作業開始 xUI.setDocumentStatus('checkin')"
+>+ check-in</button><button
+ id='ddp-activate'
+ onClick='console.log("new document :"+decodeURIComponent(documentDepot.currentSelection));xUI.setDocumentStatus("activate");'
+ class='documentPanelButton'
+ title="読み出して保留解除 xUI.setDocumentStatus('activate')"
+>+ activate</button>
 <input type='text' id='ddp-searchtext' size=20 ><button
  id='ddp-search'
  onClick='alert(this.innerHTML);'
@@ -2820,7 +2849,7 @@ onDblClick='if (! document.getElementById("single").checked) chkValue(this.id)'
 <input type=button class=toolTip value="更新"
 	onClick='XPS.xpsTracks.noteText=document.getElementById("rEsult").value;xUI.setStored("force");sync("memo");' /><br>
 <input type=button class=toolTip value="閉じる"
-	onClick='if(XPS.xpsTracks.noteText!=document.getElementById("rEsult").value){if(confirm("内容が変更されています。\n更新しますか?")){XPS.xpsTracks.noteText=document.getElementById("rEsult").value;xUI.setStored("force");sync("memo");}};sWitchPanel("clear");' /><br>
+	onClick='if(XPS.xpsTracks.noteText!=document.getElementById("rEsult").value){if(confirm("内容が変更されています。\n更新しますか?")){XPS.xpsTracks.noteText=document.getElementById("rEsult").value;xUI.setStored("force");sync("memo");}};sWitchPanel("memo");' /><br>
 </td>
 <td>タイムシートコメントを編集します。<br>
 <textarea name=rEsult id=rEsult cols=96 rows=8 >

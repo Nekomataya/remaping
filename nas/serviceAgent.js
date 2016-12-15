@@ -1,7 +1,7 @@
 ﻿/**
     サービスエージェント
     一旦このモジュールを通すことで異なる種別のリポジトリ操作を統一する
-    サービスエージェントは、ログインの管理も行う
+    サービスエージェントは、ログイン管理を行う
     
 test data:
 
@@ -110,6 +110,52 @@ W    書き込み
 
 
 */
+/**
+    ユーザ情報オブジェクト nas?
+    表示名称と識別用メールアドレスを持つ
+    ドキュメント上の記録形式は以下
+
+    displayName:uid@domain
+例　ねこまたや:user@example.com
+
+初期化引数に':'が含まれない場合は、メールアドレスか否かを判定して
+メールアドレスなら　uid部を名前として使用
+それ以外の場合は、メールアドレスを空白で初期化する
+一致比較は、メールアドレスで行う
+ */
+UserInfo = function UserInfo(nameDescription){
+    if(nameDescription.indexOf(':') < 0){
+    //セパレータがない
+        if(nameDescription.indexOf('@') < 1){
+            this.handle  = nameDescription;//メールアドレスでないと思われるので引数全体をハンドルにする
+            this.email = '';
+        }else{
+            this.handle  = nameDescription.split('@')[0];//メールアドレスっぽいので＠から前をハンドルにする
+            this.email = nameDescription;
+        }
+    } else {
+         var infoArray = nameDescription.split(':');
+        this.handle    = infoArray[0];
+        this.email     = infoArray[1];
+    }
+}
+UserInfo.prototype.toString = function(opt){
+    if(! opt) opt = 0;
+    switch (opt){
+        case "email":
+            return this.email; break;
+        case "handle":
+            return this.handle; break;
+        default :
+            return [this.handle,this.email].join(':')
+    }
+}
+UserInfo.prototype.sameAs = function(myName){
+    if(!(myName instanceof UserInfo)){
+        myName = new UserInfo(myName);
+    }
+    return (this.email==myName.email)?true:false;
+}
 /**
     サービスモードオブジェクト
     複数あるサーバ（ログイン先）の必要な情報を保持するオブジェクト
@@ -870,7 +916,8 @@ localRepository.checkinEntry=function(myJob,callback,callback2){
             if(result){
                 delete newXps ;
                 if(callback instanceof Function){ setTimeout('callback()',10)};
-            sWitchPanel();//パネルクリア
+                sWitchPanel();//ドキュメントパネルが表示されていたらパネルクリア
+                xUI.setUImode('production');//モードをproductionへ
                 return true;
             }
         }
@@ -979,9 +1026,9 @@ localRepository.getEntry(localRepository.entryList[0]);
     .getEntry(myIdentifier)
     .putEntry(myXps)
         
-今回の試験実装では、リポジトリが設定されていないので、サーバとリポジトリは1対1の存在となる
-一応オブジェクトはわけておく
-
+リポジトリに　相当する構造は　Team
+チームごとにリポジトリが設定される
+Teamへアクセスするためのトークンは、アクセス毎に設定される
 */
 NetworkRepository=function(repositoryName,myServer,repositoryURI){
     this.name = repositoryName;
@@ -999,14 +1046,16 @@ NetworkRepository=function(repositoryName,myServer,repositoryURI){
 //    this.episode_token      = $('#server-info').attr('episode_token');
 //    this.cut_token          = $('#server-info').attr('cut_token');
 // ?idの代替なので要らないか？ 
-
-
     this.curentIssue;
     this.productsData=[];
     this.entryList=[];
 }
 /**
     タイトル一覧をクリアして更新する　エピソード更新を呼び出す
+    受信したデータを複合させてサービス上のデータ構造を保持する単一のオブジェクトに
+    getXx で概要（一覧）を取得
+    xxUpdateが詳細を取得して this.productsData を上書きしてゆく
+
 */
 NetworkRepository.prototype.getProducts = function (){
     this.productsData.length = 0;
@@ -1015,7 +1064,7 @@ NetworkRepository.prototype.getProducts = function (){
         type: 'GET',
         dataType: 'json',
         success: (function(result) {
-//            console.log(msg);
+            console.log('get productsData');
             console.log(result);
 		    this.productsData=result;
 		    this.productsUpdate();
@@ -1027,11 +1076,10 @@ NetworkRepository.prototype.getProducts = function (){
 /**
     タイトルごとの詳細（エピソードリスト含む）を取得してタイトルに関連付ける
     エントリリストの更新を行う
-    
 */
 NetworkRepository.prototype.productsUpdate = function(){
     for(var idx = 0 ;idx < this.productsData.length ;idx ++){
-        console.log("get:"+this.productsData[idx].token) ;
+        console.log("product :"+this.productsData[idx].name) ;
     $.ajax({
         url: this.url+'/products/'+this.productsData[idx].token+'.json' ,
         type: 'GET',
@@ -1041,7 +1089,8 @@ NetworkRepository.prototype.productsUpdate = function(){
                 //プロダクトデータを詳細データに「入替」
 		            if(result.token == this.productsData[idx].token){this.productsData[idx]=result ; break;}
 		    }
-    console.log(this.productsData);
+		console.log('update products detail')
+        console.log(this.productsData);
 		    this.getEpisodes(idx);
         }).bind(this),
         beforeSend: (this.service.setHeader).bind(this)
@@ -1053,7 +1102,7 @@ NetworkRepository.prototype.productsUpdate = function(){
     プロダクトごとにエピソード一覧を再取得してデータ内のエピソード一覧を更新
 */
 NetworkRepository.prototype.getEpisodes = function (pid) {
-        console.log("getEpisodeList for :"+this.productsData[pid].name) ;
+        console.log("getEpisodeList for : "+pid+' : '+this.productsData[pid].name) ;
         
     $.ajax({
         url: this.url+'/episodes.json?product_token='+this.productsData[pid].token ,
@@ -1062,8 +1111,8 @@ NetworkRepository.prototype.getEpisodes = function (pid) {
         success: (function(result) {
                 //プロダクトデータのエピソード一覧を「入替」
 		            if(result) this.productsData[pid].episodes[0]=result ;
-  console.log('get Episodes :'+this.productsData[pid].name);
-   console.log(this.productsData);
+    console.log('get Episodes :'+this.productsData[pid].name);
+    console.log(result);
 		    this.episodesUpdate(pid);
         }).bind(this),
         beforeSend: (this.service.setHeader).bind(this)
@@ -1074,6 +1123,7 @@ NetworkRepository.prototype.getEpisodes = function (pid) {
     エピソードIDを指定して内部リストにコンバート
  */
 NetworkRepository.prototype.episodesUpdate = function (pid) {
+        console.log("get Episodes Detail for : "+pid+' : '+this.productsData[pid].name) ;
         for( var eid = 0 ; eid < this.productsData[pid].episodes[0].length ; eid ++){
 	            // /api/v2
                 var targetURL = this.url+ '/episodes/'+this.productsData[pid].episodes[0][eid].token +'.json';
@@ -1367,6 +1417,8 @@ NetworkRepository.prototype.pushEntry = function (myXps){
 //識別子に相当するアイテムがリポジトリに存在するかどうかをチェック
     var targetArray = String(myIdentifier).split( '//' );//ここでは必ず6要素ある
     var myProductUnit   = targetArray.slice(0,2).join( '//' );//プロダクトユニットを抽出
+
+
     for (var pid=0;pid<this.entryList.length;pid++){
         if(this.entryList[pid].toString() == myProductUnit){
             //既存のエントリが有るのでストレージとリストにpushして処理終了

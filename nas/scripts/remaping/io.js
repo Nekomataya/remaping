@@ -95,7 +95,11 @@ var myPanels=["#optionPanelMemo",
    if( status == "clear" ){
 	for(var idx=0;idx<myPanels.length;idx++){
 //		if(document.getElementById("tbLock").checked && myPanels[idx]=="#optionPanelUtl"){continue;};
-		$(myPanels[idx]).hide();
+		if(myPanels[idx]=="#optionPanelMemo"){
+			if($("#optionPanelMemo").is(':visible')){sWitchPanel('memo');}
+		}else{
+			$(myPanels[idx]).hide();
+		}
 	}
 	xUI.adjustSpacer();
 	document.getElementById("iNputbOx").focus();

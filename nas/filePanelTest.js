@@ -445,7 +445,14 @@ if(myEntry){
         documentDepot.currentSelection = document.getElementById("cutList").options[document.getElementById("cutList").selectedIndex].value;
     }
 }
-
+/**
+    ドキュメントをカラにして編集をロックする
+*/
+documentDepot.closeEntry=function(){
+    //ドキュメントがアクティブで変更フラグが立っている場合　holdしてカレントリポジトリにプッシュ
+//成功したらカレントドキュメントをクリアしてロック
+XPS = new Xps(5,144) ; xUI.init(XPS,new Xps(5,144)) ; nas_Rmp_Init();
+}
 /**
 プロダクト名　カット番号ともに編集可能とそうでないケースをグラフィックで表示する機能が必要
 選択のみで編集不能な場合、文字をグレーアウトさせるか？

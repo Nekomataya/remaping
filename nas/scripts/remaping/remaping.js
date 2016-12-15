@@ -351,11 +351,11 @@ xUI.setDocumentStatus = function(myCommand){
             (this.XPS.update_user.split(':').reverse()[0] == document.getElementById('current_user_id').value)){
             //Fixed/Holdからアクティベートする場合は、ジョブID/名称の変更はなし
                 serviceAgent.currentRepository.activateEntry(function(){
-                    //成功時はドキュメントのステータスを更新してアプリモードをproductへ変更
+                    //成功時はドキュメントのステータスを更新してアプリモードをproductionへ変更
                     xUI.XPS.job=newJob;
                     xUI.XPS.currentStatus='Active';
                     xUI.viewOnly=false;
-                    xUI.setUImode('production');sync('productStatus');
+                    xUI.setUImode('production');
                 },function(result){console.log('fail checkin:');console.log(result);});
             }
         break;
@@ -366,7 +366,7 @@ xUI.setDocumentStatus = function(myCommand){
                     //成功時はドキュメントのステータスを更新してアプリモードをproductへ変更
                     xUI.XPS.currentStatus='Hold';
                     xUI.viewOnly=true;
-                    xUI.setUImode('browsing');sync('productStatus');
+                    xUI.setUImode('browsing');
                 },function(result){console.log('fail checkin:');console.log(result);});
             }
         break;
@@ -381,7 +381,7 @@ xUI.setDocumentStatus = function(myCommand){
                     xUI.XPS.job=newJob;
                     xUI.XPS.currentStatus='Active';
                     xUI.viewOnly=false;
-                    xUI.setUImode('production');sync('productStatus');
+                    xUI.setUImode('production');
                 },function(result){console.log('fail checkin:');console.log(result);});
             }
         break;
@@ -392,7 +392,7 @@ xUI.setDocumentStatus = function(myCommand){
                     //成功時はドキュメントのステータスを更新してアプリモードをproductへ変更
                     xUI.XPS.currentStatus='Fixed';
                     xUI.viewOnly=true;
-                    xUI.setUImode('browsing');sync('productStatus');
+                    xUI.setUImode('browsing');
                 },function(result){console.log('fail checkout:');console.log(result);});
             }
         break;
@@ -416,9 +416,10 @@ xUI.setDocumentStatus = function(myCommand){
     uiMode変更　引数がなければ変更なし
     引数がモードキーワード以外ならが、モードを順次切り替えて
     現在のモード値を返す
-    production
-    management
-    browsing
+    current モード変更なし
+    production  作業モード
+    management  管理モード
+    browsing    閲覧モード
 */
 xUI.setUImode = function (myMode){
     if(typeof myMode == 'undefined') myMode='current';
@@ -427,8 +428,15 @@ xUI.setUImode = function (myMode){
             return xUI.uiMode;
             break;
         case 'production':;
-            //メニュー切替
-            　xUI.viewOnly = false;
+            if(xUI.XPS.currentStatus != 'Active'){return this.setUImode('browsing');}
+            　xUI.viewOnly = false;//メニュー切替
+            document.getElementById('pmcui-bt01').innerHTML='作業中';
+            //作業中のドキュメントステータスは、必ずActiveなので以下のボタン状態
+            //Active以外の場合はこのモードに遷移しない
+            document.getElementById('pmcui-bt01').disabled=true;
+            document.getElementById('pmcui-bt02').disabled=false;
+            document.getElementById('pmcui-bt03').disabled=true;
+            document.getElementById('pmcui-bt04').disabled=false;
             //インジケータカラー変更
             $('#pmcui').css('background-color','#bbbbdd');
             $('#pmcui').css('color','#666688');
@@ -436,6 +444,11 @@ xUI.setUImode = function (myMode){
         case 'management':;
             //メニュー切替
             　xUI.viewOnly = true;
+            document.getElementById('pmcui-bt01').innerHTML='作業開始';//
+            document.getElementById('pmcui-bt01').disabled=true;//すべてのボタンを無効
+            document.getElementById('pmcui-bt02').disabled=true;
+            document.getElementById('pmcui-bt03').disabled=true;
+            document.getElementById('pmcui-bt04').disabled=true;
             //インジケータカラー変更
             $('#pmcui').css('background-color','#ddbbbb');
             $('#pmcui').css('color','#886666');
@@ -443,17 +456,24 @@ xUI.setUImode = function (myMode){
         case 'browsing':;
             //メニュー切替
             　xUI.viewOnly = true;
+            document.getElementById('pmcui-bt01').innerHTML='作業開始';//
+
+            document.getElementById('pmcui-bt01').disabled=((xUI.XPS.currentStatus=='Startup')||(xUI.XPS.currentStatus=='Fixed'))?false:true;
+            document.getElementById('pmcui-bt02').disabled= true;
+            document.getElementById('pmcui-bt03').disabled=((xUI.XPS.currentStatus=='Hold')||((xUI.XPS.currentStatus=='Fixed')&&(xUI.XPS.update_user.sameAs(myName))))?false:true;
+            document.getElementById('pmcui-bt04').disabled=true;
+
+
             //インジケータカラー変更
             $('#pmcui').css('background-color','#bbddbb');
             $('#pmcui').css('color','#668866');
-            xUI.uiMode=myMode;
             break;
         default:;
             var nextMode = ['production','management','browsing'].indexOf(xUI.uiMode);
-            console.log(nextMode);
             return this.setUImode(['browsing','production','management'][nextMode]);
     }
     xUI.uiMode=myMode;
+    sync('productStatus');
     return xUI.uiMode;
 }
 

@@ -33,8 +33,13 @@ function pushStore(){
  var title_name = encodeURIComponent(xUI.XPS.title);
  var episode_name = encodeURIComponent(xUI.XPS.opus) + (xUI.XPS.subtitle)?
   '['+encodeURIComponent(xUI.XPS.subtitle)+']' : '';
- var cut_name = ((xUI.XPS.scene)? 'S'+encodeURIComponent(xUI.XPS.scene):'S-' )+'C'+encodeURIComponent(xUI.XPS.cut);
-  decodeURIComponent([title_name+'#'+opus_name,cut_name].join('//'))+'//0//0//0//';
+ var cut_name = [	's' + encodeURIComponent((xUI.XPS.scene.length)? xUI.XPS.scene:'-') +
+					'c' + encodeURIComponent(xUI.XPS.cut) + '('+xUI.XPS.time()+')',
+					encodeURIComponent(xUI.XPS.line.toString(true)),
+					encodeURIComponent(xUI.XPS.stage.toString(true)),
+					encodeURIComponent(xUI.XPS.job.toString(true)),
+					xUI.XPS.currentStatus
+				].join('//');
 /**
 	保存時に送り出すデータに
 		タイトル・エピソード番号（文字列）・サブタイトル
@@ -47,6 +52,7 @@ function pushStore(){
 */
 	json_data = {
 			 		content: xUI.XPS.toString(),
+			 		name: cut_name,
 		     		episode_id: episode_id,
 			 		cut_id: cut_id,
 			 		title_name: title_name,
@@ -57,10 +63,10 @@ function pushStore(){
 
 	if ( cut_id == '' ){
 		method_type = 'POST';
-		target_url = '/cuts.json';
+		target_url = '/v2/cuts.json';
 	}else{
 		method_type = 'PUT';
-		target_url = '/cuts/' + cut_id + '.json'
+		target_url = '/v2/cuts/' + cut_id + '.json'
 	}
 
 /*
@@ -95,7 +101,8 @@ episode_id,cut_idに関しては、データ内に専用のプロパティを置
 			// Error
 			console.log("error");
 			console.log(data);
-		}
+		},
+        beforeSend: serviceAgent.currentServer.setHeader
 	});
   }else{
   	alert('no network service');
