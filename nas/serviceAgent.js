@@ -1593,7 +1593,7 @@ NetworkRepository.prototype.activateEntry=function(callback,callback2){
             xUI.setUImode('production');
             sWitchPanel();//パネルクリア
             if(callback instanceof Function){ setTimeout (callback,10);}
-		})bind(this),
+		}).bind(this),
 		error :(function(result) {
 			// Error
 			console.log("error");
