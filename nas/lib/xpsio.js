@@ -137,15 +137,26 @@ XpsStage.prototype.toString=function(){
 */
 /**
     ライン記述を与えてオブジェクトを初期化する
-    '(本線):0','(背景3D-build):1:1'等
+    '(本線):0',1:(背景),'(背景3D-build):1:1','1-1:(背景3D-build)'
+    等
      識別名の(括弧)は払う
+     前置型式　後置型式　どちらでも解釈
+     数値のみの指定の場合は、無名ステージのidとして処理
 */
 function XpsLine (lineString){
     this.id   =[0]; this.name ='primary';
-    var prpArray=lineString.split(':');
-    if(prpArray.length > 0){
+    if(typeof lineString != 'undefined'){
+      if(lineString.match(/^[0-9]+$/)){lineString+=':-'}
+      var prpArray=lineString.split(':');
+      if(prpArray.length > 2){
+//要素数3以上ならば必ずID後置
         this.name = prpArray[0].replace(/^\(|\)$/g,"");
-        if(prpArray.length > 1) this.id = prpArray.slice(1);
+        this.id = prpArray.slice(1);
+      } else if(lineString.length > 0){
+        if(prpArray[0].match(/^[\d\-]+$/)){prpArray.reverse();}
+        if (prpArray[1]) this.id = prpArray[1].split('-');
+        this.name = prpArray[0].replace(/^\(|\)$/g,"");
+      }
     }
 }
 XpsLine.prototype.toString = function(opt){
@@ -160,15 +171,17 @@ XpsLine.prototype.toString = function(opt){
     記録時は後方型式
 */
 function XpsStage (stageString){
-    this.id = 0 ;this.name = '';
-    var prpArray=stageString.split(':');
-    if(prpArray.length){
+    this.id = 0 ;this.name = 'Startup';
+    if(typeof stageString != 'undefined'){
+      var prpArray=stageString.split(':');
+      if(prpArray.length){
         if(prpArray[0].match(/^\d+$/)){prpArray.reverse();}
         this.id=prpArray[1];
         this.name=prpArray[0];
+      }
     }
 }
-XpsStage.prototype.toString=function(opt){
+XpsStage.prototype.toString = function(opt){
     if(opt)     return [this.id,this.name].join(':');
     return [this.name,this.id].join(':');
 }
@@ -2068,17 +2081,17 @@ Xps.sliceReplacementLabel = function (myStr){
 /**
      Xpsオブジェクトから識別子を作成するクラスメソッド
      名前を変更するか又はオブジェクトメソッドに統合
-     この
+     このメソッドは同名別機能のオブジェクトメソッドが存在するので厳重注意
 */
 Xps.getIdentifier=function(myXps){
-//この識別子作成は実験コードです　近々にXps.getIdentifier() メソッドと置換されます。2016.11.14
+//この識別子作成は実験コードです　2016.11.14
     var myIdentifier=[
             encodeURIComponent(myXps.title)+
         "#"+encodeURIComponent(myXps.opus)+
         "["+encodeURIComponent(myXps.subtitle)+"]",
             encodeURIComponent(
-                "S" + ((myXps.scene)? myXps.scene : "-" )+
-                "C" + myXps.cut) +
+                "s" + ((myXps.scene)? myXps.scene : "-" )+
+                "c" + myXps.cut) +
                 "(" + myXps.time() +")",
             encodeURIComponent(myXps.line.toString(true)),
             encodeURIComponent(myXps.stage.toString(true)),
@@ -2088,7 +2101,32 @@ Xps.getIdentifier=function(myXps){
 //識別子を作成してネットワークリポジトリに送信する　正常に追加・更新ができた場合はローカルリストの更新を行う（コールバックで）
     return myIdentifier;
 }
-
+/*
+    仮の比較関数
+    SCiオブジェクトに統合予定
+    一致推測は未実装
+    戻値:数値   -1  :no match
+                0   :title match
+                1   :title+cut match
+*/
+Xps.compareIdentifier =function (target,destination){
+    var tgtArray  = target.split('//');
+    var destArray = destination.split('//');
+    //title+opus
+        if(tgtArray[0].split('[')[0]!=destArray[0].split('[')[0]){ return -1;}
+    //Scene,Cut
+        tgtSC = tgtArray[1].split('(')[0];
+        dstSC = destArray[1].split('(')[0];
+        
+        if(tgtSC.match(/^s([^_\-\s]*)[_\-\s]?c([^(]+)/i)){
+            tgtSC =RegExp.$1+RegExp.$2;
+        }
+        if(dstSC.match(/^s([^_\-\s]*)[_\-\s]?c([^(]+)/i)){
+            dstSC =RegExp.$1+RegExp.$2;
+        }
+        if(tgtSC != dstSC){return 0;}
+        return 1;
+}
 
 /** =====================================機能分割 20130221
  * レイヤストリームを正規化する

@@ -33,8 +33,8 @@ this.Lists.aserch=function(name,ael){if(this[name]){for (var n=0;n<this[name].le
 this.chgMyName=function(newName)
 {
 	if(! newName){
-		var msg="シートに入れる名前を入力してください。\n";
-		nas.showModalDialog("prompt",msg,"作業者の名前",myName,function(){if(this.status==0){newName=this.value;myName=newName;XPS.update_user=this.value;sync("update_user");}});
+		var msg="ユーザ名を入力してください。\n handle:uid@example.com";
+		nas.showModalDialog("prompt",msg,"作業者の名前",myName,function(){if(this.status==0){newName=this.value;myName=newName;xUI.currentUser=new UserInfo(this.value);XPS.update_user=xUI.currentUser;sync("update_user");}});
 		if(newName==null){newName=XPS.update_user}
 	}
 	this.userName=newName;

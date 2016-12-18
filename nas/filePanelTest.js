@@ -22,13 +22,13 @@ UI上のドキュメントパネルのオプションリストは、表示用の
 */
 
 /**
-    documentDepot.repositories
+    serviceAgent.currentRepository
 現在使用しているリポジトリのリスト
 サービスにアクセスするごとに更新
 サービスエージェント上のエントリへの参照
 
     documentDepot.products
-プロダクトリスト　サービスにアクセスするごとに抽出更新
+プロダクトコレクション　サービスにアクセスするごとに抽出更新
 各プロダクトは独立したデータとして一覧アクセスできるようにしておく
 フィルタは、Depotのオブジェクトメソッドで実装
 nas.Pm.Opus オブジェクトを使用　リポジトリへの参照を加える
@@ -51,7 +51,12 @@ documentDepot = {
     currentDocument:null,
     currentReferenece:null
 };
-
+/**
+    ドキュメントセレクタのアップデートを行う
+    タイトルリスト及びドキュメントコレクションをクリア後
+    リポジトリのエントリリストを走査してコレクションを再構築してブラウザをアップデートする
+    ** リポジトリ(エントリリスト)の更新は行わない　必要に従って事前に更新の要あり
+*/
 documentDepot.documentsUpdate=function(){
 //既存データをクリア
     var myProducts  =[];
@@ -85,6 +90,8 @@ documentDepot.documentsUpdate=function(){
     this.products  = myProducts;
     this.documents = myDocuments;
     this.updateOpusSelector();
+    this.updateDocumentSelector();
+    return this.documents.length;
 }
 //OPUSセレクタを更新する
 documentDepot.updateOpusSelector=function(myRegexp){
@@ -189,7 +196,7 @@ documentDepot.rebuildList=function(){
 //  for(var idr=1 ;idr < serviceAgent.repositories.length; idr ++){serviceAgent.repositories[idr].getList();}
     serviceAgent.currentRepository.getList();
 //  テスト中はこれで良いが、その後はあまり良くない 
-
+    this.documentsUpdate();
 }
 /**
 読み出し・請求

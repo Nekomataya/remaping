@@ -64,7 +64,7 @@ xUI.init    =function(XPS,referenceXps){
 
     this.XPS=XPS;//XPSを参照するオブジェクト(将来の拡張用)
     this.referenceXPS=new Xps();
-    this.referenceXPS.init(4,72);
+    this.referenceXPS.init(5,144);
     //引数に参照オブジェクトが渡されていたら、優先して解決
     //マルチステージ拡張実装後、直接指定された参照ステージは、初期化時のみ優先
     if ((typeof referenceXps != "undefined") && (referenceXps instanceof Xps)){
@@ -93,7 +93,8 @@ xUI.init    =function(XPS,referenceXps){
 //if(appHost.platform=="AIR") this.showGraphic    = false;
 
     this.onSite      = false;       //Railsサーバ動作時　true
-
+    this.currentUser = new UserInfo(myName);//実行ユーザをmyNameから作成
+    
     this.spinValue   = SpinValue;    //スピン量
     this.spinSelect  = SpinSelect;    //選択範囲でスピン指定
     this.sLoop       = SLoop;          //スピンループ
@@ -350,7 +351,7 @@ xUI.setDocumentStatus = function(myCommand){
             //activate
             (this.XPS.update_user.split(':').reverse()[0] == document.getElementById('current_user_id').value)){
             //Fixed/Holdからアクティベートする場合は、ジョブID/名称の変更はなし
-                serviceAgent.currentRepository.activateEntry(function(){
+                serviceAgent.activateEntry(function(){
                     //成功時はドキュメントのステータスを更新してアプリモードをproductionへ変更
                     xUI.XPS.job=newJob;
                     xUI.XPS.currentStatus='Active';
@@ -423,6 +424,7 @@ xUI.setDocumentStatus = function(myCommand){
 */
 xUI.setUImode = function (myMode){
     if(typeof myMode == 'undefined') myMode='current';
+            document.getElementById('pmcui-checkin').innerHTML=((xUI.XPS.currentStatus =='Hold')||(xUI.XPS.currentStatus =='Active'))?'作業中':'作業開始';//
     switch (myMode){
         case 'current':;//NOP return
             return xUI.uiMode;
@@ -430,13 +432,12 @@ xUI.setUImode = function (myMode){
         case 'production':;
             if(xUI.XPS.currentStatus != 'Active'){return this.setUImode('browsing');}
             　xUI.viewOnly = false;//メニュー切替
-            document.getElementById('pmcui-bt01').innerHTML='作業中';
             //作業中のドキュメントステータスは、必ずActiveなので以下のボタン状態
             //Active以外の場合はこのモードに遷移しない
-            document.getElementById('pmcui-bt01').disabled=true;
-            document.getElementById('pmcui-bt02').disabled=false;
-            document.getElementById('pmcui-bt03').disabled=true;
-            document.getElementById('pmcui-bt04').disabled=false;
+            document.getElementById('pmcui-checkin').disabled    =true;
+            document.getElementById('pmcui-checkout').disabled   =false;
+            document.getElementById('pmcui-activate').disabled   =true;
+            document.getElementById('pmcui-deactivate').disabled =false;
             //インジケータカラー変更
             $('#pmcui').css('background-color','#bbbbdd');
             $('#pmcui').css('color','#666688');
@@ -444,11 +445,10 @@ xUI.setUImode = function (myMode){
         case 'management':;
             //メニュー切替
             　xUI.viewOnly = true;
-            document.getElementById('pmcui-bt01').innerHTML='作業開始';//
-            document.getElementById('pmcui-bt01').disabled=true;//すべてのボタンを無効
-            document.getElementById('pmcui-bt02').disabled=true;
-            document.getElementById('pmcui-bt03').disabled=true;
-            document.getElementById('pmcui-bt04').disabled=true;
+            document.getElementById('pmcui-checkin').disabled    =true;//すべてのボタンを無効
+            document.getElementById('pmcui-checkout').disabled   =true;
+            document.getElementById('pmcui-activate').disabled   =true;
+            document.getElementById('pmcui-deactivate').disabled =true;
             //インジケータカラー変更
             $('#pmcui').css('background-color','#ddbbbb');
             $('#pmcui').css('color','#886666');
@@ -456,12 +456,16 @@ xUI.setUImode = function (myMode){
         case 'browsing':;
             //メニュー切替
             　xUI.viewOnly = true;
-            document.getElementById('pmcui-bt01').innerHTML='作業開始';//
-
-            document.getElementById('pmcui-bt01').disabled=((xUI.XPS.currentStatus=='Startup')||(xUI.XPS.currentStatus=='Fixed'))?false:true;
-            document.getElementById('pmcui-bt02').disabled= true;
-            document.getElementById('pmcui-bt03').disabled=((xUI.XPS.currentStatus=='Hold')||((xUI.XPS.currentStatus=='Fixed')&&(xUI.XPS.update_user.sameAs(myName))))?false:true;
-            document.getElementById('pmcui-bt04').disabled=true;
+            document.getElementById('pmcui-checkin').disabled    = ((xUI.XPS.currentStatus=='Startup')||(xUI.XPS.currentStatus=='Fixed'))? false:true;                
+            document.getElementById('pmcui-checkout').disabled   = true;
+            if (xUI.currentUser.sameAs(xUI.XPS.update_user)) {
+            //ドキュメントオーナー
+            document.getElementById('pmcui-activate').disabled   = ((xUI.XPS.currentStatus=='Hold')||(xUI.XPS.currentStatus=='Fixed')||(xUI.XPS.currentStatus=='Active'))? false:true;
+            }else{
+            //オーナー外
+            document.getElementById('pmcui-activate').disabled   = ((xUI.XPS.currentStatus=='Hold')||(xUI.XPS.currentStatus=='Fixed'))?false:true;
+            }
+            document.getElementById('pmcui-deactivate').disabled = true;
 
 
             //インジケータカラー変更
@@ -3920,6 +3924,7 @@ default :
     }
         return datastream;
 }
+
 //クラスメソッドを上書き
 XPS.readIN=function(datastream){
     xUI.errorCode=0;//読み込みメソッドが呼ばれたので最終のエラーコードを捨てる。
@@ -3930,6 +3935,28 @@ XPS.readIN=function(datastream){
 //データが存在したら、コンバータに送ってコンバート可能なデータをXPS互換ストリームに変換する
         return this.parseXps(convertXps(datastream));
     }
+}
+
+XPS.syncIdentifier =function(myIdentifier){
+    var dataArray=myIdentifier.split('//');
+//    console.log(dataArray);
+//  ["title","opus","subtitle","cut","line","stage","job","currentStatus"];
+    this.title    = decodeURIComponent(dataArray[0].split('#')[0]);
+    this.opus     = decodeURIComponent(dataArray[0].split('#')[1].split('[')[0]);
+    this.subtitle = (dataArray[0].match(/\[([^\]]+)\]/))? decodeURIComponent(RegExp.$1):'';
+    if(dataArray[1].match(/^s([^-_\s]+)[-_\s]?c([^\(]+)/i)){
+        this.scene = decodeURIComponent(RegExp.$1);
+        this.cut   = decodeURIComponent(RegExp.$2);
+    }else{
+        this.scene = '';
+        this.cut   = decodeURIComponent(dataArray[1].split( '(' )[0]);
+    }
+    this.line     = new XpsLine(String(dataArray[2]));
+    this.stage    = new XpsStage(String(dataArray[3]));
+    this.job      = new XpsStage(String(dataArray[4]));
+    this.currentStatus = dataArray[5];
+//    console.log(decodeURIComponent(XPS));
+    return true
 }
 
 //    ダミーマップを与えて情報取り込み
@@ -4079,7 +4106,8 @@ if(document.getElementById( "referenceXPS" ) && document.getElementById( "refere
     xUI=new_xUI();
 //    *** xUI オブジェクトは実際のコール前に必ずXPSを与えての再初期化が必要　要注意
 
-if(startupXPS.length == 0){
+//if(startupXPS.length == 0){};
+if(false){
     if(appHost.platform == "AIR"){
         var myBackup=localStorage.getItem("info.nekomataya.remaping.backupData");
         var myReference=localStorage.getItem("info.nekomataya.remaping.referenceData");
@@ -4130,9 +4158,9 @@ if(startupXPS.length > 0){
 
 //startupXPSがない場合でフラグがあればシートに書き込むユーザ名を問い合わせる
     if(NameCheck){
-        var msg=welcomeMsg+" シートに記入するあなたの名前を入力してください。\n";
+        var msg=welcomeMsg+" ユーザ名とメールアドレスを入力してください。\n handle:uid@example.com";
         var newName=null;
-        nas.showModalDialog("prompt",msg,"作業者の名前",myName,function(){if(this.status==0){newName=this.value;myName=newName;XPS.update_user=this.value;sync("update_user");}});
+        nas.showModalDialog("prompt",msg,"作業者の名前",myName,function(){if(this.status==0){newName=this.value;myName=newName;xUI.currentUser=new UserInfo(this.value);xUI.XPS.update_user=this.value;sync("update_user");}});
 
     document.getElementById("nas_modalInput").focus();
 

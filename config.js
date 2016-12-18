@@ -164,7 +164,7 @@ var myWords	=[
 ];
 
 
-//---ウインドウサイズ	*cookie[0] Ver1.2ではこの情報は意味を持たないので不要
+//---ウインドウサイズ	*cookie[0] Ver1.2以降この情報は意味を持たないので不要
 /*	sheetAllWidth	="*"	;//
 	sheetAllHeight	="*"	;//
 	sheetHeadHeight	=64	;//
@@ -172,7 +172,7 @@ var myWords	=[
 */
 
 //---作業オプション	*cookie[1]
-var myTitle="monstSP"	;
+var myTitle=""	;
 			//タイトル 現行の作品名を入れておくとラクです
 var mySubTitle=""	;
 			//サブタイトル 同上
@@ -191,11 +191,11 @@ var CompositColumns=3;
 //---
 
 var myScene=""	;
-			//A.Bパート等。空白でも良いでしょう。
+			//A.Bパート等  空白でも良い
 var myCut="000"	;
 			//カット番号
-//var myFileName= "$SCENE$CUT";
-var myFileName= "$TITLE#$OPUSs-c$CUT";
+
+var myFileName= "$TITLE#$OPUS[$SUBTITLE]_s-c$CUT($TC)";
 /*	デフォルトのファイル名 以下のワードはそれぞれのカットの値と置換されます
 	$TITLE $OPUS $SUBTITLE $SCENE $CUT $TIME $TC
 
@@ -204,7 +204,7 @@ var myFileName= "$TITLE#$OPUSs-c$CUT";
 
 */
 
-var myName="your name"	;//---作業ユーザ名	*cookie[2]
+var myName="your handle:uid@example.com"	;//---作業ユーザ名	*cookie[2] 
 
 var NameCheck=false	;
 

@@ -227,10 +227,10 @@ if(xUI.viewMode != "Compact"){
 case	"create_user":	;
 case	"update_user":	;
 	document.getElementById(prop).innerHTML=
-	(XPS[prop])? XPS[prop].split(':')[0] : "<br />";
+	(XPS[prop])? (XPS[prop].toString()).split(':')[0] : "<br />";
 if(xUI.viewMode != "Compact"){
 	for (pg=1;pg<=Math.ceil(XPS.duration()/xUI.PageLength);pg++){
-		document.getElementById(prop+pg).innerHTML=(XPS[prop])? XPS[prop].split(':')[0] : "<br />";
+		document.getElementById(prop+pg).innerHTML=(XPS[prop])? (XPS[prop].toString()).split(':')[0] : "<br />";
 }
 	}
 	break;

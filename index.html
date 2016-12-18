@@ -179,22 +179,22 @@ script src=javascript/jslb_ajax.js
 >開く</A></li>
 <li><A	id=pM0i
 	href = 'javascript:void()'
-	onclick = 'serviceAgent.currentRepository.checkinEntry(Xps.getIdentifier(xUI.XPS));return false;'
+	onclick = 'serviceAgent.checkinEntry();return false;'
 	title="作業開始"
 >check-in</A></li>
 <li><A	id=pM0j
 	href = 'javascript:void()'
-	onclick = 'serviceAgent.currentRepository.checkoutEntry(Xps.getIdentifier(xUI.XPS));return false;'
+	onclick = 'serviceAgent.checkoutEntry();return false;'
 	title="作業終了"
 >check-out</A></li>
 <li><A	id=pM0k
 	href = 'javascript:void()'
-	onclick = 'serviceAgent.currentRepository.activateEntry(Xps.getIdentifier(xUI.XPS));return false;'
+	onclick = 'serviceAgent.activateEntry();return false;'
 	title="作業再開"
 >activate</A></li>
 <li><A	id=pM0l
 	href = 'javascript:void()'
-	onclick = 'serviceAgent.currentRepository.deactivateEntry(Xps.getIdentifier(xUI.XPS));return false;'
+	onclick = 'serviceAgent.deactivateEntry();return false;'
 	title="作業中断"
 >deactivate</A></li>
 <li><A	id=pM0m
@@ -1128,29 +1128,29 @@ script src=javascript/jslb_ajax.js
 <!-- 管理IDコントロール UI-->
 <div id =pmcui class=pmcui>
 <button
-	id=pmcui-bt01
+	id=pmcui-checkin
 		class='jobControl jobControl-checkin'
-		onclick="serviceAgent.currentRepository.checkinEntry(Xps.getIdentifier(xUI.XPS));"
+		onclick="serviceAgent.checkinEntry();"
 		title="チェックイン"
 	>作業開始
 	</button><button
-	id=pmcui-bt02
+	id=pmcui-checkout
 		class='jobControl  jobControl-checkout'
-		onclick="serviceAgent.currentRepository.checkoutEntry(Xps.getIdentifier(xUI.XPS));"
+		onclick="serviceAgent.checkoutEntry();"
 		title="チェックアウト"
 	>作業終了
 	</button><button
-	id=pmcui-bt03
-		class='jobControl  jobControl-activate'
-		onclick="serviceAgent.currentRepository.activateEntry(Xps.getIdentifier(xUI.XPS));"
-		title="作業再開"
-	>保留解除
-	</button><button
-	id=pmcui-bt04
+	id=pmcui-deactivate
 		class='jobControl  jobControl-deactivate'
-		onclick="serviceAgent.currentRepository.deactivateEntry(Xps.getIdentifier(xUI.XPS));"
+		onclick="serviceAgent.deactivateEntry();"
 		title="作業保留"
 	>作業保留
+	</button><button
+	id=pmcui-activate
+		class='jobControl  jobControl-activate'
+		onclick="serviceAgent.activateEntry();"
+		title="作業再開"
+	>作業再開
 	</button>
 　> :  <span id=pmcui_line class=pmcui_> 0:(本線) </span>
 // <span id=pmcui_stage class=pmcui_> 2:原画 </span> 
@@ -1986,6 +1986,7 @@ onclick='nas.incrFCTonHTMLInput(document.getElementById("editTC"),"-(1)")'
 <input type='text' id='ddp-searchtext' size=20 ><button
  id='ddp-search'
  onClick='alert(this.innerHTML);'
+ class='documentPanelButton documentPanelButton-search'
  title=" 検 索 "
 >🔍</button><button
  id='ddp-close'
@@ -1994,7 +1995,23 @@ onclick='nas.incrFCTonHTMLInput(document.getElementById("editTC"),"-(1)")'
  title=" ウインドウを閉じる "
 >Cancel</button>
 <br>
-
+<!-- for debug -->
+<button
+ onClick='serviceAgent.currentRepository.removeEntry(documentDepot.currentSelection);'
+ class='documentPanelButton-debug'
+ title=""
+>1:removeDocument</button>
+<button
+ onClick=''
+ class='documentPanelButton-debug'
+ title=""
+>2</button>
+<button
+ onClick=''
+ class='documentPanelButton-debug'
+ title=""
+>3</button>
+<!-- for debug -->
 <br><select
 	name="opus_numbers"
 	id="opusSelect"
@@ -2018,6 +2035,7 @@ onChange='setProduct();'
 	class="document-selector document-selector-cut"
 	size=8
 	onChange="selectSCi();"
+	ondblclick='if(this.selectedIndex>0){document.getElementById("ddp-readout").click();}'
 >
 <option >（*-- no document --*）
 <!--
@@ -2395,7 +2413,10 @@ trash="xUI.init(XPS)";
 <button 
  id='test001'
  onClick='localRepository.pushEntry(xUI.XPS);localRepository.getList();return false;'
-> pushEntry-localStorage </button>
+> pushEntry-localStorage </button><button 
+ id='test002'
+ onClick='console.log(serviceAgent.currentRepository.entryList);return false;'
+> view-localStorage List </button>
 <br>
 <!--
 <input	type=button
