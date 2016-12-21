@@ -1186,9 +1186,10 @@ for ( var cid = 0 ; cid < result.length ; cid ++){
 /**
 リポジトリ内のentryListを更新する
 */
-NetworkRepository.prototype.getList = function (){
+NetworkRepository.prototype.getList = function (force){
+
     this.entryList.length=0;
-    if(this.productsData.length==0) {
+    if((force)||(this.productsData.length==0)) {
         this.getProducts();
         return;//最終工程でこの関数が呼び出されるので一旦処理中断
     }else{
@@ -1434,51 +1435,44 @@ NetworkRepository.prototype.pushEntry = function (myXps){
     var currentEntry=this.entry(myIdentifier);
     if(currentEntry){
             //既存のエントリが有るのでストレージとリストにpushして処理終了
-    
+        this.pushData('PUT',currentEntry,myXps)
     }else{
+/**
+    currentEntry==null なので、ターゲットのエピソードtokenを再取得して引数で渡す必要あり　１２・２１
+*/
             //新規エントリなので新たにPOSTする
-    
+        this.pushData('POST',currentEntry,myXps)    
     }
-
-
-    for (var pid=0;pid<this.entryList.length;pid++){
-        if(this.entryList[pid].toString() == myProductUnit){
-            var currentEntry=this.entryList[pid].push(myIdentifier);
-            
-            this.pushData(currentEntry,myXps.toString());
-            return this.entryList[pid];
-        };
-    };
-//既存エントリが無いので新規エントリを追加
-    var newEntry = this.entryList.push(new listEntry(myIdentifier))
-    this.pushData(newEntry,myXps.toString());
-    this.getList();
-    return this.entryList[this.entryList.length-1];
-
 };
 /**
     実際にサーバにデータを送る
-    
+    引数:
+        ListEntry
+        XpsString
+POST/PUTの判別はここで行ったほうが良い
+かつ　タイトルとエピソードの作成はここで自動で行う
+UI上カット（ドキュメント）主体なのでカットの無いエピソードやタイトルに対する操作は表に出せない
 */
-NetworkRepository.prototype.pushData = function (myEntry,myContents){
+NetworkRepository.prototype.pushData = function (myMethod,myEntry,myXps){
     console.log(myEntry);
+    return;
 //    var targetArray = myIdentifier.split('//');
-	var episode_id  = myEntry.episodeID;
 	var lastIssue   = myEntry.issues[myEntry.issues.length-1];
-	var cut_id      = lastIssue.cutID;
-	var method_type = '';
-	var target_url  = '';
- var title_name     = myEntry.product.split('#')[0];
- var episode_name   = myEntry.product.split('#')[1];
- var cut_name       = myEntry.product.sci;
- var line_id        = lastIssue[0];
- var stage_id       = lastIssue[1];
- var job_id         = lastIssue[2];
- var status         = lastIssue[3];
+	var method_type = myMethod;
+
+	var episode_token  = myEntry.episodeID;
+	var cut_token      = lastIssue.cutID;
+    var title_name     = myEntry.product.split('#')[0];
+    var episode_name   = myEntry.product.split('#')[1];
+    var cut_name       = myEntry.product.sci;
+    var line_id        = lastIssue[0];
+    var stage_id       = lastIssue[1];
+    var job_id         = lastIssue[2];
+    var status         = lastIssue[3];
 /**
   if(document.getElementById('backend_variables')){
-	var episode_id = $('#backend_variables').attr('data-episode_id');
-	var cut_id = $('#backend_variables').attr('data-cut_id');
+	var episode_token = $('#backend_variables').attr('data-episode_token');
+	var cut_token = $('#backend_variables').attr('data-cut_token');
 	var method_type = '';
 	var target_url = '';
   }else{
@@ -1492,36 +1486,45 @@ NetworkRepository.prototype.pushData = function (myEntry,myContents){
 	型式をきめこむ
 	サーバ側では、これが保存状態と異なる場合は、エラーを返すか又は新規タイトルとして保存する必要がある。
 	アプリケーション側は、この文字列が異なる送出を抑制して警告を出す？
-	
+このメソッドは、既存のエピソードに対しての追加機能のみ
+タイトル作成及びエピソード作成は別に用意する	
 */
+if(myMethod=='POST'){
+//新規エントリ作成
 	json_data = {
-	                name:"",
-	                description:"",
-			 		content: myContent,
-		     		episode_id: episode_id,
-			 		cut_id: cut_id,
-			 		title_name: title_name,
-			 		episode_name: episode_name,
-			 		cut_name: cut_name,
-			 		line_id: line_id,
-			 		stage_id: stage_id,
-			 		job_id: job_id,
-			 		status: status
+	                name: decodeURIComponent(cut_name),
+	                description:myEntry.toString(),
+			 		content: myXps.toString(),
+		     		episode_token: episode_token
 				};
-
+}else{
+//エントリ更新
+	json_data = {
+	                name: decodeURIComponent(cut_name),
+	                description:myEntry.toString(),
+			 		content: myXps.toString(),
+//			 		cut_token: cut_id,
+//			 		title_name: title_name,
+//			 		episode_name: episode_name,
+//			 		cut_name: cut_name,
+//			 		line_id: line_id,
+//			 		stage_id: stage_id,
+//			 		job_id: job_id,
+//			 		status: status
+				};
+    
+}
 
 	if ((typeof cut_id == 'undefined')||( cut_id == '' )){
 		method_type = 'POST';
 		target_url = '/cuts.json';
 	}else{
 		method_type = 'PUT';
-		target_url = '/cuts/' + cut_id + '.json'
+		target_url = '/cuts/' + cut_token + '.json'
 	}
 
 /*
-episode_id,cut_idに関しては、データ内に専用のプロパティを置いて記録するのが良いと思います。
-
-開発中の　制作管理DB/MAP/XPS　で共通で使用可能なnas.SCInfoオブジェクトを作成中です。
+開発中の　制作管理DB/MAP/XPS　で共通で使用可能なnas.SCInfoオブジェクトを作成中
 これに一意のIDを持たせる予定です。
 */
 
@@ -1533,23 +1536,24 @@ episode_id,cut_idに関しては、データ内に専用のプロパティを置
 		contentType: 'application/JSON',
 		dataType : 'JSON',
 		scriptCharset: 'utf-8',
-		success : function(data) {
+		success : function(result) {
 			xUI.setStored("current");//UI上の保存ステータスをセット
 			sync();//保存ステータスを同期
-
+            
 			if( method_type == 'POST'){
 				console.log("new cut!");
-				$('#backend_variables').data('cut_id', data['id']);
+				console.log(result);
+				$('#backend_variables').data('cut_token', result['token']);
 			}else{
 				console.log('existing cut!');
 			}
 
 		},
-		error : function(data) {
+		error : function(result) {
 
 			// Error
 			console.log("error");
-			console.log(data);
+			console.log(result);
 		},
 		beforeSend: (this.service.setHeader).bind(this)
 	});
@@ -1611,7 +1615,7 @@ NetworkRepository.prototype.activateEntry=function(callback,callback2){
 		    data : data,
 		    success : (function(result) {
                 console.log('activated');
-                this.getList();//リストステータスを同期
+                this.getList(true);//リストステータスを同期
                 documentDepot.rebuildList();
                 xUI.XPS.currentStatus='Active';//ドキュメントステータスを更新
 //            xUI.XPS.update_user=xUI.currentUser;//ここはもともとユーザ一致なのでコレ不用
@@ -1668,7 +1672,7 @@ if(true){
 		    data : data,
 		    success : (function(result) {
                 console.log('deactivated');
-                this.getList();//リストステータスを同期
+                this.getList(true);//リストステータスを同期
                 documentDepot.rebuildList();
                 xUI.XPS.currentStatus='Hold';//ドキュメントステータスを更新
 //            xUI.XPS.update_user=xUI.currentUser;//ここはもともとユーザ一致なのでコレ不用
@@ -1740,7 +1744,7 @@ if(true){
 		    data : data,
 		    success : (function(result) {
                 console.log('check-in');
-                this.getList();//リストステータスを同期
+                this.getList(true);//リストステータスを同期
                 documentDepot.rebuildList();
                 xUI.XPS.job.increment(myJob);
                 xUI.XPS.currentStatus='Active';//ドキュメントステータスを更新
@@ -1800,7 +1804,7 @@ if(true){
 		    data : data,
 		    success : (function(result) {
                 console.log('deactivated');
-                this.getList();//リストステータスを同期
+                this.getList(true);//リストステータスを同期
                 documentDepot.rebuildList();
                 xUI.XPS.currentStatus='Fixd';//ドキュメントステータスを更新
 //            xUI.XPS.update_user=xUI.currentUser;//ここはもともとユーザ一致なのでコレ不用

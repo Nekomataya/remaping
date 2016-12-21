@@ -2416,7 +2416,11 @@ trash="xUI.init(XPS)";
 > pushEntry-localStorage </button><button 
  id='test002'
  onClick='console.log(serviceAgent.currentRepository.entryList);return false;'
-> view-localStorage List </button>
+> view-repository List </button><button 
+ id='test003'
+ onClick='serviceAgent.currentRepository.pushEntry(xUI.XPS);serviceAgent.currentRepository.getList();return false;'
+> pushEntry !</button>
+
 <br>
 <!--
 <input	type=button
