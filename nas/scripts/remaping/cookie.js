@@ -169,7 +169,10 @@ if (!navigator.cookieEnabled){return false;}
 
 //	[2] UserName
 	if(useCookie.UserName){
-	if(rEmaping[2]) myName	=unescape(rEmaping[2]);
+	if(rEmaping[2]) {
+						myName	=unescape(rEmaping[2]);
+//						xUI.currentUser = new UserInfo(myName);
+	}
 	}
 
 //	[3] KeyOptions

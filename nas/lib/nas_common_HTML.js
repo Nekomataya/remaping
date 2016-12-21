@@ -531,7 +531,7 @@ if(!(type=="result")){
 var myContent="<div id='nas_modalDialog'>";
 myContent+="<span id='nas_modalMsg'>Message</span><br>";
 myContent+="<input id='nas_modalInput'></input><br>";
-myContent+="<div id='nas_modalUI'></div>";
+myContent+="<div id='nas_modalUI'>1234567</div>";
 myContent+="<div style='text-align:right;'>";
 myContent+="<button id='nas_modalBt0'>OK</button>";
 myContent+="<button id='nas_modalBt1'>NO</button>";
@@ -556,7 +556,9 @@ $("#nas_modalDialog").dialog({width:400,autoOpen:false,modal:true,closeOnEscape:
 $("#nas_modalDialog").dialog("option","title",this.title);
 //	document.getElementById("nas_modalTitle").innerHTML=this.title;
 	document.getElementById("nas_modalMsg").innerHTML=this.msg01;
-//	document.getElementById("nas_modalUI").innerHTML=this.msg02;//この部分にファンクションを置くとAIR上で実行されない セキリティの問題なので ライブラリの改修が必要06.20
+	document.getElementById("nas_modalUI").innerHTML =this.msg02;
+	//この部分にファンクションを置くとAIR上で実行されない セキリティの問題なので ライブラリの改修が必要06.20
+	
 	this.UIwell=document.getElementById("nas_modalUI");
 	this.UIStore=document.getElementById("ModalUIStore");
 

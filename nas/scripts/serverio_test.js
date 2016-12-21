@@ -126,7 +126,7 @@ function pullStore(){
 function backToDocumentList(){
 	if(xUI.onSite){
 		var backLocation =　(serviceAgent.currentStatus == 'online-single')?
-			'/cuts?episode_id='+$('#backend_variables').attr('data-episode_id'):
+			'/cuts?episode_token='+$('#backend_variables').attr('data-episode_token'):
 			'/'	;
 		sWitchPanel('Prog');
 	 	window.location= backLocation;

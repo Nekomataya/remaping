@@ -57,7 +57,7 @@ xUI.init    =function(XPS,referenceXps){
     this.cameraSpan    = CompositColumns;//実際は各タイムラインは混在可能である
 
     this.dialogCount   = SoundColumns;//タイムライン種別数控え
-    this.stillCount    = 0;//背景を標準的に読み込み場合はここに数値を入れる
+    this.stillCount    = 0;//背景を標準的に読み込む場合はここに数値を入れる
     this.timingCount   = SheetLayers;//
     this.sfxCount      = 0;//
     this.cameraCount   = CompositColumns;//空欄でも良いと思われるが
@@ -463,7 +463,7 @@ xUI.setUImode = function (myMode){
             document.getElementById('pmcui-activate').disabled   = ((xUI.XPS.currentStatus=='Hold')||(xUI.XPS.currentStatus=='Fixed')||(xUI.XPS.currentStatus=='Active'))? false:true;
             }else{
             //オーナー外
-            document.getElementById('pmcui-activate').disabled   = ((xUI.XPS.currentStatus=='Hold')||(xUI.XPS.currentStatus=='Fixed'))?false:true;
+            document.getElementById('pmcui-activate').disabled   = (xUI.XPS.currentStatus=='Fixed')?false:true;
             }
             document.getElementById('pmcui-deactivate').disabled = true;
 
@@ -3843,8 +3843,8 @@ return xUI;
     var MAP=new xMap(SheetLayers);
 //    新規XPSオブジェクト作成・初期化
 var        XPS= new Object() ;//ダミーオブジェクトとして初期化
-var startupXPS= ""           ;//初期状態のXPS本文
-
+var startupXPS   = ''           ;//初期状態のXPS本文text
+var referenceXPS = ''           ;//同参照XPStext
 //始動オブジェクトとして空オブジェクトで初期化する スタートアップ終了までのフラグとして使用
 var    xUI=new Object();
         xUI.Mouse=function(){return};
@@ -3944,16 +3944,16 @@ XPS.syncIdentifier =function(myIdentifier){
     this.title    = decodeURIComponent(dataArray[0].split('#')[0]);
     this.opus     = decodeURIComponent(dataArray[0].split('#')[1].split('[')[0]);
     this.subtitle = (dataArray[0].match(/\[([^\]]+)\]/))? decodeURIComponent(RegExp.$1):'';
-    if(dataArray[1].match(/^s([^-_\s]+)[-_\s]?c([^\(]+)/i)){
+    if(dataArray[1].match(/^s([^-_\s]*)[-_\s]?c([^\(]+)/i)){
         this.scene = decodeURIComponent(RegExp.$1);
         this.cut   = decodeURIComponent(RegExp.$2);
     }else{
         this.scene = '';
         this.cut   = decodeURIComponent(dataArray[1].split( '(' )[0]);
     }
-    this.line     = new XpsLine(String(dataArray[2]));
-    this.stage    = new XpsStage(String(dataArray[3]));
-    this.job      = new XpsStage(String(dataArray[4]));
+    this.line     = new XpsLine (decodeURIComponent(String(dataArray[2])));
+    this.stage    = new XpsStage(decodeURIComponent(String(dataArray[3])));
+    this.job      = new XpsStage(decodeURIComponent(String(dataArray[4])));
     this.currentStatus = dataArray[5];
 //    console.log(decodeURIComponent(XPS));
     return true
@@ -4080,7 +4080,7 @@ if(false){
 //サブルーチンの位置は後で一考
 
 //alert(SelectingColor);
-/* 初期化時のデータ取得 */
+/*============*     初期化時のデータ取得    *============*/
 
 /*
  *  再優先・レンダリング時にドキュメント内にスタートアップデータが埋め込まれている
@@ -4133,7 +4133,7 @@ if(false){
                 }
             }
     }
-};//    記録されたシートが有れば読み出し
+};//    記録されたバックアップデータが有れば読み出し(サーバ運用に向けて停止中) 
 
 if((!startupXPS)&&(fileBox)&&(fileBox.contentText.length)){startupXPS=fileBox.contentText;}
 if(startupXPS.length > 0){

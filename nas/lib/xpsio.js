@@ -185,6 +185,10 @@ XpsStage.prototype.toString = function(opt){
     if(opt)     return [this.id,this.name].join(':');
     return [this.name,this.id].join(':');
 }
+XpsStage.prototype.increment = function(myString){
+    this.id   = nas.incrStr(this.id);
+    this.name = (myString)? myString:nas.Zf(this.id,3);
+}
 
 /**
     XPS上では特にJobがサブステージとしての傾向が強いのでオブジェクトごと兼用でも良い
@@ -758,12 +762,18 @@ function Xps(Layers, Length) {
     /**
      * @desc ここから　オブジェクト化を検討中
      * @type {string}
-     */
+     *
     this.opus = (myOpus) ? myOpus : "--";
     this.title = (myTitle) ? myTitle : "noTitle";
     this.subtitle = (mySubTitle) ? mySubTitle : "--";
     this.scene = (myScene) ? myScene : "";
     this.cut = (myCut) ? myCut : "";
+     */
+    this.opus     = "--";
+    this.title    = "---";
+    this.subtitle = "";
+    this.scene    = "";
+    this.cut      = "";
 /*
 	CSInfoオブジェクトがコンテの内容を保持しているのでそこから作成
 	XPSの記録自体はオブジェクトプロパティとしての保持のみでOKか？
@@ -775,7 +785,7 @@ function Xps(Layers, Length) {
 
     var Now = new Date();
     this.create_time = (!nas) ? Now.toString() : Now.toNASString();
-    this.create_user = new UserInfo (myName);
+    this.create_user = new UserInfo ();
     this.update_time = '';
     this.update_user = '';
 
@@ -2088,7 +2098,7 @@ Xps.getIdentifier=function(myXps){
     var myIdentifier=[
             encodeURIComponent(myXps.title)+
         "#"+encodeURIComponent(myXps.opus)+
-        "["+encodeURIComponent(myXps.subtitle)+"]",
+        ((String(myXps.subtitle).length=0)? "["+encodeURIComponent(myXps.subtitle)+"]":''),
             encodeURIComponent(
                 "s" + ((myXps.scene)? myXps.scene : "-" )+
                 "c" + myXps.cut) +
