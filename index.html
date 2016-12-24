@@ -4,79 +4,70 @@
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 <title>remaping..</title>
 
-
 <link href="template/jquery-ui.css" type="text/css" rel="stylesheet">
-<link REL=stylesheet TYPE="text/css" HREF="template/remaping.css" media="screen,tv">
-
-<!-- <link REL=stylesheet TYPE="text/css" HREF="template/printout.css" media="screen,tv">-->
-<link REL=stylesheet TYPE="text/css" HREF="template/printout.css" media="print">
-
-<style type="text/css">
- * {
-  margin: 0; padding: 0;
- }
- #fixed {
-  position: fixed;
- }
- #sheet_view {
-  margin:0;
- }
- .ui-tooltip {	font-size: 10px;}
-</style>
-
-<!-- script src=./lib/startup.js></script -->
-
-<!-- IE7 用のコードは基本的にすべて廃棄 2010.08.10 -->
+<link href="template/remaping.css" type="text/css" rel=stylesheet media="screen,tv">
+<link href="template/printout.css" type="text/css" rel=stylesheet media="print">
 
 <script src="./lib/AIR/servicemonitor.swf" type="application/x-shockwave-flash"></script>
-<!--
+<!-- 以下　AIR動作時のライブラリ
 <script src="./lib/AIR/aircore.swf" type="application/x-shockwave-flash"></script>
 <script src="./lib/AIR/applicationupdater_ui.swf" type="application/x-shockwave-flash"></script>
 <script src="./lib/AIR/applicationupdater.swf" type="application/x-shockwave-flash"></script>
 <script src="./lib/AIR/HTMLHostLibrary.swf" type="application/x-shockwave-flash"></script>
 -->
-
-		<script type="text/javascript" src="./lib/AIR/AIRAliases.js">
-</script>
-
-<!-- この部分はAIR用のデバッグコードです -->
+<script type="text/javascript" src="./lib/AIR/AIRAliases.js"></script>
+<!-- 以下　AIR動作時のデバッグライブラリ -->
 <!--
 		<script type="text/javascript" src="./lib/AIR/AIRIntrospector.js"></script>
 		<script type="text/javascript" src="./lib/AIR/AIRSourceViewer.js"></script>
  -->
-
-<script src=./config.js></script>
-
-<script src=./nas/lib/nas_common.js></script>
-<!-- new test code -->
-
-        <script src=./nas/newBaseObject.js></script>
-        <script src=./nas/newValueConstractors.js></script>
-        <script src=./nas/newTrackCollection.js></script>
-
 <script src=./lib/jquery.js></script>
 <script src=./lib/jquery-ui.js></script>
-
-
-<script src=./nas/lib/nas_common_HTML.js></script>
-<script src=./lib/game.js></script>
-
 <script src=./lib/ecl/ecl.js></script>
-<script src=./nas/lib/postscriptConvert.js></script>
 
-<script src=./nas/scripts/remaping/dbg_.js></script>
-<script src=./nas/lib/mapio.js></script>
+<script src=./config.js></script>
+<script src=./nas/lib/nas_common.js></script>
+<script src=./nas/lib/nas_common_HTML.js></script>
+
+
+<!--    2116. 12/22 削除または統合されて不要になったモジュール
+<script src=./lib/game.js></script>
+        <script src=./nas/newBaseObject.js></script>
+
+        <script src=./nas/newTrackCollection.js></script>　xpsio.jsにマージ済み
+        <script src=./nas/mapio_alt.js></script>
+ -->
+<!-- システム汎用ライブラリ remaping.jsよりも前方でロードする必要あり　-->
 <!-- new test code -->
-
+<!--
+ デバッグ終了後に、nas/lib/ フォルダへ移動
+-->
+        <script src=./nas/newValueConstractors.js></script>
         <script src=./nas/pmio.js></script>
         <script src=./nas/configPM.js></script>
-        <script src=./nas/mapio_alt.js></script>
 <!-- new test code -->
+
+<script src=./nas/lib/mapio.js></script>
 <script src=./nas/lib/xpsio.js></script>
+<script src=./nas/scripts/remaping/airUI.js></script>
 
 <script src=./nas/scripts/remaping/remaping.js></script>
+<!--　りまぴん専用旧ソース　マージ済
+<script src=./nas/scripts/remaping/sync.js></script>
+<script src=./nas/scripts/remaping/io.js></script>
+<script src=./nas/scripts/remaping/cookie.js></script>
+<script src=./nas/scripts/remaping/headline.js></script>
+<script src=./nas/scripts/remaping/toolbox.js></script>
+<script src=./nas/scripts/remaping/pref.js></script>
+<script src=./nas/scripts/remaping/scene.js></script>
+<script src=./nas/scripts/remaping/getSample.js></script>
+  -->
+  
+<!-- 下マージ予定　-->
 <script src=./nas/scripts/remaping/utils.js></script>
 
+<!--     汎用ライブラリのためソース分離 一括マージ可能      -->
+<script src=./nas/lib/postscriptConvert.js></script>
 <script src=./nas/lib/lib_AEK.js></script>
 <script src=./nas/lib/lib_TVP.js></script>
 <script src=./nas/lib/lib_stylosCSV.js></script>
@@ -85,55 +76,26 @@
 <script src=./nas/lib/lib_ARDJ.js></script>
 <script src=./nas/lib/lib_TSX.js></script>
 
-<script src=./nas/lib/io.js></script>
 
-<!-- <script src=./nas/lib/fakeAE.js></script> -->
-
-<script src=./nas/scripts/remaping/sync.js></script>
-<script src=./nas/scripts/remaping/io.js></script>
-<script src=./nas/scripts/remaping/cookie.js></script>
-
-
-<script src=./nas/scripts/remaping/headline.js></script>
-
-<script src=./nas/scripts/remaping/toolbox.js></script>
-
-<script src=./nas/scripts/remaping/pref.js></script>
-<script src=./nas/scripts/remaping/scene.js></script>
-
-<script src=./nas/scripts/remaping/getSample.js></script>
-<script src=./nas/scripts/remaping/airUI.js></script>
-
-<script src=./nas/scripts/localStorage.js></script>
+<!--　マージ済
+        <script src=./nas/scripts/remaping/dbg_.js></script>
+        <script src=./nas/lib/io.js></script>
+        <script src=./nas/lib/fakeAE.js></script>
+        <script src=./nas/scripts/localStorage.js></script>
+-->
+<!-- /*  開発用テストコード   2016.07.16  追加*/ これらはremaping.jsへ統合予定-->
 <script src=./nas/serviceAgent.js></script>
-<!-- /*  開発用テストコード   2016.07.16  追加*/ -->
+
 <script src=./nas/scripts/serverio_test.js></script>
 <script src=./nas/filePanelTest.js></script>
-<!-- /*  開発用テストコード   2016.07.16  追加*/ -->
+
+<!-- /*  AdobeExtension/Scripts 準互換 多言語化リソース  */ -->
 
 <script src=./nas/lib/nas_locale.js></script>
 <script src=./nas/scripts/remaping/messages.js></script>
 
 <!-- ライブラリインストール -->
-<script >
-startupTooltip=function(){
-    jQuery( function() {
-var myToolTips=["#airMenu","#cgiMenu","#psMenu","#commonEditMenu","#optionPanelUtl"];
-for (var tid=0;tid<myToolTips.length;tid++){
-        jQuery(myToolTips[tid]).tooltip( {
-        position: {
-            my: "center top",
-            at: "center bottom",
-            track:true,
-        }
-    } );
- }
-    } );
-}
-</script>
-<!-- 保留コード群
-script src=javascript/jslb_ajax.js
--->
+
 </head>
 <body 
 	onload="startupTooltip();var nRS = setTimeout('nas_Rmp_Startup()',10);nas.LangPack.chgLocale('ja');serviceAgent.init();"
@@ -174,7 +136,7 @@ script src=javascript/jslb_ajax.js
 <!-- 一般ドキュメントメニュー インポート／エクスポートは別に-->
 <li><A	id=pM0h
 	href = 'javascript:void()'
-	onclick = 'sWitchPanel("File");return false;//myScenePref.open();document.getElementById("scnNewSheet").checked=true;return false;'
+	onclick = 'xUI.sWitchPanel("File");return false;//myScenePref.open();document.getElementById("scnNewSheet").checked=true;return false;'
 	title="ドキュメントを選択"
 >開く</A></li>
 <li><A	id=pM0i
@@ -214,12 +176,12 @@ script src=javascript/jslb_ajax.js
 <!-- 旧ドキュメントメニュー -->
 <li> <A	id=pM01
 	href = 'javascript:void()'
-	onclick = 'sWitchPanel("File");return false;//myScenePref.open();document.getElementById("scnNewSheet").checked=true;return false;'
+	onclick = 'xUI.sWitchPanel("File");return false;//myScenePref.open();document.getElementById("scnNewSheet").checked=true;return false;'
 	title="シートの新規作成と変更"
 >New</A></li>
 <li id=dMcgi><A	id=pM02
 	href="javascript:void(0);"
-	onclick="if(document.getElementById('optionPanelData').style.display!='inline'){sWitchPanel('Data')};document.getElementById('loadShortcut').value='true';document.getElementById('myCurrentFile').click();return false;"
+	onclick="if(document.getElementById('optionPanelData').style.display!='inline'){xUI.sWitchPanel('Data')};document.getElementById('loadShortcut').value='true';document.getElementById('myCurrentFile').click();return false;"
 	title="ローカルドキュメントを開く"
 >Open</A></li>
 <li id=dMair><A	id=pM03
@@ -259,12 +221,12 @@ script src=javascript/jslb_ajax.js
 >Save via CGI</A></li>
 <li><a	id=pM0a
 	href="javascript:void(0);"
-	onclick="sWitchPanel('Data');return false;"
+	onclick="xUI.sWitchPanel('Data');return false;"
 	title="読み込み書き出しパネルを開く"
 >Import/Export</a></li>
 <li id=dMsvc><hr><a id=pM0d
 	href="javascript:void(0);"
-	onclick="sWitchPanel('Login');return false;"
+	onclick="xUI.sWitchPanel('Login');return false;"
 	title="認証パネルを開く/閉じる"
 >認証パネル</a></li>
 <li id=dMsvc><a id=pM0e
@@ -488,7 +450,7 @@ script src=javascript/jslb_ajax.js
 <ul>
 <li><A	id=pM31
 	href="javascript:void(0);"
-	onclick='sWitchPanel("Data");return false;'
+	onclick='xUI.sWitchPanel("Data");return false;'
 	title="読み込み・書き出しパネル"
 >read/write</A></li>
 <li> <A	id=pM32
@@ -545,7 +507,7 @@ script src=javascript/jslb_ajax.js
 <ul>
 <li> <A	id=pM51
 	HREF='javascript:void(0);'
-	onclick='sWitchPanel("Ver");'
+	onclick='xUI.sWitchPanel("Ver");'
 	title="りまぴんについて"
 >about</A><br></li>
 <li><hr><A	id=pM52
@@ -557,7 +519,7 @@ script src=javascript/jslb_ajax.js
 <li>
 	<A
 	HREF='javascript:void(0)'
-	onclick='sWitchPanel("memo");return false;'
+	onclick='xUI.sWitchPanel("memo");return false;'
 	title="reload application"
 >メモ編集</A> </li>
 <li>
@@ -608,17 +570,17 @@ script src=javascript/jslb_ajax.js
 <hr>
 <li id=debug>  <A	id=pM617
 	HREF='javascript:void(0);'
-	onclick='sWitchPanel("Login");return false'
+	onclick='xUI.sWitchPanel("Login");return false'
 	title="lgin"
 >loginPanel</A></li>
 <li id=debug>  <A	id=pM611
 	HREF='javascript:void(0);'
-	onclick='sWitchPanel("Snd");return false'
+	onclick='xUI.sWitchPanel("Snd");return false'
 	title="Snd"
 >soundPanel</A></li>
 <li id=debug>  <A	id=pM612
 	HREF='javascript:void(0);'
-	onclick='sWitchPanel("File");return false'
+	onclick='xUI.sWitchPanel("File");return false'
 	title="File"
 >filePanel</A></li>
 <li id=debug>  <A	id=pM613
@@ -628,12 +590,12 @@ script src=javascript/jslb_ajax.js
 >logo</A></li>
 <li id=dMair>  <A	id=pM61
 	HREF='javascript:void(0);'
-	onclick='sWitchPanel("memu");return false'
+	onclick='xUI.sWitchPanel("memu");return false'
 	title="pMenu"
 >pMenu</A></li>
 <li>  <A	id=pM62
 	HREF='javascript:void(0);'
-	onclick='sWitchPanel("Tbx");return false'
+	onclick='xUI.sWitchPanel("Tbx");return false'
 	title="ソフトウェアキーボード"
 >softwareKB</A></li>
 <li>  <A	id=pM63
@@ -653,23 +615,23 @@ script src=javascript/jslb_ajax.js
 >sheetHeaderTable</A></li>
 <li>  <A	id=pM66
 	HREF='javascript:void(0);'
-	onclick='sWitchPanel("Utl");return false;'
+	onclick='xUI.sWitchPanel("Utl");return false;'
 	title="ユーティリテーメニュー"
 >commandBar</A></li>
 <li style="display:none;">  <A	id=pM67
 	HREF='javascript:void(0);'
-	onClick="sWitchPanel('memoArea')"
+	onClick="xUI.sWitchPanel('memoArea')"
 	title="memo_header"
 >memo_header</A></li>
 <li>  <A	id=pM68
 	HREF='javascript:void(0);'
-	onClick='sWitchPanel("memoArea")'
+	onClick='xUI.sWitchPanel("memoArea")'
 	title="memo"
 >memo</A></li>
 <li id=debug> <hr>
   <A	id=pM69
 	HREF='javascript:void(0);'
-	onclick='sWitchPanel("Dbg");return false;'
+	onclick='xUI.sWitchPanel("Dbg");return false;'
 	title="debug_ON"
 >debugConsole</A></li>
 <li><A	HREF='javascript:void(0);'
@@ -707,7 +669,7 @@ script src=javascript/jslb_ajax.js
         current_server=''
         oauth_token=''
         last_authrized=''
-> <span id=loginuser ></span> : <button id='loginstatus_button' onclick='sWitchPanel("Login");return false' title="ユーザ切り替え"> =OFFLINE= </button> / 
+> <span id=loginuser ></span> : <button id='loginstatus_button' onclick='xUI.sWitchPanel("Login");return false' title="ユーザ切り替え"> =OFFLINE= </button> / 
 	repository : 
 	<select
 	name="repositorySelector"
@@ -776,7 +738,7 @@ script src=javascript/jslb_ajax.js
 	</button><button
 	id=ibMs01
 		class='iconButton iconButton-selector'
-		onclick='sWitchPanel("File");return false;'
+		onclick='xUI.sWitchPanel("File");return false;'
 		title="documentSlecter"
 	>
 	</button><button
@@ -829,7 +791,7 @@ script src=javascript/jslb_ajax.js
 	</button><button
 	id=ibM02
 		class='iconButton  iconButton-openX'
-		onclick="if(document.getElementById('optionPanelData').style.display!='inline'){sWitchPanel('Data')};document.getElementById('loadShortcut').value='body';document.getElementById('myCurrentFile').click();"
+		onclick="if(document.getElementById('optionPanelData').style.display!='inline'){xUI.sWitchPanel('Data')};document.getElementById('loadShortcut').value='body';document.getElementById('myCurrentFile').click();"
 		title="file Open"
 	>
 	</button><button
@@ -915,7 +877,7 @@ script src=javascript/jslb_ajax.js
 	class='iconButton  iconButton-util'
 	name=toolBar
 	id=toolBar
-	onclick='sWitchPanel("Utl");'
+	onclick='xUI.sWitchPanel("Utl");'
 	title="ユーティリティ　ツールバー"
 >
 </button><button
@@ -923,7 +885,7 @@ script src=javascript/jslb_ajax.js
 	class='iconButton  iconButton-skb'
 	name=toolBar
 	id=toolBar
-	onclick='sWitchPanel("Tbx");'
+	onclick='xUI.sWitchPanel("Tbx");'
 	title="ツールボックス"
 >
 </button><button
@@ -931,7 +893,7 @@ script src=javascript/jslb_ajax.js
 	class='iconButton  iconButton-pen_3'
 	name=toolBar
 	id=toolBar
-	onclick='sWitchPanel("memoArea");'
+	onclick='xUI.sWitchPanel("memoArea");'
 	title="メモ欄"
 >
 </button>
@@ -1096,9 +1058,9 @@ script src=javascript/jslb_ajax.js
 	class=iNputbOx
 	type=text
 	size=24
-	onKeyDown="return keyDown(event)"
-	onKeyPress="return keyPress(event)"
-	onKeyUp="return keyUp(event)"
+	onKeyDown="return xUI.keyDown(event)"
+	onKeyPress="return xUI.keyPress(event)"
+	onKeyUp="return xUI.keyUp(event)"
 	onFocus='xUI.activate("headline")'
 	title="シートにデータを入力します。"
 > 
@@ -1518,7 +1480,7 @@ onclick='nas.incrFCTonHTMLInput(document.getElementById("editTC"),"-(1)")'
 	onClick='writeAEKey(xUI.Select[0]);'
 	 /><br>
 <input type=button class=toolTip value="閉じる"
-	onClick='sWitchPanel("clear");' /><br>
+	onClick='xUI.sWitchPanel("clear");' /><br>
 </td>
 <td>
 <strong>キー変換方式を選択</strong><br>
@@ -1636,7 +1598,7 @@ onclick='nas.incrFCTonHTMLInput(document.getElementById("editTC"),"-(1)")'
 	onClick="xUI.data_well.value=''"
 ><input
 	type=button id=option value="閉じる" style="width:10%"
-	onClick='sWitchPanel("clear")'
+	onClick='xUI.sWitchPanel("clear")'
 ><br /><textarea nema=XPSBody id=data_well style="width:80%;height:128px"
 ></textarea><br><strong> (Export) </strong>
 <input type=button id=select value="XPS" style="width:10%"
@@ -1990,7 +1952,7 @@ onclick='nas.incrFCTonHTMLInput(document.getElementById("editTC"),"-(1)")'
  title=" 検 索 "
 >🔍</button><button
  id='ddp-close'
- onClick='sWitchPanel("File");'
+ onClick='xUI.sWitchPanel("File");'
  class='documentPanelButton'
  title=" ウインドウを閉じる "
 >Cancel</button>
@@ -2316,7 +2278,7 @@ XPS File Ver. :nasTIME-SHEET 0.4<br />
 <input	type=button
 	value="OK"
 	style="width:36%"
-	onClick='sWitchPanel("Ver");'
+	onClick='xUI.sWitchPanel("Ver");'
 ><br />
 質問やバグの通報は<a href="http://www.nekomataya.info/bbs2/index.html" target=_balnk>NEKOMATAYA</a>まで。
 <hr>
@@ -2346,7 +2308,7 @@ XPS File Ver. :nasTIME-SHEET 0.4<br />
 	id=action
 	value="Do"
 	style="width:128px"
-	onClick="document.getElementById('msg_well').value+=(eval(document.getElementById('cmd').value)+'\n');"
+	onClick="dbg_action(document.getElementById('cmd').value);"
 ><input	type=button
 	id=select
 	value="selectAll"
@@ -2408,7 +2370,7 @@ trash="xUI.init(XPS)";
 	id=closeDbg
 	value="close"
 	style="width:128px;"
-	onClick="sWitchPanel('Dbg')"
+	onClick="xUI.sWitchPanel('Dbg')"
 ><br/>
 <button 
  id='test001'
@@ -2842,7 +2804,7 @@ onDblClick='if (! document.getElementById("single").checked) chkValue(this.id)'
 	onClick="xUI.snd_body.value=''"
 ><input
 	type=button id=option value="閉じる" style="width:10%"
-	onClick='sWitchPanel("clear")'
+	onClick='xUI.sWitchPanel("clear")'
 >
 </form>
 </div>
@@ -2850,10 +2812,10 @@ onDblClick='if (! document.getElementById("single").checked) chkValue(this.id)'
 <div id=memoArea>
    <div id=memo_header >
    <a href="javascript:void(0);"
-    onclick='sWitchPanel("memoArea");'
+    onclick='xUI.sWitchPanel("memoArea");'
    ><span>▶</span></a>
    <a href="javascript:void(0);"
-	onclick='sWitchPanel("memo");return false;'
+	onclick='xUI.sWitchPanel("memo");return false;'
 >MEMO : </a> <span id="transit_data"></span>
    </div>
 <!--	コメント編集	-->
@@ -2874,7 +2836,7 @@ onDblClick='if (! document.getElementById("single").checked) chkValue(this.id)'
 <input type=button class=toolTip value="更新"
 	onClick='XPS.xpsTracks.noteText=document.getElementById("rEsult").value;xUI.setStored("force");sync("memo");' /><br>
 <input type=button class=toolTip value="閉じる"
-	onClick='if(XPS.xpsTracks.noteText!=document.getElementById("rEsult").value){if(confirm("内容が変更されています。\n更新しますか?")){XPS.xpsTracks.noteText=document.getElementById("rEsult").value;xUI.setStored("force");sync("memo");}};sWitchPanel("memo");' /><br>
+	onClick='if(XPS.xpsTracks.noteText!=document.getElementById("rEsult").value){if(confirm("内容が変更されています。\n更新しますか?")){XPS.xpsTracks.noteText=document.getElementById("rEsult").value;xUI.setStored("force");sync("memo");}};xUI.sWitchPanel("memo");' /><br>
 </td>
 <td>タイムシートコメントを編集します。<br>
 <textarea name=rEsult id=rEsult cols=96 rows=8 >
@@ -2911,7 +2873,7 @@ onDblClick='if (! document.getElementById("single").checked) chkValue(this.id)'
 <br><br><br><br><br><br><br><br>ただいま準備中…ちょっぴりお待ちください<br>
 あ、非常に申し訳ありませんがりまぴんはIEでは正常に動作しません。<br>サポート外です。<br>
 <h3> タイムシート編集サービス　テスト中 </h3><img src=images/remaping.gif border=0 /><br /><img src=images/ui/wait.gif width=320 height=20><br>
-$Id:$ index.html ,v 1.6 2016/07/16  support@nekomataya.info <br />
+$Id:$ index.html ,v 1.7 2016/12/24  support@nekomataya.info <br />
 <span id=myVer1></span> <span id=myServer1>[no-server]</span>
 <br>
       </div><hr>

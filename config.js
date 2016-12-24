@@ -74,13 +74,13 @@
  *  こちらのタイトルは運用後にタイトルDBと換装の予定なのでデータ構造を調整すること
 
  */
-	var useworkTitle=true;
+	var useworkTitle=false;
 
 	var workTitles=[
 "タイトル","","title","http://www.example.com","commentText",
-"かちかちやま","./images/logo/katikati.gif","かちかちやま","./help/katikati.html","公式サイト(のつもり)",
-"かちかち山Max","./images/logo/katikatimax.gif","ALTTxt","linkURI","commentText",
-"end"];
+"かちかちやま",'',"かちかちやま","./help/katikati.html","公式サイト(のつもり)",
+"かちかち山Max",'',"ALTTxt","linkURI","commentText"
+];
 
 /**************************************************************************
  *	ユーザインターフェースカラー

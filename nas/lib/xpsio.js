@@ -327,7 +327,7 @@ function _getMapDefault(myOption) {
  等のケースとなる
 
  オブジェクト初期化時は、デフォルトの音声トラック＋コメントトラックのみを初期化する
- 必要に従って呼び出し側でクラスメソッドを用いてトラック編集を行う
+ 必要に従って呼び出し側でオブジェクトメソッドを用いてトラック編集を行う
  */
 XpsTrackCollection = function(parent,index,duration){
 	this.parentXps=parent;//固定情報　親Xps
@@ -347,6 +347,72 @@ XpsTrackCollection = function(parent,index,duration){
 XpsTrackCollection.prototype = Array.prototype;
 XpsTrackCollection.prototype.constractor = XpsTrackCollection;
 
+/**
+ * XpsTrackCollection にタイムラインを挿入
+
+ * XpsTrackCollection.insertTrack(id,XpsTimelineTrack)
+ * Timeline(XpsTimelineTrack object オブジェクト渡し)
+ * idの前方に引数のタイムラインを挿入
+ * idが未指定・範囲外の場合、後方へ挿入
+ * 0番タイムラインの前方へは挿入不能(固定のデフォルトタイムライン)
+ * @param myId
+ * @param myTimeline
+ */
+XpsTrackCollection.prototype.insertTrack = function(myId,myTrack){
+    var insertCount=0;
+    if (myTrack.id) { myTrack=[myTrack] }
+    //挿入位置を確定
+    if ((!myId ) || (myId < 1) || ( myId >= this.length - 2)) {myId = this.length - 1;}
+    //挿入
+    for(var tc=0;tc<myTrack.length;tc++){
+        if(myTrack[tc] instanceof XpsTimelineTrack) {
+            this.splice(myId+tc, 0, myTrack[tc]);
+            insertCount++;
+        }
+    }
+    this.renumber();
+    return insertCount;
+};
+/**
+ * XpsTrackCollection.removeTrack([id])
+ * 指定idのタイムラインを削除する
+ * デフォルトの音声トラックとフレームコメントトラック及び最後のタイミングトラックの削除はできない
+ * IDを単独又は配列渡しで
+ * @param args
+ */
+
+XpsTrackCollection.prototype.removeTrack = function(args){
+    var removeCount=0;
+    if (!(args instanceof Array)) {
+        args = [args]
+    }
+    args.sort().reverse();//ソートして反転　後方から順次削除しないと不整合が起きる
+    for (var idx = 0; idx < args.length; idx++) {
+        //操作範囲外の値は無視
+        var targetIndex = args[idx];
+        if (isNaN(targetIndex)) {
+            continue;
+        }
+        if ((targetIndex > 0) && (targetIndex < this.length - 1)&&(this.length >3)) {
+            this.splice(targetIndex, 1);
+            removeCount ++;
+        }
+    }
+    if(removeCount){this.renumber();}
+    return removeCount;//削除カウントを返す
+};
+/**
+ * トラックコレクションのindexをチェックして揃える
+ * タイムライントラックのindexは親配列のindexそのもの
+ */
+XpsTrackCollection.prototype.renumber = function(args){
+	for (var idx=0;idx<this.length;idx++){
+		if(this[idx].xParent !== this) { this[idx].xParent=this; }
+		if(this[idx].index != idx)     { this[idx].index  =idx ; }
+	}
+}
+ 
+ 
 /**
  * @constructor XpsTimelineTrackオブジェクトコンストラクタ
  *
@@ -785,7 +851,7 @@ function Xps(Layers, Length) {
 
     var Now = new Date();
     this.create_time = (!nas) ? Now.toString() : Now.toNASString();
-    this.create_user = new UserInfo ();
+    this.create_user = new  nas.UserInfo ();
     this.update_time = '';
     this.update_user = '';
 
@@ -2324,6 +2390,102 @@ XpsReplacement = function (name) {
  * return preSpc+string+postSpc;
  * }
  */
+
+/*
+        タイムラインをダイアログパースする
+    タイムライントラックのメソッド
+    引数なし
+    音響開始マーカーのために、本来XPSのプロパティを確認しないといけないが、
+    今回は省略
+    開始マーカーは省略不可でフレーム０からしか位置できない（＝音響の開始は第１フレームから）
+    後から仕様に合わせて再調整
+    判定内容は
+    /^[-_]{3,4}$/    開始・終了マーカー
+    /^\([^\)]+\)$|^<[^>]+>$|^\[[^\]]+\]$/    インラインコメント
+    その他は
+    ブランク中ならばラベル
+    音響Object区間ならばコンテントテキストに積む　空白は無視する
+    ⇒セリフ中の空白は消失するので、空白で調整をとっている台詞は不可
+    オリジナルとの照合が必要な場合は本文中の空白を削除した状態で評価すること
+    
+    トラックの内容をパースしてセクションコレクションを構築する機能はトラック自身に持たせる
+    その際、トラックの種別毎に別のパーサを呼び出すことが必要なのでその調整を行う
+    
+        タイムライントラックのメソッドにする
+        ストリームはトラックの内容を使う
+        新規にセクションコレクションを作り、正常な処理終了後に先にあるセクションコレクションを上書きする
+        ＊作成中に、同じ内容のセクションはキャッシュとして使用する？
+        戻り値はビルドに成功したセクション数(最低で１セクション)
+        値として　無音区間の音響オブジェクト（値）を作るか又は現状のままfalse(null)等で処理するかは一考
+*/
+_parseSoundTrack =function(){
+    var myCollection = new XpsTimelineSectionCollection(this);//自分自身を親としてセクションコレクションを新作
+    //この実装では開始マーカーが０フレームにしか位置できないので必ずブランクセクションが発生する
+    //継続時間０で先に作成 同時にカラのサウンドObjectを生成
+    var currentSection=myCollection.addSection(null);//区間値false
+    var currentSound=new nas.AnimationSound("");//第一有値区間の値　コンテンツはカラで初期化も保留
+    for (var fix=0;fix<this.length;fix++){
+        currentSection.duration ++;//currentセクションの継続長を加算
+        //未記入データ　最も多いので最初に判定しておく
+        if(this[fix]=="") continue;
+        //括弧でエスケープされたコメント又は属性
+        if(this[fix].match(/(^\([^\)]+\)$|^<[^>]+>$|^\[[^\]]+\]$)/)){
+            if(currentSection.value){
+                currentSound.comments.push([currentSound.bodyText.length,RegExp.$1]);
+            }else{
+                currentSound.attributes.push(RegExp.$1);
+            }
+            continue;
+        }
+        //セクションセパレータ　少ない
+        if(this[fix].match(/^[-_]{3,4}$/)){
+            if(currentSection.value){
+                currentSection.duration --;//加算した継続長をキャンセル
+                currentSection.value.contentText=currentSound.toString();//先の有値セクションをフラッシュして
+                currentSection=myCollection.addSection(null);//新規のカラセクションを作る
+                currentSection.duration ++;//キャンセル分を後方区間に加算
+                currentSound=new nas.AnimationSound("");//サウンドを新規作成
+            }else{
+//引数をサウンドオブジェクトでなくxMapElementに変更予定
+//                nas.new_MapElement(name,Object xMapGroup,Object Job);
+                currentSection=myCollection.addSection(currentSound);//新規有値セクション作成
+//                currentSection.value.
+            }
+                        continue;
+        }
+//判定を全て抜けたデータは本文又はラベル　ラベルは上書きで更新
+//ラベル無しの音声オブジェクトは無しのまま保存　必要に従って先行オブジェクトのラベルを引継ぐ
+        if(currentSection.value){
+            if(this[fix]=="|") this[fix]="ー";
+            currentSound.bodyText+=this[fix];
+        }else{
+            currentSound.name=this[fix];
+        }
+    }
+    this.sections=myCollection;
+    return this.sections;
+}
+
+/** //test
+XpsTimelineTrack.prototype.parseSoundTrack=_parseSoundTrack;
+XPS.xpsTracks[0].parseSoundTrack();
+XPS.xpsTracks[0].sections[1].toString();
+
+XpsTimelineTrack.prototype.parseSoundTrack=_parseSoundTrack;
+//XpsTimelineTrack.prototype.parseDialogTrack=_parseDialogTrack;
+
+//XpsTimelineTrack.prototype.parseKeyAnimationTrack=_parsekeyAnimationTrack;
+//XpsTimelineTrack.prototype.parseAnimationTrack=_parseAnimationTrack;
+XpsTimelineTrack.prototype.parseReplacementTrack=_parseReplacementTrack;
+
+XpsTimelineTrack.prototype.parseCameraWorkTrack=_parseCameraworkTrack;
+
+XpsTimelineTrack.prototype.parseCompositeTrack=_parseCompositeTrack;//コンポジット
+
+//XpsTimelineTrack.prototype.parseTrack=_parseTrack;
+//XpsTimelineTrack.prototype.parseTrack=_parseTrack;
+*/
+
 /**
  以下は、別ソースでセットアップしたメソッドを導入するテストコード
 */

@@ -1,11 +1,15 @@
-﻿/*
+﻿/*                      ------ new ValueConstractors.js
+コーディング中なので、マージは保留   2016- 12.24
+    xMap/Xpsで使用する値オブジェクト群
+
     新規のオブジェクトは、基本的に　new コンストラクタ() ではなく
     Object.create(親オブジェクト)又は、各クラスの　クラス.newオブジェクト()　メソッドで作成すること
     各々のValueオブジェクトはnas.xMapElementのcnontentプロパティとなる
     置きかえタイムラインの（区間）値としては参照を持つ
     タイムシート上は回数未定で同じ値が再利用される
 
-
+このソースは、nasライブラリの基底オブジェクトを組み合わせて構成されるタイムライントラックの値となるオブジェクト群のソース
+ライブラリを分割して　libBaseValue.js　として　nas_common.jsの後　xpsio mapioの前に読み込むものとする
  */
 /**
  *  置きかえタイムラインの値
@@ -15,12 +19,8 @@
     第一型式
 elementID   
 
-
  データ型式は 第一、第二型式を自動判別
  レコードデリミタは"\n"
-
-
-
 
  第二型式（プロパティ名＝値）型式の場合はそのまま使用
 
@@ -50,41 +50,38 @@ xMapがない場合（暫定コード）では、仮のｘMapデータにエン�
 
  */
 nas.AnimationReplacement=function(myContent){
-    this.contentText=myContent;//xMapのソースを保存する　自動で再構築が行なわれるタイミングがある
-    //myContent undefinedで初期化を行った場合の値は blank-cellで
-    this.source         ;//string 画像データのurl　nas.FileObjectの使用は避ける　オブジェクトの整備が不十分
-    this.source.duration       ;//ソースが時間情報を持ったデータだった場合の継続時間＊＊
-    this.source.startOffset    ;//ソースが時間情報を持ったデータだった場合のオフセット＊＊
-//ファイル情報を含むソースオブジェクトにした方が良さそう＊＊　>転用が可能
-    this.source.formGeometry   ;//ソース内のオフセット情報　nas.AnimationFieldオブジェクト
-    this.resolution     ;//要素の解像度   nas.UnitResolution()
-    this.size           ;//要素のサイズ   nas.Size()
-    this.offset         ;//要素の原点オフセット   nas.
-    this.pegOffset;//要素のペグオフセット＊　これらはオブジェクトで統合？
-//    this.timingNotes;//値に配置されるタイミングメモ　コレクション不要　これはタイムシートのプロパティなので不用
-    this.comment;//コメント文字列　エレメントの注釈プロパティ-xMap編集UIのみで確認できる
-    this.overlay;//カブセの対象となるエレメントへの参照
+    this.contentText=myContent  ;   //xMapのソースを保存する　自動で再構築が行なわれるタイミングがある
+    //  myContent undefined で初期化を行った場合の値は blank-cell
+    this.source                 ;   //string 画像データのurl　nas.FileObjectの使用は避ける　オブジェクトの整備が不十分
+    this.source.duration        ;   //ソースが時間情報を持ったデータだった場合の継続時間＊＊
+    this.source.startOffset     ;   //ソースが時間情報を持ったデータだった場合のオフセット＊＊
+    //  ファイル情報を含むソースオブジェクトにした方が良さそう＊＊　>転用が可能
+    this.source.formGeometry    ;   //ソース内のオフセット情報　nas.AnimationFieldオブジェクト
+    this.resolution             ;   //要素の解像度   nas.UnitResolution()
+    this.size                   ;   //要素のサイズ   nas.Size()
+    this.offset                 ;   //要素の原点オフセット   nas.
+    this.pegOffset              ;   //要素のペグオフセット＊　これらはオブジェクトで統合？
+    //  this.timingNotes;//値に配置されるタイミングメモ　コレクション不要　これはタイムシートのプロパティなので不用
+    this.comment                ;   //コメント文字列　エレメントの注釈プロパティ-xMap編集UIのみで確認できる
+    this.overlay                ;   //カブセの対象となるエレメントへの参照
 }
 nas.AnimationReplacement.prototype.toString=function(exportForm){
-    
-//引数なし　または引数が１つでfalseと判断される場合は標準保存形式出力
+    //  引数なし　または引数が１つでfalseと判断される場合は標準保存形式出力
     if ((arguments.length==0)||((arguments.length==1)&&(! arguments[0]))){
         return ['"'+this.source+'"',this.size.toString()].join();
     }
-        //引数が一つ以上ある場合の処理
+    //  引数が一つ以上ある場合の処理
     else if(arguments[0] instanceof Array){
         var myResult="";
     }
     return myResult;
 }
-
 //nas.AnimationReplacement.prototype.valueOf=function(){
 //    return nas.parseNumber(nas.normalizeStr(this.name).replace(/^[^0-9]*/,""))
 //valueOfの設定自体にあまり意味が無いのでやめたほうがヨサゲ　
 //}
-
 nas.AnimationReplacement.prototype.interpolate= function(endValue,indexCount,indexOffset,frameCount,frameOffset,props){
-    return this;//置きかえタイムラインの中間値は前方値で代表される
+    return this         ;   //置きかえタイムラインの中間値は前方値で代表されるので戻り値は必ず自分自身
     /* オプション状態で中間タイミングで後方値に切り替える（時間で） return endValue;
     　 又はブランク状態のオブジェクトを返す return new nas.newAnimationReplacement("blank");
     */
@@ -96,7 +93,6 @@ nas.AnimationReplacement.prototype.interpolate= function(endValue,indexCount,ind
     パース時にセクションの値判定を行う
     ・無効記述
     ・有効記述　値あり（xMap既存エレメント）・なし（新規エレメント）
-    
     
  タイムライントラックをパースする際に統一手順としてトラックに対応するxMapエレメントグループの有無を確認する。
 現行Jobにトラックと同名のエレメントグループが、存在しなかった場合（Stageには存在する可能性あり）は、新規にグループを作成してエントリすること。
@@ -759,7 +755,7 @@ XpsTimelineTrack.prototype.parseCompositeTrack=_parseCompositeTrack;//コンポ�
 */
 /**
 
-    タイムラインをパースしてセクション及びその値を求めるxUIのメソッド
+    タイムラインをパースしてセクション及びその値を求めるメソッド
     タイムライン種別ごとにパースするオブジェクトが異なるので
     各オブジェクトに特化したパーサが必要
     別々のパーサを作ってセクションパーサから呼び出して使用する

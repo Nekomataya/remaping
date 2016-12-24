@@ -466,7 +466,7 @@ if(inputType=="textarea"){
 	this.inputArea.parentCell=myObj;
 	this.inputArea.onchange =function(e){nas.editTableCell(this);}
 	this.inputArea.onblur   =function(e){nas.editTableCell(null);};//no button
-	this.inputArea.onkeyup	=function(e){if(getKEYCODE(e)==27){nas.editTableCell(null);};return true;}
+	this.inputArea.onkeyup	=function(e){if(e.keyCode==27){nas.editTableCell(null);};return true;}
 	this.inputArea.focus();
 }
 /*=====================================*/

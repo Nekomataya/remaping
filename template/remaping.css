@@ -5,6 +5,9 @@
 /*															*/
 
 /*========== タイムシート全体 ============*/
+ * {
+  margin: 0; padding: 0;
+ }
 /*		基本デザイン
 	情報量が多くて密度が低いのでフォントは小さめに
 	ユーザ選択は基本的に禁止
@@ -1035,6 +1038,9 @@ select	{text-align:center;}
   margin:0;
  }
 	*/
+ #sheet_view {
+ 	margin:0;
+ }
 
 /*タイムシートの文字飾り (例)*/
 .v_bar	{color:blue;border-style:solid;border-color:blue;border-width:0px 1px 0px 0px;padding:0;margin:0;}
@@ -1242,6 +1248,10 @@ transform-origin: 0 0;transform:scale(1,1);
     margin: 0;
     padding: 5px 10px;
   }
+/**
+	　jQuery-ui　tooltip
+*/
+ .ui-tooltip {	font-size: 10px;}
 
 /**
 	cellGraphicLayer

@@ -35,8 +35,8 @@ Object ServiceAgent
 オフライン作業用のリポジトリ
 常に使用可能、このリポジトリのデータは対応する作品を管理するサーバと同期可能にする    
 作業中に認証を失ったり、ネットワーク接続が切れた作業はこのリポジトリに保存することが可能
-（作業バックアップ領域とは別　作業バックアップは常時使用可能）
-ローカルリポジトリは容量が制限されるので保存できるカット数に制限がある（現在５カット　2016.11.15）
+（作業バックアップ領域とは別 作業バックアップは常時使用可能）
+ローカルリポジトリは容量が制限されるので保存できるカット数に制限がある（現在５カット 2016.11.15）
 この部分は作業履歴や作業キャッシュとして扱うべきかも
 履歴として扱う場合は、「最終5カットのリングバッファ」という風に
 
@@ -80,7 +80,7 @@ W    書き込み
 
 各ドキュメントはライン/ステージ/ジョブの構造を持つ
 
-このアトリビュート毎・ユーザ毎に　権限が異なるケースがある
+このアトリビュート毎・ユーザ毎に 権限が異なるケースがある
 
                 
 リポジトリ   *
@@ -111,71 +111,21 @@ W    書き込み
 
 */
 /**
-    ユーザ情報オブジェクト nas?
-    表示名称と識別用メールアドレスを持つ
-    ドキュメント上の記録形式は以下
-
-    displayName:uid@domain
-例　ねこまたや:user@example.com
-
-初期化引数に':'が含まれない場合は、メールアドレスか否かを判定して
-メールアドレスなら　uid部を名前として使用
-それ以外の場合は、メールアドレスを空白で初期化する
-一致比較は、メールアドレスで行う
- */
-UserInfo = function UserInfo(nameDescription){
-    if (typeof nameDescription == 'undefined'){nameDescription = 'handle:uid@example.com'}
-    if (nameDescription instanceof UserInfo){
-            this.handle = nameDescription.handle;
-            this.email  = nameDescription.email;
-    } else if (nameDescription.indexOf(':') < 0){
-    //セパレータがない
-        if(nameDescription.indexOf('@') < 1){
-            this.handle = nameDescription;//メールアドレスでないと思われるので引数全体をハンドルにする
-            this.email  = '';
-        }else{
-            this.handle = nameDescription.split('@')[0];//メールアドレスっぽいので＠から前をハンドルにする
-            this.email  = nameDescription;
-        }
-    } else {
-         var infoArray  = nameDescription.split(':');
-        this.handle     = infoArray[0];
-        this.email      = infoArray[1];
-    }
-}
-UserInfo.prototype.toString = function(opt){
-    if(! opt) opt = 0;
-    switch (opt){
-        case "email":
-            return this.email; break;
-        case "handle":
-            return this.handle; break;
-        default :
-            return [this.handle,this.email].join(':')
-    }
-}
-UserInfo.prototype.sameAs = function(myName){
-    if(!(myName instanceof UserInfo)){
-        myName = new UserInfo(myName);
-    }
-    return (this.email==myName.email)?true:false;
-}
-/**
     サービスモードオブジェクト
     複数あるサーバ（ログイン先）の必要な情報を保持するオブジェクト
     複数のサービス情報をプログラム内に保持しないようにドキュメント内の属性として監理する
     同時に記録する認証は一つ、複数のログイン情報を抱える必要はない
-    最期に認証したノード一つで運用　トークンは毎に再取得
+    最期に認証したノード一つで運用 トークンは毎に再取得
 */
 ServiceNode=function(serviceName,serviceURL){
     this.name = serviceName;//識別名称
     this.url  = serviceURL;//ベースになるURL
-//    this.uid  = '';//uid ログインユーザID パスワードは控えない　必要時に都度請求
+//    this.uid  = '';//uid ログインユーザID パスワードは控えない 必要時に都度請求
 //    this.lastAuthorized = "";//最期に認証したタイミング
 //    this.accessToken="";//アクセストークン
 //    this.username = kiyo@nekomataya.info
 //    this.password = 'devTest'
-//  以下の情報は、テスト用に埋め込み　あとで分離処置
+//  以下の情報は、テスト用に埋め込み あとで分離処置
     this.client_id = "b115aead773388942473e77c1e014f4d7d38e4d4829ae4fd1fa0e48e1347b4cd";
     this.client_secret = "54c0f02c38175436df16a058cc0c0e037038c82d3cc9ce4c212e3e4afe0449dd";
 }
@@ -198,7 +148,7 @@ ServiceNode.prototype.setHeader = function(xhr){
 }
 /**
     データ取得
-    参考コード　実際にはコールされない
+    参考コード 実際にはコールされない
 */
 ServiceNode.prototype.getFromServer = function getFromServer(url, msg){
 //V1
@@ -240,7 +190,7 @@ ServiceNode.prototype.getFromServer = function getFromServer(url, msg){
 }
 
 /**
-    認証手続きはサービスノードのメソッド　ノード自身が認証と必要なデータの記録を行う
+    認証手続きはサービスノードのメソッド ノード自身が認証と必要なデータの記録を行う
     パスワードは記録しない
     認証毎にパスワードをユーザに要求する
         myService.authorize()
@@ -343,7 +293,7 @@ console.log("url : "+this.url + '/organizations.json');
 等の処置をして人間の感覚に近づける操作を行う（比較関数必要）
 
 
-ラインID　ステージID　及びジョブIDはカット（管理単位）毎の通番　同じIDが必ずしも同種のステージやジョブを示さない。
+ラインID ステージID 及びジョブIDはカット（管理単位）毎の通番 同じIDが必ずしも同種のステージやジョブを示さない。
 管理工程の連続性のみが担保される
 識別子に管理アイテム識別文字列を加えても良い
 
@@ -355,7 +305,7 @@ console.log("url : "+this.url + '/organizations.json');
  
     ラインID
 ラインが初期化される毎に通番で増加 整数
-0   本線　primaryライン
+0   本線 primaryライン
 1   本線から最初に分岐したライン
 1-1 ライン１から分岐したライン
 2   本線から分岐した２番めのライン
@@ -386,14 +336,14 @@ Startup/Active/Hold/Fixed/Aborted (開始/作業/保留/終了/削除) の５態
  //現状
  var myXps= XPS;
     [encodeURIComponent(myXps.title)+"#"+encodeURIComponent(myXps.opus)+"["+encodeURIComponent(myXps.subtitle)+"]",encodeURIComponent("S"+((myXps.scene)?myXps.scene:"-")+"C"+myXps.cut)+"("+myXps.time()+")",myXps.xMap.currentLine,myXps.xMap.currentStage,myXps.xMap.currentJob].join(" // ");
- //将来は以下で置き換え予定　CSオブジェクト未実装
+ //将来は以下で置き換え予定 CSオブジェクト未実装
     myXps.sci.getIdentifier();
  //Xpsオブジェクトのクラスメソッドとして仮実装済み オブジェクトメソッドとして同名の機能の異なる関数があるので要注意
- 　Xps.getIdentifier(myXps);
- 　
+  Xps.getIdentifier(myXps);
+  
 */
 /**
-比較関数　管理情報3要素の管理情報配列　issuesを比較して先行の管理ノード順位を評価する関数
+比較関数 管理情報3要素の管理情報配列 issuesを比較して先行の管理ノード順位を評価する関数
 ライン拡張時は追加処理が必要
 */
 issuesSorter =function(val1,val2){
@@ -407,9 +357,9 @@ issuesSorter =function(val1,val2){
     parent  リポジトリへの参照
     product 作品と話数
     sci     カット番号（兼用情報含む）
-    issues  管理情報　４要素一次元配列 [line,stage,job,status]
+    issues  管理情報 ４要素一次元配列 [line,stage,job,status]
     実際のデータファイルはissueごとに記録される
-    いずれも　URIエンコードされた状態で格納されているので画面表示の際は、デコードが必要
+    いずれも URIエンコードされた状態で格納されているので画面表示の際は、デコードが必要
 
     ネットワークリポジトリに接続する場合は以下のプロパティが追加される
     listEntry.titleID   /int
@@ -445,7 +395,7 @@ listEntry.prototype.toString=function(myIndex){
     }else{
         if(myIndex<this.issues.length){
             return [this.product,this.sci].join("//")+"//"+ this.issues[this.issues.length - 1 - myIndex].join("//");
-            //この部分の手続はラインをまたぐと不正な値を戻すので要修正　11.23
+            //この部分の手続はラインをまたぐと不正な値を戻すので要修正 11.23
         }else{
             return [this.product,this.sci].join("//")+"//"+ this.issues[this.issues.length - 1].join("//");
         }
@@ -454,11 +404,11 @@ listEntry.prototype.toString=function(myIndex){
 /**
     識別子を引数にして管理情報をサブリストにプッシュする
     管理情報のみが与えられた場合は無条件で追加
-    フルサイズの識別子が与えられた場合は　SCI部分までが一致しなければ操作失敗
+    フルサイズの識別子が与えられた場合は SCI部分までが一致しなければ操作失敗
     追加成功時は管理情報部分を配列で返す
     
     
-    SCI部分のみでなく　ラインとステージが一致しないケースも考慮すること（今回の実装では不用）
+    SCI部分のみでなく ラインとステージが一致しないケースも考慮すること（今回の実装では不用）
     
     ネットワークリポジトリ・DB接続用にIDを増設
     
@@ -493,7 +443,7 @@ A
     記録位置は、最終ジョブ
     エントリにステータスを設定する機能は設けない
     新規の状況更新はすべてリポジトリ本体からの再読出で行う
-    　　
+      
 */
 listEntry.prototype.getStatus=function(){
     return this.issues[this.issues.length-1][3];
@@ -503,7 +453,7 @@ listEntry.prototype.getStatus=function(){
     ローカルリポジトリ
     主に最近の作業データをキャッシュする役目
     カットのデータを履歴付きで保持できる
-    複数カットを扱う　制限カット数内のリングバッファ動作
+    複数カットを扱う 制限カット数内のリングバッファ動作
     xUIから見るとサーバの一種として働く
     ローカルストレージを利用して稼働する
 
@@ -532,13 +482,13 @@ localRepository={
     戻り値はストアされたエントリの数
     実際のデータ・エントリリストが必要な場合は、localRepository.entryList を参照すること
     ドキュメントセレクタの値を更新するためには、
-    リポジトリの更新　ドキュメントリストの再構築の順で実行…　まとめたほうが良いかも
+    リポジトリの更新 ドキュメントリストの再構築の順で実行… まとめたほうが良いかも
 */
 /**
-    フィルタ引数　myFilter,isRegex
+    フィルタ引数 myFilter,isRegex
     if(typeof myFilter == "undefined") {myFilter=".+";};
     var myFilterRegex =(isRegex)? new RegExp(myFilter):new RegExp(".*"+myFilter+".*");
-//エントリ数を少なく制限するのでここでは実際はフィルタは意味をなさない　フィルタのフォーマットは一考
+//エントリ数を少なく制限するのでここでは実際はフィルタは意味をなさない フィルタのフォーマットは一考
 
 
 */
@@ -599,12 +549,9 @@ localRepository.pushEntry=function(myXps){
 //既存エントリが無いので新規エントリを追加
     localStorage.setItem(this.keyPrefix+myIdentifier,myXps.toString());
     this.entryList.push(new listEntry(myIdentifier))
-
-    if(this.entryList.length>this.maxEntry){
-    　//設定制限値をオーバーしたら、ローカルストレージから最も古いエントリを削除
-        for (var iid=0;iid<this.entryList[0].issues.length;iid++){
-             localStorage.removeItem(this.keyPrefix+this.entryList[0].this.entryList[0].issues[iid]);
-        };
+    if ( this.entryList.length > this.maxEntry ){
+//設定制限値をオーバーしたら、ローカルストレージから最も古いエントリを削除
+        for (var iid=0; iid < this.entryList[0].issues.length ; iid++ ){ localStorage.removeItem( this.keyPrefix + this.entryList[0].issues[iid])};
         this.entryList=this.entryList.slice(1);
     }
     this.getList();
@@ -675,7 +622,7 @@ localRepository.getEntry=function(myIdentifier,isReference,callback){
             if ( cx > 0 ){
 //                console.log(myIssue);
                 if(parseInt(decodeURIComponent(myIssue[2]).split(':')[0]) > 0 ){
-                //ジョブIDが１以上なので　単純に一つ前のissueを選択する（必ず先行jobがある）
+                //ジョブIDが１以上なので 単純に一つ前のissueを選択する（必ず先行jobがある）
                     refIssue = this.entryList[ix].issues[cx-1];
                 }else if(( myIssue[1].split(':')[0] > 0 )&&( myIssue[2].split(':')[0] > 0 )){
                 //第2ステージ以降前方に向かって検索
@@ -698,9 +645,9 @@ localRepository.getEntry=function(myIdentifier,isReference,callback){
                 }
             }
             console.log(documentDepot.currentReference);
-            　XPS.readIN(myXpsSource);xUI.init(XPS,documentDepot.currentReference);nas_Rmp_Init();
-            　xUI.setUImode('browsing');sync("productStatus");
-            　sWitchPanel('File');
+             XPS.readIN(myXpsSource);xUI.init(XPS,documentDepot.currentReference);nas_Rmp_Init();
+             xUI.setUImode('browsing');sync("productStatus");
+             xUI.sWitchPanel('File');
         }
     } else { 
         return false;
@@ -719,7 +666,7 @@ localRepository.removeEntry=function(myIdentifier){
     var myProductUnit   = targetArray.slice(0,2).join( '//' );//プロダクトユニットを抽出
     for (var pid=0;pid<this.entryList.length;pid++){
         if(this.entryList[pid].toString() == myProductUnit){
-    　  //関連するエントリをすべて削除
+       //関連するエントリをすべて削除
             for (var iid=0;iid<this.entryList[pid].issues.length;iid++){
                 localStorage.removeItem(this.keyPrefix+this.entryList[pid].toString(iid));
             };
@@ -766,11 +713,11 @@ localRepository.activateEntry=function(callback,callback2){
         var newXps = new Xps();
         var currentContents = localStorage.getItem(this.keyPrefix+currentEntry.toString(0));
         if (currentContents) { newXps.readIN(currentContents); }else {return false;}
-        //ここ判定違うけど保留 あとでフォーマット整備 USERNAME:uid@domain(mailAddress)　 型式で暫定的に記述
+        //ここ判定違うけど保留 あとでフォーマット整備 USERNAME:uid@domain(mailAddress)  型式で暫定的に記述
         //':'が無い場合は、メールアドレスを使用
         console.log(xUI.currentUser.sameAs(newXps.update_user));
         if ((newXps)&&(xUI.currentUser.sameAs(newXps.update_user))){
-            　//同内容でステータスを変更したエントリを作成 新規に保存して成功したら先のエントリを消す
+             //同内容でステータスを変更したエントリを作成 新規に保存して成功したら先のエントリを消す
             newXps.currentStatus = 'Active';
             console.log('activate : '+decodeURIComponent(Xps.getIdentifier(newXps)));
             localStorage.setItem(this.keyPrefix+Xps.getIdentifier(newXps),newXps.toString());
@@ -782,23 +729,23 @@ localRepository.activateEntry=function(callback,callback2){
                 documentDepot.rebuildList();
                 xUI.XPS.currentStatus='Active';//ドキュメントステータスを更新
             }else{
-                console.log('ステータス変更失敗　:');
+                console.log('ステータス変更失敗 :');
                 delete newXps ;
                 if(callback2 instanceof Function) {setTimeout(callback2,10);}
                 return false;
             }
             console.log(newXps)
             xUI.setUImode('production');
-            sWitchPanel();//パネルクリア
+            xUI.sWitchPanel();//パネルクリア
             if(callback instanceof Function){ setTimeout (callback,10);}
             return true;
         }else{
-            console.log('ステータス変更不可　:'+ Xps.getIdentifier(newXps));
+            console.log('ステータス変更不可 :'+ Xps.getIdentifier(newXps));
             if(callback2 instanceof Function) {setTimeout(callback2,10);}
             return false
         }
 }
-//作業を保留する　リポジトリ内のエントリを更新してステータスを変更 
+//作業を保留する リポジトリ内のエントリを更新してステータスを変更 
 localRepository.deactivateEntry=function(callback,callback2){
     var currentEntry = this.entry(Xps.getIdentifier(xUI.XPS));
             //Active > Holdへ
@@ -807,7 +754,7 @@ localRepository.deactivateEntry=function(callback,callback2){
         newXps.readIN(currentContents);
         //ユーザ判定は不用
         if (newXps){
-            　//同内容でステータスを変更したエントリを作成 新規に保存して成功したら先のエントリを消す
+             //同内容でステータスを変更したエントリを作成 新規に保存して成功したら先のエントリを消す
             newXps.currentStatus = 'Hold';//（ジョブID等）status以外の変更はない
             localStorage.setItem(this.keyPrefix+Xps.getIdentifier(newXps),newXps.toString());
             var result = (localStorage.getItem(this.keyPrefix+Xps.getIdentifier(newXps)) == newXps.toString())?true:false;
@@ -824,11 +771,11 @@ localRepository.deactivateEntry=function(callback,callback2){
                 delete newXps ;
                 return false;
             }
-            //データをホールドしたので、リストを更新　編集対象をクリアしてUIを初期化
+            //データをホールドしたので、リストを更新 編集対象をクリアしてUIを初期化
             xUI.setUImode('browsing');
-            sWitchPanel();//パネルクリア
+            xUI.sWitchPanel();//パネルクリア
         }else{
-            console.log('保留可能エントリが無い　:'+ Xps.getIdentifier(newXps));
+            console.log('保留可能エントリが無い :'+ Xps.getIdentifier(newXps));
              return false ;
         }
 }
@@ -846,7 +793,7 @@ localRepository.checkinEntry=function(myJob,callback,callback2){
         //当該リポジトリにエントリが無い
          return false;
       }
-            //次のJobへチェックイン　読み出したデータでXpsを初期化 
+            //次のJobへチェックイン 読み出したデータでXpsを初期化 
         var newXps = new Xps();
         var currentContents = localStorage.getItem(this.keyPrefix+currentEntry.toString(0));
         if (currentContents) {
@@ -855,14 +802,14 @@ localRepository.checkinEntry=function(myJob,callback,callback2){
             console.log('読み出し失敗')
             return false;
         }
-        //　ユーザ判定は不用（権利チェックは後ほど実装）
+        // ユーザ判定は不用（権利チェックは後ほど実装）
         if (newXps){
             newXps.job.name=(myJob)? myJob:xUI.currentUser.handle;
             newXps.job.id=nas.incrStr(newXps.job.id,1);
             newXps.update_user = xUI.currentUser;
             newXps.currentStatus = 'Active';
             console.log(newXps.toString());//
-            　//引数でステータスを変更したエントリを作成 新規に保存　JobIDは必ず繰り上る
+             //引数でステータスを変更したエントリを作成 新規に保存 JobIDは必ず繰り上る
             // newXps.job=new XpsStage(jobName+':'+(parseInt(newXps.job.id)+jobIDoffset));
             localStorage.setItem(this.keyPrefix+Xps.getIdentifier(newXps),newXps.toString());
             var resultData = localStorage.getItem(this.keyPrefix+Xps.getIdentifier(newXps));
@@ -876,7 +823,7 @@ localRepository.checkinEntry=function(myJob,callback,callback2){
                 xUI.XPS.update_user=xUI.currentUser;
                 xUI.XPS.currentStatus='Active';//ドキュメントステータスを更新
                 if(callback instanceof Function){ setTimeout('callback()',10)};
-                sWitchPanel();//ドキュメントパネルが表示されていたらパネルクリア
+                xUI.sWitchPanel();//ドキュメントパネルが表示されていたらパネルクリア
                 this.getList();//リストステータスを同期
                 documentDepot.rebuildList();
                 xUI.setUImode('production');//モードをproductionへ
@@ -886,7 +833,7 @@ localRepository.checkinEntry=function(myJob,callback,callback2){
             }
         }
         console.log('編集権利取得失敗');
-        //　すべてのトライに失敗
+        // すべてのトライに失敗
         if(callback2 instanceof Function){ setTimeout('callback2()',10)};
         return false ;
 }
@@ -905,7 +852,7 @@ localRepository.checkoutEntry=function(callback,callback2){
         newXps.readIN(currentContents);
         //ユーザ判定は不用 JobID変わらず
         if (newXps){
-            　//同内容でステータスを変更したエントリを作成 新規に保存して成功したら先のエントリを消す
+             //同内容でステータスを変更したエントリを作成 新規に保存して成功したら先のエントリを消す
             newXps.currentStatus = 'Fixed';
             localStorage.setItem(this.keyPrefix+Xps.getIdentifier(newXps),newXps.toString());
             var result = (localStorage.getItem(this.keyPrefix+Xps.getIdentifier(newXps))==newXps.toString())? true:false;
@@ -915,7 +862,7 @@ localRepository.checkoutEntry=function(callback,callback2){
                 documentDepot.rebuildList();
                 xUI.XPS.currentStatus='Fixed';//ドキュメントステータスを更新
                 if(callback instanceof Function){ setTimeout('callback()',10)};
-                sWitchPanel();//ドキュメントパネルが表示されていたらパネルクリア
+                xUI.sWitchPanel();//ドキュメントパネルが表示されていたらパネルクリア
                 xUI.setUImode('browsing');//モードをbrousingへ
                 return result;
             // データをFixしたので、編集対象をクリアしてUIを初期化
@@ -955,7 +902,7 @@ localRepository.abortEntry=function(myIdentifier){
         case 'Hold':
         case 'Fixed':
         case 'Active':
-            //管理モード下でのみ処理　このメソッドのコール自体が管理モード下でのみ可能にする
+            //管理モード下でのみ処理 このメソッドのコール自体が管理モード下でのみ可能にする
             //リポジトリに対して
         break;
     }
@@ -986,7 +933,7 @@ localRepository.getEntry(localRepository.entryList[0]);
     .getEntry(myIdentifier)
     .putEntry(myXps)
         
-リポジトリに　相当する構造は　Team
+リポジトリに 相当する構造は Team
 チームごとにリポジトリが設定される
 Teamへアクセスするためのトークンは、アクセス毎に設定される
 */
@@ -995,7 +942,7 @@ NetworkRepository=function(repositoryName,myServer,repositoryURI){
     this.service = myServer;//リポジトリの所属するサーバ
     this.url=(typeof repositoryURI == 'undefined')?this.service.url:repositoryURI;//サーバとurlが異なる場合は上書き
     this.token=null;//nullで初期化
-//サーバ内にTeamが実装　Teamをリポジトリとして扱うのでその切り分けを作成　12/13
+//サーバ内にTeamが実装 Teamをリポジトリとして扱うのでその切り分けを作成 12/13
 //リストは素早いリポジトリの切り替えやリポジトリ同士のマージ処理に不可欠なのでここで保持
 //    this.currentProduct;
 //    this.currentSC;
@@ -1011,7 +958,7 @@ NetworkRepository=function(repositoryName,myServer,repositoryURI){
     this.entryList=[];
 }
 /**
-    タイトル一覧をクリアして更新する　エピソード更新を呼び出す
+    タイトル一覧をクリアして更新する エピソード更新を呼び出す
     受信したデータを複合させてサービス上のデータ構造を保持する単一のオブジェクトに
     getXx で概要（一覧）を取得
     xxUpdateが詳細を取得して this.productsData を上書きしてゆく
@@ -1197,7 +1144,7 @@ NetworkRepository.prototype.getList = function (force){
             currentTitle = this.productsData[idx];//
             if(typeof currentTitle.episodes == "undefined"){
                 this.productsUpdate();
-                return;//情報不足　中断
+                return;//情報不足 中断
             }
             if( currentTitle.episodes[0].length == 0 ) continue;
             for(var eid = 0 ;eid < this.productsData[idx].episodes[0].length ; eid ++){
@@ -1209,7 +1156,7 @@ NetworkRepository.prototype.getList = function (force){
                 if( currentEpisode.cuts.length==1){this.getSCi(currentEpisode.token);return;}
                 if( currentEpisode.cuts[1].length == 0 ) continue;
                 for(var cid = 0 ; cid < currentEpisode.cuts[1].length ;cid ++){
-                //現在のサーバエントリ情報はサブタイトルと秒数なし 管理情報は[0,0,0,'fixed']固定で　これは保存時にアプリ側から送る仕様にする
+                //現在のサーバエントリ情報はサブタイトルと秒数なし 管理情報は[0,0,0,'fixed']固定で これは保存時にアプリ側から送る仕様にする
                 //兼用カット情報はペンディング
                 var myCutToken = currentEpisode.cuts[1][cid].token;
 
@@ -1300,7 +1247,7 @@ NetworkRepository.prototype.getEntry = function (myIdentifier,isReference,callba
 //    if(targetArray.length == 6) isReference = true ;//指定データが既Fixなので自動的にリファレンス読み込みに移行
     //この判定は不用
 
-//      myIssue; これがカットへのポインタ　episode.cuts配列のエントリ myIssue.url　にアドレスあり
+//      myIssue; これがカットへのポインタ episode.cuts配列のエントリ myIssue.url にアドレスあり
 //      urlプロパティが無い場合はid があるのでidからurlを作成する
     var targetURL=(myIssue.url)? myIssue.url: '/cuts/'+myIssue.cutID.toString()+'.json';
 /*
@@ -1341,7 +1288,7 @@ if(callback instanceof Function){
     episode.name
         decoded name
     episode.description
-        decoded subtitle　
+        decoded subtitle 
     cut.name
         decoded name
     cut.description
@@ -1357,11 +1304,11 @@ console.log("road :"+myContent);
 	        //documentDepot.currentDocument=new Xps();
 	        //documentDepot.currentDocument.readIN(myContent);//カレントドキュメントを設定
 	        XPS.readIN(myContent)
-//　読み込んだXPSが識別子と異なっていた場合識別子優先で同期する
+// 読み込んだXPSが識別子と異なっていた場合識別子優先で同期する
             XPS.syncIdentifier(targetArray.join('//'));
 	        xUI.init(XPS);
 	        nas_Rmp_Init();
-            sWitchPanel('File');
+            xUI.sWitchPanel('File');
             if(callback instanceof Function) callback();
         }).bind(this),
         error:(function(result){
@@ -1383,7 +1330,7 @@ console.log("road :"+myContent);
 	        documentDepot.currentReference=new Xps();
 	        documentDepot.currentReference.readIN(myContent);
 	        xUI.setReferenceXPS(documentDepot.currentReference);
-	        sWitchPanel('File');
+	        xUI.sWitchPanel('File');
             if(callback instanceof Function) callback();
         }).bind(this),
         error:(function(result){
@@ -1397,7 +1344,7 @@ console.log("road :"+myContent);
 }
 /**
     標準コールバックを作る
-    コールバック関数が引数で与えられなかった場合は　xUIに新規Xpsとして与えて読み込ませる
+    コールバック関数が引数で与えられなかった場合は xUIに新規Xpsとして与えて読み込ませる
     読み出したエントリに前方のジョブがあれば、それをリファレンスとして与えるルーチンも必要
 
 function(result){
@@ -1438,7 +1385,7 @@ NetworkRepository.prototype.pushEntry = function (myXps){
         this.pushData('PUT',currentEntry,myXps)
     }else{
 /**
-    currentEntry==null なので、ターゲットのエピソードtokenを再取得して引数で渡す必要あり　１２・２１
+    currentEntry==null なので、ターゲットのエピソードtokenを再取得して引数で渡す必要あり １２・２１
 */
             //新規エントリなので新たにPOSTする
         this.pushData('POST',currentEntry,myXps)    
@@ -1450,7 +1397,7 @@ NetworkRepository.prototype.pushEntry = function (myXps){
         ListEntry
         XpsString
 POST/PUTの判別はここで行ったほうが良い
-かつ　タイトルとエピソードの作成はここで自動で行う
+かつ タイトルとエピソードの作成はここで自動で行う
 UI上カット（ドキュメント）主体なのでカットの無いエピソードやタイトルに対する操作は表に出せない
 */
 NetworkRepository.prototype.pushData = function (myMethod,myEntry,myXps){
@@ -1524,7 +1471,7 @@ if(myMethod=='POST'){
 	}
 
 /*
-開発中の　制作管理DB/MAP/XPS　で共通で使用可能なnas.SCInfoオブジェクトを作成中
+開発中の 制作管理DB/MAP/XPS で共通で使用可能なnas.SCInfoオブジェクトを作成中
 これに一意のIDを持たせる予定です。
 */
 
@@ -1586,9 +1533,16 @@ NetworkRepository.prototype.entry=function(myIdentifier){
 /**
     エントリステータス操作コマンドメソッド群
     ServiceAgentの同名メソッドから呼び出す下位ファンクション
+
+    caller側のルーチンで判定基準にしたデータが最新である保証が無いので
+    各メソッドの書込み前にステータスの再確認が必要
+    読み出しを前段に置いて成功時の関数内で再判定か？
+    または、サービス側で変更要求に対する処理基準を明確にしてリジェクトを実装してもらう 2016.12.23
 */
 /**
     現在のドキュメント XPS に対応するリポジトリ上のエントリをアクティベートする
+    アクティベート前に、データの現状を取得してコールバックでアクティベート処理を渡す
+
     引数:処理成功時と失敗時のコールバック関数
 */
 NetworkRepository.prototype.activateEntry=function(callback,callback2){
@@ -1599,8 +1553,36 @@ NetworkRepository.prototype.activateEntry=function(callback,callback2){
     //同内容でステータスを変更したエントリを作成 新規に保存して成功したら先のエントリを消す
         console.log('activate : '+decodeURIComponent(Xps.getIdentifier(newXps)));
         newXps.currentStatus = 'Active';
-    //ここでサーバに現在のエントリへのステータス変更要求を送信する　成功時と失敗時の処理を渡し、かつcallback を再度中継
-    //カットの name,description のみを送信してステータスを変更
+/*
+    サーバからデータの最新状況を取得する
+    ステータスを確認して
+ */
+        var data = {
+                token: currentEntry.issues[0].cutID,
+                cut: {
+                    name:   decodeURIComponent(currentEntry.toString().split('//')[1]),
+                    description: Xps.getIdentifier(newXps)
+                }
+        };
+        console.log(data);
+	    $.ajax({
+		    type : 'GET',
+		    url : this.url+'/cuts/'+currentEntry.issues[0].cutID+'.json',
+		    data : data,
+		    success :(function(){}).bind(this),
+		    error :(function(result) {
+			// Error
+			    console.log("error");
+			    console.log(result);
+                console.log('ステータス変更不可 :'+ Xps.getIdentifier(newXps));
+                if(callback2 instanceof Function) {setTimeout(callback2,10);}
+		    }).bind(this),
+		    beforeSend: (this.service.setHeader).bind(this)
+	    });
+
+/**
+    サービス側での排他が完了したら下の処理でOK
+*/
         var data = {
                 token: currentEntry.issues[0].cutID,
                 cut: {
@@ -1622,14 +1604,14 @@ NetworkRepository.prototype.activateEntry=function(callback,callback2){
 			    xUI.setStored("current");//UI上の保存ステータスをセット
 			    sync();//保存ステータスを同期
                 xUI.setUImode('production');
-                sWitchPanel();//パネルクリア
+                xUI.sWitchPanel();//パネルクリア
                 if(callback instanceof Function){ setTimeout (callback,10);}
 		    }).bind(this),
 		    error :(function(result) {
 			// Error
 			    console.log("error");
 			    console.log(result);
-                console.log('ステータス変更不可　:'+ Xps.getIdentifier(newXps));
+                console.log('ステータス変更不可 :'+ Xps.getIdentifier(newXps));
                 if(callback2 instanceof Function) {setTimeout(callback2,10);}
 		    }).bind(this),
 		    beforeSend: (this.service.setHeader).bind(this)
@@ -1639,7 +1621,7 @@ NetworkRepository.prototype.activateEntry=function(callback,callback2){
     }
 }
 /**
-    作業を保留する　リポジトリ内の対応エントリデータを更新してステータスを変更 
+    作業を保留する リポジトリ内の対応エントリデータを更新してステータスを変更 
 */
 NetworkRepository.prototype.deactivateEntry=function(callback,callback2){
     var currentEntry = this.entry(Xps.getIdentifier(xUI.XPS));
@@ -1653,9 +1635,9 @@ if(true){
 }
         //ユーザ判定は不用
         if (newXps){
-            　//同内容でステータスを変更したエントリを作成 新規に保存して成功したら先のエントリを消す
+             //同内容でステータスを変更したエントリを作成 新規に保存して成功したら先のエントリを消す
             newXps.currentStatus = 'Hold';//（ジョブID等）status以外の変更はない
-    //ここでサーバに現在のエントリへのステータス変更要求を送信する　成功時と失敗時の処理を渡し、かつcallback を再度中継
+    //ここでサーバに現在のエントリへのステータス変更要求を送信する 成功時と失敗時の処理を渡し、かつcallback を再度中継
     //カットの name,description のみを送信してステータスを変更
         var data = {
                 token: currentEntry.issues[0].cutID,
@@ -1679,21 +1661,21 @@ if(true){
 			    xUI.setStored("current");//UI上の保存ステータスをセット
 			    sync();//保存ステータスを同期
                 xUI.setUImode('browsing');
-                sWitchPanel();//パネルクリア
+                xUI.sWitchPanel();//パネルクリア
                 if(callback instanceof Function){ setTimeout (callback,10);}
 		    }).bind(this),
 		    error :(function(result) {
 			// Error
 			    console.log("error");
 			    console.log(result);
-                console.log('保留失敗　:'+ Xps.getIdentifier(newXps));
+                console.log('保留失敗 :'+ Xps.getIdentifier(newXps));
                 if(callback2 instanceof Function) {setTimeout(callback2,10);}
                 delete newXps;
 		    }).bind(this),
 		    beforeSend: (this.service.setHeader).bind(this)
 	    });
     }else{
-            console.log('保留可能エントリ無し　:'+ decodeURIComponent(Xps.getIdentifier(newXps)));
+            console.log('保留可能エントリ無し :'+ decodeURIComponent(Xps.getIdentifier(newXps)));
              return false ;
     }
 }
@@ -1712,7 +1694,7 @@ NetworkRepository.prototype.checkinEntry=function(myJob,callback,callback2){
          return false;
       }
             //次のJobへチェックイン 
-            //リポジトリのステータスを変更する　XPSの内容は変更不用
+            //リポジトリのステータスを変更する XPSの内容は変更不用
 if(true){
         var newXps = Object.create(xUI.XPS);//現在のデータの複製をとる
 }else{
@@ -1720,14 +1702,14 @@ if(true){
         var currentContents = xUI.XPS.toString();
         newXps.readIN(currentContents);
 };//下の複製のほうが安全？
-        //　ユーザ判定は不用（権利チェックは後ほど実装）
+        // ユーザ判定は不用（権利チェックは後ほど実装）
     if (newXps){
         newXps.job.increment(myJob);
         newXps.update_user = xUI.currentUser;
         newXps.currentStatus = 'Active';
         console.log(newXps.toString());//
-            　//引数でステータスを変更したエントリを作成 新規に保存　JobIDは必ず繰り上る
-    //ここでサーバに現在のエントリへのステータス変更要求を送信する　成功時と失敗時の処理を渡し、かつcallback を再度中継
+             //引数でステータスを変更したエントリを作成 新規に保存 JobIDは必ず繰り上る
+    //ここでサーバに現在のエントリへのステータス変更要求を送信する 成功時と失敗時の処理を渡し、かつcallback を再度中継
     //カットの name,description のみを送信してステータスを変更
 
         var data = {
@@ -1752,14 +1734,14 @@ if(true){
                 xUI.setStored("current");//UI上の保存ステータスをセット
 			    sync();//保存ステータスを同期
                 xUI.setUImode('production');
-                sWitchPanel();//パネルクリア
+                xUI.sWitchPanel();//パネルクリア
                 if(callback instanceof Function){ setTimeout (callback,10);}
 		    }).bind(this),
 		    error :(function(result) {
 			// Error
 			    console.log("error");
 			    console.log(result);
-                console.log('ステータス変更不可　:'+ Xps.getIdentifier(newXps));
+                console.log('ステータス変更不可 :'+ Xps.getIdentifier(newXps));
                 if(callback2 instanceof Function) {setTimeout(callback2,10);}
 		    }).bind(this),
 		    beforeSend: (this.service.setHeader).bind(this)
@@ -1785,9 +1767,9 @@ if(true){
 };//下の複製のほうが安全？
         //ユーザ判定は不用 JobID変わらず
     if (newXps){
-            　//同内容でステータスを変更したエントリを作成 新規に保存して成功したら先のエントリを消す
+             //同内容でステータスを変更したエントリを作成 新規に保存して成功したら先のエントリを消す
             newXps.currentStatus = 'Fixed';//（ジョブID等）status以外の変更はない
-    //ここでサーバに現在のエントリへのステータス変更要求を送信する　成功時と失敗時の処理を渡し、かつcallback を再度中継
+    //ここでサーバに現在のエントリへのステータス変更要求を送信する 成功時と失敗時の処理を渡し、かつcallback を再度中継
     //カットの name,description のみを送信してステータスを変更
         var data = {
                 token: currentEntry.issues[0].cutID,
@@ -1811,14 +1793,14 @@ if(true){
 			    xUI.setStored("current");//UI上の保存ステータスをセット
 			    sync();//保存ステータスを同期
                 xUI.setUImode('browsing');
-                sWitchPanel();//パネルクリア
+                xUI.sWitchPanel();//パネルクリア
                 if(callback instanceof Function){ setTimeout (callback,10);}
 		    }).bind(this),
 		    error :(function(result) {
 			// Error
 			    console.log("error");
 			    console.log(result);
-                console.log('終了更新失敗　:'+ Xps.getIdentifier(newXps));
+                console.log('終了更新失敗 :'+ Xps.getIdentifier(newXps));
                 if(callback2 instanceof Function) {setTimeout(callback2,10);}
                 delete newXps;
 		    }).bind(this),
@@ -1858,7 +1840,7 @@ NetworkRepository.prototype.abortEntry=function(myIdentifier){
         case 'Hold':
         case 'Fixed':
         case 'Active':
-            //管理モード下でのみ処理　このメソッドのコール自体が管理モード下でのみ可能にする
+            //管理モード下でのみ処理 このメソッドのコール自体が管理モード下でのみ可能にする
             //リポジトリに対して
         break;
     }
@@ -1870,7 +1852,7 @@ NetworkRepository.prototype.abortEntry=function(myIdentifier){
 
 ログインするサーバを選んでログイン処理をする
 ログイン情報を保持して
-状態は　offline/onnline/online-single の3状態
+状態は offline/onnline/online-single の3状態
 モードによっては機能が制限される
 UI上モードを表示するシンボルが必要
 
@@ -1887,10 +1869,10 @@ serviceAgent = {
 };
 /**
     サービスエージェントの初期化(テスト版)
- リポジトリの初期化は　最終的には作業記録とサーバからの受信情報でアプリケーション初期化のタイミングで組む
+ リポジトリの初期化は 最終的には作業記録とサーバからの受信情報でアプリケーション初期化のタイミングで組む
 */
 serviceAgent.init= function(){
-    this.repositories=[localRepository];　//ローカルリポジトリを0番として加える
+    this.repositories=[localRepository]; //ローカルリポジトリを0番として加える
     
 if(xUI.onSite){
     var serviceA=new ServiceNode("SCIVONE",'http://remaping.scivone-dev.com');
@@ -1960,12 +1942,12 @@ serviceAgent.authorized = function(status){
 /**
     サーバを切り替える
 引数: myServer / Object ServiceNode
-サーバ名・URL・ID　またはキーワードで指定
+サーバ名・URL・ID またはキーワードで指定
 キーワードと同名のサーバは基本的に禁止？
 サーバにログインしていない場合は、各サーバごとの認証を呼ぶ
 既にサービスにログインしている場合は、その認証を解除してから次のサービスを認証する
 
-内部的にはともかくユーザ視点での情報の輻輳を避けるため　サーバ/リポジトリを多層構造にせず　
+内部的にはともかくユーザ視点での情報の輻輳を避けるため サーバ/リポジトリを多層構造にせず 
 リポジトリに対する認証のみをUIで扱う
 リポジトリの切り替えに対してログイン/ログアウトを行うUI仕様とする。
 サービスの切り替えは内部での呼び出しのみになるので引数は整理する
@@ -2002,10 +1984,10 @@ serviceAgent.switchRepository = function(myRepositoryID){
 };
 
 /**
-    引数を判定して動作を決定　カレントリポジトリの操作を呼び出す
-    myRepository    対象リポジトリ　名前又はオブジェクト　指定がない場合はカレント
-    myIdentifier    カット識別子　完全状態で指定されなかった場合は、検索で補う
-    isReference    リファレンスとして呼び込むか否かのフラグ　指定がなければ自動判定
+    引数を判定して動作を決定 カレントリポジトリの操作を呼び出す
+    myRepository    対象リポジトリ 名前又はオブジェクト 指定がない場合はカレント
+    myIdentifier    カット識別子 完全状態で指定されなかった場合は、検索で補う
+    isReference    リファレンスとして呼び込むか否かのフラグ 指定がなければ自動判定
     callback    コールバック関数指定が可能コールバックは以下の型式で
         function(xpsSourceText,callbackArguments){    }
     コールバックの指定がない場合は指定データをアプリケーションに読み込む
@@ -2021,11 +2003,11 @@ serviceAgent.getEntry = function(myRepository,myIdentifier,isReference,callback)
     ステータスによっては、ジョブ名引数を必要とする
     変更をトライして成功時／失敗時に指定のコールバック関数を実行する
     
-    操作対象ドキュメントは、必ずUI上でオープンされている　(xUI.XPS が対象)
+    操作対象ドキュメントは、必ずUI上でオープンされている (xUI.XPS が対象)
     引数で識別子を与えることは無い
     
     activate(callback,callback2)
-                Active > Active  例外操作 作業セッションの回復時のみ実行　データにチェック機能が必要
+                Active > Active  例外操作 作業セッションの回復時のみ実行 データにチェック機能が必要
         ステータス変更なし
                 Hold   > Active
                 Fixed  > Active （Fixedの取り消し操作）
@@ -2053,7 +2035,7 @@ Abort > 最終JobのステータスをAbortに変更して保存する
 サービス型の場合は変更リクエストを発行して終了
 
 この場合の違いを吸収するためにRepositry.changeStatus() メソッドを実装する
-エントリステータスの変更は単純な変更にならない　かつ　リポジトリ通信先のデータ更新にかかわるのでエントリのメソッドにはしない
+エントリステータスの変更は単純な変更にならない かつ リポジトリ通信先のデータ更新にかかわるのでエントリのメソッドにはしない
 
     checkin(開く)
 Startup/Fixed/(Active) > Active
@@ -2072,12 +2054,12 @@ Hold/Fixed > Active
 Acive > Hold   
 カレントジョブの状態を変更
 
-===================　ここまでproductionMode　での操作
+=================== ここまでproductionMode での操作
 ドキュメントブラウザパネルの表示は
 [ CHECKIN][CHECKOUT][ACTIVATE][DEACTIVATE]
 [作業開始][作業終了][作業保留][作業再開]
 となる
-===================　
+=================== 
 
     receipt(検収)
 fixed > Startup
@@ -2114,13 +2096,13 @@ serviceAgent.activateEntry=function(callback,callback2){
     }
     switch (currentEntry.getStatus()){
         case 'Active':
-/**     例外処理　ロストセッションの回復
-    編集中に保存せずに作業セッションを失った場合　この状態となる
+/**     例外処理 ロストセッションの回復
+    編集中に保存せずに作業セッションを失った場合 この状態となる
     また同一ユーザで編集中に他のブラウザからログインした場合も可能性あり
     ここに確認用のメッセージが必要
 */
             if(xUI.currentUser.sameAs(xUI.XPS.update_user)){
-                var msg = '[！！注意！！]　異常処理です\n';
+                var msg = '[！！注意！！] 異常処理です\n';
                 msg += 'このデータは現在あなたのアカウントで編集中です\n';
                 msg += '他の環境でドキュメントを開きっぱなしになっていないか確認してください\n';
                 msg += 'OKを押すと、現在のデータから作業を再開できます\n';
@@ -2128,7 +2110,7 @@ serviceAgent.activateEntry=function(callback,callback2){
                 if(confirm(msg)){
                     xUI.setUImode('production');
 //  必要があればここでリポジトリの操作（基本不用）
-                    sWitchPanel();//パネルクリア
+                    xUI.sWitchPanel();//パネルクリア
                     return true;
                 }
             }
@@ -2144,14 +2126,14 @@ serviceAgent.activateEntry=function(callback,callback2){
             this.currentRepository.activateEntry(callback,callback2);//コールバックはリレーする
             return true;
         } else {
-            console.log('作業再開失敗　ユーザ違い');
+            console.log('作業再開失敗 ユーザ違い');
             return false;
         }
         break;
     }
 }
 /**
-    作業を保留する　リポジトリ内のエントリを更新してステータスを変更
+    作業を保留する リポジトリ内のエントリを更新してステータスを変更
     ユーザ判定は不用
     現データの送信（保存）後にリスト更新とドキュメントブラウザの更新
 */
@@ -2206,7 +2188,7 @@ serviceAgent.checkinEntry=function(myJob,callback,callback2){
     }
 }
 /**
-    作業を終了する　リポジトリ内のエントリを更新してステータスを変更
+    作業を終了する リポジトリ内のエントリを更新してステータスを変更
     ユーザ判定は不用
     現データの送信（保存）後にリスト更新とドキュメントブラウザの更新
 */
@@ -2239,7 +2221,7 @@ serviceAgent.receiptEntry=function(myIdentifier){
     if(! currentEntry) return false;
     switch (currentEntry.getStatus()){
         case 'Startup': case 'Active': case 'Hold':
-            //条件付きで処理　又は一旦強制的にfixしてから中断に？
+            //条件付きで処理 又は一旦強制的にfixしてから中断に？
         break;
         case 'Fixed':
             //処理
@@ -2255,7 +2237,7 @@ serviceAgent.abortEntry=function(myIdentifier){
     if(! currentEntry) return false;
     switch (currentEntry.getStatus()){
         case 'Startup': case 'Hold': case 'Fixed': case 'Active':
-            //管理モード下でのみ処理　このメソッドのコール自体が管理モード下でのみ可能にする
+            //管理モード下でのみ処理 このメソッドのコール自体が管理モード下でのみ可能にする
             //リポジトリに対して
         break;
     }

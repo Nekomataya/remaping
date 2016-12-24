@@ -1,436 +1,1108 @@
-﻿/**
- * @overview MAPping配列の初期化() りまぴん用仮オブジェクト
- *
- * var MAP= new_MAP(SheetLayers);
- * var MAP= new Array(SheetLayers+2);//0番・レイヤ最大番号+1 はシステム予約
+/**
+ *	mapio.js
+ *	MapオブジェクトはECMAScript6の標準案でグローバルオブジェクトなので　名前を変更します
+ *	従来MapとしてアクセスしていたオブジェクトはxMapとなります　8.4 2016 kiyo
+ *	一般名称はMAPのままです - ManegementAnimationProducts というくらいの気分で
+ *	
+ *xMap はカット袋に相当する制作管理基本単位で、同時にアセットトレーラーである
+ *初期化の際にタイトル文字列と、管理対象記述を与えて初期化を行う
+ *引数はなくとも良い
  */
 
 
 /**
- * xMapオブジェクトは、ProductionTitel/ProductionUnit　の配下に入り基礎データの継承を行う
+ *otome/psAxeのworkTitleDBはタイトル　略称　IM/OM のクラスタオブジェクトなのでやや情報量不足　かつ　IM/OMは　この場合不要情報　なので別のアプローチをとること
+ *IM/OMは別テーブルで管理
  *
- * 実装上の継承はプロトタイプチェーンではなく、プロパティの複製で処理する
+ *識別文字列　ユニークID
+ *タイトル	フルネーム
+ *短縮表記	ショートネーム
+ *ファイル名挿入用コード（4文字まで）コード
+ *IM	PEG情報を含める
+ *OM	PEG情報を含める（pegを使用するケースはほぼ無いが、同じオブジェクトを使用するため）
+ *　//	初期化手順として
+ *new xMap(作品識別子,カット又は作業識別子);？
  *
- * これは、xMapの配下に入りプロダクション中及びプロダクション後のリソース流用に対してデータの独立性を保つための処置である
+ *Mapデータ内部では、テキストとして保存できなくなるので作品／カットデータ等は全て文字列として処理する
+ *オブジェクト処理はアプリケーション側で担当する
+ *タイトル等は識別子を使用して連結する　不明のデータは文字列のまま保存
+ *カット識別は　シーンをまたがった兼用を行う可能性があるので　それを阻害しないように　S-Cの組み合わせで識別子を作成する
+ *列挙可能にする
  *
- * 製作期間中は、タイトル・管理単位の間では同じプロパティを共有
- *
- * xMapを初期化する手順（2015 12 19）
- *
- * コンストラクタでxMapオブジェクトを初期化
- * new xMap([リプレースメントセルグループ数])
- * 戻り値は空のマップオブジェクト
- *
- * 引数は、セルのグループ数。省略可能。省略時は、グループ数1で初期化?
- * (0でも良さそう)
- *
- * 実際のデータの初期化は、マップオブジェクト自身の初期化メソッドを
- * コールして行う。
- * 初期化は、実装により異なるかもしれない。それで良いのだ。
- *
- * マップは基本的には、マップエントリグループとその配下のマップエントリを格納するトレーラです。
- *
- * エントリグループ毎に実際のセル・撮影指定等がエントリされます。
- *
- * エントリグループは、セルグループに加えて4種類(計5種)のグループがあります。
- *
- * グループ[ID.timig]/[ID.replacement]は、
- * セル置きかえを記述するグループ　実際の画像エントリ（カラエントリ。未成画像エントリはOK）を記述
- *
- * グループ[ID.camerawork]/[ID.camera]は、
- * 撮影情報に対して名前をつけて管理する(実体のファイルが存在しない)エントリが
- * 属するグループ。
- *
- * グループ[ID.dialog]/[ID.sound]は、音響効果指定
- *
- * グループ[ID.effect]/[ID.compsit]は、合成効果指定
- *
- * グループ[ID.system]は、
- * システムによって生成された(ユーザが管理しない)画像・要素が属するグループ
- * (カラセル等・今回の実装では配列の添字は0)
- *
- *
- * それぞれのエントリグループは任意の数を設定できるが、デフォルトで以下のグループが作成されます。
- * camerawork    /0
- * cell    /1(初期化時点で設定可能)
- * dialog    /1
- * effect    /0
- * system    /1
- *
- * したがってマップ配列の要素数は、作成時点でセルグループ数+2 となる。
- *
- * AEの場合のMAPに望まれる機能
- * 名前で指定されたXPSのエントリーを適切なタイムリマップ値に変換すること
- * XPS側からは タイムラインラベルおよびエントリ文字列を与える
- * MAPサイドでは、
- * ラベルからエントリグループ(コンポジション)を特定
- * エントリ文字列からグループ内のエントリ(タイムリマップ値)を特定して戻す
- *
- * コンポ内でブランク対応している場合(ファイルモード)は、ブランクに相当するタイムリマップ値を返す
- * それ以外の場合は、特定のキーワード"blank"を返す。
- * エントリに該当しない場合は、nullを返す。
- * this.trailer=targetFolder;//ターゲットフォルダアイテムを指定して初期化
- *
- * (元設計)
- * xMap.getElementByName("ラベル","エントリ")    戻り値：Number(整数)or "blank" or null
- *
- * (拡張新設計)
- * 以前の置きかえタイミングのみのサポートでなく全種のトラックに対応するために拡張を行う。
- * xMapに対してのエントリ要求は、同名のメソッドで行われる。
- * xMap.getElementByName(name,group[,[job]][,stage])    戻り値：Object or Null
- *
- * 要求されたエントリが、リプレースメントの場合は当該のオブジェクトまたはNull
- * 要求されたエントリが、カメラワークの場合は当該のオブジェクトまたはNull
- * 要求されたエントリが、コンポジットの場合は当該のオブジェクトまたはNull
- * 要求されたエントリが、サウンドの場合は当該のオブジェクトまたはNull
- *
- * 前設計では置きかえタイミングで存在しないエントリが要求された場合はブランクが戻るが、今設計ではNullとなる
- * ブランクの置き換えはxMapへの問い合わせでなくタイムシートを制御する側で行われるように
- *
- * トラックの基底データとして持つオブジェクトをシステムオブジェクトでxMap内に持つことは従来のまま
- *
- * *****ステージ拡張
- * 制作進捗状況の把握管理のためにステージとステージ内のジョブを拡張実装する
- * 各エレメントグループのエントリは必ずいずれかのステージに属するものとする
- *
- * グループの上位構造ではなく、エレメントごとのプロパティとして実装？
- * 　＞記述上はグループの上位構造に見えるが、グループ記述を一か所にまとめる必要はなく、複数の重複したエントリが認められる。
- * 記述順で後から指定されたものが優先であるが、ステージ・ジョブレベルが異なる場合は別のエントリとなる。
- * 各エントリの識別子は同一ステージ内で一意性を要求されるが、　ステージが異なる場合はその限りでない。
- * 同一ステージ内の同名の複数のエントリは、タイムシート上の同名のエントリを示す。
- *
- * また、ステージ内でジョブレベルが異なれば、フルネームで指定されないかぎりジョブの並びにしたがって最後にエントリされたモノが有効となる。
- *
- * 要素のフルネームは StageID.JobID.GroupID.Name となるが、特にフルネームで指定されないかぎりは Name のみで指定される。
- * その際に戻されるエレメントは (最後尾ステージ).(最終ジョブ).(アクティブタイムライントラックのグループ).Name である。
- * ステージの指定のみが行われると、当該ステージの最終ジョブの値が戻る。
- * ジョブのみの指定が行われれば、カレントのステージで当該ジョブに対応する値を返す。
- *
- * そういう仕様で設計するが、要求側で同設計のもとフルネームをビルドして要素を指定するものとしたほうが良い
- * 要求された要素が存在しない場合は、
- * xMap側で「要求された要素」＞「要求された要素に近い代替要素」＞「前ステージにさかのぼって推定される同名の要素」＞Null　
- * と戻り値をフォールダウンさせることができるように作りたい
  */
-
+function xMap(titleString,targetDecription){
+	this.parent;//親ｘMapへのアクセス ? ステージ内に限る 複製継承をしないほうが良い…？
 /**
- * @param myParent
- * @param cellCount
- * @constructor
+ *	//========== 以下のプロパティはグローバルの参照でなく順次DB接続からの参照に置きかえ
+ *	//カット番号情報直接でなくオブジェクト化する　ｘMap.prodUnit=new ProductionManagementUnit();
+ *	// 作品・兼用を含むカット番号情報等の集合データ　以下のプロパティはそのオブジェクトへの参照を入れる
+ *	//MAP標準プロパティ設定
+ *	// 作品情報 workTitel-DBの値　nas.workTitles[myTitle]=
+ *	//	this.workTitle = new nas.workTitle();//マスタライブラリ側で作成　カレントの作品はそちらで処理
  */
-function xMap(myParent, cellCount) {
-    if (!cellCount) cellCount = 1;//引数無ければ 1
-    cellCount = parseInt(cellCount);//数値にしておく
-    /**
-     * 基本要素設定
-     * システム配列要素を2つ追加する。ダイアログとシステム
-     * @type {Array}
-     */
-    this.mapBody = new Array(cellCount + 2);
+	this.opus	=	myOpus;//SCi
+	this.title	=	myTitle;//
+	this.subtitle	=	mySubTitle;
+	this.rate	=	(!nas)? "24FPS":nas.RATE;//作品情報として追加
+	this.framerate	=	(!nas)? nas.newFramerate("24FPS"):nas.newFramerate(nas.RATE, nas.FRATE);//作品情報として追加
+	this.standerdFrame = new nas.AnimationField();
+	this.standerdPeg = this.standerdFrame.peg;
+	this.baseResolution = new nas.UnitResolution(nas.RESOLUTION,"dpc");
+// 兼用カットトレーラー
+	this.scene	= "";//シーン所属を記録・空白でも可　この情報は死に体だが、互換のため残置
+	this.cut	= "";//S-C形式代表カットを指定する　外部アセットの場合予約語"_EXTRA_"を使用
+	this.inherit	= "";//S-C形式で兼用カットを列挙　代表カットは記述してもしなくても良い　重複は別に整理する　兼用がなければ省略可
+	this.inheritParent	= "";//参照（継承）する外部の単独ｘMapをファイルパスで記述　(継承の詳細は未定　2016.04)
+	this.extraAsset	;//cutが"_EXTRA_"である場合に記述・最終目的のアセットを保持する
+// 作業内容登録
+// 内部変数scene-cutを整理して格納する配列
+		this.scenes = new Array();//extraアセットの場合配列要素数は0のままである　そういうケースが多い
+// 代表名称
+	this.name	="" ;//再初期化で名前を生成する　[myScene,myCut].join("-");//-で接合して名前にする（カットの場合）
+		var Now =new Date();
 
-    /**
-     * @desc プロパティを標準値で設定
-     */
+//以下の情報は　xMap.manager = new ManegementNode(); への参照に更新予定
+	this.create_time	=	Now.toNASString();//オブジェクトを初期化したタイミング
+	this.create_user	=	myName;//
+	this.update_time	=	"";//
+	this.update_user	=	myName;//
 
-    /**
-     *
-     * 標準値は、現在の実装ではconfig.jsから読み込んでいるが
-     * これはProductionParams等の親オブジェクトから継承する形にできるようにしておく
-     * 具体的には、参照用のプロパティを置いてそこから取得する？
-     * xMapの親プロパティSubTitel.Title.Production
-     *
-     * @type {Window}
-     */
-    this.productinUnit = parent;	//ProductionUnit
-    this.cut = myCut;//
-    this.scene = myScene;//
-    this.subtitle = mySubTitle;//object SubTitle
-    this.opus = myOpus;//
-    this.title = myTitle;//
-    var Now = new Date();
-    this.create_time = Now.toNASString();//
-    this.create_user = myName;//
-    this.update_time = "";//
-    this.update_user = myName;//
-    this.standerd_frame = [22.5, 4 / 3.144 / 2.54];//width(cm),aspect(w/h),Resolution(dpc)//Frameに置き換え予定
-    this.standerd_peg = ["3P", 0, 19.875, 0];//type,x,y,0];//pegType,posX,posY,rotation//Pegに置き換え予定
-    this.resolution = nas.RESOLUTION;//(dpc)
+//デフォルトの値はトレーラー内のグループの標準値を参照するので、ここでは設定しない　8-4 2016
 
-    /**
-     * @desc グループ情報の設定
-     * グループの持つジオメトリ情報は、各エントリのジオメトリと独立している。
-     * これは、グループ内のセルの持つ情報の省略値ではなく、グループ全体の持つ
-     * トリミング情報となる。要するにタップとフレームだ。
-     *
-     * @type {Array}
-     */
-    this.groups = new Array(cellCount + 2);
-    /**初期値
-     * @type {string}
-     */
-    var name = "";
-    var geometry = "640,480,72/2.54,1,0,300,0";
-    //デフォルト値としては妥当な気がする?
-    //"X,Y,dpc,par,offsetX,offsetY,rotation"
-    var comment = "";//未設定
 
-    this.groups[0] = ["system", geometry, comment];//0番要素はシステム固定
-    /**
-     * ループしてデフォルト値を設定
-     */
-    for (id = 1; id < (cellCount + 1); id++) {
-        name = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".charAt(id - 1);
-        //geometry	="640,480,72,1,0,300,0";
-        //comment	="";
-        this.groups[id] = [name, geometry, comment];
-    }
+//========= 進捗管理情報 分離可能に
+		this.currentJob;//	=	"";//job　フォーカスのあるオブジェクトへの参照
+//	ジョブがリンクしているのでステージとラインは特定可能
+		this.lines	=new Array();
+		this.stages	=new Array();
+		this.jobs	=new Array();
+//
+		this.lines.add	=xAdd;
+		this.stages.add	=xAdd;
+		this.jobs.add	=xAdd;;
+//現在のMapが制御下に置くライン情報
+//	this.currentLine=0;//##LINE_ID から抽出
 
-    this.groups[cellCount + 1] = ["camera", geometry, comment];//最終要素はシステム予約(1番でも良いかもその方が計算が減る?)
-    /**
-     * エントリ情報の設定
-     */
-    for (id = 0; id < SheetLayers + 2; id++) {
-        this.mapBody[id] = "=AUTO=";
-    }
+	this.lineIssues=	new nas.Pm.LineIssues(new nas.Pm.Issue("trunc",0),this);
+//ライン発行記録　ライン情報の転記（自動更新）素材の変更権限は各ラインごとの記録
+/*
+	この部分は独立オブジェクトにするのが良さそう
+	nas.PmlineIssuesのメンバーは　nas.Pm.Issue 
+	Issue 一件毎に　発行ID:名称:発行日時/ユーザ:終了（合流）日時/ユーザ ラインステータス　で構成される
+	記録上はテキストに展開されてファイルに埋め込まれる
+	
+*/
+//========= データ保持構造をオブジェクト化したほうが良さそう？
+		this.currentIndex = 0;//フォーカスのあるエレメントID
+//エレメントには　Job/Groupの参照があり　GroupからStageへの参照がある
+//ステージ内の同名（同グループ）エレメントであっても、Jobが異なる場合は双方を維持する
+//通常のリクエストには際後発のエレメントを戻す
+//
+		this.elementGroups   = new Array();
+		this.elementStore = new Array();
+//memo
+		this.memo="";
 }
-/**
- * 各メソッド
- * @returns {string}
+//コレクション汎用メソッド
+/*配列をコレクションとして使用する場合の標準メソッド*/
+/*	xAdd
+	全要素を検査して同管理パスの要素があればそれをもどして終了
+	ない場合は、コレクションにメンバーとして追加
+*/
+function xAdd(mEmber){
+	for (var ix=0;ix<this.length;ix++){	if(mEmber.getPath()==this[ix].getPath()) return this[ix]	};
+	this.push(mEmber);
+	 if(mEmber instanceof nas.Pm.ProductionJob) this.currentJob=mEmber;
+	return mEmber; 
+}
+/*	getPath　メソッド
+ *	当該要素の管理パスを戻す
+ *	管理パスは以下の型式で管理ツリーのノードを"."でつないだ文字列
+ *	上方のパスは省略可能　その場合はトップノード(右端=文字列終端)の"."は付かない
+ *	job.stage.line.sci.opus.title.
+ *	job.stage.line.sci.opus
+ *	job.stage.line.sci
+ *	job.stage.line
+ *	job.stage
+ *	job
  */
-xMap.prototype.init = function () {
-    return "ここで初期化するぞー!(してないけど)";
+/*	xRemove
+ *	メンバーを削除
+ */
+
+//xMap.のメソッドを定義
+xMap.prototype.getElementById =function(idx){
+ for (var id=0;id<this.elementStore.length;id++){
+    if(this.elementStore[id].id==idx) return this.elementStore[id];
+ }
+ return false;
+};
+xMap.prototype.getElementByName =function(myName){
+ for (var id=0;id<this.elementStore.length;id++){
+ 	var parentName=(this.elementStore[id].parent)? this.elementStore[id].parent.name:"";
+ 	if((parentName + this.elementStore[id].name)==myName) return this.elementStore[id];
+ }
+ return false;
+//暫定的に　グループ名+セル名の完全一致で動作中
+//これは検索規則に合わせて調整要
+
+/**
+エントリ毎にlinkJobが登録されている
+Jobが異なるとグループを新たに登録可能
+
+group   "B"
+name    "B-1"
+        "001"
+        "B001"
+        "1"     //これらは同一セルとして許される表記
+
+        "B-2a"
+        "B_3カブセ"
+*/
 };
 
 /**
- * @param id
- * @param prop
- * @returns {*}
- */
-xMap.prototype.getgeometry = function (id, prop) {
-    if (!id) id = 0;
-    if (!prop) prop = "all";
-    switch (prop) {
-        case "sizeX":
-            return (( this["groups"][id][1].split(",")[0] / 72 ) *
-            this["groups"][id][1].split(",")[2] );
-            break;
-        case "sizeY":
-            return (( this["groups"][id][1].split(",")[1] / 72 ) *
-            (this["groups"][id][1].split(",")[2] / this["groups"][id][1].split(",")[3]));
-            break;
-        case "resX":
-            return this["groups"][id][1].split(",")[2];
-            break;
-        case "aspect":
-            return this["groups"][id][1].split(",")[3];
-            break;
-        case "resY"    :
-            return (this["groups"][id][1].split(",")[2] / this[id][1].split(",")[3]);
-            break;
-        case "offsetX"    :
-            return this["groups"][id][1].split(",")[4];
-            break;
-        case "offsetY"    :
-            return this["groups"][id][1].split(",")[5];
-            break;
-        case "rotation"    :
-            return this["groups"][id][1].split(",")[6];
-            break;
-        default    :
-            return this["groups"][id][1].split(",");
-    }
+	Class xMapElement
+	エレメントクラス 各合成素材（情報）の共通部分
+	エレメントの所属するJobが未指定の場合は、登録時のカレントJobとなる
+*/
+nas.xMapElement =function xMapElement(myName,myParentGroup,myLinkJob){
+	this.id;//セッション内ユニークインデックス
+	this.parent=myParentGroup;//xMapGroup/Object
+	this.link=myLinkJob;//linkPmJob/Object
+	this.type=this.parent.type;//親グループのtype以外は受け付けないので参照を記録
+	this.name=myName;
+	this.content=Object.create(this.parent.content);//継承　親グループが正常に初期化されているのが条件
+	if(this.content.type=="cell"){this.content.overlay=null;}
+//	if(this.content.type=="replacement"){this.content.overlay=null;}
+	this.comment="";
 };
-
-/**
- * @param id
- * @returns {*}
- */
-xMap.prototype.getmaxlot = function (id) {
-    if (this.mapBody[id] == "=AUTO=") {
-        return "=AUTO="
-    } else {
-        return this.mapBody[id].length;
-    }
+nas.xMapElement.prototype.toString=function(){
+	var myResult=this.parent.name +"\t"+this.name+"\t"+this.content.toString() +"\t"+this.comment+"\n";
+	var addResult=this.content.toString(true);
+	if(addResult) myResult += addResult;
+    return myResult;
 };
-
-/**
- * @desc xMapコンストラクタ終了
+/*
+ *	Class xMapGroup
+ *	合成素材をグルーピングするクラス　グループラベル・グループのデフォルト値を保持するのが主な目的
+ *	グループ登録時に親のプロパティの複製をとってエレメントに設定する
+ contentプロパティには、グループのデフォルト値となる値を持ったインスタンスを置く
+    dialog
+    sound       :blank  
+    cell
+    replacement :blank  
+    still       :picture グループ代表スチル画像をオブジェクトで＝何も記述しなくとも値ができる
+    camarawork  :standerd frame animationField  標準カメラジオメトリ
+    effect      :normal composit 100%   ノーマルコンポジット100% 
+ */
+nas.xMapGroup =function xMapGroup(myName,myTypeString,myLinkJob){
+	this.id;//セッション内ユニークインデックス
+	this.parent=this;//xMap/Object
+	this.link=myLinkJob;//linkPmJob/Object
+	this.type=myTypeString;//system,sound,effect,camera,cell/String
+	this.name=myName;//
+	this.content="";//タイプストリング毎の初期化を行うことが必要　未コーディング　2016.09.07
+	this.comment="group";
+	this.elements = new Array();//要素トレーラー
+};
+nas.xMapGroup.prototype.toString=function(jobFilter){
+	var myResult="["+this.name+"\t"+this.type +"\t"+this.content.toString()+"\t"+this.comment+"]\n";
+	var addResult=this.content.toString(true);
+	if(addResult) myResult += addResult;
+	for (var eIdx=0;eIdx<this.elements.length;eIdx++){
+		if((typeof jobFilter == "undefined")||(jobFilter===this.elements[eIdx].link)) myResult+=this.elements[eIdx].toString();
+	}
+	return myResult;
+};
+/*
+ *エレメント及びグループの編集用メソッド
+ *	基本的には、xUIで実装するが、対応するデータ設計のみは行っておく
+ *EG.remove()	,オブジェクトの削除	グループを削除すると配下のエレメントを全削除
+ *削除は、配列要素のdeleteではなく、removed属性のセットで行う　クリアするまではやり直し可能になる（逆処理をスタックに詰める）
+ *EG.dupuricate(to),オブジェクトの複製	複製先アドレスが必用　(element.group.job.stage.line.)　指定がなければ同ロケーションで自動リネームして作成
+ *EG.rename(newName)	,オブジェクトのリネーム　新しい名前はアドレス指定が可能	(element.group.job.stage.line.)　指定がなければ自分自身の名前を使用（==NOP）
+ *E.moveTo(G)	,エレメントを他のグループに移動（ラベルが変わる）上の機能のエイリアス
+ *
+ *G.sort()	,（全体エレメントでなく）グループ内のエレメントをネームソート
+ *G.add(E)	,グループにエレメントを追加	引数なければ増番で新規作成
+ *EG.setValue	,値オブジェクトのセット　実際の値の処理は値オブジェクトごとの別処理
+ *EG.getValue	,値オブジェクトの取得
  */
 
-/**
- * @returns {string}
+/*
+ *	エレメント作成メソッド
+ *		継承セットアップ・コレクション登録処理つき
+ *グループ作成
+ *	new_xMapElement(name,type,Object Job);//名前,タイプ文字列,リンクするジョブを引数にする
+ *戻り値：グループオブジェクト
+ *
+ *エレメント作成
+ *	new_MapElement(name,Object xMapGroup,Object Job);//名前,継承する親グループ,リンクするジョブを引数にする
+ *戻り値：エレメントオブジェクト
+ *	インデックスナンバを生成してMap.elementGroups[name]にグループエレメントを登録する
+ *
+ *例：test
+ var myMap=new xMap();
+ 	var myLine	=	myMap.new_ProductionLine("trunk");//ライン初期化
+ 	var myStage	=	myMap.new_ProductionStage("layout",myLine)//ステージを初期化
+ 	var myJob	=	myMap.new_Job("",myStage)//第一ジョブを初期化
+ 	
+ var group.A	=	myMap.new_xMapElement("A"	,"cell"	,myJob);//グループ作成-連結するジョブが必要
+ 
+ var A1		=	myMap.new_xMapElement("A-1"	,Acell	,myJob	);//B.name;
+ myMap.getElementByName("A");
+ *
+ *
+ *	
  */
-function initMAP() {
-    /**
-     * マップオブジェクトの初期化は、ファイルを指定するか、または 導入済のFolderItemを指定して行う
-     * ファイルが指定された場合は、AEの環境下では、マップのファイルをインポートしてフォルダアイテムに展開し
-     * さらにそのフォルダアイテム自身を登録して行うこと。
-     *
-     * Photoshop環境下では、アクティブドキュメントをMAP展開して利用する
-     * または、指定ファイルをドキュメントとして読み込み展開する
-     * アイテムのサイズは、ドキュメント内で不定
-     *
-     * XPSエディタ(りまぴん)側では、読み込んでデータテーブルを配置するだけでおしまい。
-     *  すなわち、動作仕様が変わるので注意
-     *
-     * MAPファイルを指定されればインポートおよび環境形成（未実装）
-     * それ以外は導入済みデータを使用してエージェントの初期化を行う
-     * AE以外の環境はあとまわし
-     */
+xMap.prototype.new_xMapElement = function (myName,myOption,myLink,contentSource){
+ if(typeof myName == "undefined" ) return false;//
+ if(typeof myLink == "undefined" ) return false;//
+ if(typeof myOption == "undefined" ) myOption = "";
+ if(typeof contentSource == "undefined" ) contentSource = "";
+//ここまでは無くとも可
 
 
-    /**
-     * MAP各プロパティ
-     */
-    /*
-     var cellCount=app.project.items.getByName(nas.otome.mapFolders.mapBase).items.getByName(nas.otome.mapFolders.cell).length;//グループアイテムフォルダのエントリ数をみる
-     ////////////////////// 基本要素設定
-     this.mapBody = new Array(cellCount+2);//システム配列要素を2つ追加する。ダイアログとシステム
-
-     //	プロパティを空で設定
-     this.opus	=	myOpus;//
-     this.title	=	myTitle;//
-     this.subtitle	=	mySubTitle;//
-     this.scene	=	myScene;//
-     this.cut	=	myCut;//
-     var Now =new Date();
-     this.create_time	=	Now.toNASString();//
-     this.create_user	=	myName;//
-     this.update_time	=	"";//
-     this.update_user	=	myName;//
-     */
-
-    return "代用マップデータの初期化をしました";
+ if(myOption instanceof nas.xMapGroup){
+//親オブエジェクトが指定されたらエレメント作成
+	var newElement=new nas.xMapElement(myName,myOption,myLink);
+		myOption.elements.push(newElement);
+ }else{
+//指定されない場合はグループなのでデフォルトパラメータを設定する
+/*
+	default params
+	xps     :xpsAgent       :Xpsの参照先パスを保持して　カット番号、時間等を返すエージェント
+	text    :AnimationText  :
+    system  :
+        
+    エレメントの作成には必ずこのルーチンを通してエレメントストアの管理を行うこと
+    エレメントの削除は単独のエレメントのメソッドで行う
+    ガベージコレクションはストアオブジェクトのメソッドにする
+*/
+	if(!(myOption.toString().match(/(camera|cell|effect|sound|system)/))) myOption = "cell";
+	var newElement=new nas.xMapGroup(myName,myOption,myLink);
+	this.elementGroups.push(newElement);
+	
+	switch(myOption){
+		case "xps":
+			newElement.content=new nas.XpsAgent();
+		break;
+		case "text":
+			newElement.content=new nas.AnimationText();
+		break;
+		case "system":
+	newElement.content=new nas.AnimationReplacement();
+	newElement.content.source=new nas.File();//ファイル　空
+	newElement.content.resolution=this.baseResolution;//作品DBの解像度
+	newElement.content.size=this.standerdFrame;//以下デフォルト値
+	newElement.content.position=new nas.Position();
+	newElement.content.rotation=new nas.Rotation();
+	newElement.content.offset=new nas.Offset();
+	newElement.content.offsetRotation=new nas.OffsetRotation();
+	newElement.content.pegOffset=new nas.Offset();
+	newElement.content.pegRotation=new nas.OffsetRotation();
+	newElement.content.comments=new String("");
+		break;
+		case "sound":
+		case "dialog":
+			if( contentSource instanceof nas.AnimationSound ){
+			    newElement.content=contentSource;
+			}else{
+    			newElement.content=new nas.AnimationSound(contentSource);			    
+			}
+		break;
+		case "effect":
+		case "sfx":
+			if( contentSource instanceof nas.AnimationEffect ){
+    			newElement.content=contentSource;
+    		}else{
+    			newElement.content=new nas.AnimationEffect(contentSource);
+			}
+		break;
+		case "camera":
+		case "camerawork":
+			if( contentSource instanceof nas.ClippingFrame ){
+    			newElement.content=contentSource;
+    		}else{
+    			newElement.content=new nas.ClippingFrame(contentSource);
+    		}
+		break;
+		case "cell":
+		case "replacement":
+		default:
+			if( contentSource instanceof nas.AnimationReplacement ){
+    			newElement.content=contentSource;
+    		}else{
+    			newElement.content=new nas.AnimationReplacement(contentSource);
+    		}
+	}	
+ };
+	this.elementStore.push(newElement);//エレメントとグループを総合ストアに格納
+	newElement.id=this.currentIndex;
+	this.currentIndex++;//削除してもSession内でidが不変
+	return newElement;
 }
 
-/**
- * xMap用各種メソッド
- * @returns {string}
+/*　
+ *nas.xManagementUnit
+ *	xMap,Xpsを包含するｘManagementUnitの継承手順
+ *外部メソッドで手続きする
+ *var myMAP=new_xMAP（オブション）
+ *ステージ
+ *ジョブ
+ *親アセット
+ *依存アセット
+ *マネジメントノードは、xMap,Xps外に置く？
+ *初期化の手順ーー
+ *
+ *　マネジメントノードは全てJob
+ *　JobがプロパティとしてStageとLineの値を持つ
+ *Stage と　Lineは同じコンストラクタの別オブジェクトにする？
+ *
+ *
+ *
+ *nas.xMap.ManagementNode("(本線)","line","/");//本線の初期化
+ *nas.xMap.ManagementNode("レイアウト","stage",Object);//レイアウトステージの初期化
+ *nas.xMap.ManagementNode("美術","line","/");//美術ラインの初期化
+ *nas.xMap.ManagementNode("美術","stage",Object);//原図整理の初期化
+ *nas.xMap.ManagementNode("原画","stage",Object);// 原画ステージの初期化
+ *nas.xMap.ManagementNode("色指定","stage",Object);//美術ラインの初期化
+ *
  */
-xMap.prototype.toString = function () {
-    /**
-     * xMapデータを保存形式で
-     * @type {Date}
-     */
-    var Now = new Date();
-    /**
-     * セパレータ文字列調整
-     * @type {string}
-     */
-    var bold_sep = '\n#';
-    for (n = this.layers.length + 2; n > 0; n--) bold_sep += '========';
-    var thin_sep = '\n#';
-    for (n = this.layers.length + 2; n > 0; n--) thin_sep += '--------';
-    /**
-     * ヘッダで初期化
-     * @type {string}
-     */
-    var result = 'nasMAP-FILE 2.0';//出力変数初期化
-    /**
-     * ##共通プロパティ変数設定
-     * @type {string}
-     */
-    result += '\n##CREATE_USER=' + this.create_user;
-    result += '\n##UPDATE_USER=' + this.update_user;
-    result += '\n##CREATE_TIME=' + this.create_time;
-    result += '\n##UPDATE_TIME=' + Now.toNASString();
+//ラインオブジェクト登録
+/*
+ *	ライン名は登録されたキーワード
+ *	cell,backgroundArt,cast3D,characterDesign,propDesign,BGDesign,colorDesign,colorCoordiante,composite,ALL
+ *	nas.Pm.lines[キーワード]　から複製をとってプロパティを追加する
+ */
+xMap.prototype.new_ProductionLine=function(myName){
+	var newLine=nas.Pm.lines.getLine(myName);//名前からラインのテンプレートを取得する。失敗のケースあり
+	if(!(newLine instanceof nas.Pm.ProductionLine)){
+		return false;//ここは取得失敗時（新規ラインかもしれない）の処理　今日はfalse　20160412
+	}else{
+		newLine=Object.create(newLine);//名前からラインのテンプレートを取得する
+		newLine.stages=new Array();//ステージコレクション要るか？
+		newLine.id=new Number(this.lines.length);//親コレクション内のID(ラインコレクション登録前=Origin:0)
+		newLine.parent=this;//親xMapへの参照
+		if(this.lines.add(newLine)){
+			return newLine;
+		}else{
+			return false;//追加失敗
+		}
+	}
+}
+//新規ステージオブジェクト登録
+/*
+	ステージ名は登録されたキーワード
+	ライン種別によって登録可能なステージが異なるのでフィルタリングが必要
+	ステージオブジェクトに親をもたせたほうが良いかもしれない
+*/
+xMap.prototype.new_ProductionStage=function(myName,myLine){
+	var newStage=nas.Pm.stages.getStage(myName);//取得失敗時はfalse
+	if(!(newStage instanceof nas.Pm.ProductionStage )){
+		return false;//ここは取得失敗時（新規ステージかもしれない）の処理　今日はfalse　20160412
+	}else{
+		newStage=Object.create(newStage);
+		newStage.jobs=new Array();
+		newStage.line=myLine;//parentLineObject
+		newStage.id=new Number(myLine.stages.length);//親コレクション内のID(Origin:0)
+		if(this.stages.add(newStage)){
+			;//Map内のステージコレクションへ追加成功したら以下の処理
+			myLine.stages.push(newStage);//親ラインのコレクションに登録
+			return newStage;
+		}else{
+			return false;//コレクションの追加に失敗
+		}
+	}
+}
+//新規ジョブオブジェクト登録
+/*
+ジョブは新規に作成
+*/
+xMap.prototype.new_Job=function(myName,myStage){
+	var Now=new Date();
+	var newJob = new nas.Pm.ProductionJob(myName,myStage);
 
-    result += '\n##TITLE=' + this.title;
-    result += '\n##SUB_TITLE=' + this.subtitle;
-    result += '\n##OPUS=' + this.opus;
-    result += '\n##SCENE=' + this.scene;
-    result += '\n##CUT=' + this.cut;
+//	newJob.stage=myStage;//ステージ参照 オブジェクト
+//	newJob.line=myStage.line;//ライン参照　オブジェクト//これはたどれるので不要？
+	newJob.currentStatus=0;//
+	newJob.createUser=this.currentUser;//
+	newJob.createDate=Now.toNASString();//
+	newJob.updateUser=this.currentUser;//
+	newJob.updateDate=Now.toNASString();//
+	if(this.jobs.add(newJob)){
+		newJob.type=new Number(myStage.jobs.length);//	 /0:init/1:primary/2~:check/
+		myStage.jobs.push(newJob);
+		newJob.id =new Number(this.jobs.length);//	インデックスは内部アクセス用のID
+		this.currentJob=newJob;//カレントを記録
+//	this.trailer=new xMapArray();//	コレクションオブジェクト（配列）
+//ステージ内IDで全て処理が可能か
+		return newJob;
+	}else{
+		return false;
+	}
+}
+/*
+ ManagementNodeオブジェクトは、Mapデータの内部で進捗情報を受け持つ
+ｘMap.manager=new nas.xMap.ManagementNode()
+	マネジメントノードの役割は
+ライン・ステージ・ジョブの情報を持つ
+各オブジェクトは「ジョブ」に対応する（type は不要）　管理ノードは　ステージ／ラインプロパティを持ったJOBのみ
+ステージは　アセットにリレーション
 
-//result+='\n##TIME='	+ nas.Frm2FCT(this.time(),3,0)	;
-//result+='\n##TRIN='	+nas.Frm2FCT(this.trin[0],3,0)+","+ this.trin[1];
-//result+='\n##TROUT='	+nas.Frm2FCT(this.trout[0],3,0)+","+ this.trout[1];
-//result+='\n##FRAME_RATE='	+ this.framerate	;
-//result+='\n##FOCUS='	+11//
-//result+='\n##SPIN='	+S3//
-//result+='\n##BLANK_SWITCH='	+File//
-    result += '\n#';
-    result += bold_sep;//セパレータ####################################
-    /**
-     * レイヤ別プロパティをストリームに追加
-     * @type {string[]}
-     */
-    var Lprops = ["sizeX", "sizeY", "aspect", "lot", "blmtd", "blpos", "option", "link", "name"];
-//	var Lprops=["sizeX","sizeY","aspect","lot","blmtd","blpos","option","link","CELL"];
-    for (var prop = 0; prop < Lprops.length; prop++) {
-        var propName = Lprops[prop];
-        var lineHeader = (propName == "name") ?
-            '\n[CELL\tN' : '\n[' + propName + '\t';
-        result += lineHeader;
-        for (id = 0; id < this.layers.length; id++) {
-            result += "\t" + this["layers"][id][propName];
-        }
-        result += '\t]';//
-    }
-    /**
-     * セパレータ
-     * @type {string}
-     */
-    result += bold_sep;//セパレータ####################################
-    /**
-     * シートボディ
-     */
-    for (line = 0; line < this.duration(); line++) {
-        result += '\n.';//改行＋ラインヘッダ
-        for (column = 0; column < (this.layers.length + 2); column++) {
-            address = column + '_' + line;
-//			if(! Separator){}else{};
+ステージスターター（アセット）ステージを開始するアセットがある　特定ステージの出力
+ステージアウトプット　ステージはアウトプットで終了する
+ステージのアウトプットは、ジョブのアウトプットである
+最終ジョブのアウトプットが常にステージのアウトプットとなる
+ジョブのアウトプットがステージアウトプットの条件を満たすか否かの判定は、判定権限者が行う。
+実質上　次の工程の開始を持って判定が行なわれたものとみなす。
 
-            result += '\t' + this.xpsBody[column][line];
-//				result+=Separator+this.xpsBody[column][line];
+ラインに関して
+（本線）以外のラインは、命名時に最終想定目的アセットの名前を持ってライン名にすることを推奨
+例えば　3DAnimationアセットを期待されるラインは「3DAnimation」
+背景美術上がりを期待されるラインは「背景美術」となる
+ラインの名前はプリセットの他はライン立ち上げ時に新しく定義が行なわれ、DBの更新がなされるものとする
+（本線）は「CELL」ラインでもある
+　ラインの初期化に当たってライブラリ内部では、エイリアスでの初期化を許す
+その仕組を作りこむ必要あり
 
-        }
-        /**
-         * 1/4秒おきにサブセパレータ/秒セパレータを出力
-         */
-        if ((line + 1) % Math.round(this.framerate / 4) == 0) {
-            if ((line + 1) % Math.round(this.framerate) == 0) {
-                result += bold_sep;
-            } else {
-                result += thin_sep;
-            }
-        }
-    }
-    /**
-     * ボディ終了セパレータ
-     * @type {string}
-     */
-    result += bold_sep;//セパレータ####################################
-    /**
-     * ENDマーク
-     * @type {string}
-     */
-    result += '\n[END]\n';
-    /**
-     * メモ
-     */
-    result += this.memo;
+ */
+ /*
+ 	アセットオブジェクト
+ 	管理上のアセット
+ 	アセットは複数のステージを呼び出すことが出来る
+ 	実際の起動はユーザが行い、起動される度にPMUのラインが増える
+	実運用上は外部DBから供給されるデータで初期化する
+	アセットのアクセスは以下のように
+	nas.Pm.assets["キーワード"]　又は	nas.Pm.assets("アセット名")
+	
+	アセットが呼び出し可能なステージの一覧は
+	配列　asset.callStage に識別文字列で格納（オブジェクトでない）
+	アセットのプロパティは
+	name	表記名
+	shortName	短縮名
+	code	コード
+	description　概要
+	hasXPS/bool	タイムシートを持つか否か
+	endNode/bool	ラインを終了することが出来るか否かのフラグ
+	callStage/array	呼び出し可能ステージ種別
+
+	コンストラクタ他のメンテナンス系コードは保留
+
+ */
+nas.new_ManagementAsset=function(assetTypeName,assetProps,myStages){
+	var newAsset=Object.create(nas.Pm.assets[assetTypeName]);//=assetProps;
+	newAsset.callStage=myStages;
+	//ステージオブジェクトコレクション選択可能なステージキーワードを列記したものを与える
+	return nas.Pm.assets[assetTypeName];
+}
+//アセットの初期値　nas.PM.assetsに格納
+/*
+nas.Pm.lines["キーワード"]　でアクセス
+
+nas.Pm.PmU.prototype.addNewManagementLine=function(lineKey,myStage){
+	newLine=Object.create(nas.Pm.lines[lineKey]);
+	newLine.stages=[myStage];//ステージコレクション 開始ステージで初期化
+	this.lines.push(newLine);//コレクションに登録
+	return newLine;
+}
+*/
+//ステージの初期値
+/*
+nas.Pm.stages["キーワード"]　でアクセス
+*/
+nas.ManagementStage=function(stageName,iniAsset,startJob){
+	this.name=stageName;
+	this.jobs=[startJob];//stratJobはもれなくinit
+	this.outputAsset=nas.PM.assets[stageName];//アセットを出力１つだけ出力する　ステージ自体を外部のDBから供給する
+};
+nas.ManagementStage.prototype.toString=function(){
+	var myResilt="";
+	myResult+="##["+this.name+"]\n";
+	for (var jID=0;jID<this.jobs.length;jID++){myResult+=this.jobs[jID].toString();}
+	myResult+="##["+this.name+"]/\n";
+	return myResult;
+};
+
+/*	test
+myMap=new xMap();
+var myLine=myMap.new_ProductionLine("trunk");//ライン初期化
+var myStage=myMap.new_ProductionStage("layout",myLine)//ステージを初期化
+var myJob=myMap.new_Job("",myStage)//第一ジョブを入れる
+A=myMap.new_xMapElement("A","cell",myMap.currentJob.stage);//グループ作成
+B=myMap.new_xMapElement("A-1",A,myJob);//B.name;
+myMap.getElementByName("A");
+*/
+
+/*
+xMap.parent.parent.parent 等とたどって目的のデータまで遡ることができる。
+データの外側からステージをサブステージを確認しながらたどれば問題ない?
+
+-キャリアをペアレントだけでなく外部にも持つ
+-識別情報を各オブジェクトに与えてどちらからもアクセス可能にする
+-継承にはこだわらない あまり有効に働いていない（データ量が画期的には減らない　弊害が多い）
+
+外側にジョブツリーを持つのが良い
+基点オブジェクトからの相対アドレス解決する　無理？　二分木ツリーじゃ無かった
+　＞NO　ステージツリーとジョブコレクションが良い
+
+アドレス　ライン/ステージ/ジョブ  この形式はOK
+全検索でこのアドレスを探すほうが手っ取りはやそう
+
+ペアレントの直線継承が意味を持つのはステージ内だけ
+ラインが別れた際の継承はあまり意味を持たないので、更新制限の機能も考えあわせて別の方式をとったほうが良さそう
+
+ラインが切れたら再初期化　＞参照可能
+ステージが切れたら再初期化
+
+作品管理情報
+	カット情報をオブジェクト化
+	進捗情報をオブジェクト化
+	ライン
+	ステージ
+	ジョブ
+ステージ(ライン上の特定点)を指定する書式が必要
+
+　(lineName)stageName:jobID
+　
+　例えば
+　(本線),彩色,0:打合せ	実質上打合せにはアセットデータが無い
+　(背景美術),原図整理,1:素上がり
+等で、この書式でデータを引き出せるように設定する
+
+XPS.setStage("(本線),彩色,3:作監修正")　的な設定
+データを持たないポイントがあるのでその際のデータ状態に注意
+
+ステージの開始時にデータがリセットされる
+イニシャライズジョブ時点では常にカラ（参照だけがある）になる
+これはが基本状態
+
+タイムシートはジョブごとに変更を記録＝ジョブ毎にエレメント数が変更される
+エレメントグループは　ステージごとに構成が一新される＝ステージが変われば同名のグループがある
+
+エレメントグループのプロパティとしてステージを連結
+
+一度フィックスしたエレメントには、改名及び内容の変更は無い　これは許されない
+エレメントは所属するジョブをプロパティに持つ
+
+ラインは複数のエレメントグループを持つ
+ライン開始に先行するグループはラインに準ずるが表示を変更する
+
+*/
+/*
+ *	xMap.branch(newLine)
+ *	現在のラインからブランチを行う
+ */
+/*
+ *	xMap.branch(newLine)
+ *
+ */
+
+/*
+ *	読み込みメソッド
+ *	戻り値として、parsexMap の戻り値を返す
+*/
+xMap.prototype.readIN=function(datastream){	return this.parsexMap(datastream) };
+/*	parsexMap(datastream)
+ *	xMap  perser
+ *	パーサの時点では、引数のストリームを全てパースする
+ *　ここにブランチやマージの機能を求めない（別のメソッドとする）
+ */
+xMap.prototype.parsexMap=function(datastream){
+	if(! datastream.match){return false};
+//ラインで分割して配列に取り込み
+	var SrcData=new Array();
+	if(datastream.match(/\r/)){datastream=datastream.replace(/\r\n?/g,("\n"))};
+	SrcData=datastream.split("\n");
+//データストリーム判別プロパティ
+	SrcData.startLine	=0;//データ開始行
+	SrcData.endLine	=0;//データ終了行（[END]の前行）
+//ソースデータのプロパティ
+	SrcData.lines	=new Array();//
+	SrcData.stages	=new Array();//
+	SrcData.jobs	=new Array();//
+	SrcData.groups	=new Array();//
+	SrcData.elemnts	=new Array();//
+//アクティブなグループを保持する一時プロパティ
+	SrcData.activeGroup=new Array();//	undefinedで初期化？
+	SrcData.activeGroup.name;//	undefinedで初期化？
+//第二パス中に再初期化とソースのスタックを繰り返すバッファになるのでその構造を持たせる　またはソーススタックとして配列でも良い？
+
+	
+	
+/*
+	第一パス
+	データ冒頭の空白行を無視して、データ開始行を取得
+	識別行の確認
+	冒頭ラインが識別コードまたは空行でなかった場合は、さようなら御免ね
+		**IEのデータの検証もここで
+*/
+	for (l=0;l<SrcData.length;l++)
+	{
+		if(SrcData[l].match(/^\s*$/))
+		{
+			continue;
+		}else{
+
+		if(MSIE){
+	var choped=SrcData[l].charCodeAt(SrcData[l].length-1);
+	if(choped<=32)
+	SrcData[l] = SrcData[l].slice(0,-1);
+		}
+		//なぜだかナゾなぜに一文字多いのか?
+if(SrcData[l].match(/^nasMAP-FILE\ 1\.9x$/))
+{
+	SrcData.startLine =l;//データ開始行
+	break;
+}else{
+//	alert("no map data");
+	return false;
+//	この部分要整備
+}
+		}
+	};
+//第一パス終了
+//第二パスのデータ設定する検証用のxMAPを作る
+//	var newMap = new xMap();
+	var newMap = this;
+//データ開始行が無かった場合その時点で終了
+	if(SrcData.startLine==0 && SrcData.length==l){ xUI.errorCode=3;return false;}
+//##変数名とプロパティ名の対照テーブル//
+//	var props =new Array(varNames.length);
+	var props ={
+	CREATE_USER:"create_user",
+	UPDATE_USER:"update_user",
+	CREATE_TIME:"create_time",
+	UPDATE_TIME:"update_time",
+	TITLE:"title",
+	SUB_TITLE:"subtitle",
+	OPUS:"opus",
+	RATE:"rate",
+	FRAME_RATE:"frameRate",
+	STANDERD_FRAME:"standerdFrame",
+	STANDERD_PEG:"standerdPeg",
+	BASE_RESOLUTION:"baseResolution",
+	SCENE:"scene",
+	CUT:"cut",
+	INHERIT:"inherit",
+	INHERIT_PARENT:"inheritParent",
+LINE_ID:"lineID",
+CHECK_OUT:"checkOut",
+CHECK_IN:"checkIn",
+currentStatus:"currentStatus",
+	created:"",
+	updated:"",
+	manager:"",
+	worker:"",
+	currentStatus:"",
+END:""
+};
+/*
+	データ走査第二パス
+	エレメントの取得に先行して管理データのみを構築する
+	必要時にここで切り離しが可能　管理オブジェクトの独立化をする
+
+	ライン・ステージ・ジョブの記述開始　及び終了を検査する
+	それぞれのステータス
+		
+		line
+	宣言前は"LineUndefined"　この状態での記述は
+	##による全体記述以外は全て無効
+	（記述を捨てる）
+	宣言後は明示的に閉じられるか、又は他のラインが宣言されるまでは宣言されたライン
+	宣言ラインが閉じられたあと他のラインが開かれていない場合は、宣言前の状態に戻る
+		stage
+	各ライン内でステージ宣言前は、"StageUndefined"この状態での記述は
+	##による全体記述以外は全て無効
+	（記述を捨てる）
+	宣言後は明示的に閉じられるか、又は他のラインが宣言されるまでは宣言されたステージ
+	宣言ステージが閉じた後は宣言前の状態に戻る
+		job	
+	各ステージ内でジョブ宣言前は、"JobUndefined"
+	この状態での記述は##による全体記述以外は全て無効
+	（記述を捨てる）
+	宣言後は明示的に閉じられるか、又は他のラインが宣言されるまでは宣言されたステージ
+	宣言ステージが閉じた後は宣言前の状態に戻る
+
+	第二パスで遷移状態を見て、開始終了状況を記録する
+
+	第三パスでエレメントテーブルを読み込む際にこの情報を使用する?
+	
+
+	それぞれの区間は同型のオブジェクトでテーブルに記録する？
+
+
+
+*/
+var issueDescription=false;//分岐情報フラグ
+var issueStream="";//分離処理用一時変数
+var currentLine; //ライン
+var currentStage;//
+var currentJob;//
+/*
+	各データは、分岐状態により複合されたモード状態を持つ
+	このフラグが立っている間はストリームを分離して別にパースする
+*/
+	for(line=SrcData.startLine;line<SrcData.length;line++){
+			//前置部分を読み込みつつ、本体情報の確認
+		if(MSIE){
+	var choped=SrcData[line].charCodeAt(SrcData[line].length-1);
+	if(choped<=32)
+	SrcData[line] = SrcData[line].slice(0,-1);
+		}
+		//なぜだかナゾなぜに一文字多いのか?
+//			　#コメントとエレメント行をスキップ
+//		if(SrcData[line].match(/(^\#[!\#]|^[!\#])/)) continue;
+//				#コメントと空行をスキップに変更
+		if(SrcData[line].match(/(^#[^#]|^\s*$)/)) continue;
+//			シートプロパティにマッチ
+//			ライン記述を先行評価
+		if(SrcData[line].match(/^##([^=]+)=?(.*)$/)){
+			var nAme=RegExp.$1;var vAlue=RegExp.$2;
+//			if(line%10==0){alert(nAme+":"+vAlue)};
+
+/*================================================================*/
+
+//			分岐状況フラグが立っている場合は別ストリームに取り出す
+			if(issueDescription){
+				if(! nAme.match(/CHECK_IN|CHECK_OUT|currentStatus/)){
+	　	dbgPut(line +": exit IssueStreamMode:\n"+issueStream+":");
+					issueDescription=false;
+				//ここでストリームを処理する
+					newMap.lineIssues=nas.Pm.parseIssue(issueStream+"\n");
+//ストリームの処理後に判定行はプロセスに工程に流す
+				}else{
+	　	dbgPut(line+": add IssueStream :"+SrcData[line]+":");
+					issueStream += SrcData[line]+"\n";
+					continue;
+				}
+			}
+
+/*================================================================*/
+//	カレントラインの取得　= ドキュメントに一つ(二つ目以降はあっても無視)
+//	モードを変更して分岐情報を別のストリームにまとめる
+	　	if (nAme=="LINE_ID") dbgPut(line +": detect LINE_ID :"+SrcData[line]);
+	　if((issueStream.length==0)&&(nAme=="LINE_ID")){
+	　	issueDescription=true;
+	　	issueStream+=SrcData[line]+"\n";
+	　	continue;
+	　}
+/*================================================================*/
+//	ライン記述モード遷移
+	　if(nAme.match(/^<\(([^\)]+)\)>(.*)$/)){
+	　	dbgPut(line +": detect productionLine : "+nAme +":"+RegExp.$1+":"+RegExp.$2);
+	　	if(RegExp.$2.length){
+	　	//記述終了
+//			dbgPut(line+": ライン設定解除 :"+currentLine.getPath())
+			dbgPut(line+": ライン設定解除 :"+SrcData[line]);
+			currentLine=undefined;
+	　	}else{
+			currentLine=newMap.new_ProductionLine(RegExp.$1);//xMapにメソッドで登録
+//既に存在するラインを送った場合は追加されない　その場合はcorrentLineがfalse
+		　	if(currentLine instanceof nas.Pm.ProductionLine){
+		　		dbgPut(line+": line setup:"+RegExp.$1+":"+currentLine.getPath());
+		　	}else{
+		　		dbgPut(line+": line setup [[FAULT]]:"+RegExp.$1+":"+currentLine);
+		　	}
+	　	}
+	　		continue;
+	　}
+//	ステージ記述モード遷移
+	　if(nAme.match(/^\[([^\[\]]+)\](\/?)$/)){
+	　	//alert("detect Stage : "+nAme);
+	　	if(RegExp.$2.length){
+　		//ステージ解除
+//			dbgPut(line+":\tステージ設定解除 :"+currentStage.getPath())
+			dbgPut(line+":\tステージ設定解除 :"+SrcData[line]);
+			currentStage=undefined;
+	　	}else{
+	　	//ステージ設定
+	　		if(currentLine instanceof nas.Pm.ProductionLine)
+			currentStage=newMap.new_ProductionStage(RegExp.$1,currentLine);//xMapにメソッドで登録トライ
+			if(currentStage instanceof nas.Pm.ProductionStage){
+		　		dbgPut(line+":\tstage setup　:"+RegExp.$1+":"+currentStage.getPath());
+		　	}else{
+		　		dbgPut(line+":\tstage setup [[FAULT]]:"+RegExp.$1+":"+currentStage+":"+currentLine);
+		　	}
+		}
+	　	continue;
+	　}
+//	ジョブ記述モード遷移
+	　if(nAme.match(/^\[\[([^\[\]]+)\]([^\[\]]*)\](\/?)$/)){
+	　	//alert("detect Job : "+nAme);
+	　	if(RegExp.$3.length){
+	　		//記述終了
+//			dbgPut(line+":\t\tジョブ設定解除 :"+currentJob.getPath())
+			dbgPut(line+":\t\tジョブ設定解除 :"+SrcData[line]);
+			currentJob=undefined;
+	　	}else{
+	　		if(currentStage instanceof nas.Pm.ProductionStage)
+	　		currentJob=newMap.new_Job(RegExp.$1,currentStage);
+		　	if(currentJob instanceof nas.Pm.ProductionJob){
+		　		dbgPut(line+":\t\tjob setup:"+RegExp.$1+":"+currentJob.getPath()+":");
+		　	}else{
+		　		dbgPut(line+":\t\tjob setup [[FAULT]]:"+RegExp.$1+":"+currentJob+":");
+		　	}
+	　	}
+	　	continue;
+	　}
+
+//	プロパティ同士が直結していないものを先行して評価。
+switch (nAme){
+case	"INHERIT":			;//兼用は","で分離してオブジェクト配列へ（あとで良いか？）
+			newMap[props[nAme]]=vAlue;
+			break	;
+case	"INHERIT_PARENT":			;//参照する既存MAP
+			newMap[props[nAme]]=vAlue;
+			break	;
+case	"RATE":
+			newMap.framerate=nas.newFramerate(vAlue);
+			break;
+case	"FRAME_RATE":
+			newMap.framerate=nas.newFramerate(newMap.framerate.name,vAlue);
+			break;
+case	"STANDERD_FRAME":			;//標準フレーム（入力メディア）を設定
+			newMap[props[nAme]]=new nas.AnimationField(vAlue);
+			break	;
+case	"STANDERD_PEG":			;//標準タップ（入力メディア）を設定
+			newMap[props[nAme]]=new nas.AnimationPegForm(vAlue);
+			break	;
+case	"BASE_RESOLUTION":			;//標準解像度を設定
+			newMap[props[nAme]]=new nas.UnitResolution(vAlue);
+			break	;
+//以下は、カレントのJobプロパティ
+case	"created":
+		dbgPut(line+":\t\t\t\tjob:"+nAme+" checkout:"+vAlue);
+		var myContent=vAlue.split(";")[0].split("/");
+		if(currentJob instanceof nas.Pm.ProductionJob){
+			currentJob.createUser=myContent.reverse()[0];
+			currentJob.createDate=new Date(myContent.slice(1,myContent.length).reverse().join("/"));
+		};
+			break;
+case	"updated":
+		dbgPut(line+":\t\t\t\tjob:"+nAme+" checkin:"+vAlue);
+		var myContent=vAlue.split(";")[0].split("/");
+		if(currentJob instanceof nas.Pm.ProductionJob){
+			currentJob.updateUser=myContent.reverse()[0];
+			currentJob.updateDate=new Date(myContent.slice(1,myContent.length).reverse().join("/"));
+		};
+			break;
+case	"manager":
+case	"worker":
+case	"slipNumber":
+		dbgPut(line+":\t\t\t\tjob-set:"+nAme+":"+vAlue);
+		if(currentJob instanceof nas.Pm.ProductionJob){
+			currentJob[props[nAme]]=vAlue.split(";")[0];
+		};
+			break;
+			break	;
+default:				;//直接結合プロパティ
+			newMap[props[nAme]]=vAlue;
+//					判定した値をプロパティで控える
+	continue;
+}
+			continue;
+		}
+
+//			エレメントグループまたは終了識別にマッチ
+		if(SrcData[line].match(/^\[([^\[]+)\]$/)){
+//データ記述が終わっていたらメモを取り込んで終了
+			if(SrcData[line].match(/\[END\]/)){
+//データ記述終了ライン控え
+//				SrcData.descriptionEnd=line;
+				newMap["memo"]='';
+				for(li=line+1;li<SrcData.length;li++)
+				{
+					newMap["memo"]+=SrcData[li];
+					if((li+1) < SrcData.length){newMap["memo"]+="\n"};//最終行以外は改行を追加
+				}
+					break ;
+			}else{
+//　エレメントグループを新規登録
+/*	グループはいずれかのジョブに所属する必要があるので、JobUndefinedの場合は拾った値を捨てる
+*/
+//dbgPut("X--:\t"+RegExp.$1+" :"+currentJob+"/"+currentStage+"/"+currentLine)
+		if(currentJob instanceof nas.Pm.ProductionJob){
+			dbgPut(RegExp.$1+"\tjob: "+currentJob.getPath()+":\n\t");
+			dbgPut(SrcData[line]);
+		}
+/*else{
+	//currentJob undefined or otherObject(不正状態なのでエントリ行は捨てる) 
+			alert(currentLine+":"+currentStage+":"+currentJob+":"+"--"+":"+RegExp.$1);
+		}
+*/
+			}
+		}else{
+//	マップエントリパーサ
+//この場では振り分けのみを行い、実際のパースは外部メソッドに委ねる
+ if(currentJob instanceof nas.Pm.ProductionJob){dbgPut("group ["+currentJob.getPath()+"] addEntry :"+line+":\t\t\t:"+SrcData[line])};
+	
+
+		}
+	}
+
+/*++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
+//	第二パス終了・読み取った情報でxMAPオブジェクトを再初期化(共通)
+
+/*
+	データ操作第三パス 2パスで問題無さそう？　複雑なテーブルが無い
+	ライン・ステージ・ジョブを切り替えながらエレメントテーブルを作成
+*/
+return newMap;
+}
+/*
+ *	書きだしメソッド
+ *	書き出しの際は　保持しているLine/Stage/Jobは全て書き出す
+ *	ブランチは、オブジェクト自体をブランチオブジェクトに設定してそのオブジェクトの書き出しを行うこと
+ */
+xMap.prototype.toString= function()
+{
+	var Now=new Date();
+//セパレータ文字列
+	var	bold_sep='\n#';
+		for(n=8;n>0;n--) bold_sep+='========';
+	var	thin_sep='\n#';
+		for(n=8;n>0;n--) thin_sep+='--------';
+//	ヘッダで初期化
+	var result='nasMAP-SHEET 1.9x';//出力変数初期化
+//	##共通プロパティ変数設定
+	result+='\n##CREATE_USER='	+ this.create_user	;
+	result+='\n##UPDATE_USER='	+ this.update_user	;
+	result+='\n##CREATE_TIME='	+ this.create_time	;
+	result+='\n##UPDATE_TIME='	+ Now.toNASString()	;
+
+	result+='\n##TITLE='		+ this.title	;
+	result+='\n##SUB_TITLE='	+ this.subtitle	;
+	result+='\n##OPUS='			+ this.opus	;
+//xMap.frameRate
+	result+='\n##RATE='			+ this.framerate.name;
+	result+='\n##FRAME_RATE='	+ this.framerate.rate;
+//xMap.
+	result+='\n##STANDERD_FRAME='	+ this.standerdFrame.name;
+	result+='\n##STANDERD_PEG='	+ this.standerdFrame.peg.name;
+	result+='\n##BASE_RESOLUTION='	+ this.baseResolution.as("dpi")+"dpi";
+
+	
+	result+='\n##SCENE='	+ this.scene	;
+	result+='\n##CUT='	+ this.cut	;
+	result+='\n##NAME='	+ this.name	;
+	result+='\n##INHERIT='	+ this.inherit	;
+	result+='\n##INHERIT_PARENT='	+ this.inheritParent	;
+
+	result+='\n#';
+	result+=bold_sep;//セパレータ####################################
+/*	カレントのライン・ステージの状況を書き出す　本線・支線の管理を行う必要があるが、
+	ここでの変更は行なわない　別の管理メソッドで切り替え
+	管理オブエジェクトからの出力を埋め込む設計にする
+ */
+	result+='\n#';
+ 	result+=this.lineIssues.toString();
+// 	result+=this.LineManger.toString(); //LineManager 未コーディング　21-04 2016
+ 	result+='\n#';
+	result+=bold_sep;//セパレータ####################################
+	result+='\n#';
+	result+=bold_sep;//セパレータ####################################
+	result+='\n#';
+//lineLoop
+for (var lidx=0;lidx<this.lines.length;lidx++){
+	var currentLine=this.lines[lidx];
+	result+="<("+currentLine.name+")>\n";
+//StageLoop
+	for (var sidx=0;sidx<this.lines[lidx].stages.length;sidx++){
+		var currentStage=this.lines[lidx].stages[sidx];
+		result+="["+currentStage.name+"]\n";
+//JobLoop
+		for (var jidx=0;jidx<this.lines[lidx].stages[sidx].jobs.length;jidx++){
+			var currentJob = this.lines[lidx].stages[sidx].jobs[jidx];
+			result+=currentJob.toString();
+/*			
+				for(var gidx=0;gidx<this.elementGroups.length){
+					if(this.elementGroups[gidx].link!==currentJob){
+						continue;
+					}else{
+						var currentGroup=this.elementGroups[gidx];
+						result+=currentGroup.toString();//groupがエレメントの出力を内包しているのでここで最終出力
+					}
+				}
+			result+="##[["+currentJob.name+"]]/\n";//ジョブ閉じる
+*/
+		}
+		result+="##["+currentStage.name+"]/\n";//ステージ閉じる
+	}
+	result+="##<("+currentLine.name+")>/\n";//ライン閉じる
+}
+
+//
+//ENDマーク
+	result+='\n[END]\n';
+//メモ
+	result+=this.memo;
 
 // // // // //返す(とりあえず)
+//引数を認識していくつかの形式で返すように拡張予定
+//セパレータを空白に変換したものは必要
+//変更前(開始時点)のバックアップを返すモード必要/ゼロスクラッチの場合は、カラシートを返す。
+	if(xUI.errorCode){xUI.errorCode=0};return result;
+}
 
-    /**
-     * 引数を認識していくつかの形式で返すように拡張予定
-     * セパレータを空白に変換したものは必要
-     * 変更前(開始時点)のバックアップを返すモード必要/ゼロスクラッチの場合は、カラシートを返す。
-     */
-    if (xUI.errorCode) {
-        xUI.errorCode = 0
-    }
-    return result;
-    return result;
-};
 
-// var MAP= new_MAP(SheetLayers);
-//if (dbg) {alert(initMAP())};	//マップダミー初期化
+//比較関数
+/*
+英数大文字小文字	不一致
+
+英数全角半角	一致
+数値	冒頭のゼロを払う
+小数点以下はポストフィックスに編入
+半角カナ	＞　全角カナ
+実現するためには
+
+>文字列のAlphaNumeric部分を1bite化
+>ｶﾅ文字を全角化(…微妙)放置したほうが良さそう
+ラベル・数値・後置部分を切り分ける
+先行する数字以外をラベル
+数字の連続部分を数字部
+それ以降を後置部と定義する
+＞小数点以下は後置部となる
+*/
 
 /**
- * まだ腐っているけどmap関連一応分離 2005.03.22
- */
+Xps 初期化引数にSCIを使う
 
+    1.Mapがあらかじめ初期化されてMapに含まれるSCIを利用して初期化する
+    2.DB情報相当のSCIを初期化してそれを利用する
+    3.SCI相当の文字列で初期化する（XPS初期化ルーチン内でSCIを作る）
+    
+    
+Xps 初期に先立ってMapオブジェクトを初期化して、そのMapを引数にして初期化する（Xps内部的でMapをそのまま利用）
+
+Xps 初期化時にMapが無い場合は、初期化時にSCI情報でMapを初期化してエントリにする（この場合は自動的にテンポラリMapになる）
+
+dataChack関数は、現状のままで互換のためだけに整備する
+
+相当する新機能は、xMap.requestEntry(elementName,groupName,targetJob)で
+xMapに対してxMapエレメントを請求するメソッドを作成する
+
+リクエストされたエントリが存在すれば当該エントリを返す
+存在しない場合は、そのエントリを「新規」に「空の値」で作成して返す
+エントリは、順次作成されてセッションユニークなIDが与えられる（恒常性は無い）
+
+セッション中はエントリにIDでアクセスすることも可能
+
+エントリは、タイミングを調整してXPS側からクリンアップを行うことが可能
+保存前処理として終了前には必ずクリンアップが行なわれる。
+
+シート上に一度も使用されないエントリを抽出して、値が空のままのエントリは自動削除され、記録には残らない。
+値が与えられたエントリは記録される
+ユーザ判断によるクリンアップのルートは作成する
+
+
+
+*/
 /**
+=============== 以下は、古いスタイルのデータパーサのための後方互換関数　新規の使用は禁止
+                　古いスタイルのパーサが無くなったら削除予定 2016 - 12.24
+
  * NAS(U) りまぴん専用データチェック関数
  * マップ処理ができるようになったら汎用関数に
  * マップオブジェクトのメソッドに切り換え予定
@@ -607,8 +1279,6 @@ _getIdx = function (Lname, targetTrailer) {
     }
     return null
 };
-
-//以下は 上のエントリの置換え用関数
 
 /**
  * xMap.dataCheck(myStr,tlLabel[,blFlag])
