@@ -144,7 +144,7 @@ XpsStage.prototype.toString=function(){
      数値のみの指定の場合は、無名ステージのidとして処理
 */
 function XpsLine (lineString){
-    this.id   =[0]; this.name ='primary';
+    this.id   =[0]; this.name ='本線';// 又は'trunk'
     if(typeof lineString != 'undefined'){
       if(lineString.match(/^[0-9]+$/)){lineString+=':-'}
       var prpArray=lineString.split(':');
@@ -171,7 +171,7 @@ XpsLine.prototype.toString = function(opt){
     記録時は後方型式
 */
 function XpsStage (stageString){
-    this.id = 0 ;this.name = 'Startup';
+    this.id = 0 ;this.name = 'startup';
     if(typeof stageString != 'undefined'){
       var prpArray=stageString.split(':');
       if(prpArray.length){
@@ -186,8 +186,14 @@ XpsStage.prototype.toString = function(opt){
     return [this.name,this.id].join(':');
 }
 XpsStage.prototype.increment = function(myString){
-    this.id   = nas.incrStr(this.id);
+    this.id   = nas.incrStr(String(this.id));
     this.name = (myString)? myString:nas.Zf(this.id,3);
+    return this;
+}
+XpsStage.prototype.reset = function(myString){
+    this.id   = 0;
+    this.name = (myString)? myString:'init';
+    return this;
 }
 
 /**
@@ -360,7 +366,7 @@ XpsTrackCollection.prototype.constractor = XpsTrackCollection;
  */
 XpsTrackCollection.prototype.insertTrack = function(myId,myTrack){
     var insertCount=0;
-    if (myTrack.id) { myTrack=[myTrack] }
+    if (!(myTrack instanceof Array)) { myTrack=[myTrack] };
     //挿入位置を確定
     if ((!myId ) || (myId < 1) || ( myId >= this.length - 2)) {myId = this.length - 1;}
     //挿入
@@ -1196,10 +1202,30 @@ Xps.prototype.reInitBody = function (newTimelines, newDuration) {
     if (newTimelines < 3 || newDuration <= 0) {
         return false;
     }
-    var widthUp    = (newTimelines > oldWidth)   ? true : false;
-    var durationUp = (newDuration > oldDuration) ? true : false;
+    var widthUp    = (newTimelines > oldWidth)   ? 1 : (newTimelines == oldWidth)   ? 0 : -1 ;
+    var durationUp = (newDuration > oldDuration) ? 1 : (newDuration == oldDuration) ? 0 : -1 ;
+    alert("reInitBody 新構造に合わせて変更中");
+//  トラックを先に編集　トラック数が増えた場合は空白ラベルで挿入　減っている場合は削除メソッドを発行
+    if(widthUp > 0){
+        var newTracks=[];
+        for (var tid = 0 ; tid < widthUp ; tid ++){
+            newTracks.push(new XpsTimelineTrack('','timing',this.xpsTracks,this.duration()));
+        }
+        this.xpsTracks.insertTrack(0,newTracks);
+    }else if(widthUp < 0){
+        for (var tid = (this.xpsTracks.length-1);tid >= newTimelines;tid --){
+            this.xpsTracks[tid].remove();
+        }
+    }
+//  トラック長を変更する
+    if(durationUp != 0){
+        for(var tid = 0 ; tid < this.xpsTracks.length ; tid ++){
+            this.xpsTracks[tid].length = newDuration;
+        }
+             this.xpsTracks.duration = newDuration;
+    }
+    return true;
 if(this.xpsTracks.duration){
-    alert("reInitBody");
     
 }else{
     this.xpsTracks.length = newTimelines;//配列長(タイムライン数)の設定 メソッドに置きかえ予定
@@ -1248,7 +1274,6 @@ if(this.xpsTracks.duration){
     if (widthUp) {
         for (i = oldWidth - 2; i < (newTimelines - 2); i++) {
             this.xpsTracks[i] = new XpsTimelineTrack(i,"timing",this.xpsTracks,newDuration);//myLabel, myType, myParent, myLength
-
             this.xpsTracks[i]["id"] = ("00" + i).slice(-2);
             this.xpsTracks[i]["sizeX"] = this.xpsTracks[oldWidth - 3]["sizeX"];
             this.xpsTracks[i]["sizeY"] = this.xpsTracks[oldWidth - 3]["sizeY"];
@@ -1259,7 +1284,6 @@ if(this.xpsTracks.duration){
             this.xpsTracks[i]["option"] = this.xpsTracks[oldWidth - 3]["option"];
             this.xpsTracks[i]["link"] = this.xpsTracks[oldWidth - 3]["link"];
             this.xpsTracks[i]["parent"] = this.xpsTracks[oldWidth - 3]["parent"];
-
         }
     }
 }

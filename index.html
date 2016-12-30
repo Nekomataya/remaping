@@ -1061,7 +1061,6 @@
 	onKeyDown="return xUI.keyDown(event)"
 	onKeyPress="return xUI.keyPress(event)"
 	onKeyUp="return xUI.keyUp(event)"
-	onFocus='xUI.activate("headline")'
 	title="シートにデータを入力します。"
 > 
 <button
@@ -1088,14 +1087,15 @@
 </span>
 </div>
 <!-- 管理IDコントロール UI-->
-<div id =pmcui class=pmcui>
+    <div id =pmcui class=pmcui>
 <button
 	id=pmcui-checkin
 		class='jobControl jobControl-checkin'
 		onclick="serviceAgent.checkinEntry();"
 		title="チェックイン"
 	>作業開始
-	</button><button
+	</button>
+	         <button
 	id=pmcui-checkout
 		class='jobControl  jobControl-checkout'
 		onclick="serviceAgent.checkoutEntry();"
@@ -1119,8 +1119,194 @@
 // <span id=pmcui_job class=pmcui_> 1:(原画) </span>
 // <span id=pmcui_status class=pmcui_> Active </span>
 // <span id=pmcui_documentWriteable class=pmcui_> [保存不可] </span>
-<hr></div>
+<hr>
+    </div>
 <!-- 管理IDコントロール UI-->
+
+<!-- ドキュメントコントロール(制作管理)メニュー
+class=optionPanel id=optionPanelProductManagement
+-->
+        <div class=pmcui>
+    <div id=pmaui>
+<button
+	id=pmaui-new
+    class='pmControl pmControll-new' 
+    disabled = true
+    title='新規カットを作成'
+>新規カット</button>
+
+<button
+	id=pmaui-receipt
+    class='pmControl pmControl-receipt'
+    title='作業終了した工程を閉じて次の工程を開始'
+	onclick="serviceAgent.receiptEntry();"
+>作業検収</button><button
+	id=pmaui-checkout
+    class='pmControl pmControl-checkout'
+    disabled = true
+    title='作業中のカットを強制的に終了（回収）'
+>作業終了</button><button
+	id=pmaui-abort
+    class='pmControl pmControl-adort'
+    disabled = true
+    title='カットの全工程を停止（カット削除）'
+>作業中断</button>
+
+<button
+	id=pmaui-branch
+    class='pmControl pmControl-branch'
+    disabled = true
+    title='新規ラインを立ち上げる'
+>ライン分岐</button><button
+	id=pmaui-merge
+    class='pmControl pmControl-merge'
+    disabled = true
+    title='分岐したラインを収束'
+>ラインマージ</button>
+
+    </div>
+<!--
+<span class='pmLabel'>
+    ライン :
+</span>
+<span class='pmId'>
+0:
+</span>
+<select class='pmControl' id=linSelect>
+    <option value='本線'>本線</option>
+</select>
+<span class='pmLabel'>
+　新規ライン :
+</span>
+<span class='pmId'>
+1-2-1:
+</span>
+<input type=text class=pmSelector list=line_list>
+<datalist id=line_list>
+    <option value='trunk'>trunk</option>
+    <option value='本線'>本線</option>
+    <option value='background art'>background art</option>
+    <option value='背景美術'>背景美術</option>
+    <option value='3D-Animation'>3D-Animation</option>
+    <option value='3D-美術'>3D-美術</option>
+</datalist>
+<button class=pmControllButton >分岐</button>
+<br>
+<span class='pmLabel'>
+    工程 :
+</span>
+<span class='pmId'>
+0:
+</span>
+<select class='pmControl' id=stageSelect>
+    <option value='コンテ撮'>コンテ撮</option>
+    <option value='レイアウト'>レイアウト</option>
+</select>
+<span class='pmLabel'>
+　新規工程 :
+</span>
+<span class='pmId'>
+1:
+</span>
+<input type=text class=pmSelector list=stage_list>
+<datalist id=stage_list>
+    <option value='原画'></option>
+    <option value='動画'></option>
+    <option value='トレース'></option>
+    <option value='彩色'></option>
+</datalist>
+<button class=pmControllButton >開始</button>
+<br>
+<span class='pmLabel'>
+    作業 :
+</span>
+<span class='pmId'>
+3:
+</span>
+<select class='pmControl' id=stageSelect>
+    <option value='レイアウト作画'>レイアウト作画</option>
+    <option value='作画打合'></option>
+</select>
+<span class='pmLabel'>
+　新規作業 :
+</span>
+<span class='pmId'>
+4:
+</span>
+<input type=text class=pmSelector list=job_list>
+<datalist id=job_list>
+    <option value='監督チェック'></option>
+    <option value='演出チェック'></option>
+    <option value='作監チェック'></option>
+    <option value='総作監チェック'></option>
+</datalist>
+<button class=pmControllButton >開始</button>
+<br> -->
+<hr>
+<!--
+
+//  新規カット
+カット番号を入力（確認）してリポジトリに送信（POST）
+
+
+//  作業検収
+カット内容の提示と確認（Fixed）はチェック済
+次ステージの指定（確認）してリポジリに送信（POST）
+
+//  作業終了
+強制的に作業中(Active/Hold)のデータを終了状態(Fixed)に遷移
+二重確認
+（作業中のユーザにメーッセージを発信）省略可
+モード変更送信(PUSH)
+
+//  作業中断
+終了状態(Fixed)のデータを中断(Aborted)に遷移
+二重確認
+モード変更送信
+
+//  ライン分岐
+現在のラインから新規ラインを分岐する
+
+2016拡張では保留　xMap実装後に合わせて実装
+マスターDBが無いので分岐の確認が出来ない
+
+//  ラインマージ
+親側のライン（マスター）側からサブラインドキュメントを指定してマージする
+または支線側からマスターに向かってマージを行う（親は自動認識）
+マージ先はアセットストア
+（通信ロスト等）マージ先が特定できない場合は、処理失敗
+
+2016拡張では保留　xMap実装後に合わせて実装
+マスターDBが無いので分岐の確認が出来ない
+
+//  全処理共通
+新規作成成功/失敗を表示
+リストの更新
+
+
+
+
+    <div id=messages-pmaui>
+    新規カットを作成します。カット番号/継続時間を入力して[OK]ボタンで確定してください。<br>
+        TITLE : <span>%title%</span> OPUS#:<span>%opus%</span> S-C:<input type=text></input> TIME:<input type=text></input>
+        
+    %curentStage% 工程を閉じて次の工程を開きます。新しい工程名を入力してください。<br>
+        現在の工程 : %currentStage% 新規工程 : <input type=text list=taragetStageList></input>  <button>O K</button><hr>
+    カットの更新に失敗しました。時間をおいて再度処理してください。
+    現在作業中のデータを廃棄して作業を終了します。<br>
+    作業担当者 %update_user% に通知を送信します。<input type=checkbox></input>[yes/no]<br>
+    よろしいですか？<br>
+    yes/no/cancel<hr>
+    現在の作業をすべて停止してカット制作を中断します。<br>
+    よろしいですか？<br>
+    
+    
+    </div>
+<hr>
+<hr>-->
+        </div>
+<!-- ドキュメントコントロール(制作管理)メニュー-->
+
 <!-- シートヘッダテーブル　編集機能あり縮小UIの際は非表示または縮小表示に -->
 <div id=sheetHeaderTable>
 <!-- コンパクトビューの時は　インジケータ　カット番号　時間　を残して非表示-->
@@ -1847,7 +2033,6 @@ onclick='nas.incrFCTonHTMLInput(document.getElementById("editTC"),"-(1)")'
 </button></span><br>
 <hr></div>
 <!-- 時間編集UI -->
-
 <!--	ファイルブラウザ試験中	-->
 <div class=optionPanelModal id=optionPanelFile >
 <!-- りまぴん(新) ファイルブラウザインターフェース -->
@@ -1919,22 +2104,16 @@ onclick='nas.incrFCTonHTMLInput(document.getElementById("editTC"),"-(1)")'
 </span>
 <!-- メニューバー と ロゴ -->
 <button
- id='ddp-refresh'
- onClick='documentDepot.rebuildList();'
- class='productFilter'
- title="リストを最新の情報に更新"
->Refresh</button>
-<button
  id='ddp-reference'
  onClick='console.log("read to reference :" + decodeURIComponent(documentDepot.currentSelection));serviceAgent.currentRepository.getEntry(documentDepot.currentSelection,true);'
  class='documentPanelButton'
  title="参照読出  readout - reference"
->reference</button><button
+>参照</button><button
  id='ddp-readout'
  onClick='console.log("read :" + decodeURIComponent(documentDepot.currentSelection));serviceAgent.currentRepository.getEntry(documentDepot.currentSelection);'
  class='documentPanelButton'
  title="読出 readout"
->readonly</button><button
+>読出</button><button
  id='ddp-checkin'
  onClick='console.log( "open :" + decodeURIComponent(documentDepot.currentSelection));xUI.setDocumentStatus("checkin");'
  class='documentPanelButton'
@@ -2023,6 +2202,12 @@ onChange='setProduct();'
 </select>
 <div>
 <span align=left>
+<button
+ id='ddp-refresh'
+ onClick='documentDepot.rebuildList();'
+ class='productFilter'
+ title="リストを最新の情報に更新"
+>Refresh</button>
 <button
 class=productFilter
 onclick="documentDepot.products.sort();documentDepot.updateOpusSelector();"
@@ -2382,7 +2567,10 @@ trash="xUI.init(XPS)";
  id='test003'
  onClick='serviceAgent.currentRepository.pushEntry(xUI.XPS);serviceAgent.currentRepository.getList();return false;'
 > pushEntry !</button>
-
+<button 
+ id='test004'
+ onClick='xUI.viewOnly=(xUI.viewOnly)?false:true;return false;'
+> viewOnly </button>
 <br>
 <!--
 <input	type=button
@@ -2884,4 +3072,22 @@ $Id:$ index.html ,v 1.7 2016/12/24  support@nekomataya.info <br />
 <!-- </form> -->
      </div>
 <div id="scrollSpaceFt" class=\"screenSpace\"><br></div>
+<!--
+="73o16nRYK7oqNNmeGDHWizLV"
+<span id="backend_variables"
+    data-user_access_token="35ff5dbfcf84dd3d842ec1b31ebe73d8a94e4f70bd4abd7ee64b58a6d3b3ad71"
+    data-user_token=""
+    data-user_name="ねこまたや"
+    data-user_email="kiyo@nekomataya.info"
+    data-episode_id="17"
+    data-cut_id="24"　
+    data-episode_token="mfjVjBUuG6Q8GHu7u6nzJTa2"
+    data-cut_token="tSZZ8qEgYtrrZY3wHt69aF9U"
+    data-line_id="0:(本線)"
+    data-stage_id="0:ライカ"
+    data-job_id="1:"
+    data-status="Active"
+></span>
+-->
+
 </body></html>

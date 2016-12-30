@@ -41,31 +41,34 @@ function new_xUI(){
 
 /**     xUIオブジェクト初期化メソッド
  *      編集対象となるXpsオブジェクトを与えて初期化する。
- *      初期化時点の参照変数はconfig.js内で設定される値
+ *      初期化時点の参照変数はconfig.js内で設定された値及び
+ *      nas_common.jsで処理されたオブジェクト
  *
  */
 /**
-      新規に動作モードを実装 2016  
+      新規に動作モードを実装 2016 12
       モードは以下三態
-    productionMode
-    managementMode
-    browsingMode
+    production  
+    management  
+    browsing    
 
-        各モード内では作業条件によっては read onlyの状態がある
+        各モード内で作業条件によって read onlyの状態がある
 */
 xUI.init    =function(XPS,referenceXps){
-    
+
+    this.XPS=XPS;                           //XPSを参照するオブジェクト
+/*
+    以下の情報を　グローバルの変数でなくXPSから取得するように変更
+*/
     this.dialogSpan    = SoundColumns;      //シート上の配置に合わせてXPSを初期化する
     this.timingSpan    = SheetLayers;       //シートは便宜上サウンド/タイミング（セル）/カメラ の３エリアに分けられるが
     this.cameraSpan    = CompositColumns;   //実際は各タイムラインは混在可能である
-
     this.dialogCount   = SoundColumns;      //タイムライン種別数控え
     this.stillCount    = 0;                 //背景を標準的に読み込む場合はここに数値を入れる
     this.timingCount   = SheetLayers;       //
     this.sfxCount      = 0;                 //
     this.cameraCount   = CompositColumns;   //空欄でも良いと思われるが
 
-    this.XPS=XPS;                           //XPSを参照するオブジェクト
     this.referenceXPS=new Xps();
     this.referenceXPS.init(5,144);
 /**    引数に参照オブジェクトが渡されていたら、優先して解決
@@ -73,8 +76,9 @@ xUI.init    =function(XPS,referenceXps){
     if ((typeof referenceXps != "undefined") && (referenceXps instanceof Xps)){
         this.referenceXPS=referenceXps;
     };
-    //参照用XPSは初期化の引数で与える（優先）
+
 /**
+    参照用XPSは初期化の引数で与える（優先）
     初期化時点で参照Xpsが与えられなかった場合は、XPSに含まれる参照ステージの内容、XPS内のステージストアにある現行ステージの前段のステージを利用する セットアップのタイミングはUIの初期化以降に保留される
 */
     this.referenceView=["timing"];      //表示させる種別を配列で　
@@ -95,7 +99,7 @@ xUI.init    =function(XPS,referenceXps){
 
 //if(appHost.platform=="AIR") this.showGraphic    = false;
 
-    this.onSite      = false;           //Railsサーバ上での動作時　true
+    this.onSite      = false;           //Railsサーバ上での動作時サーバのurlが値となる
     this.currentUser = new  nas.UserInfo(myName);//実行ユーザをmyNameから作成
     
     this.spinValue   = SpinValue;       //スピン量
@@ -106,6 +110,7 @@ xUI.init    =function(XPS,referenceXps){
 //コンパクトモード時はこのプロパティとcolsの値を無視するように変更
     this.SheetWidth= this.XPS.xpsTracks.length; //シートの幅(編集範囲)
     this._checkProp=function(){
+
 //XPSをチェックしてxUIのシートビュープロパティを更新
     this.dialogCount=0;this.stillCount=0;this.timingCount=0;this.sfxCount=0;this.cameraCount=0;
     this.dialogSpan=0;this.cameraSpan=0;
@@ -149,108 +154,56 @@ for(var idx=0;idx<(this.XPS.xpsTracks.length-1);idx++){
         }
     }
     this._checkProp();
-    this.PageLength=this.SheetLength*Math.ceil(XPS.framerate);//1ページの表示コマ数を出す
+    this.PageLength         =this.SheetLength*Math.ceil(XPS.framerate);  //1ページの表示コマ数を出す
 //    1秒のコマ数はドロップを考慮して切り上げ
-    this.cPageLength=Math.ceil(XPS.framerate);//カラム長だったけど一秒に変更
-
-    this.sheetSubSeparator    =SheetSubSeparator;//サブセパレータの間隔
-    this.PageCols    =SheetPageCols;    //シートのカラム段数。
+    this.cPageLength        =Math.ceil(XPS.framerate);                  //カラム長だったけど一秒に変更
+    this.sheetSubSeparator  =SheetSubSeparator;                         //サブセパレータの間隔
+    this.PageCols           =SheetPageCols;                             //シートのカラム段数。
                 //    実際問題としては１または２以外は使いづらくてダメ
                 //    コンパクトモードでは1段に強制するのでこの値を無視する
-    this.fct0    =Counter0;    //カウンタのタイプ
-    this.fct1    =Counter1;    //二号カウンタはコンパクトモードでは非表示
+    this.fct0               =Counter0;                                  //カウンタのタイプ
+    this.fct1               =Counter1;                                  //二号カウンタはコンパクトモードでは非表示
 
+    this.favoriteWords      =FavoriteWords;                             //お気に入り単語
+    this.footMark           =FootMark;                                  //フットマーク機能フラグ
+    this.autoScroll         =AutoScroll;                                //自動スクロールフラグ
+    this.tabSpin            =TabSpin;                                   //TABキーで確定操作
 
+    this.noSync             =NoSync;                                    //入力同期停止
 
-    this.favoriteWords    =FavoriteWords;    //お気に入り単語
-    this.footMark    =FootMark;//フットマーク機能フラグ
-    this.autoScroll    =AutoScroll;//自動スクロールフラグ
-    this.tabSpin    =TabSpin;//TABキーで確定操作
-
-    this.noSync    =NoSync;//入力同期停止
-
-    this.blmtd    =BlankMethod;    //カラセル方式デフォルト値
+    this.blmtd              =BlankMethod;                               //カラセル方式デフォルト値
                     //["file","opacity","wipe","expression1","expression2"];
-    this.blpos    =BlankPosition;    //カラセル位置デフォルト値
+    this.blpos              =BlankPosition;                             //カラセル位置デフォルト値
                     //["build","first","end","none"]
 
-    this.fpsF    =FootageFramerate;    //フッテージのフレームレート
+    this.fpsF               =FootageFramerate;                          //フッテージのフレームレート
                             //コンポサイズdefeult
-    this.dfX    =defaultSIZE.split(",")[0];    //コンポサイズが指定されない場合の標準値
-    this.dfY    =defaultSIZE.split(",")[1];    //
-    this.dfA    =defaultSIZE.split(",")[2];    //
-    this.timeShift    =TimeShift;    //読み込みタイムシフト
+    this.dfX                =defaultSIZE.split(",")[0];                 //コンポサイズが指定されない場合の標準値
+    this.dfY                =defaultSIZE.split(",")[1];                 //
+    this.dfA                =defaultSIZE.split(",")[2];                 //
+    this.timeShift          =TimeShift;                                 //読み込みタイムシフト
 
 //yank関連
-    this.yankBuf={body:"",direction:""};    //ヤンクバッファは、comma、改行区切りのデータストリームで
+    this.yankBuf            ={body:"",direction:""};                    //ヤンクバッファは、comma、改行区切りのデータストリームで
         this.yankBuf.valueOf=function(){return this.body;}
 //undo関連
     this.flushUndoBuf();
 //保存ポインタ関連
 
 //ラピッド入力モード関連
-    this.eXMode=0;    //ラピッドモード変数(0/1/2/3)
-    this.eXCode=0;    //ラピッドモード導入キー変数
+    this.eXMode =0;         //ラピッドモード変数(0/1/2/3)
+    this.eXCode =0;         //ラピッドモード導入キー変数
 //シート入力関連
-    this.eddt="";    //編集バッファ
-    this.edchg=false;    //編集フラグ
-//    this.Focus=false;    //シートフォーカス
-    this.edmode=0;        //編集操作モード　0:通常入力　1:ブロック移動　2:区間編集
-    this.floatSourceAddress=[0,0];
-    this.floatDestAddress=[0,0];
-    this.spinBackup=this.spin();//スピン量をバックアップ
+    this.eddt   ="";        //編集バッファ
+    this.edchg  =false;     //編集フラグ
+    this.edmode=0;          //編集操作モード　0:通常入力　1:ブロック移動　2:区間編集
+    this.floatSourceAddress =[0,0];
+    this.floatDestAddress   =[0,0];
+    this.spinBackup         =this.spin();//スピン量をバックアップ
 
-    this.activeInput=null;//アクティブ入力エレメントを保持
 //    アクセス頻度の高いDOMオブジェクトの参照保持用プロパティ
-    this["data_well"]=document.getElementById("data_well");//データウェル
-    this["snd_body"]=document.getElementById("snd_body");//音声編集バッファ
-
-/*    xUI.activate(target)
-引数:キーワード　target
-戻値:なし
-    アクティブ入力エレメント切り換えメソッド
-        targetとしてキーワードを
-        ["tool_","sheet" ]ほかは廃止済
-    そのうち全廃2015 09 30
-*/
-this.activate= function(target){this.activeInput=target;};    
-
-if(! this.SWap){
-    this.tbap=false;    //ツールボックスを使用しているか否かのフラグ
-    this.tool_=null;    //ツールボックスオブジェクト参照用変数
-    this.pfap=false;    //プリファレンスを使用しているか否かのフラグ
-    this.pref=null;        //プリファレンスオブジェクト参照用変数
-
-
-    this.SWap=new Array();//サブウィンドウ表示情報格納用
-    this.SWsz=new Array();//サブウィンドウサイズ格納用
-        this.SWap["writeout_"]=false;
-            this.SWsz["writeout_"]=[512,480];
-        this.SWap["tool_"]=false;
-            this.SWsz["tool_"]=[360,360];
-        this.SWap["pref_"]=false;
-            this.SWsz["pref_"]=[400,300];
-        this.SWap["scene_"]=false;
-            this.SWsz["scene_"]=[512,480];
-        this.SWap["about_"]=false;
-            this.SWsz["about_"]=[420,420];
-        this.SWap["data_"]=false;
-            this.SWsz["data_"]=[512,400];
-        this.SWap["dbg_"]=false;
-            this.SWsz["dbg_"]=[512,400];
-
-//サブウィンドウオブジェクト
-    this["writeout_"]    =new Object();
-    this["tool_"]    =new Object();
-    this["pref_"]    =new Object();
-    this["scene_"]    =new Object();
-    this["about_"]    =new Object();
-    this["data_"]    =new Object();
-    this["dbg_"]    =new Object();
-/*
-    ウィンドウ構成変更にしたがって変更要 後で調整 07/08/06
-*/
-};
+    this["data_well"]       =document.getElementById("data_well");//データウェル
+    this["snd_body"]        =document.getElementById("snd_body");//音声編集バッファ
 
 //以下インターフェースカラー設定
     this.sheetbaseColor    =SheetBaseColor;        //タイムシート背景色
@@ -639,10 +592,6 @@ xUI.flushUndoBuf=function(){
         this.undoStack.push([[0,1],[0,0],'']);
     this.undoPt=0;    //アンドウポインタ初期化
     this.storePt=0;    //保存ポインタ初期化
-/* フラッシュのタイミングが変わるのでここでこれらは不要
-    this.Backupdata=new Array();//編集バックアップトレーラ
-    this.activeInput=null;//アクティブ入力ポインタ
-*/
 };
 /*
     保存ポインタを参照してドキュメントが保存されているか否かを返す関数
@@ -864,6 +813,7 @@ xUI.reInitBody=function(newTimelines,newDuration){
     newXPS.readIN(XPS.toString());//別オブジェクトとして複製を作る
     //変更してputメソッドに渡す
     newXPS.reInitBody(newTimelines,newDuration);
+    console.log(newXPS);
     this.put(newXPS);
 };
 
@@ -1026,20 +976,11 @@ xUI.getid=function(name){
 */
 xUI.selectCell=function(ID){
     if (typeof ID == "undefined") ID='';
-if(dbg) document.getElementById("app_status").innerHTML=ID;//デバッグ用
-//        移動なし かつ インプットボックスなし 編集なし ならば処理中止
-    if (ID == this.getid("Select") && ! this.Focus && !this.edchg){
-//        ツールボックスがアクティブなら優先してフォーカスを入れる
-        if (this.activeInput=="tool_")
-        {    this["tool_"].document.getElementById("iNputbOx").focus();};
-    };
-//    現在のセレクトをフォーカスアウト
-//    引数が偽ならば フォーカスアウトのみ(ここでリターン)
+    if(dbg) document.getElementById("app_status").innerHTML=ID;//デバッグ用
+//      現在のセレクトをフォーカスアウト 引数が偽ならば フォーカスアウトのみ(ここでリターン)
     if(! ID){return;};
-//    選択セルの内容をXPSの当該の値で置き換え
-//    新アドレスにフォーカス処理開始 = IDをセレクト
-
-//指定IDが稼働範囲外だったら丸め込む
+//      選択セルの内容をXPSの当該の値で置換 新アドレスにフォーカス処理開始 = IDをセレクト
+//      指定IDが稼働範囲外だったら丸め込む
 if(ID instanceof Array){
     var tRack = ID[0];
     var fRame = ID[1];
@@ -1052,7 +993,7 @@ if(ID instanceof Array){
     ID=tRack+'_'+fRame;
 //    JQオブジェクトを取得
     var currentJQItem=$("#"+ID);
-//    まずセレクションクリア
+//    セレクションクリア
         this.selectionHi("clear");
 //    フットマーク機能がオンならば選択範囲とそしてホットポイントをフミツケ
     if(this.footMark){
@@ -1060,9 +1001,9 @@ if(ID instanceof Array){
     }else{
         paintColor=this.sheetbaseColor;//                    == clear ==
     };
-//この辺まとめた方が良さそう?
+//      この辺まとめた方が良さそう?
     if(this.XPS.xpsTracks[xUI.Select[0]][xUI.Select[1]]=='') paintColor=this.sheetbaseColor;
-//足跡ぺったら
+//      footstamp
     document.getElementById(this.getid("Select")).style.backgroundColor=paintColor;
 //フレームの移動があったらカウンタ更新フラグ立てる
         var fctrefresh = (fRame==this.Select[1])? false : true ;
@@ -1079,12 +1020,6 @@ if(ID instanceof Array){
 //    ヘッドライン
     if(document.getElementById("iNputbOx").value!=eddt)
     {    document.getElementById("iNputbOx").value=eddt;};//編集ラインに送る
-//    ツールボックスへ送る
-    if (this.SWap["tool_"])
-    {
-        if(this["tool_"].document.getElementById("iNputbOx").value!=eddt)
-        {    this["tool_"].document.getElementById("iNputbOx").value=eddt;};
-    };
 /*    オートスクロールフラグが立っていたらスクロールを制御
     現在、オートスクロールで移動時にマウスによる選択処理をキャンセルしている
     オートスクロールのアルゴリズムが改善されたら処理を検討のこと
@@ -1098,26 +1033,9 @@ if(ID instanceof Array){
 横方向　セルフォーカスが表示範囲左右一定（２～４？）カラム以内であること（左右別条件に）
 かつ移動余裕があること=各条件がシート端からの距離以上であること
 */
-if (this.autoScroll){
-    this.scrollTo(ID);
-// 入力ボックスあるならばフォーカスを入れる
-    if (this.activeInput=="tool_"){
-        this["tool_"].focus();
-        this["tool_"].document.getElementById("iNputbOx").select();
-    }else{
-        document.getElementById("iNputbOx").select();
-    };
-}
-// 入力ボックスあるならばフォーカスを入れる
-
-    if (this.activeInput=="tool_"){
-        this["tool_"].focus();
-        this["tool_"].document.getElementById("iNputbOx").select();
-    }else{
-        document.getElementById("iNputbOx").select();
-    };
+    if (this.autoScroll){ this.scrollTo(ID) };
+    document.getElementById("iNputbOx").select();
 };
-
 /*    カラム移動
         xUI.changeColumn(カラムID,カラムブロック番号)
         カラムブロック番号は、タイムシートのひとかたまりのブロック番号
@@ -1722,7 +1640,7 @@ BODY_ += pageNumber;
 BODY_ += '_';
 BODY_ += cols.toString();
 
-BODY_ +='" class="layerlabelR" ';
+BODY_ +='" class="layerlabelR"';
 BODY_ +=' >';
 var lbString=(this.referenceLabels[r].length<4)?this.referenceLabels[r]:'<a onclick="return false;" title="'+this.referenceLabels[r]+'">●</a>';
 
@@ -2112,8 +2030,6 @@ default :    ;//数値の場合は、spin値の更新 数値以外はNOP
         this.spinHi("clear");
         this.spinValue=NxsV;
         document.getElementById("spin_V").value=this.spinValue;
-        if(this.SWap["tool_"])this["tool_"].document.getElementById("spin_V").value=this.spinValue;
-
         this.spinHi();
     };
     var newID=NxrA+"_"+NxFr;//新しいフォーカス位置を導く
@@ -3044,11 +2960,7 @@ case    27    :    ;//esc
     if (this.edchg){this.put(this.eddt);}//更新
     if (this.Selection.join() != "0,0"){this.selection();this.spinHi();break;};
         //選択範囲解除
-//    if(this.Focus) {this.focusCell();};
-    
-        //選択範囲なければフォーカス解除
     break;
-
 case    32    :    ;//space 値を確定してフォーカスアウト
     if (this.edchg){this.put(this.eddt);}//更新
 //    this.focusCell();
@@ -3493,11 +3405,7 @@ xUI.Mouse=function(e){
 //if(dbg) dbgPut("mouse:"+e.type.toString());
 //document.getElementById("iNputbOx").focus();
 
-if(this.edchg){
-    this.eddt=(this.activeInput=="tool_")?
-        this["tool_"].document.getElementById("iNputbOx").value:
-        document.getElementById("iNputbOx").value;
-};
+if(this.edchg){ this.eddt= document.getElementById("iNputbOx").value };
 //IEのとき event.button event.srcElement
 //    if(MSIE){TargeT = event.srcElement ;Bt = event.button ;}else{};
 
@@ -3677,51 +3585,6 @@ default    :    return true;
 //
 //    xUI.Mouse.action    =false    ;//マウスアクション保留フラグ
 //    xUI.Mouse.rID=false    ;//マウスカーソルID
-
-//
-//サブウインドウを開く。引数はキーワード。戻り値は常にfalse?引っ越しする?
-xUI.openSW=function(name){
-    if (this.SWap[name]){
-    if (! this[name].closed){};
-        this[name].focus();
-        sync(name);
-        return false;
-    }else{
-if (name!="scene_"){
-    this[name]=window.open("../template/"+name+".html",name,"width="+this.SWsz[name][0]+",height="+this.SWsz[name][1]);
-}else{
-    this[name]=window.open("../template/"+name+".html",name,"width="+this.SWsz[name][0]+",height="+this.SWsz[name][1]+",resizable=yes,scrollbars=yes");
-};
-        this.SWap[name]=true;
-//        sync(name);
-        return false;
-    };
-};
-//
-//xUI.openSW    =openSW_;
-//サブウィンドウをすべて閉じる
-xUI.closeSW=function(){
-    for (var n=0;n<this.SWap.length;n++){
-        if (this.SWap[n]==true) {this.SWap[n]=false;this[n].close();}
-    };
-};
-//
-//xUI.closeSW    =closeSW_;
-//
-
-//サブウィンドウをライズ
-xUI.riseSW=function(name){
-    if (! name){
-        for (var n=0;n<this.SWap.length;n++)
-        {if (this.SWap[n]==true) {this[n].focus();}};
-    }else{
-        if (this.SWap[name]==true) {this[name].focus();};
-    };
-};
-//
-//xUI.riseSW    =riseSW_    ;
-//
-
 //ドキュメントを開く
 xUI.openDocument=function(){
     if(fileBox.openFileDB){fileBox.openFileDB();}else{this.sWitchPanel("Data");}
@@ -4534,13 +4397,16 @@ if(startupXPS.length > 0){
     nas_Rmp_Init();
 //================================css設定
 //    シート境界色設定
-    nas.addCssRule("table","border-color:"+SheetBorderColor,"screen");
-    nas.addCssRule("th","border-color:"+SheetBorderColor,"screen");
-    nas.addCssRule("td","border-color:"+SheetBorderColor,"screen");
+    $('table').css('border-color',SheetBaseColor);
+    $('th').css('border-color',SheetBorderColor);
+    $('td').css('border-color',SheetBorderColor);
 //    識別用ラベル背景色設定
-    nas.addCssRule("th.stilllabel" ,"background-color:"+xUI.stillColor ,"screen");
-    nas.addCssRule("th.sfxlabel"   ,"background-color:"+xUI.sfxColor   ,"screen");
-    nas.addCssRule("th.cameralabel","background-color:"+xUI.cameraColor,"screen");
+//    nas.addCssRule("th.stilllabel" ,"background-color:"+xUI.stillColor ,"screen");
+//    nas.addCssRule("th.sfxlabel"   ,"background-color:"+xUI.sfxColor   ,"screen");
+//    nas.addCssRule("th.cameralabel","background-color:"+xUI.cameraColor,"screen");
+    $("th.stilllabel").css("background-color",xUI.stillColor);// ,"screen");
+    $("th.sfxlabel").css("background-color",xUI.sfxColor);//   ,"screen");
+    $("th.cameralabel").css("background-color",xUI.cameraColor);//,"screen");
 
 //startupXPSがない場合でフラグがあればシートに書き込むユーザ名を問い合わせる
     if(NameCheck){
@@ -4625,20 +4491,79 @@ document.getElementById("UIheader").style.display="none";
     };
 }
 //サーバーオンサイトであるか否かを判定して表示を更新
+/**     テスト用にダミー状態を作成   12.25 */
+if(false){
+    var tempElement = document.appendChild('span');
+    tempElement.id = "backend_variables";
+/*
+    tempElement.data-user_access_token = '';
+    tempElement.data-episode_id = '';
+    tempElement.data-cut_id = '';
+    tempElement.data-episode_token = '';
+    tempElement.data-cut_token = '';
+    tempElement.data-line_id = '';
+    tempElement.data-stage_id = '';
+    tempElement.data-job_id = '';
+    tempElement.data-status = '';    
+*/
+//    serviceAgent.currentServer.authorize(function(){$('#backend_variables').attr('user_access_token',$('#server-info').attr('oauth_token'));});
+}
 　   if(document.getElementById('backend_variables')){
-　       xUI.onSite = window.location.toString().split('/').slice(0,3).join('/');
+//　       xUI.onSite = window.location.toString().split('/').slice(0,3).join('/');//現在のロケーションから取得
+　       xUI.onSite = serviceAgent.currentServer.url.split('/').slice(0,3).join('/');//試験用　サーバのURLから取得       
 　       serviceAgent.currentStatus='online';
 　       document.getElementById('loginstatus_button').innerHTML = '=ONLINE=';
 　       document.getElementById('loginstatus_button').disabled  = true;
-　       if(
-　           ($("#backend_variables").attr("data-episode_id").length > 0)&&
-　           ($("#backend_variables").attr("data-cut_id").length > 0)
-　       ){
-//ドキュメント拘束モードへ移行
+  //ここにユーザ設定を挿入予定
+        xUI.currentUser = new nas.UserInfo(
+            $("#backend_variables").attr("data-uers_name") + ":" +
+            $("#backend_variables").attr("data-user_email")
+        );
+    　   if($("#backend_variables").attr("data-episode_token").length > 0){
 　           serviceAgent.currentStatus='online-single';
 　           $('#server-info').hide();
 　           $('#server-onsite').show();
-            document.getElementById('toolbarHeader').style.backgroundColor='#ddbbbb';
+                 document.getElementById('toolbarHeader').style.backgroundColor='#ddbbbb';
+//ドキュメント拘束モード
+　           if($("#backend_variables").attr("data-cut_token").length > 0){
+    　           serviceAgent.currentServer.getRepositories(function(){
+    　               serviceAgent.switchRepository(1,function(){
+    　                   var myIdentifier=serviceAgent.currentRepository.getIdentifierByToken($("#backend_variables").attr("data-cut_token"));
+                         if(Xps.getIdentifier(XPS) != myIdentifier){
+    　                       console.log('syncIdentifier');
+    　                       XPS.syncIdentifier(myIdentifier);
+    　                       sync('info_');
+    　                   }
+    　               });
+    　           });
+    　       }else{
+//ドキュメント新規作成    　           
+    　           serviceAgent.currentServer.getRepositories(function(){
+    　               serviceAgent.switchRepository(1,function(){
+    　                   var myIdentifier = serviceAgent.currentRepository.getIdentifierByToken($("#backend_variables").attr("data-episode_token"));
+                             myIdentifier = myIdentifier+'('+XPS.time()+')';
+                         if(Xps.compareIdentifier(Xps.getIdentifier(XPS),myIdentifier) < 0){
+    　                       console.log('syncIdentifier');
+    　                       console.log(Xps.getIdentifier(XPS));
+    　                       console.log(myIdentifier);
+    　                       console.log(Xps.compareIdentifier(Xps.getIdentifier(XPS),myIdentifier));
+    　                       XPS.syncIdentifier(myIdentifier);
+    　                       XPS.create_user=myName;
+    　                       XPS.update_user=myName;
+    　                       //var msg='新規カットです。カット番号を入力してください';
+    　                       //var newCutName=prompt(msg);
+    　                       //if()
+    　                       sync('info_');
+    　                   }
+    　               });
+    　           });
+    　       }
+　       } else {
+
+    　       serviceAgent.currentServer.getRepositories(function(){
+//    　           serviceAgent.switchRepository(1);
+    　       });
+
 　       }
 　   }
 //シートボディを締める
@@ -4905,9 +4830,10 @@ function nas_Rmp_reStart(evt){
 //    alert(1234567);
 //ファイルがオープン後に変更されていたら、警告する
 /*
-    オープン判定は xUI.storePt と xUI.undoPtの比較で行う
+    変更判定は xUI.storePt と xUI.undoPtの比較で行う
 storePtはオープン時および保存時に現状のundoPtを複製するので、
 内容変化があれば (xUI.storePt != xUI.undoPt) となる
+
 */
     if(! xUI.isStored()){
     evt = event || window.event;
@@ -4923,10 +4849,7 @@ storePtはオープン時および保存時に現状のundoPtを複製するの�
 //if(confirm("TEST")){return }else {return false};
 //    クッキーを使用する設定なら、
 //    現在のウィンドウサイズを取得してクッキーかき出し
-if (useCookie[0]) {writeCk(buildCk());};
-//    サブウィンドウが開いていたら閉じる?
-    xUI.closeSW();
-//
+// if (useCookie[0]) {writeCk(buildCk());};現在　cookie:0 は常にfalse
 };
 
 /*
@@ -5103,12 +5026,6 @@ case	"fct":	;
 		nas.Frm2FCT(xUI.Select[1],xUI.fct0[0],xUI.fct0[1]);
 	document.getElementById("fct1").value=
 		nas.Frm2FCT(xUI.Select[1],xUI.fct1[0],xUI.fct1[1]);
-	if (xUI.SWap["tool_"]){
-	xUI["tool_"].document.getElementById("fct0").value=
-		nas.Frm2FCT(xUI.Select[1],xUI.fct0[0],xUI.fct0[1]);
-	xUI["tool_"].document.getElementById("fct1").value=
-		nas.Frm2FCT(xUI.Select[1],xUI.fct1[0],xUI.fct1[1]);
-	}
 	break;
 case	"lvl":	;
 //レイヤの移動があったらボタンラベルを更新
@@ -5132,21 +5049,12 @@ stat=(XPS.xpsTracks[xUI.Select[0]]["option"].match(/still|timing|replacement/))?
 	//現在タイムリマップトラック以外はdisable　将来的には各トラックごとの処理あり
 	document.getElementById("blmtd").value=bmtd;
 	document.getElementById("blpos").value=bpos;
-	
-	if (xUI.SWap["tool_"]){
-	xUI["tool_"].document.getElementById("activeLvl").value=label;
-	xUI["tool_"].document.getElementById("activeLvl").disabled=stat;
-	}
-
 	document.getElementById("blmtd").disabled=stat;
 	document.getElementById("blpos").disabled=stat;
 	if(! document.getElementById("blpos").disabled) chkPostat();
 	break;
 case	"spinS":
 	document.getElementById("spinCk").checked=xUI.spinSelect;
-	if (xUI.SWap["tool_"]){
-	xUI["tool_"].document.getElementById("spinCk").checked=xUI.spinSelect;
-	}
 	break;
 case	"title":
 
@@ -5237,34 +5145,15 @@ case	"framerate":	;break;
 case	"undo":	;
 {
 //undoバッファの状態を見てボタンラベルを更新
-
 	stat=(xUI.undoPt==0)? true:false ;
-
-//	document.getElementById("undo").disabled=stat;
 	$("#undo").attr("disabled",stat);
-//	$("#undo").html((stat)?"<img src=./images/ui/undo-d.png>":"<img src=./images/ui/undo.png>")
-	
-	
-	if (xUI.SWap["tool_"]){
-	xUI["tool_"].document.getElementById("undo").disabled=stat;
-	}
 }
 	break;
 case	"redo":	;
 {
 //redoバッファの状態を見てボタンラベルを更新
-
 	stat=((xUI.undoPt+1)>=xUI.undoStack.length)? true:false ;
-
 	$("#redo").attr("disabled",stat);
-//	$("#redo").html((stat)?"<img src=./images/ui/redo-d.png>":"<img src=./images/ui/redo.png>")
-
-
-//	document.getElementById("redo").disabled=stat;
-	
-	if (xUI.SWap["tool_"]){
-	xUI["tool_"].document.getElementById("redo").disabled=stat;
-	}
 }
 	break;
 case	"time":	;//時間取得
@@ -5282,8 +5171,6 @@ case	"trout":	;
 	var transit=XPS[prop][1];
 	document.getElementById(prop).innerHTML=
 	(XPS[prop][0]==0)? "-<br/>" : " ("+timestr+")";
-//	(XPS[prop][0]==0)? "-<br/>" : transit + " ("+timestr+")";
-
 	var myTransit="";
 	if(XPS.trin[0]>0){
 		myTransit+="△ "+XPS.trin[1]+'('+nas.Frm2FCT(XPS.trin[0],3)+')';
@@ -5293,7 +5180,6 @@ case	"trout":	;
 	myTransit+="▼ "+XPS.trout[1]+'('+nas.Frm2FCT(XPS.trout[0],3)+')';
 	}
 	document.getElementById("transit_data").innerHTML=myTransit;
-
 	break;
 case	"memo":
 	var memoText=XPS.xpsTracks.noteText.toString().replace(/(\r)?\n/g,"<br>");
@@ -5367,28 +5253,15 @@ function syncInput(entry)
 {
 	if((xUI.noSync)||(xUI.viewOnly)) return;
 //カーソル入力同期
-//		ヘッドライン更新
+//		表示更新
 	if (document.getElementById("iNputbOx").value!=entry)
 	document.getElementById("iNputbOx").value=entry;
-//		ツールボックス更新
-	if (xUI.SWap["tool_"]){
-	if (xUI["tool_"].document.getElementById("iNputbOx").value!=entry)
-	xUI["tool_"].document.getElementById("iNputbOx").value=entry;
-	}
-//		フォーカスがシート上にあればボックスを更新
-	if(this.Focus)
-	{
-		if (document.getElementById("iNputbOx").value!=entry)
-			document.getElementById("iNputbOx").value=entry;
-	}else{
-		if (document.getElementById(xUI.Select[0]+"_"+xUI.Select[1]).innerHTML!=entry)
-			document.getElementById(xUI.Select[0]+"_"+xUI.Select[1]).innerHTML=(entry=="")?"<br>":entry;
-
-		var paintColor=(xUI.eXMode>=2)?xUI.inputModeColor.EXTENDeddt:xUI.inputModeColor.NORMALeddt;
-		if (! xUI.edchg) paintColor=xUI.selectedColor;
-		if (document.getElementById(xUI.Select[0]+"_"+xUI.Select[1]).style.backgroundColor!=paintColor)
-			document.getElementById(xUI.Select[0]+"_"+xUI.Select[1]).style.backgroundColor=paintColor;
-	};
+	if (document.getElementById(xUI.Select[0]+"_"+xUI.Select[1]).innerHTML!=entry)
+		document.getElementById(xUI.Select[0]+"_"+xUI.Select[1]).innerHTML=(entry=="")?"<br>":entry;
+	var paintColor=(xUI.eXMode>=2)?xUI.inputModeColor.EXTENDeddt:xUI.inputModeColor.NORMALeddt;
+	if (! xUI.edchg) paintColor=xUI.selectedColor;
+	if (document.getElementById(xUI.Select[0]+"_"+xUI.Select[1]).style.backgroundColor!=paintColor)
+		document.getElementById(xUI.Select[0]+"_"+xUI.Select[1]).style.backgroundColor=paintColor;
 }
 
 /*						----- io.js
@@ -7267,9 +7140,9 @@ if(	xUI.SheetLength !=document.getElementById("prefSheetLength").value ||
 )
 {
 //
-	xUI["viewMode"]=newMode;
+	xUI["viewMode"] = newMode;
 // シート外観の変更が必要なのでフォーカス関連を控えて再初期化する
-		Bkup=[xUI.Select,xUI.Selection,xUI.Focus];
+		Bkup=[xUI.Select,xUI.Selection];
 	xUI.SheetLength=document.getElementById("prefSheetLength").value;
 		xUI.PageLength	=xUI.SheetLength*
 		XPS.framerate;
@@ -7279,7 +7152,6 @@ if(	xUI.SheetLength !=document.getElementById("prefSheetLength").value ||
 //フォーカス復帰
 		xUI.Select =Bkup[0];
 		xUI.Selection =Bkup[1];
-		xUI.Focus =Bkup[2];
 			xUI.selectCell();
 }
 	xUI.footMark=document.getElementById("prefFootMark").checked;
@@ -8163,6 +8035,10 @@ this.close=function (){
 
 if (dbg){
 	var dbg_info=new Array();
+if(typeof console == 'undefined'){
+    console = {};
+    console.log=function(aRg){ dbg_action(aRg)};
+}
 //でばぐ出力
 function dbgPut(aRg){
 	document.getElementById('msg_well').value += (aRg+"\n");
@@ -8178,7 +8054,8 @@ function dbg_action(cmd){
 	var body="";
 	try{body=eval(cmd);}catch(er){body=er;};
 	document.getElementById('msg_well').value += (body+'\n');
-	if(console){console.log(body);}
+//	if(console){console.log(body);}
+
 }
 }
 

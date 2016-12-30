@@ -26,14 +26,16 @@
 //この関数名で
 function pushStore(){
   if(document.getElementById('backend_variables')){
-	var episode_id = $('#backend_variables').attr('data-episode_id');
-	var cut_id = $('#backend_variables').attr('data-cut_id');
-	var method_type = '';
-	var target_url = '';
+	var episode_id 	  = $('#backend_variables').attr('data-episode_id');
+	var episode_token = $('#backend_variables').attr('data-episode_token');
+	var cut_id        = $('#backend_variables').attr('data-cut_id');
+	var cut_token     = $('#backend_variables').attr('data-cut_token');
+	var method_type   = '';
+	var target_url    = '';
  var title_name = encodeURIComponent(xUI.XPS.title);
  var episode_name = encodeURIComponent(xUI.XPS.opus) + (xUI.XPS.subtitle)?
   '['+encodeURIComponent(xUI.XPS.subtitle)+']' : '';
- var cut_name = [	's' + encodeURIComponent((xUI.XPS.scene.length)? xUI.XPS.scene:'-') +
+ var cut_description = [	's' + encodeURIComponent((xUI.XPS.scene.length)? xUI.XPS.scene:'-') +
 					'c' + encodeURIComponent(xUI.XPS.cut) + '('+xUI.XPS.time()+')',
 					encodeURIComponent(xUI.XPS.line.toString(true)),
 					encodeURIComponent(xUI.XPS.stage.toString(true)),
@@ -53,6 +55,7 @@ function pushStore(){
 	json_data = {
 			 		content: xUI.XPS.toString(),
 			 		name: cut_name,
+			 		description: cut_description,
 		     		episode_id: episode_id,
 			 		cut_id: cut_id,
 			 		title_name: title_name,
@@ -129,7 +132,7 @@ function backToDocumentList(){
 			'/cuts?episode_token='+$('#backend_variables').attr('data-episode_token'):
 			'/'	;
 		xUI.sWitchPanel('Prog');
-	 	window.location= backLocation;
+	 	window.location= xUI.onSite+backLocation;
 	 }else{
 	 	return false;	
 	 }

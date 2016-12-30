@@ -39,8 +39,8 @@
  *		ただし開始メッセージが抑制されている場合は表示されません。
  */
 
-	var welcomeMsg="TVPaintCSV サーバ対応版test20161020";
-	var windowTitle="ver. 1.5.7";//WindowTitleとしての役割は終了 統合バージョンです
+	var welcomeMsg="サーバ対応版 -test- 20161225";
+	var windowTitle="ver. 1.6.0";//WindowTitleとしての役割は終了 統合バージョンです
 
 /**************************************************************************
  *	ロゴ等
