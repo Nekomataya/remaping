@@ -352,6 +352,11 @@ issuesSorter =function(val1,val2){
 };
 
 /**
+    ソート比較関数
+    カット番号（文字列内の最初の整数クラスタ）を整数化して比較
+*/
+numSorter =function(val1,val2){ return (nas.parseNumber(val1) - nas.parseNumber(val2))};
+/**
 初期化引数:カット識別子[タイトルID,話数ID,カットID]
 
     ドキュメントリストにエントリされるオブジェクト
@@ -363,9 +368,9 @@ issuesSorter =function(val1,val2){
     いずれも URIエンコードされた状態で格納されているので画面表示の際は、デコードが必要
 
     ネットワークリポジトリに接続する場合は以下のプロパティが追加される
-    listEntry.titleID   /int
-    listEntry.episodeID /int
-    listEntry.iassues[#].cutID  /int
+    listEntry.titleID   /string token
+    listEntry.episodeID /string token
+    listEntry.iassues[#].cutID  /string token
     
 */
 listEntry=function(myIdentifier){
@@ -551,6 +556,7 @@ localRepository.pushEntry=function(myXps){
 //既存エントリが無いので新規エントリを追加
     localStorage.setItem(this.keyPrefix+myIdentifier,myXps.toString());
     this.entryList.push(new listEntry(myIdentifier))
+    console.log(this.entryList.length > this.maxEntry)
     if ( this.entryList.length > this.maxEntry ){
 //設定制限値をオーバーしたら、ローカルストレージから最も古いエントリを削除
         for (var iid=0; iid < this.entryList[0].issues.length ; iid++ ){ localStorage.removeItem( this.keyPrefix + this.entryList[0].issues[iid])};
@@ -1432,8 +1438,10 @@ NetworkRepository.prototype.pushEntry = function (myXps){
 /**
     currentEntry==null なので、ターゲットのエピソードtokenを再取得して引数で渡す必要あり １２・２１
 */
-            //新規エントリなので新たにPOSTする
-        this.pushData('POST',false,myXps)    
+            //新規エントリなので新たにPOSTする (空エントリを引数に付ける)
+//        var tmpEntry= new listEntry(Xps.getIdentifier(myXps));
+        var tmpEntry= this.entry(Xps.getIdentifier(myXps),true);
+        this.pushData('POST',tmpEntry,myXps)    
     }
 };
 /**
@@ -1443,33 +1451,55 @@ NetworkRepository.prototype.pushEntry = function (myXps){
 
 リポジトリ上に既存エントリはPUT 新規エントリはPOSTで　送信
 タイトルや、エピソードが存在しないデータはリジェクト
+オンサイト時は　各種データをbackend_variablesから取得
+それ以外の場合は、documentDepotから取得をトライする
+取得に失敗した場合は送信失敗
+
+
+
+<span id="backend_variables" data-user_access_token="4dcb5a249c94aa21529a522e23de730f176d032d8e1e1bf621c8f09b0d733566"
+                               data-user_token="aWWMWNKW2HAfuRHWANZKbETy"
+                               data-user_name="ねこまたや"
+                               data-user_email="kiyo@nekomataya.info"
+                               data-episode_id="17"
+                               data-cut_id="24"　
+                               data-episode_token="mfjVjBUuG6Q8GHu7u6nzJTa2"
+                               data-cut_token="73o16nRYK7oqNNmeGDHWizLV"
+                               data-line_id="0:(primary)"
+                               data-stage_id="0:Startup"
+                               data-job_id="1:work"
+                               data-status="Active"
+  ></span>
+  
 */
 NetworkRepository.prototype.pushData = function (myMethod,myEntry,myXps){
     console.log(myEntry);
-    return;
-//    var targetArray = myIdentifier.split('//');
+//    return;
 	var lastIssue   = myEntry.issues[myEntry.issues.length-1];
-	var method_type = myMethod;
+//	var method_type = myMethod;
 
-	var episode_token  = myEntry.episodeID;
-	var cut_token      = lastIssue.cutID;
     var title_name     = myEntry.product.split('#')[0];
     var episode_name   = myEntry.product.split('#')[1];
-    var cut_name       = myEntry.product.sci;
+    var cut_name       = (myMethod == 'PUT')? myEntry.sci:'s'+((myXps.scene)? myXps.scene:'-')+'c'+myXps.cut+"("+nas.Frm2FCT(myXps.time(),3)+")";
     var line_id        = lastIssue[0];
     var stage_id       = lastIssue[1];
     var job_id         = lastIssue[2];
     var status         = lastIssue[3];
-/**
-  if(document.getElementById('backend_variables')){
-	var episode_token = $('#backend_variables').attr('data-episode_token');
-	var cut_token = $('#backend_variables').attr('data-cut_token');
-	var method_type = '';
-	var target_url = '';
-  }else{
-  	alert('no network service');
-  }
 
+//オンサイトの場合は優先してbackend_variablesから情報を取得
+
+  if(document.getElementById('backend_variables')){
+	var episode_token   = $('#backend_variables').attr('data-episode_token');
+	var cut_token       = $('#backend_variables').attr('data-cut_token');
+  }else{
+	var episode_token   = myEntry.episodeID;
+	var cut_token       = (myMethod == 'PUT')? lastIssue.cutID:false;
+  }
+console.log(episode_token);
+console.log(cut_token);
+console.log(decodeURIComponent(cut_name));
+//return
+/**
 	保存時に送り出すデータに
 		タイトル・エピソード番号（文字列）・サブタイトル
 		カット番号+カット尺
@@ -1482,18 +1512,22 @@ NetworkRepository.prototype.pushData = function (myMethod,myEntry,myXps){
 */
 if(myMethod=='POST'){
 //新規エントリ作成
-	json_data = {
+	json_data = {cut:{
+		     		episode_token: episode_token,
 	                name: decodeURIComponent(cut_name),
-	                description:myEntry.toString(),
-			 		content: myXps.toString(),
-		     		episode_token: episode_token
-				};
+	                description:Xps.getIdentifier(myXps,true),
+			 		content: myXps.toString()
+				}};
+		method_type = 'POST';
+		target_url = '/cuts.json';
 }else{
 //エントリ更新
 	json_data = {
+		     		token: cut_token,
+		     		cut:{
 	                name: decodeURIComponent(cut_name),
 	                description:myEntry.toString(),
-			 		content: myXps.toString(),
+			 		content: myXps.toString()
 //			 		cut_token: cut_id,
 //			 		title_name: title_name,
 //			 		episode_name: episode_name,
@@ -1502,17 +1536,10 @@ if(myMethod=='POST'){
 //			 		stage_id: stage_id,
 //			 		job_id: job_id,
 //			 		status: status
-				};
-    
-}
-
-	if ((typeof cut_id == 'undefined')||( cut_id == '' )){
-		method_type = 'POST';
-		target_url = '/cuts.json';
-	}else{
+				}};
 		method_type = 'PUT';
 		target_url = '/cuts/' + cut_token + '.json'
-	}
+}
 
 /*
 開発中の 制作管理DB/MAP/XPS で共通で使用可能なnas.SCInfoオブジェクトを作成中
@@ -1527,7 +1554,7 @@ if(myMethod=='POST'){
 		contentType: 'application/JSON',
 		dataType : 'JSON',
 		scriptCharset: 'utf-8',
-		success : function(result) {
+		success : (function(result) {
 			xUI.setStored("current");//UI上の保存ステータスをセット
 			sync();//保存ステータスを同期
             
@@ -1539,7 +1566,9 @@ if(myMethod=='POST'){
 				console.log('existing cut!');
 			}
 
-		},
+                this.getList(true);//リストステータスを同期
+                documentDepot.rebuildList();
+		}).bind(this),
 		error : function(result) {
 
 			// Error
@@ -2373,48 +2402,61 @@ serviceAgent.checkoutEntry=function(callback,callback2){
      現在のタイトル及びOPUSに新規カットを登録する
      現在のTitle-Opusに既存のカットは処理できないので排除
      データ内容の指定は不可・尺のみ指定可能　最小テンプレートでカット番号のあるカラエントリのみが処理対象
+     初期状態の、ライン／ステージ／ジョブの指定が可能
 */
-serviceAgent.addEntry = function(myIdentifier){
-    if(!myIdentifier){
+serviceAgent.addEntry = function(myXps){
+    if(!myXps){
         var myProduct = documentDepot.currentProduct;
-        if(myProduct == '==newTitle=='){myProduct = documentDepot.products[0];}
+        if((myProduct == '==newTitle==')||(myProduct == null)){myProduct = documentDepot.products[0];}
         var myEntry       = this.currentRepository.entry(myProduct+"//",true);
         var currentTitle  = decodeURIComponent(myEntry.product.split('#')[0]);
         var currentOpus   = decodeURIComponent(myEntry.product.split('#')[1].split('[')[0]);
         var title = '新規カット追加';
         var msg  = '新規カットを作成します。\nカット番号/継続時間を入力して[OK]ボタンで確定してください。';
-        var msg2 = '<br><span>%title%</span>:<span>%opus%</span><br> S-C:<input id=newCutName type=text ></input> TIME:<input id=newCutTime type=text value="6 + 0"></input>';
+        var msg2 = '<br><span>%title%</span>:<span>%opus%</span><br> S-C:<input id=newCutName type=text ></input> TIME:<input id=newCutTime type=text value="6 + 0"></input><br><input id=newLine type=text value="%lineName%"></input><input id=newStage type=text value="%stageName%"></input><input id=newJob type=text value="%jobName%"></input><br>';
+
         msg2 = msg2.replace(/%title%/,currentTitle);
         msg2 = msg2.replace(/%opus%/,currentOpus);
+        msg2 = msg2.replace(/%lineName%/,nas.Pm.pmTemplate[0].line);
+        msg2 = msg2.replace(/%stageName%/,nas.Pm.pmTemplate[0].stages[0]);
+        msg2 = msg2.replace(/%jobName%/,nas.Pm.jobNames.getTemplate(nas.Pm.pmTemplate[0].stages[0],"init")[0]);
         nas.showModalDialog('confirm',[msg,msg2],title,false,function(){
-                var newCutName = document.getElementById('newCutName').value;
-                var newCutTime = nas.FCT2Frm(document.getElementById('newCutTime').value+" ");
-                if ((this.status == 0)&&(newCutName)){
-                    if(! newCutTime) newCutTime = "144";
-        var newXps = new Xps(5,144);
-        newXps.title = currentTitle;
-        newXps.opus  = currentOpus;
-        newXps.cut   = newCutName;
-        newXps.time  = newCutTime;
-        newXps.createUser = xUI.currentUser;
-        newXps.updateUser = xUI.currentUser;
-
-                    serviceAgent.currentRepository.Entry(newCutName,newJobName);
-                }
-        })
-        
-        
-        
-        
+            var newCutName  = document.getElementById('newCutName').value;
+            var newCutTime  = nas.FCT2Frm(String(document.getElementById('newCutTime').value));
+            var newLine     = document.getElementById('newLine').value;
+            var newStage    = document.getElementById('newStage').value;
+            var newJob      = document.getElementById('newJob').value;
+            if ((this.status == 0)&&(newCutName)){
+                if(! newCutTime) newCutTime = "144";
+                myXps = new Xps(5,newCutTime);
+                myXps.title = currentTitle;
+                myXps.opus  = currentOpus;
+                myXps.cut   = newCutName;
+                myXps.createUser = xUI.currentUser;
+                myXps.updateUser = xUI.currentUser;
+                myXps.line     = '0:'+ newLine;
+                myXps.stage    = '0:'+ newStage;
+                myXps.job      = '0:'+ newJob;
+                var myIdentifier = Xps.getIdentifier(myXps);
+            }
+            if((!newCutName)||(serviceAgent.currentRepository.entry(myIdentifier))){
+                alert('カット番号が重複しているかまたは不正です');
+                serviceAgent.addEntry();
+            }else{
+                serviceAgent.addEntry(myXps);
+            };
+        });
+        return;
+    }else{
+        var myIdentifier = Xps.getIdentifier(myXps);
+        if(this.currentRepository.entry(myIdentifier)){
+                alert('カット番号が既存です');
+             return false
+        }
+//        var tmpEntry= new listEntry(myIdentifier);
+        serviceAgent.currentRepository.pushEntry(myXps);
     }
-    
-    var currentEntry = this.currentRepository.entry(myIdentifier);
-    if(currentEntry) {
-        return false;
-    }
-    this.currentRepository.pushEntry(newXps)
 }
-
 /**
      工程を閉じて次の工程を開始する手続き
      逆戻り不能なのでチェックを厳重に

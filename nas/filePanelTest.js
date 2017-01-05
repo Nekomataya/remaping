@@ -125,8 +125,10 @@ documentDepot.updateDocumentSelector=function(myRegexp){
          continue;
     }
 //console.log()
+    myDocuments.sort(documentDepot.sortBySCi);
+    console.log(myDocuments);
 //  正規表現フィルタで抽出してHTMLを組む
-    var myContents = ""
+    var myContents = "";
     myContents += '<option value="==newDocument==">（*-- no document selected--*）';
     for ( var dlid = 0 ; dlid < myDocuments.length ; dlid ++){
         var currentText = decodeURIComponent(myDocuments[dlid].toString(0).split('//')[1]);
@@ -141,6 +143,10 @@ documentDepot.updateDocumentSelector=function(myRegexp){
     document.getElementById( "cutList" ).innerHTML = myContents;
     
 }
+/**
+listEntryのカット番号順にソートする　評価関数
+*/
+documentDepot.sortBySCi = function(val1,val2){return (nas.parseNumber(val1.sci)-nas.parseNumber(val2.sci))};
 /**
     読み出して編集エリアに取り込む
     識別子が指定されない場合は、セレクタの値を見る
@@ -272,10 +278,10 @@ encodeURIComponent() を識別子組み立て前に通す
             第三要素    ラインID   (Int 通番)　 各要素にname要素を付加しても良い　0:本線//1:レイアウト//0:打合せ　等
             第四要素    ステージID (Int 通番)
             第五要素    ジョブID   (Int 通番)
-            第六要素    ジョブ終了マーカー　値はなんでも良い　セパレータ自体が終了マーカーとなる
+            第六要素    ジョブステータス　値は文字列 Startup/Active/Hold/Fixed/Aborted いずれか
 
 *   作業ステージを閉じる処理は、ユーザがアプリケーション側で行う
-    その際、識別子にフィックスのサインを付加する（第六要素用のセパレータを加える）
+    その際、識別子にフィックスのサインを付加する（第六要素'Fixed'）
     フィックスされたデータが上書きされることはない　データの請求は常に有効
     将来的には、ステージ/ジョブを内部に備えたXps,xMap 等が利用されるが、その際もこの識別子はそのまま使用可能
 

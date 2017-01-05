@@ -7,7 +7,7 @@
 nas.LangPack=new nas.LanguagePack;
 
 nas.LangPack.ja=[
-	["pM00","innerHTML","ドキュメント"],
+	["pMdocument","innerHTML","ドキュメント"],
 ["pM01","innerHTML","開く"],
 ["pM01","title","ドキュメントパネル"],
 ["pM02","innerHTML","読込"],

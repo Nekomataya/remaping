@@ -2227,7 +2227,93 @@ Xps.compareIdentifier =function (target,destination){
         if(tgtSC != dstSC){return 0;}
         return 1;
 }
+/**
+    識別子をパースする関数
+    SCiオブジェクトで戻す？
+    Identifier の持ちうる情報は以下
 
+    title
+        .name
+    opus
+        .name
+        .subtitle
+    [sci]
+        .name
+        .times
+    
+    [issues]
+        Line
+            .id
+            .name
+        Stage
+            .id
+            .name
+        Job
+            .id
+            .name
+    status
+*/
+/**
+    プロダクト識別子をパースして返す
+    サブタイトルは一致比較時に比較対象から外す
+*/
+Xps.parseProduct = function(productString){
+    var dataArray = productString.replace( /[\[\]]/g ,'#').split('#');
+    return {
+        title     :   decodeURIComponent(dataArray[0]),
+        opus      :   decodeURIComponent(dataArray[1]),
+        subtitle  :   decodeURIComponent(dataArray[2])
+    };
+}
+/** test
+    console.log (Xps.parseProduct('%E3%82%BF%E3%82%A4%E3%83%88%E3%83%AB%E6%9C%AA%E5%AE%9A#%E7%AC%AC%20%20%E8%A9%B1'));
+*/
+/**
+    sci識別子をパースして返す
+    識別子に付属する時間情報はトランジション／継続時間ではなくカット尺のみ
+    補助情報は持たせない。かつ対比時に比較対象とならないものとする
+    カット番号情報は、ここではscene-cutの分離を行わない
+    比較の必要がある場合に始めて比較を行う方針でコーディングする   
+*/
+Xps.parseSCi = function(sciString){
+    var dataArray = sciString.split('/');
+    var result = [];
+    for (var ix=0;ix < dataArray.length ;ix ++){
+        result.push({
+        'cut'   :   decodeURIComponent(dataArray[ix].split('(')[0]),
+        'time'  :   decodeURIComponent(dataArray[ix].split('(')[1].replace(/[\(\)]/g,''))
+        });
+    }
+    return result;
+}
+/** test
+    console.log (Xps.parseSCi('s-cC%23%20(16)/'));
+*/
+/**
+     データ識別子をパースして無名オブジェクトで戻す
+     SCi/listEntryオブジェクトとの兼ね合いを要調整　20170104
+*/
+Xps.parseIdentifier = function(myIdentifier){
+    var dataArray = myIdentifier.split('//');
+    var result={};
+    console.log(dataArray[0]);
+    result.product  = Xps.parseProduct(dataArray[0]);
+    result.sci      = Xps.parseSCi(dataArray[1]);
+    
+    result.title    = result.product.title;
+    result.opus     = result.product.opus;
+    result.subtitle = result.product.subtitle;
+    result.cut      = result.sci[0].cut;
+    result.time     = result.sci[0].time;
+    result.line     = new XpsLine(decodeURIComponent(dataArray[2]));
+    result.stage    = new XpsStage(decodeURIComponent(dataArray[3]));
+    result.job      = new XpsStage(decodeURIComponent(dataArray[4]));
+    result.currentStatus   = dataArray[5];//この情報はデコード不用
+    return result;
+}
+/** test 
+    console.log(Xps.parseIdentifier('%E3%81%8B%E3%81%A1%E3%81%8B%E3%81%A1%E5%B1%B1Max#%E3%81%8A%E3%81%9F%E3%82%81%E3%81%97//s-c10(72)//0%3A(%E6%9C%AC%E7%B7%9A)//0%3Alayout//0%3Ainit//Startup'));
+*/
 /** =====================================機能分割 20130221
  * レイヤストリームを正規化する
  * 内部処理用

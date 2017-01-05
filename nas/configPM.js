@@ -113,9 +113,8 @@ nas.Pm.stages.addStage("preCompositCheck"   ,["撮出し検査"                 
  *
                     id                ,[識別名称         ,shortName  ,outputAsset      ,initAsset,code  ,description]
 */
-nas.Pm.lines.addLine("null"           ,["(未設定)"        ,"(未)"    ,"null"           ,"null"   ,"null","初期化前のオブジェクトに設定するダミーライン"]);
-nas.Pm.lines.addLine("ALL"            ,["(全素材)"        ,"全"      ,"ALL"            ,"ALL"    ,"_all","カット情報を持って一時的に集積されるライン"]);
 nas.Pm.lines.addLine("trunk"          ,["本線"            ,"本線"    ,"cell"           ,"SCInfo" ,"cell","管理本線となるセルライン"]);
+
 nas.Pm.lines.addLine("backgroundArt"  ,["背景美術"        ,"背景"    ,"backgroundArt"  ,"layout" ,"bg__"  ,"美術作業"]);
 nas.Pm.lines.addLine("cast3D"         ,["3Dアニメーション","3D"      ,"3DCast"         ,"SCInfo" ,"__3D","3Dアニメーションキャスト"]);
 nas.Pm.lines.addLine("characterDesign",["キャラクター設定","キャラ設","characterDesign","EXTRA"  ,"cd"  ,"キャラクター設定"]);
@@ -124,8 +123,24 @@ nas.Pm.lines.addLine("BGDesign"       ,["美術設定"        ,"美設"    ,"BGD
 nas.Pm.lines.addLine("colorDesign"    ,["色彩設計"        ,"色設計"  ,"colorDesign"    ,"EXTRA"  ,"colD","色彩設計"]);
 nas.Pm.lines.addLine("colorCoordiante",["色指定"          ,"指定"    ,"colorDesign"    ,"SCInfo" ,"__cc","色指定"]);
 nas.Pm.lines.addLine("composite"      ,["コンポジット"    ,"撮影"    ,"ALL"            ,"ALL"    ,"comp","撮影"]);
-
+nas.Pm.lines.addLine("ALL"            ,["(全素材)"        ,"全"      ,"ALL"            ,"ALL"    ,"_all","カット情報を持って一時的に集積されるライン"]);
+nas.Pm.lines.addLine("null"           ,["(未設定)"        ,"(未)"    ,"null"           ,"null"   ,"null","初期化前のオブジェクトに設定するダミーライン"]);
 /*========================================================================*/
+
+/**
+ *   制作基準テンプレート
+ *  制作管理のため基準値として利用
+ *   このデータは基礎データとしてユーザが編集する必要あり
+ *　 サイトごとのライン内のステージの流れをテンプレートとして保存する
+ *   以下に設定するのは参考用テンプレート
+ * 引数
+ *   親オブジェクト    (nas.Pmは参照用マスターDB　他はリポジトリを置く 対応する　lines,stages,jobNames　を配下に持っているオブジェクト)
+ *   ライン    (ライン識別名で)
+ *   ラインごとのステージ標準並び (出現順に配列で名称を列記)
+ */
+nas.Pm.pmTemplate.push(new nas.Pm.LineTemplate(nas.Pm,"本線",["レイアウト","原画","動画","色指定","トレス","色トレス","ペイント","セル特効","撮出し検査","撮影"]));
+nas.Pm.pmTemplate.push(new nas.Pm.LineTemplate(nas.Pm,"背景美術",["美術原図","背景","美術監督チェック","演出検査"]));
+
 /**
  *  ジョブは、ステージごとに定義される
  *  正確には作業中に初期状態の名称リストの他に逐次新しい名前を定義して良い

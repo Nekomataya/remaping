@@ -284,7 +284,7 @@ nas.Pm.assets = new nas.Pm.AssetCollection(nas.Pm);
  *  stageNames  ステージ名称コレクション
  *  jobName     ジョブ名称コレクション
  *  
- *  .getLines()             ラインの
+ *  .getLines()             設定されているラインのリストを返す
  *  .getStageName(myLine)   ラインごとのステージ候補セットを設定順で戻す
  *  .getJobNames(myStage)   指定ステージのジョブ候補セットを設定順で戻す
  *  
@@ -299,11 +299,24 @@ stageNames[stage]=[line1,line2];
 jobNames[job]=[stage1,stage2]
 line null,ALL,trunk,backgroundArt,
  */
-nas.Pm.PmTemplate = function(){
-    this.lines=[];
+//ラインデータコレクション配列
+nas.Pm.PmTemplateCollection   = function(myParent){
+        this.parent = myParent;
 };
-nas.Pm.PmTemplate.getJobNames = function(){};
+nas.Pm.PmTemplateCollection.prototype = Array.prototype;
 
+/**
+    ラインテンプレート　ステージデータコレクション
+
+*/
+nas.Pm.LineTemplate = function(myParent,lineName,myStages){
+    if (!(myStages instanceof Array)) myStages = [myStages];
+    this.parent = myParent
+    this.line   = this.parent.lines.getLine(lineName);
+    this.stages = myStages;
+};
+
+nas.Pm.pmTemplate = new nas.Pm.PmTemplateCollection(nas.Pm);
 
 /*制作管理用 Jobオブジェクト
  *プロパティ

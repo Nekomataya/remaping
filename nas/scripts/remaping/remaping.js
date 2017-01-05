@@ -3703,6 +3703,22 @@ onscrollの設定位置を一考
      $('#UIheaderScrollH').offset( { left : $('#qdr4').offset().left} );
    };
 //===========================================
+/**
+    xUI.pMenu(target,mode)
+    プルダウンメニューの有効／無効を切り替える
+    引数:
+        target  stging:メニューid
+        mode    string:"disable","enable"
+*/
+    xUI.pMenu = function(target,mode){
+        if (mode == 'enable'){
+            $('#'+target+'-d').hide();
+            $('#'+target).show();
+        }else{
+            $('#'+target).hide();
+            $('#'+target+'-d').show();            
+        }
+    }
 /*
 	xUI.sWitchPanel(引数)
 パネル類の表示をコントローする

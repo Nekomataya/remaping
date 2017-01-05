@@ -131,247 +131,266 @@
 <!-- dropdown menu for brouser ブラウザ用ドロップダウンメニュー　-->
 <div id=pMenu>
 <ul id=pMenu>
-<li><span id=pM00>Document</span>
+<li><span id=pMdocument>Document</span>
 <ul>
 <!-- 一般ドキュメントメニュー インポート／エクスポートは別に-->
-<li><A	id=pM0h
+
+<li><span id=pMbrowse-d class='pM pM-alt'>書類選択</span><A	id=pMbrouse
 	href = 'javascript:void()'
 	onclick = 'xUI.sWitchPanel("File");return false;//myScenePref.open();document.getElementById("scnNewSheet").checked=true;return false;'
 	title="ドキュメントを選択"
->開く</A></li>
-<li><A	id=pM0i
+>書類選択</A></li>
+<hr>
+<li><span id=pMcheckin-d class='pM pM-alt'>作業開始</span><A id=pMcheckin
 	href = 'javascript:void()'
 	onclick = 'serviceAgent.checkinEntry();return false;'
 	title="作業開始"
->check-in</A></li>
-<li><A	id=pM0j
+>作業開始</A></li>
+<li><span id=pMsave-d class='pM pM-alt'>作業保存</span><A	id=pMsave
+	href = 'javascript:void()'
+	onclick = 'serviceAgent.checkoutEntry();return false;'
+	title="作業保存"
+>作業保存</A></li>
+<li><span id=pMcheckout-d class='pM pM-alt'>作業終了</span><A	id=pMcheckout
 	href = 'javascript:void()'
 	onclick = 'serviceAgent.checkoutEntry();return false;'
 	title="作業終了"
->check-out</A></li>
-<li><A	id=pM0k
+>作業終了</A></li>
+<li><span id=pMactivate-d class='pM pM-alt'>作業再開</span><A	id=pMactivate
 	href = 'javascript:void()'
 	onclick = 'serviceAgent.activateEntry();return false;'
 	title="作業再開"
->activate</A></li>
-<li><A	id=pM0l
+>作業再開</A></li>
+<li><span id=pMdeactivate-d class='pM pM-alt'>作業中断</span><A	id=pMdeactivate
 	href = 'javascript:void()'
 	onclick = 'serviceAgent.deactivateEntry();return false;'
 	title="作業中断"
->deactivate</A></li>
-<li><A	id=pM0m
+>作業中断</A></li>
+<li><span id=pMdiscard-d class='pM pM-alt'>編集破棄</span><A	id=pMdiscard
 	href = 'javascript:void()'
 	onclick = 'documentDepot.closeEntry();return false;'
-	title="閉じる"
->close</A></li>
-<li><A	id=pM0n
-	href = 'javascript:void()'
-	onclick = 'return false;'
-	title="送信"
->push</A></li>
+	title="編集を破棄して閉じる"
+>編集破棄</A></li>
 <hr>
 <!-- 制作管理用ドキュメントメニュー -->
-<li><span id=pM0o-d>制作管理</span></li>
-<hr>
-<!-- 旧ドキュメントメニュー -->
-<li> <A	id=pM01
+<li><span id=pMnewEntry-d class='pM pM-alt'>新規カット</span><A	id=pMnewEntry
 	href = 'javascript:void()'
-	onclick = 'xUI.sWitchPanel("File");return false;//myScenePref.open();document.getElementById("scnNewSheet").checked=true;return false;'
-	title="シートの新規作成と変更"
->New</A></li>
-<li id=dMcgi><A	id=pM02
+	onclick = 'serviceAgent.addEntry();return false;'
+	title="新規カット追加"
+>新規カット</A></li>
+<hr>
+<li><span id=pMreceipt-d class='pM pM-alt'>作業検収</span><A	id=pMreceipt
+	href = 'javascript:void()'
+	onclick = 'serviceAgent.receiptEntry();return false;'
+	title="次の工程へ進める"
+>作業検収</A></li>
+<li><span id=pMcheckoutF-d class='pM pM-alt'>作業終了</span><A	id=pMcheckoutF
+	href = 'javascript:void()'
+	onclick = ';return false;'
+	title="強制的に作業を閉じる"
+>作業終了</A></li>
+<li><span id=pMabort-d class='pM pM-alt'>作業中断</span><A	id=pMabort
+	href = 'javascript:void()'
+	onclick = 'serviceAgent.abortEntry();return false;'
+	title="制作を中断する"
+>制作中断</A></li>
+<hr>
+<li><span id=pMbranch-d class='pM pM-alt'>ライン分岐</span><A	id=pMbranch
+	href = 'javascript:void()'
+	onclick = ';return false;'
+	title="制作ラインを分岐"
+>ライン分岐</A></li>
+<li><span id=pMmerge-d class='pM pM-alt'>ラインマージ</span><A	id=pMmerge
+	href = 'javascript:void()'
+	onclick = ';return false;'
+	title=""
+>ラインマージ</A></li>
+<hr>
+
+<!-- 旧ドキュメントメニュー -->
+<li id=dMcgi><span id=pMimportDatas-d class='pM pM-alt'>Open</span><A id=pMimportDatas
 	href="javascript:void(0);"
 	onclick="if(document.getElementById('optionPanelData').style.display!='inline'){xUI.sWitchPanel('Data')};document.getElementById('loadShortcut').value='true';document.getElementById('myCurrentFile').click();return false;"
 	title="ローカルドキュメントを開く"
 >Open</A></li>
-<li id=dMair><A	id=pM03
+<li id=dMair><span id=pMopenFS-d class='pM pM-alt'>Open</span><A id=pMopenFS
 	href="javascript:void(0);"
 	onclick="fileBox.openFileDB();return false;"
 	title="ローカルドキュメントを開く(ファイル)"
 >Open</A></li>
-<li id=dMair><A	id=pM04
+<li id=dMair><span id=pMsaveFS-d class='pM pM-alt'>Save</span><A id=pMsaveFS
 	href="javascript:void(0);"
 	onclick="if(fileBox.saveFile){fileBox.saveFile();}"
 	title="保存（ファイル）"
 >Save</A></li>
-<li id=dMair><A	id=pM05
+<li id=dMair><<span id=pMexportFS-d class='pM pM-alt'>Save As</span>A	id=pMexportFS
 	href="javascript:void(0);"
 	onclick="if(fileBox.saveAs){fileBox.saveAs();}else{alert('現在ファイルの操作ができません')};return false;"
 	title="別名で保存（ファイル）"
 >Save As</A></li>
-<li id=dMps><A	id=pM06
+<li id=dMps><span id=pMopenFSps-d class='pM pM-alt'>Open</span><A	id=pMopenFSps
 	href="javascript:void(0);"
 	onclick="fileBox.openFileDB();return false;"
 	title="ローカルドキュメントを開く(ファイル)"
 >Open</A></li>
-<li id=dMps><A	id=pM07
+<li id=dMps><span id=pMsaveFSps-d class='pM pM-alt'>Save</span><A	id=pMsaveFSps
 	href="javascript:void(0);"
 	onclick="if(fileBox.saveFile){fileBox.saveFile();}"
 	title="保存（ファイル）"
 >Save</A></li>
-<li id=dMps><A	id=pM08
+<li id=dMps><span id=pMexportFSps-d class='pM pM-alt'>Save As</span><A	id=pMexportFSps
 	href="javascript:void(0);"
 	onclick="if(fileBox.saveAs){fileBox.saveAs();}else{alert('現在ファイルの操作ができません')};return false;"
 	title="別名で保存（ファイル）"
 >Save As</A></li>
-<li id=dMcgi><A	id=pM09
+<li id=dMcgi><span id=pMcallEcho-d class='pM pM-alt'>Save via CGI</span><A	id=pMcallEcho
 	href="javascript:void(0);"
 	onclick="callEcho();return false;"
 	title="CGI経由でローカルに保存（要CGI設定）"
 >Save via CGI</A></li>
-<li><a	id=pM0a
+<li><span id=pMimportexport-d class='pM pM-alt'>Import/Export</span><a	id=pMimportexport
 	href="javascript:void(0);"
 	onclick="xUI.sWitchPanel('Data');return false;"
 	title="読み込み書き出しパネルを開く"
 >Import/Export</a></li>
-<li id=dMsvc><hr><a id=pM0d
+<li id=dMsvc><hr><span id=pMauthPnl-d class='pM pM-alt'>認証パネル</span><a id=pMauthPnl
 	href="javascript:void(0);"
 	onclick="xUI.sWitchPanel('Login');return false;"
 	title="認証パネルを開く/閉じる"
 >認証パネル</a></li>
-<li id=dMsvc><a id=pM0e
+<li id=dMsvc><span id=pMsignInOut-d class='pM pM-alt'>Authorize</span><a id=pMsignInOut
 	href="javascript:void(0);"
 	onclick="serviceAgent.authorize();return false;"
 	title="サインイン/アウト"
 >Authorize</a></li>
-<li id=dMsvc><hr><a id=pM0b
-	href="javascript:void(0);"
-	onclick="pullStore();return false;"
-	title="最後の編集へ復帰"
->Restore</a></li>
-<!--<li id=dMsvc><a id=pM0c
+<!--<li id=dMsvc><span id=-d class='pM pM-alt'></span><a id=pM0c
 	href="javascript:void(0);"
 	onclick="alert('お待ち下さい');return false;"
 	title=""
 >Reload</a></li>-->
-<li id=dMsvc><a id=pM0f
-	href="javascript:void(0);"
-	onclick="pushStore();return false;"
-	title="ファイルをサーバに保存"
->サーバに保存</a></li>
 <hr>
-<li id=dMsvc><a id=pM0g
+<li id=dMsvc><span id=pMmenuBack-d class='pM pM-alt'>戻る</span><a id=pMmenuBack
 	href="javascript:void(0);"
 	onclick="return backToDocumentList();"
-	title="カット一覧へ戻る"
->一覧へ戻る</a></li>
+	title="戻る"
+>戻る</a></li>
 </ul>
 </li>
 
 <li><span id=pM10>Edit</span>
 <ul>
-<li><A	id=pM11
+<li><span id=pMselectAll-d class='pM pM-alt'>selectAll</span><A	id=pMselectAll
 	HREF='javascript:void(0);'
 	onclick='chkValue("selall");return false;'
 	title=""
 >selectAll</A></li>
-<li><A	id=pM12
+<li><span id=-d class='pM pM-alt'></span><A	id=pM12
 	HREF='javascript:void(0);'
 	onclick='chkValue("cut");return false;'
 	title=""
 >Cut [ctr]-[x]</A></li>
-<li><A	id=pM13
+<li><span id=-d class='pM pM-alt'></span><A	id=pM13
 	HREF='javascript:void(0);'
 	onclick='chkValue("copy");return false;'
 	title=""
 >Copy [ctr]-[c]</A></li>
-<li><A	id=pM14
+<li><span id=-d class='pM pM-alt'></span><A	id=pM14
 	HREF='javascript:void(0);'
 	onclick='chkValue("paste");return false;'
 	title=""
 >Paste [ctr]-[v]</A></li>
-<li><hr><A	id=pM15
+<li><hr><span id=-d class='pM pM-alt'></span><A	id=pM15
 	HREF='javascript:void(0);'
 	onclick='reNameLabel(xUI.Select[0]);return false;'
 	title="ラベル変更"
 >renameTL</A></li>
-<li><A	id=pM16
+<li><span id=-d class='pM pM-alt'></span><A	id=pM16
 	HREF='javascript:void(0);'
 	onclick='clearTL();return false;'
 	title="一列クリア"
 >ClearTL</A></li>
-<li><A	id=pM17
+<li><span id=-d class='pM pM-alt'></span><A	id=pM17
 	HREF='javascript:void(0);'
 	onclick='clearTL("all");return false;'
 	title="シートをクリア"
 >ClearAll</A></li>
 
-<li><A	id=pM18
+<li><span id=-d class='pM pM-alt'></span><A	id=pM18
 	HREF='javascript:void(0);'
 	onclick='insertBlank();return false;'
 	title="選択範囲にカラコマを挿入"
 >InsertBlank</A></li>
-<li><A	id=pM19
+<li><span id=-d class='pM pM-alt'></span><A	id=pM19
 	HREF='javascript:void(0);'
 	onclick='deleteBlank();return false;'
 	title="ブロックで削除"
 >BlockDelete</A></li>
 
-<li><hr><A	id=pM1a
+<li><hr><span id=-d class='pM pM-alt'></span><A	id=pM1a
 	HREF='javascript:void(0);'
 	onclick='addTimeline("dialog");return false;'
 	title="音声ライン追加"
 >addSoundTrack</A></li>
-<li><A	id=pM1b
+<li><span id=-d class='pM pM-alt'></span><A	id=pM1b
 	HREF='javascript:void(0);'
 	onclick='addTimeline("still");return false;'
 	title="静止画タイムライン追加"
 >addStilTL</A></li>
-<li><A	id=pM1c
+<li><span id=-d class='pM pM-alt'></span><A	id=pM1c
 	HREF='javascript:void(0);'
 	onclick='addTimeline("timing");return false;'
 	title="タイムライン追加"
 >addCellTL</A></li>
-<li><A	id=pM1d
+<li><span id=-d class='pM pM-alt'></span><A	id=pM1d
 	HREF='javascript:void(0);'
 	onclick='addTimeline("camera");return false;'
 	title="カメラを追加"
 >addCameraTL</A></li>
-<li><A	id=pM1e
+<li><span id=-d class='pM pM-alt'></span><A	id=pM1e
 	HREF='javascript:void(0);'
 	onclick='addTimeline("effect");return false;'
 	title="効果を追加"
 >addSfxTL</A></li>
-<li><A	id=pM1f
+<li><span id=-d class='pM pM-alt'></span><A	id=pM1f
 	HREF='javascript:void(0);'
 	onclick='insertColumns();return false;'
 	title="タイムライン挿入"
 >InsertTL</A></li>
-<li><A	id=pM1g
+<li><span id=-d class='pM pM-alt'></span><A	id=pM1g
 	HREF='javascript:void(0);'
 	onclick='deleteColumns();;return false;'
 	title="タイムライン削除"
 >DeleteTL</A></li>
-<li><A	id=pM1h
+<li><span id=-d class='pM pM-alt'></span><A	id=pM1h
 	HREF='javascript:void(0);'
 	onclick='reformatTimeline();return false;'
 	title="タイムライン整形"
 >FormatTL</A></li>
-<li><A	id=pM1i
+<li><span id=-d class='pM pM-alt'></span><A	id=pM1i
 	HREF='javascript:void(0);'
 	onclick='reformatTimeline("all");return false;'
 	title="シートを整形"
 >FormatSheet</A></li>
-<li><A	id=pM1m
+<li><span id=-d class='pM pM-alt'></span><A	id=pM1m
 	HREF='javascript:void(0);'
 	onclick='simplifyTimeline();return false;'
 	title="タイムライン単整形"
 >simplifyTL</A></li>
-<li><A	id=pM1n
+<li><span id=-d class='pM pM-alt'></span><A	id=pM1n
 	HREF='javascript:void(0);'
 	onclick='simplifyTimeline("all");return false;'
 	title="タイムシート単整形"
 >simplifySheet</A></li>
-<br><hr><br><li><A	id=pM1j	HREF='javascript:void(0);'
+<br><hr><br><li><span id=-d class='pM pM-alt'></span><A	id=pM1j	HREF='javascript:void(0);'
 	onclick='xUI.setBackup();return false;'
 	title="バックアップ更新"
 >pushBackup</A></li>
-<li><A	id=pM1k
+<li><span id=-d class='pM pM-alt'></span><A	id=pM1k
 	HREF='javascript:void(0);'
 	onclick='xUI.getBackup();return false;'
 	title="バックアップ復帰"
 >restoreBackup</A></li>
-<li><A	id=pM1l
+<li><span id=-d class='pM pM-alt'></span><A	id=pM1l
 	HREF='javascript:void(0);'
 	onclick='xUI.clearBackup();return false;'
 	title="バックアップをクリア"
@@ -381,33 +400,33 @@
 
 <li><span id=pM20>Ref..</span>
 <ul>
-<li id=dMcgi><A	id=pM21
+<li id=dMcgi><span id=-d class='pM pM-alt'></span><A	id=pM21
 	HREF='javascript:void(0);'
 	onclick='document.getElementById("loadShortcut").value="ref";document.getElementById("myCurrentFile").click();return false;'
 	title="参照エリア読み込み"
 >import</A></li>
-<li id=dMair><A	id=pM22
+<li id=dMair><span id=-d class='pM pM-alt'></span><A	id=pM22
 	HREF='javascript:void(0);'
 	onclick='alert("yet!");return false;'
 	title="参照エリア読み込み"
 >import</A></li>
-<li><A	id=pM23
+<li><span id=-d class='pM pM-alt'></span><A	id=pM23
 	HREF='javascript:void(0);'
 	onclick='putReference();return false;'
 	title="参照エリアへ転記"
 >copy to Ref</A></li>
-<li><A	id=pM24
+<li><span id=-d class='pM pM-alt'></span><A	id=pM24
 	HREF='javascript:void(0);'
 	onclick='getReference();return false;'
 	title="参照エリアから転記"
 >copy from Ref</A></li>
-<li><A	id=pM25
+<li><span id=-d class='pM pM-alt'></span><A	id=pM25
 	HREF='javascript:void(0);'
 	onclick='xUI.referenceXPS=new Xps(XPS.layers.length,XPS.duration());nas_Rmp_Init();return false;'
 	title="参照エリア消去"
 >clear Ref</A></li>
 <hr>
-<li><A	id=pM26
+<li><span id=-d class='pM pM-alt'></span><A	id=pM26
 	HREF='javascript:void(0);'
 	onclick='buildActionSheet()'
 	title="原画アクションシートを作成"
@@ -448,42 +467,42 @@
 
 <li><span id=pM30>Xps</span>
 <ul>
-<li><A	id=pM31
+<li><span id=-d class='pM pM-alt'></span><A	id=pM31
 	href="javascript:void(0);"
 	onclick='xUI.sWitchPanel("Data");return false;'
 	title="読み込み・書き出しパネル"
 >read/write</A></li>
-<li> <A	id=pM32
+<li><span id=-d class='pM pM-alt'></span><A	id=pM32
 	href='javascript:void()'
 	onclick='myScenePref.open();return false;'
 	title="シートの新規作成と変更"
 >Document</A></li>
-<li id=dMair><A	id=pM33
+<li id=dMair><span id=-d class='pM pM-alt'></span><A	id=pM33
 	href='javascript:void()'
 	onclick='if(fileBox.storeOtherExtensionFile){fileBox.storeOtherExtensionFile(printHTML(true),"html")}else{alert("現在ファイルの操作ができません")};return false;'
 	title="表示用HTMLで書出し"
 >Export as html</A></li>
-<li id=dMair><A	id=pM34
+<li id=dMair><span id=-d class='pM pM-alt'></span><A	id=pM34
 	href='javascript:void()'
 	onclick='var prevChack=document.getElementById("exportCheck").checked;document.getElementById("exportCheck").checked=true;if(exportEps()){document.getElementById("exportCheck").checked=prevChack;};return false;'
 	title="epsで画像書出し（実験中）"
 >Export as eps</A></li>
-<li id=dMps><A	id=pM35
+<li id=dMps><span id=-d class='pM pM-alt'></span><A	id=pM35
 	href='javascript:void()'
 	onclick='if(fileBox.storeOtherExtensionFile){fileBox.storeOtherExtensionFile(printHTML(true),"html")}else{alert("現在ファイルの操作ができません")};return false;'
 	title="表示用HTMLで書出し"
 >Export as html</A></li>
-<li id=dMps><A	id=pM36
+<li id=dMps><span id=-d class='pM pM-alt'></span><A	id=pM36
 	href='javascript:void()'
 	onclick='var prevChack=document.getElementById("exportCheck").checked;document.getElementById("exportCheck").checked=true;if(exportEps()){document.getElementById("exportCheck").checked=prevChack;};return false;'
 	title="epsで画像書出し（実験中）"
 >Export as eps</A></li>
-<li id=dMcgi><A	id=pM37
+<li id=dMcgi><span id=-d class='pM pM-alt'></span><A	id=pM37
 	href='javascript:void()'
 	onclick='if(xUI.data_well.value=XPS.toString("html")){callEchoHTML()};return false;'
 	title="表示用HTMLをダウンロード"
 >Export as html</A></li>
-<li id=dMcgi><A	id=pM38
+<li id=dMcgi><span id=-d class='pM pM-alt'></span><A	id=pM38
 	href='javascript:void()'
 	onclick='var prevChack=document.getElementById("exportCheck").checked;document.getElementById("exportCheck").checked=true;if(exportEps()){document.getElementById("exportCheck").checked=prevChack;};return false;'
 	title="eps画像ダウンロード"
@@ -505,37 +524,34 @@
 
 <li><span id=pM50>Tools</span>
 <ul>
-<li> <A	id=pM51
+<li><span id=-d class='pM pM-alt'></span><A	id=pM51
 	HREF='javascript:void(0);'
 	onclick='xUI.sWitchPanel("Ver");'
 	title="りまぴんについて"
 >about</A><br></li>
-<li><hr><A	id=pM52
+<li><hr><span id=-d class='pM pM-alt'></span><A	id=pM52
 	HREF='javascript:void(0);'
 	onclick='myPref=new Pref();myPref.open();return false;'
 	target='pref_'
 	title="各種環境設定"
 >Pref</A></li>
-<li>
-	<A
+<li><span id=-d class='pM pM-alt'></span><A id=pMmemoEdit
 	HREF='javascript:void(0)'
 	onclick='xUI.sWitchPanel("memo");return false;'
 	title="reload application"
 >メモ編集</A> </li>
-<li>
-	<A	id=pM53
+<li><span id=-d class='pM pM-alt'></span><A	id=pM53
 	HREF='javascript:void(0)'
 	onclick='if(confirm("アプリケーションを再読み込みします\nデータは破棄されます\nよろしいですか？")){document.location.reload()};return false;'
 	title="reload application"
 >reload</A> </li>
-<li>
-<hr>	<A	id=pM54
+<li><hr><span id=-d class='pM pM-alt'></span><A	id=pM54
 	HREF='http://www.nekomataya.info/tools/remaping/'
 	title="old version"
 >前バージョン</A> </li>
 <!--
 <li>
-<hr>	<A	id=pM54
+<hr><span id=-d class='pM pM-alt'></span><A	id=pM54
 	HREF='../sbdConvert/index.html'
 	title="story board viewer(on test)"
 >絵コンテ</A> </li>
@@ -546,105 +562,106 @@
 </li>
 <li><span	id=pM60>Show</span>
 <ul>
-<li>  <A	id=pM610
+<li><span id=-d class='pM pM-alt'></span><A	id=pM610
 	HREF='javascript:void(0);'
 	onclick='xUI.viewMode=(xUI.viewMode=="Compact")?"WordProp":"Compact";nas_Rmp_Init();return false'
 	title="編集モード切り替え"
 >[ 編集モード ]</A></li>
-<li>  <A	id=pM614
+<li><span id=-d class='pM pM-alt'></span><A	id=pM614
 	HREF='javascript:void(0);'
 	onclick='xUI.PageCols=(xUI.PageCols==1)?2:1;nas_Rmp_Init();return false'
 	title="二段組"
 >[ 段組 ]</A></li>
 <hr>
-<li>  <A	id=pM615
+<li><span id=-d class='pM pM-alt'></span><A	id=pM615
 	HREF='javascript:void(0);'
 	onclick='xUI.zoomSwitch();return false'
 	title="zoomChange"
 >zoom</A></li>
-<li>  <A	id=pM616
+<li><span id=-d class='pM pM-alt'></span><A	id=pM616
 	HREF='javascript:void(0);'
 	onclick='xUI.zoomSwitch.currentPreset=0;xUI.adjustScale();return false'
 	title="zoom100%"
 >100%</A></li>
 <hr>
-<li id=debug>  <A	id=pM617
+<li id=debug><span id=-d class='pM pM-alt'></span><A	id=pM617
 	HREF='javascript:void(0);'
 	onclick='xUI.sWitchPanel("Login");return false'
 	title="lgin"
 >loginPanel</A></li>
-<li id=debug>  <A	id=pM611
+<li id=debug><span id=-d class='pM pM-alt'></span><A	id=pM611
 	HREF='javascript:void(0);'
 	onclick='xUI.sWitchPanel("Snd");return false'
 	title="Snd"
 >soundPanel</A></li>
-<li id=debug>  <A	id=pM612
+<li id=debug><span id=-d class='pM pM-alt'></span><A	id=pM612
 	HREF='javascript:void(0);'
 	onclick='xUI.sWitchPanel("File");return false'
 	title="File"
 >filePanel</A></li>
-<li id=debug>  <A	id=pM613
+<li id=debug><span id=-d class='pM pM-alt'></span><A	id=pM613
 	HREF='javascript:void(0);'
 	onclick='$("#logoTable").hide();return false'
 	title="Logo"
 >logo</A></li>
-<li id=dMair>  <A	id=pM61
+<li id=dMair><span id=-d class='pM pM-alt'></span><A	id=pM61
 	HREF='javascript:void(0);'
 	onclick='xUI.sWitchPanel("memu");return false'
 	title="pMenu"
 >pMenu</A></li>
-<li>  <A	id=pM62
+<li><span id=-d class='pM pM-alt'></span><A	id=pM62
 	HREF='javascript:void(0);'
 	onclick='xUI.sWitchPanel("Tbx");return false'
 	title="ソフトウェアキーボード"
 >softwareKB</A></li>
-<li>  <A	id=pM63
+<li><span id=-d class='pM pM-alt'></span><A	id=pM63
 	HREF='javascript:void(0);'
 	onClick="document.getElementById(this.title).style.display=(document.getElementById(this.title).style.display=='none')?'inline':'none';xUI.adjustSpacer();"
 	title="toolbarHeader"
 >toolbarHeader</A></li>
-<li style="display:none;">  <A	id=pM64
+<li style="display:none;"><span id=-d class='pM pM-alt'></span><A	id=pM64
 	HREF='javascript:void(0);'
 	onClick="document.getElementById(this.title).style.display=(document.getElementById(this.title).style.display=='none')?'inline':'none';"
 	title="airMenu"
 >-----airMenu</A></li>
-<li>  <A	id=pM65
+<li><span id=-d class='pM pM-alt'></span><A	id=pM65
 	HREF='javascript:void(0);'
 	onClick="document.getElementById(this.title).style.display=(document.getElementById(this.title).style.display=='none')?'inline':'none';xUI.adjustSpacer();"
 	title="sheetHeaderTable"
 >sheetHeaderTable</A></li>
-<li>  <A	id=pM66
+<li><span id=-d class='pM pM-alt'></span><A	id=pM66
 	HREF='javascript:void(0);'
 	onclick='xUI.sWitchPanel("Utl");return false;'
 	title="ユーティリテーメニュー"
 >commandBar</A></li>
-<li style="display:none;">  <A	id=pM67
+<li style="display:none;"><span id=-d class='pM pM-alt'></span><A	id=pM67
 	HREF='javascript:void(0);'
 	onClick="xUI.sWitchPanel('memoArea')"
 	title="memo_header"
 >memo_header</A></li>
-<li>  <A	id=pM68
+<li><span id=-d class='pM pM-alt'></span><A	id=pM68
 	HREF='javascript:void(0);'
 	onClick='xUI.sWitchPanel("memoArea")'
 	title="memo"
 >memo</A></li>
 <li id=debug> <hr>
-  <A	id=pM69
+<span id=-d class='pM pM-alt'></span><A	id=pM69
 	HREF='javascript:void(0);'
 	onclick='xUI.sWitchPanel("Dbg");return false;'
 	title="debug_ON"
 >debugConsole</A></li>
-<li><A	HREF='javascript:void(0);'
+<li><span id=-d class='pM pM-alt'></span><A id=pMdbgWindow
+	HREF='javascript:void(0);'
 	onclick='dbg=(dbg)?false:true;nas_Rmp_Startup();xUI.init(XPS,referenceXPS);'
 	title="デバッグモード切り替え"
 >dbgON/OFF</A> </li>
 
-<li id=airDbg ><A	id=pM6a
+<li id=airDbg ><span id=-d class='pM pM-alt'></span><A	id=pM6a
 	HREF='javascript:void(0);'
 	onclick='air.Introspector.Console.log(document);'
 	title="イントロスペクタ"
 >イントロスペクタ</A> </li>
-<li id=airDbg><A	id=pM6b
+<li id=airDbg><span id=-d class='pM pM-alt'></span><A	id=pM6b
 	HREF='javascript:void(0);'
 	onclick='var viewer = air.SourceViewer.getDefault(); viewer.viewSource();'
 	title="ソース閲覧"
@@ -737,21 +754,21 @@
 	>
 	</button><button
 	id=ibMs01
-		class='iconButton iconButton-selector'
+		class='iconButton iconButton-openX'
 		onclick='xUI.sWitchPanel("File");return false;'
-		title="documentSlecter"
+		title="documentSelector"
+	>
+	</button><button
+	id=ibMs03
+		class='iconButton  iconButton-storeX'
+		onclick=""
+		title="サーバへ保存"
 	>
 	</button><button
 	id=ibMs02
 		class='iconButton  iconButton-close'
 		onclick="documentDepot.closeEntry();"
 		title="ドキュメントを閉じる"
-	>
-	</button><button
-	id=ibMs03
-		class='iconButton  iconButton-push'
-		onclick=""
-		title="サーバへ保存"
 	>
 	</button>
  </span>
@@ -1097,6 +1114,12 @@
 	</button>
 	         <button
 	id=pmcui-checkout
+		class='jobControl  jobControl-save'
+		onclick="serviceAgent.currentRepository.pushEntry();"
+		title="保存"
+	>作業保存
+	</button><button
+	id=pmcui-checkout
 		class='jobControl  jobControl-checkout'
 		onclick="serviceAgent.checkoutEntry();"
 		title="チェックアウト"
@@ -1114,25 +1137,22 @@
 		title="作業再開"
 	>作業再開
 	</button>
-　> :  <span id=pmcui_line class=pmcui_> 0:(本線) </span>
+ :  <span id=pmcui_line class=pmcui_> 0:(本線) </span>
 // <span id=pmcui_stage class=pmcui_> 2:原画 </span> 
 // <span id=pmcui_job class=pmcui_> 1:(原画) </span>
 // <span id=pmcui_status class=pmcui_> Active </span>
 // <span id=pmcui_documentWriteable class=pmcui_> [保存不可] </span>
-<hr>
-    </div>
 <!-- 管理IDコントロール UI-->
 
 <!-- ドキュメントコントロール(制作管理)メニュー
 class=optionPanel id=optionPanelProductManagement
 -->
-        <div class=pmcui>
     <div id=pmaui>
 <button
 	id=pmaui-new
-    class='pmControl pmControll-new' 
-    disabled = true
+    class='pmControl pmControl-new' 
     title='新規カットを作成'
+	onclick="serviceAgent.addEntry();"
 >新規カット</button>
 
 <button
@@ -1150,7 +1170,7 @@ class=optionPanel id=optionPanelProductManagement
     class='pmControl pmControl-adort'
     disabled = true
     title='カットの全工程を停止（カット削除）'
->作業中断</button>
+>制作中断</button>
 
 <button
 	id=pmaui-branch
@@ -1242,7 +1262,8 @@ class=optionPanel id=optionPanelProductManagement
 </datalist>
 <button class=pmControllButton >開始</button>
 <br> -->
-<hr>
+<hr><hr>
+
 <!--
 
 //  新規カット
@@ -2559,13 +2580,13 @@ trash="xUI.init(XPS)";
 ><br/>
 <button 
  id='test001'
- onClick='localRepository.pushEntry(xUI.XPS);localRepository.getList();return false;'
+ onClick='localRepository.pushEntry(xUI.XPS);localRepository.getList();documetDepot.rebuildList();return false;'
 > pushEntry-localStorage </button><button 
  id='test002'
  onClick='console.log(serviceAgent.currentRepository.entryList);return false;'
 > view-repository List </button><button 
  id='test003'
- onClick='serviceAgent.currentRepository.pushEntry(xUI.XPS);serviceAgent.currentRepository.getList();return false;'
+ onClick='serviceAgent.currentRepository.pushEntry(xUI.XPS);serviceAgent.currentRepository.getList();documetDepot.rebuildList();return false;'
 > pushEntry !</button>
 <button 
  id='test004'

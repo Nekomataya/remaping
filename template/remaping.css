@@ -406,9 +406,8 @@ button.iconButton:disabled {
 .iconButton-imp { background-position: -324px -27px; }
 .iconButton-push { background-position: -351px -27px; }
 .iconButton-pull { background-position: -378px -27px; }
-/*
-.iconButton- { background-position: -405px -27px; }
-*/
+.iconButton-close { background-position: -405px -27px; }
+
 .iconButton-document { background-position: 0 -54px; }
 .iconButton-timesheet { background-position: -27px -54px; }
 .iconButton-layerName { background-position: -54px -54px; }
@@ -423,10 +422,9 @@ button.iconButton:disabled {
 .iconButton-dialogEdit { background-position: -297px -54px; }
 .iconButton-simplify { background-position: -324px -54px; }
 .iconButton-eraser { background-position: -351px -54px; }
-/*
-.iconButton- { background-position: -378px -54px; }
-.iconButton- { background-position: -405px -54px; }
-*/
+.iconButton-zoom { background-position: -378px -54px; }
+.iconButton-search { background-position: -405px -54px; }
+
 .iconButton-section { background-position: 0 -81px; }
 .iconButton-reformat { background-position: -27px -81px; }
 .iconButton-clearFS { background-position: -54px -81px; }
@@ -486,13 +484,14 @@ button.iconButton:disabled {
 .iconButton-timelineAnimation { background-position: -27px -162px; }
 .iconButton-frameAnimation { background-position: -54px -162px; }
 .iconButton-switchShortcut { background-position: -81px -162px; }
+.iconButton-multipage { background-position: -108px -162px; }
+.iconButton-singlepage { background-position: -135px -162px; }
+.iconButton-plus { background-position: -162px -162px; }
+/*.iconButton- { background-position: -189px -162px; } */
+
+.iconButton-movie { background-position: -216px -162px; }
+.iconButton-ps { background-position: -243px -162px; }
 /*
-.iconButton- { background-position: -108px -162px; }
-.iconButton- { background-position: -135px -162px; }
-.iconButton- { background-position: -162px -162px; }
-.iconButton- { background-position: -189px -162px; }
-.iconButton- { background-position: -216px -162px; }
-.iconButton- { background-position: -243px -162px; }
 .iconButton- { background-position: -270px -162px; }
 .iconButton- { background-position: -297px -162px; }
 .iconButton- { background-position: -324px -162px; }
@@ -1223,6 +1222,15 @@ div.application_status {
 	display:none;
 	position:absolute;
 }
+
+.pM-alt {
+	color: #AAA;
+	display:none;
+}
+
+
+
+
 input{
 	vertical-align:middle;
 }
@@ -1301,6 +1309,8 @@ span.pmcui_ {
 	width:96px;
 	height:21px;
 }
+.pmControl-new {margin-left:8px;}
+
 .pmControllButton	{
 	width:48px;
 	height:21px;
