@@ -380,7 +380,8 @@ xUI.setDocumentStatus = function(myCommand){
 */
 xUI.setUImode = function (myMode){
     if(typeof myMode == 'undefined') myMode='current';
-            document.getElementById('pmcui-checkin').innerHTML=((xUI.XPS.currentStatus =='Hold')||(xUI.XPS.currentStatus =='Active'))?'作業中':'作業開始';//
+//            document.getElementById('pmcui-checkin').innerHTML=((xUI.XPS.currentStatus =='Hold')||(xUI.XPS.currentStatus =='Active'))?'作業中':'作業開始';//
+            document.getElementById('pmcui-checkin').innerHTML=((xUI.XPS.currentStatus =='Hold')||(xUI.XPS.currentStatus =='Active'))?nas.localize(nas.uiMsg.jobInUse):nas.localize(nas.uiMsg.jobCheckin);//
     switch (myMode){
         case 'current':;//NOP return
             return xUI.uiMode;
@@ -388,9 +389,11 @@ xUI.setUImode = function (myMode){
         case 'production':;
             if(xUI.XPS.currentStatus != 'Active'){return this.setUImode('browsing');}
             　xUI.viewOnly = false;//メニュー切替
+	$('#pmaui').hide();
             //作業中のドキュメントステータスは、必ずActiveなので以下のボタン状態
             //Active以外の場合はこのモードに遷移しない
             document.getElementById('pmcui-checkin').disabled    =true;
+            document.getElementById('pmcui-update').disabled     =true;
             document.getElementById('pmcui-checkout').disabled   =false;
             document.getElementById('pmcui-activate').disabled   =true;
             document.getElementById('pmcui-deactivate').disabled =false;
@@ -401,7 +404,9 @@ xUI.setUImode = function (myMode){
         case 'management':;
             //メニュー切替
             　xUI.viewOnly = true;
+	$('#pmaui').show();
             document.getElementById('pmcui-checkin').disabled    =true;//すべてのボタンを無効
+            document.getElementById('pmcui-update').disabled     =true;
             document.getElementById('pmcui-checkout').disabled   =true;
             document.getElementById('pmcui-activate').disabled   =true;
             document.getElementById('pmcui-deactivate').disabled =true;
@@ -412,6 +417,7 @@ xUI.setUImode = function (myMode){
         case 'browsing':;
             //メニュー切替
             　xUI.viewOnly = true;
+	$('#pmaui').hide();
             document.getElementById('pmcui-checkin').disabled    = ((xUI.XPS.currentStatus=='Startup')||(xUI.XPS.currentStatus=='Fixed'))? false:true;                
             document.getElementById('pmcui-checkout').disabled   = true;
             if (xUI.currentUser.sameAs(xUI.XPS.update_user)) {
@@ -2116,11 +2122,6 @@ xUI.copy    =function(){    this.yank();};
  */
 xUI.cut    =function()
 {
-//    var bkPos=[
-//      (this.Selection[0]>0)?this.Select[0]:this.Selection[0]+this.Select[0],
-//      (this.Selection[1]>0)?this.Select[1]:this.Selection[1]+this.Select[1]
-//    ];
-
     this.yank();
 //選択範囲を取得して全部空のストリームに作って流し込む。
     var actionRange=this.actionRange();
@@ -2132,7 +2133,6 @@ xUI.cut    =function()
     for (c=0;c<=Columns;c++) {bulk+=(c!=Columns)? bulk_c+"\n":bulk_c;};
     this.inputFlag="cut";
     this.put(bulk);
-//    this.selectCell(bkPos.join("_"));
     this.selectCell(actionRange[0]);//
     this.selection();
 };
@@ -2146,19 +2146,9 @@ xUI.cut    =function()
  */
 xUI.paste    =function(){
     var bkPos=this.Select.slice();
-//    var bkRange=this.Selection.slice();
-//        this.selectCell(add(bkPos,bkRange));
-//        this.selection();
-//    var range=this.actionRange();
-//    this.selection();
-//    this.selectCell(range[0]);
     this.inputFlag="cut";
     this.put(this.yankBuf.body);
-//    this.put(this.yankBuf.body,this.yankBuf.direction);
-
-        this.selectCell(bkPos);
-//        this.selection(add(this.Select,[Math.abs(this.yankBuf.direction[0]),Math.abs(this.yankBuf.direction[1])]));
-//        this.selection();
+    this.selectCell(bkPos);
 };
 /*    移動
 xUI.move(dest,dup);
@@ -5029,11 +5019,11 @@ case	"productStatus":;
 	document.getElementById('pmcui_documentWriteable').innerHTML= (xUI.viewOnly)?'[編集不可]':'';
 	switch (xUI.uiMode){
 		case 'production':
-	document.getElementById('pmcui').style.backgroundColor = '#bbbbbdd';break;
+	document.getElementById('pmcui').style.backgroundColor = '#bbbbdd';break;
 		case 'management':
-	document.getElementById('pmcui').style.backgroundColor = '#ddbbbb';break;
+	document.getElementById('pmcui').style.backgroundColor = '#ddbbbb';	break;
 		case 'brousing':
-	document.getElementById('pmcui').style.backgroundColor = '#bbddbb';break;
+	document.getElementById('pmcui').style.backgroundColor = '#bbddbb'; break;
 	}
 break;
 case	"fct":	;
@@ -5162,14 +5152,14 @@ case	"undo":	;
 {
 //undoバッファの状態を見てボタンラベルを更新
 	stat=(xUI.undoPt==0)? true:false ;
-	$("#undo").attr("disabled",stat);
+	$("#ibMundo").attr("disabled",stat);
 }
 	break;
 case	"redo":	;
 {
 //redoバッファの状態を見てボタンラベルを更新
 	stat=((xUI.undoPt+1)>=xUI.undoStack.length)? true:false ;
-	$("#redo").attr("disabled",stat);
+	$("#ibMredo").attr("disabled",stat);
 }
 	break;
 case	"time":	;//時間取得

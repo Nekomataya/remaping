@@ -261,6 +261,7 @@ console.log("url : "+this.url + '/organizations.json');
         myContents +='<option value="'+idr+'" >'+serviceAgent.repositories[idr].name; 
     }
     document.getElementById('repositorySelector').innerHTML = myContents;
+    document.getElementById('repositorySelector-f').innerHTML = myContents;
     if(callback instanceof Function){callback();}
           }).bind(this),
           error : function(result){
@@ -2067,6 +2068,7 @@ if(xUI.onSite){
         myContents +='<option value="'+idr+'" >'+this.repositories[idr].name; 
     }
     document.getElementById('repositorySelector').innerHTML = myContents;
+    document.getElementById('repositorySelector-f').innerHTML = myContents;
 
     this.switchRepository(0);
     this.currentServer = serviceA;
@@ -2152,7 +2154,10 @@ serviceAgent.switchRepository = function(myRepositoryID,callback){
     } else {
         this.currentServer     = null;
     }
-    if(document.getElementById('repositorySelector').value != myRepositoryID) document.getElementById('repositorySelector').value=myRepositoryID;
+    if(document.getElementById('repositorySelector').value != myRepositoryID){
+         document.getElementById('repositorySelector').value=myRepositoryID;
+         document.getElementById('repositorySelector-f').value=myRepositoryID;
+    }
     /*== ドキュメントリスト更新 ==*/
     documentDepot.rebuildList(callback);
 };

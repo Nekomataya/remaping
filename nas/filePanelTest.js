@@ -126,7 +126,7 @@ documentDepot.updateDocumentSelector=function(myRegexp){
     }
 //console.log()
     myDocuments.sort(documentDepot.sortBySCi);
-    console.log(myDocuments);
+    if(dbg) console.log(myDocuments);
 //  正規表現フィルタで抽出してHTMLを組む
     var myContents = "";
     myContents += '<option value="==newDocument==">（*-- no document selected--*）';

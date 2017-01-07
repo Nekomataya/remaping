@@ -349,7 +349,7 @@ button.iconButton {
 	height:27px;
 	background-color:#666666;
 	border-width:1px;
-
+	vertical-align:middle;
    /* 角丸 */
     -moz-border-radius: 3px;
     -webkit-border-radius: 3px;
@@ -1156,17 +1156,23 @@ div.application_status {
 	}
 
 .productFilter {
-	height:24px;
+	height:27px;
 	width:64px;
+	vertical-align:middle;
 }
 .numberFilter {
 	
-	height:24px;
+	height:27px;
 	width:48px;
+	vertical-align:middle;
 }
 .documentPanelButton {
-	height:24px;
-	 width:84px;
+	height:27px;
+	width:84px;
+	vertical-align:middle;
+}
+.documentPanelButton-search {
+	 width:24px;
 }
 /*---------------- ドロップダウンメニュー*/
 
