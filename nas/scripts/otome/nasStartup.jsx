@@ -25,7 +25,7 @@
 //@include "../nas/lib/nas_GUIlib.js"
 //@include "../nas/lib/nas_Otome_config.js"
 //@include "../nas/lib/nas_OtomeLib.js"
-//@include "../nas/lib/nas_prefarenceLib.js"
+//@include "../nas/lib/nas_preferenceLib.js"
 //@include "../nas/lib/otome.systemWatcher.js"
 
 //@include "../nas/lib/nas_version.js"
@@ -70,7 +70,7 @@ if(scriptFile.exists){
 	Folder.current = nas.GUI.prevCurrentFolder;
 };
 //起動時に保存された設定が存在すれば読み込む
-	if(true){nas.readPrefarence();}
+	if(true){nas.readPreference();}
 /*	立ち上げ時に起動したいツールを設定してください。
  */
 //nas.StartUp.execute("../nas/nasAbout.jsx");//アルファ用スプラッシュ

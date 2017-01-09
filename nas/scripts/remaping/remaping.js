@@ -22,17 +22,17 @@ function new_xUI(){
  */
     xUI.errorCode    =    0;
     xUI.errorMsg=[
-"000:最終処理にエラーはありません",
-"001:データ長が0です。読み込みに失敗したかもしれません",
-"002:どうもすみません。このデータは読めないみたいダ",
-"003:読み取るデータがないのです。",
-"004:変換すべきデータがありません。\n処理を中断します。",
-"005:MAPデータがありません",
-"006:ユーザキャンセル",
-"007:範囲外の指定はできません",
-"008:",
-"009:想定外エラー"
-];
+{en: "000:" ,ja: "000:最終処理にエラーはありません"},
+{en: "001:" ,ja: "001:データ長が0です。読み込みに失敗したかもしれません"},
+{en: "002:" ,ja: "002:どうもすみません。このデータは読めないみたいダ"},
+{en: "003:" ,ja: "003:読み取るデータがないのです。"},
+{en: "004:" ,ja: "004:変換すべきデータがありません。\n処理を中断します。"},
+{en: "005:" ,ja: "005:MAPデータがありません"},
+{en: "006:" ,ja: "006:ユーザキャンセル"},
+{en: "007:" ,ja: "007:範囲外の指定はできません"},
+{en: "008:" ,ja: "008:"},
+{en: "009:" ,ja: "009:想定外エラー"}
+];//    -localized
 
 //------- UIオブジェクト初期化前の未定義参照エラーを回避するためのダミーメソッド
     xUI.Mouse=function(evt){return true;};
@@ -380,8 +380,7 @@ xUI.setDocumentStatus = function(myCommand){
 */
 xUI.setUImode = function (myMode){
     if(typeof myMode == 'undefined') myMode='current';
-//            document.getElementById('pmcui-checkin').innerHTML=((xUI.XPS.currentStatus =='Hold')||(xUI.XPS.currentStatus =='Active'))?'作業中':'作業開始';//
-            document.getElementById('pmcui-checkin').innerHTML=((xUI.XPS.currentStatus =='Hold')||(xUI.XPS.currentStatus =='Active'))?nas.localize(nas.uiMsg.jobInUse):nas.localize(nas.uiMsg.jobCheckin);//
+            document.getElementById('pmcui-checkin').innerHTML=((xUI.XPS.currentStatus =='Hold')||(xUI.XPS.currentStatus =='Active'))?nas.localize(nas.uiMsg.pMinUse):nas.localize(nas.uiMsg.pMcheckin);//'作業中':'作業開始'//
     switch (myMode){
         case 'current':;//NOP return
             return xUI.uiMode;
@@ -654,7 +653,10 @@ if(fileBox.saveFile){fileBox.saveFile();}else{writeXPS(XPS);}
           localStorage.setItem("info.nekomataya.remaping.referenceData",this.referenceXPS.toString());
 //            alert(this.referenceXPS.toString());
         }
-        if(false){alert("バックアップ領域に現在のデータを退避しました。")};//表示は設定で抑制可能にする
+        if(false){
+            var msg = localize(nas.uiMsg.dmBackupDone);//バックアップ終了
+            alert(msg);
+            };//表示は設定で抑制可能にする
         xUI.setStored("current");sync();
     }
 //==================================== ここまでをシステムバックアップメソッドに移行
@@ -664,7 +666,7 @@ xUI.getBackup =function(){
 //
     var myBackup=localStorage.getItem("info.nekomataya.remaping.backupData");
     if(myBackup!==null){
-      if(confirm("バックアップデータをシートに読み込みます。\n現在のデータは失われます。\nよろしいですか？")){
+      if(confirm(localize(nas.uiMsg.dmBackupConfirm))){
         document.getElementById("data_well").value=myBackup;
     var myReference=localStorage.getItem("info.nekomataya.remaping.referenceData");
         if(XPS.readIN(xUI.data_well.value)){
@@ -675,13 +677,13 @@ xUI.getBackup =function(){
             nas_Rmp_Init();
       }
     }else{
-      alert("現在、バックアップ領域にデータがありません。")
+      alert(localize(nas.uiMsg.dmBackupNodata));//バックアップにデータなし
     }
 }
 xUI.clearBackup =function(){
     var myBackup=localStorage.removeItem("info.nekomataya.remaping.backupData");
     var myReference=localStorage.removeItem("info.nekomataya.remaping.backupReference");
-    alert("バックアップ領域をクリアしました。");
+    alert(localize(nas.uiMsg.dmBackupClear));//バックアップクリア
 }
 /*    未保存時の処理をまとめるメソッド
 未保存か否かを判別してケースごとのメッセージを出す
@@ -691,10 +693,9 @@ xUI.checkStored=function(mode){
 if(!mode){mode=null;}
     if(xUI.isStored()){return (true)};//保存済みなら即 true
 if(fileBox.saveFile){
-var    msg ="ドキュメントが保存されていません 保存しますか？";
+var    msg = localize(nas.uiMsg.dmDocumentNosave);
 //ドキュメントの保存・保存しないで更新・処理をキャンセルの３分岐に変更 2013.03.18
-    msg+="\nOK:保存する /Cancel:保存せずに続行\n";
-//    msg+="\nYes:保存する /No:保存しないで更新 /Cancel:処理をキャンセル\n";
+    msg+="\n"+localize(nas.uiMsg.documentConfirmOkCancel)+"\n";
 //    nas.showModalDialog("confirm2",msg,"ドキュメント更新",0,
 /*
     function(){
@@ -720,8 +721,8 @@ break;
         xUI.setStored("current");sync();return true;// キャンセルの場合は保存しないで続行
     }
 }else{
-var    msg ="ドキュメントが保存されていません 書き出しますか？";
-    msg+="\nOK:保存する /Cancel:保存せずに続行\n";
+    var msg  = localize(nas.uiMsg.dmDocumentNosaveExport);//エクスポートしますか？
+    　　msg += "\n"+localize(nas.uiMsg.dmDocumentConfirmOKCancel)+"\n";//
     var myAction=confirm(msg);
     if(myAction){
         //保存処理　後でテンポラリファイルを実装しておくこと        
@@ -824,7 +825,7 @@ xUI.reInitBody=function(newTimelines,newDuration){
 };
 
 xUI.switchStage=function(){
-    alert("どうもすみません。\nこの機能はまだ実装されていません。");
+    alert(localize(nas.uiMsg.dmUnimplemented));//未実装
 };
 
 xUI.setReferenceXPS=function(myXps){
@@ -1002,13 +1003,11 @@ if(ID instanceof Array){
 //    セレクションクリア
         this.selectionHi("clear");
 //    フットマーク機能がオンならば選択範囲とそしてホットポイントをフミツケ
-    if(this.footMark){
+    if(this.footMark && this.diff(this.getid('Select'))){
         paintColor=this.footstampColor;//                    == footmark ==
     }else{
         paintColor=this.sheetbaseColor;//                    == clear ==
     };
-//      この辺まとめた方が良さそう?
-    if(this.XPS.xpsTracks[xUI.Select[0]][xUI.Select[1]]=='') paintColor=this.sheetbaseColor;
 //      footstamp
     document.getElementById(this.getid("Select")).style.backgroundColor=paintColor;
 //フレームの移動があったらカウンタ更新フラグ立てる
@@ -1125,7 +1124,7 @@ try{
                     {
                         paintColor=xUI.selectionColor
                     }else{
-                        if(this.footMark && XPS.xpsTracks[C][L]!='')
+                        if(this.footMark && this.diff([C,L]))
                         {
                             paintColor=xUI.footstampColor;
                         }else{
@@ -1155,6 +1154,8 @@ xUI.spinHi = function(Method)
 //    必ず
 if(! document.getElementById(this.getid("Select"))){if(dbg) dbgPut(this.getid("Select")) ;return;};
 if(Method == "clear") {
+//    console.log('foooooooot');
+//    console.log(this.getid("Select"));
     document.getElementById(this.getid("Select")).style.backgroundColor=this.footstampColor;
 }else{
     document.getElementById(this.getid("Select")).style.backgroundColor=this.selectedColor;
@@ -1165,7 +1166,8 @@ if(Method == "clear") {
     {
         if(L > 0 && L < XPS.xpsTracks[0].length){
             if(Method=="clear"){
-if(XPS.xpsTracks[this.Select[0]][L]!="" && this.footMark){
+//if(XPS.xpsTracks[this.Select[0]][L]!="" && this.footMark){}
+if(this.diff([this.Select[0],L]) && this.footMark){
         document.getElementById(this.Select[0]+"_"+L).style.backgroundColor=this.footstampColor;//スピンエリア表示解除
 }else{
 if(document.getElementById(this.Select[0]+"_"+L).style.backgroundColor)
@@ -2705,8 +2707,8 @@ this.drawSheetCell(sheetCell);//関数内でシートセルを書き換える
             }
 //本体シート処理の際のみフットスタンプ更新
   if(! isReference){
-//空白以外のデータならフットスタンプ処理
-    if (XPS.xpsTracks[r][f]!=''){
+//変更されたデータならフットスタンプ処理
+    if (this.diff[r,f]){
             lastAddress=[r,f] ;        //最終入力操作アドレス控え
             var footstamp =(this.footMark)? 
             this.footstampColor:this.sheetbaseColor;//踏むぞー
@@ -2715,7 +2717,7 @@ this.drawSheetCell(sheetCell);//関数内でシートセルを書き換える
             if (document.getElementById(r+"_"+f).style.backgroundColor!=footstamp)
             document.getElementById(r+"_"+f).style.backgroundColor=footstamp; //セレクト位置を踏む！
     }else{
-    //セルが空なので、背景色がフットスタンプならフットスタンプを消す。
+    //否変更なので、背景色がフットスタンプならフットスタンプを消す。
         //各ブラウザで試験して判定文字列を変更(未処置)
         if (document.getElementById(r+"_"+f).style.backgroundColor!=this.sheetbaseColor && this.footMark)
         document.getElementById(r+"_"+f).style.backgroundColor=this.sheetbaseColor; //踏み消す
@@ -2726,7 +2728,26 @@ this.drawSheetCell(sheetCell);//関数内でシートセルを書き換える
     };
 }
 //syncSheetCell シートセルの表示を編集内容に同期させる　
-
+/**
+    リファレンス領域と編集領域のデータが異なっているか否かを返す関数
+    標準で[トラックid,フレーム]を配列で、又は ID文字列"trc_frm"
+    それ以外はXPSのプロパティ名(id)とみなす オブジェクト渡しは禁止
+    指定IDの比較データが存在しない場合は、常にfalseを返す
+*/
+xUI.diff=function(target){
+    if(String(target).match(/^\d+_\d+$/)){target = target.split('_');}
+    if(target instanceof Array){
+         if (
+            (typeof this.XPS.xpsTracks[target[0]]                       == 'undefined')||
+            (typeof this.referenceXPS.xpsTracks[target[0]]              == 'undefined')||
+            (typeof this.XPS.xpsTracks[target[0]][target[1]]            == 'undefined')||
+            (typeof this.referenceXPS.xpsTracks[target[0]][target[1]]   == 'undefined')
+        ) return false;
+        return (this.XPS.xpsTracks[target[0]][target[1]] != this.referenceXPS.xpsTracks[target[0]][target[1]]);
+    }else{
+        return (this.XPS[target] != this.referenceXPS[target]);
+    }
+}
 //バックアップデータ入出力method作成
 xUI.bkup    =function(Datas){
 if (! Datas){return this.Backupdata[0]};
@@ -3851,7 +3872,8 @@ case	"AEKey":	;//キー表示
 case	"memu":	;//ドロップダウンメニューバー　消す時に操作性が阻害されるケースがあるので警告を入れる
 	if($("#pMenu").is(":visible")){
 		if(appHost.platform!="AIR"){
-			if(confirm("ドロップダウンメニューを非表示にしてよろしいですか？")){$("#pMenu").hide();}else{break;};
+		    var msg=localize(nas.uiMsg.dmConfirmClosepMenu);//
+			if(confirm(msg)){$("#pMenu").hide();}else{break;};
 		}else{
 			$("#pMenu").hide();
 		}
@@ -4109,7 +4131,7 @@ function nas_Rmp_Startup(){
 //バージョンナンバーセット
     sync("about_");
 //設定ファイルの内容を配列で保存
-//    var myPrefarences=buildCk();
+//    var myPreferences=buildCk();
 //クッキー指定があれば読み込む
     if(useCookie[0]){ldCk()};
 
@@ -4188,10 +4210,37 @@ XPS.readIN=function(datastream){
 //"001:データ長が0です。読み込みに失敗したかもしれません",
     }else{
 //データが存在したら、コンバータに送ってコンバート可能なデータをXPS互換ストリームに変換する
+/**
+    importオプションが与えられた場合、現在のデータのうち以下のプロパティを保護する
+        "mapfile",
+        "title",
+        "subtitle",
+        "opus",
+        "scene",
+        "cut",
+            "time",
+            "trin",
+            "trout",
+            "framerate",
+        "create_user",
+        "update_user",
+        "create_time",
+        "update_time",
+        "line",
+        "lineStatus",
+        "stage",
+        "stageStatus",
+        "job",
+        "jobStatus",
+        "currentStatus"
+
+*/
         return this.parseXps(convertXps(datastream));
     }
 }
+/**
 
+*/
 XPS.syncIdentifier =function(myIdentifier){
     var dataArray=myIdentifier.split('//');
 //    console.log(dataArray);
@@ -4416,9 +4465,10 @@ if(startupXPS.length > 0){
 
 //startupXPSがない場合でフラグがあればシートに書き込むユーザ名を問い合わせる
     if(NameCheck){
-        var msg=welcomeMsg+" ユーザ名とメールアドレスを入力してください。\n handle:uid@example.com";
+        var msg=welcomeMsg+"\n"+localize(nas.uiMsg.dmAskUserinfo)+"\n handle:uid@example.com";
         var newName=null;
-        nas.showModalDialog("prompt",msg,"作業者の名前",myName,function(){if(this.status==0){newName=this.value;myName=newName;xUI.currentUser=new  nas.UserInfo(this.value);xUI.XPS.update_user=this.value;sync("update_user");}});
+        ;//
+        nas.showModalDialog("prompt",msg,localize(nas.uiMsg.userInfo),myName,function(){if(this.status==0){newName=this.value;myName=newName;xUI.currentUser=new  nas.UserInfo(this.value);xUI.XPS.update_user=this.value;sync("update_user");}});
 
     document.getElementById("nas_modalInput").focus();
 
@@ -4606,33 +4656,35 @@ $("#optionPanelVer").dialog({
 	autoOpen:false,
 	modal	:true,
 	width	:480,
-	title	:"りまぴんについて",
+	title	:localize(nas.uiMsg.aboutOf,"remaping…")
 });
+//:nas.uiMsg.Preference
 $("#optionPanelPref").dialog({
 	autoOpen:false,
 	modal	:true,
 	width	:520,
-	title	:"各種設定"
+	title	:localize(nas.uiMsg.Preference)
 });
+//:nas.uiMsg.xSheetInfo
 $("#optionPanelScn").dialog({
 	autoOpen:false,
 	modal	:true,
 	width	:512,
-	title	:"新規タイムシート/タイムシート内容の編集",
+	title	:localize(nas.uiMsg.xSheetInfo)
 });
-
+//:nas.uiMsg.document
 $("#optionPanelFile").dialog({
 	autoOpen:false,
 	modal	:true,
 	width	:720,
-	title	:"ドキュメント",
+	title	:localize(nas.uiMsg.document)
 });
-
+//:nas.uiMsg.processing
 $("#optionPanelProg").dialog({
 	autoOpen:false,
 	modal	:true,
 	width	:720,
-	title	:"処理中",
+	title	:localize(nas.uiMsg.processing)
 });
 })();
 
@@ -5560,12 +5612,12 @@ window.addEventListener('DOMContentLoaded', function() {
 switch (myAction){
 case "body":		if(XPS.readIN(xUI.data_well.value)){
 			xUI.init(XPS);nas_Rmp_Init();xUI.sWitchPanel("clear");
-		}else{alert("reading-Body : "+xUI.errorMsg[xUI.errorCode] )}
+		}else{alert("reading-Body : "+localize(xUI.errorMsg[xUI.errorCode]) )};
 break;
 case "ref":	var myStream=convertXps(xUI.data_well.value);
 		if(xUI.referenceXPS.readIN(myStream)){
 			nas_Rmp_Init();xUI.sWitchPanel("clear");
-		}else{alert("reading-Ref : "+xUI.errorMsg[xUI.errorCode] )}
+		}else{alert("reading-Ref : "+localize(xUI.errorMsg[xUI.errorCode]) )};
 break;
 }
 		document.getElementById("loadShortcut").value="false";
@@ -5592,12 +5644,12 @@ switch (myAction){
 case "body":
 		if(XPS.readIN(xUI.data_well.value)){
 			xUI.init(XPS);nas_Rmp_Init();xUI.sWitchPanel("clear");
-		}else{alert("reading-Body : "+xUI.errorMsg[XPS.errorCode] )};
+		}else{alert("reading-Body : "+localize(xUI.errorMsg[XPS.errorCode]) )};
 break;
 case "ref":
 		if(xUI.referenceXPS.readIN(convertXps(xUI.data_well.value))){
 			nas_Rmp_Init();xUI.sWitchPanel("clear");
-		}else{alert("reading-Ref : "+xUI.errorMsg[xUI.errorCode] )};
+		}else{alert("reading-Ref : "+localize(xUI.errorMsg[xUI.errorCode]) )};
 break;
 }
 		document.getElementById("loadShortcut").value="false";
@@ -5607,7 +5659,8 @@ break;
       reader.readAsText(input, myEncode);
 }else{
 //FileReaderが無いブラウザ(Safari等)では、お詫びしてオシマイ
-	alert("no FileReader! :\n　このブラウザはFileReaderオブジェクトをサポートしていません。\n残念ですが、この環境ではローカルファイルは読みだし出来ません。\nThis browser does not support the FileReader object. \n Unfortunately, you can't read local files now.");
+var msg = "no FileReader! :\n　このブラウザはFileReaderオブジェクトをサポートしていません。\n残念ですが、この環境ではローカルファイルは読みだし出来ません。\nThis browser does not support the FileReader object. \n Unfortunately, you can't read local files now.";
+	alert(msg);
 }
     }
    }
@@ -6191,14 +6244,13 @@ if (!navigator.cookieEnabled){return false;}
 function dlCk() {
 	ckName = 'rEmaping'; document.cookie = ckName + '=;expires=Thu,01-Jan-70 00:00:01 GMT';
 	useCookie=false;
-	var msg="クッキーを削除しました。\n値をリセットするには、再読み込みをしてください。";
-	alert(msg);
+	alert(localize(nas.uiMsg.dmCookieRemoved));
 }
 function resetCk()
 {
-// alert(myPrefarences)
+// alert(myPreferences)
 	dlCk();
-	writeCk(myPrefarences);
+	writeCk(myPreferences);
 	ldCk();
 }
 //
@@ -6258,7 +6310,8 @@ case	"trin":
 	newTrin[1]=RegExp.$1;
 	newTrin[0]=nas.FCT2Frm(RegExp.$2);
 		}else{
-	alert("処理できませんでした。");return;
+	alert(localize(nas.uiMsg.failed));//"処理できませんでした"
+	return;
 		};
 		break;
 case	"trout":
@@ -6267,7 +6320,8 @@ case	"trout":
 	newTrout[1]=RegExp.$1;
 	newTrout[0]=nas.FCT2Frm(RegExp.$2);
 		}else{
-	alert("処理できませんでした。");return;
+	alert(localize(nas.uiMsg.failed));//"処理できませんでした"
+	return;
 		};
 		break;
 default	:return;
@@ -6282,13 +6336,10 @@ default	:return;
 
 //	カット尺更新確認
 		if(duration!=oldduration){
-		var msg="";
-		msg+="カットの継続時間が変更されます。\n";
-		if (!durationUp)
-			msg +="\t消去されるフレームの内容は破棄されます。\n";
-//
-		msg +="\n実行してよろしいですか。?";
-//確認
+		var msg = localize(nas.uiMsg.alertDurationchange);
+		if (!durationUp) msg +="\n\t" + localize(nas.uiMsg.alertDiscardframes);
+		msg += "\n" + localize(nas.uiMsg.confirmExecute);
+//確認:
 	if(confirm(msg)){
 //	設定尺が現在の編集位置よりも短い場合は編集位置を調整
 		if(oldduration>duration){
@@ -6598,12 +6649,12 @@ xUI.setStored("force");sync();
 	ただしオブションで機能を切り離し可能に
 
 
-
  */
 function callEcho()
 {
-var msg="次の名前でダウンロードフォルダにタイムシートを保存します。\nよろしいですか？";
-nas.showModalDialog(" prompt",msg,"ダウンロードフォルダに保存",xUI.getFileName()+'\.xps',function(){
+var msg = localize(nas.uiMsg.confirmCallecho);
+var title = localize(nas.uiMsg.saveToDonloadfolder);
+nas.showModalDialog(" prompt",msg,title,xUI.getFileName()+'\.xps',function(){
 	if(this.status==0){
 	var storeName=this.value;
 	xUI.setStored("current");
@@ -6621,11 +6672,23 @@ nas.showModalDialog(" prompt",msg,"ダウンロードフォルダに保存",xUI.
 /*	拡張子を引数にしてコールする
 txt,html,ard,tsh,eps,ard　など
 送信データ本体は、document.saveXps.XPSBody.value なので　あらかじめ値をセットしてからコールする必要あり
+:nas.uiMsg
 */
 function callEchoExport(myExt)
 {
    var myEncoding="utf8";//デフォルトutf-8
    var sendData=xUI.data_well.value;
+   
+var form={
+html:"documentHTML",
+xmap:"documentxMap",
+xps:"documentXps",
+ard:"documentArd",
+ardj:"documentArdj",
+csv:"documentCSV",
+sts:"documentSTS",
+tsh:"documentTSheet"
+}
 		//ファイル保存ではなくエクスポートなので環境リセットは省略;
    if(! myExt){myExt="txt";}
    switch (myExt){
@@ -6638,9 +6701,9 @@ function callEchoExport(myExt)
 	default:
 		myEncoding="utf8";
    }
-  var msg="次の名前でダウンロードフォルダにファイルを保存します。\nよろしいですか？";
-  
-nas.showModalDialog("prompt",msg,"ダウンロードフォルダにファイルを保存",xUI.getFileName()+'\.'+myExt,function(){
+  var msg = localize(nas.uiMsg.confirmCallechoSwap,localize(nas.uiMsg[form[myExt]]));
+  var title = localize(nas.uiMsg.saveToDonloadfolderSwap,localize(nas.uiMsg[form[myExt]]))
+nas.showModalDialog("prompt",msg,title,xUI.getFileName()+'\.'+myExt,function(){
 	if(this.status==0){
 //alert(myEncoding);
 	document.saveXps.action=ServiceUrl+'COMMAND=save&';
@@ -6660,11 +6723,13 @@ nas.showModalDialog("prompt",msg,"ダウンロードフォルダにファイル�
 
 function callEchoHTML()
 {
-   var myEncoding="utf-8";//デフォルトutf8
-   var sendData=printHTML(true);
-   var myExt="html";
-	var msg="表示用HTMLデータを次の名前でダウンロードフォルダに保存します。\nよろしいですか？";
-nas.showModalDialog("prompt",msg,"ダウンロードフォルダにファイルを保存",xUI.getFileName()+'\.'+myExt,function(){
+    var myEncoding="utf-8";//デフォルトutf8
+    var sendData=printHTML(true);
+    var myExt="html";
+   
+    var msg = localize(nas.uiMsg.confirmCallechoSwap,localize(nas.uiMsg.documentHTML));
+    var title = localize(nas.uiMsg.saveToDonloadfolderSwap,localize(nas.uiMsg.documentHTML));
+nas.showModalDialog("prompt",msg,title,xUI.getFileName()+'\.'+myExt,function(){
 //	sendData=sendData.replace(/\r?\n/g,"\r\n");
 	if(this.status==0){
 	document.saveXps.action=ServiceUrl+'COMMAND=save&';
@@ -6811,6 +6876,7 @@ case	"exportCheck":	;//スイッチ変更
 	return false;
 			break;
 case	"layer"	:	;//レイヤ変更
+case	"tBtrackSelect"	:	;//レイヤ変更
 	if (document.getElementById("single")){}
 
 	xUI.selectCell(
@@ -6820,11 +6886,13 @@ case	"layer"	:	;//レイヤ変更
 	reWriteCS();//cセレクタの書き直し
 	break;
 case	"cell"	:	;//セルの入力
+case	"tBitemSelect"	:	;//セルの入力
 	xUI.put((document.getElementById(id).selectedIndex+1));
 	xUI.spin("fwd");
 
 	break;
 case	"fav"	:	;//文字の一括入力
+case	"tBkeywordSelect"	:	;//文字の一括入力
 EXword=xUI.favoriteWords[document.getElementById(id).selectedIndex];
 TGword=XPS.xpsTracks[xUI.Select[0]][xUI.Select[1]];
 //文字列に*があれば、現在の値と置換
@@ -6871,7 +6939,7 @@ function initToolbox(){
 		Selector+=(selected==c)?'<option selected/>':'<option />';
 		Selector+=myLabel;
 	}
-	document.getElementById("layer").innerHTML=Selector;
+	document.getElementById("tBtrackSelect").innerHTML=Selector;
 	reWriteCS();//cellセレクタの書き直し
 	reWriteWS();//wordセレクタの書き直し
 }
@@ -6886,19 +6954,21 @@ function reWriteCS(){
 20 : XPS["xpsTracks"][xUI.Select[0]]["lot"];
 for(f=1;f<=cOunt;f++){Selector+='<option />'+f.toString()}
 	};
-	document.getElementById("cell").innerHTML=Selector;
+	document.getElementById("tBitemSelect").innerHTML=Selector;
 }
 //お気に入り単語のセレクタを書き直す。
 function reWriteWS(){
 	var Selector='';
 	var wCount=xUI.favoriteWords.length;
 	for(id=0;id<wCount;id++){Selector+='<option />'+xUI.favoriteWords[id]};
-		document.getElementById("fav").innerHTML=Selector;
+		document.getElementById("tBkeywordSelect").innerHTML=Selector;
 	}
 //
 function toss(target){document.getElementById(target).focus();};
 //
-function hello(){alert("この辺は、まだなのだ。\nのんびり待っててチョ。");}
+function hello(){
+    alert("この辺は、まだなのだ。\nのんびり待っててチョ。\n Unimplemented. Please wait and leisurely Jo ");
+}
 /**					------pref.js
 	環境設定パネル
 */
@@ -6930,12 +7000,12 @@ function Pref(){
 this.Lists.aserch=function(name,ael){if(this[name]){for (var n=0;n<this[name].length;n++){if(this[name][n]==ael)return n}};return -1;}
 
 	this.userName="";
-//ユーザ名変更
+//ユーザ名変更　プリファレンスパネルは大幅に変更があるのでこのメッセージの翻訳は保留　:nas.uiMsg.
 this.chgMyName=function(newName)
 {
 	if(! newName){
-		var msg="ユーザ名を入力してください。\n handle:uid@example.com";
-		nas.showModalDialog("prompt",msg,"作業者の名前",myName,function(){if(this.status==0){newName=this.value;myName=newName;xUI.currentUser=new  nas.UserInfo(this.value);XPS.update_user=xUI.currentUser;sync("update_user");}});
+		var msg=localize(nas.uiMsg.dmAskUserinfo)+"\n handle:uid@example.com";
+		nas.showModalDialog("prompt",msg,localize(nas.uiMsg.userInfo),myName,function(){if(this.status==0){newName=this.value;myName=newName;xUI.currentUser=new  nas.UserInfo(this.value);XPS.update_user=xUI.currentUser;sync("update_user");}});
 		if(newName==null){newName=XPS.update_user}
 	}
 	this.userName=newName;
@@ -7201,7 +7271,8 @@ this.open=function(){
 	変更フラグ立っていれば確認して操作を反映
  */
 this.close=function(){
-	if(this.changed){if(confirm("設定が変更されています。反映させますか?")){this.putProp();}};
+	if(this.changed){if(confirm(localize(nas.uiMsg.dmPrefConfirmSave
+))){this.putProp();}};
 		xUI.sWitchPanel("Pref");
 }
 
@@ -7303,18 +7374,18 @@ this.chglayers =function (id){
 	if(id=="scnLayers"){
 		if(isNaN(document.getElementById("scnLayers").value))
 		{
-			alert("数値を指定してほしいのョ!と");
+			alert(localize(nas.uiMsg.requiresNumber));
 			return;
 		}
 		if(document.getElementById("scnLayers").value<=0)
 		{
-			alert("正の数がいいなぁ…");
+			alert(localize(nas.uiMsg.requiresPositiveInteger));
 			return;
 		}
 		if(document.getElementById("scnLayers").value>=26)
 		{
-if(! confirm("止めないけど…そんなにレイヤが多いとツライよ\nレイヤ名を自動でつけるのは「Z」までなので\nその先は自分でつけてね。"))
-{
+var msg=localize(nas.uiMsg.dmAlertMenytracks);//レイヤ数多すぎの警告
+if(! confirm(msg)){
 		document.getElementById("scnLayers").value=this.layers;//リセット
 			return;
 }
@@ -7633,7 +7704,9 @@ this.layerTableUpdate =function(){
 //各種設定表示初期化
 this.getProp =function ()
 {
-document.getElementById("scnNewSheet").checked=false;//新規フラグダウン
+// document.getElementById("scnNewSheet").checked=false;//新規フラグダウン
+//ドキュメントパネルから新規ドキュメントフラグを削除　削除に伴う変更まだ
+
 //レイヤ数取得
 	if (this.layers != (XPS.xpsTracks.length-2)){
 		this.layers=1*XPS.xpsTracks.length-2;//バックアップとる
@@ -7651,7 +7724,7 @@ document.getElementById("scnNewSheet").checked=false;//新規フラグダウン
 //変換不要パラメータ
 	var names=[
 "mapfile","title","subtitle","opus","scene","cut","framerate",
-"create_time","create_user","update_time","update_user","noteText.xpsTracks"
+"create_time","create_user","update_time","update_user","xpsTracks.noteText"
 ];
 //
 	var ids=[
@@ -7775,7 +7848,7 @@ this.getLayerProp =function (){
 //バルクシートの設定
 this.newProp =function ()
 {
-	var msg="デフォルトの値で新規にシートを設定します。\n\tよろしいですか?";
+	var msg=localize(nas.uiMsg.dmComfirmNewxSheetprop);
 if (confirm(msg)){
 	document.getElementById("scnNewSheet").checked=true;//新規チェック入れる
 
@@ -7855,24 +7928,26 @@ nas.FCT2Frm(document.getElementById("scnTime").value);
 	var widthUp =(newWidth>oldWidth)?true:false;//増えたか?
 //	新規作成ならば細かいチェックは不要
 	if(document.getElementById("scnNewSheet").checked){
-	var msg="指定の内容で新規シートを作成します。\n現在の編集内容は、破棄されます。\n\n実行してよろしいですか?"
+	var msg = localize(nas.uiMsg.alertNewdocumet) ;//新規シートを作成します。
+    msg += "\n"+localize(nas.uiMsg.alertDiscardedit);//現在の編集内容は、破棄されます。
+    msg += "\n\n"+localize(nas.uiMsg.confirmExecute);//実行してよろしいですか?
 	}else{
 //	現内容の変更なので一応確認
 //	レイヤ数の変更確認
 	var msg="";
 		if(newWidth!=oldWidth){
-			msg +="レイヤ数が変更されます。\n";
+			msg += localize(nas.uiMsg.alertTrackschange)+"\n";//レイヤ数が変更されます
 			if (!widthUp)
-			msg +="\t消去されるレイヤの内容は破棄されます。\n";
+			msg += "\t"+ localize(nas.uiMsg.alertDiscardtracks )+"\n";//消去されるレイヤの内容は破棄されます
 		}
 //	カット尺更新確認
 		if(duration!=oldduration){
-			msg+="カットの尺が変更されます。\n";
+			msg+= localize(nas.uiMsg.alertDurationchange)+"\n";//カットの尺が変更されます
 			if (!durationUp)
-			msg +="\t消去されるフレームの内容は破棄されます。\n";
+			msg += "\t"+localize(nas.uiMsg.alertDiscardframes)+"\n";//消去されるフレームの内容は破棄されます。
 		}
 //
-		msg +="\n実行してよろしいですか。?";
+		msg += localize(nas.uiMsg.confirmExecute);//実行してよろしいですか
 	}
 //確認
 	if(confirm(msg)){
@@ -7960,7 +8035,9 @@ document.getElementById("scnTrot").value
 	this.chgFRATE();
 	this.changed=false;
 		this.close();
-	}else{alert("処理を中断します。")}
+	}else{
+	    alert(localize(nas.uiMsg.aborted));
+	}
 }
 //更新操作終了
 this.putLayerProp =function ()
@@ -8024,7 +8101,7 @@ this.open=function(){
 
 this.close=function (){
 	//変更フラグ立っていれば確認して操作反映
-	if(this.changed){if(confirm("設定が変更されています。反映させますか?")){this.putProp();}};
+	if(this.changed){if(confirm(localize(nas.uiMsg.dmPrefConfirmSave))){this.putProp();}};//設定変更確認
 	//パネル閉じる
 		xUI.sWitchPanel("Scn")
 }

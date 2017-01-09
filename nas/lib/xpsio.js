@@ -1429,9 +1429,9 @@ Xps.prototype.readIN = function (datastream) {
  * @returns {boolean}
  */
 Xps.prototype.parseXps = function (datastream) {
-//以前のコードに存在したエラーハンドリングは全廃
 /**
- *  マルチステージ拡張を行うため
+ *  マルチステージ拡張を行うため以前のコードに存在したエラーハンドリングは全廃
+ *  
  *
  *
  */
@@ -1927,7 +1927,7 @@ Xps.prototype.parseXps = function (datastream) {
 
     }
     if (xUI.errorCode) {
-        alert("error :" + xUI.errorMsg[xUI.errorCode]);
+        alert("error :" + localize(xUI.errorMsg[xUI.errorCode]));
 //	xUI.errorCode=0;
     }
     return true;
@@ -2188,7 +2188,7 @@ Xps.getIdentifier=function(myXps){
     var myIdentifier=[
             encodeURIComponent(myXps.title)+
         "#"+encodeURIComponent(myXps.opus)+
-        ((String(myXps.subtitle).length=0)? "["+encodeURIComponent(myXps.subtitle)+"]":''),
+        ((String(myXps.subtitle).length > 0)? "["+encodeURIComponent(myXps.subtitle)+"]":''),
             encodeURIComponent(
                 "s" + ((myXps.scene)? myXps.scene : "-" )+
                 "c" + myXps.cut) +

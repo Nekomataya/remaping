@@ -543,13 +543,13 @@ alert(msg);
 	w.saveBt.onClick=function(){
 		var goOutput=confirm("現在のエクスプレッションを保存します。"+nas.GUI.LineFeed+"file　は　nas/lib/etc/nas.expressions.json です。")
 //		if(goOutput){this.parent.editBox.text=nas.expressions.toSource();}
-		if(goOutput){nas.otome.writePrefarence("nas.expressions");}
+		if(goOutput){nas.otome.writePreference("nas.expressions");}
 	};
 	w.loadBt.onClick=function(){
 		var goRestore=confirm("保存データを読み込みます。現在のデータはクリアされます");
 			if(goRestore)
 			{
-				nas.otome.readPrefarence("nas.expressions");
+				nas.otome.readPreference("nas.expressions");
 				this.parent.ctSelect.options=nas.expressions.names;
 				this.parent.ctSelect.select(0);
 				this.parent.stSelect.setOptions(nas.expressions.labels[0],[false]);

@@ -120,8 +120,8 @@
 //選択領域の背景色
 
 	SelectionColor	="#f8f8dd"	;//
-//フットスタンプの色
-	FootStampColor	="#fffff8"	;//足跡機能を使用しない場合は無効
+//フットスタンプ/diff の色
+	FootStampColor	="#fff8f8"	;//足跡機能を使用しない場合は無効
 
 	EditingColor	="#eebbbb"	;//セル編集中のインジケータ
 	SelectingColor	="#ccccaa"	;//セル選択中のインジケータ
@@ -172,21 +172,28 @@ var myWords	=[
 */
 
 //---作業オプション	*cookie[1]
+/*
+    データハンドリングをサーバアクセス主体に変更になるので
+    以下の初期プロパティは修正
+    クッキーの保存も終了
+*/
 var myTitle=""	;
 			//タイトル 現行の作品名を入れておくとラクです
 var mySubTitle=""	;
 			//サブタイトル 同上
-var myOpus="--"	;
+var myOpus=""	;
 			//制作話数等
 var myFrameRate=24	;
 			//初期フレームレートを置いてください。フレーム毎秒
 var Sheet="6+0"	;
 			//カット尺初期値初期タイムシートの長さをタイムコードで
 var SoundColumns=1;
-			//セリフ欄の数 初期値を整数で(必要に従って増やせる。1つは予約)
-var SheetLayers=6;
+			//セリフ欄の数 初期値を整数で(必要に従って増やせる。最低で1つはルック維持のため予約)
+var SheetLayers=5;
 			//セル重ねの数 初期値を整数で
-var CompositColumns=3;
+var CompositColumns=0;
+			//カメラワーク欄の数 初期値を整数で
+var SfxColumns=0;
 			//カメラワーク欄の数 初期値を整数で
 //---
 

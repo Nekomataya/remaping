@@ -29,14 +29,6 @@
 <script src=./nas/lib/nas_common.js></script>
 <script src=./nas/lib/nas_common_HTML.js></script>
 
-
-<!--    2116. 12/22 削除または統合されて不要になったモジュール
-<script src=./lib/game.js></script>
-        <script src=./nas/newBaseObject.js></script>
-
-        <script src=./nas/newTrackCollection.js></script>　xpsio.jsにマージ済み
-        <script src=./nas/mapio_alt.js></script>
- -->
 <!-- システム汎用ライブラリ remaping.jsよりも前方でロードする必要あり　-->
 <!-- new test code -->
 <!--
@@ -52,17 +44,7 @@
 <script src=./nas/scripts/remaping/airUI.js></script>
 
 <script src=./nas/scripts/remaping/remaping.js></script>
-<!--　りまぴん専用旧ソース　マージ済
-<script src=./nas/scripts/remaping/sync.js></script>
-<script src=./nas/scripts/remaping/io.js></script>
-<script src=./nas/scripts/remaping/cookie.js></script>
-<script src=./nas/scripts/remaping/headline.js></script>
-<script src=./nas/scripts/remaping/toolbox.js></script>
-<script src=./nas/scripts/remaping/pref.js></script>
-<script src=./nas/scripts/remaping/scene.js></script>
-<script src=./nas/scripts/remaping/getSample.js></script>
-  -->
-  
+
 <!-- 下マージ予定　-->
 <script src=./nas/scripts/remaping/utils.js></script>
 
@@ -76,13 +58,6 @@
 <script src=./nas/lib/lib_ARDJ.js></script>
 <script src=./nas/lib/lib_TSX.js></script>
 
-
-<!--　マージ済
-        <script src=./nas/scripts/remaping/dbg_.js></script>
-        <script src=./nas/lib/io.js></script>
-        <script src=./nas/lib/fakeAE.js></script>
-        <script src=./nas/scripts/localStorage.js></script>
--->
 <!-- /*  開発用テストコード   2016.07.16  追加*/ これらはremaping.jsへ統合予定-->
 <script src=./nas/serviceAgent.js></script>
 
@@ -92,6 +67,7 @@
 <!-- /*  AdobeExtension/Scripts 準互換 多言語化リソース  */ -->
 
 <script src=./nas/lib/nas_locale.js></script>
+<script src=./nas/lib/messages.js></script>
 <script src=./nas/scripts/remaping/messages.js></script>
 
 <!-- ライブラリインストール -->
@@ -1724,10 +1700,17 @@ onclick='nas.incrFCTonHTMLInput(document.getElementById("editTC"),"-(1)")'
 <!--	XPS書き出し	-->
 <!--	シート取り込み	-->
 <div class=optionPanel id=optionPanelData>
-<strong>データ入出力</strong> (このウェルにデータをコピーペーストします)
+<strong id=dataPnl>データ入出力</strong> <span id=dataPnlcaption>(このウェルにデータをコピーペーストします)</span>
 <hr>
-<div><form name=cgiSample id=cgiSample><a href="javascript:void(0);" onclick="return writeXPS(XPS)" title="保存用に書き出し"
->別ウィンドウに書き出し</a> <a href="javascript:void(0);" onclick="return printHTML(false)" title="HTML書き出し"
+<div><form name=cgiSample id=cgiSample><a
+    id=exportXPSwindow
+    href="javascript:void(0);" onclick="return writeXPS(XPS)"
+    title="保存用に書き出し"
+>別ウィンドウに書き出し</a> <a
+    id=exportHTMLwindow
+    href="javascript:void(0);"
+    onclick="return printHTML(false)"
+    title="HTML書き出し"
 >別ウィンドウにHTMLで書き出し</a> <span id=TSXUi></span>
 / Sample data :
 <select name=sampleSelect id=sampleSelect　>
@@ -1742,7 +1725,10 @@ onclick='nas.incrFCTonHTMLInput(document.getElementById("editTC"),"-(1)")'
  <option value=8>TVP-csv1.0
  <option value=9>TVP-csv1.1
 </select>
-<button onClick='getSample(1*(document.cgiSample.sampleSelect.value));return false;'>サンプル読み込み</button>
+<button
+    id=sampleLoaderSelect
+    onClick='getSample(1*(document.cgiSample.sampleSelect.value));return false;'
+>サンプル読み込み</button>
 <!-- <a href="javascript:void(0);" onClick="getSample(1)" id=sample1 title="xps">XPS-1</a> |
  <a href="javascript:void(0);" onClick="getSample(2)" id=sample2 title="xps(修飾メモ付き)">XPS-2</a> |
  <a href="javascript:void(0);" onClick="getSample(3)" id=sample3 title="AE-Key">AE-Key</a> |
@@ -1862,7 +1848,8 @@ onclick='nas.incrFCTonHTMLInput(document.getElementById("editTC"),"-(1)")'
 	<td width=24em colspan=2>
 	<input type=text id=scnMapfile style="width:100%" value="---" onChange="myScenePref.rewrite(this.id)"/>
 	</td>
-</tr><tr>
+</tr>
+<tr>
 	<th>	Title.
 	</th><td colspan=2>
 	<input	type=text
@@ -1871,17 +1858,6 @@ onclick='nas.incrFCTonHTMLInput(document.getElementById("editTC"),"-(1)")'
 		value="---" 
 		onChange="myScenePref.rewrite(this.id)"
 	/>
-</tr><tr>
-	<th>	sub title.
-	</th><td colspan=2>
-	<input type=text
-		id=scnSubtitle
-		style="width:100%"
-		value="---"
-		onChange="myScenePref.rewrite(this.id)"
-	/>
-
-	</td>
 </tr><tr>
 	</td>
 	<th>	No.
@@ -1892,6 +1868,17 @@ onclick='nas.incrFCTonHTMLInput(document.getElementById("editTC"),"-(1)")'
 			value="---"
 			onChange="myScenePref.rewrite(this.id)"
 	/>
+	</td>
+</tr><tr>
+	<th>	sub title.
+	</th><td colspan=2>
+	<input type=text
+		id=scnSubtitle
+		style="width:100%"
+		value="---"
+		onChange="myScenePref.rewrite(this.id)"
+	/>
+
 	</td>
 </tr><tr>
 	<th>	S - C
@@ -1911,7 +1898,7 @@ onclick='nas.incrFCTonHTMLInput(document.getElementById("editTC"),"-(1)")'
 	/>
 	</td>
 </tr><tr>
-	<th>	レイヤ数
+	<th>	tracks
 	</th><td colspan=2 nowrap>
 		<input	type=text
 			id=scnLayers
@@ -1985,7 +1972,7 @@ onclick='nas.incrFCTonHTMLInput(document.getElementById("editTC"),"-(1)")'
 		<input type=text id=scnTrotT style="width:5em" value="---" onChange="myScenePref.rewrite(this.id)"/>
 	</td>
 </tr><tr>
-	<th nowrap>	シート作成
+	<th nowrap>	created
 		<input	type=hidden id=scnCreate_time value=""/>
 		<input	type=hidden id=scnCreate_user value=""/>
 		<input	type=hidden id=scnUpdate_time value=""/>
@@ -1993,7 +1980,7 @@ onclick='nas.incrFCTonHTMLInput(document.getElementById("editTC"),"-(1)")'
 	</td><td id=scnCreate_userTD >	名前(自動)
 	</td>
 </tr><tr>
-	<th>	シート更新
+	<th>	updated
 	</th><td id=scnUpdate_timeTD >	日付(自動)
 	</td><td>
 		<input	type=text
@@ -2270,9 +2257,13 @@ onclick="alert(this.innerHTML);"
 		<th class=menu colspan=3> name. / <span id=myName onClick="myPref.chgMyName()"></span></th>
 	</tr>
 	<tr>
-		<td colspan=2 style="text-align:center"><input type=button value="設定反映"
+		<td colspan=2 style="text-align:center"><input type=button
+		    id=prefBtapply
+		    value="設定反映"
 			style="width:120px;" onClick="myPref.putProp();"> <input type=button
+			id=prefBtReset
 			value="リセット" style="width:120px;" onClick="myPref.getProp();"> <input
+			id=prefBtClose
 			type=button value="閉じる" style="width:120px;" onClick="myPref.close();">
 		</td>
 	</tr>
@@ -2287,9 +2278,12 @@ onclick="alert(this.innerHTML);"
 	-->
 	<tr>
 		<td colspan=2 style="text-align:center"><input type=button
+		    id=prefBtSave
 			value="設定を保存" style="width:180px;" 
             onClick="myPref.putProp();writeCk();">
-		<input type=button value="設定を削除" style="width:180px;"
+		<input type=button
+		    id=prefBtDelete
+		    value="設定を削除" style="width:180px;"
 			onClick="dlCk();"></td>
 	</tr>
 	<tr>
@@ -2298,16 +2292,16 @@ onclick="alert(this.innerHTML);"
 		</td>
 	</tr>
 	<tr>
-		<td colspan=2 class=toolbarR>画面モード<br />
+		<td id=prefLbMode colspan=2 class=toolbarR>画面モード<br />
 		<input type="radio" name="viewMode" id=vMWordProp value="WordProp" onClick='myPref.chgVM(this.value)' checked onChange="alert(this.value)">
-		<a href="javascript:" onClick='return myPref.chgVM("WordProp")'>タイムシートワープロ</a>　/
+		<a id=prefModeWP href="javascript:" onClick='return myPref.chgVM("WordProp")'>タイムシートワープロ</a>　/
 		<input type="radio" name="viewMode" id=vMCompact value="Compact" onClick='myPref.chgVM(this.value)'>
-		<a href="javascript:" onClick='return myPref.chgVM("Compact")'>コンパクトエディタ</a>
+		<a id=prefModeCP href="javascript:" onClick='return myPref.chgVM("Compact")'>コンパクトエディタ</a>
 		<hr>
 		</td>
 	</tr>
 	<tr>
-		<td colspan=2 class=toolbarR >AE キーデータオプション<br />
+		<td id=prefLbAE colspan=2 class=toolbarR >AE キーデータオプション<br />
 		blank method. <SELECT NAME=blmtd id=prefBlmtd onChange="myPref.chgblk(this.id)">
 			<OPTION VALUE=0>ファイル
 			<OPTION VALUE=1>不透明度
@@ -2331,7 +2325,7 @@ onclick="alert(this.innerHTML);"
 			<OPTION VALUE=0>最少フレーム</SELECT>
 -->
 		<br>
-		フーテージのフレームレート:<INPUT TYPE=text SIZE=6 NAME=fpsF id=prefFpsF VALUE=--
+		<span id=prefLbFpsF>フーテージのフレームレート</span>:<INPUT TYPE=text SIZE=6 NAME=fpsF id=prefFpsF VALUE=--
 			onChange="myPref.chgfpsF(this.id)"> fps<SELECT NAME=SetFpsF id=SetFpsF
 			onChange="myPref.chgfpsF(this.id)"
 			style="text-align:center;width:100px;font-size:12px">
@@ -2347,7 +2341,7 @@ onclick="alert(this.innerHTML);"
 			<OPTION VALUE=9>FR60(60)
 
 		</SELECT><br />
-		<a href="javascript:" onClick='return myPref.chg("timeShift")'>取り込み自動補正</a>:<INPUT
+		<a id=prefLbTimeshift href="javascript:" onClick='return myPref.chg("timeShift")'>取り込み自動補正</a>:<INPUT
 			TYPE=CheckBox NAME=timeShift id=timeShift><br />
 		省略時サイズ:<input type=text SIZE=4 NAME=dfX id=prefDfX VALUE="---"
 			onChange="myPref.chgdfSIZE(this.id)">x<input type=text SIZE=4 NAME=dfY
@@ -2375,15 +2369,15 @@ id=prefDfY VALUE="---" onChange="myPref.chgdfSIZE(this.id)">:<input type=text
 			<TR>
 
 				<TD VALIGN=top NOWRAP ALIGN=right></TD>
-				<TD VALIGN=top NOWRAP ALIGN=right>シート情報<br />
-				1枚の秒数<INPUT TYPE=TEXT NAME=SheetLength id=prefSheetLength VALUE=6 SIZE=2>秒<br />
-				<a href="javascript:" onClick='return myPref.chg("prefPageCol")'>1ページ2列</a>:<INPUT
+				<TD VALIGN=top NOWRAP ALIGN=right><span id=prefLbSheetInfo >シート情報</span><br />
+				<span id=prefLbSheetLength>1枚の秒数</span><INPUT TYPE=TEXT NAME=SheetLength id=prefSheetLength VALUE=6 SIZE=2><span id=prefLbSec>秒</span><br />
+				<a id=prefLbColums href="javascript:" onClick='return myPref.chg("prefPageCol")'>1ページ2列</a>:<INPUT
 					TYPE=CheckBox NAME=PageCol id=prefPageCol checked><br />
-				<a href="javascript:" onClick='return myPref.chg("prefFootMark")'>フットスタンプ機能</a>:<INPUT
+				<a id=prefLbDiff href="javascript:" onClick='return myPref.chg("prefFootMark")'> 差分表示機能</a>:<INPUT
 					TYPE=CheckBox NAME=footMark id=prefFootMark checked><br />
 
 				</TD>
-				<TD ALIGN=right NOWRAP>カウンタのタイプ<br />
+				<TD ALIGN=right NOWRAP><span id=prefLbFCT >カウンタのタイプ</span><br />
 				0.<SELECT NAME=FCTo0 id=FCTo0>
 					<OPTION VALUE=10>00000 .
 					<OPTION VALUE=20>0:00:00 .
@@ -2414,18 +2408,18 @@ id=prefDfY VALUE="---" onChange="myPref.chgdfSIZE(this.id)">:<input type=text
 				</SELECT><br />
 				</TD>
 				<TD ALIGN=right NOWRAP></TD>
-				<TD ALIGN=right NOWRAP>ループアクション<br />
-				<a href="javascript:" onClick='return myPref.chg("cLoop")'>カーソル</a>:<INPUT
+				<TD ALIGN=right NOWRAP><span id=prefLbLoop>ループアクション</span><br />
+				<a id=prefLbCloop href="javascript:" onClick='return myPref.chg("cLoop")'>カーソル</a>:<INPUT
 					TYPE=checkbox NAME=cLoop id=cLoop checked><br />
-				<a href="javascript:" onClick='return myPref.chg("sLoop")'>スピン</a>:<INPUT
+				<a id=prefLbSloop href="javascript:" onClick='return myPref.chg("sLoop")'>スピン</a>:<INPUT
 					TYPE=checkbox NAME=sLoop id=sLoop><br />
-				<a href="javascript:" onClick='return myPref.chg("autoScroll")'>自動スクロール</a>:<INPUT
+				<a id=prefLbAscroll href="javascript:" onClick='return myPref.chg("autoScroll")'>自動スクロール</a>:<INPUT
 					TYPE=CheckBox NAME=autoScroll id=autoScroll checked><br />
-				<a href="javascript:" onClick='return myPref.chg("tabSpin")'>TABで確定</a>:<INPUT
+				<a id=prefLbTABspin href="javascript:" onClick='return myPref.chg("tabSpin")'>TABで確定</a>:<INPUT
 					TYPE=CheckBox NAME=tabSpin id=tabSpin checked><br />
-				<a href="javascript:" onClick='return myPref.chg("noSync")'>入力同期停止</a>:<INPUT
+				<a id=prefLbNoSync href="javascript:" onClick='return myPref.chg("noSync")'>入力同期停止</a>:<INPUT
 					TYPE=CheckBox NAME=noSync id=noSync checked><br />
-				<a href="javascript:" onClick='return myPref.chg("prefUtilBar")'>開始時にツールバーを表示</a>:<INPUT
+				<a id=prefLbUtilBar href="javascript:" onClick='return myPref.chg("prefUtilBar")'>開始時にツールバーを表示</a>:<INPUT
 					TYPE=CheckBox NAME=UtilBar id=prefUtilBar checked><br />
 				</TD>
 			</TR>
@@ -2435,7 +2429,7 @@ id=prefDfY VALUE="---" onChange="myPref.chgdfSIZE(this.id)">:<input type=text
 	</tr>
 	<tr>
 		<td  class=toolbarR >
-			eps export option <br>
+			<span id=prefLbExportopt>eps export option<span> <br>
 		export size. <SELECT NAME=expSize id=prefEpsS onChange="myPref.chgSize(this.id)">
 			<OPTION VALUE=0>A4
 			<OPTION VALUE=1 selected=true>A3
@@ -2455,9 +2449,12 @@ id=prefDfY VALUE="---" onChange="myPref.chgdfSIZE(this.id)">:<input type=text
 	<div align=center>
 このコンテンツは、Javascriptによるアプリケーションです。<br />
 Javascriptを有効にした状態でご使用ください。<br />
+This content is an application by Javascript. <br />
+Please use with Javascript enabled<br>
 <br /><hr />
 <B>Univarsal Animation Timesheet<br>汎用タイムシートエディタ</B><br />
 　試験版<br />
+Under examination<br />
 <img src=images/remaping.gif border=0 width=256 height=127 onClick='document.getElementById("optionPanelVer").style.display="none";'/><br />
 <span 
 	style="font-size:x-small;color:red"
@@ -2466,7 +2463,7 @@ Javascriptを有効にした状態でご使用ください。<br />
  $Id: index.html 2016/  kiyo Exp $ <br />
 <span id=myVer0></span> <span id=myServer0>[no-server]</span><br />
 
-XPS File Ver. :nasTIME-SHEET 0.4<br />
+XPS File Ver. :nasTIME-SHEET 0.5<br />
 </span>
 <input	type=button
 	value="OK"
@@ -2567,13 +2564,13 @@ trash="xUI.init(XPS)";
 ><br/>
 <button 
  id='dbgPushEntryLR'
- onClick='localRepository.pushEntry(xUI.XPS);localRepository.getList();documetDepot.rebuildList();return false;'
+ onClick='localRepository.pushEntry(xUI.XPS);localRepository.getList();documentDepot.rebuildList();return false;'
 > pushEntry-localStorage </button><button 
  id='dbgViewRepsitoryList'
  onClick='console.log(serviceAgent.currentRepository.entryList);return false;'
 > view-repository List </button><button 
  id='dbgPushEntryCR'
- onClick='serviceAgent.currentRepository.pushEntry(xUI.XPS);serviceAgent.currentRepository.getList();documetDepot.rebuildList();return false;'
+ onClick='serviceAgent.currentRepository.pushEntry(xUI.XPS);serviceAgent.currentRepository.getList();documentDepot.rebuildList();return false;'
 > pushEntry !</button>
 <button 
  id='dbgChangeVO'
@@ -2603,9 +2600,9 @@ trash="xUI.init(XPS)";
 >
 
 <tr>
-	<th>レベル</th>
-	<th>セル</th>
-	<th>よく使う文字</th>
+	<th id=tBtrackID>レベル</th>
+	<th id=tBtrackEL>セル</th>
+	<th id=tBitems>よく使う文字</th>
 	<td colspan=3>
 		<input	type=checkbox
 			naem=single
@@ -2613,18 +2610,18 @@ trash="xUI.init(XPS)";
 			checked=true
 		><a href="javascript:void()" onClick='return chg("single")'>single-click</a>
 <input	type=button
+	id=skbHome
 	name=home
-	id=home
 	value=HOME
 	style="width:48px;"
-	onclick="chkValue(this.id);"
+	onclick="chkValue(this.name);"
 	title="先頭へ"
 ><input	type=button
+	id=skbEnd
 	name=end
-	id=end
 	style="width:48px;"
 	value=END
-	onclick="chkValue(this.id);"
+	onclick="chkValue(this.name);"
 	title="カット尻へ"
 > 
 
@@ -2634,9 +2631,9 @@ trash="xUI.init(XPS)";
 <td	id=l_select
 	valign=top
 ><select
+	id="tBtrackSelect"
 	name="map_labels"
-	id="layer"
-	title="レイヤを選択"
+	title="トラックを選択"
 	size=5
 style="height:6em;width:7em;text-align:center;font-size:12pt"
 onClick='if(document.getElementById("single").checked) chkValue(this.id)'
@@ -2653,8 +2650,8 @@ onDblClick='if (! document.getElementById("single").checked) chkValue(this.id)'
 <td	id=c_select
 	valign=top
 ><select
+	id="tBitemSelect"
 	name="cell_numbers"
-	id="cell"
 	size=5
 style="height:6em;width:7em;text-align:center;font-size:12pt"
 onClick='if(document.getElementById("single").checked) chkValue(this.id)'
@@ -2668,8 +2665,8 @@ onDblClick='if (! document.getElementById("single").checked) chkValue(this.id)'
 <td	id=u_select
 	valign=top
 ><select
+	id="tBkeywordSelect"
 	name="fav"
-	id="fav"
 	size=5
 style="height:6em;width:7em;text-align:center;font-size:12pt"
 onClick='if(document.getElementById("single").checked) chkValue(this.id)'
@@ -2836,7 +2833,7 @@ onDblClick='if (! document.getElementById("single").checked) chkValue(this.id)'
 	onclick="skbPush(this.value)"
 ><input	type=button
 	name=skb
-	id=skb
+	id=skbOK
 	value="〇"
 	title="〇"
 	style="	width:3.8em;"
@@ -2846,58 +2843,64 @@ onDblClick='if (! document.getElementById("single").checked) chkValue(this.id)'
 </td>
 <td>
 <input	type=button
+	id=skbPgup
 	name=pgup
-	id=pgup
 	style="width:5em;"
 	value=Pgup
-	onclick="chkValue(this.id);"
+	onclick="chkValue(this.name);"
 	title="１ページもどる"
 ><input	type=button
+	id=skbPgdn
 	name=pgdn
-	id=pgdn
 	style="width:5em;"
 	value=Pgdn
-	onclick="chkValue(this.id);"
+	onclick="chkValue(this.name);"
 	title="１ページ進む"
 >
 <br />
 <input	type=button
+	id=skbUp
+	name=up
 	title="UP"
 	value=△
-	id=up
-	onclick="chkValue(this.id);"
+	onclick="chkValue(this.name);"
 	style="width:5em"
 ><br /><input	type=button
+	id=skbLeft
+	name=left
 	title="left"
 	value=&lt;&lt;
-	id=left
-	onclick="chkValue(this.id);"
+	onclick="chkValue(this.name);"
 	style="width:5em"
 ><input type=button
+	id=skbRight
+	name=right
 	alt="RIGHT"
 	value=&gt;&gt;
-	id=right
-	onclick="chkValue(this.id);"
+	onclick="chkValue(this.name);"
 	style="width:5em"
 ><br /><input type=button
+	id=skbDown
+	name=down
 	alt="DOWN"
 	value=▽
-	id=down
-	onclick="chkValue(this.id);"
+	onclick="chkValue(this.name);"
 	style="width:5em"
 >
 <br />
 <input type=button
+	id=skbBack
+	name=back
 	alt="spinF"
 	value=↑spin↑
-	id=back
-	onclick="chkValue(this.id);"
+	onclick="chkValue(this.name);"
 	style="width:5em"
 ><input type=button
+	id=skbFwd
+	name=fwd
 	alt="spinB"
 	value=↓spin↓
-	id=fwd
-	onclick="chkValue(this.id);"
+	onclick="chkValue(this.name);"
 	style="width:5em"
 >
 </td>
@@ -2912,7 +2915,7 @@ onDblClick='if (! document.getElementById("single").checked) chkValue(this.id)'
 <span id=soundPnl class=SoundPanel>音声編集</span>
 <hr>
 <div><form>
-ラベル:
+name:
 <select name=soundLabelSelector id=saundLabelSelector>
 
  <option value=1>桃太郎
@@ -2923,7 +2926,7 @@ onDblClick='if (! document.getElementById("single").checked) chkValue(this.id)'
  <option value=5>きじ
  <option value=6>おに
 </select>
-分類:
+kind:
 <select name=soundPropSelector id=saundPropSelector>
 
  <option value=1>台詞
@@ -2951,7 +2954,7 @@ onDblClick='if (! document.getElementById("single").checked) chkValue(this.id)'
 <hr>
 
 </div>
-内 容: 	duration : <input type=button value="○" style="width:20px"
+content: 	duration : <input type=button value="○" style="width:20px"
 	onClick='return false;'
 >
 <input type=text
@@ -3017,7 +3020,8 @@ onDblClick='if (! document.getElementById("single").checked) chkValue(this.id)'
    <div id=memo_header >
    <a href="javascript:void(0);"
     onclick='xUI.sWitchPanel("memoArea");'
-   ><span>▶</span></a>
+    title='hide note text'
+   ><span>[×]</span></a>
    <a href="javascript:void(0);"
 	onclick='xUI.sWitchPanel("memo");return false;'
 >MEMO : </a> <span id="transit_data"></span>
@@ -3049,7 +3053,7 @@ onDblClick='if (! document.getElementById("single").checked) chkValue(this.id)'
     id=memoPnlClose class=toolTip value="閉じる"
 	onClick='if(XPS.xpsTracks.noteText!=document.getElementById("rEsult").value){if(confirm("内容が変更されています。\n更新しますか?")){XPS.xpsTracks.noteText=document.getElementById("rEsult").value;xUI.setStored("force");sync("memo");}};xUI.sWitchPanel("memo");' /><br>
 </td>
-<td>タイムシートコメントを編集します。<br>
+<td ><span id=memoPnlCaption>タイムシートコメントを編集します</span><br>
 <textarea name=rEsult id=rEsult cols=96 rows=8 >
 </textarea></td>
 </tr><tr>

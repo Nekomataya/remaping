@@ -1084,11 +1084,11 @@ if (exFlag) {
 
 //Yes/No/Cacel
     nas.Pref.importButton.onClick = function () {
-        nas.importPrefarence();
+        nas.importPreference();
         this.parent.init("all");
     };
     nas.Pref.exportButton.onClick = function () {
-        nas.exportPrefarence();
+        nas.exportPreference();
     };
     nas.Pref.readButton.onClick = function () {
         var doAction = confirm(nas.localize({
@@ -1096,7 +1096,7 @@ if (exFlag) {
             ja: "保存中の設定を読み込みます。現在の設定は上書きされます。\n取り消しはできません。よろしいですか？"
         }));
         if (doAction) {
-            nas.readPrefarence();
+            nas.readPreference();
             this.parent.init("all")
         }
         ;
@@ -1105,13 +1105,13 @@ if (exFlag) {
         var doAction = confirm(nas.localize({
             en: "It will save the settings [ %1 ] below. \n the previous file will be overwritten. Are you sure?",
             ja: "設定を[ %1 ]以下に保存します。\n以前のファイルは上書きされます。よろしいですか？"
-        }, nas.prefarenceFolder.fsName));
+        }, nas.preferenceFolder.fsName));
         if (doAction) {
-            nas.writePrefarence()
+            nas.writePreference()
         }
     };
     nas.Pref.clearButton.onClick = function () {
-        nas.cleraPrefarence();
+        nas.cleraPreference();
     };
     nas.Pref.closeButton.onClick = function () {
         nas.Pref.close();

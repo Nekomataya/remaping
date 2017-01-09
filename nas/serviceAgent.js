@@ -2355,8 +2355,9 @@ serviceAgent.checkinEntry=function(myJob,callback,callback2){
         case 'Fixed':case 'Startup':
             //次のJobへチェックイン
             //ジョブ名称を請求
-            var title   = '作業開始 / チェックイン';
-            var msg     = '新規作業を開始します。\n新しい作業名を入力してください。\nリストにない場合は、作業名を入力してください。';
+            var title   = localize(nas.uiMsg.pMcheckin);//'作業開始 / チェックイン';
+            var msg     = localize(nas.uiMsg.dmPMnewItemSwap,localize(nas.uiMsg.pMjob));
+            //'新規作業を開始します。\n新しい作業名を入力してください。\nリストにない場合は、作業名を入力してください。';
             var msg2    = '<br> <input id=newJobName  type=text list=newJobList></input><datalist id=newJobList>';
 //            console.log(xUI.XPS.stage.name +","+ ((xUI.XPS.job.id == 0) ? 'primary':'*'));
             var newJobList = nas.Pm.jobNames.getTemplate(xUI.XPS.stage.name,((xUI.XPS.job.id == 0) ? 'primary':'*'));//ここは後ほどリポジトリ個別のデータと差替
@@ -2416,9 +2417,10 @@ serviceAgent.addEntry = function(myXps){
         var myEntry       = this.currentRepository.entry(myProduct+"//",true);
         var currentTitle  = decodeURIComponent(myEntry.product.split('#')[0]);
         var currentOpus   = decodeURIComponent(myEntry.product.split('#')[1].split('[')[0]);
-        var title = '新規カット追加';
-        var msg  = '新規カットを作成します。\nカット番号/継続時間を入力して[OK]ボタンで確定してください。';
-        var msg2 = '<br><span>%title%</span>:<span>%opus%</span><br> S-C:<input id=newCutName type=text ></input> TIME:<input id=newCutTime type=text value="6 + 0"></input><br><input id=newLine type=text value="%lineName%"></input><input id=newStage type=text value="%stageName%"></input><input id=newJob type=text value="%jobName%"></input><br>';
+        var title = localize(nas.uiMsg.pMaddNewScene);//'新規カット追加';
+        var msg  = localize(nas.uiMsg.dmPMnewDocument);
+        //'新規カットを作成します。\nカット番号/継続時間を入力して[OK]ボタンで確定してください。';
+        var msg2 = '<br><span>%title%</span>#<span>%opus%</span><br> S-C:<input id=newCutName type=text ></input> TIME:<input id=newCutTime type=text value="6 + 0"></input><br><input id=newLine type=text value="%lineName%"></input><input id=newStage type=text value="%stageName%"></input><input id=newJob type=text value="%jobName%"></input><br>';
 
         msg2 = msg2.replace(/%title%/,currentTitle);
         msg2 = msg2.replace(/%opus%/,currentOpus);
@@ -2479,9 +2481,9 @@ serviceAgent.receiptEntry=function(){
             //Fixedのみを処理
             var newStageList = nas.Pm.stages.getTemplate(xUI.XPS.stage.name);//ここは後ほどリポジトリ個別のデータと差替
             var newJobList   = nas.Pm.jobNames.getTemplate(xUI.XPS.stage.name);//ここは後ほどリポジトリ個別のデータと差替
-            var title = '作業検収 / 工程移行';
-            var msg   = '現在の工程を閉じて次の工程を開きます。\n新しい工程名を入力してください。\nリストにない場合は、工程名を入力してください。';
-            var msg2  = '<br><span>現在の工程 : %currentStage% <br>新規工程 : '+ nas.incrStr(xUI.XPS.stage.id)
+            var title = localize(nas.uiMsg.pMreseiptStage);//'作業検収 / 工程移行';
+            var msg   = localize(nas.uiMsg.dmPMnewStage);//'現在の工程を閉じて次の工程を開きます。\n新しい工程名を入力してください。\nリストにない場合は、工程名を入力してください。';
+            var msg2  = '<br><span>'+localize(nas.uiMsg.pMcurrentStage)+' : %currentStage% <br>'+localize(nas.uiMsg.pMnewStage)+' : '+ nas.incrStr(xUI.XPS.stage.id)
                     + ' :</span><input id=newStageName type=text list=taragetStageList onChange="serviceAgent.updateNewJobName(this.value);"></input><datalist id=taragetStageList>';
                 msg2　= msg2.replace(/%currentStage%/,xUI.XPS.stage.toString(true));
             for(var idx = 0 ; idx < newStageList.length;idx ++){

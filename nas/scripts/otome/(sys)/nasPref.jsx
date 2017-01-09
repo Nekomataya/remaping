@@ -992,11 +992,11 @@ nas.Pref.SaWtUpdate=function(myStatus){
 //Yes/No/Cacel
 	nas.Pref.readButton.onClick=function(){
 		var doAction=confirm("保存中の設定を読み込みます。現在の設定は上書きされます。"+nas.GUI.LineFeed+"取り消しはできません。よろしいですか？");
-		if(doAction){nas.otome.readPrefarence();this.parent.init("all")};
+		if(doAction){nas.otome.readPreference();this.parent.init("all")};
 		};
 	nas.Pref.writeButton.onClick=function(){
-		var doAction=confirm("設定を["+nas.otome.prefarenceFolder.fsName+"]以下に保存します。"+nas.GUI.LineFeed+"以前のファイルは上書きされます。よろしいですか？");
-		if(doAction){nas.otome.writePrefarence()}
+		var doAction=confirm("設定を["+nas.otome.preferenceFolder.fsName+"]以下に保存します。"+nas.GUI.LineFeed+"以前のファイルは上書きされます。よろしいですか？");
+		if(doAction){nas.otome.writePreference()}
 		};
 	nas.Pref.closeButton.onClick=function(){nas.Pref.close();};
 //アップデートコントロール

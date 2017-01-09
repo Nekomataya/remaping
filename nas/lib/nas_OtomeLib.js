@@ -5476,13 +5476,13 @@ nas.otome.asSourceString = function (myItem, myBase, myForm) {
  * 新規のオブジェクトは作成しない
  */
 
-//nas.otome.prefarenceFolder=new Folder(Folder.nas.path+"/nas/lib/etc");//保存場所固定
-nas.otome.prefarenceFolder = new Folder(Folder.userData.path + "/" + Folder.userData.name + "/nas/lib/etc");//保存場所固定
-if (!nas.otome.prefarenceFolder.exists) {
-    nas.otome.prefarenceFolder.create();
+//nas.otome.preferenceFolder=new Folder(Folder.nas.path+"/nas/lib/etc");//保存場所固定
+nas.otome.preferenceFolder = new Folder(Folder.userData.path + "/" + Folder.userData.name + "/nas/lib/etc");//保存場所固定
+if (!nas.otome.preferenceFolder.exists) {
+    nas.otome.preferenceFolder.create();
 }
 /**
- * nas.otome.readPrefarence(myPropName)
+ * nas.otome.readPreference(myPropName)
  * 設定の保存・復帰用関数
  * 引数:プロパティ名
  * 戻値:なし
@@ -5491,11 +5491,11 @@ if (!nas.otome.prefarenceFolder.exists) {
  *
  * @param myPropName
  */
-nas.otome.readPrefarence = function (myPropName) {
+nas.otome.readPreference = function (myPropName) {
     if (!myPropName) {
         myPropName = "*"
     }
-    var myPrefFiles = this.prefarenceFolder.getFiles(myPropName + ".json");
+    var myPrefFiles = this.preferenceFolder.getFiles(myPropName + ".json");
     for (var idx = 0; idx < myPrefFiles.length; idx++) {
         var myPropName = myPrefFiles[idx].name.replace(/\.json$/, "");
         if (eval(myPropName)) {
@@ -5532,7 +5532,7 @@ nas.otome.readPrefarence = function (myPropName) {
 };
 
 /**
- * nas.otome.writePrefarence(myPrefs)
+ * nas.otome.writePreference(myPrefs)
  * 設定の保存・復帰用関数
  * 引数:オブジェクト
  * 戻値:なし
@@ -5543,7 +5543,7 @@ nas.otome.readPrefarence = function (myPropName) {
  *
  * @param myPrefs
  */
-nas.otome.writePrefarence = function (myPrefs) {
+nas.otome.writePreference = function (myPrefs) {
     if (!myPrefs) {
         myPrefs = []
     }
@@ -5589,7 +5589,7 @@ nas.otome.writePrefarence = function (myPrefs) {
     /**
      * ,"nas.ftgFolders";//
      */
-    if ((this.prefarenceFolder.exists) && (!(this.prefarenceFolder.readonly))) {
+    if ((this.preferenceFolder.exists) && (!(this.preferenceFolder.readonly))) {
         for (var idx = 0; idx < myPrefs.length; idx++) {
             if (eval(myPrefs[idx])) {
                 if ((eval(myPrefs[idx])) instanceof RegExp) {
@@ -5606,7 +5606,7 @@ nas.otome.writePrefarence = function (myPrefs) {
                 }
                 var myFileName = myPrefs[idx] + ".json";
                 nas.otome.writeConsole(myContent);
-                var myOpenFile = new File(this.prefarenceFolder.path + "/" + this.prefarenceFolder.name + "/" + myFileName);
+                var myOpenFile = new File(this.preferenceFolder.path + "/" + this.preferenceFolder.name + "/" + myFileName);
                 var canWrite = myOpenFile.open("w");
                 if (canWrite) {
                     nas.otome.writeConsole(myOpenFile.fsName);
@@ -5628,7 +5628,7 @@ nas.otome.writePrefarence = function (myPrefs) {
 };
 
 /**
- * nas.otome.readPrefarence();
+ * nas.otome.readPreference();
  * スクリプト他のファイル類の実行サービスを乙女のライブラリに移動する
  * 振り分けルーチンは使用してもしなくてもかまわない
  * doFFX / doAction / doScript / throwSystem

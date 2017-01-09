@@ -42,7 +42,7 @@ if(! app.nas){
   nas_common.js		AE・HTML共用一般アニメライブラリ
   nas_GUIlib.js		Adobe環境共用GUIライブラリ
   nas_psAxeLib.js	PS用環境ライブラリ
-  nas_prefarenceLib.js	Adobe環境共用データ保存ライブラリ
+  nas_preferenceLib.js	Adobe環境共用データ保存ライブラリ
 
   nasXpsStore.js	PSほかAdobe汎用XpsStoreライブラリ(AE用は特殊)
   xpsio.js		汎用Xpsライブラリ
@@ -58,7 +58,7 @@ includeLibs=[
 	nasLibFolderPath+"nas_common.js",
 	nasLibFolderPath+"nas_GUIlib.js",
 	nasLibFolderPath+"nas_psAxeLib.js",
-	nasLibFolderPath+"nas_prefarenceLib.js"
+	nasLibFolderPath+"nas_preferenceLib.js"
 ];
 //=====================================　Application Objectに参照をつける
 	app.nas=nas;
@@ -99,7 +99,7 @@ for(prop in includeLibs){
 	}
 }
 //=====================================保存してあるカスタマイズ情報を取得
-if(bootFlag){nas.readPrefarence();nas.workTitles.select();}
+if(bootFlag){nas.readPreference();nas.workTitles.select();}
 //=====================================
 //+++++++++++++++++++++++++++++++++ここまで共用
 

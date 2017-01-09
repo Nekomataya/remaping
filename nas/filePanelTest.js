@@ -71,8 +71,15 @@ documentDepot.documentsUpdate=function(){
     for (var idx = 0 ; idx < myDocuments.length ; idx ++ ){
         var currentProduct=myDocuments[idx].toString().split( '//' )[0];
         var hasProduct =false;
+
         for (var idp = 0 ; idp < myProducts.length ; idp ++ ){
-            if (currentProduct == myProducts[idp]){hasProduct = true;break;}
+            //判定が完全一致なので比較メソッドを使う　//で補って０以上
+            // if (currentProduct == myProducts[idp]){hasProduct = true;break;}
+            if (Xps.compareIdentifier(myDocuments[idx].toString(),myProducts[idp]+"//")>-1){
+                hasProduct = true;
+                if(currentProduct.length > myProducts[idp].length){myProducts[idp]=currentProduct;}
+                break;
+            }
         }
         if(hasProduct) {
             if(myProducts[idp].scis){

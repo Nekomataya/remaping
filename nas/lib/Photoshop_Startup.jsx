@@ -59,7 +59,7 @@ if (typeof app.nas == "undefined") {
          * nas_common.js        AE・HTML共用一般アニメライブラリ
          * nas_GUIlib.js        Adobe環境共用GUIライブラリ
          * nas_psAxeLib.js    PS用環境ライブラリ
-         * nas_prefarenceLib.js    Adobe環境共用データ保存ライブラリ
+         * nas_preferenceLib.js    Adobe環境共用データ保存ライブラリ
          *
          * nasXpsStore.js    PSほかAdobe汎用XpsStoreライブラリ(AE用は特殊)
          * xpsio.js        汎用Xpsライブラリ
@@ -80,7 +80,7 @@ if (typeof app.nas == "undefined") {
             nasLibFolderPath + "nas_common.js",
             nasLibFolderPath + "nas_GUIlib.js",
             nasLibFolderPath + "nas_psAxeLib.js",
-            nasLibFolderPath + "nas_prefarenceLib.js",
+            nasLibFolderPath + "nas_preferenceLib.js",
             nasLibFolderPath + "nas_axeEventHandler.js",
             nasLibFolderPath + "nas_locale.js",
             nasLibFolderPath + "messages.js",
@@ -110,7 +110,7 @@ if (typeof app.nas == "undefined") {
             $.evalFile(myScriptFileName);
         }
 //=====================================保存してあるカスタマイズ情報を取得
-        nas.readPrefarence();
+        nas.readPreference();
         nas.workTitles.select();
 //=====================================startup
 
