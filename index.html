@@ -535,16 +535,21 @@
 </li>
 <li><span	id=pMshow>Show</span>
 <ul>
-<li><span id=pMeditMode-d class='pM pM-alt'></span><A	id=pMeditMode
+<li><span id=pMeditMode-d class='pM pM-alt'>[ 編集モード ]</span><A	id=pMeditMode
 	HREF='javascript:void(0);'
 	onclick='xUI.viewMode=(xUI.viewMode=="Compact")?"WordProp":"Compact";nas_Rmp_Init();return false'
 	title="編集モード切り替え"
 >[ 編集モード ]</A></li>
-<li><span id=pMcolumns-d class='pM pM-alt'></span><A	id=pMcolumns
+<li><span id=pMcolumns-d class='pM pM-alt'>[ 段組 ]</span><A	id=pMcolumns
 	HREF='javascript:void(0);'
 	onclick='xUI.PageCols=(xUI.PageCols==1)?2:1;nas_Rmp_Init();return false'
 	title="二段組"
 >[ 段組 ]</A></li>
+<li><span id=pMchgLoacle-d class='pM pM-alt'>[言語切替]</span><A	id=pMchgLoacle
+	HREF='javascript:void(0);'
+    onClick='nas.locale=(nas.locale=="ja")? "en":"ja";nas.LangPack.chgLocale(nas.locale);return false;'
+    title="言語切替"
+>[言語切替]</A></li>
 <hr>
 <li><span id=pMzoom-d class='pM pM-alt'></span><A	id=pMzoom
 	HREF='javascript:void(0);'
@@ -2110,24 +2115,28 @@ onclick='nas.incrFCTonHTMLInput(document.getElementById("editTC"),"-(1)")'
 <!-- メニューバー と ロゴ -->
 <button
  id='ddp-reference'
- onClick='console.log("read to reference :" + decodeURIComponent(documentDepot.currentSelection));serviceAgent.currentRepository.getEntry(documentDepot.currentSelection,true);'
+ onClick='console.log("read to reference :" + decodeURIComponent(documentDepot.currentSelection));serviceAgent.getEntry(documentDepot.currentSelection,true);'
  class='documentPanelButton'
  title="参照読出  readout - reference"
+ disabled=true
 >参照</button><button
  id='ddp-readout'
- onClick='console.log("read :" + decodeURIComponent(documentDepot.currentSelection));serviceAgent.currentRepository.getEntry(documentDepot.currentSelection);'
+ onClick='console.log("read :" + decodeURIComponent(documentDepot.currentSelection));serviceAgent.getEntry(documentDepot.currentSelection);'
  class='documentPanelButton'
  title="読出 readout"
+ disabled=true
 >読出</button><button
  id='ddp-checkin'
- onClick='console.log( "open :" + decodeURIComponent(documentDepot.currentSelection));xUI.setDocumentStatus("checkin");'
+ onClick='console.log( "open :" + decodeURIComponent(documentDepot.currentSelection));serviceAgent.getEntry(documentDepot.currentSelection,false,fucntion(){serviceAgent.checkinEntry();});'
  class='documentPanelButton'
  title="読み出して作業開始 xUI.setDocumentStatus('checkin')"
+ disabled=true
 >+ check-in</button><button
  id='ddp-activate'
- onClick='console.log("new document :"+decodeURIComponent(documentDepot.currentSelection));xUI.setDocumentStatus("activate");'
+ onClick='console.log("new document :"+decodeURIComponent(documentDepot.currentSelection));serviceAgent.getEntry(documentDepot.currentSelection,false,function(){serviceAgent.activateEntry();});'
  class='documentPanelButton'
  title="読み出して保留解除 xUI.setDocumentStatus('activate')"
+ disabled=true
 >+ activate</button>
 <input type='text' id='ddp-searchtext' size=20 ><button
  id='ddp-search'

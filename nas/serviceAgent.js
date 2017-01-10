@@ -610,14 +610,7 @@ localRepository.getEntry=function(myIdentifier,isReference,callback){
     console.log(targetArray.join( '//' ));
     var myXpsSource=localStorage.getItem(this.keyPrefix+targetArray.join( '//' ));
     if(myXpsSource){
-        if(callback instanceof Function){
-            //コールバック渡しの場合はリファレンス指定は無効
-            console.log(callback);
-            //setTimeout('callback('+myXpsSource+')',10);
-            return true;
-        }
-        if(isReference){
-            
+        if(isReference){            
         //データ単独で現在のセッションのリファレンスを置換
             documentDepot.currentReference = new Xps();
             documentDepot.currentReference.readIN(myXpsSource);
@@ -660,7 +653,9 @@ localRepository.getEntry=function(myIdentifier,isReference,callback){
             console.log(documentDepot.currentReference);//単エントリで直前のエントリ取得不能の可能性あり
              XPS.readIN(myXpsSource);xUI.init(XPS,documentDepot.currentReference);nas_Rmp_Init();
              xUI.setUImode('browsing');sync("productStatus");
-             xUI.sWitchPanel('File');
+            //読込実行後にコールバックが存在したら実行
+            if(callback instanceof Function){setTimeout((callback).bind(this),100)};
+//             xUI.sWitchPanel('File');
         }
     } else { 
         return false;
@@ -845,7 +840,7 @@ localRepository.checkinEntry=function(myJob,callback,callback2){
 			    sync();//保存ステータスを同期
                 xUI.setUImode('production');//モードをproductionへ
                 xUI.sWitchPanel();//ドキュメントパネルが表示されていたらパネルクリア
-                if(callback instanceof Function){ setTimeout('callback()',10)};
+                if(callback instanceof Function){ setTimeout(function(){callback()},10)};
                 return result;
             }else{
                 console.log(result);
@@ -853,7 +848,7 @@ localRepository.checkinEntry=function(myJob,callback,callback2){
         }
         console.log('編集権利取得失敗');
         // すべてのトライに失敗
-        if(callback2 instanceof Function){ setTimeout('callback2()',10)};
+        if(callback2 instanceof Function){ setTimeout(function(){callback2()},10)};
         return false ;
 }
 /**
@@ -1313,9 +1308,11 @@ NetworkRepository.prototype.getEntry = function (myIdentifier,isReference,callba
         refIssue = [myIssue[0],myIsseu[1]-1,0];
     }
 */
-//    console.log(targetURL);
-  
+//    console.log(targetURL);  
 //    that=this;
+/**
+当初コールバック関数に取得したXpsContentsを渡す設計だったが、標準処理終了時に実行するリレー処理関数に変更
+以下はコンテンツを受け取るコードなので不使用
 if(callback instanceof Function){
     $.ajax({
         url: this.url + targetURL,
@@ -1327,18 +1324,14 @@ if(callback instanceof Function){
         }).bind(this),
         beforeSend: (this.service.setHeader).bind(this)
     });
-/**
-    以下コールバック指定なし（標準処理）
-    
- */
 }else
+*/
     if(! isReference){
 /**
 暫定補助情報フォーマット
     product.name
         decoded name
     product.description
- 
     episode.name
         decoded name
     episode.description
@@ -1360,7 +1353,7 @@ console.log("road :"+myContent);
             XPS.syncIdentifier(targetArray.join('//'));
 	        xUI.init(XPS);
 	        nas_Rmp_Init();
-            xUI.sWitchPanel('File');
+//            xUI.sWitchPanel('File');
             if(callback instanceof Function) callback();
         }).bind(this),
         error:(function(result){
@@ -1382,7 +1375,7 @@ console.log("road :"+myContent);
 	        documentDepot.currentReference=new Xps();
 	        documentDepot.currentReference.readIN(myContent);
 	        xUI.setReferenceXPS(documentDepot.currentReference);
-	        xUI.sWitchPanel('File');
+//	        xUI.sWitchPanel('File');
             if(callback instanceof Function) callback();
         }).bind(this),
         error:(function(result){
@@ -2164,7 +2157,6 @@ serviceAgent.switchRepository = function(myRepositoryID,callback){
 
 /**
     引数を判定して動作を決定 カレントリポジトリの操作を呼び出す
-    myRepository    対象リポジトリ 名前又はオブジェクト 指定がない場合はカレント
     myIdentifier    カット識別子 完全状態で指定されなかった場合は、検索で補う
     isReference    リファレンスとして呼び込むか否かのフラグ 指定がなければ自動判定
     callback    コールバック関数指定が可能コールバックは以下の型式で
@@ -2172,8 +2164,9 @@ serviceAgent.switchRepository = function(myRepositoryID,callback){
     コールバックの指定がない場合は指定データをアプリケーションに読み込む
     コールバック関数以降の引数はコールバックに渡される
 */
-serviceAgent.getEntry = function(myRepository,myIdentifier,isReference,callback){
-    alert('test');
+serviceAgent.getEntry = function(myIdentifier,isReference,callback){
+    this.currentRepository.getEntry(myIdentifier,isReference,callback);
+    if($("#optionPanelFile").is(':visible')) xUI.sWitchPanel('File');
 };
 
 /**
@@ -2281,12 +2274,10 @@ serviceAgent.activateEntry=function(callback,callback2){
     ここに確認用のメッセージが必要
 */
             if(xUI.currentUser.sameAs(xUI.XPS.update_user)){
-                var msg = '[！！注意！！] 異常処理です\n';
-                msg += 'このデータは現在あなたのアカウントで編集中です\n';
-                msg += '他の環境でドキュメントを開きっぱなしになっていないか確認してください\n';
-                msg += 'OKを押すと、現在のデータから作業を再開できます\n';
-                msg += 'よろしいですか？';
-                if(confirm(msg)){
+                var msg = localize(nas.uiMsg.alertAbnomalPrccs);
+                msg += '\n'+localize(nas.uiMsg.dmPMrecoverLostSession);
+                msg += '\n\n'+localize(nas.uiMsg.confirmOk);
+               if(confirm(msg)){
                     xUI.setUImode('production');
 //  必要があればここでリポジトリの操作（基本不用）
                     xUI.sWitchPanel();//パネルクリア
@@ -2295,6 +2286,7 @@ serviceAgent.activateEntry=function(callback,callback2){
             }
         break;
         case 'Aborted':case 'Startup':
+            alert(localize(nas.uiMsg.dmAlertCantActivate));//アクティベート不可 
             //NOP return
             return false;
         break;
@@ -2305,7 +2297,7 @@ serviceAgent.activateEntry=function(callback,callback2){
             this.currentRepository.activateEntry(callback,callback2);//コールバックはリレーする
             return true;
         } else {
-            console.log('作業再開失敗 ユーザ違い');
+            alert(localize(nas.uiMsg.dmAlertDataBusy));//ユーザ違い
             return false;
         }
         break;
@@ -2324,8 +2316,9 @@ serviceAgent.deactivateEntry=function(callback,callback2){
     }
     switch (currentEntry.getStatus()){
         case 'Aborted': case 'Startup': case 'Hold': case 'Fixed':
-            //NOP 
-            console.log('fail deactivate so :'+ currentEntry.getStatus());
+            //NOP
+//            console.log('fail deactivate so :'+ currentEntry.getStatus());
+            alert(localize(nas.uiMsg.dmAlertCantDeactivate));//アクティブでない
             return false;
             break;
         case 'Active':
@@ -2340,14 +2333,18 @@ serviceAgent.deactivateEntry=function(callback,callback2){
     このメソッド内でジョブ名称を確定しておく  
 */
 serviceAgent.checkinEntry=function(myJob,callback,callback2){
+//  ここで処理前にリストを最新に更新する
+    this.currentRepository.getList(true);
     var currentEntry = this.currentRepository.entry(Xps.getIdentifier(xUI.XPS));
     if(! currentEntry){
-        console.log ('noentry in repository :' +  decodeURIComponent(currentEntry))
+        alert(localize(nas.uiMsg.dmAlertNoEntry));//対応エントリが無い
+//        console.log ('noentry in repository :' +  decodeURIComponent(currentEntry))
         //当該リポジトリにエントリが無い
          return false;
       }
     switch (currentEntry.getStatus()){
         case 'Aborted': case 'Active': case 'Hold':
+            alert(localize(nas.uiMsg.dmAlertCheckinFail)+"\n>"+currentEntry.getStatus(myJob,callback,callback2));
             //NOP return
             console.log('fail checkin so :'+ currentEntry.getStatus(myJob,callback,callback2));
             return false;
@@ -2372,7 +2369,16 @@ serviceAgent.checkinEntry=function(myJob,callback,callback2){
             nas.showModalDialog('confirm',[msg,msg2],title,false,function(){
                 var newJobName=document.getElementById('newJobName').value;
                 if((this.status == 0)&&(newJobName)){
-                    serviceAgent.currentRepository.checkinEntry(newJobName,callback,callback2)
+                    serviceAgent.currentRepository.checkinEntry(newJobName,
+                    function(){
+                        //成功時は現在のデータをリファレンスへ複製しておく
+                        putReference();
+                        if(callback instanceof Function) callback();
+                    },
+                    function(){
+                        alert(localize(nas.uiMsg.dmAlertCheckinFail));//チェックイン失敗
+                        if(callback2 instanceof Function) callback2();
+                    });
                 }
             });
         break;
@@ -2388,13 +2394,16 @@ serviceAgent.checkoutEntry=function(callback,callback2){
 //    this.currentRepository.checkoutEntry(callback,callback2);
 
     if(! currentEntry) {
-        console.log ('noentry in repository :' +  decodeURIComponent(currentEntry))
+//        console.log ('noentry in repository :' +  decodeURIComponent(currentEntry))
+        //当該リポジトリにエントリが無い
+        alert(localize(nas.uiMsg.dmAlertNoEntry)+'\n>'+decodeURIComponent(currentEntry));//対応エントリが無い
         return false;
     }
     switch (currentEntry.getStatus()){
-        case 'Startup': case 'Hold': case 'Fixed': 
+        case 'Startup': case 'Hold': case 'Fixed':
             //NOP
-            console.log('fail checkout so :'+ currentEntry.getStatus());
+//            console.log('fail checkout so :'+ currentEntry.getStatus());
+            alert(localize(nas.uiMsg.dmAlertCantCheckout));//作業データでない
             return false;
         break;
         case 'Active':
@@ -2428,6 +2437,7 @@ serviceAgent.addEntry = function(myXps){
         msg2 = msg2.replace(/%stageName%/,nas.Pm.pmTemplate[0].stages[0]);
         msg2 = msg2.replace(/%jobName%/,nas.Pm.jobNames.getTemplate(nas.Pm.pmTemplate[0].stages[0],"init")[0]);
         nas.showModalDialog('confirm',[msg,msg2],title,false,function(){
+            if(this.status>1){return};//cancel
             var newCutName  = document.getElementById('newCutName').value;
             var newCutTime  = nas.FCT2Frm(String(document.getElementById('newCutTime').value));
             var newLine     = document.getElementById('newLine').value;
@@ -2447,8 +2457,14 @@ serviceAgent.addEntry = function(myXps){
                 var myIdentifier = Xps.getIdentifier(myXps);
             }
             if((!newCutName)||(serviceAgent.currentRepository.entry(myIdentifier))){
-                alert('カット番号が重複しているかまたは不正です');
-                serviceAgent.addEntry();
+                var msg = "";
+                if (!newCutName){
+                    msg += localize(nas.uiMsg.alertCutIllegal);//"カット番号不正"
+                }else{
+                    msg += localize(nas.uiMsg.alertCutConflict);//"カット番号衝突"
+                }
+                alert(msg);
+                setTimeout (function(){serviceAgent.addEntry();},10);
             }else{
                 serviceAgent.addEntry(myXps);
             };
@@ -2457,7 +2473,7 @@ serviceAgent.addEntry = function(myXps){
     }else{
         var myIdentifier = Xps.getIdentifier(myXps);
         if(this.currentRepository.entry(myIdentifier)){
-                alert('カット番号が既存です');
+                alert(localize(nas.uiMsg.alertCutConflict));
              return false
         }
 //        var tmpEntry= new listEntry(myIdentifier);

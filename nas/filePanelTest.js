@@ -52,6 +52,9 @@ documentDepot = {
     currentReferenece:null
 };
 /**
+    ドキュメントブラウザの初期化を行って
+*/
+/**
     ドキュメントセレクタのアップデートを行う
     タイトルリスト及びドキュメントコレクションをクリア後
     リポジトリのエントリリストを走査してコレクションを再構築してブラウザをアップデートする
@@ -455,10 +458,13 @@ if(myEntry){
         documentDepot.currentSelection = documentDepot.buildIdentifier();//現在のテキスト入力状態から識別子をビルドする。
     }else{
 //リポジトリ内に指定データが存在する
-        document.getElementById("ddp-checkin").disabled     = false;
-        document.getElementById("ddp-activate").disabled    = false;
-        document.getElementById("ddp-readout").disabled     = false;
-        document.getElementById("ddp-reference").disabled   = false;
+var currentStatus = myEntry.issues[myEntry.issues.length-1][3];
+        document.getElementById("ddp-checkin").disabled =
+            ((currentStatus == "Startup")||(currentStatus == "Fixed"))?false:true;//startup||fixed チェックイン可能
+        document.getElementById("ddp-activate").disabled =
+            ((currentStatus == "Hold")||(currentStatus == "Fixed"))?false:true;//hold||fixed　アクティベート可能
+        document.getElementById("ddp-readout").disabled     = false;//無条件読出可能
+        document.getElementById("ddp-reference").disabled   = false;//同上
         for ( var tidx = 0 ; tidx < myInputText.length ; tidx ++ ){
             document.getElementById(myInputText[tidx]).disabled = true;
         }

@@ -18,6 +18,9 @@ nas.uiMsg.activateUpperLayer    = {en: "activate upper layer", ja: "上位レイ
 nas.uiMsg.addNewLayer           = {en: "add new layer", ja: "新規動画レイヤ作成"};
 nas.uiMsg.addNewOvl             = {en: "add new overlay", ja: "新規修正レイヤ作成"};
 
+nas.uiMsg.alertAbnomalPrccs     = {en:"[！！Caution！！] Abnormal processing",ja:"[！！注意！！] 異常処理です"};
+nas.uiMsg.alertCutConflict      = {en:"The same scene has already been entered.\nThis scene can not be entered",ja:"既に同じカットが登録されています\nこのカットの登録はできません"};
+nas.uiMsg.alertCutIllegal       = {en:"Scene name is invalid \ nThis scene can not be entered",ja:"カット番号が不正です\nこのカットの登録はできません"};
 nas.uiMsg.alertDurationchange   = {en:"the duration of document is changed.",ja:"カットの継続時間が変更されます。"};
 nas.uiMsg.alertDiscardframes    = {en:"contents of the erased frame are discarded.",ja:"消去されるフレームの内容は破棄されます。"};
 nas.uiMsg.alertTrackschange     = {en:"layer counts of document is changed.",ja:"カットのレイヤ数が変更されます。"};
@@ -31,6 +34,7 @@ nas.uiMsg.atCreateNewLayer      = {en: "to Create a new Layer", ja: "新規レ�
 nas.uiMsg.backgroundColor       = {en: "background color", ja: "背景色"};
 
 
+nas.uiMsg.confirmOk             = {en:'Is it OK?',ja:'よろしいですか？'};
 nas.uiMsg.confirmExecute        = {en:"Do you want to run it?",ja:"実行してよろしいですか?"};
 nas.uiMsg.confirmCallecho       = {en:"Save the document in the download folder with the following name.\nIs it OK?",ja:"次の名前でダウンロードフォルダに書類を保存します。\nよろしいですか？"};
 nas.uiMsg.confirmCallechoSwap   = {en:"Save %1 in the download folder with the following name.\nIs it OK?",ja:"次の名前でダウンロードフォルダに %1 を保存します。\nよろしいですか？"};
@@ -128,6 +132,8 @@ nas.uiMsg.Sounds                = {en: "Sounds", ja: "サウンド"};
 nas.uiMsg.time                  = {en: "time", ja: "time"};
 nas.uiMsg.title                 = {en: "title", ja: "題名"};
 nas.uiMsg.transition            = {en: "transition", ja: "トランジション"};
+nas.uiMsg.timelineTrack         = {en: "timeline track", ja: "タイムライントラック"};
+nas.uiMsg.timelineRename        = {en: "timeline rename", ja: "タイムライン名変更"};
 nas.uiMsg.uninstall             = {en: "uninstall", ja: "削除"};
 nas.uiMsg.Update                = {en: "Update", ja: "更新"};
 nas.uiMsg.userInfo              = {en:"userInfo",ja:"作業者の情報"};
@@ -368,11 +374,51 @@ nas.uiMsg.dmAlertMenytracks = {
 en:"The number of specified tracks is very large.\nAutomatic generation of track name is up to 'Z'.",
 ja:"止めないけど…そんなにレイヤが多いとツライよ\nレイヤ名を自動でつけるのは「Z」までなので\nその先は自分でつけてね。"
 };
+nas.uiMsg.dmAlertCheckinFail = {
+    en:"Check-in failed.\nplease check the status of document",
+    ja:"作業開始に失敗しました\nドキュメントの状態を確認してください"
+};
+nas.uiMsg.dmAlertDataBusy = {
+    em:"Another user has this scene working. \nYou can not work on this scene.",
+    ja:"他のユーザが作業中です\nこのカットを作業することはできません"
+};
+nas.uiMsg.dmAlertCantActivate = {
+    en:"You can not work on this data. \nPlease try Check-in procedure",
+    ja:"このデータで作業する事はできません。\n作業開始手続を試してみてください"
+};
+nas.uiMsg.dmAlertCantDeactivate = {
+    en:"Work cannot deactivate.\nThis is not active data",
+    ja:"作業保留できません\nこれは作業中のデータではありません"
+};
+nas.uiMsg.dmAlertCantCheckout = {
+    en:"Work cannot Chack-out.\nThis is not active data",
+    ja:"作業終了できません\nこれは作業中のデータではありません"
+};
+
 nas.uiMsg.dmComfirmNewxSheetprop = {
     en:"Set a new xSheet with the default value.\n Is it OK?",
 	ja:"デフォルトの値で新規にシートを設定します。\n\tよろしいですか?"
 };
-
+nas.uiMsg.dmAlertNoEntry = {
+    en:"There are no match-entry in this repository.\nPlease make sure the target repository is selected.\nYou can temporarily store it to LocalRepository or write it externally to protect the data.",
+    ja:"リポジトリにこのカットがありません\n正しいリポジトリか確認してください\nローカルリポジトリに一時的に保存するか又は外部に書出してデータを保護することができます"
+};
+nas.uiMsg.dmPMrecoverLostSession = {
+    en:'This data is currently being edited in your account.\nPlease check that the document is not open in other environment.\nPress OK to resume work from the current data.',
+    ja:'このデータは現在あなたのアカウントで編集中です\n他の環境でドキュメントを開きっぱなしになっていないか確認してください\nOKを押すと、現在のデータから作業を再開できます\n'
+}
+nas.uiMsg.dmTLlabelRename = {
+	en:"Change timeline label.",
+	ja:"タイムラインラベルを変更します。"
+};
+nas.uiMsg.dmRenameLabels ={
+	en:"Please specify a new label name set. \nThe shortfall, excess will be ignored.",
+	ja:"新しいラベル名セットを指定してください。\n不足分、超過分は無視されます。"
+};
+nas.uiMsg.dmRenameLabel = {
+	en:"Please specify a new label.",
+	ja:"新しいラベルを指定してください。"
+};
 /*
 
  nas.uiMsg.	={en:"	,ja:"};

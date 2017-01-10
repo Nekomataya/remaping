@@ -640,7 +640,7 @@ if(newNames!=null){
 //	xUI.flushUndoBuf();sync("undo");//
 
 }else{
-	alert("処理を中止しました。");
+	alert(localize(nas.uiMsg.aborted));//処理を中止しました
 };
 };
 }
@@ -700,7 +700,7 @@ if(newNames!=null){
 //	xUI.flushUndoBuf();sync("undo");//
 
 }else{
-	alert("処理を中止しました。");
+	alert(localize(nas.uiMsg.aborted));//処理を中止しました
 };
 }
 
@@ -808,18 +808,18 @@ var myTop=(myRange[1]<0)?origPoint[1]+myRange[1]:origPoint[1];
 reNameLabel=function(TimelineId)
 {
 	var newNames=new Array();
-
-	var msg="タイムラインラベルを変更します。";
+	var msg=localize(nas.uiMsg.dmTLlabelRename);//タイムラインラベルを変更します
 	if(!TimelineId){
 		//全タイムラインのラベルを取得して仮セット
 		for (var Tidx=0;Tidx<XPS.xpsTracks.length-1;Tidx++){
 			newNames.push(XPS.xpsTracks[Tidx].id);
 		};
-		msg+="\n新しいラベル名セットを指定してください。\n不足分、超過分は無視されます。"
+
+		msg+="\n"+localize(nas.uiMsg.dmRenameLabels);//新しいラベル名セットを指定してください
 	}else{
 		var kind=XPS.xpsTracks[TimelineId].option;
 		newNames.push(XPS.xpsTracks[TimelineId].id);
-		msg+="\n新しいラベルを指定してください。\n"+kind+":"
+		msg+="\n"+localize(nas.uiMsg.dmRenameLabel)+"\n"+kind+":";//新しいラベルを指定してください
 		msg=[msg];
 		switch (kind){
 		  case "dilaog":
@@ -862,7 +862,7 @@ reNameLabel=function(TimelineId)
 	return;
 	}
 	myFunc.TimelineId=TimelineId;
-	newNames=nas.showModalDialog("prompt",msg,"タイムラインの変更",newNames.join(","),myFunc);
+	newNames=nas.showModalDialog("prompt",msg,localize(nas.uiMsg.timelineRename),newNames.join(","),myFunc);
 };
 //タイムラインラベル変更用ボタンメソッド
 inputButtonText=function(myText){

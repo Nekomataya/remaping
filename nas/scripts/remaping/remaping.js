@@ -92,7 +92,7 @@ xUI.init    =function(XPS,referenceXps){
     viewOnly    編集禁止（データのreadonlyではなくUI上の編集ブロック）
 */
     this.viewMode    = ViewMode;        //表示モード Compact/WordProp
-    this.uiMode      = 'production';    // ui基本動作モード production/management/browsing
+    this.uiMode      = 'browsing';    // ui基本動作モード production/management/browsing
     this.viewOnly    = false;           //編集禁止フラグ
     this.hideSource  = false;           //グラフィック置き換え時にシートテキストを隠す
     this.showGraphic = true;            //置き換えグラフィックを非表示　＝　テキスト表示
@@ -106,6 +106,7 @@ xUI.init    =function(XPS,referenceXps){
     this.spinSelect  = SpinSelect;      //選択範囲でスピン指定
     this.sLoop       = SLoop;           //スピンループ
     this.cLoop       = CLoop;           //カーソルループ
+    this.utilBar     = true;            //サブツールバーの初期状態
     this.SheetLength    = SheetLength;  //タイムシート1枚の表示上の秒数 コンパクトモードではシート長が収まる秒数に強制される
 //コンパクトモード時はこのプロパティとcolsの値を無視するように変更
     this.SheetWidth= this.XPS.xpsTracks.length; //シートの幅(編集範囲)
@@ -305,7 +306,8 @@ xUI.setDocumentStatus = function(myCommand){
         //activate / 再開する
             if((this.XPS.currentStatus.match(/Fixed|Hold/i))&&
             //activate
-            (this.XPS.update_user.split(':').reverse()[0] == document.getElementById('current_user_id').value)){
+//            (this.XPS.update_user.split(':').reverse()[0] == document.getElementById('current_user_id').value)){}
+            (this.XPS.update_user.email == document.getElementById('current_user_id').value)){
             //Fixed/Holdからアクティベートする場合は、ジョブID/名称の変更はなし
                 serviceAgent.activateEntry(function(){
                     //成功時はドキュメントのステータスを更新してアプリモードをproductionへ変更
@@ -331,7 +333,8 @@ xUI.setDocumentStatus = function(myCommand){
             //check-in / 開く
             if(this.XPS.currentStatus.match(/Startup|Fixed/i)){
             //現テータスがStartup/Fixedの場合新しいジョブの名称が必要　ジョブ名は第二引数で置く　ジョブIDは繰り上がる 
-                     　var newJobName = (arguments[1])? arguments[1]:xUI.XPS.update_user.split(':')[0];
+//                     　var newJobName = (arguments[1])? arguments[1]:xUI.XPS.update_user.split(':')[0];
+                     　var newJobName = (arguments[1])? arguments[1]:xUI.XPS.update_user.handle;
                        var newJob = new XpsStage([parseInt(xUI.XPS.job.id)+1,newJobName].join(':'));
                 serviceAgent.currentRepository.checkinEntry(newJob,function(){
                     //成功時はドキュメントのステータスを更新してアプリモードをproductへ変更
@@ -371,7 +374,7 @@ xUI.setDocumentStatus = function(myCommand){
 /**
     xUI.setUImode(newMode)
     uiMode変更　引数がなければ変更なし
-    引数がモードキーワード以外ならが、モードを順次切り替えて
+    引数がモードキーワード以外ならば、モードを順次切り替えて
     現在のモード値を返す
     current モード変更なし
     production  作業モード
@@ -1252,7 +1255,8 @@ if(pageNumber>1){
     _BODY+='<td class=pgHeader id="title'+pageNumber+'">'+XPS.title+XPS.subtitle+'</td>';
     _BODY+='<td class=pgHeader id="scene_cut'+pageNumber+'">'+XPS.scene+XPS.cut+'</td>';
     _BODY+='<td class=pgHeader id="time'+pageNumber+'">'+nas.Frm2FCT(XPS.time(),3)+'</td>';
-    _BODY+='<td class=pgHeader id="update_user'+pageNumber+'">'+XPS.update_user.split(":")[0]+'</td>';
+    _BODY+='<td class=pgHeader id="update_user'+pageNumber+'">'+(XPS.update_user.toString()).split(":")[0]+'</td>';
+//    _BODY+='<td class=pgHeader id="update_user'+pageNumber+'">'+XPS.update_user.handle+'</td>';
 //シート番号終了表示
 if(pageNumber==Pages){
     _BODY+='<td class=pgHeader >'+'end / '+Pages+'</td>';
@@ -4476,6 +4480,8 @@ if(startupXPS.length > 0){
 
 //    クッキーで設定されたspinValueがあれば反映
     if(xUI.spinValue){document.getElementById("spin_V").value=xUI.spinValue} ;
+//ツールバー表示指定があれば表示
+    if(xUI.utilBar){$("#optionPanelUtl").show();}
 
 document.getElementById("iNputbOx").focus();
 
@@ -4485,7 +4491,7 @@ document.getElementById("iNputbOx").focus();
 タイムシートのUIをリセットする手続き
 タイムシートの変更があった場合はxUI.init(XPS)を先にコールしてxUIのアップデートを行うこと
 */
-function nas_Rmp_Init(){
+function nas_Rmp_Init(uiMode){
 //プロパティのリフレッシュ
     xUI._checkProp();
     xUI.Cgl.init();
@@ -4495,7 +4501,8 @@ Compactモード時は強制的に
 表示モードにしたがって
   タイトルヘッドラインの縮小
 */
-    xUI.setUImode('browsing');
+    if(typeof uiMode != 'undefined'){xUI.setUImode(uiMode);}else{xUI.setUImode(xUI.setUImode());}
+
 /** 動作モードを新設
 production/management/browsing
 managementモードではシート編集はブロック
@@ -5074,7 +5081,7 @@ case	"productStatus":;
 	document.getElementById('pmcui').style.backgroundColor = '#bbbbdd';break;
 		case 'management':
 	document.getElementById('pmcui').style.backgroundColor = '#ddbbbb';	break;
-		case 'brousing':
+		case 'browsing':
 	document.getElementById('pmcui').style.backgroundColor = '#bbddbb'; break;
 	}
 break;
