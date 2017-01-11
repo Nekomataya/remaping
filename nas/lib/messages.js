@@ -97,6 +97,7 @@ nas.uiMsg.noLayers              = {en: "no layer for deploying", ja: "展開す�
 nas.uiMsg.noRemoveData          = {en: "no data to remove.", ja: "削除するデータがありません"};
 nas.uiMsg.noSvaeData            = {en: "no data to save.", ja: "保存するデータがありません"};
 nas.uiMsg.noTarget              = {en: "no target items", ja: "対象アイテムがありません"};
+nas.uiMsg.noSigninService       = {en: "(You are not signed in to the service)",ja:"（サービスにサインインしていません）"};
 nas.uiMsg.OMedit                = {en: "OutputMedias", ja: "出力メディア編集"};
 nas.uiMsg.OMset                 = {en: "OutputMedias", ja: "出力メディア登録"};
 nas.uiMsg.Open                  = {en: "Open", ja: "開く"};

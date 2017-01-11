@@ -2260,9 +2260,9 @@ Xps.compareIdentifier =function (target,destination){
 Xps.parseProduct = function(productString){
     var dataArray = productString.replace( /[\[\]]/g ,'#').split('#');
     return {
-        title     :   decodeURIComponent(dataArray[0]),
-        opus      :   decodeURIComponent(dataArray[1]),
-        subtitle  :   decodeURIComponent(dataArray[2])
+        title     :   (decodeURIComponent(dataArray[0])=='undefined')? "":decodeURIComponent(dataArray[0]),
+        opus      :   (decodeURIComponent(dataArray[1])=='undefined')? "":decodeURIComponent(dataArray[1]),
+        subtitle  :   (decodeURIComponent(dataArray[2])=='undefined')? "":decodeURIComponent(dataArray[2])
     };
 }
 /** test
@@ -2273,15 +2273,17 @@ Xps.parseProduct = function(productString){
     識別子に付属する時間情報はトランジション／継続時間ではなくカット尺のみ
     補助情報は持たせない。かつ対比時に比較対象とならないものとする
     カット番号情報は、ここではscene-cutの分離を行わない
-    比較の必要がある場合に始めて比較を行う方針でコーディングする   
+    比較の必要がある場合に始めて比較を行う方針でコーディングする
+    sciStringに時間情報が含まれないケースあり
 */
 Xps.parseSCi = function(sciString){
     var dataArray = sciString.split('/');
     var result = [];
     for (var ix=0;ix < dataArray.length ;ix ++){
+        var currentEntry=dataArray[ix].split('(');
         result.push({
-        'cut'   :   decodeURIComponent(dataArray[ix].split('(')[0]),
-        'time'  :   decodeURIComponent(dataArray[ix].split('(')[1].replace(/[\(\)]/g,''))
+        'cut'   :   decodeURIComponent(currentEntry[0]),
+        'time'  :   (currentEntry.length ==1 )? "6+0":decodeURIComponent(currentEntry[1]).replace(/[\(\)]/g,'')
         });
     }
     return result;
@@ -2290,25 +2292,53 @@ Xps.parseSCi = function(sciString){
     console.log (Xps.parseSCi('s-cC%23%20(16)/'));
 */
 /**
+カット識別子をパースするメソッド
+カット識別子は時間情報・ステータス等を含まない
+パースされた識別子は、逆順の配列で戻す　最大４要素
+
+    [cut,scene,opus,title]
+    [cut,scene,opus]
+    [cut,scene]
+    [cut]
+
+要素数が識別子に含まれる情報の深度を示す
+*/
+Xps.parseCutIF = function(myIdentifier){
+    var result = String(myIdentifier).replace(/[\ _\-]+/g,"_").split("_").reverse();
+    for (var ix=0;ix<result.length;ix++){
+        if(ix==0){result[ix]=result[ix].replace(/^[CcＣｃ]/,"");};//cut
+        if(ix==1){result[ix]=result[ix].replace(/^[SsＳｓ]/,"");};//scene
+        if(ix==2){result[ix]=result[ix].replace(/^[OoＯｏ#＃]/,"");};//opus
+        result[ix]=result[ix].replace(/^[#＃№]|^(No.)/,"");//ナンバーサインを削除
+    };
+    return result;
+}
+//test
+//    console.log(Xps.parseCutIF("s-c123"));
+//
+/**
      データ識別子をパースして無名オブジェクトで戻す
      SCi/listEntryオブジェクトとの兼ね合いを要調整　20170104
 */
 Xps.parseIdentifier = function(myIdentifier){
     var dataArray = myIdentifier.split('//');
     var result={};
-    console.log(dataArray[0]);
+    console.log(dataArray);
     result.product  = Xps.parseProduct(dataArray[0]);
     result.sci      = Xps.parseSCi(dataArray[1]);
     
     result.title    = result.product.title;
     result.opus     = result.product.opus;
     result.subtitle = result.product.subtitle;
-    result.cut      = result.sci[0].cut;
+    var sep = Xps.parseCutIF(result.sci[0].cut);
+    result.scene    = (sep.length > 1)? sep[1]:'';
+    result.cut      = sep[0];
     result.time     = result.sci[0].time;
     result.line     = new XpsLine(decodeURIComponent(dataArray[2]));
     result.stage    = new XpsStage(decodeURIComponent(dataArray[3]));
     result.job      = new XpsStage(decodeURIComponent(dataArray[4]));
     result.currentStatus   = dataArray[5];//この情報はデコード不用
+    console.log(result);
     return result;
 }
 /** test 

@@ -148,40 +148,40 @@
 	title="編集を破棄して閉じる"
 >編集破棄</A></li>
 <hr>
+
 <!-- 制作管理用ドキュメントメニュー -->
-<li><span id=pMnewEntry-d class='pM pM-alt'>新規カット</span><A	id=pMnewEntry
+<li id=auiMenu><span id=pMnewEntry-d class='pM pM-alt'>新規カット</span><A	id=pMnewEntry
 	href = 'javascript:void()'
 	onclick = 'serviceAgent.addEntry();return false;'
 	title="新規カット追加"
 >新規カット</A></li>
-<hr>
-<li><span id=pMreceipt-d class='pM pM-alt'>作業検収</span><A	id=pMreceipt
+
+<li id=auiMenu><hr><span id=pMreceipt-d class='pM pM-alt'>作業検収</span><A	id=pMreceipt
 	href = 'javascript:void()'
 	onclick = 'serviceAgent.receiptEntry();return false;'
 	title="次の工程へ進める"
 >作業検収</A></li>
-<li><span id=pMcheckoutF-d class='pM pM-alt'>作業終了</span><A	id=pMcheckoutF
+<li id=auiMenu><span id=pMcheckoutF-d class='pM pM-alt'>作業終了</span><A	id=pMcheckoutF
 	href = 'javascript:void()'
 	onclick = ';return false;'
 	title="強制的に作業を閉じる"
 >作業終了</A></li>
-<li><span id=pMabort-d class='pM pM-alt'>作業中断</span><A	id=pMabort
+<li id=auiMenu><span id=pMabort-d class='pM pM-alt'>作業中断</span><A	id=pMabort
 	href = 'javascript:void()'
 	onclick = 'serviceAgent.abortEntry();return false;'
 	title="制作を中断する"
 >制作中断</A></li>
-<hr>
-<li><span id=pMbranch-d class='pM pM-alt'>ライン分岐</span><A	id=pMbranch
+
+<li id=auiMenu><hr><span id=pMbranch-d class='pM pM-alt'>ライン分岐</span><A	id=pMbranch
 	href = 'javascript:void()'
 	onclick = ';return false;'
 	title="制作ラインを分岐"
 >ライン分岐</A></li>
-<li><span id=pMmerge-d class='pM pM-alt'>ラインマージ</span><A	id=pMmerge
+<li id=auiMenu><span id=pMmerge-d class='pM pM-alt'>ラインマージ</span><A	id=pMmerge
 	href = 'javascript:void()'
 	onclick = ';return false;'
 	title=""
->ラインマージ</A></li>
-<hr>
+>ラインマージ</A><hr></li>
 
 <!-- 旧ドキュメントメニュー -->
 <li id=dMcgi><span id=pMimportDatas-d class='pM pM-alt'>Open</span><A id=pMimportDatas
@@ -647,10 +647,6 @@
 </div>
 <!-- dropdown menu for browser ブラウザ用ドロップダウンメニュー　-->
 <div>
-<div    class = 'server-info'
-        id    = 'server-onsite'
-        style ='display:none'
-        >onsite information</div>
 <div    class=server-info
         id = server-info
         client_id='b115aead773388942473e77c1e014f4d7d38e4d4829ae4fd1fa0e48e1347b4cd'
@@ -659,20 +655,9 @@
         current_server=''
         oauth_token=''
         last_authrized=''
-> <span id=loginuser ></span> : <button id='loginstatus_button' onclick='xUI.sWitchPanel("Login");return false' title="ユーザ切り替え"> =OFFLINE= </button> / 
-	repository : 
-	<select
-	name="repositorySelector"
-	id="repositorySelector"
-	title="リポジトリ選択"
-	style="width:200;text-align:right"
-	onchange="serviceAgent.switchRepository(this.value)"
 >
-<option selected>[HOME]
-<option>会社/url
-<option>団体/url
-<option>プロジェクト/url
-</select>
+ <span id="serverurl"></span> :
+ <span id=loginuser ></span> : <button id='loginstatus_button' onclick='xUI.sWitchPanel("Login");return false' title="ユーザ切り替え"> =OFFLINE= </button> 
 </div>
 <div style="float:clear;">
 		<form	name=saveXps
@@ -706,8 +691,8 @@
 
 <!--	ログインパネル	-->
 <div class=loginPanel id=optionPanelLogin style="text-align:right;">
-<hr>	userID (or mail-address) : <input id='current_user_id' type=text size=32 value='kiyo@nekomataya.info'>
-	password : <input id='current_user_password' type=password size=32 value='devTest'>
+<hr>	userID (or mail-address) : <input id='current_user_id' type=text size=32 value=''>
+	password : <input id='current_user_password' type=password size=32 value='********'>
 	<button id='login_button' onclick='serviceAgent.authorize();'>SIGNIN / signout</button><hr>
 </div>
 <!--	ログインパネル	-->
@@ -1300,7 +1285,7 @@ class=optionPanel id=optionPanelProductManagement
 <!--	ユーティリティーコマンドバー	最上段に配置　-->
 <div class=optionPanel id=optionPanelUtl >
 <hr>
- <input type=hidden
+ <input type=checkbox
 	id=tbLock
 	title="toolbar-lock"
 	checked=false
@@ -2170,7 +2155,7 @@ onclick='nas.incrFCTonHTMLInput(document.getElementById("editTC"),"-(1)")'
 ></button>--></div>
 <!-- for debug -->
 	<select
-	id="repositorySelector-f"
+	id="repositorySelector"
 	title="リポジトリ選択"
 	style="width:200;text-align:right"
 	onchange="serviceAgent.switchRepository(this.value)"
@@ -3108,22 +3093,5 @@ $Id:$ index.html ,v 1.7 2016/12/24  support@nekomataya.info <br />
 <!-- </form> -->
      </div>
 <div id="scrollSpaceFt" class=\"screenSpace\"><br></div>
-<!--
-="73o16nRYK7oqNNmeGDHWizLV"
-<span id="backend_variables"
-    data-user_access_token="35ff5dbfcf84dd3d842ec1b31ebe73d8a94e4f70bd4abd7ee64b58a6d3b3ad71"
-    data-user_token=""
-    data-user_name="ねこまたや"
-    data-user_email="kiyo@nekomataya.info"
-    data-episode_id="17"
-    data-cut_id="24"　
-    data-episode_token="mfjVjBUuG6Q8GHu7u6nzJTa2"
-    data-cut_token="tSZZ8qEgYtrrZY3wHt69aF9U"
-    data-line_id="0:(本線)"
-    data-stage_id="0:ライカ"
-    data-job_id="1:"
-    data-status="Active"
-></span>
--->
 
 </body></html>

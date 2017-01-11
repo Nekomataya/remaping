@@ -45,6 +45,7 @@ function new_xUI(){
  *      nas_common.jsで処理されたオブジェクト
  *
  */
+
 /**
       新規に動作モードを実装 2016 12
       モードは以下三態
@@ -392,10 +393,11 @@ xUI.setUImode = function (myMode){
             if(xUI.XPS.currentStatus != 'Active'){return this.setUImode('browsing');}
             　xUI.viewOnly = false;//メニュー切替
 	$('#pmaui').hide();
+    $("li#auiMenu").each(function(){$(this).hide()});
             //作業中のドキュメントステータスは、必ずActiveなので以下のボタン状態
             //Active以外の場合はこのモードに遷移しない
             document.getElementById('pmcui-checkin').disabled    =true;
-            document.getElementById('pmcui-update').disabled     =true;
+            document.getElementById('pmcui-update').disabled     =true;//初期値 diabled
             document.getElementById('pmcui-checkout').disabled   =false;
             document.getElementById('pmcui-activate').disabled   =true;
             document.getElementById('pmcui-deactivate').disabled =false;
@@ -407,6 +409,7 @@ xUI.setUImode = function (myMode){
             //メニュー切替
             　xUI.viewOnly = true;
 	$('#pmaui').show();
+    $("li#auiMenu").each(function(){$(this).show()});
             document.getElementById('pmcui-checkin').disabled    =true;//すべてのボタンを無効
             document.getElementById('pmcui-update').disabled     =true;
             document.getElementById('pmcui-checkout').disabled   =true;
@@ -420,7 +423,9 @@ xUI.setUImode = function (myMode){
             //メニュー切替
             　xUI.viewOnly = true;
 	$('#pmaui').hide();
+    $("li#auiMenu").each(function(){$(this).hide()});
             document.getElementById('pmcui-checkin').disabled    = ((xUI.XPS.currentStatus=='Startup')||(xUI.XPS.currentStatus=='Fixed'))? false:true;                
+            document.getElementById('pmcui-update').disabled     =true;
             document.getElementById('pmcui-checkout').disabled   = true;
             if (xUI.currentUser.sameAs(xUI.XPS.update_user)) {
             //ドキュメントオーナー
@@ -440,6 +445,19 @@ xUI.setUImode = function (myMode){
             var nextMode = ['production','management','browsing'].indexOf(xUI.uiMode);
             return this.setUImode(['browsing','production','management'][nextMode]);
     }
+//プルダウンメニューの表示をステータスに合わせる
+            this.pMenu('pMcheckin'      ,(document.getElementById('pmcui-checkin').disabled)?'disable':'enable');
+            this.pMenu('pMsave'         ,(document.getElementById('pmcui-update').disabled)?'disable':'enable');
+            this.pMenu('pMcheckout'     ,(document.getElementById('pmcui-checkout').disabled)?'disable':'enable');
+            this.pMenu('pMactivate'     ,(document.getElementById('pmcui-activate').disabled)?'disable':'enable');
+            this.pMenu('pMdeactivate'   ,(document.getElementById('pmcui-deactivate').disabled)?'disable':'enable');
+
+            this.pMenu('pMreceipt'      ,(document.getElementById('pmaui-receipt').disabled)?'disable':'enable');
+            this.pMenu('pMcheckoutF'    ,(document.getElementById('pmaui-checkout').disabled)?'disable':'enable');
+            this.pMenu('pMabort'        ,(document.getElementById('pmaui-abort').disabled)?'disable':'enable');
+            this.pMenu('pMbranch'       ,(document.getElementById('pmaui-branch').disabled)?'disable':'enable');
+            this.pMenu('pMmerge'        ,(document.getElementById('pmaui-merge').disabled)?'disable':'enable');
+//
     xUI.uiMode=myMode;
     sync('productStatus');
     return xUI.uiMode;
@@ -4134,24 +4152,14 @@ var    xUI=new Object();
 function nas_Rmp_Startup(){
 //バージョンナンバーセット
     sync("about_");
-//設定ファイルの内容を配列で保存
-//    var myPreferences=buildCk();
 //クッキー指定があれば読み込む
     if(useCookie[0]){ldCk()};
 
-//設定されたサイズ(内寸)にリサイズする。
-/*
-    sheetAllWidth=(isNaN(sheetAllWidth))?
-    getINNERWIDTH(window.parent) :sheetAllWidth;
-    sheetAllHeight=(isNaN(sheetAllHeight))?
-    getINNERHEIGHT(window.parent):sheetAllHeight;
-    resizeToWIN(sheetAllWidth,sheetAllHeight,parent);
-//設定されたサイズ比にフレームを調整
-window.parent.document.getElementById("HTctlr").rows=sheetHeadHeight+",*";
-window.parent.document.getElementById("WDctlr").cols=sheetInfoWidth+",*";
- */
 //シートロゴをアップデート
-document.getElementById("headerLogo").innerHTML="<a href='"+ headerLogo_url +"' title='"+ headerLogo_urlComment +"' target='_new'>"+ headerLogo +"</a>";
+    document.getElementById("headerLogo").innerHTML=
+    "<a href='"+ headerLogo_url +
+    "' title='"+ headerLogo_urlComment +
+    "' target='_new'>"+ headerLogo +"</a>";
 
     XPS=new Xps(MaxLayers,MaxFrames);//XPSを実際のXpsオブジェクトとして再初期化する
 
@@ -4160,7 +4168,6 @@ document.getElementById("headerLogo").innerHTML="<a href='"+ headerLogo_url +"' 
     元のreadINメソッドから切り離した、データ判定ルーチン部分
     内部でparseXpsメソッドを呼んでリザルトを返す
 */
-
 convertXps=function(datastream){
     if(! datastream.toString().length ){
         return false;
@@ -4168,44 +4175,43 @@ convertXps=function(datastream){
 //データが存在したら、種別判定して、コンバート可能なデータはコンバータに送ってXPS互換ストリームに変換する
 //Xpxデータが与えられた場合は素通し
 //この分岐処理は、互換性維持のための分岐
-switch(true)
-{
-case    (/^nasTIME-SHEET\ 0\.[1-5]/).test(datastream):
+        switch (true) {
+        case    (/^nasTIME-SHEET\ 0\.[1-5]/).test(datastream):
 //    判定ルーチン内で先にXPSをチェックしておく（先抜け）
-break;
-case    (/^UTF\-8\,\ TVPaint\,\ \"CSV 1\.[01]\"/).test(datastream):
+        break;
+        case    (/^UTF\-8\,\ TVPaint\,\ \"CSV 1\.[01]\"/).test(datastream):
             datastream =TVP2XPS(datastream);
             //TVPaint csv
-break;
-case    (/^\"Frame\",/).test(datastream):
+        break;
+        case    (/^\"Frame\",/).test(datastream):
             datastream =StylosCSV2XPS(datastream);//ボタン動作を自動判定にする 2015/09/12 引数は使用せず
-break;
-case    (/^\{[^\}]*\}/).test(datastream):
+        break;
+        case    (/^\{[^\}]*\}/).test(datastream):;
             try{datastream =ARDJ2XPS(datastream);}catch(err){return false};
-break;
-
-case    (/^#TimeSheetGrid\x20SheetData/).test(datastream):
+        break;
+        case    (/^#TimeSheetGrid\x20SheetData/).test(datastream):
             try{datastream =ARD2XPS(datastream);}catch(err){return false}
-break;
-case    (/^\x22([^\x09]*\x09){25}[^\x09]*/).test(datastream):
+        break;
+        case    (/^\x22([^\x09]*\x09){25}[^\x09]*/).test(datastream):
             try{datastream =TSH2XPS(datastream);}catch(err){return false}
-break;
-case    (/^Adobe\ After\ Effects\x20([456]\.[05])\ Keyframe\ Data/).test(datastream):
+        break;
+        case    (/^Adobe\ After\ Effects\x20([456]\.[05])\ Keyframe\ Data/).test(datastream):
             try{datastream=AEK2XDS(datastream)}catch(err){alert(err);return false}
         xUI.put(datastream);return true;
-break;
-default :
-    if(TSXEx){
-        try{datastream=TSX2XPS(datastream)}catch(err){alert(err);return false}
-    }
-//元の判定ルーチンと同じ
-//データ内容での判別がほぼ不可能なので、拡張オプションがあってかつ他の判定をすべてすり抜けたデータを暫定的にTSXデータとみなす
-}
+        break;
+        default :
+/*
+    元の判定ルーチンと同じくデータ内容での判別がほぼ不可能なので、
+    拡張オプションがあってかつ他の判定をすべてすり抜けたデータを暫定的にTSXデータとみなす
+ */
+            if(TSXEx){
+                try{datastream=TSX2XPS(datastream)}catch(err){alert(err);return false;}
+            }
+      }
         if(! datastream){return false}
     }
         return datastream;
 }
-
 //クラスメソッドを上書き
 XPS.readIN=function(datastream){
     xUI.errorCode=0;//読み込みメソッドが呼ばれたので最終のエラーコードを捨てる。
@@ -4243,11 +4249,23 @@ XPS.readIN=function(datastream){
     }
 }
 /**
-
+シーンカット名は分離せずに仮扱い
 */
 XPS.syncIdentifier =function(myIdentifier){
+    var parseData   = Xps.parseIdentifier(myIdentifier);
+    this.title      = parseData.title;
+    this.opus       = parseData.opus;
+    this.subtitle   = parseData.subtitle;
+    this.scene      = parseData.scene;
+    this.cut        = parseData.cut;
+    this.line       = parseData.line;
+    this.stage      = parseData.stage;
+    this.job        = parseData.job;
+    this.currentStatus = parseData.currentStatus;
+
+return parseData;
+//以下は削除予定  
     var dataArray=myIdentifier.split('//');
-//    console.log(dataArray);
 //  ["title","opus","subtitle","cut","line","stage","job","currentStatus"];
     this.title    = decodeURIComponent(dataArray[0].split('#')[0]);
     this.opus     = decodeURIComponent(dataArray[0].split('#')[1].split('[')[0]);
@@ -4264,7 +4282,7 @@ XPS.syncIdentifier =function(myIdentifier){
     this.job      = new XpsStage(decodeURIComponent(String(dataArray[4])));
     this.currentStatus = dataArray[5];
 //    console.log(decodeURIComponent(XPS));
-    return true
+    return true;
 }
 
 //    ダミーマップを与えて情報取り込み
@@ -4468,11 +4486,20 @@ if(startupXPS.length > 0){
     $("th.cameralabel").css("background-color",xUI.cameraColor);//,"screen");
 
 //startupXPSがない場合でフラグがあればシートに書き込むユーザ名を問い合わせる
-    if(NameCheck){
-        var msg=welcomeMsg+"\n"+localize(nas.uiMsg.dmAskUserinfo)+"\n handle:uid@example.com";
+if(false){    myPref.chgMyName(); document.getElementById("nas_modalInput").focus();}
+if((NameCheck)||(myName=="")){   var msg=welcomeMsg+"\n"+localize(nas.uiMsg.dmAskUserinfo)+
+        "\n\n ハンドル:メールアドレス / handle:uid@example.com ";
         var newName=null;
         ;//
-        nas.showModalDialog("prompt",msg,localize(nas.uiMsg.userInfo),myName,function(){if(this.status==0){newName=this.value;myName=newName;xUI.currentUser=new  nas.UserInfo(this.value);xUI.XPS.update_user=this.value;sync("update_user");}});
+        nas.showModalDialog("prompt",msg,localize(nas.uiMsg.userInfo),myName,function(){
+            if(this.status==0){
+                myName = this.value;
+                xUI.currentUser = new nas.UserInfo(this.value);
+                xUI.XPS.update_user = this.value;
+                sync("update_user");
+                sync("current_user");
+            }
+        });
 
     document.getElementById("nas_modalInput").focus();
 
@@ -4481,7 +4508,7 @@ if(startupXPS.length > 0){
 //    クッキーで設定されたspinValueがあれば反映
     if(xUI.spinValue){document.getElementById("spin_V").value=xUI.spinValue} ;
 //ツールバー表示指定があれば表示
-    if(xUI.utilBar){$("#optionPanelUtl").show();}
+    if(xUI.utilBar){xUI.sWitchPanel('Utl');};//$("#optionPanelUtl").show();}
 
 document.getElementById("iNputbOx").focus();
 
@@ -4571,29 +4598,40 @@ if(false){
 */
 //    serviceAgent.currentServer.authorize(function(){$('#backend_variables').attr('user_access_token',$('#server-info').attr('oauth_token'));});
 }
+// エレメントが存在すればon-site
 　   if(document.getElementById('backend_variables')){
-//　       xUI.onSite = window.location.toString().split('/').slice(0,3).join('/');//現在のロケーションから取得
-　       xUI.onSite = serviceAgent.currentServer.url.split('/').slice(0,3).join('/');//試験用　サーバのURLから取得       
+//　       xUI.onSite = window.location.toString().split('/').slice(0,3).join('/');//現在のロケーションから取得(本番用)
+　       xUI.onSite = serviceAgent.currentServer.url.split('/').slice(0,3).join('/');//(試験用)サーバのURLから取得
 　       serviceAgent.currentStatus='online';
 　       document.getElementById('loginstatus_button').innerHTML = '=ONLINE=';
 　       document.getElementById('loginstatus_button').disabled  = true;
-  //ここにユーザ設定を挿入予定
+//  ユーザ情報取得
         xUI.currentUser = new nas.UserInfo(
-            $("#backend_variables").attr("data-uers_name") + ":" +
+            $("#backend_variables").attr("data-user_name") + ":" +
             $("#backend_variables").attr("data-user_email")
         );
+
+        myName = xUI.currentUser.toString();//旧変数互換 まとめて処理する関数が必要
+
     　   if($("#backend_variables").attr("data-episode_token").length > 0){
+//シングルドキュメント拘束モード
 　           serviceAgent.currentStatus='online-single';
-　           $('#server-info').hide();
-　           $('#server-onsite').show();
+document.getElementById('loginstatus_button').innerHTML='>ON-SITE<';
+document.getElementById('loginstatus_button').disabled=true;
+document.getElementById('loginuser').innerHTML = xUI.currentUser.handle;
+document.getElementById('serverurl').innerHTML = serviceAgent.currentServer.url;
+
                  document.getElementById('toolbarHeader').style.backgroundColor='#ddbbbb';
-//ドキュメント拘束モード
+//既存ファイル
 　           if($("#backend_variables").attr("data-cut_token").length > 0){
     　           serviceAgent.currentServer.getRepositories(function(){
-    　               serviceAgent.switchRepository(1,function(){
+                     var RepID = serviceAgent.getRepsitoryIdByToken($("#backend_variables").attr("data-organization_token"));
+    　               serviceAgent.switchRepository(RepID,function(){
     　                   var myIdentifier=serviceAgent.currentRepository.getIdentifierByToken($("#backend_variables").attr("data-cut_token"));
                          if(Xps.getIdentifier(XPS) != myIdentifier){
-    　                       console.log('syncIdentifier');
+    　                       console.log('syncIdentifier:');
+    　                       console.log(myIdentifier);
+//    　                       xUI.sWitchPanel("Prog");
     　                       XPS.syncIdentifier(myIdentifier);
     　                       sync('info_');
     　                   }
@@ -4611,8 +4649,8 @@ if(false){
     　                       console.log(myIdentifier);
     　                       console.log(Xps.compareIdentifier(Xps.getIdentifier(XPS),myIdentifier));
     　                       XPS.syncIdentifier(myIdentifier);
-    　                       XPS.create_user=myName;
-    　                       XPS.update_user=myName;
+    　                       XPS.create_user=xUI.currentUser;
+    　                       XPS.update_user=xUI.currentUser;
     　                       //var msg='新規カットです。カット番号を入力してください';
     　                       //var newCutName=prompt(msg);
     　                       //if()
@@ -4622,12 +4660,15 @@ if(false){
     　           });
     　       }
 　       } else {
-
+//マルチドキュメントモード
     　       serviceAgent.currentServer.getRepositories(function(){
-//    　           serviceAgent.switchRepository(1);
+    　           serviceAgent.switchRepository(1);
     　       });
 
 　       }
+　   }else{
+//オフサイトモード
+　       serviceAgent.authorized();
 　   }
 //シートボディを締める
     document.getElementById("sheet_body").innerHTML=SheetBody+"<div class=\"screenSpace\"></div>";
@@ -4878,7 +4919,7 @@ default:
 if(dbg){
 //    $("#optionPanelDbg").show();//
 //    if(dbg){xUI.openSW("dbg_")};
-    $("#optionPanelDbg").show();
+//    $("#optionPanelDbg").show();
 //    $("#optionPanelUtl").show();
 //    $("#optionPanelTrackLabel").show();
 //    $("#optionPanelEfxTrack").show();
@@ -4888,6 +4929,9 @@ if(dbg){
 xUI.adjustSpacer();
 /* */
 xUI.selection();
+
+//オンサイト時の最終調整はこちらで？
+//    if(xUI.onSite){xUI.sWitchPanel('Prog');}
 };
 
 
@@ -5065,15 +5109,16 @@ data_	;//
 dbg_	;//
 winTitle;//ウィンドウタイトル文字列
 productStatus	;//制作ステータス 
+server-info
 */
 function sync(prop){
 if (typeof prop == 'undefined') prop = 'NOP_';
 	switch (prop)
 	{
 case	"productStatus":;
-	document.getElementById('pmcui_line').innerHTML  = xUI.XPS.line.id.join('-')  + ':(' +xUI.XPS.line.name + ')';
-	document.getElementById('pmcui_stage').innerHTML = xUI.XPS.stage.id + ':'  +xUI.XPS.stage.name ;
-	document.getElementById('pmcui_job').innerHTML   = xUI.XPS.job.id   + ':'  +xUI.XPS.job.name ;
+	document.getElementById('pmcui_line').innerHTML  = xUI.XPS.line.toString(true);
+	document.getElementById('pmcui_stage').innerHTML = xUI.XPS.stage.toString(true);
+	document.getElementById('pmcui_job').innerHTML   = xUI.XPS.job.toString(true);
 	document.getElementById('pmcui_status').innerHTML= xUI.XPS.currentStatus;
 	document.getElementById('pmcui_documentWriteable').innerHTML= (xUI.viewOnly)?'[編集不可]':'';
 	switch (xUI.uiMode){
@@ -5179,7 +5224,6 @@ if(xUI.viewMode != "Compact"){
 }
 	}
 	break;
-case	"create_user":	;
 case	"update_user":	;
 	document.getElementById(prop).innerHTML=
 	(XPS[prop])? (XPS[prop].toString()).split(':')[0] : "<br />";
@@ -5188,6 +5232,9 @@ if(xUI.viewMode != "Compact"){
 		document.getElementById(prop+pg).innerHTML=(XPS[prop])? (XPS[prop].toString()).split(':')[0] : "<br />";
 }
 	}
+case	"create_user":	;
+case    "current_user": ;
+    document.getElementById("current_user_id").value=xUI.currentUser.email;
 	break;
 case	"scene":	;
 case	"cut":	;
@@ -5306,13 +5353,21 @@ case	"NOP_":	;
 	break;
 default	:	if(dbg){dbgPut(": "+prop+" :ソレは知らないプロパティなのです。");}
 	}
-//windowTitleは無条件で変更
+//windowTitle及び保存処理系は無条件で変更
 	if(xUI.init){
-		var winTitle=XPS["scene"].toString()+XPS["cut"].toString();
+		var winTitle=XPS["cut"].toString();//これは修正予定1/9
 		if((appHost.platform == "AIR") && (fileBox.currentFile)){winTitle = fileBox.currentFile.name}
 		winTitle +=(xUI.isStored())?"":" *";
 		if(document.title!=winTitle){document.title=winTitle};//違ってるときのみ書き直す
+        if(! xUI.isStored()){
+            if(document.getElementById('pmcui-update').disabled == true) document.getElementById('pmcui-update').disabled = false;
+            xUI.pMenu('pMsave','enable');            
+        }else{
+            if(document.getElementById('pmcui-update').disabled == false) document.getElementById('pmcui-update').disabled = true;
+            xUI.pMenu('pMsave','false');
+       }
 	}
+//
 }
 function syncInput(entry)
 {
@@ -6201,7 +6256,7 @@ if (!navigator.cookieEnabled){return false;}
 	if(useCookie.UserName){
 	if(rEmaping[2]) {
 						myName	=unescape(rEmaping[2]);
-//						xUI.currentUser = new  nas.UserInfo(myName);
+//						if(xUI.currentUser) xUI.currentUser = new  nas.UserInfo(myName);
 	}
 	}
 
@@ -7011,13 +7066,23 @@ this.Lists.aserch=function(name,ael){if(this[name]){for (var n=0;n<this[name].le
 this.chgMyName=function(newName)
 {
 	if(! newName){
-		var msg=localize(nas.uiMsg.dmAskUserinfo)+"\n handle:uid@example.com";
-		nas.showModalDialog("prompt",msg,localize(nas.uiMsg.userInfo),myName,function(){if(this.status==0){newName=this.value;myName=newName;xUI.currentUser=new  nas.UserInfo(this.value);XPS.update_user=xUI.currentUser;sync("update_user");}});
-		if(newName==null){newName=XPS.update_user}
+		var msg = localize(nas.uiMsg.dmAskUserinfo)+
+		        "\n\n ハンドル:メールアドレス / handle:uid@example.com ";
+		nas.showModalDialog("prompt",msg,localize(nas.uiMsg.userInfo),myName,function(){
+		    if(this.status==0){
+		        console.log(this.value)
+		        newName = this.value;
+		        myName = newName;
+		        xUI.currentUser = new nas.UserInfo(this.value);//objectc
+		        XPS.update_user = xUI.currentUser;//object参照
+		        sync("update_user");
+		        sync("current_user");
+		    }
+		});
+		if(newName==null){newName=xUI.currentUser.toString()}
 	}
 	this.userName=newName;
 		document.getElementById("myName").innerHTML=
-
 '<a href="javascript:return false" title="名前を変更する。">'+
 this.userName+'</a>';
 		if(! this.changed){this.changed=true;};
@@ -7134,7 +7199,7 @@ this.chgVM=function(myValue)
 this.getProp=function()
 {
 //作業ユーザ名
-	this.chgMyName(XPS.update_user);
+	this.chgMyName(xUI.currentUser.toString());
 //表示モード
 	this.chgVM(xUI["viewMode"]);
 //カラセル関連
@@ -7227,8 +7292,7 @@ if(	xUI.SheetLength !=document.getElementById("prefSheetLength").value ||
 // シート外観の変更が必要なのでフォーカス関連を控えて再初期化する
 		Bkup=[xUI.Select,xUI.Selection];
 	xUI.SheetLength=document.getElementById("prefSheetLength").value;
-		xUI.PageLength	=xUI.SheetLength*
-		XPS.framerate;
+		xUI.PageLength	=xUI.SheetLength　*　XPS.framerate;
 	xUI.PageCols= cols;
 //実行。
 		nas_Rmp_Init();
@@ -7878,8 +7942,8 @@ Now =new Date();
 	document.getElementById("scnFramerate").value=myFrameRate;
 
 	document.getElementById("scnCreate_time").value=Now.toNASString();
-	document.getElementById("scnCreate_user").value=myName;
-	document.getElementById("scnUpdate_user").value=myName;
+	document.getElementById("scnCreate_user").value=xUI.currentUser;//myName;
+	document.getElementById("scnUpdate_user").value=xUI.currentUser;//myName;
 	document.getElementById("scnUpdate_time").value="";
 
 	document.getElementById("scnMemo").value="";

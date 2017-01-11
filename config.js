@@ -211,13 +211,14 @@ var myFileName= "$TITLE#$OPUS[$SUBTITLE]_s-c$CUT($TC)";
 
 */
 
-var myName="your handle:uid@example.com"	;//---作業ユーザ名	*cookie[2] 
+var myName=　""	;//---作業ユーザ名	*cookie[2]　ユーザ名はヌルストリングで初期化に変更 
 
 var NameCheck=false	;
 
 	// NameCheckを有効にすると起動時に名前を入力するプロンプトがでます。
-	// 名前はクッキーで保存できます。
-
+	// 名前はクッキーで保存可能
+    // データ形式は (ハンドル):(メールアドレス)
+    // 例　ねこまたや:nekomataya@nekomataya.info
 
 //////////////////////////////////////////////
 //---キー変換オプション	*cookie[3]

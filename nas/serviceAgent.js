@@ -35,6 +35,7 @@ Object ServiceAgent
 オフライン作業用のリポジトリ
 常に使用可能、このリポジトリのデータは対応する作品を管理するサーバと同期可能にする    
 作業中に認証を失ったり、ネットワーク接続が切れた作業はこのリポジトリに保存することが可能
+サービスノード（サーバ）としてはダミーの値を持たせる
 （作業バックアップ領域とは別 作業バックアップは常時使用可能）
 ローカルリポジトリは容量が制限されるので保存できるカット数に制限がある（現在５カット 2016.11.15）
 この部分は作業履歴や作業キャッシュとして扱うべきかも
@@ -122,7 +123,8 @@ RDBMのサポートのないファイル（ストレージ）上でリポジト�
 */
 ServiceNode=function(serviceName,serviceURL){
     this.name = serviceName;//識別名称
-    this.url  = serviceURL;//ベースになるURL
+    this.url  = serviceURL;//ベースになるURL localStorageの際は"localStorage:"
+    this.type = "scivon"///localStrage/scivon/localfilesystem 等のキーワード
 //    this.uid  = '';//uid ログインユーザID パスワードは控えない 必要時に都度請求
 //    this.lastAuthorized = "";//最期に認証したタイミング
 //    this.accessToken="";//アクセストークン
@@ -261,8 +263,7 @@ console.log("url : "+this.url + '/organizations.json');
         myContents +='<option value="'+idr+'" >'+serviceAgent.repositories[idr].name; 
     }
     document.getElementById('repositorySelector').innerHTML = myContents;
-    document.getElementById('repositorySelector-f').innerHTML = myContents;
-    if(callback instanceof Function){callback();}
+    if(callback instanceof Function){setTimeout(function(){callback();},10)};
           }).bind(this),
           error : function(result){
             console.log(result);
@@ -1262,6 +1263,7 @@ NetworkRepository.prototype.getList = function (force,callback){
 
 サーバからの読み出し後に、データ照合を行ってデータから生成される識別子がサーバの識別子と一致するように調整
 サーバ側指定を優先してデータは自動更新される
+詳細情報を受け取った際に補助情報又は受け取ったオブジェクトそのものをバックアップすること
 */
 NetworkRepository.prototype.getEntry = function (myIdentifier,isReference,callback,callback2){
     console.log('getEntry :' + decodeURIComponent(myIdentifier));
@@ -1346,6 +1348,7 @@ if(callback instanceof Function){
         type: 'GET',
         dataType: 'json',
         success: (function(result) {
+            console.log(result);
         	var myContent=result.content;//XPSソーステキストをセット
 console.log("road :"+myContent);
 	        if(myContent) XPS.readIN(myContent);// contentがnullのケースがあるので排除
@@ -1521,15 +1524,15 @@ if(myMethod=='POST'){
 		     		cut:{
 	                name: decodeURIComponent(cut_name),
 	                description:myEntry.toString(),
-			 		content: myXps.toString()
+			 		content: myXps.toString(),
 //			 		cut_token: cut_id,
 //			 		title_name: title_name,
 //			 		episode_name: episode_name,
 //			 		cut_name: cut_name,
-//			 		line_id: line_id,
-//			 		stage_id: stage_id,
-//			 		job_id: job_id,
-//			 		status: status
+			 		line_id: line_id,
+			 		stage_id: stage_id,
+			 		job_id: job_id,
+			 		status: status
 				}};
 		method_type = 'PUT';
 		target_url = '/cuts/' + cut_token + '.json'
@@ -1739,9 +1742,13 @@ if(true){
         var data = {
                 token: currentEntry.issues[0].cutID,
                 cut: {
-                    name:   decodeURIComponent(currentEntry.toString().split('//')[1]),
-                    description: Xps.getIdentifier(newXps),
-                    content: newXps.toString()
+                    name        : decodeURIComponent(currentEntry.toString().split('//')[1]),
+                    description : Xps.getIdentifier(newXps),
+                    content     : newXps.toString(),
+			 		line_id     : newXps.line.toString(),
+			 		stage_id    : newXps.stage.toString(),
+			 		job_id      : newXps.job.toString(),
+			 		status      : newXps.currentStatus
                 }
         };
         console.log(data);
@@ -1873,10 +1880,14 @@ if(true){
         var data = {
                 token: currentEntry.issues[0].cutID,
                 cut: {
-                    name:   decodeURIComponent(currentEntry.toString().split('//')[1]),
-                    description: Xps.getIdentifier(newXps),
-                    content: newXps.toString()
-                }
+                    name        : decodeURIComponent(currentEntry.toString().split('//')[1]),
+                    description : Xps.getIdentifier(newXps),
+                    content     : newXps.toString(),
+ 			 		line_id     : newXps.line.toString(),
+			 		stage_id    : newXps.stage.toString(),
+			 		job_id      : newXps.job.toString(),
+			 		status      : newXps.currentStatus
+               }
         };
         console.log(data);
 	    $.ajax({
@@ -2061,7 +2072,6 @@ if(xUI.onSite){
         myContents +='<option value="'+idr+'" >'+this.repositories[idr].name; 
     }
     document.getElementById('repositorySelector').innerHTML = myContents;
-    document.getElementById('repositorySelector-f').innerHTML = myContents;
 
     this.switchRepository(0);
     this.currentServer = serviceA;
@@ -2098,11 +2108,13 @@ serviceAgent.authorize = function(){
 serviceAgent.authorized = function(status){
     if (status == 'success'){
         this.currentStatus = 'online';   
+            document.getElementById('serverurl').innerHTML = serviceAgent.currentServer.url.split('/').slice(0,3).join('/');//?
             document.getElementById('loginuser').innerHTML = document.getElementById('current_user_id').value;
             document.getElementById('loginstatus_button').innerHTML = "=ONLINE=";
             document.getElementById('login_button').innerHTML = "signin \\ SIGNOUT";
     }else{
         this.currentStatus = 'offline';
+            document.getElementById('serverurl').innerHTML = localize(nas.uiMsg.noSigninService);//?
             document.getElementById('loginuser').innerHTML = '';
             document.getElementById('loginstatus_button').innerHTML = "=OFFLINE=";
             document.getElementById('login_button').innerHTML = "SIGNIN / signout";
@@ -2123,6 +2135,16 @@ serviceAgent.authorized = function(status){
 */
 serviceAgent.switchService = function(myServer){
     if(myServer instanceof ServiceNode ) currentServer = myServer; 
+
+    if((myRepositoryID > 0)&&(myRepositoryID<this.repositories.length)){
+        this.currentServer=this.currentRepository.service;
+    } else {
+        this.currentServer     = null;
+    }
+    if(document.getElementById('repositorySelector').value != myRepositoryID){
+         document.getElementById('repositorySelector').value=myRepositoryID;
+    }
+
 return currentServer;
 };
 /**
@@ -2149,10 +2171,37 @@ serviceAgent.switchRepository = function(myRepositoryID,callback){
     }
     if(document.getElementById('repositorySelector').value != myRepositoryID){
          document.getElementById('repositorySelector').value=myRepositoryID;
-         document.getElementById('repositorySelector-f').value=myRepositoryID;
     }
     /*== ドキュメントリスト更新 ==*/
     documentDepot.rebuildList(callback);
+};
+/**
+    title-token  又は　episode-token が含まれるRepositoryをカレントに切り替えて返す
+*/
+serviceAgent.getRepsitoryIdByToken = function(myToken){
+    var RIX=0;
+    search_loop:
+    for (var rix=1;rix<this.repositories.length;rix++){
+        if(myToken==this.repositories[rix].token){
+            RIX=rix;
+            break search_loop;            
+        }
+        //リポジトリ内のプロダクトデータを検索（エントリ総当りはしない）
+        for (var pix=0;pix<this.repositories[rix].productsData.length;pix++){
+            if(myToken==this.repositories[rix].productsData[pix].token){
+                RIX=rix;
+                break search_loop;
+            };
+            for (var eix=0;eix<this.repositories[rix].productsData[pix].episodes[0].length;eix++){
+                if(myToken == this.repositories[rix].productsData[pix].episodes[0][eix].token){
+                    RIX=rix;
+                    break search_loop;                    
+                };
+            };
+        };
+    };
+    if(RIX)  {return RIX}else{return false}
+    
 };
 
 /**
@@ -2334,7 +2383,7 @@ serviceAgent.deactivateEntry=function(callback,callback2){
 */
 serviceAgent.checkinEntry=function(myJob,callback,callback2){
 //  ここで処理前にリストを最新に更新する
-    this.currentRepository.getList(true);
+//    this.currentRepository.getList(true);
     var currentEntry = this.currentRepository.entry(Xps.getIdentifier(xUI.XPS));
     if(! currentEntry){
         alert(localize(nas.uiMsg.dmAlertNoEntry));//対応エントリが無い
@@ -2555,6 +2604,7 @@ serviceAgent.updateNewJobName = function(stageName,type){
 //    console.log(newJobList);
 }
 //Test code
+
 /**
 
 Repos.getProducts();//一度初期化する
