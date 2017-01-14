@@ -259,7 +259,7 @@ nas.LangPack.ja=[
     ["pmaui-receipt","innerHTML","作業検収"],
     ["pmaui-receipt","title","作業終了した工程を閉じて次の工程を開始"],
     ["pmaui-checkout","innerHTML","作業終了"],
-    ["pmaui-checkout","title","作業中のカットを強制的に終了（回収）"],
+    ["pmaui-checkout","title","作業中のカットを強制的に終了（引上）"],
     ["pmaui-abort","innerHTML","制作中断"],
     ["pmaui-abort","title","カットの全工程を停止（カット削除）"],
     ["pmaui-branch","innerHTML","ライン分岐"],

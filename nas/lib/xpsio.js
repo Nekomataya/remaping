@@ -857,9 +857,9 @@ function Xps(Layers, Length) {
 
     var Now = new Date();
     this.create_time = (!nas) ? Now.toString() : Now.toNASString();
-    this.create_user = new  nas.UserInfo ();
+    this.create_user = new nas.UserInfo ();
     this.update_time = '';
-    this.update_user = '';
+    this.update_user = new nas.UserInfo ();
 
 //  this.memo = "";
     //メモはトラックコレクションのプロパティへ移行　プロパティ名は　Xps.xpsTracks.noteText
@@ -956,7 +956,7 @@ Xps.prototype.init = function (Tracks, Length) {
     this.create_time = (!nas) ? Now.toString() : Now.toNASString();
     this.create_user = myName;
     this.update_time = "";
-    this.update_user = myName;
+    this.update_user = new nas.UserInfo(myName);
 
 //    this.memo = "";
 
@@ -1638,11 +1638,16 @@ Xps.prototype.parseXps = function (datastream) {
                      *
                      */
                 　case   "Line":;
-                　   SrcData[props[nAme]] = new XpsLine(vAlue);
+                　   SrcData[props[nAme]] = (vAlue)?
+                　       new XpsLine(vAlue):new XpsLine("0:"+nas.Pm.pmTemplate[0].line);
                 　  break;
                 　case   "Stage":;
+                　   SrcData[props[nAme]] = (vAlue)?
+                　       new XpsStage(vAlue):new XpsStage("0:"+nas.Pm.pmTemplate[0].stages[0]);
+                　  break;
                 　case   "Job":;
-                　   SrcData[props[nAme]] = new XpsStage(vAlue);
+                　   SrcData[props[nAme]] = (vAlue)?
+                　       new XpsStage(vAlue):new XpsStage("0:"+nas.Pm.jobNames[0]);
                 　  break;
                 default:
                     /**
@@ -1892,7 +1897,7 @@ Xps.prototype.parseXps = function (datastream) {
          * 実際のデータの継続時間とこの情報の「長いほう」を採る
          * TIME=(時間文字列)
          *            this.time=nas.FCT2Frm(this.time);
-         *            if(isNaN(this.time)){this.time=0* 
+         *            if(isNaN(this.time)){this.time=0*} 
          * 作品データ
          * 情報が無い場合は、空白で初期化。マップをみるようになったら。
          * マップの情報を参照

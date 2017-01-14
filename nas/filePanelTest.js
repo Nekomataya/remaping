@@ -447,8 +447,8 @@ if(myEntry){
     if (document.getElementById("cutList").selectedIndex <= 0){}
     if (! myEntry){
 //選択されたドキュメントがリスト内に無い　
-        document.getElementById("ddp-checkin").disabled     = true;
-        document.getElementById("ddp-activate").disabled    = true;
+ //       document.getElementById("ddp-checkin").disabled     = true;
+ //       document.getElementById("ddp-activate").disabled    = true;
         document.getElementById("ddp-readout").disabled     = true;
         document.getElementById("ddp-reference").disabled   = true;
 
@@ -459,10 +459,12 @@ if(myEntry){
     }else{
 //リポジトリ内に指定データが存在する
 var currentStatus = myEntry.issues[myEntry.issues.length-1][3];
+        /*
         document.getElementById("ddp-checkin").disabled =
             ((currentStatus == "Startup")||(currentStatus == "Fixed"))?false:true;//startup||fixed チェックイン可能
         document.getElementById("ddp-activate").disabled =
             ((currentStatus == "Hold")||(currentStatus == "Fixed"))?false:true;//hold||fixed　アクティベート可能
+          */  
         document.getElementById("ddp-readout").disabled     = false;//無条件読出可能
         document.getElementById("ddp-reference").disabled   = false;//同上
         for ( var tidx = 0 ; tidx < myInputText.length ; tidx ++ ){

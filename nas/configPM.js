@@ -269,12 +269,12 @@ ProductionLine/ProductionStage/ProductionJob
 
 */
 nas.Pm.jobNames.addName([
-    ["*","*","primary"],
-    ["*作業","*","primary"],
     ["作業開始","*","init"],
     ["初期化","*","init"],
     ["作打済","*","init"],
     ["準備","*","init"],
+    ["*","*","primary"],
+    ["*作業","*","primary"],
     ["演出チェック","*","check"],
     ["監督チェック","*","check"],
     ["作監チェック","*","check"],

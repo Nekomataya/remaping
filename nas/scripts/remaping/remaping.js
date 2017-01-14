@@ -4148,7 +4148,17 @@ var referenceXPS = ''           ;//同参照XPStext
 var    xUI=new Object();
         xUI.Mouse=function(){return};
         xUI.onScroll=function(){return};
-/* Startup */
+//コード読込のタイミングで行う初期化
+
+
+/** Startup
+    nas_Rmp_Startup
+プログラム及び全リソースをロード後に１回だけ実行される手続
+    nas_Rmp_Init
+データドキュメントロード時に毎回実行される手続　UI初期化を含む
+    nas_Rmp_reStart
+ページ
+*/
 function nas_Rmp_Startup(){
 //バージョンナンバーセット
     sync("about_");
@@ -4162,7 +4172,6 @@ function nas_Rmp_Startup(){
     "' target='_new'>"+ headerLogo +"</a>";
 
     XPS=new Xps(MaxLayers,MaxFrames);//XPSを実際のXpsオブジェクトとして再初期化する
-
 /*
     XPSオブジェクトのreadINメソッドをオーバーライド
     元のreadINメソッドから切り離した、データ判定ルーチン部分
@@ -4495,7 +4504,7 @@ if((NameCheck)||(myName=="")){   var msg=welcomeMsg+"\n"+localize(nas.uiMsg.dmAs
             if(this.status==0){
                 myName = this.value;
                 xUI.currentUser = new nas.UserInfo(this.value);
-                xUI.XPS.update_user = this.value;
+                xUI.XPS.update_user = xUI.currentUser;
                 sync("update_user");
                 sync("current_user");
             }
@@ -4517,6 +4526,7 @@ document.getElementById("iNputbOx").focus();
 /*
 タイムシートのUIをリセットする手続き
 タイムシートの変更があった場合はxUI.init(XPS)を先にコールしてxUIのアップデートを行うこと
+引数としてuiModeを文字列で与えて　リセット後のuiModeを指定可能 未指定の場合はリセット前のモードを継続
 */
 function nas_Rmp_Init(uiMode){
 //プロパティのリフレッシュ
@@ -4528,14 +4538,15 @@ Compactモード時は強制的に
 表示モードにしたがって
   タイトルヘッドラインの縮小
 */
-    if(typeof uiMode != 'undefined'){xUI.setUImode(uiMode);}else{xUI.setUImode(xUI.setUImode());}
 
 /** 動作モードを新設
 production/management/browsing
 managementモードではシート編集はブロック
 viewOnly
 */
-sync('productStatus');
+    if(typeof uiMode != 'undefined'){xUI.setUImode(uiMode);}else{xUI.setUImode(xUI.setUImode());}
+
+    sync('productStatus');
 //xUI.PageCols=(xUI.viewMode=="Compact")? 1:2;
 //xUI.SheetLength=(xUI.viewMode=="Compact")?(Math.floor(XPS.duration()/nas.FRATE)):6;
 //タイムシートテーブルボディ幅の算出
@@ -4600,9 +4611,15 @@ if(false){
 }
 // エレメントが存在すればon-site
 　   if(document.getElementById('backend_variables')){
-//　       xUI.onSite = window.location.toString().split('/').slice(0,3).join('/');//現在のロケーションから取得(本番用)
-　       xUI.onSite = serviceAgent.currentServer.url.split('/').slice(0,3).join('/');//(試験用)サーバのURLから取得
+    　      if(false){
+　       xUI.onSite = String(window.location).split('/').splice(0,loc.length-3).join('/');
+　       // window.location.toString().split('/').slice(0,3).join('/');//現在のロケーションから取得(本番用)
+            }else{
+        serviceAgent.switchService(1);
+        xUI.onSite = serviceAgent.currentServer.url.split('/').slice(0,3).join('/');//(試験用)サーバのURLから取得
+            }
 　       serviceAgent.currentStatus='online';
+        
 　       document.getElementById('loginstatus_button').innerHTML = '=ONLINE=';
 　       document.getElementById('loginstatus_button').disabled  = true;
 //  ユーザ情報取得
@@ -4668,7 +4685,18 @@ document.getElementById('serverurl').innerHTML = serviceAgent.currentServer.url;
 　       }
 　   }else{
 //オフサイトモード
-　       serviceAgent.authorized();
+//オンサイト専用UIを隠す
+            $("li#dMos").each(function(){$(this).hide()});
+            $("#ibMmenuBack").hide();
+/** 現在のセッションが承認済みか否かを判定して表示を更新
+    
+*/
+        if($("#server-info").attr('oauth_token')){
+            serviceAgent.authorized('success');
+        }else{
+            serviceAgent.authorized();
+        };
+//        sync('server-info')
 　   }
 //シートボディを締める
     document.getElementById("sheet_body").innerHTML=SheetBody+"<div class=\"screenSpace\"></div>";
@@ -4890,6 +4918,11 @@ default:
 //    $("#UIheaderScroll").hide();
     }
 
+//オンサイト時の最終調整はこちらで？
+    if(xUI.onSite){
+        $('#serverSelector').hide();
+//        xUI.sWitchPanel('Prog');
+    }
 
 //infoシートの初期化
     if(TSXEx){init_TSXEx();};
@@ -4929,14 +4962,11 @@ if(dbg){
 xUI.adjustSpacer();
 /* */
 xUI.selection();
-
-//オンサイト時の最終調整はこちらで？
-//    if(xUI.onSite){xUI.sWitchPanel('Prog');}
 };
-
-
+/*
+    ページ再ロード前に必要な手続群
+*/
 function nas_Rmp_reStart(evt){
-//    alert(1234567);
 //ファイルがオープン後に変更されていたら、警告する
 /*
     変更判定は xUI.storePt と xUI.undoPtの比較で行う
@@ -4948,8 +4978,11 @@ storePtはオープン時および保存時に現状のundoPtを複製するの�
     evt = event || window.event;
     return evt.returnValue="ドキュメントの変更が保存されていません！";
         //xUI.setBackup();
-//        var msg="このページから移動します(移動のキャンセルはできません)\nドキュメントが保存されていませんが、保存しますか？";
-//        if(confirm(msg)){xUI.setBackup()};
+        var msg="このページから移動します(移動のキャンセルはできません)\nドキュメントが保存されていませんが、保存しますか？";
+/*データ保全は、モード／ケースごとに振り分け必要*/
+        if(confirm(msg)){
+            xUI.setBackup()
+        };
         //nas.showModalDialogに置換えは意味が無かった　本物のモーダルパネルではないのでウィンドウのリロードは止まらない
 //nas.showModalDialog("confirm",msg,"ファイル未保存",function(){if(this.status==0){xUI.setBackup();}})
         //保存処理
@@ -7256,7 +7289,8 @@ this.putProp=function ()
 	if(newName != myName)
 	{
 		myName=newName;
-		XPS.update_user=newName;
+        xUI.currentUser = new nas.UserInfo(myName)
+		XPS.update_user = xUI.currentUser;
 		sync("update_user");
 	}
 

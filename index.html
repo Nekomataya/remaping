@@ -41,11 +41,11 @@
 
 <script src=./nas/lib/mapio.js></script>
 <script src=./nas/lib/xpsio.js></script>
-<script src=./nas/scripts/remaping/airUI.js></script>
 
+<script src=./nas/scripts/remaping/airUI.js></script>
 <script src=./nas/scripts/remaping/remaping.js></script>
 
-<!-- 下マージ予定　-->
+<!-- 下　remaping.js　にマージ予定　-->
 <script src=./nas/scripts/remaping/utils.js></script>
 
 <!--     汎用ライブラリのためソース分離 一括マージ可能      -->
@@ -58,7 +58,7 @@
 <script src=./nas/lib/lib_ARDJ.js></script>
 <script src=./nas/lib/lib_TSX.js></script>
 
-<!-- /*  開発用テストコード   2016.07.16  追加*/ これらはremaping.jsへ統合予定-->
+<!-- /*  開発用テストコード   2016.07.16  追加*/ これらはすべてremaping.jsへ統合予定-->
 <script src=./nas/serviceAgent.js></script>
 
 <script src=./nas/scripts/serverio_test.js></script>
@@ -124,7 +124,8 @@
 >作業開始</A></li>
 <li><span id=pMsave-d class='pM pM-alt'>作業保存</span><A	id=pMsave
 	href = 'javascript:void()'
-	onclick = 'serviceAgent.checkoutEntry();return false;'
+	onclick = 'serviceAgent.pushEntry(xUI.XPS,function(){xUI.setStored("current");sync();
+},function(){alert("error");});return false;'
 	title="作業保存"
 >作業保存</A></li>
 <li><span id=pMcheckout-d class='pM pM-alt'>作業終了</span><A	id=pMcheckout
@@ -281,7 +282,7 @@
 	title=""
 >Reload</a></li>-->
 <hr>
-<li id=dMsvc><span id=pMmenuBack-d class='pM pM-alt'>戻る</span><a id=pMmenuBack
+<li id=dMos><span id=pMmenuBack-d class='pM pM-alt'>戻る</span><a id=pMmenuBack
 	href="javascript:void(0);"
 	onclick="return backToDocumentList();"
 	title="戻る"
@@ -656,6 +657,13 @@
         oauth_token=''
         last_authrized=''
 >
+
+	<select id=serverSelector
+		onChange="serviceAgent.switchService(this.value)"
+	>
+<option value='-1'>+no server selected+
+	</select>
+
  <span id="serverurl"></span> :
  <span id=loginuser ></span> : <button id='loginstatus_button' onclick='xUI.sWitchPanel("Login");return false' title="ユーザ切り替え"> =OFFLINE= </button> 
 </div>
@@ -700,14 +708,14 @@
 <!--	ツールバー/toolbarHeader	-->
 <div id=toolbarHeader>
 <!--	ツールバーボタン/toolIcons	-->
-
- <span id="severMenu" >
+ <span id="siteMenu">
 	<button
 	id=ibMmenuBack
 		class='iconButton iconButton-eject'
 		onclick="return backToDocumentList();"
 		title="戻る"
 	>
+ </span><span id="severMenu" >
 	</button><button
 	id=ibMbrowse
 		class='iconButton iconButton-openX'
@@ -1018,7 +1026,8 @@
 	         <button
 	id=pmcui-update
 		class='jobControl  jobControl-save'
-		onclick="serviceAgent.currentRepository.pushEntry();"
+		onclick='serviceAgent.pushEntry(xUI.XPS,function(){xUI.setStored("current");sync();
+},function(){alert("error")});'
 		title="保存"
 	>作業保存
 	</button><button
@@ -2106,11 +2115,14 @@ onclick='nas.incrFCTonHTMLInput(document.getElementById("editTC"),"-(1)")'
  disabled=true
 >参照</button><button
  id='ddp-readout'
- onClick='console.log("read :" + decodeURIComponent(documentDepot.currentSelection));serviceAgent.getEntry(documentDepot.currentSelection);'
+ onClick='console.log("read :" + decodeURIComponent(documentDepot.currentSelection));serviceAgent.getEntry(documentDepot.currentSelection,false,function(){if(xUI.currentUser.sameAs(xUI.XPS.update_user)&&(xUI.XPS.currentStatus.match(/(Hold|Active)/))){serviceAgent.activateEntry();}});'
  class='documentPanelButton'
  title="読出 readout"
  disabled=true
->読出</button><button
+>読出</button>
+
+
+<button
  id='ddp-checkin'
  onClick='console.log( "open :" + decodeURIComponent(documentDepot.currentSelection));serviceAgent.getEntry(documentDepot.currentSelection,false,fucntion(){serviceAgent.checkinEntry();});'
  class='documentPanelButton'
@@ -2123,6 +2135,8 @@ onclick='nas.incrFCTonHTMLInput(document.getElementById("editTC"),"-(1)")'
  title="読み出して保留解除 xUI.setDocumentStatus('activate')"
  disabled=true
 >+ activate</button>
+
+
 <input type='text' id='ddp-searchtext' size=20 ><button
  id='ddp-search'
  onClick='alert(this.innerHTML);'
@@ -3093,5 +3107,21 @@ $Id:$ index.html ,v 1.7 2016/12/24  support@nekomataya.info <br />
 <!-- </form> -->
      </div>
 <div id="scrollSpaceFt" class=\"screenSpace\"><br></div>
+<!--  -->
+ <span id="backend_variables"
+        data-organization_token="1xW4FYYQnmt73z7b7cMPGVx8"
+        data-user_access_token="4c4958b693c391f26080a59de64b9078b03b3b8bc0e0ece3a407573bd4a00db4"
+        data-user_token="vwNW7gjUuHbbZZpkC7Y4ydBs"
+        data-user_name="Nekomataya-STG1"
+        data-user_email="kiyo@nekomataya.info"
+        data-episode_id="1"
+        data-cut_id="1"　
+        data-episode_token="he4mzMCw4VWfqAgUiDaoko8Y"
+        data-cut_token="1C2hXYT5ApGP3RgACSenQdGK"
+        data-line_id="0:(primary)"
+        data-stage_id="0:Startup"
+        data-job_id="2:レイアウト"
+        data-status="Fixed"
+  ></span>
 
 </body></html>

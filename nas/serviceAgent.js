@@ -216,7 +216,8 @@ ServiceNode.prototype.authorize=function(callback){
         client_secret: this.client_secret,
         grant_type: 'password'
     };
-    var oauthURL=this.url.split('/').slice(0,3).join('/');
+    var oauthURL=this.url;//.split('/').slice(0,3).join('/');
+console.log(oauthURL+"/oauth/token.json");
     that = this;
     $.ajax({
         type: "POST",
@@ -232,8 +233,9 @@ ServiceNode.prototype.authorize=function(callback){
 		},
 		error : function(result) {
 		    /**
-		        認証失敗 トークンと必要情報をクリアして表示を変更する
-		    */            
+		        認証失敗 エラーメッセージ表示　トークンと必要情報をクリアして表示を変更する
+		    */
+		    alert(localize(nas.uiMsg.dmAlertFailAuthorize));
             $('#server-info').attr('oauth_token'  , '');
             $('#server-info').attr('last_authrized' , '');
             serviceAgent.authorized('false');
@@ -244,10 +246,10 @@ ServiceNode.prototype.authorize=function(callback){
     リポジトリ（TEAM）一覧を取得してUIを更新する
 */
 ServiceNode.prototype.getRepositories=function(callback){
-console.log("url : "+this.url + '/organizations.json');
+console.log("url : "+this.url + '/api/v2/organizations.json');
 
         $.ajax({
-          url : this.url + '/organizations.json',
+          url : this.url + '/api/v2/organizations.json',
           type : 'GET',
           dataType : 'json',
           success : (function(result) {
@@ -541,7 +543,7 @@ localRepository.getList=function(force,callback){
     エントリ数の制限を行う
     エントリ数は、キーの総数でなく識別子の第一、第二要素を結合してエントリとして認識する
 */
-localRepository.pushEntry=function(myXps){
+localRepository.pushEntry=function(myXps,callback,callback2){
 //クラスメソッドで識別子取得
     var myIdentifier=Xps.getIdentifier(myXps);
 //識別子に相当するアイテムがローカルストレージに存在するかどうかをチェック
@@ -551,20 +553,31 @@ localRepository.pushEntry=function(myXps){
         if(this.entryList[pid].toString() == myProductUnit){
             //既存のエントリが有るのでストレージとリストにpushして終了
             this.entryList[pid].push(myIdentifier);
-            localStorage.setItem(this.keyPrefix+myIdentifier,myXps.toString());
+            try{ localStorage.setItem(this.keyPrefix+myIdentifier,myXps.toString()) }catch(err){
+                if(callback2 instanceof Function){callback2();}                
+            }
+            if(callback instanceof Function){callback();}
             return this.entryList[pid];
         };
     };
 //既存エントリが無いので新規エントリを追加
     localStorage.setItem(this.keyPrefix+myIdentifier,myXps.toString());
-    this.entryList.push(new listEntry(myIdentifier))
-    console.log(this.entryList.length > this.maxEntry)
-    if ( this.entryList.length > this.maxEntry ){
+    try{
+        this.entryList.push(new listEntry(myIdentifier)) 
+    
+        console.log(this.entryList.length > this.maxEntry)
+        if ( this.entryList.length > this.maxEntry ){
 //設定制限値をオーバーしたら、ローカルストレージから最も古いエントリを削除
-        for (var iid=0; iid < this.entryList[0].issues.length ; iid++ ){ localStorage.removeItem( this.keyPrefix + this.entryList[0].issues[iid])};
-        this.entryList=this.entryList.slice(1);
+            for (var iid=0; iid < this.entryList[0].issues.length ; iid++ ){
+                localStorage.removeItem( this.keyPrefix + this.entryList[0].issues[iid])
+            };
+            this.entryList=this.entryList.slice(1);
+        }
+        this.getList();
+    }catch(err){
+        if(callback2 instanceof Function){callback2();}                
     }
-    this.getList();
+    if(callback instanceof Function){callback();}
     return this.entryList[this.entryList.length-1];
 }
 
@@ -834,6 +847,7 @@ localRepository.checkinEntry=function(myJob,callback,callback2){
                 console.log(newXps.currentStatus);
                 this.getList();//リストステータスを同期
                 documentDepot.rebuildList();
+                xUI.referenceXPS.parseXps(xUI.XPS.toString());
                 xUI.XPS.job.increment(myJob);
                 xUI.XPS.currentStatus='Active';//ドキュメントステータスを更新
                 xUI.XPS.update_user=xUI.currentUser;//ユーザ更新
@@ -1032,7 +1046,7 @@ NetworkRepository=function(repositoryName,myServer,repositoryURI){
 NetworkRepository.prototype.getProducts = function (callback){
     this.productsData.length = 0;
     $.ajax({
-        url: this.url+'/products.json',
+        url: this.url+'/api/v2/products.json',
         type: 'GET',
         dataType: 'json',
         success: (function(result) {
@@ -1053,7 +1067,7 @@ NetworkRepository.prototype.productsUpdate = function(callback){
     for(var idx = 0 ;idx < this.productsData.length ;idx ++){
         console.log("product :"+this.productsData[idx].name) ;
     $.ajax({
-        url: this.url+'/products/'+this.productsData[idx].token+'.json' ,
+        url: this.url+'/api/v2/products/'+this.productsData[idx].token+'.json' ,
         type: 'GET',
         dataType: 'json',
         success: (function(result) {
@@ -1084,7 +1098,7 @@ NetworkRepository.prototype.getEpisodes = function (pid,callback) {
         console.log("getEpisodeList for : "+pid+' : '+this.productsData[pid].name) ;
         
     $.ajax({
-        url: this.url+'/episodes.json?product_token='+this.productsData[pid].token ,
+        url: this.url+'/api/v2/episodes.json?product_token='+this.productsData[pid].token ,
         type: 'GET',
         dataType: 'json',
         success: (function(result) {
@@ -1107,7 +1121,7 @@ NetworkRepository.prototype.episodesUpdate = function (pid,callback) {
         console.log("get Episodes Detail for : "+pid+' : '+this.productsData[pid].name) ;
         for( var eid = 0 ; eid < this.productsData[pid].episodes[0].length ; eid ++){
 	            // /api/v2
-                var targetURL = this.url+ '/episodes/'+this.productsData[pid].episodes[0][eid].token +'.json';
+                var targetURL = this.url+ '/api/v2/episodes/'+this.productsData[pid].episodes[0][eid].token +'.json';
 //    console.log(targetURL);
 	            $.ajax({
                     url: targetURL,
@@ -1144,7 +1158,7 @@ NetworkRepository.prototype.episodesUpdate = function (pid,callback) {
     カット一覧にdescriptionを出してもらう
  */
 NetworkRepository.prototype.getSCi = function (epToken,callback) {
-                var targetURL = this.url+ '/cuts.json?episode_token='+epToken ;
+                var targetURL = this.url+ '/api/v2/cuts.json?episode_token='+epToken ;
 	            $.ajax({
                     url: targetURL,
                     type: 'GET',
@@ -1221,12 +1235,27 @@ NetworkRepository.prototype.getList = function (force,callback){
                 if( currentEpisode.cuts.length==1){this.getSCi(currentEpisode.token,callback);return;}
                 if( currentEpisode.cuts[1].length == 0 ) continue;
                 for(var cid = 0 ; cid < currentEpisode.cuts[1].length ;cid ++){
-                //現在のサーバエントリ情報はサブタイトルと秒数なし 管理情報は[0,0,0,'fixed']固定で これは保存時にアプリ側から送る仕様にする
+                //現在のサーバエントリ情報はサブタイトルと秒数なし 管理情報は[0,0,0,'fixed']固定で これは保存時にアプリ側から送る仕様にする 管理情報はAPIに出して　あれば優先して使用
                 //兼用カット情報はペンディング
                 var myCutToken = currentEpisode.cuts[1][cid].token;
 
+                var myCutLine  = (currentEpisode.cuts[1][cid].line_id)?currentEpisode.cuts[1][cid].line_id:(new XpsLine(nas.Pm.pmTemplate[0].line.toString())).toString(true);
+                var myCutStage = (currentEpisode.cuts[1][cid].stage_id)?currentEpisode.cuts[1][cid].stage_id:(new XpsStage(nas.Pm.pmTemplate[0].stages[0].toString())).toString(true);
+                var myCutJob   = (currentEpisode.cuts[1][cid].job_id)?currentEpisode.cuts[1][cid].job_id:(new XpsStage(nas.Pm.jobNames.members[0].toString())).toString(true);
+                var myCutStatus= (currentEpisode.cuts[1][cid].status)?currentEpisode.cuts[1][cid].status:'Startup';
+
                 //管理情報が不足の場合は初期値で補う
-                var entryArray = (currentEpisode.cuts[1][cid].description.split('//').concat(['0:(primary)','0:Startup','0:Startup','Startup'])).slice(0,6);//
+/*
+                var entryInfo = Xps.parseIdentifier(currentEpisode.cuts[1][cid].description);
+                    entryInfo.title     = currentTitle.name;
+                    entryInfo.opus      = currentEpisode.name;
+                    entryInfo.subtitle  = currentEpisode.description;
+                    if (! (entryInfo.line))   entryInfo.line   = myCutLine;
+                    if (! (entryInfo.stage))  entryInfo.stage  = myCutStage;
+                    if (! (entryInfo.job))    entryInfo.job    = myCutJob;
+                    if (! (entryInfo.status)) entryInfo.status = myCutStatus;
+*/
+                var entryArray = (currentEpisode.cuts[1][cid].description.split('//').concat([encodeURIComponent(myCutLine),encodeURIComponent(myCutStage),encodeURIComponent(myCutJob),myCutStatus])).slice(0,6);//
 
                 var myEntry=entryArray.slice(0,2).join( "//" );//管理情報を外してSCi部のみ抽出
 //                var hasEntry = false;
@@ -1300,7 +1329,7 @@ NetworkRepository.prototype.getEntry = function (myIdentifier,isReference,callba
 
 //      myIssue; これがカットへのポインタ episode.cuts配列のエントリ myIssue.url にアドレスあり
 //      urlプロパティが無い場合はid があるのでidからurlを作成する
-    var targetURL=(myIssue.url)? myIssue.url: '/cuts/'+myIssue.cutID.toString()+'.json';
+    var targetURL=(myIssue.url)? myIssue.url: '/api/v2/cuts/'+myIssue.cutID.toString()+'.json';
 /*
     if( myIssue[2] > 0 ){
         for (var cx=0;cx<this.entryList[ix].issues.length;cx++){
@@ -1420,7 +1449,7 @@ function(result){
 これは保存系のAPIが出てから調整
 */
 
-NetworkRepository.prototype.pushEntry = function (myXps){
+NetworkRepository.prototype.pushEntry = function (myXps,callback,callback2){
 //識別子取得
     var myIdentifier=Xps.getIdentifier(myXps,true);//６要素で取得
 //識別子に相当するアイテムがリポジトリに存在するかどうかをチェック
@@ -1430,7 +1459,7 @@ NetworkRepository.prototype.pushEntry = function (myXps){
     var currentEntry=this.entry(myIdentifier);
     if(currentEntry){
             //既存のエントリが有るのでストレージとリストにpushして処理終了
-        this.pushData('PUT',currentEntry,myXps)
+        this.pushData('PUT',currentEntry,myXps,callback,callback2)
     }else{
 /**
     currentEntry==null なので、ターゲットのエピソードtokenを再取得して引数で渡す必要あり １２・２１
@@ -1438,7 +1467,7 @@ NetworkRepository.prototype.pushEntry = function (myXps){
             //新規エントリなので新たにPOSTする (空エントリを引数に付ける)
 //        var tmpEntry= new listEntry(Xps.getIdentifier(myXps));
         var tmpEntry= this.entry(Xps.getIdentifier(myXps),true);
-        this.pushData('POST',tmpEntry,myXps)    
+        this.pushData('POST',tmpEntry,myXps,callback,callback2)    
     }
 };
 /**
@@ -1469,7 +1498,7 @@ NetworkRepository.prototype.pushEntry = function (myXps){
   ></span>
   
 */
-NetworkRepository.prototype.pushData = function (myMethod,myEntry,myXps){
+NetworkRepository.prototype.pushData = function (myMethod,myEntry,myXps,callback,callback2){
     console.log(myEntry);
 //    return;
 	var lastIssue   = myEntry.issues[myEntry.issues.length-1];
@@ -1478,11 +1507,16 @@ NetworkRepository.prototype.pushData = function (myMethod,myEntry,myXps){
     var title_name     = myEntry.product.split('#')[0];
     var episode_name   = myEntry.product.split('#')[1];
     var cut_name       = (myMethod == 'PUT')? myEntry.sci:'s'+((myXps.scene)? myXps.scene:'-')+'c'+myXps.cut+"("+nas.Frm2FCT(myXps.time(),3)+")";
+    var line_id        = myXps.line.toString(true);
+    var stage_id       = myXps.stage.toString(true);
+    var job_id         = myXps.job.toString(true);
+    var status         = myXps.currentStatus;
+/*
     var line_id        = lastIssue[0];
     var stage_id       = lastIssue[1];
     var job_id         = lastIssue[2];
     var status         = lastIssue[3];
-
+*/
 //オンサイトの場合は優先してbackend_variablesから情報を取得
 
   if(document.getElementById('backend_variables')){
@@ -1510,32 +1544,37 @@ console.log(decodeURIComponent(cut_name));
 if(myMethod=='POST'){
 //新規エントリ作成
 	json_data = {cut:{
-		     		episode_token: episode_token,
-	                name: decodeURIComponent(cut_name),
-	                description:Xps.getIdentifier(myXps,true),
-			 		content: myXps.toString()
+		     		episode_token   : episode_token,
+	                name            : decodeURIComponent(cut_name),
+	                description     : Xps.getIdentifier(myXps,true),
+			 		status          : myXps.currentStatus,
+			 		job_id          : decodeURIComponent(myXps.job.toString(true)),
+			 		stage_id        : decodeURIComponent(myXps.stage.toString(true)),
+			 		line_id         : decodeURIComponent(myXps.line.toString(true)),
+			 		content         : myXps.toString()
 				}};
 		method_type = 'POST';
-		target_url = '/cuts.json';
+		target_url = '/api/v2/cuts.json';
 }else{
 //エントリ更新
 	json_data = {
 		     		token: cut_token,
 		     		cut:{
-	                name: decodeURIComponent(cut_name),
-	                description:myEntry.toString(),
-			 		content: myXps.toString(),
-//			 		cut_token: cut_id,
-//			 		title_name: title_name,
-//			 		episode_name: episode_name,
-//			 		cut_name: cut_name,
-			 		line_id: line_id,
-			 		stage_id: stage_id,
-			 		job_id: job_id,
-			 		status: status
+	                   name         : decodeURIComponent(cut_name),
+//	                   description  : myEntry.toString(true),
+	                   description  : Xps.getIdentifier(myXps,true),
+			 		   content      : myXps.toString(),
+//			 		 cut_token   : cut_id,
+//			 		 title_name  : title_name,
+//			 		 episode_name: episode_name,
+//			 		 cut_name    : cut_name,
+			 		   line_id     : decodeURIComponent(line_id),
+			 		   stage_id    : decodeURIComponent(stage_id),
+			 		   job_id      : decodeURIComponent(job_id),
+			 		   status      : status
 				}};
 		method_type = 'PUT';
-		target_url = '/cuts/' + cut_token + '.json'
+		target_url = '/api/v2/cuts/' + cut_token + '.json'
 }
 
 /*
@@ -1563,11 +1602,12 @@ if(myMethod=='POST'){
 				console.log('existing cut!');
 			}
 
-                this.getList(true);//リストステータスを同期
-                documentDepot.rebuildList();
+            this.getList(true);//リストステータスを同期
+            documentDepot.rebuildList();
+            if(callback instanceof Function){callback();}
 		}).bind(this),
 		error : function(result) {
-
+            if(callback2 instanceof Function){callback2();}
 			// Error
 			console.log("error");
 			console.log(result);
@@ -1667,7 +1707,7 @@ NetworkRepository.prototype.activateEntry=function(callback,callback2){
         console.log(data);
 	    $.ajax({
 		    type : 'GET',
-		    url : this.url+'/cuts/'+currentEntry.issues[0].cutID+'.json',
+		    url : this.url+'/api/v2/cuts/'+currentEntry.issues[0].cutID+'.json',
 		    data : data,
 		    success :(function(){}).bind(this),
 		    error :(function(result) {
@@ -1693,7 +1733,7 @@ NetworkRepository.prototype.activateEntry=function(callback,callback2){
         console.log(data);
 	    $.ajax({
 		    type : 'PUT',
-		    url : this.url+'/cuts/'+currentEntry.issues[0].cutID+'.json',
+		    url : this.url+'/api/v2/cuts/'+currentEntry.issues[0].cutID+'.json',
 		    data : data,
 		    success : (function(result) {
                 console.log('activated');
@@ -1754,7 +1794,7 @@ if(true){
         console.log(data);
 	    $.ajax({
 		    type : 'PUT',
-		    url : this.url+'/cuts/'+currentEntry.issues[0].cutID+'.json',
+		    url : this.url+'/api/v2/cuts/'+currentEntry.issues[0].cutID+'.json',
 		    data : data,
 		    success : (function(result) {
                 console.log('deactivated');
@@ -1828,12 +1868,13 @@ if(true){
         console.log(data);
 	    $.ajax({
 		    type : 'PUT',
-		    url : this.url+'/cuts/'+currentEntry.issues[0].cutID+'.json',
+		    url : this.url+'/api/v2/cuts/'+currentEntry.issues[0].cutID+'.json',
 		    data : data,
 		    success : (function(result) {
                 console.log('check-in');
                 this.getList(true);//リストステータスを同期
                 documentDepot.rebuildList();
+                xUI.referenceXPS.parseXps(xUI.XPS.toString());
                 xUI.XPS.job.increment(myJob);
                 xUI.XPS.currentStatus='Active';//ドキュメントステータスを更新
                 xUI.XPS.update_user=xUI.currentUser;//ユーザ更新
@@ -1892,13 +1933,13 @@ if(true){
         console.log(data);
 	    $.ajax({
 		    type : 'PUT',
-		    url : this.url+'/cuts/'+currentEntry.issues[0].cutID+'.json',
+		    url : this.url+'/api/v2/cuts/'+currentEntry.issues[0].cutID+'.json',
 		    data : data,
 		    success : (function(result) {
                 console.log('deactivated');
                 this.getList(true);//リストステータスを同期
                 documentDepot.rebuildList();
-                xUI.XPS.currentStatus='Fixd';//ドキュメントステータスを更新
+                xUI.XPS.currentStatus='Fixed';//ドキュメントステータスを更新
 //            xUI.XPS.update_user=xUI.currentUser;//ここはもともとユーザ一致なのでコレ不用
 			    xUI.setStored("current");//UI上の保存ステータスをセット
 			    sync();//保存ステータスを同期
@@ -1979,7 +2020,7 @@ if(true){
         console.log(data);
 	    $.ajax({
 		    type : 'PUT',
-		    url : this.url+'/cuts/'+currentEntry.issues[0].cutID+'.json',
+		    url : this.url+'/api/v2/cuts/'+currentEntry.issues[0].cutID+'.json',
 		    data : data,
 		    success : (function(result) {
                 console.log('check-in');
@@ -2052,13 +2093,28 @@ serviceAgent.init= function(){
     this.repositories=[localRepository]; //ローカルリポジトリを0番として加える
     
 if(xUI.onSite){
-//    var serviceA=new ServiceNode("SCIVONE",'http://remaping.scivone-dev.com');
-    var serviceA=new ServiceNode("SCIVONE-v2",'http://remaping.scivone-dev.com/api/v2');
+//    http://remaping.scivone-dev.com/cuts/eKToipkQJ3piHvmb1p6uNMTS/edit
+    var loc=String(window.location).split('/')
+    var myUrl = loc.splice(0,loc.length-3).join('/');
+    
+    this.servers.push(new ServiceNode("CURRENT",myUrl));
 }else{
-//    var serviceA=new ServiceNode("SCIVONE-v1",'http://remaping.scivone-dev.com/api/v1');
-    var serviceA=new ServiceNode("SCIVONE-v2",'http://remaping.scivone-dev.com/api/v2');
+    var myServers={
+        devFront:{name:'devFront',url:'http://remaping.scivone-dev.com'},
+        Srage:{name:'Stage',url:'http://remaping-stg.u-at.net'},
+        UAT: {name:'U-AT',url:'http://remaping.u-at.net'}
+    };
+    for(svs in myServers){this.servers.push(new ServiceNode(myServers[svs].name,myServers[svs].url));}
 }
-    this.servers.push(serviceA);
+/*
+    仮のサーバセレクタを設定
+*/
+    var mylistContents="";
+    mylistContents +='<option selected value="-1" > +no server selected+';
+    for(var ids=0; ids < this.servers.length;ids ++){
+        mylistContents +='<option value="'+ids+'" >'+this.servers[ids].name; 
+    }
+    document.getElementById('serverSelector').innerHTML = mylistContents;
 
 //    var Home=new NetworkRepository("HOME",serviceA);
 //    this.repositories.push(Home);
@@ -2074,7 +2130,7 @@ if(xUI.onSite){
     document.getElementById('repositorySelector').innerHTML = myContents;
 
     this.switchRepository(0);
-    this.currentServer = serviceA;
+    this.currentServer = null;//初期化時点のサーバは　null 
 }
 /**
     ユーザ認証
@@ -2134,18 +2190,16 @@ serviceAgent.authorized = function(status){
 サービスの切り替えは内部での呼び出しのみになるので引数は整理する
 */
 serviceAgent.switchService = function(myServer){
-    if(myServer instanceof ServiceNode ) currentServer = myServer; 
-
-    if((myRepositoryID > 0)&&(myRepositoryID<this.repositories.length)){
-        this.currentServer=this.currentRepository.service;
-    } else {
-        this.currentServer     = null;
+    if(myServer instanceof ServiceNode ) {
+        this.currentServer = myServer; 
+    }else if((myServer >= 0)&&(myServer<this.servers.length)){
+        this.currentServer = this.servers[myServer];
+    }else{
+        this.currentServer = null;
     }
-    if(document.getElementById('repositorySelector').value != myRepositoryID){
-         document.getElementById('repositorySelector').value=myRepositoryID;
-    }
+    sync();
 
-return currentServer;
+return this.currentServer;
 };
 /**
     リポジトリを切り替える
@@ -2214,7 +2268,9 @@ serviceAgent.getRepsitoryIdByToken = function(myToken){
     コールバック関数以降の引数はコールバックに渡される
 */
 serviceAgent.getEntry = function(myIdentifier,isReference,callback){
-    this.currentRepository.getEntry(myIdentifier,isReference,callback);
+    this.currentRepository.getEntry(myIdentifier,isReference,function(){
+        if (callback instanceof Function) callback();
+    });
     if($("#optionPanelFile").is(':visible')) xUI.sWitchPanel('File');
 };
 
@@ -2418,14 +2474,15 @@ serviceAgent.checkinEntry=function(myJob,callback,callback2){
             nas.showModalDialog('confirm',[msg,msg2],title,false,function(){
                 var newJobName=document.getElementById('newJobName').value;
                 if((this.status == 0)&&(newJobName)){
-                    serviceAgent.currentRepository.checkinEntry(newJobName,
-                    function(){
-                        //成功時は現在のデータをリファレンスへ複製しておく
-                        putReference();
+                    serviceAgent.currentRepository.checkinEntry(newJobName,function(){
+                        //成功時は現在のデータをリファレンスへ複製しておく　ダメ
+                        //putReference();　このタイミングで行うと　ステータス変更後のデータがリファレンスへ入るので　ダメ　各メソッド側に実装
+                        sync('productStatus');//ここで　ステータスの更新を行う
                         if(callback instanceof Function) callback();
                     },
                     function(){
                         alert(localize(nas.uiMsg.dmAlertCheckinFail));//チェックイン失敗
+                        sync('productStatus');//ここで　ステータスの更新を行う
                         if(callback2 instanceof Function) callback2();
                     });
                 }
@@ -2472,9 +2529,11 @@ serviceAgent.addEntry = function(myXps){
     if(!myXps){
         var myProduct = documentDepot.currentProduct;
         if((myProduct == '==newTitle==')||(myProduct == null)){myProduct = documentDepot.products[0];}
-        var myEntry       = this.currentRepository.entry(myProduct+"//",true);
-        var currentTitle  = decodeURIComponent(myEntry.product.split('#')[0]);
-        var currentOpus   = decodeURIComponent(myEntry.product.split('#')[1].split('[')[0]);
+        var myEntry         = this.currentRepository.entry(myProduct+"//",true);
+        var currentTitle    = decodeURIComponent(myEntry.product.split('#')[0]);
+        var currentOpus     = decodeURIComponent(myEntry.product.split('#')[1].split('[')[0]);
+        var currentSubtitle = (myEntry.product.split('#')[1].split('[').length > 1)?
+            decodeURIComponent(myEntry.product.split('#')[1].split('[')[1].slice(0,-1)):'';
         var title = localize(nas.uiMsg.pMaddNewScene);//'新規カット追加';
         var msg  = localize(nas.uiMsg.dmPMnewDocument);
         //'新規カットを作成します。\nカット番号/継続時間を入力して[OK]ボタンで確定してください。';
@@ -2495,15 +2554,16 @@ serviceAgent.addEntry = function(myXps){
             if ((this.status == 0)&&(newCutName)){
                 if(! newCutTime) newCutTime = "144";
                 myXps = new Xps(5,newCutTime);
-                myXps.title = currentTitle;
-                myXps.opus  = currentOpus;
-                myXps.cut   = newCutName;
+                myXps.title      = currentTitle;
+                myXps.opus       = currentOpus;
+                myXps.subtitle   = currentSubtitle;
+                myXps.cut        = newCutName;
                 myXps.createUser = xUI.currentUser;
                 myXps.updateUser = xUI.currentUser;
-                myXps.line     = '0:'+ newLine;
-                myXps.stage    = '0:'+ newStage;
-                myXps.job      = '0:'+ newJob;
-                var myIdentifier = Xps.getIdentifier(myXps);
+                myXps.line       = '0:'+ newLine;
+                myXps.stage      = '0:'+ newStage;
+                myXps.job        = '0:'+ newJob;
+                var myIdentifier = Xps.getIdentifier(myXps,true);
             }
             if((!newCutName)||(serviceAgent.currentRepository.entry(myIdentifier))){
                 var msg = "";
@@ -2605,6 +2665,14 @@ serviceAgent.updateNewJobName = function(stageName,type){
 }
 //Test code
 
+serviceAgent.pushEntry = function(myXps,callback,callback2){
+    if (typeof myXps == 'undefined') myXps = xUI.XPS;
+    if (!( myXps instanceof Xps)){
+        if(callback2 instanceof Function){callbakc2();}
+        return false;
+    }
+    this.currentRepository.pushEntry(myXps,callback,callback2);
+}
 /**
 
 Repos.getProducts();//一度初期化する

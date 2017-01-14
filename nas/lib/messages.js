@@ -395,6 +395,10 @@ nas.uiMsg.dmAlertCantCheckout = {
     en:"Work cannot Chack-out.\nThis is not active data",
     ja:"作業終了できません\nこれは作業中のデータではありません"
 };
+nas.uiMsg.dmAlertFailAuthorize = {
+    en:"Server authentication failed.\nPlease check ID and password",
+    ja:"サーバ認証に失敗しました\nIDとパスワードを確認してください"
+};
 
 nas.uiMsg.dmComfirmNewxSheetprop = {
     en:"Set a new xSheet with the default value.\n Is it OK?",
