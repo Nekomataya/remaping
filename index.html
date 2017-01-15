@@ -658,12 +658,6 @@
         last_authrized=''
 >
 
-	<select id=serverSelector
-		onChange="serviceAgent.switchService(this.value)"
-	>
-<option value='-1'>+no server selected+
-	</select>
-
  <span id="serverurl"></span> :
  <span id=loginuser ></span> : <button id='loginstatus_button' onclick='xUI.sWitchPanel("Login");return false' title="ユーザ切り替え"> =OFFLINE= </button> 
 </div>
@@ -699,7 +693,13 @@
 
 <!--	ログインパネル	-->
 <div class=loginPanel id=optionPanelLogin style="text-align:right;">
-<hr>	userID (or mail-address) : <input id='current_user_id' type=text size=32 value=''>
+<hr>	<select id=serverSelector
+		onChange="serviceAgent.switchService(this.value)"
+	>
+<option value='-1'>+no server selected+
+	</select>
+
+	userID (or mail-address) : <input id='current_user_id' type=text size=32 value=''>
 	password : <input id='current_user_password' type=password size=32 value='********'>
 	<button id='login_button' onclick='serviceAgent.authorize();'>SIGNIN / signout</button><hr>
 </div>
@@ -3107,7 +3107,7 @@ $Id:$ index.html ,v 1.7 2016/12/24  support@nekomataya.info <br />
 <!-- </form> -->
      </div>
 <div id="scrollSpaceFt" class=\"screenSpace\"><br></div>
-<!--  -->
+<!-- 
  <span id="backend_variables"
         data-organization_token="1xW4FYYQnmt73z7b7cMPGVx8"
         data-user_access_token="4c4958b693c391f26080a59de64b9078b03b3b8bc0e0ece3a407573bd4a00db4"
@@ -3122,6 +3122,6 @@ $Id:$ index.html ,v 1.7 2016/12/24  support@nekomataya.info <br />
         data-stage_id="0:Startup"
         data-job_id="2:レイアウト"
         data-status="Fixed"
-  ></span>
+  ></span> -->
 
 </body></html>

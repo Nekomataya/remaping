@@ -847,7 +847,7 @@ localRepository.checkinEntry=function(myJob,callback,callback2){
                 console.log(newXps.currentStatus);
                 this.getList();//リストステータスを同期
                 documentDepot.rebuildList();
-                xUI.referenceXPS.parseXps(xUI.XPS.toString());
+                xUI.setReferenceXPS();
                 xUI.XPS.job.increment(myJob);
                 xUI.XPS.currentStatus='Active';//ドキュメントステータスを更新
                 xUI.XPS.update_user=xUI.currentUser;//ユーザ更新
@@ -1874,7 +1874,7 @@ if(true){
                 console.log('check-in');
                 this.getList(true);//リストステータスを同期
                 documentDepot.rebuildList();
-                xUI.referenceXPS.parseXps(xUI.XPS.toString());
+                xUI.setReferenceXPS()
                 xUI.XPS.job.increment(myJob);
                 xUI.XPS.currentStatus='Active';//ドキュメントステータスを更新
                 xUI.XPS.update_user=xUI.currentUser;//ユーザ更新
@@ -2475,7 +2475,7 @@ serviceAgent.checkinEntry=function(myJob,callback,callback2){
                 var newJobName=document.getElementById('newJobName').value;
                 if((this.status == 0)&&(newJobName)){
                     serviceAgent.currentRepository.checkinEntry(newJobName,function(){
-                        //成功時は現在のデータをリファレンスへ複製しておく　ダメ
+                        //成功時は現在のデータをリファレンスへ複製しておく
                         //putReference();　このタイミングで行うと　ステータス変更後のデータがリファレンスへ入るので　ダメ　各メソッド側に実装
                         sync('productStatus');//ここで　ステータスの更新を行う
                         if(callback instanceof Function) callback();

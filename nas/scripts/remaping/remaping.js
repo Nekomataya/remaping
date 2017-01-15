@@ -848,11 +848,21 @@ xUI.reInitBody=function(newTimelines,newDuration){
 xUI.switchStage=function(){
     alert(localize(nas.uiMsg.dmUnimplemented));//未実装
 };
-
+/**
+    リファレンスエリアにデータをセットする
+    引数がない場合は、現在のデータをそのまま利用する
+*/
 xUI.setReferenceXPS=function(myXps){
+    if(typeof myXps == 'undefined'){
+        this.referenceXPS.readIN(xUI.XPS.toString());
+    } else if (myXps instanceof Xps) {
         this.referenceXPS=myXps;
+    } else {
+        return false
+    }
         nas_Rmp_Init();
         //sync("reference");//書き直しの少ない穏やかな同期をあとで書く2016
+        return true;
     }
 //////
 /**
@@ -4920,7 +4930,6 @@ default:
 
 //オンサイト時の最終調整はこちらで？
     if(xUI.onSite){
-        $('#serverSelector').hide();
 //        xUI.sWitchPanel('Prog');
     }
 
@@ -4991,7 +5000,7 @@ storePtはオープン時および保存時に現状のundoPtを複製するの�
 //if(confirm("TEST")){return }else {return false};
 //    クッキーを使用する設定なら、
 //    現在のウィンドウサイズを取得してクッキーかき出し
-// if (useCookie[0]) {writeCk(buildCk());};現在　cookie:0 は常にfalse
+ if (useCookie[0]) {writeCk(buildCk());};//現在　cookie:0 は常にfalse
 };
 
 /*
