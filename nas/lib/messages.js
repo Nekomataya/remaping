@@ -88,6 +88,7 @@ nas.uiMsg.layerRename           = {en: "layer rename", ja: "レイヤ名変更"}
 nas.uiMsg.Layout                = {en: "Layout", ja: "レイアウト"};
 nas.uiMsg.Load                  = {en: "Load", ja: "読込"};
 nas.uiMsg.makeNewXPS            = {en: "make new eXposureSheet", ja: "新規タイムシートを作成します"};
+nas.uiMsg.modeChange            = {en: "mode change", ja: "モード切替"};
 nas.uiMsg.Medias                = {en: "Medias", ja: "メディア設定"};
 nas.uiMsg.newLayerBgColor       = {en: "bgColor of new layer", ja: "新規レイヤの背景色"};
 nas.uiMsg.newXPS                = {en: "new eXposureSheet", ja: "新規タイムシート"};
@@ -118,6 +119,10 @@ nas.uiMsg.reverseAnimationFrame = {en: "reverse animation frame", ja: "アニメ
 nas.uiMsg.requiresNumber		= {en:"Please specify a numerical value",ja:"数値を指定してほしいのョ!と"};
 nas.uiMsg.requiresPositiveInteger = {en:"Please specify a positive value",ja:"正の数がいいなぁ…"};
 nas.uiMsg.requiresStrings       = {en:"Please specify String value",ja:"文字列で指定してほしいのですョ!"};
+
+nas.uiMsg.statusEdit            = {en: "editting", ja: "編集中"};
+nas.uiMsg.statusView            = {en: "readonly", ja: "閲覧"};
+nas.uiMsg.statusAdmin           = {en: "management", ja: "制作管理"};
 
 nas.uiMsg.Save                  = {en: "Save", ja: "保存"};
 nas.uiMsg.saveAndClose          = {en: "save and close", ja: "保存して閉じる"};

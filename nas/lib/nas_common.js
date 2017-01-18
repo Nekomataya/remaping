@@ -2057,7 +2057,9 @@ nas.Frm2FCT = function (frames, type, ostF, fpsC) {
  * 中間の45fpsを閾値としてnas.FRATEがそれ以下の場合は30DF
  * それ以上の場合は60DFのフレーム数を返す
  * 本来60DFはSMPTEの規格外なので扱いに注意すること
- *
+ * 
+    近来　23.8 (ドロップ互換24fps)が広範に利用されているのでそろそろ考慮化必要？
+ 
  * @param Fct
  * @param fpsC
  * @returns {*}
@@ -2189,13 +2191,13 @@ nas.FCT2Frm = function (Fct, fpsC) {
         var s = 0;
         var k = 0;
         /**
-         * type 1    00000 ドロップは存在しない
+         * type 1    00000 ドロップは存在しない FR
          */
         if (fct.match(/^[0-9]+$/)) {
             k = fct;
         } else {
             /**
-             * type 2    0:00:00 少数フレームレートの際にドロップ発生
+             * type 2    0:00:00 少数フレームレートの際にドロップ発生  TC
              */
             if (fct.match(/^([0-9]+:){1,3}[0-9]+$/)) {
                 /**
@@ -2216,14 +2218,14 @@ nas.FCT2Frm = function (Fct, fpsC) {
                 }
             } else {
                 /**
-                 * type 3    000 + 00
+                 * type 3    000 + 00   trad-JA
                  */
                 if (fct.match(/^[0-9]+\+[0-9]+$/)) {
                     s = fct.substring(0, fct.search(/\+/));
                     k = fct.substr(fct.search(/\+/) + 1);
                 } else {
                     /**
-                     * type 4    p 0 / 0 + 00
+                     * type 4    p 0 / 0 + 00 page-SK
                      */
                     if (fct.match(/^p[0-9]+\/[0-9]+\+[0-9]+$/)) {
                         p = fct.slice(1, fct.search(/\x2F/));
@@ -2231,7 +2233,7 @@ nas.FCT2Frm = function (Fct, fpsC) {
                         k = fct.substr(fct.search(/\+/) + 1);
                     } else {
                         /**
-                         * type 5    p 0 / + 000
+                         * type 5    p 0 / + 000 page-K
                          */
                         if (fct.match(/^p[0-9]+\/\+[0-9]+$/)) {
                             p = fct.slice(1, fct.search(/\x2F/));

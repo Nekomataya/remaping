@@ -310,9 +310,26 @@ nas.Pm.titles.addTitle("Momotaro"     ,["0002" ,"ももたろう"   ,"も"     ,
 
 /*
  * メディアDB
+
  *mediaName ,[ID(リレーションID) ,animationField, baseResolution ,mediaType ,tcType ,pegForm ,pixelAspect ,description]
+mediaName               名称　識別名
+ID                      リレーションID　登録順連番整数　DB接続時に再解決する
+animationField          作画時の標準フィールドのリンク又は識別名称　主に画面縦横比（画郭）を指定するための要素
+baseResolution          基本的な画像解像度（走査線密度==縦方向解像度）String　単位付き文字列で
+mediaType               メディアタイプキーワード string　"drawing"=="input"||"intermediate"||"movie"=="output"
+tcType                  タイムコードタイプ   frames,trag-JA,SMPTE,SMPTE-drop,page-Frames,page-SK　等の文字列で指定？
+pegForm                 タップの型式         invisible,ACME,jis2hales,us3hales ビデオ等のタップと無関係のデータはinvisible　　
+pixelAspect             ピクセル縦横比　縦方向を１として対する横方向の比率を浮動小数点数値で
+description             コメントテキスト
+
+
+nas.Pm.medias.addMedia("" ,["" ,"" ,"" ,"" ,"" ,"" ,"" ,""]);
+
  */
-nas.Pm.medias.addMedia("作画フレーム200dpi" ,["0001" ,"10in-HDTV" ,"200dpi" ,"drawing" ,"trad-JA" ,"ACME" ,"1" ,"参考用作画フレーム"]);
-nas.Pm.medias.addMedia("作画フレーム192dpi" ,["0001" ,"10in-HDTV" ,"192dpi" ,"drawing" ,"trad-JA" ,"ACME" ,"1" ,"参考用作画フレーム"]);
+nas.Pm.medias.addMedia("作画フレーム200dpi" ,["" ,"10in-HDTV" ,"200dpi" ,"drawing" ,"trad-JA" ,"ACME" ,"1" ,"参考用作画フレーム"]);
+nas.Pm.medias.addMedia("作画フレーム192dpi" ,["" ,"10in-HDTV" ,"192dpi" ,"drawing" ,"trad-JA" ,"ACME" ,"1" ,"参考用作画フレーム"]);
+nas.Pm.medias.addMedia("HDTV-720p"          ,["" ,"HDTV" ,"72dpi" ,"movie" ,"SMPTE-drop" ,"invisible" ,"1" ,"HDTV省力原版"]);
+nas.Pm.medias.addMedia("HDTV-1080p"         ,["" ,"HDTV2K" ,"1080dpi" ,"movie" ,"SMPTE" ,"invisible" ,"1" ,"HDTV"]);
+nas.Pm.medias.addMedia("HDTV-2160p"         ,["" ,"HDTV4K" ,"2160dpi" ,"movie" ,"SMPTE" ,"invisible" ,"1" ,"4KHDTV"]);
 
 

@@ -4180,8 +4180,12 @@ function nas_Rmp_Startup(){
     "<a href='"+ headerLogo_url +
     "' title='"+ headerLogo_urlComment +
     "' target='_new'>"+ headerLogo +"</a>";
+//
 
-    XPS=new Xps(MaxLayers,MaxFrames);//XPSを実際のXpsオブジェクトとして再初期化する
+/**
+        XPSを実際のXpsオブジェクトとして再初期化する
+*/
+    XPS=new Xps(MaxLayers,MaxFrames);
 /*
     XPSオブジェクトのreadINメソッドをオーバーライド
     元のreadINメソッドから切り離した、データ判定ルーチン部分
@@ -4267,8 +4271,13 @@ XPS.readIN=function(datastream){
         return this.parseXps(convertXps(datastream));
     }
 }
-/**
-シーンカット名は分離せずに仮扱い
+
+/** 識別子の情報でカットのプロパティを上書きする
+    インポート時に必要な情報は識別子にすべて含まれるためそれで上書きを行う
+    duration は
+        元シートのデータを維持
+        新シートに合わせる
+    の二択となるので要注意
 */
 XPS.syncIdentifier =function(myIdentifier){
     var parseData   = Xps.parseIdentifier(myIdentifier);
@@ -4283,25 +4292,6 @@ XPS.syncIdentifier =function(myIdentifier){
     this.currentStatus = parseData.currentStatus;
 
 return parseData;
-//以下は削除予定  
-    var dataArray=myIdentifier.split('//');
-//  ["title","opus","subtitle","cut","line","stage","job","currentStatus"];
-    this.title    = decodeURIComponent(dataArray[0].split('#')[0]);
-    this.opus     = decodeURIComponent(dataArray[0].split('#')[1].split('[')[0]);
-    this.subtitle = (dataArray[0].match(/\[([^\]]+)\]/))? decodeURIComponent(RegExp.$1):'';
-    if(dataArray[1].match(/^s([^-_\s]*)[-_\s]?c([^\(]+)/i)){
-        this.scene = decodeURIComponent(RegExp.$1);
-        this.cut   = decodeURIComponent(RegExp.$2);
-    }else{
-        this.scene = '';
-        this.cut   = decodeURIComponent(dataArray[1].split( '(' )[0]);
-    }
-    this.line     = new XpsLine (decodeURIComponent(String(dataArray[2])));
-    this.stage    = new XpsStage(decodeURIComponent(String(dataArray[3])));
-    this.job      = new XpsStage(decodeURIComponent(String(dataArray[4])));
-    this.currentStatus = dataArray[5];
-//    console.log(decodeURIComponent(XPS));
-    return true;
 }
 
 //    ダミーマップを与えて情報取り込み
@@ -4313,37 +4303,22 @@ return parseData;
 if(dbg)    XPS.getMap(MAP);
 */
 
-/*
-//現在のシート上のカラーデータを取得
+/**
+    シートのカラーデータを構築
+    別の関数に分離予定
+        指定引数は　SheetBaseColorのみ？
 */
-//    alert(document.body.bgColor);
-//    alert(document.body.Color);
-
+    if (! SheetBaseColor.toString().match(/^#[0-9a-f]+/i)){
+        SheetBaseColor = nas.colorAry2Str(nas.colorStr2Ary(SheetBaseColor));
+    };
 //タイムシート背景色をconfigで設定した色に置き換え(css固定に変更)
     document.body.style.backgroundColor=SheetBaseColor;
-//    さらにヘッダとフッタの背景色をシート背景色で塗りつぶし
+//ヘッダとフッタの背景色をシート背景色で塗りつぶし
     document.getElementById("fixedHeader").style.backgroundColor=SheetBaseColor;
-//    nas.addCssRule("div.fixedHeadline","background-color:"+SheetBaseColor,"screen")
     nas.addCssRule("table.sheet","background-color:"+SheetBaseColor,"screen")
-//    document.getElementById("UIheaderScrollH").style.width="100%";
-//    document.getElementById("fixedFooter").style.backgroundColor=SheetBaseColor;
-
-/*
-//そのため画面から取得するルーチンはすべて無効に 2007/06/19
-//    SheetBaseColor    =(document.getElementById("0_0").style.backgroundColor)?document.getElementById("0_0").style.backgroundColor:SheetBaseColor;
-if(Safari)
-{
-    SheetBaseColor=document.styleSheets.item(0).cssRules.item(0).style.getPropertyValue("background-color");
-//    alert("get bgColor "+SheetBaseColor);
-}else{
-    SheetBaseColor    =(document.bgColor)?document.bgColor:SheetBaseColor;
-};
-    SheetBaseColor=nas.colorAry2Str(nas.colorStr2Ary(SheetBaseColor));
- */
 
 //編集不可領域の背景色
-    if (! SheetBaseColor.toString().match(/^#[0-9a-f]+/i)) SheetBaseColor=nas.colorAry2Str(nas.colorStr2Ary(SheetBaseColor));
-    SheetBlankColor    =nas.colorAry2Str(mul(nas.colorStr2Ary(SheetBaseColor),.95));
+    SheetBlankColor    = nas.colorAry2Str(mul(nas.colorStr2Ary(SheetBaseColor),.95));
 
 //シート境界色
     SheetBorderColor    =nas.colorAry2Str(mul(nas.colorStr2Ary(SheetBaseColor),.75));
@@ -4358,27 +4333,25 @@ if(Safari)
 //    SelectingColor    =document.getElementById("spanSelection").style.backgroundColor;
 //セル選択中のインジケータ
 /*
-var mySections=[
     ["th.timelabel","width:"+(TimeGuideWidth + CellWidthUnit)],
     [".dtSep","width:"+(DialogWidth + CellWidthUnit)],
     [".ntSep","width:"+(CommentWidth + CellWidthUnit)],
     ["td.colSep","width:"+(ColumnSeparatorWidth +CellWidthUnit)],
     ["th.layerlabelR","width:"+(ActionWidth + CellWidthUnit)],
-    ["th.layerlabel","width:"+(SheetCellWidth + CellWidthUnit)]
+    ["th.layerlabel","width:"+(SheetCellWidth + CellWidthUnit)],
     ["th.framenoteSpan","width",(CommentWidth + CellWidthUnit)],
-]
+    ["timeguide","width:"+],
 */
-//    ["timeguide","width:"+],
 var mySections=[
-    ["th.tcSpan","width",(TimeGuideWidth + CellWidthUnit)],
-    ["th.dialogSpan","width,",(DialogWidth + CellWidthUnit)],
-    ["td.colSep","width",(ColumnSeparatorWidth +CellWidthUnit)],
-    ["th.referenceSpan","width",(ActionWidth + CellWidthUnit)],
-    ["th.editSpan","width",(SheetCellWidth + CellWidthUnit)],
-    ["th.timingSpan","width",(SheetCellWidth + CellWidthUnit)],
-    ["th.stillSpan","width",(StillCellWidth + CellWidthUnit)],
-    ["th.sfxSpan","width",(SfxCellWidth + CellWidthUnit)],
-    ["th.cameraSpan","width",(CameraCellWidth + CellWidthUnit)],
+    ["th.tcSpan"        ,"width" ,(TimeGuideWidth + CellWidthUnit)],
+    ["th.dialogSpan"    ,"width" ,(DialogWidth + CellWidthUnit)],
+    ["td.colSep"        ,"width" ,(ColumnSeparatorWidth +CellWidthUnit)],
+    ["th.referenceSpan" ,"width" ,(ActionWidth + CellWidthUnit)],
+    ["th.editSpan"      ,"width" ,(SheetCellWidth + CellWidthUnit)],
+    ["th.timingSpan"    ,"width" ,(SheetCellWidth + CellWidthUnit)],
+    ["th.stillSpan"     ,"width" ,(StillCellWidth + CellWidthUnit)],
+    ["th.sfxSpan"       ,"width" ,(SfxCellWidth + CellWidthUnit)],
+    ["th.cameraSpan"    ,"width" ,(CameraCellWidth + CellWidthUnit)]
 ]
 
 /*    cssにルールセットを追加する関数
@@ -4387,7 +4360,7 @@ var mySections=[
         プロパティ    プロパティを置く
         適用範囲    "screen""print"または"both"
  */
-//width set
+//トラックの幅を設定
 /*    リスト
 class=timelabel
 class=timeguide? 
@@ -4416,15 +4389,14 @@ for(var idx=0;idx<mySeps.length;idx++){
 
 if(false){
 //    設定幅適用
-    $("th.tcSpan").width       =(TimeGuideWidth+CellWidthUnit);
-    $("th.referenceSpan").width=(ActionWidth+CellWidthUnit);
-    $("th.dialogSpan").width   =(DialogWidth+CellWidthUnit);
-    $("th.editSpan").width     =(SheetCellWidth+CellWidthUnit);
-    $("th.framenoteSpan").width=(CommentWidth+CellWidthUnit);
+    $("th.tcSpan").width        = (TimeGuideWidth+CellWidthUnit);
+    $("th.referenceSpan").width = (ActionWidth+CellWidthUnit);
+    $("th.dialogSpan").width    = (DialogWidth+CellWidthUnit);
+    $("th.editSpan").width      = (SheetCellWidth+CellWidthUnit);
+    $("th.framenoteSpan").width = (CommentWidth+CellWidthUnit);
 }
 //サブルーチンの位置は後で一考
 
-//alert(SelectingColor);
 /*============*     初期化時のデータ取得    *============*/
 
 /*
@@ -4527,7 +4499,7 @@ if((NameCheck)||(myName=="")){   var msg=welcomeMsg+"\n"+localize(nas.uiMsg.dmAs
 //    クッキーで設定されたspinValueがあれば反映
     if(xUI.spinValue){document.getElementById("spin_V").value=xUI.spinValue} ;
 //ツールバー表示指定があれば表示
-    if(xUI.utilBar){xUI.sWitchPanel('Utl');};//$("#optionPanelUtl").show();}
+    if((xUI.utilBar)&&(!$("#optionPanelUtl").is(':visible'))){$("#optionPanelUtl").show();};//xUI.sWitchPanel('Utl');
 
 document.getElementById("iNputbOx").focus();
 
@@ -4557,8 +4529,7 @@ viewOnly
     if(typeof uiMode != 'undefined'){xUI.setUImode(uiMode);}else{xUI.setUImode(xUI.setUImode());}
 
     sync('productStatus');
-//xUI.PageCols=(xUI.viewMode=="Compact")? 1:2;
-//xUI.SheetLength=(xUI.viewMode=="Compact")?(Math.floor(XPS.duration()/nas.FRATE)):6;
+
 //タイムシートテーブルボディ幅の算出
 //(タイムヘッダ幅+ダイアログ幅+レイヤ数*幅+コメント欄幅+余分)×ページカラム数＋カラムセパレータ幅×(ページカラム数?1)
 
@@ -4583,7 +4554,6 @@ if(xUI.viewMode=="Compact"){
 document.getElementById("UIheaderFix").innerHTML=xUI.pageView(-1);
 document.getElementById("UIheaderScrollH").innerHTML=xUI.pageView(0);
 document.getElementById("UIheaderScrollV").innerHTML=xUI.pageView(-2);
-
 document.getElementById("UIheader").style.display="inline";
 //コンパクトUI時は1ページ限定なのでボディ出力を１回だけ行う
         var SheetBody= xUI.headerView(1);
@@ -4621,17 +4591,18 @@ if(false){
 }
 // エレメントが存在すればon-site
 　   if(document.getElementById('backend_variables')){
-    　      if(false){
-　       xUI.onSite = String(window.location).split('/').splice(0,loc.length-3).join('/');
-　       // window.location.toString().split('/').slice(0,3).join('/');//現在のロケーションから取得(本番用)
-            }else{
-        serviceAgent.switchService(1);
-        xUI.onSite = serviceAgent.currentServer.url.split('/').slice(0,3).join('/');//(試験用)サーバのURLから取得
-            }
+        if (serviceAgent.servers.length==1) {
+            serviceAgent.switchService(0);
+        }else{
+            serviceAgent.switchService(1);//デフォルトサーバのIDを置く
+        }
+        xUI.onSite = serviceAgent.currentServer.url.split('/').slice(0,3).join('/');
 　       serviceAgent.currentStatus='online';
-        
+//  ドキュメント表示更新
 　       document.getElementById('loginstatus_button').innerHTML = '=ONLINE=';
 　       document.getElementById('loginstatus_button').disabled  = true;
+　       $('#pMbrowseMenu').hide();
+　       $('#ibMbrowse').hide();//設定表示
 //  ユーザ情報取得
         xUI.currentUser = new nas.UserInfo(
             $("#backend_variables").attr("data-user_name") + ":" +
@@ -4992,15 +4963,14 @@ storePtはオープン時および保存時に現状のundoPtを複製するの�
         if(confirm(msg)){
             xUI.setBackup()
         };
-        //nas.showModalDialogに置換えは意味が無かった　本物のモーダルパネルではないのでウィンドウのリロードは止まらない
-//nas.showModalDialog("confirm",msg,"ファイル未保存",function(){if(this.status==0){xUI.setBackup();}})
         //保存処理
     };
 
-//if(confirm("TEST")){return }else {return false};
+// if(confirm("TEST")){return true}else {return false};
 //    クッキーを使用する設定なら、
 //    現在のウィンドウサイズを取得してクッキーかき出し
  if (useCookie[0]) {writeCk(buildCk());};//現在　cookie:0 は常にfalse
+
 };
 
 /*
@@ -5165,11 +5135,17 @@ case	"productStatus":;
 	document.getElementById('pmcui_documentWriteable').innerHTML= (xUI.viewOnly)?'[編集不可]':'';
 	switch (xUI.uiMode){
 		case 'production':
-	document.getElementById('pmcui').style.backgroundColor = '#bbbbdd';break;
+	document.getElementById('pmcui').style.backgroundColor = '#bbbbdd';
+	document.getElementById('edchg').innerHTML=localize(nas.uiMsg.statusEdit);
+	break;
 		case 'management':
-	document.getElementById('pmcui').style.backgroundColor = '#ddbbbb';	break;
+	document.getElementById('pmcui').style.backgroundColor = '#ddbbbb';
+	document.getElementById('edchg').innerHTML=localize(nas.uiMsg.statusAdmin);
+	break;
 		case 'browsing':
-	document.getElementById('pmcui').style.backgroundColor = '#bbddbb'; break;
+	document.getElementById('pmcui').style.backgroundColor = '#bbddbb';
+	document.getElementById('edchg').innerHTML=localize(nas.uiMsg.statusView);
+	break;
 	}
 break;
 case	"fct":	;
@@ -6211,6 +6187,9 @@ if(useCookie.UIView){
 };//記録チェックがない場合は元のデータを変更しない
 myCookie[7]=ToolView;
 
+	console.log(ToolView);
+	alert(myCookie);
+
 return myCookie;
 }
 
@@ -6343,6 +6322,7 @@ if (!navigator.cookieEnabled){return false;}
 	if(useCookie.UIView){
 	if(rEmaping[7]) ToolView	=rEmaping[7];
 	}
+	console.log( ToolView)
 }
 //	クッキー削除
 function dlCk() {
@@ -6452,18 +6432,9 @@ default	:return;
 //ターゲットから複製を作ってサイズを調整
 	var newXPS=new Xps();
 	newXPS.readIN( xUI.XPS.toString());
-
-	for (i=0;i<newXPS.xpsTracks.length;i++)
-	{
-		newXPS.xpsTracks[i].length=duration;
-		if(durationUp)
-			for(f=oldduration;f<duration;f++)
-			newXPS.xpsTracks[i][f]='';
-	}
-
+    newXPS.setDuration(duration);
 		newXPS["trin"]=newTrin;
 		newXPS["trout"]=newTrout;
-
 		xUI.put(newXPS);
 		xUI.setStored("force");//変更フラグを立てる
 	}
@@ -7265,7 +7236,7 @@ this.getProp=function()
 	document.getElementById("timeShift").checked=xUI["timeShift"];
 // UI情報
 //	document.getElementById("prefToolBar").checked=xUI["toolBar"];
-	document.getElementById("prefUtilBar").checked=xUI["utilBar"];
+//	document.getElementById("prefUtilBar").checked=xUI["utilBar"];
 
 // シート情報
 //ページ長・カラム・フットスタンプ
@@ -7319,7 +7290,7 @@ this.putProp=function ()
 //読み込みタイムシフト
 	xUI["timeShift"]=document.getElementById("timeShift").checked;
 //UI情報
-	xUI["utilBar"]=document.getElementById("prefUtilBar").checked;
+//	xUI["utilBar"]=document.getElementById("prefUtilBar").checked;
 //viewMode
 	var newMode=(document.getElementById("vMCompact").checked)?"Compact":"WordProp";
 // シート情報

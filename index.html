@@ -111,12 +111,12 @@
 <ul>
 <!-- 一般ドキュメントメニュー インポート／エクスポートは別に-->
 
-<li><span id=pMbrowse-d class='pM pM-alt'>書類選択</span><A	id=pMbrowse
+<li id=pMbrowseMenu><span id=pMbrowse-d class='pM pM-alt'>書類選択</span><A	id=pMbrowse
 	href = 'javascript:void()'
 	onclick = 'xUI.sWitchPanel("File");return false;//myScenePref.open();document.getElementById("scnNewSheet").checked=true;return false;'
 	title="ドキュメントを選択"
->書類選択</A></li>
-<hr>
+>書類選択</A></li><hr>
+
 <li><span id=pMcheckin-d class='pM pM-alt'>作業開始</span><A id=pMcheckin
 	href = 'javascript:void()'
 	onclick = 'serviceAgent.checkinEntry();return false;'
@@ -595,17 +595,17 @@
 >softwareKB</A></li>
 <li><span id=pMtoolbar-d class='pM pM-alt'></span><A	id=pMtoolbar
 	HREF='javascript:void(0);'
-	onClick="document.getElementById(this.title).style.display=(document.getElementById(this.title).style.display=='none')?'inline':'none';xUI.adjustSpacer();"
+	onClick="document.getElementById('toolbarHeader').style.display=(document.getElementById('toolbarHeader').style.display=='none')?'inline':'none';xUI.adjustSpacer();"
 	title="toolbarHeader"
 >toolbarHeader</A></li>
 <li style="display:none;"><span id=pMairMenu-d class='pM pM-alt'></span><A	id=pMairMenu
 	HREF='javascript:void(0);'
-	onClick="document.getElementById(this.title).style.display=(document.getElementById(this.title).style.display=='none')?'inline':'none';"
+	onClick="document.getElementById('airMenu').style.display=(document.getElementById('airMenu').style.display=='none')?'inline':'none';"
 	title="airMenu"
 >-----airMenu</A></li>
 <li><span id=pMsheetHeader-d class='pM pM-alt'></span><A	id=pMsheetHeader
 	HREF='javascript:void(0);'
-	onClick="document.getElementById(this.title).style.display=(document.getElementById(this.title).style.display=='none')?'inline':'none';xUI.adjustSpacer();"
+	onClick="document.getElementById('sheetHeaderTable').style.display=(document.getElementById('sheetHeaderTable').style.display=='none')?'inline':'none';xUI.adjustSpacer();"
 	title="sheetHeaderTable"
 >sheetHeaderTable</A></li>
 <li><span id=pMcommandbar-d class='pM pM-alt'></span><A	id=pMcommandbar
@@ -714,9 +714,9 @@
 		class='iconButton iconButton-eject'
 		onclick="return backToDocumentList();"
 		title="戻る"
-	>
+	>	</button>
  </span><span id="severMenu" >
-	</button><button
+<button
 	id=ibMbrowse
 		class='iconButton iconButton-openX'
 		onclick='xUI.sWitchPanel("File");return false;'
@@ -771,7 +771,7 @@
  <span id="cgiMenu">
     <button
 	id=ibMimportDatas
-		class='iconButton  iconButton-openX'
+		class='iconButton  iconButton-imp'
 		onclick="if(document.getElementById('optionPanelData').style.display!='inline'){xUI.sWitchPanel('Data')};document.getElementById('loadShortcut').value='body';document.getElementById('myCurrentFile').click();"
 		title="file Open"
 	>
@@ -786,13 +786,13 @@
  <span id="airMenu">
     <button
 	id=ibMopenFS
-		class='iconButton  iconButton-openX'
+		class='iconButton  iconButton-imp'
 		onClick="fileBox.openFileDB()"
 		title="OPEN"
 	>
 	</button><button
 	id=ibMsaveFS
-		class='iconButton  iconButton-storeX'
+		class='iconButton  iconButton-exp'
 		onClick="fileBox.saveFile()"
 		title="save"
 	>
@@ -808,13 +808,13 @@
 <span id="psMenu">
     <button
 	id=ibMopenFSps
-		class='iconButton  iconButton-openX'
+		class='iconButton  iconButton-imp'
 		onClick="if(fileBox.openFileDB){fileBox.openFileDB()}"
 		title="OPEN"
 	>
 	</button><button
 	id=ibMsaveFSps
-		class='iconButton  iconButton-storeX'
+		class='iconButton  iconButton-exp'
 		onClick="if(fileBox.saveFile){fileBox.saveFile()}"
 		title="save"
 	>
@@ -897,6 +897,11 @@
     class='iconButton iconButton-zoom'
 	onclick="xUI.zoomSwitch();"
 	title='縮小表示'
+> </button><button
+	id=ibMpmn
+    class='iconButton iconButton-notice'
+	onclick="xUI.setUImode('next');sync('productStatus');"
+	title='モード切替'
 > </button>
 </span>
 
@@ -1265,7 +1270,7 @@ class=optionPanel id=optionPanelProductManagement
 <td rowspan=2>
 
 <select name=stageSelect id=stageSelect onChange='xUI.switchStage(this.value);'  style="width:100%;margin:0;padding:0;text-align:center;">
-					<OPTION style='font-color:reg;'>レイアウト
+					<OPTION>レイアウト
 					<OPTION>原画
 					<OPTION>演出検査
 				</select>
@@ -1296,6 +1301,7 @@ class=optionPanel id=optionPanelProductManagement
 <hr>
  <input type=checkbox
 	id=tbLock
+	style='display:none;'
 	title="toolbar-lock"
 	checked=false
 >
@@ -2426,9 +2432,10 @@ id=prefDfY VALUE="---" onChange="myPref.chgdfSIZE(this.id)">:<input type=text
 				<a id=prefLbTABspin href="javascript:" onClick='return myPref.chg("tabSpin")'>TABで確定</a>:<INPUT
 					TYPE=CheckBox NAME=tabSpin id=tabSpin checked><br />
 				<a id=prefLbNoSync href="javascript:" onClick='return myPref.chg("noSync")'>入力同期停止</a>:<INPUT
-					TYPE=CheckBox NAME=noSync id=noSync checked><br />
+					TYPE=CheckBox NAME=noSync id=noSync checked>
+				 <!--	<br />
 				<a id=prefLbUtilBar href="javascript:" onClick='return myPref.chg("prefUtilBar")'>開始時にツールバーを表示</a>:<INPUT
-					TYPE=CheckBox NAME=UtilBar id=prefUtilBar checked><br />
+					TYPE=CheckBox NAME=UtilBar id=prefUtilBar checked><br />-->
 				</TD>
 			</TR>
 		</TABLE>
@@ -2582,7 +2589,7 @@ trash="xUI.init(XPS)";
 > pushEntry !</button>
 <button 
  id='dbgChangeVO'
- onClick='xUI.viewOnly=(xUI.viewOnly)?false:true;return false;'
+ onClick='xUI.viewOnly=(xUI.viewOnly)?false:true;sync("productStatus");return false;'
 > viewOnly </button>
 <button 
  id='dbgChangeLocale'
@@ -3107,7 +3114,8 @@ $Id:$ index.html ,v 1.7 2016/12/24  support@nekomataya.info <br />
 <!-- </form> -->
      </div>
 <div id="scrollSpaceFt" class=\"screenSpace\"><br></div>
-<!-- 
+<!--
+
  <span id="backend_variables"
         data-organization_token="1xW4FYYQnmt73z7b7cMPGVx8"
         data-user_access_token="4c4958b693c391f26080a59de64b9078b03b3b8bc0e0ece3a407573bd4a00db4"
@@ -3122,6 +3130,5 @@ $Id:$ index.html ,v 1.7 2016/12/24  support@nekomataya.info <br />
         data-stage_id="0:Startup"
         data-job_id="2:レイアウト"
         data-status="Fixed"
-  ></span> -->
-
+  ></span>  -->
 </body></html>

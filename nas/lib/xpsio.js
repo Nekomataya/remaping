@@ -1183,6 +1183,29 @@ Xps.prototype.deleteTL = function (args) {
 
 };
 /**
+     Xpsの継続時間を変更する
+     引数：　int フレーム数
+     現在の値と同じ場合は何もしない
+     継続時間が減少する場合はシート後方から削除
+     増加の場合は""で初期化
+*/
+Xps.prototype.setDuration =function(myDuration){
+    if(! myDuration) return false;
+    if(myDuration != this.xpsTracks.duration){
+        var currentDuration = this.xpsTracks.duration;
+        for(var tid = 0 ; tid < this.xpsTracks.length ; tid ++){
+            this.xpsTracks[tid].length = myDuration;
+            if(myDuration > currentDuration){
+                for (var fid=currentDuration;fid<myDuration;fid++){
+                    this.xpsTracks[tid][fid]="";
+                }
+            }
+        }
+        this.xpsTracks.duration = myDuration;
+    }
+    return this.xpsTracks.duration;
+}
+/**
  * Xps.reInitBody(newTimelines:int,newDuration:int)
  *
  * Xps本体データのサイズを変更する。
@@ -1190,41 +1213,44 @@ Xps.prototype.deleteTL = function (args) {
  * 切り捨て分はなくなる。
  * 新たに出来たレコードは、ヌルストリングデータで埋める。
  * セクションキャッシュはすべて無効
+ トラック引数の値は旧メソッドと互換のためレイヤ数を指定する
+ トラック数を３(=[dialog,timing,comment])にするためには1を与える
+ 
  * @param newTimelines
  * @param newDuration
  * @returns {boolean}
  */
 Xps.prototype.reInitBody = function (newTimelines, newDuration) {
-    var oldWidth = this.xpsTracks.length;
+    var oldWidth = (this.xpsTracks.length - 2);
     if (!newTimelines) newTimelines = oldWidth;
     var oldDuration = this.duration();//this.xpsTracks.duration;
     if (!newDuration) newDuration = oldDuration;
-    if (newTimelines < 3 || newDuration <= 0) {
+    if (newTimelines < 1 || newDuration <= 0) {
         return false;
     }
     var widthUp    = (newTimelines > oldWidth)   ? 1 : (newTimelines == oldWidth)   ? 0 : -1 ;
     var durationUp = (newDuration > oldDuration) ? 1 : (newDuration == oldDuration) ? 0 : -1 ;
-    alert("reInitBody 新構造に合わせて変更中");
 //  トラックを先に編集　トラック数が増えた場合は空白ラベルで挿入　減っている場合は削除メソッドを発行
     if(widthUp > 0){
         var newTracks=[];
-        for (var tid = 0 ; tid < widthUp ; tid ++){
+        var widthUpCount = newTimelines-oldWidth;
+                        alert("add new "+widthUpCount+ ' tracks!');
+        for (var tid = 0 ; tid < widthUpCount ; tid ++){
             newTracks.push(new XpsTimelineTrack('','timing',this.xpsTracks,this.duration()));
         }
         this.xpsTracks.insertTrack(0,newTracks);
+        console.log(this.xpsTracks);
     }else if(widthUp < 0){
-        for (var tid = (this.xpsTracks.length-1);tid >= newTimelines;tid --){
+        for (var tid = (this.xpsTracks.length-2);tid >= (newTimelines-1);tid --){
             this.xpsTracks[tid].remove();
         }
     }
 //  トラック長を変更する
     if(durationUp != 0){
-        for(var tid = 0 ; tid < this.xpsTracks.length ; tid ++){
-            this.xpsTracks[tid].length = newDuration;
-        }
-             this.xpsTracks.duration = newDuration;
+        this.setDuration(newDuration);
     }
-    return true;
+     return true;
+
 if(this.xpsTracks.duration){
     
 }else{

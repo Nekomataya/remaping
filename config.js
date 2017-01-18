@@ -61,8 +61,8 @@
 	var headerLogo_url	="./help/index.html";試験中
     ロゴをクリックするとこちらのurlをひらきます。
  */
-	var headerLogo_url	="http://www.nekomataya.info/nekojyarashi/wiki.cgi?%a4%ea%a4%de%a4%d4%a4%f3%bc%e8%b0%b7%c0%e2%cc%c0%bd%f1";
-	var headerLogo_urlComment	="ヘルプとか";//ロゴのコメントです
+	var headerLogo_url	="http://www.nekomataya.info/remaping/";
+	var headerLogo_urlComment	="UATimesheetService";//ロゴのコメントです
 /**************************************************************************
  *	作品タイトルロゴ
  *		タイトル置換機能を使う場合は、useworkTitleの値を"true"にして、
@@ -72,7 +72,7 @@
  *
  *  タイトル,[画像ファイル(URL)],[ALTテキスト],[リンクURL],[コメントテキスト]
  *  こちらのタイトルは運用後にタイトルDBと換装の予定なのでデータ構造を調整すること
-
+タイトルDBはこちらを使用しないように変更中
  */
 	var useworkTitle=false;
 
@@ -103,6 +103,7 @@
 //	SheetBaseColor	="#cfcfd6"	;//銀鼠
 	SheetBaseColor	="#efefef"	;//白鼠
 //	SheetBaseColor	="#f8f8f8"	;//白練
+
 //選択セルの背景色(通常)
 	SelectedColor	="#ccccff"	;//青
 //選択セルの背景色(拡張入力モード)
@@ -324,21 +325,37 @@ var TSXEx	=false;
 var ViewMode="WordProp"	;	//UIモード  コンパクトCompat/ シートワープロ WordProp
 //var ViewMode="Compact"	;
 
-// ツール表示状態  *cookie[7]
 /*
+    Cookie[7]
+    ツール類の表示状態を保存
+
     ツール類の表示状態を記録する　ドキュメントファイルに記録するのでなく環境として記録
-ブール値を連結した文字列
+    ブール値を連結した文字列
     最初から順に　
-プルダウンメニュー
-ツールボックス
-ツールバー
-タイムシートヘッダ
-コマンドバー
-メモ欄
+
+    "pMenu"             ドロップダウンメニュー
+    "optionPanelLogin"  認証パネル
+    "toolbarHeader"     ツールバー
+    "pmcui"             作業メニュー
+    "sheetHeaderTable"  タイムシートヘッダ
+    "optionPanelUtl"　  コマンドバー
+    "optionPanelTbx"    ソフトウェアキーボード
+    "optionPanelDbg"    デバッグコンソール
+
     一般表示メニューの順と一致　メニューが変わると変更あり
 */
-var UIViewIdList=["pMenu","optionPanelTbx","toolbarHeader","sheetHeaderTable","optionPanelUtl","memo_Area"]
-var ToolView="101100";
+var UIViewIdList = [
+    "pMenu",
+    "optionPanelLogin",
+    "toolbarHeader",
+    "pmcui",
+    "sheetHeaderTable",
+    "optionPanelUtl",
+    "optionPanelTbx",
+    "optionPanelDbg"
+];
+var ToolView='10111100';
+
 //--
 /*
 ラピッドモードコマンド

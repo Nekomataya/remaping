@@ -914,7 +914,7 @@ console.log(decodeURIComponent(currentEntry.toString(0)));
 */
 localRepository.receiptEntry=function(stageName,jobName,callback,callback2){
     if( typeof stageName == 'undefined') return false;
-    var myStage = nas.Pm.stages.getStage(stageName) ;//ステージDBと照合　エントリが無い場合はエントリ登録
+    var myStage = nas.pm.stages.getStage(stageName) ;//ステージDBと照合　エントリが無い場合はエントリ登録
     /*  2106-12 の実装では省略して　エラー終了*/
     if(! myStage) return false;
     var currentEntry = this.entry(Xps.getIdentifier(xUI.XPS));
@@ -1239,9 +1239,9 @@ NetworkRepository.prototype.getList = function (force,callback){
                 //兼用カット情報はペンディング
                 var myCutToken = currentEpisode.cuts[1][cid].token;
 
-                var myCutLine  = (currentEpisode.cuts[1][cid].line_id)?currentEpisode.cuts[1][cid].line_id:(new XpsLine(nas.Pm.pmTemplate[0].line.toString())).toString(true);
-                var myCutStage = (currentEpisode.cuts[1][cid].stage_id)?currentEpisode.cuts[1][cid].stage_id:(new XpsStage(nas.Pm.pmTemplate[0].stages[0].toString())).toString(true);
-                var myCutJob   = (currentEpisode.cuts[1][cid].job_id)?currentEpisode.cuts[1][cid].job_id:(new XpsStage(nas.Pm.jobNames.members[0].toString())).toString(true);
+                var myCutLine  = (currentEpisode.cuts[1][cid].line_id)?currentEpisode.cuts[1][cid].line_id:(new XpsLine(nas.pm.pmTemplate[0].line.toString())).toString(true);
+                var myCutStage = (currentEpisode.cuts[1][cid].stage_id)?currentEpisode.cuts[1][cid].stage_id:(new XpsStage(nas.pm.pmTemplate[0].stages[0].toString())).toString(true);
+                var myCutJob   = (currentEpisode.cuts[1][cid].job_id)?currentEpisode.cuts[1][cid].job_id:(new XpsStage(nas.pm.jobNames.members[0].toString())).toString(true);
                 var myCutStatus= (currentEpisode.cuts[1][cid].status)?currentEpisode.cuts[1][cid].status:'Startup';
 
                 //管理情報が不足の場合は初期値で補う
@@ -1981,7 +1981,7 @@ if(true){
 NetworkRepository.prototype.receiptEntry=function(stageName,jobName,callback,callback2){
     if( typeof stageName == 'undefined') return false;
     if( typeof stageName == 'undefined') return false;
-    var myStage = nas.Pm.stages.getStage(stageName) ;//ステージDBと照合　エントリが無い場合はエントリ登録
+    var myStage = nas.pm.stages.getStage(stageName) ;//ステージDBと照合　エントリが無い場合はエントリ登録
     /*  2106-12 の実装では省略して　エラー終了*/
     if(! myStage) return false;
     var currentEntry = this.entry(Xps.getIdentifier(xUI.XPS));
@@ -2091,10 +2091,11 @@ serviceAgent = {
 */
 serviceAgent.init= function(){
     this.repositories=[localRepository]; //ローカルリポジトリを0番として加える
-    
-if(xUI.onSite){
-//    http://remaping.scivone-dev.com/cuts/eKToipkQJ3piHvmb1p6uNMTS/edit
-    var loc=String(window.location).split('/')
+    if(document.getElementById('backend_variables')){
+    //本番用
+//if(true){}
+    //テスト時はこちらで
+    var loc=String(window.location).split('/');//
     var myUrl = loc.splice(0,loc.length-3).join('/');
     
     this.servers.push(new ServiceNode("CURRENT",myUrl));
@@ -2462,7 +2463,7 @@ serviceAgent.checkinEntry=function(myJob,callback,callback2){
             //'新規作業を開始します。\n新しい作業名を入力してください。\nリストにない場合は、作業名を入力してください。';
             var msg2    = '<br> <input id=newJobName  type=text list=newJobList></input><datalist id=newJobList>';
 //            console.log(xUI.XPS.stage.name +","+ ((xUI.XPS.job.id == 0) ? 'primary':'*'));
-            var newJobList = nas.Pm.jobNames.getTemplate(xUI.XPS.stage.name,((xUI.XPS.job.id == 0) ? 'primary':'*'));//ここは後ほどリポジトリ個別のデータと差替
+            var newJobList = nas.pm.jobNames.getTemplate(xUI.XPS.stage.name,((xUI.XPS.job.id == 0) ? 'primary':'*'));//ここは後ほどリポジトリ個別のデータと差替
             for(var idx = 0 ; idx < newJobList.length;idx ++){
                 msg2   += '<option value="';
                 msg2   += newJobList[idx];
@@ -2541,9 +2542,9 @@ serviceAgent.addEntry = function(myXps){
 
         msg2 = msg2.replace(/%title%/,currentTitle);
         msg2 = msg2.replace(/%opus%/,currentOpus);
-        msg2 = msg2.replace(/%lineName%/,nas.Pm.pmTemplate[0].line);
-        msg2 = msg2.replace(/%stageName%/,nas.Pm.pmTemplate[0].stages[0]);
-        msg2 = msg2.replace(/%jobName%/,nas.Pm.jobNames.getTemplate(nas.Pm.pmTemplate[0].stages[0],"init")[0]);
+        msg2 = msg2.replace(/%lineName%/,nas.pm.pmTemplate[0].line);
+        msg2 = msg2.replace(/%stageName%/,nas.pm.pmTemplate[0].stages[0]);
+        msg2 = msg2.replace(/%jobName%/,nas.pm.jobNames.getTemplate(nas.pm.pmTemplate[0].stages[0],"init")[0]);
         nas.showModalDialog('confirm',[msg,msg2],title,false,function(){
             if(this.status>1){return};//cancel
             var newCutName  = document.getElementById('newCutName').value;
@@ -2604,8 +2605,8 @@ serviceAgent.receiptEntry=function(){
         break;
         case 'Fixed':
             //Fixedのみを処理
-            var newStageList = nas.Pm.stages.getTemplate(xUI.XPS.stage.name);//ここは後ほどリポジトリ個別のデータと差替
-            var newJobList   = nas.Pm.jobNames.getTemplate(xUI.XPS.stage.name);//ここは後ほどリポジトリ個別のデータと差替
+            var newStageList = nas.pm.stages.getTemplate(xUI.XPS.stage.name);
+            var newJobList   = nas.pm.jobNames.getTemplate(xUI.XPS.stage.name);
             var title = localize(nas.uiMsg.pMreseiptStage);//'作業検収 / 工程移行';
             var msg   = localize(nas.uiMsg.dmPMnewStage);//'現在の工程を閉じて次の工程を開きます。\n新しい工程名を入力してください。\nリストにない場合は、工程名を入力してください。';
             var msg2  = '<br><span>'+localize(nas.uiMsg.pMcurrentStage)+' : %currentStage% <br>'+localize(nas.uiMsg.pMnewStage)+' : '+ nas.incrStr(xUI.XPS.stage.id)
@@ -2654,7 +2655,7 @@ serviceAgent.updateNewJobName = function(stageName,type){
         targetList.removeChild(targetList.childNodes[i]);
     }
     if(!type) type='init';
-    var newJobList = nas.Pm.jobNames.getTemplate(stageName,type);//ここは後ほどリポジトリ個別データと差替
+    var newJobList = nas.pm.jobNames.getTemplate(stageName,type);
     for(var idx = 0 ; idx < newJobList.length;idx ++){
         var option = document.createElement('option');
         option.id = idx;
