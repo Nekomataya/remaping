@@ -1143,6 +1143,10 @@ div.application_status {
 /*	ドキュメントブラウザ関連
 
 */
+#issueSelector select{
+		width:100%;
+		height:42px;
+	}
 	.document-selector {
 	  height:75%;
 	}
@@ -1168,7 +1172,7 @@ div.application_status {
 }
 .documentPanelButton {
 	height:27px;
-	width:84px;
+	width:120px;
 	vertical-align:middle;
 }
 .documentPanelButton-search {

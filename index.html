@@ -15,11 +15,15 @@
 <script src="./lib/AIR/applicationupdater.swf" type="application/x-shockwave-flash"></script>
 <script src="./lib/AIR/HTMLHostLibrary.swf" type="application/x-shockwave-flash"></script>
 -->
+
 <script type="text/javascript" src="./lib/AIR/AIRAliases.js"></script>
 <!-- 以下　AIR動作時のデバッグライブラリ -->
-<!--
+<!-- 
+		<script type="text/javascript" src="./lib/AIR/AIRLocalizer.js"></script>
+		<script type="text/javascript" src="./lib/AIR/AIRMenuBuilder.js"></script>
 		<script type="text/javascript" src="./lib/AIR/AIRIntrospector.js"></script>
 		<script type="text/javascript" src="./lib/AIR/AIRSourceViewer.js"></script>
+
  -->
 <script src=./lib/jquery.js></script>
 <script src=./lib/jquery-ui.js></script>
@@ -2081,13 +2085,19 @@ onclick='nas.incrFCTonHTMLInput(document.getElementById("editTC"),"-(1)")'
 	disabled=true
 	onChange="function(){documentDepot.currentDocument=documentDepot.buildIdentifier();"
 ><br><input	type=text
-	id=statusInput
+	id=statusSelector
 	size=64
 	disabled=true
-	value='#:---,#---,#---,(status)'
+	value='#:--- / #--- / #--- /(status)'
+	onChange="function(){documentDepot.currentDocument=documentDepot.buildIdentifier();"
+><br>
+<select
+	id=issueSelector
+	disabled=true
 	onChange="function(){documentDepot.currentDocument=documentDepot.buildIdentifier();"
 >
-
+	<option value=-1>#:--- / #--- / #--- /(status)
+</select>
 <!--
 <span style="position:relative;height:24px;width:64px;"><button
     class='subControl subControl-incrS subControl-left-top'
@@ -2127,7 +2137,7 @@ onclick='nas.incrFCTonHTMLInput(document.getElementById("editTC"),"-(1)")'
  disabled=true
 >読出</button>
 
-
+<!--
 <button
  id='ddp-checkin'
  onClick='console.log( "open :" + decodeURIComponent(documentDepot.currentSelection));serviceAgent.getEntry(documentDepot.currentSelection,false,fucntion(){serviceAgent.checkinEntry();});'
@@ -2141,7 +2151,7 @@ onclick='nas.incrFCTonHTMLInput(document.getElementById("editTC"),"-(1)")'
  title="読み出して保留解除 xUI.setDocumentStatus('activate')"
  disabled=true
 >+ activate</button>
-
+-->
 
 <input type='text' id='ddp-searchtext' size=20 ><button
  id='ddp-search'

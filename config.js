@@ -137,7 +137,7 @@
 
 	TimeGuideWidth	    =36; //時間表示
 	ActionWidth         =20; //アクションシートの幅
-	DialogWidth	        =48; //台詞欄の幅
+	DialogWidth	        =36; //台詞欄の幅
 	SheetCellWidth	    =42; //通常のセルの表示幅
 	SheetCellNarrow	    =4;  //折りたたみ時のセルの表示幅
 	StillCellWidth	    =12; //静止画欄の幅

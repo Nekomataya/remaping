@@ -437,12 +437,15 @@ function selectSCi(sciName){
     document.getElementById("cutInput").value    = (cutNumber.length)? cutNumber:"(*--c#--*)";
     document.getElementById("timeInput").value     = (cutTime)? nas.Frm2FCT(nas.FCT2Frm(cutTime),3):"6 + 00 .";
 if(myEntry){
-    document.getElementById("statusInput").value = decodeURIComponent(myEntry.issues[myEntry.issues.length-1]);
+    document.getElementById("statusSelector").value = decodeURIComponent(myEntry.issues[myEntry.issues.length-1]);
+
+
+
 }else{
-    document.getElementById("statusInput").value = '#:---,#---,#---,(status)';
+    document.getElementById("statusSelector").value = '#:---//#---//#---//(status)';
 }
 //UIボタンの更新
-    var myInputText=["titleInput","opusInput","subtitleInput","cutInput","timeInput","statusInput"];
+    var myInputText=["titleInput","opusInput","subtitleInput","cutInput","timeInput","statusSelector"];
 
     if (document.getElementById("cutList").selectedIndex <= 0){}
     if (! myEntry){

@@ -146,6 +146,7 @@ XpsStage.prototype.toString=function(){
 function XpsLine (lineString){
     this.id   =[0]; this.name ='本線';// 又は'trunk'
     if(typeof lineString != 'undefined'){
+      lineString=String(lineString);
       if(lineString.match(/^[0-9]+$/)){lineString+=':-'}
       var prpArray=lineString.split(':');
       if(prpArray.length > 2){
@@ -176,7 +177,7 @@ function XpsStage (stageString){
       var prpArray=stageString.split(':');
       if(prpArray.length){
         if(prpArray[0].match(/^\d+$/)){prpArray.reverse();}
-        this.id=prpArray[1];
+        this.id=(String(prpArray[1]).match(/^\d$/))? prpArray[1]:0;
         this.name=prpArray[0];
       }
     }
@@ -2365,10 +2366,19 @@ Xps.parseIdentifier = function(myIdentifier){
     result.scene    = (sep.length > 1)? sep[1]:'';
     result.cut      = sep[0];
     result.time     = result.sci[0].time;
-    result.line     = new XpsLine(decodeURIComponent(dataArray[2]));
-    result.stage    = new XpsStage(decodeURIComponent(dataArray[3]));
-    result.job      = new XpsStage(decodeURIComponent(dataArray[4]));
-    result.currentStatus   = dataArray[5];//この情報はデコード不用
+    if(dataArray.length == 6){
+        result.line     = new XpsLine(decodeURIComponent(dataArray[2]));
+        result.stage    = new XpsStage(decodeURIComponent(dataArray[3]));
+        result.job      = new XpsStage(decodeURIComponent(dataArray[4]));
+        result.currentStatus   = dataArray[5];//この情報はデコード不用
+    }
+    /*ここでは初期化しない　undefined で戻す
+    {
+        result.line     = new XpsLine(nas.pm.pmTemplate[0].line);
+        result.stage    = new XpsStage(nas.pm.pmTemplate[0].stages[0]);
+        result.job      = new XpsStage(nas.pm.jobNames.getTemplate(nas.pm.pmTemplate[0].stages[0],"init")[0]);
+        result.currentStatus   = "Startup";        
+    }*/
     console.log(result);
     return result;
 }

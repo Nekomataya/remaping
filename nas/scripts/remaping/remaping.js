@@ -1224,9 +1224,9 @@ if(nas.colorAry2Str(nas.colorStr2Ary(document.getElementById(this.Select[0]+"_"+
 xUI.footstampClear    =function(){
 
     if (this.footstampColor){
-    var BGr=eval("0x"+this.footstampColor.substr(1,2));
-    var BGg=eval("0x"+this.footstampColor.substr(3,2));
-    var BGb=eval("0x"+this.footstampColor.substr(5,2));
+    var BGr=parseInt("0x"+this.footstampColor.substr(1,2),16);
+    var BGg=parseInt("0x"+this.footstampColor.substr(3,2),16);
+    var BGb=parseInt("0x"+this.footstampColor.substr(5,2),16);
 } else {BGr=0;BGg=0;BGb=0;};
     var BGColor="rgb("+BGr+", "+BGg+", "+BGb+")";
     if (! this.footMark) {return;};
@@ -4278,6 +4278,7 @@ XPS.readIN=function(datastream){
         元シートのデータを維持
         新シートに合わせる
     の二択となるので要注意
+    新規作成時にライン〜ステータス情報が欠落するのでそれは判定して補う
 */
 XPS.syncIdentifier =function(myIdentifier){
     var parseData   = Xps.parseIdentifier(myIdentifier);
@@ -4286,11 +4287,18 @@ XPS.syncIdentifier =function(myIdentifier){
     this.subtitle   = parseData.subtitle;
     this.scene      = parseData.scene;
     this.cut        = parseData.cut;
-    this.line       = parseData.line;
-    this.stage      = parseData.stage;
-    this.job        = parseData.job;
-    this.currentStatus = parseData.currentStatus;
-
+    if(parseData.currentStatus){
+        this.line       = parseData.line;
+        this.stage      = parseData.stage;
+        this.job        = parseData.job;
+        this.currentStatus = parseData.currentStatus;
+    }
+/*    {
+        this.line     = new XpsLine(nas.pm.pmTemplate[0].line);
+        this.stage    = new XpsStage(nas.pm.pmTemplate[0].stages[0]);
+        this.job      = new XpsStage(nas.pm.jobNames.getTemplate(nas.pm.pmTemplate[0].stages[0],"init")[0]);
+        this.currentStatus   = "Startup";     
+    }*/
 return parseData;
 }
 
@@ -4642,11 +4650,15 @@ document.getElementById('serverurl').innerHTML = serviceAgent.currentServer.url;
     　                   var myIdentifier = serviceAgent.currentRepository.getIdentifierByToken($("#backend_variables").attr("data-episode_token"));
                              myIdentifier = myIdentifier+'('+XPS.time()+')';
                          if(Xps.compareIdentifier(Xps.getIdentifier(XPS),myIdentifier) < 0){
-    　                       console.log('syncIdentifier');
+    　                       console.log('syncIdentifier new Entry');
     　                       console.log(Xps.getIdentifier(XPS));
     　                       console.log(myIdentifier);
     　                       console.log(Xps.compareIdentifier(Xps.getIdentifier(XPS),myIdentifier));
     　                       XPS.syncIdentifier(myIdentifier);
+        XPS.line     = new XpsLine(nas.pm.pmTemplate[0].line);
+        XPS.stage    = new XpsStage(nas.pm.pmTemplate[0].stages[0]);
+        XPS.job      = new XpsStage(nas.pm.jobNames.getTemplate(nas.pm.pmTemplate[0].stages[0],"init")[0]);
+        XPS.currentStatus   = "Startup";     
     　                       XPS.create_user=xUI.currentUser;
     　                       XPS.update_user=xUI.currentUser;
     　                       //var msg='新規カットです。カット番号を入力してください';
@@ -6250,73 +6262,71 @@ function ldCk(ckStrings){
 if (!navigator.cookieEnabled){return false;}
 
 	if(breakValue(document.cookie,"rEmaping")){
-		eval("rEmaping="+breakValue(document.cookie,"rEmaping"));
+		var rEmaping = JSON.parse(breakValue(document.cookie,"rEmaping"));
 	}else{
 		return false;
 	}
 //	[0] WindowSize
 	if (useCookie.WinSize){
-	if(rEmaping[0][0]) sheetAllWidth	=unescape(rEmaping[0][0]);
-	if(rEmaping[0][1]) sheetAllHeight	=rEmaping[0][1];
+	if(rEmaping[0][0]) sheetAllWidth	= unescape(rEmaping[0][0]);
+	if(rEmaping[0][1]) sheetAllHeight	= rEmaping[0][1];
 
-	if(rEmaping[0][2]) sheetHeadHeight	=rEmaping[0][2];
-	if(rEmaping[0][3]) sheetInfoWidth	=rEmaping[0][3];
+	if(rEmaping[0][2]) sheetHeadHeight	= rEmaping[0][2];
+	if(rEmaping[0][3]) sheetInfoWidth	= rEmaping[0][3];
 	}
 
 //	[1] XPSAttrib
 	if (useCookie.XPSAttrib){
-	if(rEmaping[1][0]) myTitle	=unescape(rEmaping[1][0]);
-	if(rEmaping[1][1]) mySubTitle	=unescape(rEmaping[1][1]);
-	if(rEmaping[1][2]) myOpus	=unescape(rEmaping[1][2]);
-	if(rEmaping[1][3]) myFrameRate	=unescape(rEmaping[1][3]);
-	if(rEmaping[1][4]) Sheet	=unescape(rEmaping[1][4]);
-	if(rEmaping[1][5]) SheetLayers	=unescape(rEmaping[1][5]);
+	if(rEmaping[1][0]) myTitle      = unescape(rEmaping[1][0]);
+	if(rEmaping[1][1]) mySubTitle   = unescape(rEmaping[1][1]);
+	if(rEmaping[1][2]) myOpus       = unescape(rEmaping[1][2]);
+	if(rEmaping[1][3]) myFrameRate  = unescape(rEmaping[1][3]);
+	if(rEmaping[1][4]) Sheet        = unescape(rEmaping[1][4]);
+	if(rEmaping[1][5]) SheetLayers  = unescape(rEmaping[1][5]);
 	}
 
 //	[2] UserName
 	if(useCookie.UserName){
 	if(rEmaping[2]) {
-						myName	=unescape(rEmaping[2]);
+						myName  = unescape(rEmaping[2]);
 //						if(xUI.currentUser) xUI.currentUser = new  nas.UserInfo(myName);
 	}
 	}
 
 //	[3] KeyOptions
 	if(useCookie.KeyOptions){
-	if(rEmaping[3][0]) BlankMethod	=unescape(rEmaping[3][0]);
-	if(rEmaping[3][1]) BlankPosition=unescape(rEmaping[3][1]);
-	if(rEmaping[3][2]) AEVersion	=unescape(rEmaping[3][2]);
-	if(rEmaping[3][3]) KEYMethod	=unescape(rEmaping[3][3]);
-	if(rEmaping[3][4]) TimeShift	=eval(rEmaping[3][4]);
-	if(rEmaping[3][5]) FootageFramerate=unescape(rEmaping[3][5]);
-	if(rEmaping[3][6]) defaultSIZE	=unescape(rEmaping[3][6].toString());
+	if(rEmaping[3][0]) BlankMethod      = unescape(rEmaping[3][0]);
+	if(rEmaping[3][1]) BlankPosition    = unescape(rEmaping[3][1]);
+	if(rEmaping[3][2]) AEVersion	    = unescape(rEmaping[3][2]);
+	if(rEmaping[3][3]) KEYMethod	    = unescape(rEmaping[3][3]);
+	if(rEmaping[3][4]) TimeShift	    = (rEmaping[3][4]=="true")?true:false;
+	if(rEmaping[3][5]) FootageFramerate = unescape(rEmaping[3][5]);
+	if(rEmaping[3][6]) defaultSIZE	    = unescape(rEmaping[3][6].toString());
 	}
 
 //	[4] SheetOptions
 	if(useCookie.SheetOptions){
-	if(rEmaping[4][0]) SpinValue 	=eval(rEmaping[4][0]);
-	if(rEmaping[4][1]) SpinSelect	=eval(rEmaping[4][1]);
-	if(rEmaping[4][2]) SheetLength	=eval(rEmaping[4][2]);
-	if(rEmaping[4][3]) SheetPageCols=eval(rEmaping[4][3]);
-	if(rEmaping[4][4]) FootMark	=eval(rEmaping[4][4]);
+	if(rEmaping[4][0]) SpinValue        =parseInt(rEmaping[4][0],10);
+	if(rEmaping[4][1]) SpinSelect       =(rEmaping[4][1]=="true")?true:false;
+	if(rEmaping[4][2]) SheetLength      =parseInt(rEmaping[4][2],10);
+	if(rEmaping[4][3]) SheetPageCols    =parseInt(rEmaping[4][3],10);
+	if(rEmaping[4][4]) FootMark         =(rEmaping[4][4]=="true")?true:false;
 	}
 
 //	[5] CounterType
 	if(useCookie.CounterType){
 	
-	if(rEmaping[5][0] instanceof Array) Counter0 =
-	[eval(rEmaping[5][0][0]),eval(rEmaping[5][0][1])];
-	if(rEmaping[5][1] instanceof Array) Counter1 =
-	[eval(rEmaping[5][1][0]),eval(rEmaping[5][1][1])];
+	if(rEmaping[5][0] instanceof Array) Counter0 =	[parseInt(rEmaping[5][0][0],10),parseInt(rEmaping[5][0][1],10)];
+	if(rEmaping[5][1] instanceof Array) Counter1 =	[parseInt(rEmaping[5][1][0],10),parseInt(rEmaping[5][1][1],10)];
 	}
 
 //	[6] UIOptions
 	if(useCookie.UIOptions){
-	if(rEmaping[6][0]) SLoop	=eval(rEmaping[6][0]);
-	if(rEmaping[6][1]) CLoop	=eval(rEmaping[6][1]);
-	if(rEmaping[6][2]) AutoScroll	=eval(rEmaping[6][2]);
-	if(rEmaping[6][3]) TabSpin	=eval(rEmaping[6][3]);
-	if(rEmaping[6][4]) ViewMode	=rEmaping[6][4];
+	if(rEmaping[6][0]) SLoop        = (rEmaping[6][0]=="true")?true:false;
+	if(rEmaping[6][1]) CLoop        = (rEmaping[6][1]=="true")?true:false;
+	if(rEmaping[6][2]) AutoScroll   = (rEmaping[6][2]=="true")?true:false;
+	if(rEmaping[6][3]) TabSpin      = (rEmaping[6][3]=="true")?true:false;
+	if(rEmaping[6][4]) ViewMode     = rEmaping[6][4];
 	}
 //	[7] UIView
 	if(useCookie.UIView){
@@ -8205,11 +8215,14 @@ if (dbg){
 	var dbg_info=new Array();
 if(typeof console == 'undefined'){
     console = {};
-    console.log=function(aRg){ dbg_action(aRg)};
+    console.log=function(aRg){ 
+        //dbg_action(aRg)
+        document.getElementById('msg_well').value += (aRg+"\n");
+    };
 }
 //でばぐ出力
 function dbgPut(aRg){
-	document.getElementById('msg_well').value += (aRg+"\n");
+//	document.getElementById('msg_well').value += (aRg+"\n");
 	if(console){console.log(aRg);}
 }
 function show_all_props(Obj){
@@ -8218,6 +8231,10 @@ function show_all_props(Obj){
 	dbgPut(Xalert);
 }
 function dbg_action(cmd){
+    if(appHost.platform=="AIR"){
+        document.getElementById('msg_well').value += (":"+aRg+"\n");
+        return;
+    }
 //エラー発生時はキャプチャしてそちらを表示する
 	var body="";
 	try{body=eval(cmd);}catch(er){body=er;};
