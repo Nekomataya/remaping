@@ -2100,7 +2100,7 @@ Xps.prototype.toString = function () {
  * @returns {boolean}
  */
 Xps.prototype.isSame = function (targetXps) {
-    var rejectRegEx = new RegExp("errorCode|errorMsg|mapfile|create_time|create_user|update_time|update_user|layers|xpsTracks|memo");
+    var rejectRegEx = new RegExp("errorCode|errorMsg|mapfile|create_time|create_user|update_time|update_user|layers|xpsTracks|memo|line|stage|job|currentStatus");
     /**
      * プロパティリスト
      */
@@ -2240,6 +2240,11 @@ Xps.getIdentifier=function(myXps){
     戻値:数値   -1  :no match
                 0   :title match
                 1   :title+cut match
+                2   :line match
+                3   :stage match
+                4   :job match
+                5   :status match
+                
 */
 Xps.compareIdentifier =function (target,destination){
     var tgtArray  = target.split('//');
@@ -2247,6 +2252,7 @@ Xps.compareIdentifier =function (target,destination){
     //title+opus
         if(tgtArray[0].split('[')[0]!=destArray[0].split('[')[0]){ return -1;}
     //Scene,Cut
+/*
         tgtSC = tgtArray[1].split('(')[0];
         dstSC = destArray[1].split('(')[0];
         
@@ -2257,7 +2263,17 @@ Xps.compareIdentifier =function (target,destination){
             dstSC =RegExp.$1+RegExp.$2;
         }
         if(tgtSC != dstSC){return 0;}
-        return 1;
+*/      
+        tgtSC = Xps.parseCutIF(Xps.parseSCi(tgtArray[1])[0].cut);
+        dstSC = Xps.parseCutIF(Xps.parseSCi(destArray[1])[0].cut);
+
+        if((tgtSC[0] != dstSC[0])||(tgtSC[1] != dstSC[1])){return 0;}
+        var result = 1;
+        for(var ix = 2;ix <= 5;ix++){
+            if(tgtArray[ix] != destArray[ix]) return result;
+            result ++;
+        }
+        return result;
 }
 /**
     識別子をパースする関数

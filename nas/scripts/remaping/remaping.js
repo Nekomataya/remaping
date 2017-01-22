@@ -22,16 +22,16 @@ function new_xUI(){
  */
     xUI.errorCode    =    0;
     xUI.errorMsg=[
-{en: "000:" ,ja: "000:最終処理にエラーはありません"},
-{en: "001:" ,ja: "001:データ長が0です。読み込みに失敗したかもしれません"},
-{en: "002:" ,ja: "002:どうもすみません。このデータは読めないみたいダ"},
-{en: "003:" ,ja: "003:読み取るデータがないのです。"},
-{en: "004:" ,ja: "004:変換すべきデータがありません。\n処理を中断します。"},
-{en: "005:" ,ja: "005:MAPデータがありません"},
-{en: "006:" ,ja: "006:ユーザキャンセル"},
-{en: "007:" ,ja: "007:範囲外の指定はできません"},
-{en: "008:" ,ja: "008:"},
-{en: "009:" ,ja: "009:想定外エラー"}
+{en: "000:There is no error in final processing" ,ja: "000:最終処理にエラーはありません"},
+{en: "001:Data length is 0. It may have failed to read" ,ja: "001:データ長が0です。読み込みに失敗したかもしれません"},
+{en: "002:sorry. I do not seem to be able to read this data" ,ja: "002:どうもすみません。このデータは読めないみたいダ"},
+{en: "003:There is no data to read" ,ja: "003:読み取るデータがないのです。"},
+{en: "004:There is no data to be converted.\n Processing is interrupted." ,ja: "004:変換すべきデータがありません。\n処理を中断します。"},
+{en: "005:MAP data is missing" ,ja: "005:MAPデータがありません"},
+{en: "006:User cancellation" ,ja: "006:ユーザキャンセル"},
+{en: "007:You can not specify outside the range" ,ja: "007:範囲外の指定はできません"},
+{en: "008:You can not update confirmed data" ,ja: "008:確定済データを更新することはできません"},
+{en: "009:Unexpected error" ,ja: "009:想定外エラー"}
 ];//    -localized
 
 //------- UIオブジェクト初期化前の未定義参照エラーを回避するためのダミーメソッド
@@ -54,10 +54,21 @@ function new_xUI(){
     browsing    
 
         各モード内で作業条件によって read onlyの状態がある
+
+        セッション溯及ステータスを実装　2017 01
+        sessionRetrace
+        制作管理上の作業セッションはジョブに　１：１で対応する
+        整数値で作業の状態を表す データを読み取った際にセットされる
+        その都度のドキュメントの保存状態から計算される値なのでデータ内での保存はされない
+    -1  所属セッションなし(初期値)
+    0   最新セッション
+    1~  数値分だけ遡ったセッション
+        
 */
 xUI.init    =function(XPS,referenceXps){
 
     this.XPS=XPS;                           //XPSを参照するオブジェクト
+    this.sessionRetrace = -1;               //管理上のジョブの状態
 /*
     以下の情報を　グローバルの変数でなくXPSから取得するように変更
 */
@@ -424,12 +435,12 @@ xUI.setUImode = function (myMode){
             　xUI.viewOnly = true;
 	$('#pmaui').hide();
     $("li#auiMenu").each(function(){$(this).hide()});
-            document.getElementById('pmcui-checkin').disabled    = ((xUI.XPS.currentStatus=='Startup')||(xUI.XPS.currentStatus=='Fixed'))? false:true;                
+            document.getElementById('pmcui-checkin').disabled    = ((xUI.sessionRetrace==0)&&((xUI.XPS.currentStatus=='Startup')||(xUI.XPS.currentStatus=='Fixed')))? false:true;                
             document.getElementById('pmcui-update').disabled     =true;
             document.getElementById('pmcui-checkout').disabled   = true;
             if (xUI.currentUser.sameAs(xUI.XPS.update_user)) {
             //ドキュメントオーナー
-            document.getElementById('pmcui-activate').disabled   = ((xUI.XPS.currentStatus=='Hold')||(xUI.XPS.currentStatus=='Fixed')||(xUI.XPS.currentStatus=='Active'))? false:true;
+            document.getElementById('pmcui-activate').disabled   = ((xUI.sessionRetrace==0)&&((xUI.XPS.currentStatus=='Hold')||(xUI.XPS.currentStatus=='Fixed')||(xUI.XPS.currentStatus=='Active')))? false:true;
             }else{
             //オーナー外
             document.getElementById('pmcui-activate').disabled   = (xUI.XPS.currentStatus=='Fixed')?false:true;
@@ -4553,7 +4564,7 @@ var tableBodyWidth=(
 
 /* この計算はシート表示初期化の際にのみ必要な計算なのでこちらに移動    07/07/08    */
 //シートを初期化
-    var TimeStart=new Date();
+if(dbg) var TimeStart=new Date();
 //UI上メモとトランジション表示をシート表示と切り分けること 関連処理注意
     sync("memo");
 if(xUI.viewMode=="Compact"){
@@ -4699,6 +4710,8 @@ document.getElementById('serverurl').innerHTML = serviceAgent.currentServer.url;
 window.setTimeout(function(){
     xUI.syncSheetCell(0,0,false);//シートグラフィック置換
     xUI.syncSheetCell(0,0,true);//referenceシートグラフィック置換
+//フットスタンプの再表示
+    if(xUI.footMark){xUI.footstampPaint()};
 },0);
 //書き出したら、セレクト関連をハイライト
 //
@@ -4757,14 +4770,6 @@ $("#optionPanelProg").dialog({
 });
 })();
 
-
-//表示内容の同期
-    sync("tool_");sync("info_");
-//フットスタンプの再表示
-    if(FootMark){xUI.footstampPaint()};
-    var TimeFinish=new Date();
-    var msg="ただいまのレンダリング所要時間は、およそ "+ Math.round((TimeFinish-TimeStart)/1000) +" 秒 でした。\n レイヤ数は、 "+XPS.xpsTracks.length+ "\nフレーム数は、"+XPS.duration()+"\tでした。\n\t現在のspin値は :"+xUI.spinValue;
-//    if(dbg) alert(msg);
 
 //ヘッドラインの初期化
     initToolbox();
@@ -4949,6 +4954,14 @@ if(dbg){
 //    $("#optionPanelTrackLabel").show();
 //    $("#optionPanelEfxTrack").show();
 //    $("#optionPanelTrsTrack").show();
+}
+//表示内容の同期
+    sync("tool_");sync("info_");
+
+if(dbg){
+    var TimeFinish=new Date();
+    var msg="ただいまのレンダリング所要時間は、およそ "+ Math.round((TimeFinish-TimeStart)/1000) +" 秒 でした。\n レイヤ数は、 "+XPS.xpsTracks.length+ "\nフレーム数は、"+XPS.duration()+"\tでした。\n\t現在のspin値は :"+xUI.spinValue;
+//    if(dbg) alert(msg);
 }
 /* ヘッダ高さの初期調整*/
 xUI.adjustSpacer();
@@ -5137,14 +5150,29 @@ server-info
 */
 function sync(prop){
 if (typeof prop == 'undefined') prop = 'NOP_';
-	switch (prop)
-	{
+	switch (prop){
+case    "historySelector":;
+    var currentIdentifier = Xps.getIdentifier(xUI.XPS);
+    var currentEntry = serviceAgent.currentRepository.entry(currentIdentifier);
+    var myContents="";
+        for (var ix=currentEntry.issues.length-1;ix >= 0;ix--){
+            if(Xps.compareIdentifier(currentEntry.issues[ix].identifier,currentIdentifier)>2){
+                myContents += '<option value="'+currentEntry.issues[ix].identifier+'"' ;
+                myContents += (Xps.compareIdentifier(currentEntry.issues[ix].identifier,currentIdentifier)>4)?
+                    'selected >':' >';
+                myContents += decodeURIComponent(currentEntry.issues[ix][2])+"/"+currentEntry.issues[ix][3];
+                myContents += '</option>'
+            }
+        }
+        document.getElementById('jobSelector').innerHTML=myContents;
+    break;
 case	"productStatus":;
 	document.getElementById('pmcui_line').innerHTML  = xUI.XPS.line.toString(true);
 	document.getElementById('pmcui_stage').innerHTML = xUI.XPS.stage.toString(true);
 	document.getElementById('pmcui_job').innerHTML   = xUI.XPS.job.toString(true);
 	document.getElementById('pmcui_status').innerHTML= xUI.XPS.currentStatus;
 	document.getElementById('pmcui_documentWriteable').innerHTML= (xUI.viewOnly)?'[編集不可]':'';
+	document.getElementById('pmcui_documentWriteable').innerHTML += String(xUI.sessionRetrace);
 	switch (xUI.uiMode){
 		case 'production':
 	document.getElementById('pmcui').style.backgroundColor = '#bbbbdd';

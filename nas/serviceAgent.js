@@ -360,6 +360,9 @@ Startup/Active/Hold/Fixed/Aborted (開始/作業/保留/終了/削除) の５態
 ライン拡張時は追加処理が必要
 */
 issuesSorter =function(val1,val2){
+/*    if(typeof val1 == 'undefined'){ return -1 } 
+    if(typeof val2 == 'undefined'){ return  1 } 
+*/
     return (parseInt(val1[0].split(':')[0]) * 10000 + parseInt(val1[1].split(':')[0]) * 100 + parseInt(val1[2].split(':')[0])) - ( parseInt(val2[0].split(':')[0]) * 10000 + parseInt(val2[1].split(':')[0]) * 100 + parseInt(val2[2].split(':')[0]));
 };
 
@@ -378,21 +381,27 @@ numSorter =function(val1,val2){ return (nas.parseNumber(val1) - nas.parseNumber(
     issues  管理情報 ４要素一次元配列 [line,stage,job,status]
     実際のデータファイルはissueごとに記録される
     いずれも URIエンコードされた状態で格納されているので画面表示の際は、デコードが必要
-
-    ネットワークリポジトリに接続する場合は以下のプロパティが追加される
+    issues には　オリジナル（初期化時）の識別子を保存する
+    ネットワークリポジトリに接続する場合は以下のプロパティが設定される
     listEntry.titleID   /string token
     listEntry.episodeID /string token
-    listEntry.iassues[#].cutID  /string token
-    listEntry.iassues[#].versionID  /string token
+    listEntry.issues[#].cutID  /string token
+    listEntry.issues[#].versionID  /string token
     
 */
 listEntry=function(myIdentifier){
-    var dataArray=myIdentifier.split("//");
+    this.dataInfo = Xps.parseIdentifier(myIdentifier);//dataInfoそのものを拡張すればプロパティが不要となる？
     this.parent;//初期化時にリポジトリへの参照を設定
-    this.product = dataArray[0];
-    this.sci     = dataArray[1];
-    this.issues  = [dataArray.slice(2)];
-    // this.status  = (dataArray[5])?dataArray[5]:'fixed';
+    this.product = encodeURIComponent(this.dataInfo.product.title)+"#"+encodeURIComponent(this.dataInfo.product.opus);
+    this.sci     = encodeURIComponent(this.dataInfo.sci[0].cut);
+    this.issues  = [[
+        encodeURIComponent(this.dataInfo.line.toString(true)),
+        encodeURIComponent(this.dataInfo.stage.toString(true)),
+        encodeURIComponent(this.dataInfo.job.toString(true)),
+        this.dataInfo.currentStatus
+    ]];
+    this.issues[0].identifier=myIdentifier;
+    this.issues[0].time=nas.FCT2Frm(this.dataInfo.sci[0].time);
 if(arguments.length>1) {
         this.titleID             = arguments[1];
         this.episodeID           = arguments[2];
@@ -414,10 +423,12 @@ listEntry.prototype.toString=function(myIndex){
         return [this.product,this.sci].join("//");
     }else{
         if(myIndex<this.issues.length){
-            return [this.product,this.sci].join("//")+"//"+ this.issues[this.issues.length - 1 - myIndex].join("//");
+            return this.issues[this.issues.length - 1 - myIndex].identifier;
+//            return [this.product,this.sci].join("//")+"//"+ this.issues[this.issues.length - 1 - myIndex].join("//");
             //この部分の手続はラインをまたぐと不正な値を戻すので要修正 11.23
         }else{
-            return [this.product,this.sci].join("//")+"//"+ this.issues[this.issues.length - 1].join("//");
+            return this.issues[this.issues.length - 1].identifier;
+//            return [this.product,this.sci].join("//")+"//"+ this.issues[this.issues.length - 1].join("//");
         }
     }
 }
@@ -435,16 +446,23 @@ listEntry.prototype.toString=function(myIndex){
     
 */
 listEntry.prototype.push=function(myIdentifier){
-    var dataArray=myIdentifier.split("//");
-    if(dataArray.length > 5){
-        if((dataArray[0]!=this.product)||(dataArray[1]!=this.sci)){return false;}
-        issueArray = dataArray.slice(2);
-    } else {
-        issueArray = dataArray;
+    if(Xps.compareIdentifier(this.issues[0].identifier,myIdentifier) < 1){return false;}
+    var dataInfo=Xps.parseIdentifier(myIdentifier);
+    if(dataInfo.currentStatus){
+        var issueArray = [
+            encodeURIComponent(dataInfo.line.toString(true)),
+            encodeURIComponent(dataInfo.stage.toString(true)),
+            encodeURIComponent(dataInfo.job.toString(true)),
+            dataInfo.currentStatus
+        ];
+    }else{
+        var issueArray = [];
     }
+        issueArray.identifier=myIdentifier;
+        issueArray.time=nas.FCT2Frm(dataInfo.sci[0].time);
     if(arguments.length>1) {
-        this.titleID         = arguments[1];
-        this.episodeID       = arguments[2];
+//        this.titleID         = arguments[1];
+//        this.episodeID       = arguments[2];
         issueArray.cutID     = arguments[3];
         issueArray.versionID = arguments[4];
     }
@@ -521,17 +539,27 @@ localRepository.getList=function(force,callback){
     for (var kid=0;kid<keyCount;kid++){
         if(localStorage.key(kid).indexOf(this.keyPrefix)==0){
             var currentIdentifier=localStorage.key(kid).slice(this.keyPrefix.length);
-            var entryArray=currentIdentifier.split( "//" );//分離して配列化
+/*  比較をXpsクラスメソッドに置き換えたので以下不用
+            var entryArray=currentIdentifier.split( "//" );//分離して配列化?
             var myEntry=entryArray.slice(0,2).join( "//" );//管理情報を外してSCi部のみ抽出
+
+            var entryInfo = Xps.parseIdentifier(currentIdentifier);//パーサで分解
+            var myEntry   = entryInfo.cut;
+ */
             var hasEntry = false;
             for (var eid=0 ; eid < this.entryList.length; eid ++){
                 //エントリリストにすでに登録されているか検査
-                if(myEntry == this.entryList[eid]){ currentEntryID = eid; hasEntry=true; break; }
+                //if(myEntry == this.entryList[eid]){ currentEntryID = eid; hasEntry=true; break; }
+                if(Xps.compareIdentifier(currentIdentifier,this.entryList[eid].toString()) == 1){
+                    currentEntryID = eid; hasEntry=true; break; 
+                }
             }
             if(hasEntry){
+                console.log("push issues :" + decodeURIComponent(currentIdentifier));
                 //登録済みプロダクトなのでエントリに管理情報を追加
-                this.entryList[currentEntryID].push(entryArray.slice(2).join("//"))
+                this.entryList[currentEntryID].push(currentIdentifier);
             }else{
+                console.log("add :: "+decodeURIComponent(currentIdentifier));
                 //未登録新規プロダクトなのでエントリ追加
                 var newEntry = new listEntry(currentIdentifier);
                 newEntry.parent = this;
@@ -557,11 +585,9 @@ localRepository.getList=function(force,callback){
 localRepository.pushEntry=function(myXps,callback,callback2){
 //クラスメソッドで識別子取得
     var myIdentifier=Xps.getIdentifier(myXps);
-//識別子に相当するアイテムがローカルストレージに存在するかどうかをチェック // 後ほど比較メソッドに置き換え　01・18
-    var targetArray = String(myIdentifier).split( '//' );//ここでは必ず6要素ある
-    var myProductUnit   = targetArray.slice(0,2).join( '//' );//プロダクトユニットを抽出(この時点でサブタイトルが評価値に含まれるので要注意)
+//識別子に相当するアイテムがローカルストレージ内に存在するかどうかを比較メソッドで検査
     for (var pid=0;pid<this.entryList.length;pid++){
-        if(this.entryList[pid].toString() == myProductUnit){
+        if(Xps.compareIdentifier(this.entryList[pid].toString(),myIdentifier) > 3){
             //既存のエントリが有るのでストレージとリストにpushして終了
             this.entryList[pid].push(myIdentifier);
             try{ localStorage.setItem(this.keyPrefix+myIdentifier,myXps.toString()) }catch(err){
@@ -576,11 +602,12 @@ localRepository.pushEntry=function(myXps,callback,callback2){
     try{
         this.entryList.push(new listEntry(myIdentifier)) 
     
-        console.log(this.entryList.length > this.maxEntry)
+        console.log(this.entryList.length +":entry/max: "+ this.maxEntry)
         if ( this.entryList.length > this.maxEntry ){
+            console.log("remove Item !")
 //設定制限値をオーバーしたら、ローカルストレージから最も古いエントリを削除
             for (var iid=0; iid < this.entryList[0].issues.length ; iid++ ){
-                localStorage.removeItem( this.keyPrefix + this.entryList[0].issues[iid])
+                localStorage.removeItem( this.keyPrefix + this.entryList[0].issues[iid].identifier );
             };
             this.entryList=this.entryList.slice(1);
         }
@@ -602,38 +629,49 @@ localRepository.pushEntry=function(myXps,callback,callback2){
 */
 localRepository.getEntry=function(myIdentifier,isReference,callback){
     if(typeof isReference == 'undefined'){isReference = false;}
+    //識別子をパース
+    var targetInfo = Xps.parseIdentifier(myIdentifier);//?
     //引数の識別子を分解して配列化
     var targetArray = String(myIdentifier).split( '//' );//引数検査は行わない
     var myProductUnit   = targetArray.slice(0,2).join( '//' );//引数の状況に関係なく設定
+
     var myIssue = false;
     var refIssue = false;
-    checkProduct:{
-        for (var ix=0;ix<this.entryList.length;ix++){
-            if ( myProductUnit == this.entryList[ix].toString() ) break checkProduct;
-        }
-        return false ;//プロダクトが無いので失敗
+
+    var myEntry = this.entry(myIdentifier);
+    if(! myEntry){
+        console.log("noProduct : "+ decodeURIComponent(myIdentifier));//プロダクトが無い
+        return false;
     }
-    if( targetArray.length == 2){
+    if(! targetInfo.currentStatus){
    //引数に管理部分がないので、最新のissueとして補う
-    var cx = this.entryList[ix].issues.length-1;//最新のissue
-    myIssue = this.entryList[ix].issues[cx];//配列で取得
-        targetArray=(myProductUnit.split('//')).concat(myIssue);//連結更新
+        var cx = myEntry.issues.length-1;//最新のissue
+        myIssue = myEntry.issues[cx];//配列で取得
     } else {
     //指定管理部分からissueを特定する 連結して文字列比較（後方から検索) リスト内に指定エントリがなければ失敗
-        var targetIssue =  targetArray.splice(2).join('//');//
         checkIssues:{
-            for (var cx = (this.entryList[ix].issues.length-1) ; cx <= 0 ;cx--){
-                if ( this.entryList[ix].issues[cx].join('//') == targetIssue ){ myIssue = this.entryList[ix].issues[cx]; break checkIssues;}
+            for (var cx = (myEntry.issues.length-1) ; cx >= 0 ;cx--){
+//                 console.log ( String(myEntry.issues[cx].identifier)+'\n'+String(myIdentifier));
+//                 console.log ( Xps.compareIdentifier(myEntry.issues[cx].identifier,myIdentifier))
+                if ( Xps.compareIdentifier(myEntry.issues[cx].identifier,myIdentifier) > 4){
+                    myIssue = myEntry.issues[cx];
+                    break checkIssues;
+                }
             }
-        if (! myIssue) return false;
+            if (! myIssue){
+                console.log( 'no target data :'+ decodeURIComponent(myIdentifier) );//ターゲットのデータが無い
+                return false;
+            }
         }
     }
     // 構成済みの情報を判定 (リファレンス置換 or 新規セッションか)
-//    if(targetArray.length == 6) isReference = true ;//指定データが既Fixなので自動的にリファレンス読み込みに移行 
-// ここの自動判定は削除
     // ソースデータ取得
-    console.log(targetArray.join( '//' ));
-    var myXpsSource=localStorage.getItem(this.keyPrefix+targetArray.join( '//' ));
+    console.log("readin XPS");
+    console.log(decodeURIComponent(myIssue.identifier));
+
+    var myXpsSource=localStorage.getItem(this.keyPrefix+myIssue.identifier);
+//識別子を再結合してもキーが得られない場合があるのでエントリから対応キーの引き出しを行う
+
     if(myXpsSource){
         if(isReference){            
         //データ単独で現在のセッションのリファレンスを置換
@@ -648,26 +686,25 @@ localRepository.getEntry=function(myIdentifier,isReference,callback){
            //自動設定されるリファレンスはあるか？
             //指定管理部分からissueを特定する 文字列化して比較
             if ( cx > 0 ){
-//                console.log(myIssue);
                 if(parseInt(decodeURIComponent(myIssue[2]).split(':')[0]) > 0 ){
                 //ジョブIDが１以上なので 単純に一つ前のissueを選択する
                 //必ず先行jobがある  =  通常処理の場合は先行JOBが存在するが、単データをエントリした場合そうでないケースがあるので対処が必要　2016 12 29
-                    refIssue = this.entryList[ix].issues[cx-1];
-                }else if(( myIssue[1].split(':')[0] > 0 )&&( myIssue[2].split(':')[0] > 0 )){
+                    refIssue = myEntry.issues[cx-1];
+                }else if(decodeURIComponent(myIssue[1]).split(':')[0] > 0 ){
                 //第2ステージ以降前方に向かって検索
                 //最初にステージIDが先行IDになった要素が参照すべき要素
-                    for(var xcx = cx;xcx >= 0 ; xcx --){
-                        if (parseInt(decodeURIComponent(this.entryList[ix].issues[xcx][1]).split(':')[0]) == (parseInt(decodeURIComponent(myIssue[1]).split(':')[0])-1)){
-                            refIssue = this.entryList[ix].issues[xcx];
+                    for(var xcx = cx-1 ;xcx >= 0 ; xcx --){
+                        if (parseInt(decodeURIComponent(myEntry.issues[xcx][1]).split(':')[0]) == (parseInt(decodeURIComponent(myIssue[1]).split(':')[0])-1)){
+                            refIssue = myEntry.issues[xcx];
                             break;
                         }
                     }
                 };//cx==0 のケースでは、デフォルトで参照すべき先行ジョブは無い
-              console.log('refIssue');
-              console.log(refIssue);
+//              console.log('refIssue');
+//              console.log(refIssue);
                 if(refIssue){
-                    console.log(this.keyPrefix + myProductUnit + '//' + refIssue.join('//'))
-                    myRefSource=localStorage.getItem(this.keyPrefix + myProductUnit + '//' + refIssue.join('//'));//リファレンスソースとる
+                    console.log(this.keyPrefix + refIssue.identifier);
+                    myRefSource=localStorage.getItem(this.keyPrefix + refIssue.identifier);//リファレンスソースとる
                     if(myRefSource){
                         console.log('myRefSource:');
                         console.log(myRefSource);
@@ -676,8 +713,9 @@ localRepository.getEntry=function(myIdentifier,isReference,callback){
                 }
             }
             console.log(documentDepot.currentReference);//単エントリで直前のエントリ取得不能の可能性あり
-             XPS.readIN(myXpsSource);xUI.init(XPS,documentDepot.currentReference);nas_Rmp_Init();
-             xUI.setUImode('browsing');sync("productStatus");
+            XPS.readIN(myXpsSource);xUI.init(XPS,documentDepot.currentReference);nas_Rmp_Init();
+            xUI.sessionRetrace = myEntry.issues.length-cx-1;
+            xUI.setUImode('browsing');sync("productStatus");
             //読込実行後にコールバックが存在したら実行
             if(callback instanceof Function){setTimeout(callback,100)};
 //             xUI.sWitchPanel('File');
@@ -695,20 +733,16 @@ localRepository.getEntry=function(myIdentifier,isReference,callback){
     直接要素編集をしても良い？
 */
 localRepository.removeEntry=function(myIdentifier){
-    var targetArray = String(myIdentifier).split( '//' );
-    var myProductUnit   = targetArray.slice(0,2).join( '//' );//プロダクトユニットを抽出
-    for (var pid=0;pid<this.entryList.length;pid++){
-        if(this.entryList[pid].toString() == myProductUnit){
+    var myEntry = this.entry(myIdentifier);
+    if(myEntry){
        //関連するエントリをすべて削除
-            for (var iid=0;iid<this.entryList[pid].issues.length;iid++){
-                localStorage.removeItem(this.keyPrefix+this.entryList[pid].toString(iid));
+            for (var iid=0;iid < myEntry.issues.length;iid++){
+                localStorage.removeItem(this.keyPrefix+myEntry.issues[iid].identifier);
             };
-            var removedEntry = this.entryList.splice(pid,1);
             this.getList();
-            return removedEntry;
-        }
-    }    
-}
+            return myEntry;
+    };    
+};
 /**
     識別子でエントリリストを検索して該当するリストエントリを返す操作をメソッド可
     issuesは受取先で評価
@@ -723,16 +757,6 @@ localRepository.entry=function(myIdentifier,opt){
         }
     }
     return null;        
-/**
-    var targetArray     = String(myIdentifier).split( '//' );
-    var myProductUnit   = targetArray.slice(0,2).join( '//' );//プロダクトユニットを抽出
-//    var myIssues        = if( targetArray.length == 2)? null :targetArray.slice(2,6).join( '//' );
-    for (var pid=0;pid<this.entryList.length;pid++){
-        if(this.entryList[pid].toString() == myProductUnit){
-                return this.entryList[pid]
-        }
-    }
-    return null;        */
 }
 /**
     以下、ステータス操作コマンドメソッド
@@ -1043,7 +1067,7 @@ NetworkRepository=function(repositoryName,myServer,repositoryURI){
 //    this.episode_token      = $('#server-info').attr('episode_token');
 //    this.cut_token          = $('#server-info').attr('cut_token');
 // ?idの代替なので要らないか？ 
-    this.curentIssue;
+    this.currentIssue;
     this.productsData=[];
     this.entryList=[];
 }
@@ -1087,10 +1111,6 @@ NetworkRepository.prototype.productsUpdate = function(callback){
                 //プロダクトデータを詳細データに「入替」
 		            if(result.token == serviceAgent.currentRepository.productsData[idx].token){
 		                serviceAgent.currentRepository.productsData[idx]=result ;
-		                
-/*        if( this.productsData[idx].description != encodeURIComponent(this.productsData[idx].name )){
-            this.productsData[idx].description  = encodeURIComponent(this.productsData[idx].name);
-        }*/
 		                break;
 		            }
 		    }
@@ -1149,16 +1169,12 @@ NetworkRepository.prototype.episodesUpdate = function (pid,callback) {
                                     var myToken = serviceAgent.currentRepository.productsData[idx].episodes[0][eid].token;
                                 if( result.token == myToken ){
                                     serviceAgent.currentRepository.productsData[idx].episodes[0][eid] = result;
-/*                                    if( this.productsData[idx].episodes[0][eid].description != encodeURIComponent(this.productsData[idx].episodes[0][eid].name )){
-                                        this.productsData[idx].episodes[0][eid].description  = encodeURIComponent(this.productsData[idx].episodes[0][eid].name);
-                                    }*/
                                     break searchLoop;
                                 };
                             }
                         }
                       }
                       serviceAgent.currentRepository.getSCi(myToken,callback);
-//                     this.getList();
                     },
                     beforeSend: serviceAgent.currentRepository.service.setHeader
                 });
@@ -1186,19 +1202,19 @@ NetworkRepository.prototype.getSCi = function (epToken,callback) {
                                     serviceAgent.currentRepository.productsData[idx].episodes[0][eid].cuts[1]=result;//cuts[1] としてアクセス
 /**
 エントリ取得タイミングで仮にcutのdescription を追加するcuts[1][cid].description を作成して調整に使用する
-本番ではデータ比較ありで、入替えを行う
-サーバ側のプロパティ優先
+本番ではデータ比較ありで、入替えを行う　サーバ側のプロパティ優先
 */
     var myIdentifier_opus =
         encodeURIComponent(serviceAgent.currentRepository.productsData[idx].name) +
         '#'+encodeURIComponent(serviceAgent.currentRepository.productsData[idx].episodes[0][eid].name) +
-        ((serviceAgent.currentRepository.productsData[idx].episodes[0][eid].description)?'['+encodeURIComponent(serviceAgent.currentRepository.productsData[idx].episodes[0][eid].description) +']':'');
-
+        ((serviceAgent.currentRepository.productsData[idx].episodes[0][eid].description)?
+            '['+encodeURIComponent(serviceAgent.currentRepository.productsData[idx].episodes[0][eid].description) +']':''
+        );
 for ( var cid = 0 ; cid < result.length ; cid ++){
     if(serviceAgent.currentRepository.productsData[idx].episodes[0][eid].cuts[0][cid].name == null){
         serviceAgent.currentRepository.productsData[idx].episodes[0][eid].cuts[0][cid].name = "";
         serviceAgent.currentRepository.productsData[idx].episodes[0][eid].cuts[1][cid].name = "";
-    }
+    };
     var myIdentifier_cut = encodeURIComponent(serviceAgent.currentRepository.productsData[idx].episodes[0][eid].cuts[0][cid].name);
     // デスクリプションに識別子がない場合のみissuen部の無い識別子を補う
     if(! serviceAgent.currentRepository.productsData[idx].episodes[0][eid].cuts[1][cid].description){
@@ -1211,7 +1227,7 @@ for ( var cid = 0 ; cid < result.length ; cid ++){
                             }
                         }
                       }
-                     serviceAgent.currentRepository.getList(false,callback);
+                      serviceAgent.currentRepository.getList(false,callback);
                     },
                     error : function(result){
                         console.log('getSCi ::');
@@ -1251,10 +1267,17 @@ NetworkRepository.prototype.getList = function (force,callback){
                 //兼用カット情報はペンディング
                 var myCutToken = currentEpisode.cuts[1][cid].token;
 
-                var myCutLine  = (currentEpisode.cuts[1][cid].line_id)?currentEpisode.cuts[1][cid].line_id:(new XpsLine(nas.pm.pmTemplate[0].line.toString())).toString(true);
-                var myCutStage = (currentEpisode.cuts[1][cid].stage_id)?currentEpisode.cuts[1][cid].stage_id:(new XpsStage(nas.pm.pmTemplate[0].stages[0].toString())).toString(true);
-                var myCutJob   = (currentEpisode.cuts[1][cid].job_id)?currentEpisode.cuts[1][cid].job_id:(new XpsStage(nas.pm.jobNames.members[0].toString())).toString(true);
-                var myCutStatus= (currentEpisode.cuts[1][cid].status)?currentEpisode.cuts[1][cid].status:'Startup';
+                var myCutLine  = (currentEpisode.cuts[1][cid].line_id)?
+                    currentEpisode.cuts[1][cid].line_id:
+                    (new XpsLine(nas.pm.pmTemplate[0].line.toString())).toString(true);
+                var myCutStage = (currentEpisode.cuts[1][cid].stage_id)?
+                    currentEpisode.cuts[1][cid].stage_id:
+                    (new XpsStage(nas.pm.pmTemplate[0].stages[0].toString())).toString(true);
+                var myCutJob   = (currentEpisode.cuts[1][cid].job_id)?
+                    currentEpisode.cuts[1][cid].job_id:
+                    (new XpsStage(nas.pm.jobNames.members[0].toString())).toString(true);
+                var myCutStatus= (currentEpisode.cuts[1][cid].status)?
+                    currentEpisode.cuts[1][cid].status:'Startup';
 
                 //管理情報が不足の場合は初期値で補う
 
@@ -1270,18 +1293,22 @@ NetworkRepository.prototype.getList = function (force,callback){
 
                 var currentEntry=serviceAgent.currentRepository.entry(currentEpisode.cuts[1][cid].description);//既登録エントリを確認
                 if(currentEntry){
+                    //データ構造上このパートが実行されるケースは無い…versionIDがつかない＝エラーエントリになる
                     currentEntry.push(entryArray.slice(2).join("//"),currentTitle.token,currentEpisode.token,myCutToken);
                 }else{
                     var newEntry = new listEntry(entryArray.join('//'),currentTitle.token,currentEpisode.token,myCutToken);
                     newEntry.parent = serviceAgent.currentRepository;
                     serviceAgent.currentRepository.entryList.push(newEntry);
+                    // エントリ配下にversionsがあればそのままpush
+
                     for (var vid = 0;vid<currentEpisode.cuts[1][cid].versions.length;vid++){
                         var myVersionString=(currentEpisode.cuts[1][cid].versions[vid].description)?
                             currentEpisode.cuts[1][cid].versions[vid].description:entryArray.join("//");
+//                        if(myVersionString.split('//').length < 6)
                         var myVersionToken = currentEpisode.cuts[1][cid].versions[vid].version_token;
-                        newEntry.push(myVersionString,currentTitle.token,currentEpisode.token,myCutToken,myVersionToken);
+                 console.log("push entry : "+ myVersionString);
+                       newEntry.push(myVersionString,currentTitle.token,currentEpisode.token,myCutToken,myVersionToken);
                     }
-                    
                 }
             }
         }
@@ -1311,67 +1338,45 @@ NetworkRepository.prototype.getList = function (force,callback){
 NetworkRepository.prototype.getEntry = function (myIdentifier,isReference,callback,callback2){
     console.log('getEntry ::' + decodeURIComponent(myIdentifier));
     if(typeof isReference == 'undefined'){isReference = false;}
-    //引数の識別子を分解して配列化
-    var targetArray     = String(myIdentifier).split( '//' );
-    var myProductUnit   = targetArray.slice(0,2).join('//');
+    var targetInfo     = Xps.parseIdentifier(myIdentifier);//?
+
     var myIssue = false;
     var refIssue = false;
-    checkProduct:{
-        for (var ix=0;ix<this.entryList.length;ix++){
-            if ( myProductUnit == this.entryList[ix].toString() ) break checkProduct;
-        }
-        return "noProduct :"+ myProductUnit;//プロダクトが無い
+
+    var myEntry = this.entry(myIdentifier);
+    if(! myEntry){
+        console.log("noProduct : "+ decodeURIComponent(myIdentifier));//プロダクトが無い
+        return false;
     }
-    if( targetArray.length == 2 ){
+    if(! targetInfo.currentStatus){
     //ターゲットに管理部分がないので、最新のissueとして補う
-        var cx = this.entryList[ix].issues.length-1;
-        myIssue = this.entryList[ix].issues[cx];
-        targetArray=(myProductUnit.split('//')).concat(myIssue);
+        var cx = myEntry.issues.length-1;
+        myIssue = myEntry.issues[cx];
     }else{
     //指定管理部分からissueを特定する 連結して比較（後方から検索)リスト内に指定エントリがなければ失敗
-        var targetIssue =  targetArray.splice(2).join('//');//
         checkIssues:{
-            for (var cx = (this.entryList[ix].issues.length-1) ; cx <= 0 ;cx--){
-                if ( this.entryList[ix].issues[cx].join('//') == targetIssue ){ myIssue = this.entryList[ix].issues[cx]; break checkIssues; }
+            for (var cx = (myEntry.issues.length-1) ; cx >= 0 ;cx--){
+                 console.log ( decodeURIComponent(myEntry.issues[cx].identifier)+'\n'+decodeURIComponent(myIdentifier))
+               if ( Xps.compareIdentifier(myEntry.issues[cx].identifier,myIdentifier) > 4){
+                    myIssue = myEntry.issues[cx];
+                    break checkIssues;
+                }
             }
-        if (! myIssue) return 'no target data'+ targetIssue ;//ターゲットのデータが無い
+            if (! myIssue){
+                console.log( 'no target data :'+ decodeURIComponent(myIdentifier) );//ターゲットのデータが無い
+                return false;
             }
+        }
     }
 // 構成済みの情報を判定 (リファレンス置換 or 新規セッションか)
 //      myIssue; これがカットへのポインタ episode.cuts配列のエントリ myIssue.url にアドレスあり
 //      urlプロパティが無い場合はid があるのでidからurlを作成する
-    if(typeof myIssue.versionID == 'undefined'){
+    if(! myIssue.versionID){
         var targetURL=(myIssue.url)? myIssue.url: '/api/v2/cuts/'+myIssue.cutID.toString()+'.json';
     }else{
         var targetURL=(myIssue.url)? myIssue.url: '/api/v2/cuts/'+myIssue.cutID.toString()+'/'+String(myIssue.versionID)+'.json';
+    console.log(targetURL);
     }
-/*
-    if( myIssue[2] > 0 ){
-        for (var cx=0;cx<this.entryList[ix].issues.length;cx++){
-            if (myIssue.join('//') == this.entryList[ix].issues[cx].join('//')){ myIssue = this.entryList[ix].issues[cx]; break; }
-        }
-    }else if( myIssue[1] > 0){
-        refIssue = [myIssue[0],myIsseu[1]-1,0];
-    }
-*/
-//    console.log(targetURL);  
-//    that=this;
-/**
-当初コールバック関数に取得したXpsContentsを渡す設計だったが、標準処理終了時に実行するリレー処理関数に変更
-以下はコンテンツを受け取るコードなので不使用
-if(callback instanceof Function){
-    $.ajax({
-        url: this.url + targetURL,
-        type: 'GET',
-        dataType: 'json',
-        success: function(result) {
-            var myContent=result.content;
-            callback(myContent);
-        },
-        beforeSend: this.service.setHeader
-    });
-}else
-*/
     if(! isReference){
 /**
 暫定補助情報フォーマット
@@ -1395,13 +1400,42 @@ if(callback instanceof Function){
             console.log(result);
         	var myContent=result.content;//XPSソーステキストをセット
 console.log("road :"+myContent);
-	        if(myContent) XPS.readIN(myContent);// contentがnullのケースがあるので排除
+	        if(myContent){
+	            XPS.readIN(myContent);// contentがnullのケースがあるので排除
 // 読み込んだXPSが識別子と異なっていた場合識別子優先で同期する
-            XPS.syncIdentifier(targetArray.join('//'));
-	        xUI.init(XPS);
-	        nas_Rmp_Init();
+                XPS.syncIdentifier(myIssue.identifier);
+	            xUI.init(XPS);
+	            if(myEntry.issues.length>1){
+                    documentDepot.currentReference = new Xps(5,144);//カラオブジェクトをあらかじめ新規作成
+                    //自動設定されるリファレンスはあるか？
+                    //指定管理部分からissueを特定する 文字列化して比較
+                    if ( cx > 0 ){
+                        if(parseInt(decodeURIComponent(myIssue[2]).split(':')[0]) > 0 ){
+                    //ジョブIDが１以上なので 単純に一つ前のissueを選択する
+                    //必ず先行jobがある  =  通常処理の場合は先行JOBが存在するが、単データをエントリした場合そうでないケースがあるので対処が必要　2016 12 29
+                        refIssue = myEntry.issues[cx-1];
+                        }else if(decodeURIComponent(myIssue[1]).split(':')[0] > 0 ){
+                    //第2ステージ以降前方に向かって検索
+                    //最初にステージIDが先行IDになった要素が参照すべき要素
+                            for(var xcx = cx-1 ;xcx >= 0 ; xcx --){
+                                if (parseInt(decodeURIComponent(myEntry.issues[xcx][1]).split(':')[0]) == (parseInt(decodeURIComponent(myIssue[1]).split(':')[0])-1)){
+                                    refIssue = myEntry.issues[xcx];
+                                    break;
+                                }
+                            }
+                        };//cx==0 のケースでは、デフォルトで参照すべき先行ジョブは無い
+	                }
+	                if(refIssue) serviceAgent.currentRepository.getEntry(refIssue.identifier,true);
+	            }
+	            nas_Rmp_Init();
+                xUI.sessionRetrace = myEntry.issues.length-cx-1;
+                xUI.setUImode('browsing');sync("productStatus");
 //            xUI.sWitchPanel('File');
-            if(callback instanceof Function) callback();
+                if(callback instanceof Function) callback();
+            }else{
+                console.log(result);
+                if(callback2 instanceof Function) callback2();               
+            }
         },
         error:function(result){
            console.log(result);
@@ -1467,9 +1501,10 @@ function(result){
 NetworkRepository.prototype.pushEntry = function (myXps,callback,callback2){
 //識別子取得
     var myIdentifier=Xps.getIdentifier(myXps,true);//６要素で取得
+    
 //識別子に相当するアイテムがリポジトリに存在するかどうかをチェック
-    var targetArray = String(myIdentifier).split( '//' );//ここでは必ず6要素ある
-    var myProductUnit   = targetArray.slice(0,2).join( '//' );//プロダクトユニットを抽出
+//    var targetArray = String(myIdentifier).split( '//' );//ここでは必ず6要素ある?
+//    var myProductUnit   = targetArray.slice(0,2).join( '//' );//プロダクトユニットを抽出?
 
     var currentEntry=this.entry(myIdentifier);
     if(currentEntry){
@@ -1634,6 +1669,13 @@ if(myMethod=='POST'){
 
 /**
     ネットワークリポジトリのエントリをアプリケーションから削除することは無いので以下のメソッドは不用？
+    APIにハードデリートとソフトデリートを出してもらう？
+    削除が可能な条件は
+    自分自身が開始した作業セッションであること && 最終の作業セッションであること
+    エントリをすべて削除するにはオプションが必要
+    識別子がフル（）
+    
+    
 */
 NetworkRepository.prototype.removeEntry = function (myIdentifier){
 //
@@ -2286,6 +2328,7 @@ serviceAgent.getRepsitoryIdByToken = function(myToken){
 */
 serviceAgent.getEntry = function(myIdentifier,isReference,callback){
     this.currentRepository.getEntry(myIdentifier,isReference,function(){
+        sync('historySelector');
         if (callback instanceof Function) callback();
     });
     if($("#optionPanelFile").is(':visible')) xUI.sWitchPanel('File');
@@ -2681,9 +2724,18 @@ serviceAgent.updateNewJobName = function(stageName,type){
 //    console.log(newJobList);
 }
 //Test code
-
+/**
+    サーバエージェントを経由してリポジトリにデータを送出する
+    保存データが最新のissueでない場合はリジェクト
+    この場合はデータの更新があるかないかは問わない()
+*/
 serviceAgent.pushEntry = function(myXps,callback,callback2){
     if (typeof myXps == 'undefined') myXps = xUI.XPS;
+    if((xUI.XPS === myXps)&&(xUI.sessionRetrace > 0)){
+        xUI.errorCode=8;//確定済データを更新することはできません
+        alert(localize(xUI.errorMsg[xUI.errorCode]));
+        return false;
+    }
     if (!( myXps instanceof Xps)){
         if(callback2 instanceof Function){callbakc2();}
         return false;

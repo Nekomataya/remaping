@@ -39,6 +39,12 @@ opusが同じでもリポジトリが異なる場合は、同エントリ内で�
     documentDepot.documents
 ドキュメントエントリーコレクション　サービスにアクセスするごとに更新
 ドキュメントエントリはカプセル化されたオブジェクトにする　SCi互換
+
+    currentProduct      　　現在ブラウザで選択中のプロダクト識別子
+    currentSelection        現在ブラウザで選択中のドキュメント識別子
+    currentDocument         現在編集対象のXps      (xUI.XPS の相互参照)
+    currentReferenece       現在表示対象の参考Xps  (xUI.referenceXPSの相互参照)
+として扱う
 */
 //エントリを格納するオブジェクト xUIを再初期化するのでこのコードが消える
 //良くない
@@ -146,7 +152,7 @@ documentDepot.updateDocumentSelector=function(myRegexp){
             myContents += '<option';
             myContents += ' value="';
             myContents += myDocuments[dlid];
-            myContents += (this.currentSelection == myDocuments[dlid])? '" selected>':'">';
+            myContents += (this.currentSelection == myDocuments[dlid])? '" selected >':'">';
             myContents += currentText;
         }
     }
@@ -178,7 +184,7 @@ documentDepot.getEntry =function(myIdentifier){
 /**
     現在のテキスト入力状態から識別子をビルドする。
 */
-documentDepot.buildIdentifier = function(){
+documentDepot.buildIdentifier = function(addStatus){
     var result="";
     result += (document.getElementById('titleInput').value.match(/\(\*/)) ? "no-Title":
         encodeURIComponent(document.getElementById('titleInput').value);
@@ -187,9 +193,18 @@ documentDepot.buildIdentifier = function(){
     result += (document.getElementById('subtitleInput').value.match(/\(\*/)) ? '':
         '['+encodeURIComponent(document.getElementById('opusInput').value)+']';
     result += '//';
-    result += (document.getElementById('cutInput').value.match(/\(\*/)) ? 's-c':
-        's-c'+encodeURIComponent(document.getElementById('cutInput').value);
-    result += '( '+nas.Frm2FCT(nas.FCT2Frm(document.getElementById('timeInput').value),3)+' )';
+    var mySCi = Xps.parseSCi(document.getElementById('cutInput').value+'('+document.getElementById('timeInput').value+')');
+    var myNames = Xps.parseCutIF(mySCi[0].cut);
+    result += (myNames.length > 1) ? 's'+encodeURIComponent(myNames[1])+'-c':'s-c';
+    result += encodeURIComponent(myNames[0]);
+    result += '( '+nas.Frm2FCT(nas.FCT2Frm(mySCi[0].time),3)+' )';
+    if(addStatus){
+        result +='//';
+        result +=document.getElementById('issueSelector').value;
+    }
+console.log("buildIdentifier::");
+console.log(mySCi[0].time);
+console.log(decodeURIComponent(result));
     return result;
 }
 /**
@@ -408,16 +423,31 @@ function setProduct(productName){
 function selectSCi(sciName){
     if(typeof sciName == "undefined"){
     //カット名が引数で与えられない場合はセレクタの値をとる
-    //セレクタの値の場合は、ドキュメントリストの対応するエントリを取得
+    //セレクタ値の場合は、ドキュメントリストの対応するエントリを取得
     //選択されたアイテムがない場合は、デフォルト値を使用してフリー要素を選択する
-    if ( document.getElementById("cutList").selectedIndex >= 0 ){
-        sciName = document.getElementById("cutList").options[document.getElementById("cutList").selectedIndex].text;
-        var myEntry = serviceAgent.currentRepository.entry(document.getElementById("cutList").options[document.getElementById("cutList").selectedIndex].value);
-    }else{
-        document.getElementById("cutList").selectedIndex = 0;
-        sciName = "(*--c#--*)";
-        var myEntry = null;
-    }
+        if ( document.getElementById("cutList").selectedIndex > 0 ){
+            /*  セレクタで選択したカットのissuesをドロップダウンリストで閲覧可能にする
+                デフォルト値は最終issue
+             */
+            var myEntry = serviceAgent.currentRepository.entry(document.getElementById("cutList").options[document.getElementById("cutList").selectedIndex].value);
+            var myContents="";
+//          for (var ix=myEntry.issues.length-1;ix>=0;ix--){}
+            for (var ix=0;ix<myEntry.issues.length;ix++){
+                myContents += '<option value="'+myEntry.issues[ix].join('//')+'"';
+                myContents += (ix==(myEntry.issues.length-1))? ' selected >':' >';
+                myContents += decodeURIComponent(myEntry.issues[ix].join('//'))+"</option>";
+            }
+            document.getElementById("issueSelector").innerHTML=myContents;
+            document.getElementById("issueSelector").disabled=false;
+
+            sciName = document.getElementById("cutList").options[document.getElementById("cutList").selectedIndex].text;
+        }else{
+            document.getElementById("issueSelector").innerHTML='<option value="" selected>#:---line//#:---stage//#:---job//(status)</option>';
+            document.getElementById("issueSelector").disabled=true;
+            document.getElementById("cutList").selectedIndex = 0;
+            sciName = "(*--c#--*)";
+            var myEntry = null;
+        }
     }
     sciName=sciName.toString();//明示的にストリング変換する
     if(sciName.length <= 0){return false;}
@@ -437,12 +467,12 @@ function selectSCi(sciName){
     document.getElementById("cutInput").value    = (cutNumber.length)? cutNumber:"(*--c#--*)";
     document.getElementById("timeInput").value     = (cutTime)? nas.Frm2FCT(nas.FCT2Frm(cutTime),3):"6 + 00 .";
 if(myEntry){
-    document.getElementById("statusSelector").value = decodeURIComponent(myEntry.issues[myEntry.issues.length-1]);
+    document.getElementById("statusSelector").value = decodeURIComponent(myEntry.issues[myEntry.issues.length-1].join('//'));
 
 
 
 }else{
-    document.getElementById("statusSelector").value = '#:---//#---//#---//(status)';
+    document.getElementById("statusSelector").value = '#:---line//#:---stage//#:---job//(status)';
 }
 //UIボタンの更新
     var myInputText=["titleInput","opusInput","subtitleInput","cutInput","timeInput","statusSelector"];

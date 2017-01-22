@@ -1273,10 +1273,8 @@ class=optionPanel id=optionPanelProductManagement
 <tr onDblClick ="return rewriteValueByEvt(event)" >
 <td rowspan=2>
 
-<select name=stageSelect id=stageSelect onChange='xUI.switchStage(this.value);'  style="width:100%;margin:0;padding:0;text-align:center;">
-					<OPTION>レイアウト
-					<OPTION>原画
-					<OPTION>演出検査
+<select name=jobSelector id=jobSelector onChange='xUI.switchStage(this.value);'  style="width:100%;margin:0;padding:0;text-align:center;">
+					<option>----</option>
 				</select>
 
 </td><td id=opus lock="yes" >
@@ -2057,46 +2055,47 @@ onclick='nas.incrFCTonHTMLInput(document.getElementById("editTC"),"-(1)")'
     size=32
 	disabled=true
     value='(*--title--*)'
-	onChange="documentDepot.currentDocument=documentDepot.buildIdentifier();"
+	onChange="documentDepot.currentSelection=documentDepot.buildIdentifier();"
 ><input type=text
     id = opusInput
     size=12
 	disabled=true
     value='(*--opus--*)'
-	onChange="documentDepot.currentDocument=documentDepot.buildIdentifier();"
+	onChange="documentDepot.currentSelection=documentDepot.buildIdentifier();"
 ><input type=text
     id = subtitleInput
     size=32
 	disabled=true
     value='(*--subtitle--*)'
-	onChange="documentDepot.currentDocument=documentDepot.buildIdentifier();"
+	onChange="documentDepot.currentSelection=documentDepot.buildIdentifier();"
 ><input	type=text
 	name=fileTest
 	id=cutInput
 	size=12
 	value='(*--c#--*)'
 	disabled=true
-	onChange="documentDepot.currentDocument=documentDepot.buildIdentifier();"
+	onChange="documentDepot.currentSelection=documentDepot.buildIdentifier();"
 ><input	type=text
 	name=fileTest
 	id=timeInput
 	size=8
 	value='3 + 0 .'
 	disabled=true
-	onChange="function(){documentDepot.currentDocument=documentDepot.buildIdentifier();"
+	onChange="documentDepot.currentSelection=documentDepot.buildIdentifier();"
 ><br><input	type=text
 	id=statusSelector
 	size=64
 	disabled=true
 	value='#:--- / #--- / #--- /(status)'
-	onChange="function(){documentDepot.currentDocument=documentDepot.buildIdentifier();"
+	onChange="documentDepot.currentSelection=documentDepot.buildIdentifier(true);"
 ><br>
 <select
 	id=issueSelector
 	disabled=true
-	onChange="function(){documentDepot.currentDocument=documentDepot.buildIdentifier();"
+	onChange="documentDepot.currentSelection=documentDepot.buildIdentifier(true);"
+	title='過去のバージョン'
 >
-	<option value=-1>#:--- / #--- / #--- /(status)
+	<option value=-1>#:---line//#:---stage//#:---job//(status)</option>
 </select>
 <!--
 <span style="position:relative;height:24px;width:64px;"><button
@@ -2131,7 +2130,7 @@ onclick='nas.incrFCTonHTMLInput(document.getElementById("editTC"),"-(1)")'
  disabled=true
 >参照</button><button
  id='ddp-readout'
- onClick='console.log("read :" + decodeURIComponent(documentDepot.currentSelection));serviceAgent.getEntry(documentDepot.currentSelection,false,function(){if(xUI.currentUser.sameAs(xUI.XPS.update_user)&&(xUI.XPS.currentStatus.match(/(Hold|Active)/))){serviceAgent.activateEntry();}});'
+ onClick='console.log("read :" + decodeURIComponent(documentDepot.currentSelection));serviceAgent.getEntry(documentDepot.currentSelection,false,function(){if(xUI.currentUser.sameAs(xUI.XPS.update_user)&&(xUI.XPS.currentStatus.match(/(Hold|Active)/))&&(xUI.sessionRetrace==0)){serviceAgent.activateEntry();}});'
  class='documentPanelButton'
  title="読出 readout"
  disabled=true
