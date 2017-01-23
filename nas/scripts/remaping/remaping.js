@@ -327,7 +327,7 @@ xUI.setDocumentStatus = function(myCommand){
                     xUI.XPS.currentStatus='Active';
                     xUI.viewOnly=false;
                     xUI.setUImode('production');
-                },function(result){console.log('fail checkin:');console.log(result);});
+                },function(result){if(dbg) console.log('fail checkin:');if(dbg) console.log(result);});
             }
         break;
         case 'deavtivate':
@@ -338,7 +338,7 @@ xUI.setDocumentStatus = function(myCommand){
                     xUI.XPS.currentStatus='Hold';
                     xUI.viewOnly=true;
                     xUI.setUImode('browsing');
-                },function(result){console.log('fail checkin:');console.log(result);});
+                },function(result){if(dbg) console.log('fail checkin:');if(dbg) console.log(result);});
             }
         break;
         case 'checkin':
@@ -354,7 +354,7 @@ xUI.setDocumentStatus = function(myCommand){
                     xUI.XPS.currentStatus='Active';
                     xUI.viewOnly=false;
                     xUI.setUImode('production');
-                },function(result){console.log('fail checkin:');console.log(result);});
+                },function(result){if(dbg) console.log('fail checkin:');if(dbg) console.log(result);});
             }
         break;
         case 'checkout':
@@ -365,7 +365,7 @@ xUI.setDocumentStatus = function(myCommand){
                     xUI.XPS.currentStatus='Fixed';
                     xUI.viewOnly=true;
                     xUI.setUImode('browsing');
-                },function(result){console.log('fail checkout:');console.log(result);});
+                },function(result){if(dbg) console.log('fail checkout:');if(dbg) console.log(result);});
             }
         break;
         case 'Startup':
@@ -852,7 +852,7 @@ xUI.reInitBody=function(newTimelines,newDuration){
     newXPS.readIN(XPS.toString());//別オブジェクトとして複製を作る
     //変更してputメソッドに渡す
     newXPS.reInitBody(newTimelines,newDuration);
-    console.log(newXPS);
+    if(dbg) console.log(newXPS);
     this.put(newXPS);
 };
 
@@ -970,12 +970,12 @@ break;
         }
 break;
     }
-//    console.log(target.id+":"+currentTrackOption+":"+myXps.xpsTracks[tgtID[1]][tgtID[0]]+":"+myStr);
+//    if(dbg) console.log(target.id+":"+currentTrackOption+":"+myXps.xpsTracks[tgtID[1]][tgtID[0]]+":"+myStr);
 //    target.innerHTML=myStr;
 target.innerHTML=myStr;
 if(this.showGraphic){
     if(sectionDraw){
-//        if(console) console.log([tgtID[1],mySection.startOffset()].join("_")+":"+formStr+":"+drawForm+":"+mySection.duration);
+//        if(console) if(dbg) console.log([tgtID[1],mySection.startOffset()].join("_")+":"+formStr+":"+drawForm+":"+mySection.duration);
         setTimeout(function(){xUI.Cgl.sectionDraw([tgtID[1],mySection.startOffset()].join("_"),drawForm,mySection.duration);},0);
     }else{
         setTimeout(function(){xUI.Cgl.draw(target.id,drawForm)},0);
@@ -1196,8 +1196,8 @@ xUI.spinHi = function(Method)
 //    必ず
 if(! document.getElementById(this.getid("Select"))){if(dbg) dbgPut(this.getid("Select")) ;return;};
 if(Method == "clear") {
-//    console.log('foooooooot');
-//    console.log(this.getid("Select"));
+//    if(dbg) console.log('foooooooot');
+//    if(dbg) console.log(this.getid("Select"));
     document.getElementById(this.getid("Select")).style.backgroundColor=this.footstampColor;
 }else{
     document.getElementById(this.getid("Select")).style.backgroundColor=this.selectedColor;
@@ -2746,7 +2746,7 @@ if((r>=0)&&(r<targetXps.xpsTracks.length)&&(f>=0)&&(f<targetXps.xpsTracks.durati
 this.drawSheetCell(sheetCell);//関数内でシートセルを書き換える
 //                var td=(targetXps.xpsTracks[r][f]=='')? "<br>" : this.trTd(targetXps.xpsTracks[r][f]) ;
 //        シートテーブルは必要があれば書き換え
-//                if (sheetCell.innerHTML!= td){ console.log(sheetCell.innerHTML);sheetCell.innerHTML=td;}
+//                if (sheetCell.innerHTML!= td){ if(dbg) console.log(sheetCell.innerHTML);sheetCell.innerHTML=td;}
             }
 //本体シート処理の際のみフットスタンプ更新
   if(! isReference){
@@ -4620,8 +4620,8 @@ if(false){
 //  ドキュメント表示更新
 　       document.getElementById('loginstatus_button').innerHTML = '=ONLINE=';
 　       document.getElementById('loginstatus_button').disabled  = true;
-　       $('#pMbrowseMenu').hide();
-　       $('#ibMbrowse').hide();//設定表示
+         document.getElementById('loginuser').innerHTML = xUI.currentUser.handle;
+         document.getElementById('serverurl').innerHTML = serviceAgent.currentServer.url;
 //  ユーザ情報取得
         xUI.currentUser = new nas.UserInfo(
             $("#backend_variables").attr("data-user_name") + ":" +
@@ -4635,21 +4635,38 @@ if(false){
 　           serviceAgent.currentStatus='online-single';
 document.getElementById('loginstatus_button').innerHTML='>ON-SITE<';
 document.getElementById('loginstatus_button').disabled=true;
-document.getElementById('loginuser').innerHTML = xUI.currentUser.handle;
-document.getElementById('serverurl').innerHTML = serviceAgent.currentServer.url;
+//document.getElementById('loginuser').innerHTML = xUI.currentUser.handle;
+//document.getElementById('serverurl').innerHTML = serviceAgent.currentServer.url;
+　       $('#pMbrowseMenu').hide();
+　       $('#ibMbrowse').hide();//設定表示
 
                  document.getElementById('toolbarHeader').style.backgroundColor='#ddbbbb';
-//既存ファイル
-　           if($("#backend_variables").attr("data-cut_token").length > 0){
+//サーバ既存エントリ
+            var isNewEntry = (startupXPS.length==0)? true:false;
+//この判定は初期化の際以外は不能別のパラメータを参照するか又は最初期化時の記録をする
+            　           
+             if($("#backend_variables").attr("data-cut_token").length){
     　           serviceAgent.currentServer.getRepositories(function(){
                      var RepID = serviceAgent.getRepsitoryIdByToken($("#backend_variables").attr("data-organization_token"));
     　               serviceAgent.switchRepository(RepID,function(){
     　                   var myIdentifier=serviceAgent.currentRepository.getIdentifierByToken($("#backend_variables").attr("data-cut_token"));
                          if(Xps.getIdentifier(XPS) != myIdentifier){
-    　                       console.log('syncIdentifier:');
-    　                       console.log(myIdentifier);
+    　                       if(dbg) console.log('syncIdentifier:');
+    　                       if(dbg) console.log(decodeURIComponent(myIdentifier));
 //    　                       xUI.sWitchPanel("Prog");
     　                       XPS.syncIdentifier(myIdentifier);
+//
+if(isNewEntry){
+if(dbg) console.log('new Entry init');
+        xUI.XPS.line     = new XpsLine(nas.pm.pmTemplate[0].line);
+        xUI.XPS.stage    = new XpsStage(nas.pm.pmTemplate[0].stages[0]);
+        xUI.XPS.job      = new XpsStage(nas.pm.jobNames.getTemplate(nas.pm.pmTemplate[0].stages[0],"init")[0]);
+        xUI.XPS.currentStatus   = "Startup";     
+        xUI.XPS.create_user=xUI.currentUser;
+        xUI.XPS.update_user=xUI.currentUser;
+        xUI.sessionRetrace=0;
+        xUI.setUImode('production');
+}    　                       
     　                       sync('info_');
     　                   }
     　               });
@@ -4659,19 +4676,20 @@ document.getElementById('serverurl').innerHTML = serviceAgent.currentServer.url;
     　           serviceAgent.currentServer.getRepositories(function(){
     　               serviceAgent.switchRepository(1,function(){
     　                   var myIdentifier = serviceAgent.currentRepository.getIdentifierByToken($("#backend_variables").attr("data-episode_token"));
-                             myIdentifier = myIdentifier+'('+XPS.time()+')';
-                         if(Xps.compareIdentifier(Xps.getIdentifier(XPS),myIdentifier) < 0){
-    　                       console.log('syncIdentifier new Entry');
-    　                       console.log(Xps.getIdentifier(XPS));
-    　                       console.log(myIdentifier);
-    　                       console.log(Xps.compareIdentifier(Xps.getIdentifier(XPS),myIdentifier));
+                             myIdentifier = myIdentifier+'('+xUI.XPS.time()+')';
+                         if(Xps.compareIdentifier(Xps.getIdentifier(xUI.XPS),myIdentifier) < 0){
+    　                       if(dbg) console.log('syncIdentifier new Entry');
+    　                       if(dbg) console.log(Xps.getIdentifier(xUI.XPS));
+    　                       if(dbg) console.log(myIdentifier);
+    　                       if(dbg) console.log(Xps.compareIdentifier(Xps.getIdentifier(xUI.XPS),myIdentifier));
     　                       XPS.syncIdentifier(myIdentifier);
-        XPS.line     = new XpsLine(nas.pm.pmTemplate[0].line);
-        XPS.stage    = new XpsStage(nas.pm.pmTemplate[0].stages[0]);
-        XPS.job      = new XpsStage(nas.pm.jobNames.getTemplate(nas.pm.pmTemplate[0].stages[0],"init")[0]);
-        XPS.currentStatus   = "Startup";     
-    　                       XPS.create_user=xUI.currentUser;
-    　                       XPS.update_user=xUI.currentUser;
+        xUI.XPS.line     = new XpsLine(nas.pm.pmTemplate[0].line);
+        xUI.XPS.stage    = new XpsStage(nas.pm.pmTemplate[0].stages[0]);
+        xUI.XPS.job      = new XpsStage(nas.pm.jobNames.getTemplate(nas.pm.pmTemplate[0].stages[0],"init")[0]);
+        xUI.XPS.currentStatus   = "Startup";     
+        xUI.XPS.create_user=xUI.currentUser;
+        xUI.XPS.update_user=xUI.currentUser;
+        xUI.sessionRetrace=0;
     　                       //var msg='新規カットです。カット番号を入力してください';
     　                       //var newCutName=prompt(msg);
     　                       //if()
@@ -5385,7 +5403,7 @@ if(XPS.xpsTracks[r].id.match(/^\s*$/)){
 	break;
 case	"info_":	;//セット変更
 	var syncset=
-["opus","title","subtitle","time","trin","trout","scene","update_user"];
+["opus","title","subtitle","time","trin","trout","scene","update_user","productStatus"];
 //["opus","title","subtitle","time","trin","trout","scene","update_user","memo"];
 	for(var n=0;n<syncset.length;n++){sync(syncset[n])};
 	break;
@@ -6227,7 +6245,7 @@ if(useCookie.UIView){
 };//記録チェックがない場合は元のデータを変更しない
 myCookie[7]=ToolView;
 
-	console.log(ToolView);
+	if(dbg) console.log(ToolView);
 	alert(myCookie);
 
 return myCookie;
@@ -6360,7 +6378,7 @@ if (!navigator.cookieEnabled){return false;}
 	if(useCookie.UIView){
 	if(rEmaping[7]) ToolView	=rEmaping[7];
 	}
-	console.log( ToolView)
+	if(dbg) console.log( ToolView)
 }
 //	クッキー削除
 function dlCk() {
@@ -7121,7 +7139,7 @@ this.chgMyName=function(newName)
 		        "\n\n ハンドル:メールアドレス / handle:uid@example.com ";
 		nas.showModalDialog("prompt",msg,localize(nas.uiMsg.userInfo),myName,function(){
 		    if(this.status==0){
-		        console.log(this.value)
+		        if(dbg) console.log(this.value)
 		        newName = this.value;
 		        myName = newName;
 		        xUI.currentUser = new nas.UserInfo(this.value);//objectc
@@ -8242,16 +8260,20 @@ this.close=function (){
 if (dbg){
 	var dbg_info=new Array();
 if(typeof console == 'undefined'){
-    console = {};
-    console.log=function(aRg){ 
+    if(air.Introspector){
+        console=air.Introspector.Console;
+    }else{
+        console = {};
+        if(dbg) console.log=function(aRg){ 
         //dbg_action(aRg)
-        document.getElementById('msg_well').value += (aRg+"\n");
-    };
+            document.getElementById('msg_well').value += (aRg+"\n");
+        };
+    }
 }
 //でばぐ出力
 function dbgPut(aRg){
 //	document.getElementById('msg_well').value += (aRg+"\n");
-	if(console){console.log(aRg);}
+	if(console){if(dbg) console.log(aRg);}
 }
 function show_all_props(Obj){
 	var Xalert="\n\tprops\n\n";
@@ -8267,7 +8289,7 @@ function dbg_action(cmd){
 	var body="";
 	try{body=eval(cmd);}catch(er){body=er;};
 	document.getElementById('msg_well').value += (body+'\n');
-//	if(console){console.log(body);}
+//	if(console){if(dbg) console.log(body);}
 
 }
 }

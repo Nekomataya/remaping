@@ -116,39 +116,39 @@
 <!-- 一般ドキュメントメニュー インポート／エクスポートは別に-->
 
 <li id=pMbrowseMenu><span id=pMbrowse-d class='pM pM-alt'>書類選択</span><A	id=pMbrowse
-	href = 'javascript:void()'
+	href = 'javascript:void(0)'
 	onclick = 'xUI.sWitchPanel("File");return false;//myScenePref.open();document.getElementById("scnNewSheet").checked=true;return false;'
 	title="ドキュメントを選択"
 >書類選択</A></li><hr>
 
 <li><span id=pMcheckin-d class='pM pM-alt'>作業開始</span><A id=pMcheckin
-	href = 'javascript:void()'
+	href = 'javascript:void(0)'
 	onclick = 'serviceAgent.checkinEntry();return false;'
 	title="作業開始"
 >作業開始</A></li>
 <li><span id=pMsave-d class='pM pM-alt'>作業保存</span><A	id=pMsave
-	href = 'javascript:void()'
+	href = 'javascript:void(0)'
 	onclick = 'serviceAgent.pushEntry(xUI.XPS,function(){xUI.setStored("current");sync();
 },function(){alert("error");});return false;'
 	title="作業保存"
 >作業保存</A></li>
 <li><span id=pMcheckout-d class='pM pM-alt'>作業終了</span><A	id=pMcheckout
-	href = 'javascript:void()'
+	href = 'javascript:void(0)'
 	onclick = 'serviceAgent.checkoutEntry();return false;'
 	title="作業終了"
 >作業終了</A></li>
 <li><span id=pMactivate-d class='pM pM-alt'>作業再開</span><A	id=pMactivate
-	href = 'javascript:void()'
+	href = 'javascript:void(0)'
 	onclick = 'serviceAgent.activateEntry();return false;'
 	title="作業再開"
 >作業再開</A></li>
 <li><span id=pMdeactivate-d class='pM pM-alt'>作業中断</span><A	id=pMdeactivate
-	href = 'javascript:void()'
+	href = 'javascript:void(0)'
 	onclick = 'serviceAgent.deactivateEntry();return false;'
 	title="作業中断"
 >作業中断</A></li>
 <li><span id=pMdiscard-d class='pM pM-alt'>編集破棄</span><A	id=pMdiscard
-	href = 'javascript:void()'
+	href = 'javascript:void(0)'
 	onclick = 'documentDepot.closeEntry();return false;'
 	title="編集を破棄して閉じる"
 >編集破棄</A></li>
@@ -156,34 +156,34 @@
 
 <!-- 制作管理用ドキュメントメニュー -->
 <li id=auiMenu><span id=pMnewEntry-d class='pM pM-alt'>新規カット</span><A	id=pMnewEntry
-	href = 'javascript:void()'
+	href = 'javascript:void(0)'
 	onclick = 'serviceAgent.addEntry();return false;'
 	title="新規カット追加"
 >新規カット</A></li>
 
 <li id=auiMenu><hr><span id=pMreceipt-d class='pM pM-alt'>作業検収</span><A	id=pMreceipt
-	href = 'javascript:void()'
+	href = 'javascript:void(0)'
 	onclick = 'serviceAgent.receiptEntry();return false;'
 	title="次の工程へ進める"
 >作業検収</A></li>
 <li id=auiMenu><span id=pMcheckoutF-d class='pM pM-alt'>作業終了</span><A	id=pMcheckoutF
-	href = 'javascript:void()'
+	href = 'javascript:void(0)'
 	onclick = ';return false;'
 	title="強制的に作業を閉じる"
 >作業終了</A></li>
 <li id=auiMenu><span id=pMabort-d class='pM pM-alt'>作業中断</span><A	id=pMabort
-	href = 'javascript:void()'
+	href = 'javascript:void(0)'
 	onclick = 'serviceAgent.abortEntry();return false;'
 	title="制作を中断する"
 >制作中断</A></li>
 
 <li id=auiMenu><hr><span id=pMbranch-d class='pM pM-alt'>ライン分岐</span><A	id=pMbranch
-	href = 'javascript:void()'
+	href = 'javascript:void(0)'
 	onclick = ';return false;'
 	title="制作ラインを分岐"
 >ライン分岐</A></li>
 <li id=auiMenu><span id=pMmerge-d class='pM pM-alt'>ラインマージ</span><A	id=pMmerge
-	href = 'javascript:void()'
+	href = 'javascript:void(0)'
 	onclick = ';return false;'
 	title=""
 >ラインマージ</A><hr></li>
@@ -235,37 +235,37 @@
 	title="読み込み書き出しパネルを開く"
 >Import/Export</a></li>
 <li><span id=pMdocInfo-d class='pM pM-alt'></span><A	id=pMdocInfo
-	href='javascript:void()'
+	href='javascript:void(0)'
 	onclick='myScenePref.open();return false;'
 	title="シート情報"
 >DocumentInfo</A></li>
 <li id=dMair><span id=pMexportHTMLair-d class='pM pM-alt'>Export as html</span><A	id=pMexportHTMLair
-	href='javascript:void()'
+	href='javascript:void(0)'
 	onclick='if(fileBox.storeOtherExtensionFile){fileBox.storeOtherExtensionFile(printHTML(true),"html")}else{alert("現在ファイルの操作ができません")};return false;'
 	title="表示用HTMLで書出し"
 >Export as html</A></li>
 <li id=dMair><span id=pMexportEPSair-d class='pM pM-alt'>Export as eps</span><A	id=pMexportEPSair
-	href='javascript:void()'
+	href='javascript:void(0)'
 	onclick='var prevChack=document.getElementById("exportCheck").checked;document.getElementById("exportCheck").checked=true;if(exportEps()){document.getElementById("exportCheck").checked=prevChack;};return false;'
 	title="epsで画像書出し（実験中）"
 >Export as eps</A></li>
 <li id=dMps><span id=pMexportHTMLps-d class='pM pM-alt'>Export as html</span><A	id=pMexportHTMLps
-	href='javascript:void()'
+	href='javascript:void(0)'
 	onclick='if(fileBox.storeOtherExtensionFile){fileBox.storeOtherExtensionFile(printHTML(true),"html")}else{alert("現在ファイルの操作ができません")};return false;'
 	title="表示用HTMLで書出し"
 >Export as html</A></li>
 <li id=dMps><span id=pMexportEPSps-d class='pM pM-alt'>Export as eps</span><A	id=pMexportEPSps
-	href='javascript:void()'
+	href='javascript:void(0)'
 	onclick='var prevChack=document.getElementById("exportCheck").checked;document.getElementById("exportCheck").checked=true;if(exportEps()){document.getElementById("exportCheck").checked=prevChack;};return false;'
 	title="epsで画像書出し（実験中）"
 >Export as eps</A></li>
 <li id=dMcgi><span id=pMexportHTML-d class='pM pM-alt'>Export as html</span><A	id=pMexportHTML
-	href='javascript:void()'
+	href='javascript:void(0)'
 	onclick='if(xUI.data_well.value=XPS.toString("html")){callEchoHTML()};return false;'
 	title="表示用HTMLをダウンロード"
 >Export as html</A></li>
 <li id=dMcgi><span id=pMexportEPS-d class='pM pM-alt'>Export as eps</span><A	id=pMexportEPS
-	href='javascript:void()'
+	href='javascript:void(0)'
 	onclick='var prevChack=document.getElementById("exportCheck").checked;document.getElementById("exportCheck").checked=true;if(exportEps()){document.getElementById("exportCheck").checked=prevChack;};return false;'
 	title="eps画像ダウンロード"
 >Export as eps</A></li>
@@ -2502,12 +2502,10 @@ XPS File Ver. :nasTIME-SHEET 0.5<br />
 <!--	デバッグパネル	-->
 <div class=optionPanel id=optionPanelDbg>
 <span>
-<form action="void()">
+<form action="void(0)">
 <!-- 
-/*
-やっと作るデバッグツール
-遅いよな 4・25
-*/
+debug console
+デバッグコンソール
 -->
 <textarea	
 	nema=msg_well
@@ -2616,7 +2614,7 @@ trash="xUI.init(XPS)";
 <div class=optionPanelFloat id=optionPanelTbx >
 <dl><dt style="background-color:#888888;">toolBox<a href="" class=minimize ><img src=images/ui/minimize.png alt="＿"></a><a href="" class=close ><img src=images/ui/close.png alt="×"></a></dt></dl>
 <div id=formTbx>
-<form name=test action="javascript:void();">
+<form name=test action="javascript:void(0);">
 <!-- りまぴん ツールボックスインターフェース-->
 <table
 	class=toolbox
@@ -2632,7 +2630,7 @@ trash="xUI.init(XPS)";
 			naem=single
 			id=single
 			checked=true
-		><a href="javascript:void()" onClick='return chg("single")'>single-click</a>
+		><a href="javascript:void(0)" onClick='return chg("single")'>single-click</a>
 <input	type=button
 	id=skbHome
 	name=home
@@ -3124,20 +3122,19 @@ $Id:$ index.html ,v 1.7 2016/12/24  support@nekomataya.info <br />
      </div>
 <div id="scrollSpaceFt" class=\"screenSpace\"><br></div>
 <!--
-
- <span id="backend_variables"
-        data-organization_token="1xW4FYYQnmt73z7b7cMPGVx8"
-        data-user_access_token="4c4958b693c391f26080a59de64b9078b03b3b8bc0e0ece3a407573bd4a00db4"
-        data-user_token="vwNW7gjUuHbbZZpkC7Y4ydBs"
-        data-user_name="Nekomataya-STG1"
+<span id="backend_variables"
+        data-organization_token="aZnVwPym4r7WSSGDHzFqMfko"
+        data-user_access_token="1816e7b7c411f7e7db17b76c8f8ddee1500f33f614b7a3a6620e5f5476e327f5"
+        data-user_token="aWWMWNKW2HAfuRHWANZKbETy"
+        data-user_name="ねこまたや"
         data-user_email="kiyo@nekomataya.info"
-        data-episode_id="1"
-        data-cut_id="1"　
-        data-episode_token="he4mzMCw4VWfqAgUiDaoko8Y"
-        data-cut_token="1C2hXYT5ApGP3RgACSenQdGK"
-        data-line_id="0:(primary)"
-        data-stage_id="0:Startup"
-        data-job_id="2:レイアウト"
-        data-status="Fixed"
-  ></span>  -->
+        data-episode_id="23"
+        data-cut_id="81"　
+        data-episode_token=""
+        data-cut_token=""
+        data-line_id=""
+        data-stage_id=""
+        data-job_id=""
+        data-status=""
+></span>  -->
 </body></html>

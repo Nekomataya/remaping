@@ -93,14 +93,14 @@ documentDepot.documentsUpdate=function(){
         if(hasProduct) {
             if(myProducts[idp].scis){
                 myProducts[idp].scis.push(myDocuments[idx]);
-//console.log("push:"+decodeURIComponent(myProducts[idp])+':'+decodeURIComponent(myDocuments[idx]));
+//if(dbg) console.log("push:"+decodeURIComponent(myProducts[idp])+':'+decodeURIComponent(myDocuments[idx]));
             }else{
-//console.log("skip!!:"+decodeURIComponent(myProducts[idp])+':'+decodeURIComponent(myDocuments[idx]));
+//if(dbg) console.log("skip!!:"+decodeURIComponent(myProducts[idp])+':'+decodeURIComponent(myDocuments[idx]));
             }
         }else{
             myProducts.push(currentProduct);
             myProducts[myProducts.length-1].scis=[myDocuments[idx]];
-//console.log("newEntry:"+decodeURIComponent(myProducts[idp])+':'+decodeURIComponent(myDocuments[idx]));
+//if(dbg) console.log("newEntry:"+decodeURIComponent(myProducts[idp])+':'+decodeURIComponent(myDocuments[idx]));
         }
     }
     this.products  = myProducts;
@@ -117,7 +117,7 @@ documentDepot.updateOpusSelector=function(myRegexp){
     myContents += '<option value="==newTitle==">（*-- no title selected --*）';
     for( var opid = 0 ; opid < this.products.length ; opid ++){
         var currentText = decodeURIComponent(this.products[opid]);
-//console.log(currentText);
+//if(dbg) console.log(currentText);
         if(currentText.match(myRegexp)){
             myContents += '<option';
             myContents += ' value="';
@@ -140,9 +140,9 @@ documentDepot.updateDocumentSelector=function(myRegexp){
         }
          continue;
     }
-//console.log()
+//if(dbg) console.log()
     myDocuments.sort(documentDepot.sortBySCi);
-    if(dbg) console.log(myDocuments);
+    if(dbg) if(dbg) console.log(myDocuments);
 //  正規表現フィルタで抽出してHTMLを組む
     var myContents = "";
     myContents += '<option value="==newDocument==">（*-- no document selected--*）';
@@ -202,9 +202,9 @@ documentDepot.buildIdentifier = function(addStatus){
         result +='//';
         result +=document.getElementById('issueSelector').value;
     }
-console.log("buildIdentifier::");
-console.log(mySCi[0].time);
-console.log(decodeURIComponent(result));
+if(dbg) console.log("buildIdentifier::");
+if(dbg) console.log(mySCi[0].time);
+if(dbg) console.log(decodeURIComponent(result));
     return result;
 }
 /**

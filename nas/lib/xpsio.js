@@ -1240,7 +1240,7 @@ Xps.prototype.reInitBody = function (newTimelines, newDuration) {
             newTracks.push(new XpsTimelineTrack('','timing',this.xpsTracks,this.duration()));
         }
         this.xpsTracks.insertTrack(0,newTracks);
-        console.log(this.xpsTracks);
+        if(dbg) console.log(this.xpsTracks);
     }else if(widthUp < 0){
         for (var tid = (this.xpsTracks.length-2);tid >= (newTimelines-1);tid --){
             this.xpsTracks[tid].remove();
@@ -2208,7 +2208,7 @@ Xps.sliceReplacementLabel = function (myStr){
     for(var idx=0;idx<testStrings.length;idx++){
         myResult += testStrings[idx]+" : "+Xps.sliceReplacementLabel(testStrings[idx])+"\n";
     }
-    console.log(myResult);
+    if(dbg) console.log(myResult);
 */
 /**
      Xpsオブジェクトから識別子を作成するクラスメソッド
@@ -2267,7 +2267,7 @@ Xps.compareIdentifier =function (target,destination){
         tgtSC = Xps.parseCutIF(Xps.parseSCi(tgtArray[1])[0].cut);
         dstSC = Xps.parseCutIF(Xps.parseSCi(destArray[1])[0].cut);
 
-        if((tgtSC[0] != dstSC[0])||(tgtSC[1] != dstSC[1])){return 0;}
+        if(tgtSC.join('') != dstSC.join('')){return 0;}
         var result = 1;
         for(var ix = 2;ix <= 5;ix++){
             if(tgtArray[ix] != destArray[ix]) return result;
@@ -2314,7 +2314,7 @@ Xps.parseProduct = function(productString){
     };
 }
 /** test
-    console.log (Xps.parseProduct('%E3%82%BF%E3%82%A4%E3%83%88%E3%83%AB%E6%9C%AA%E5%AE%9A#%E7%AC%AC%20%20%E8%A9%B1'));
+    if(dbg) console.log (Xps.parseProduct('%E3%82%BF%E3%82%A4%E3%83%88%E3%83%AB%E6%9C%AA%E5%AE%9A#%E7%AC%AC%20%20%E8%A9%B1'));
 */
 /**
     sci識別子をパースして返す
@@ -2337,7 +2337,7 @@ Xps.parseSCi = function(sciString){
     return result;
 }
 /** test
-    console.log (Xps.parseSCi('s-cC%23%20(16)/'));
+    if(dbg) console.log (Xps.parseSCi('s-cC%23%20(16)/'));
 */
 /**
 カット識別子をパースするメソッド
@@ -2362,7 +2362,7 @@ Xps.parseCutIF = function(myIdentifier){
     return result;
 }
 //test
-//    console.log(Xps.parseCutIF("s-c123"));
+//    if(dbg) console.log(Xps.parseCutIF("s-c123"));
 //
 /**
      データ識別子をパースして無名オブジェクトで戻す
@@ -2371,7 +2371,7 @@ Xps.parseCutIF = function(myIdentifier){
 Xps.parseIdentifier = function(myIdentifier){
     var dataArray = myIdentifier.split('//');
     var result={};
-    console.log(dataArray);
+    if(dbg) console.log(dataArray);
     result.product  = Xps.parseProduct(dataArray[0]);
     result.sci      = Xps.parseSCi(dataArray[1]);
     
@@ -2395,11 +2395,11 @@ Xps.parseIdentifier = function(myIdentifier){
         result.job      = new XpsStage(nas.pm.jobNames.getTemplate(nas.pm.pmTemplate[0].stages[0],"init")[0]);
         result.currentStatus   = "Startup";        
     }*/
-    console.log(result);
+    if(dbg) console.log(result);
     return result;
 }
 /** test 
-    console.log(Xps.parseIdentifier('%E3%81%8B%E3%81%A1%E3%81%8B%E3%81%A1%E5%B1%B1Max#%E3%81%8A%E3%81%9F%E3%82%81%E3%81%97//s-c10(72)//0%3A(%E6%9C%AC%E7%B7%9A)//0%3Alayout//0%3Ainit//Startup'));
+    if(dbg) console.log(Xps.parseIdentifier('%E3%81%8B%E3%81%A1%E3%81%8B%E3%81%A1%E5%B1%B1Max#%E3%81%8A%E3%81%9F%E3%82%81%E3%81%97//s-c10(72)//0%3A(%E6%9C%AC%E7%B7%9A)//0%3Alayout//0%3Ainit//Startup'));
 */
 /** =====================================機能分割 20130221
  * レイヤストリームを正規化する
