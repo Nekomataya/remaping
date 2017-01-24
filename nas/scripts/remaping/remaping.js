@@ -4673,6 +4673,7 @@ if(dbg) console.log('new Entry init');
     　                   }
     　                   xUI.setRetrace();
                          xUI.setUImode('production');
+    　                   sync('historySelector');
     　                   sync('info_');
     　               });
     　           });
@@ -4701,6 +4702,7 @@ if(dbg) console.log('new Entry init');
     　                       //if()
     　                   xUI.setRetrace();
                          xUI.setUImode('production');
+    　                   sync('historySelector');
     　                   sync('info_');
     　                   }
     　               });

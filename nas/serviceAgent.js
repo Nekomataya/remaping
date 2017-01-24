@@ -2154,8 +2154,9 @@ serviceAgent.init= function(){
     ;//本番用
 //if(true){}
     //テスト時はこちらで
-    var loc=String(window.location).split('/');//
-    var myUrl = loc.splice(0,loc.length-3).join('/');
+    var loc = String(window.location).split('/');//
+    var locOffset = (loc[loc.length-1]=="edit")? 3:2;
+    var myUrl = loc.splice(0,loc.length-locOffset).join('/');
 //    var myUrl = 'http://remaping.scivone-dev.com';
     this.servers.push(new ServiceNode("CURRENT",myUrl));
 }else{
