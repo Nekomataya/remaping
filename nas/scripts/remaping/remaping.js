@@ -4145,6 +4145,27 @@ xUI.Cgl.sectionDraw = function(myId,myForm,myDuration){
         }
     }
 }
+/**
+    sessionRetrace 値の更新
+    サーバ上での更新状態を示す
+    -1  リポジトリ上にエントリがない
+    0   最新のデータ作業続行可能
+    1~  番号が増えるに従って1世代づつ古いデータとなる
+*/
+xUI.setRetrace = function(){
+    var myIdentifier = Xps.getIdentifier(xUI.XPS);
+    var currentEntry = serviceAgent.currentRepository.entry(myIdentifier);
+    if(currentEntry){
+        for (var ix=0;ix<currentEntry.issues.length;ix++){
+            if(Xps.compareIdentifier(currentEntry.toString(ix),myIdentifier)>4){
+                xUI.sessionRetrace = ix;
+                break;
+            }
+        }
+    }else{
+        xUI.sessionRetrace = -1;    
+    }
+}
 
 //オブジェクト戻す
 return xUI;
@@ -4590,25 +4611,10 @@ document.getElementById("UIheader").style.display="none";
         SheetBody+= xUI.pageView(Page);
     };
 }
-//サーバーオンサイトであるか否かを判定して表示を更新
-/**     テスト用にダミー状態を作成   12.25 */
-if(false){
-    var tempElement = document.appendChild('span');
-    tempElement.id = "backend_variables";
 /*
-    tempElement.data-user_access_token = '';
-    tempElement.data-episode_id = '';
-    tempElement.data-cut_id = '';
-    tempElement.data-episode_token = '';
-    tempElement.data-cut_token = '';
-    tempElement.data-line_id = '';
-    tempElement.data-stage_id = '';
-    tempElement.data-job_id = '';
-    tempElement.data-status = '';    
-*/
-//    serviceAgent.currentServer.authorize(function(){$('#backend_variables').attr('user_access_token',$('#server-info').attr('oauth_token'));});
-}
-// エレメントが存在すればon-site
+サーバーオンサイトであるか否かを判定して表示を更新
+     エレメントが存在すればon-site
+ */
 　   if(document.getElementById('backend_variables')){
         if (serviceAgent.servers.length==1) {
             serviceAgent.switchService(0);
@@ -4643,8 +4649,7 @@ document.getElementById('loginstatus_button').disabled=true;
                  document.getElementById('toolbarHeader').style.backgroundColor='#ddbbbb';
 //サーバ既存エントリ
             var isNewEntry = (startupXPS.length==0)? true:false;
-//この判定は初期化の際以外は不能別のパラメータを参照するか又は最初期化時の記録をする
-            　           
+//サーバ上で作成したエントリの最初の1回目は送出データが空            　           
              if($("#backend_variables").attr("data-cut_token").length){
     　           serviceAgent.currentServer.getRepositories(function(){
                      var RepID = serviceAgent.getRepsitoryIdByToken($("#backend_variables").attr("data-organization_token"));
@@ -4664,20 +4669,22 @@ if(dbg) console.log('new Entry init');
         xUI.XPS.currentStatus   = "Startup";     
         xUI.XPS.create_user=xUI.currentUser;
         xUI.XPS.update_user=xUI.currentUser;
-        xUI.sessionRetrace=0;
-        xUI.setUImode('production');
-}    　                       
-    　                       sync('info_');
+}
     　                   }
+    　                   xUI.setRetrace();
+                         xUI.setUImode('production');
+    　                   sync('info_');
     　               });
     　           });
     　       }else{
-//ドキュメント新規作成    　           
+//ドキュメント新規作成
+/*    旧タイプの処理この状態には入らないはずなので順次削除      */
     　           serviceAgent.currentServer.getRepositories(function(){
     　               serviceAgent.switchRepository(1,function(){
     　                   var myIdentifier = serviceAgent.currentRepository.getIdentifierByToken($("#backend_variables").attr("data-episode_token"));
-                             myIdentifier = myIdentifier+'('+xUI.XPS.time()+')';
-                         if(Xps.compareIdentifier(Xps.getIdentifier(xUI.XPS),myIdentifier) < 0){
+                          myIdentifier = myIdentifier+'('+xUI.XPS.time()+')';
+                          var tarceValue = Xps.compareIdentifier(Xps.getIdentifier(xUI.XPS),myIdentifier);
+                         if( traceValue < 0){
     　                       if(dbg) console.log('syncIdentifier new Entry');
     　                       if(dbg) console.log(Xps.getIdentifier(xUI.XPS));
     　                       if(dbg) console.log(myIdentifier);
@@ -4689,11 +4696,12 @@ if(dbg) console.log('new Entry init');
         xUI.XPS.currentStatus   = "Startup";     
         xUI.XPS.create_user=xUI.currentUser;
         xUI.XPS.update_user=xUI.currentUser;
-        xUI.sessionRetrace=0;
     　                       //var msg='新規カットです。カット番号を入力してください';
     　                       //var newCutName=prompt(msg);
     　                       //if()
-    　                       sync('info_');
+    　                   xUI.setRetrace();
+                         xUI.setUImode('production');
+    　                   sync('info_');
     　                   }
     　               });
     　           });
@@ -4705,6 +4713,7 @@ if(dbg) console.log('new Entry init');
     　       });
 
 　       }
+//if(serviceAgent.currentRepository.entry(Xps.getIdentifier(xUI.XPS))),
 　   }else{
 //オフサイトモード
 //オンサイト専用UIを隠す
@@ -5445,7 +5454,7 @@ default	:	if(dbg){dbgPut(": "+prop+" :ソレは知らないプロパティなの
 	}
 //windowTitle及び保存処理系は無条件で変更
 	if(xUI.init){
-		var winTitle=XPS["cut"].toString();//これは修正予定1/9
+		var winTitle=xUI.XPS.getIdentifier();//これは修正予定1/9
 		if((appHost.platform == "AIR") && (fileBox.currentFile)){winTitle = fileBox.currentFile.name}
 		winTitle +=(xUI.isStored())?"":" *";
 		if(document.title!=winTitle){document.title=winTitle};//違ってるときのみ書き直す

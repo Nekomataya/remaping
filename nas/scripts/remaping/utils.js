@@ -805,8 +805,8 @@ var myTop=(myRange[1]<0)?origPoint[1]+myRange[1]:origPoint[1];
 	効果 WXP/透過光/FI/FO/OL/FLT　通常/加算/SC/覆焼/乗算/焼込/差分
 	種別の編集は行わない
 */
-reNameLabel=function(TimelineId)
-{
+reNameLabel=function(TimelineId) {
+	if(xUI.viewOnly){return false;};
 	var newNames=new Array();
 	var msg=localize(nas.uiMsg.dmTLlabelRename);//タイムラインラベルを変更します
 	if(!TimelineId){
