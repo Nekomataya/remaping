@@ -5172,17 +5172,31 @@ if (typeof prop == 'undefined') prop = 'NOP_';
 case    "historySelector":;
     var currentIdentifier = Xps.getIdentifier(xUI.XPS);
     var currentEntry = serviceAgent.currentRepository.entry(currentIdentifier);
-    var myContents="";
+    var myContentsStage='';var stid=-1;
+    var myContentsJob='';
         for (var ix=currentEntry.issues.length-1;ix >= 0;ix--){
-            if(Xps.compareIdentifier(currentEntry.issues[ix].identifier,currentIdentifier)>2){
-                myContents += '<option value="'+currentEntry.issues[ix].identifier+'"' ;
-                myContents += (Xps.compareIdentifier(currentEntry.issues[ix].identifier,currentIdentifier)>4)?
-                    'selected >':' >';
-                myContents += decodeURIComponent(currentEntry.issues[ix][2])+"/"+currentEntry.issues[ix][3];
-                myContents += '</option>'
+            var matchResult=Xps.compareIdentifier(currentEntry.issues[ix].identifier,currentIdentifier);
+            if(decodeURIComponent(currentEntry.issues[ix][2]).split(":")[0] == 0){stid=ix-1}
+            if((stid == ix)||(ix == (currentEntry.issues.length-1))){
+                myContentsStage += '<li><a id="'+currentEntry.issues[ix].identifier+'" ' ;
+                myContentsStage += 'title="'+decodeURIComponent(currentEntry.issues[ix].identifier)+'" ';
+                myContentsStage += 'href="javascript:void(0)" ';
+                myContentsStage += 'onclick="serviceAgent.getEntry(this.id)">';
+                myContentsStage += (matchResult>4)? '*':' ';
+                myContentsStage += decodeURIComponent(currentEntry.issues[ix][0])+"//"+decodeURIComponent(currentEntry.issues[ix][1]);
+                myContentsStage += '</a></li>'
             }
+            if(matchResult>2){
+                myContentsJob += '<option value="'+currentEntry.issues[ix].identifier+'"' ;
+                myContentsJob += (matchResult>4)?
+                    'selected >':' >';
+                myContentsJob += decodeURIComponent(currentEntry.issues[ix][2])+"/"+currentEntry.issues[ix][3];
+                myContentsJob += '</option>'
+            }
+            
         }
-        document.getElementById('jobSelector').innerHTML=myContents;
+        document.getElementById('pMstageList').innerHTML=myContentsStage;
+        document.getElementById('jobSelector').innerHTML=myContentsJob;
     break;
 case	"productStatus":;
 	document.getElementById('pmcui_line').innerHTML  = xUI.XPS.line.toString(true);
@@ -6246,7 +6260,7 @@ if(useCookie.UIView){
 myCookie[7]=ToolView;
 
 	if(dbg) console.log(ToolView);
-	alert(myCookie);
+//	alert(myCookie);
 
 return myCookie;
 }

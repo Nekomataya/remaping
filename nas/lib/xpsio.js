@@ -2369,6 +2369,7 @@ Xps.parseCutIF = function(myIdentifier){
      SCi/listEntryオブジェクトとの兼ね合いを要調整　20170104
 */
 Xps.parseIdentifier = function(myIdentifier){
+    if(! myIdentifier.split){console.log(myIdentifier)};
     var dataArray = myIdentifier.split('//');
     var result={};
     if(dbg) console.log(dataArray);
