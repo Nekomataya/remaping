@@ -890,6 +890,7 @@ localRepository.checkinEntry=function(myJob,callback,callback2){
 			    sync();//保存ステータスを同期
                 xUI.setUImode('production');//モードをproductionへ
                 xUI.sWitchPanel();//ドキュメントパネルが表示されていたらパネルクリア
+                sync('historySelector');//ここで　履歴セレクタの更新を行う
                 if(callback instanceof Function){ setTimeout(function(){callback()},10)};
                 return result;
             }else{
@@ -1898,7 +1899,7 @@ NetworkRepository.prototype.checkinEntry=function(myJob,callback,callback2){
       }
             //次のJobへチェックイン 
             //リポジトリのステータスを変更する XPSの内容は変更不用
-if(true){
+if(false){
         var newXps = Object.create(xUI.XPS);//現在のデータの複製をとる
 }else{
         var newXps = new Xps();
@@ -1941,6 +1942,7 @@ if(true){
 			    sync();//保存ステータスを同期
                 xUI.setUImode('production');
                 xUI.sWitchPanel();//パネルクリア
+                sync('historySelector');//ここで　履歴セレクタの更新を行う
                 if(callback instanceof Function){ setTimeout (callback,10);}
 		    },
 		    error : function(result) {
