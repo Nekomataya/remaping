@@ -1233,8 +1233,12 @@ div.application_status {
 	position:absolute;
 }
 
+.pM {
+	color: #666;
+}
+
 .pM-alt {
-	color: #AAA;
+	coror:AAA;
 	display:none;
 }
 

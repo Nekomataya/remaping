@@ -68,7 +68,7 @@ function new_xUI(){
 xUI.init    =function(XPS,referenceXps){
 
     this.XPS=XPS;                           //XPSを参照するオブジェクト
-    this.sessionRetrace = -1;               //管理上のジョブの状態
+    this.sessionRetrace = -1;               //管理上の作業セッション状態
 /*
     以下の情報を　グローバルの変数でなくXPSから取得するように変更
 */
@@ -4267,7 +4267,14 @@ convertXps=function(datastream){
     }
         return datastream;
 }
-//クラスメソッドを上書き
+/**
+        クラスメソッドを上書き
+        データインポートを自動判定
+        xUI.sessionRetrace == -1    通常の読み出し
+        xUI.sessionRetrace == 0     内容のみ入れ替え
+        xUI.sessionRetrace > 0     読み込んだ後に-1にリセット
+        
+*/
 XPS.readIN=function(datastream){
     xUI.errorCode=0;//読み込みメソッドが呼ばれたので最終のエラーコードを捨てる。
     if(! datastream.toString().length ){
@@ -4276,31 +4283,45 @@ XPS.readIN=function(datastream){
     }else{
 //データが存在したら、コンバータに送ってコンバート可能なデータをXPS互換ストリームに変換する
 /**
-    importオプションが与えられた場合、現在のデータのうち以下のプロパティを保護する
-        "mapfile",
-        "title",
-        "subtitle",
-        "opus",
-        "scene",
-        "cut",
-            "time",
-            "trin",
-            "trout",
-            "framerate",
-        "create_user",
-        "update_user",
-        "create_time",
-        "update_time",
-        "line",
-        "lineStatus",
-        "stage",
-        "stageStatus",
-        "job",
-        "jobStatus",
-        "currentStatus"
-
-*/
-        return this.parseXps(convertXps(datastream));
+        データインポートは自動判定
+        xUI.sessionRetrace == -1    通常の読み出し
+        xUI.sessionRetrace == 0     内容のみ入れ替え
+        xUI.sessionRetrace > 0     読み込んだ後に-1にリセット
+    import判定がtrueの場合、現データの以下のプロパティを保護する
+ カット尺は、ユーザに問い合わせる必要があるかも…　いや無い！
+ カット尺を保護する場合は、リファレンスに読み込んで部分コピーを行うべき
+//      "mapfile"  ,マップデータは現在どちらでも意味は無いが読み込み側優先
+//      "time"     ,関数なので入れ替え不用
+//      "trin"     ,読み込んだデータのものを使用
+//      "trout"    ,同上
+//      "framerate",同上
+ */
+        var props=[
+            "title",
+            "subtitle",
+            "opus",
+            "scene",
+            "cut",
+            "create_user",
+            "update_user",
+            "create_time",
+            "update_time",
+            "line",
+            "lineStatus",
+            "stage",
+            "stageStatus",
+            "job",
+            "jobStatus",
+            "currentStatus"
+        ]
+        var isImport=((xUI.sessionRetrace==0)&&(xUI.uiMode=='production'))? true:false;
+        var newXps = new Xps();
+        newXps.parseXps(convertXps(datastream));
+        if(isImport){
+            for (var ix=0;ix<props.length;ix++){newXps[props[ix]]=XPS[props[ix]]}
+        }
+//        if(xUI.sessionRetrace > 0) xUI.sessionRetrace= -1;
+        return this.parseXps(newXps.toString());
     }
 }
 
@@ -4673,7 +4694,6 @@ if(dbg) console.log('new Entry init');
     　                   }
     　                   xUI.setRetrace();
                          xUI.setUImode('production');
-    　                   sync('historySelector');
     　                   sync('info_');
     　               });
     　           });
@@ -4702,7 +4722,6 @@ if(dbg) console.log('new Entry init');
     　                       //if()
     　                   xUI.setRetrace();
                          xUI.setUImode('production');
-    　                   sync('historySelector');
     　                   sync('info_');
     　                   }
     　               });
@@ -5189,13 +5208,20 @@ case    "historySelector":;
             var matchResult=Xps.compareIdentifier(currentEntry.issues[ix].identifier,currentIdentifier);
             if(decodeURIComponent(currentEntry.issues[ix][2]).split(":")[0] == 0){stid=ix-1}
             if((stid == ix)||(ix == (currentEntry.issues.length-1))){
-                myContentsStage += '<li><a id="'+currentEntry.issues[ix].identifier+'" ' ;
-                myContentsStage += 'title="'+decodeURIComponent(currentEntry.issues[ix].identifier)+'" ';
-                myContentsStage += 'href="javascript:void(0)" ';
-                myContentsStage += 'onclick="serviceAgent.getEntry(this.id)">';
-                myContentsStage += (matchResult>4)? '*':' ';
-                myContentsStage += decodeURIComponent(currentEntry.issues[ix][0])+"//"+decodeURIComponent(currentEntry.issues[ix][1]);
-                myContentsStage += '</a></li>'
+                if(matchResult>4){
+                    myContentsStage += '<li><span id="'+currentEntry.issues[ix].identifier+'" ' ;
+                    myContentsStage += 'title="'+decodeURIComponent(currentEntry.issues[ix].identifier)+'" ';
+                    myContentsStage += 'class="pM">*';
+                    myContentsStage += decodeURIComponent(currentEntry.issues[ix][0])+"//"+decodeURIComponent(currentEntry.issues[ix][1]);
+                    myContentsStage += '</span></li>'
+                }else{
+                    myContentsStage += '<li><a id="'+currentEntry.issues[ix].identifier+'" ' ;
+                    myContentsStage += 'title="'+decodeURIComponent(currentEntry.issues[ix].identifier)+'" ';
+                    myContentsStage += 'href="javascript:void(0)" ';
+                    myContentsStage += 'onclick="serviceAgent.getEntry(this.id)"> ';
+                    myContentsStage += decodeURIComponent(currentEntry.issues[ix][0])+"//"+decodeURIComponent(currentEntry.issues[ix][1]);
+                    myContentsStage += '</a></li>'
+                }
             }
             if(matchResult>2){
                 myContentsJob += '<option value="'+currentEntry.issues[ix].identifier+'"' ;
@@ -5427,6 +5453,7 @@ if(XPS.xpsTracks[r].id.match(/^\s*$/)){
   }
 	break;
 case	"info_":	;//セット変更
+    setTimeout(function(){sync('historySelector')},10);
 	var syncset=
 ["opus","title","subtitle","time","trin","trout","scene","update_user","productStatus"];
 //["opus","title","subtitle","time","trin","trout","scene","update_user","memo"];

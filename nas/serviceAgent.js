@@ -890,7 +890,7 @@ localRepository.checkinEntry=function(myJob,callback,callback2){
 			    sync();//保存ステータスを同期
                 xUI.setUImode('production');//モードをproductionへ
                 xUI.sWitchPanel();//ドキュメントパネルが表示されていたらパネルクリア
-                sync('historySelector');//ここで　履歴セレクタの更新を行う
+//                sync('historySelector');//ここで　履歴セレクタの更新を行う
                 if(callback instanceof Function){ setTimeout(function(){callback()},10)};
                 return result;
             }else{
@@ -1942,7 +1942,7 @@ if(false){
 			    sync();//保存ステータスを同期
                 xUI.setUImode('production');
                 xUI.sWitchPanel();//パネルクリア
-                sync('historySelector');//ここで　履歴セレクタの更新を行う
+//                sync('historySelector');//ここで　履歴セレクタの更新を行う
                 if(callback instanceof Function){ setTimeout (callback,10);}
 		    },
 		    error : function(result) {
@@ -2542,14 +2542,14 @@ serviceAgent.checkinEntry=function(myJob,callback,callback2){
                     serviceAgent.currentRepository.checkinEntry(newJobName,function(){
                         //成功時は現在のデータをリファレンスへ複製しておく
                         //putReference();　このタイミングで行うと　ステータス変更後のデータがリファレンスへ入るので　ダメ　各メソッド側に実装
-                        sync('productStatus');//ここで　ステータスの更新を行う
-                        sync('historySelector');//ここで　履歴セレクタの更新を行う
+//                        sync('productStatus');//ここで　ステータスの更新を行う
+//                        sync('historySelector');//ここで　履歴セレクタの更新を行う
                         if(callback instanceof Function) callback();
                     },
                     function(){
                         alert(localize(nas.uiMsg.dmAlertCheckinFail));//チェックイン失敗
-                        sync('productStatus');//ここで　ステータスの更新を行う
-                        sync('historySelector');//ここで　履歴セレクタの更新を行う
+//                        sync('productStatus');//ここで　ステータスの更新を行う
+//                        sync('historySelector');//ここで　履歴セレクタの更新を行う
                         if(callback2 instanceof Function) callback2();
                     });
                 }
