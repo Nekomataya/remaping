@@ -7917,19 +7917,21 @@ this.getProp =function ()
 //変換不要パラメータ
 	var names=[
 "mapfile","title","subtitle","opus","scene","cut","framerate",
-"create_time","create_user","update_time","update_user","xpsTracks.noteText"
+"create_time","create_user","update_time","update_user"
 ];
 //
 	var ids=[
 "scnMapfile","scnTitle","scnSubtitle","scnOpus","scnScene","scnCut","scnFramerate",
-"scnCreate_time","scnCreate_user","scnUpdate_time","scnUpdate_user","scnMemo"
+"scnCreate_time","scnCreate_user","scnUpdate_time","scnUpdate_user"
 ];
 //
 	for (var i=0;i<names.length;i++){
 		document.getElementById(ids[i]).value=
 		XPS[names[i]];
 	}
-
+//シートメモ転記
+		document.getElementById('scnMemo').value=xUI.XPS.xpsTracks.noteText;
+        
 	var names=["create_time","create_user","update_time"];
 	var ids=["scnCreate_time","scnCreate_user","scnUpdate_time"];
 	for (var i=0;i<names.length;i++){
@@ -8151,14 +8153,14 @@ nas.FCT2Frm(document.getElementById("scnTime").value);
 	)
 	{ var changeSheet=true }else{ var changeSheet=false }
 //	実際のデータ更新
-
-
+//シートメモ転記
+		XPS.xpsTracks.noteText = document.getElementById("scnMemo").value;
 //値の変換不要なパラメータをまとめて更新
 	var names=[
-"mapfile","title","subtitle","opus","scene","cut","update_user","memo"
+"mapfile","title","subtitle","opus","scene","cut","update_user"
 	];//
 	var ids=[
-"scnMapfile","scnTitle","scnSubtitle","scnOpus","scnScene","scnCut","scnUpdate_user","scnMemo"
+"scnMapfile","scnTitle","scnSubtitle","scnOpus","scnScene","scnCut","scnUpdate_user"
 	];//
 	for (var i=0;i<names.length;i++){
 		XPS[names[i]]=document.getElementById(ids[i]).value;

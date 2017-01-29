@@ -356,14 +356,14 @@ Startup/Active/Hold/Fixed/Aborted (開始/作業/保留/終了/削除) の５態
   
 */
 /**
-比較関数 管理情報3要素の管理情報配列 issuesを比較して先行の管理ノード順位を評価する関数
+比較関数 管理情報 3要素の管理情報配列 issuesを比較して先行の管理ノード順位を評価する関数
 ライン拡張時は追加処理が必要
 */
 issuesSorter =function(val1,val2){
-/*    if(typeof val1 == 'undefined'){ return -1 } 
+    if(typeof val1 == 'undefined'){ return -1 } 
     if(typeof val2 == 'undefined'){ return  1 } 
-*/
-    return (parseInt(val1[0].split(':')[0]) * 10000 + parseInt(val1[1].split(':')[0]) * 100 + parseInt(val1[2].split(':')[0])) - ( parseInt(val2[0].split(':')[0]) * 10000 + parseInt(val2[1].split(':')[0]) * 100 + parseInt(val2[2].split(':')[0]));
+
+    return (parseInt(String(val1[0]).split(':')[0]) * 10000 + parseInt(String(val1[1]).split(':')[0]) * 100 + parseInt(String(val1[2]).split(':')[0])) - ( parseInt(String(val2[0]).split(':')[0]) * 10000 + parseInt(String(val2[1]).split(':')[0]) * 100 + parseInt(String(val2[2]).split(':')[0]));
 };
 
 /**
@@ -388,6 +388,10 @@ numSorter =function(val1,val2){ return (nas.parseNumber(val1) - nas.parseNumber(
     listEntry.issues[#].cutID  /string token
     listEntry.issues[#].versionID  /string token
     
+    オブジェクトメソッド
+    listEntry.toString(Index)   
+    listEntry.push(Identifier)
+    listEntry.getStatus()
 */
 listEntry=function(myIdentifier){
     this.dataInfo = Xps.parseIdentifier(myIdentifier);//dataInfoそのものを拡張すればプロパティが不要となる？
@@ -1038,7 +1042,32 @@ localRepository.getList();
 //localRepository.entryList[0];
 localRepository.getEntry(localRepository.entryList[0]);
 */
-
+/**
+    最終作業の破棄
+    バックアップ作業これを呼び出す側で処理
+    ここを直接コールした場合はバックアップは実行されない
+    ユーザメッセージはここでは処理されない
+    
+*/
+localRepository.destroyJob=function(callback,callback2){
+    if(xUI.XPS.currentStatus != 'Active'){return false}
+ //   カレントの作業に対応するステレージ上のキーを消去
+  //  成功すれば
+    var currentEntry = this.entry(Xps.getIdentifier(xUI.XPS));
+    if(! currentEntry){
+        if(dbg) console.log ('noentry in repository :' +  decodeURIComponent(currentEntry))
+        //当該リポジトリにエントリが無い
+         return false;
+    }
+    try {
+        localStorage.removeItem(this.keyPrefix+currentEntry.toString(0));
+		currentEntry.issues.pop();
+        xUI.XPS.readIN(new Xps(5,144).toString()) ; xUI.init(XPS,new Xps(5,144)) ; nas_Rmp_Init();
+        if(callback instanceof Function) callback();
+    }catch(er){
+        if(callback2 instanceof Function) callback2();
+    }
+}
 
 /**
     ネットワーク上のリポジトリオブジェクト
@@ -1217,10 +1246,15 @@ for ( var cid = 0 ; cid < result.length ; cid ++){
         serviceAgent.currentRepository.productsData[idx].episodes[0][eid].cuts[1][cid].name = "";
     };
     var myIdentifier_cut = encodeURIComponent(serviceAgent.currentRepository.productsData[idx].episodes[0][eid].cuts[0][cid].name);
-    // デスクリプションに識別子がない場合のみissuen部の無い識別子を補う
+
+    // デスクリプションに識別子がない場合issuen部の無い識別子を補う
+    // 他はDB側の識別子を優先して識別子を更新する
     if(! serviceAgent.currentRepository.productsData[idx].episodes[0][eid].cuts[1][cid].description){
-        if(dbg) console.log(decodeURIComponent(myIdentifier_opus));
         serviceAgent.currentRepository.productsData[idx].episodes[0][eid].cuts[1][cid].description=[myIdentifier_opus,myIdentifier_cut].join('//');
+    } else {
+        var currentIssue = serviceAgent.currentRepository.productsData[idx].episodes[0][eid].cuts[1][cid].description.split("//").slice(2);
+        serviceAgent.currentRepository.productsData[idx].episodes[0][eid].cuts[1][cid].description=([myIdentifier_opus,myIdentifier_cut].concat(currentIssue)).join('//');
+        
     }
 }
                                    break searchLoop;
@@ -1492,12 +1526,74 @@ function(result){
 
 
  */
+/**
+    DBにタイトルを作成する。
+    confirmあり
+引数
+    タイトル　または識別子
+    備考テキスト
+    Pmオブジェクト
+    コールバック関数２種
+*/
+NetworkRepository.prototype.addTitle = function (myTitle,myDescription,myPm,callback,callback2){
+/*
+    2107.01.28時点でAPIにtemplateが出ていないので省略　遅延で詳細編集を行っても良い
+*/
+    var data = {
+        product: {
+          name          : myTitle,
+          description   : myDescription,
+        } 
+    };
 
+	$.ajax({
+		type : 'POST',
+		url : serviceAgent.currentRepository.url+"/api/v2/products.json",
+		data : JSON.stringify(json_data),
+		success : function(result) {},
+		error:function(result) {},
+		beforeSend: serviceAgent.currentRepository.service.setHeader
+	});
+}
+/**
+    DBにタイトルを作成する。
+    confirmあり
+引数
+    タイトル　または識別子
+    備考テキスト
+    Pmオブジェクト
+    コールバック関数２種
+*/
+NetworkRepository.prototype.addEpisode = function (myName,mySubtitle,callback,callback2){
+/*
+    2107.01.28時点でAPIにtemplateが出ていないので省略　遅延で詳細編集を行っても良い
+*/
+    var productToken = serviceAgent.currentRepository;
+    var data = {
+        episode: {
+          product_token : productToken,
+          name          : myName,
+          description   : mySubtitle,
+        } 
+    };
+
+	$.ajax({
+		type : 'POST',
+		url : serviceAgent.currentRepository.url+"/api/v2/episodes.json",
+		data : JSON.stringify(json_data),
+		success : function(result) {},
+		error:function(result) {},
+		beforeSend: serviceAgent.currentRepository.service.setHeader
+	});
+}
 /**
 データオブジェクトを渡してリポジトリにプッシュする
 一致エントリがあれば上書き
 一致エントリで先行の管理情報がロックされている場合はリジェクト
 管理情報の世代が上がっていれば追加の管理情報を添えて保存
+タイトルがDBに登録されていない場合は、ユーザの確認をとってタイトルを作成
+エピソードがDBに登録されていない場合も同様
+
 これは保存系のAPIが出てから調整
 */
 
@@ -2125,6 +2221,49 @@ NetworkRepository.prototype.abortEntry=function(myIdentifier){
     }
 }
 
+/**
+    最終作業の破棄
+    バックアップ作業これを呼び出す側で処理
+    ここを直接コールした場合はバックアップは実行されない
+    ユーザメッセージはここでは処理されない
+    
+*/
+NetworkRepository.prototype.destroyJob=function(callback,callback2){
+    if(xUI.XPS.currentStatus != 'Active'){return false}
+ //    カレントのtokenを添えてdestroyコマンドを発行する
+    var currentEntry = this.entry(Xps.getIdentifier(xUI.XPS));
+    if(! currentEntry){
+        if(dbg) console.log ('noentry in repository :' +  decodeURIComponent(currentEntry))
+        //当該リポジトリにエントリが無い
+         return false;
+    }
+    
+        currentEntry.issues[0].cutID
+        if(dbg) console.log(data);
+	    $.ajax({
+		    type : 'PUT',
+		    url : this.url+'/api/v2/cuts/discard/:'+currentEntry.issues[0].cutID,
+		    data : data,
+		    success : function(result) {
+		        currentEntry.issues.pop();
+                xUI.XPS.readIN(new Xps(5,144).toString()) ; xUI.init(XPS,new Xps(5,144)) ; nas_Rmp_Init();
+                serviceAgent.currentRepository.getList(true);//リストステータスを同期
+                documentDepot.rebuildList();
+                xUI.setStored("current");//UI上の保存ステータスをセット
+			    sync();//保存ステータスを同期
+                xUI.setUImode('browsing');
+                if(callback instanceof Function){ setTimeout (callback,10);}
+		    },
+		    error : function(result) {
+			// Error
+			    if(dbg) console.log("error");
+			    if(dbg) console.log(result);
+                if(callback2 instanceof Function) {setTimeout(callback2,10);}
+		    },
+		    beforeSend: this.service.setHeader
+	    });
+
+}
 
 /**
 サービスエージェントオブエジェクト
@@ -2712,7 +2851,41 @@ serviceAgent.abortEntry=function(myIdentifier){
     }
 }
 /**
-    
+    閉じる
+    ドキュメントの扱いが変わったので
+    XPSをカラ（初期状態）にして編集をロックする
+    エントリは、ActiveならHoldに変更
+*/
+serviceAgent.closeEntry=function(){
+    //  ドキュメントがアクティブで変更フラグが立っている場合　holdしてカレントリポジトリにプッシュ
+     if((xUI.currentStatus=="Active")&&(! xUI.isStored())){
+    //  成功したらカレントドキュメントをクリアしてロック
+        this.currentRepository.deactivateEntry(function(){
+            xUI.XPS.readIN(new Xps(5,144).toString()) ; xUI.init(XPS,new Xps(5,144)) ; nas_Rmp_Init();   
+        },function(){
+            xUI.errorCode=9;
+        }
+        );
+    }
+}
+/**
+    最終ジョブを破棄する（巻き戻し）
+    現在のジョブ内容を、保存含めて破棄する
+    破棄可能な条件は、
+    現在作業中のジョブまたは作業可能なジョブであること（Activeドキュメントのみに適用）
+    closeに手順がにているが、ハードデリートを伴う点が異なる
+    ハードデリートを伴うため　バックアップコピーを作成して保険として使う    
+*/
+serviceAgent.destroyJob=function(callback,callback2){
+    if(xUI.XPS.currentStatus!="Active"){return false;}
+//ドキュメントがアクティブでない場合は操作不能
+    xUI.setBackup();//自動でバックアップをとる（undoではない）
+    serviceAgent.currentRepository.destroyJob(callback,callback2)
+}
+
+/**
+    選択可能な参考ジョブリストの更新
+    更新されたリスト以外のジョブ名称も認められる
 */
 serviceAgent.updateNewJobName = function(stageName,type){
     var targetList=document.getElementById("taragetJobList");

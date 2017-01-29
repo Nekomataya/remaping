@@ -154,7 +154,7 @@
 >作業中断</A></li>
 <li><span id=pMdiscard-d class='pM pM-alt'>編集破棄</span><A	id=pMdiscard
 	href = 'javascript:void(0)'
-	onclick = 'documentDepot.closeEntry();return false;'
+	onclick = 'serviceAgent.destroyJob();return false;'
 	title="編集を破棄して閉じる"
 >編集破棄</A></li>
 <hr>
@@ -705,7 +705,7 @@
 	</button><button
 	id=ibMdiscard
 		class='iconButton  iconButton-close'
-		onclick="documentDepot.closeEntry();"
+		onclick="serviceAgent.destroyJob();"
 		title="編集を破棄してドキュメントを閉じる"
 	>
 	</button>
