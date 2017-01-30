@@ -2372,7 +2372,7 @@ Xps.parseIdentifier = function(myIdentifier){
     if(! myIdentifier.split){console.log(myIdentifier)};
     var dataArray = myIdentifier.split('//');
 //    if((dataArray.length<2)||(String(dataArray[1]).length==0)) return false;
-    if(dbg) console.log(dataArray);
+//    if(dbg) console.log(dataArray);
     var result={};
     result.product  = Xps.parseProduct(dataArray[0]);
 //        if(! result.product) return false;
@@ -2399,7 +2399,7 @@ Xps.parseIdentifier = function(myIdentifier){
         result.job      = new XpsStage(nas.pm.jobNames.getTemplate(nas.pm.pmTemplate[0].stages[0],"init")[0]);
         result.currentStatus   = "Startup";        
     }*/
-    if(dbg) console.log(result);
+//    if(dbg) console.log(result);
     return result;
 }
 /** test 

@@ -4666,7 +4666,7 @@ document.getElementById('loginstatus_button').disabled=true;
 //document.getElementById('serverurl').innerHTML = serviceAgent.currentServer.url;
 　       $('#pMbrowseMenu').hide();
 　       $('#ibMbrowse').hide();//設定表示
-
+//console.log('000000000000000000000=');
                  document.getElementById('toolbarHeader').style.backgroundColor='#ddbbbb';
 //サーバ既存エントリ
             var isNewEntry = (startupXPS.length==0)? true:false;
@@ -4677,6 +4677,7 @@ document.getElementById('loginstatus_button').disabled=true;
     　               serviceAgent.switchRepository(RepID,function(){
     　                   var myIdentifier=serviceAgent.currentRepository.getIdentifierByToken($("#backend_variables").attr("data-cut_token"));
                          if(Xps.getIdentifier(XPS) != myIdentifier){
+
     　                       if(dbg) console.log('syncIdentifier:');
     　                       if(dbg) console.log(decodeURIComponent(myIdentifier));
 //    　                       xUI.sWitchPanel("Prog");
@@ -4693,9 +4694,10 @@ if(dbg) console.log('new Entry init');
 }
     　                   }
     　                   xUI.setRetrace();
-//ここで無条件でproductionへ移行せずに、チェックが組み込まれているactivateEntryメソッドを使用する　
-                        //xUI.setUImode('production');
-                        serviceAgent.activateEntry();
+//ここで無条件でproductionへ移行せずに、チェックが組み込まれているactivateEntryメソッドを使用する
+//                        console.log('========================');
+                        xUI.setUImode('production');
+                        //serviceAgent.activateEntry();
                         sync('info_');
     　               });
     　           });

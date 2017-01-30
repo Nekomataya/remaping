@@ -1193,13 +1193,13 @@ NetworkRepository.prototype.episodesUpdate = function (pid,callback) {
                     success: function(result) {
                         if(dbg) console.log('episode:');
                         if(dbg) console.log(result);
-                    if(serviceAgent.currentStatus=='online-single'){
-                      var myToken = $('#backend_variables').attr("data-episode_token");
-                    }else{
+//                    if(serviceAgent.currentStatus=='online-single'){}
                       searchLoop:{
                         for( var idx = 0 ; idx < serviceAgent.currentRepository.productsData.length ; idx ++){
                             if((typeof serviceAgent.currentRepository.productsData[idx].episodes == 'undefined')||(serviceAgent.currentRepository.productsData[idx].episodes[0].length == 0)) continue;//エピソード数０の際は処理スキップ
                             for( var eid = 0 ; eid < serviceAgent.currentRepository.productsData[idx].episodes[0].length ; eid ++){
+//                                    var myToken = (serviceAgent.currentStatus=='online-single')?
+//                    $('#backend_variables').attr("data-episode_token"):serviceAgent.currentRepository.productsData[idx].episodes[0][eid].token;
                                     var myToken = serviceAgent.currentRepository.productsData[idx].episodes[0][eid].token;
                                 if( result.token == myToken ){
                                     serviceAgent.currentRepository.productsData[idx].episodes[0][eid] = result;
@@ -1208,7 +1208,6 @@ NetworkRepository.prototype.episodesUpdate = function (pid,callback) {
                             }
                         }
                       }
-                    }
                       serviceAgent.currentRepository.getSCi(myToken,callback);
                     },
                     beforeSend: serviceAgent.currentRepository.service.setHeader
@@ -1234,6 +1233,7 @@ NetworkRepository.prototype.getSCi = function (epToken,callback) {
                             if((typeof serviceAgent.currentRepository.productsData[idx].episodes == 'undefined')||(serviceAgent.currentRepository.productsData[idx].episodes[0].length == 0)) continue;//エピソード数０の際は処理スキップ
                             for( var eid = 0 ; eid < serviceAgent.currentRepository.productsData[idx].episodes[0].length ; eid ++){
                                 if(epToken == serviceAgent.currentRepository.productsData[idx].episodes[0][eid].token ){
+//                                    console.log(serviceAgent.currentRepository.productsData[idx]);
                                     serviceAgent.currentRepository.productsData[idx].episodes[0][eid].cuts[1]=result;//cuts[1] としてアクセス
 /**
 エントリ取得タイミングで仮にcutのdescription を追加するcuts[1][cid].description を作成して調整に使用する
@@ -1346,7 +1346,7 @@ NetworkRepository.prototype.getList = function (force,callback){
                             currentEpisode.cuts[1][cid].versions[vid].description:entryArray.join("//");
 //                        if(myVersionString.split('//').length < 6)
                         var myVersionToken = currentEpisode.cuts[1][cid].versions[vid].version_token;
-                 if(dbg) console.log("push entry : "+ myVersionString);
+//                 if(dbg) console.log("push entry : "+ myVersionString);
                        newEntry.push(myVersionString,currentTitle.token,currentEpisode.token,myCutToken,myVersionToken);
                     }
                 }
