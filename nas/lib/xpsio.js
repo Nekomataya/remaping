@@ -2247,32 +2247,27 @@ Xps.getIdentifier=function(myXps){
                 
 */
 Xps.compareIdentifier =function (target,destination){
-    var tgtArray  = target.split('//');
-    var destArray = destination.split('//');
+    var tgtInfo  = Xps.parseIdentifier(target);
+    var destInfo = Xps.parseIdentifier(destination);
     //title+opus
-        if(tgtArray[0].split('[')[0]!=destArray[0].split('[')[0]){ return -1;}
+        if((tgtInfo.title+tgtInfo.opus) != (destInfo.title+destInfo.opus)){ return -1;}
     //Scene,Cut
-/*
-        tgtSC = tgtArray[1].split('(')[0];
-        dstSC = destArray[1].split('(')[0];
-        
-        if(tgtSC.match(/^s([^_\-\s]*)[_\-\s]?c([^(]+)/i)){
-            tgtSC =RegExp.$1+RegExp.$2;
-        }
-        if(dstSC.match(/^s([^_\-\s]*)[_\-\s]?c([^(]+)/i)){
-            dstSC =RegExp.$1+RegExp.$2;
-        }
+        tgtSC = tgtInfo.cut;
+        dstSC = destInfo.cut;
+        if((! tgtSC)||(! dstSC)) return 0;
         if(tgtSC != dstSC){return 0;}
-*/      
-        tgtSC = Xps.parseCutIF(Xps.parseSCi(tgtArray[1])[0].cut);
-        dstSC = Xps.parseCutIF(Xps.parseSCi(destArray[1])[0].cut);
-
-        if(tgtSC.join('') != dstSC.join('')){return 0;}
+//        if(tgtSC.join('') != dstSC.join('')){return 0;}
         var result = 1;
-        for(var ix = 2;ix <= 5;ix++){
-            if(tgtArray[ix] != destArray[ix]) return result;
-            result ++;
-        }
+        if (((tgtInfo.line)&&(destInfo.line))&&(tgtInfo.line.id == destInfo.line.id )) result ++;
+        if (((tgtInfo.stage)&&(destInfo.stage))&&(tgtInfo.stage.id== destInfo.stage.id )) result ++;
+        if (((tgtInfo.Job)&&(destInfo.Job))&&(tgtInfo.Job.id  == destInfo.Job.id )) result ++;
+        if ((tgtInfo.currentStatus)&&(destInfo.currentStatus)&&(tgtInfo.currentStatus == destInfo.currentStatus)) result ++;
+
+//        for(var ix = 2;ix <= 5;ix++){
+//            tgtInfo.line == dstInfo.line;
+//            if(tgtArray[ix] != destArray[ix]) return result;
+//            result ++;
+//        }
         return result;
 }
 /**
@@ -2304,13 +2299,15 @@ Xps.compareIdentifier =function (target,destination){
 /**
     プロダクト識別子をパースして返す
     サブタイトルは一致比較時に比較対象から外す
+    引数がまたは第一要素がカラの場合はfalse
 */
 Xps.parseProduct = function(productString){
-    var dataArray = productString.replace( /[\[\]]/g ,'#').split('#');
+    var dataArray = String(productString).replace( /[\[\]]/g ,'#').split('#');
+//     if((dataArray.length==0)||(String(dataArray[0]).length==0)){ return false};
     return {
-        title     :   (decodeURIComponent(dataArray[0])=='undefined')? "":decodeURIComponent(dataArray[0]),
-        opus      :   (decodeURIComponent(dataArray[1])=='undefined')? "":decodeURIComponent(dataArray[1]),
-        subtitle  :   (decodeURIComponent(dataArray[2])=='undefined')? "":decodeURIComponent(dataArray[2])
+        title     :   (dataArray[0]=='undefined')? "":decodeURIComponent(dataArray[0]),
+        opus      :   (dataArray[1]=='undefined')? "":decodeURIComponent(dataArray[1]),
+        subtitle  :   (dataArray[2]=='undefined')? "":decodeURIComponent(dataArray[2])
     };
 }
 /** test
@@ -2325,7 +2322,8 @@ Xps.parseProduct = function(productString){
     sciStringに時間情報が含まれないケースあり
 */
 Xps.parseSCi = function(sciString){
-    var dataArray = sciString.split('/');
+    var dataArray = String(sciString).split('/');
+//    if((dataArray.length==0)||(String(dataArray[0]).length==0)){return false};
     var result = [];
     for (var ix=0;ix < dataArray.length ;ix ++){
         var currentEntry=dataArray[ix].split('(');
@@ -2366,16 +2364,21 @@ Xps.parseCutIF = function(myIdentifier){
 //
 /**
      データ識別子をパースして無名オブジェクトで戻す
+     データ判定を兼ねる
+     分割要素がカット番号を含まない（データ識別子でない）場合はfalseを戻す
      SCi/listEntryオブジェクトとの兼ね合いを要調整　20170104
 */
 Xps.parseIdentifier = function(myIdentifier){
     if(! myIdentifier.split){console.log(myIdentifier)};
     var dataArray = myIdentifier.split('//');
-    var result={};
+//    if((dataArray.length<2)||(String(dataArray[1]).length==0)) return false;
     if(dbg) console.log(dataArray);
+    var result={};
     result.product  = Xps.parseProduct(dataArray[0]);
+//        if(! result.product) return false;
     result.sci      = Xps.parseSCi(dataArray[1]);
-    
+//        if(! result.sci) return false;
+
     result.title    = result.product.title;
     result.opus     = result.product.opus;
     result.subtitle = result.product.subtitle;

@@ -4693,8 +4693,10 @@ if(dbg) console.log('new Entry init');
 }
     　                   }
     　                   xUI.setRetrace();
-                         xUI.setUImode('production');
-    　                   sync('info_');
+//ここで無条件でproductionへ移行せずに、チェックが組み込まれているactivateEntryメソッドを使用する　
+                        //xUI.setUImode('production');
+                        serviceAgent.activateEntry();
+                        sync('info_');
     　               });
     　           });
     　       }else{
@@ -5010,6 +5012,7 @@ if(dbg){
     var TimeFinish=new Date();
     var msg="ただいまのレンダリング所要時間は、およそ "+ Math.round((TimeFinish-TimeStart)/1000) +" 秒 でした。\n レイヤ数は、 "+XPS.xpsTracks.length+ "\nフレーム数は、"+XPS.duration()+"\tでした。\n\t現在のspin値は :"+xUI.spinValue;
 //    if(dbg) alert(msg);
+    dbg=false;
 }
 /* ヘッダ高さの初期調整*/
 xUI.adjustSpacer();
@@ -5202,6 +5205,7 @@ if (typeof prop == 'undefined') prop = 'NOP_';
 case    "historySelector":;
     var currentIdentifier = Xps.getIdentifier(xUI.XPS);
     var currentEntry = serviceAgent.currentRepository.entry(currentIdentifier);
+    if(! currentEntry) break;
     var myContentsStage='';var stid=-1;
     var myContentsJob='';
         for (var ix=currentEntry.issues.length-1;ix >= 0;ix--){

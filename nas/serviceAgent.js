@@ -587,6 +587,7 @@ localRepository.getList=function(force,callback){
     エントリ数は、キーの総数でなく識別子の第一、第二要素を結合してエントリとして認識する
 */
 localRepository.pushEntry=function(myXps,callback,callback2){
+    if(myXps.cut==''){return false};
 //クラスメソッドで識別子取得
     var myIdentifier=Xps.getIdentifier(myXps);
 //識別子に相当するアイテムがローカルストレージ内に存在するかどうかを比較メソッドで検査
@@ -1192,6 +1193,9 @@ NetworkRepository.prototype.episodesUpdate = function (pid,callback) {
                     success: function(result) {
                         if(dbg) console.log('episode:');
                         if(dbg) console.log(result);
+                    if(serviceAgent.currentStatus=='online-single'){
+                      var myToken = $('#backend_variables').attr("data-episode_token");
+                    }else{
                       searchLoop:{
                         for( var idx = 0 ; idx < serviceAgent.currentRepository.productsData.length ; idx ++){
                             if((typeof serviceAgent.currentRepository.productsData[idx].episodes == 'undefined')||(serviceAgent.currentRepository.productsData[idx].episodes[0].length == 0)) continue;//エピソード数０の際は処理スキップ
@@ -1204,6 +1208,7 @@ NetworkRepository.prototype.episodesUpdate = function (pid,callback) {
                             }
                         }
                       }
+                    }
                       serviceAgent.currentRepository.getSCi(myToken,callback);
                     },
                     beforeSend: serviceAgent.currentRepository.service.setHeader
@@ -1537,8 +1542,12 @@ function(result){
 */
 NetworkRepository.prototype.addTitle = function (myTitle,myDescription,myPm,callback,callback2){
 /*
-    2107.01.28時点でAPIにtemplateが出ていないので省略　遅延で詳細編集を行っても良い
+    識別子を検出
+    2107.01.28時点でAPIにtemplateが出ていないのでpmの処理は省略　遅延で詳細編集を行っても良い
+    
 */
+    var parseData = Xps.parseIdentifier(myTitle);
+        if(parseData){myTitle=parseData.title};
     var data = {
         product: {
           name          : myTitle,
@@ -1549,7 +1558,7 @@ NetworkRepository.prototype.addTitle = function (myTitle,myDescription,myPm,call
 	$.ajax({
 		type : 'POST',
 		url : serviceAgent.currentRepository.url+"/api/v2/products.json",
-		data : JSON.stringify(json_data),
+		data : JSON.stringify(data),
 		success : function(result) {},
 		error:function(result) {},
 		beforeSend: serviceAgent.currentRepository.service.setHeader
@@ -1557,7 +1566,6 @@ NetworkRepository.prototype.addTitle = function (myTitle,myDescription,myPm,call
 }
 /**
     DBにタイトルを作成する。
-    confirmあり
 引数
     タイトル　または識別子
     備考テキスト
@@ -1566,21 +1574,30 @@ NetworkRepository.prototype.addTitle = function (myTitle,myDescription,myPm,call
 */
 NetworkRepository.prototype.addEpisode = function (myName,mySubtitle,callback,callback2){
 /*
-    2107.01.28時点でAPIにtemplateが出ていないので省略　遅延で詳細編集を行っても良い
+    listEntry.titleID
 */
-    var productToken = serviceAgent.currentRepository;
+    var parseData = Xps.parseIdentifier(myName);
+        if(! parseData){
+            var myProduct = serviceAgent.currentRepository.entry(Xps.getIdentifier(xUI.XPS)).product;
+            myProduct.opus = myName;
+            myProduct.subtitle = mySubtitle;
+        }else{
+            var myProduct=parseData.product;
+        }
+    var myEntry = serviceAgent.currentRepository.entry(Xps.getIdentifier(xUI.XPS));
+
     var data = {
         episode: {
-          product_token : productToken,
-          name          : myName,
-          description   : mySubtitle,
+          product_token : myEntry.productID,
+          name          : myProduct.opus,
+          description   : myProduct.subtitle
         } 
     };
 
 	$.ajax({
 		type : 'POST',
 		url : serviceAgent.currentRepository.url+"/api/v2/episodes.json",
-		data : JSON.stringify(json_data),
+		data : JSON.stringify(data),
 		success : function(result) {},
 		error:function(result) {},
 		beforeSend: serviceAgent.currentRepository.service.setHeader
@@ -2238,12 +2255,11 @@ NetworkRepository.prototype.destroyJob=function(callback,callback2){
          return false;
     }
     
-        currentEntry.issues[0].cutID
-        if(dbg) console.log(data);
+        //currentEntry.issues[0].cutID
+        if(dbg) console.log(currentEntry.issues[0].cutID);
 	    $.ajax({
-		    type : 'PUT',
-		    url : this.url+'/api/v2/cuts/discard/:'+currentEntry.issues[0].cutID,
-		    data : data,
+		    type : 'PATCH',
+		    url : this.url+'/api/v2/cuts/:'+currentEntry.issues[0].cutID+'/discard',
 		    success : function(result) {
 		        currentEntry.issues.pop();
                 xUI.XPS.readIN(new Xps(5,144).toString()) ; xUI.init(XPS,new Xps(5,144)) ; nas_Rmp_Init();
@@ -2264,7 +2280,7 @@ NetworkRepository.prototype.destroyJob=function(callback,callback2){
 	    });
 
 }
-
+//serviceAgent.currentRepository.destroyJob();
 /**
 サービスエージェントオブエジェクト
 
@@ -2299,6 +2315,7 @@ serviceAgent.init= function(){
     var locOffset = (loc[loc.length-1]=="edit")? 3:2;
     var myUrl = loc.splice(0,loc.length-locOffset).join('/');
 //    var myUrl = 'http://remaping.scivone-dev.com';
+//    var myUrl = 'http://remaping-stg.u-at.net';
     this.servers.push(new ServiceNode("CURRENT",myUrl));
 }else{
     var myServers={

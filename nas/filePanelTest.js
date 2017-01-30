@@ -196,8 +196,10 @@ documentDepot.buildIdentifier = function(addStatus){
     var mySCi = Xps.parseSCi(document.getElementById('cutInput').value+'('+document.getElementById('timeInput').value+')');
     var myNames = Xps.parseCutIF(mySCi[0].cut);
     result += (myNames.length > 1) ? 's'+encodeURIComponent(myNames[1])+'-c':'s-c';
-    result += encodeURIComponent(myNames[0]);
+    result += (typeof myNames[0] == 'undefined')?encodeURIComponent(myNames[0]):"";
+  if(mySCi[0].time != "*--c#--*"){
     result += '( '+nas.Frm2FCT(nas.FCT2Frm(mySCi[0].time),3)+' )';
+  }
     if(addStatus){
         result +='//';
         result +=document.getElementById('issueSelector').value;
@@ -419,7 +421,9 @@ function setProduct(productName){
 //    document.getElementById("opusSelect").selected
 }
 //setProduct("源氏物語＃二十三帖「初音」");
-
+/**
+selectSCi
+*/
 function selectSCi(sciName){
     if(typeof sciName == "undefined"){
     //カット名が引数で与えられない場合はセレクタの値をとる
@@ -430,6 +434,7 @@ function selectSCi(sciName){
                 デフォルト値は最終issue
              */
             var myEntry = serviceAgent.currentRepository.entry(document.getElementById("cutList").options[document.getElementById("cutList").selectedIndex].value);
+            if(myEntry){
             var myContents="";
 //          for (var ix=myEntry.issues.length-1;ix>=0;ix--){}
             for (var ix=0;ix<myEntry.issues.length;ix++){
@@ -441,6 +446,14 @@ function selectSCi(sciName){
             document.getElementById("issueSelector").disabled=false;
 
             sciName = document.getElementById("cutList").options[document.getElementById("cutList").selectedIndex].text;
+            }else{console.log(myEntry)}
+            if(false){
+            document.getElementById("issueSelector").innerHTML='<option value="" selected>#:---line//#:---stage//#:---job//(status)</option>';
+            document.getElementById("issueSelector").disabled=true;
+            document.getElementById("cutList").selectedIndex = 0;
+            sciName = "(*--c#--*)";
+            var myEntry = null;
+            }
         }else{
             document.getElementById("issueSelector").innerHTML='<option value="" selected>#:---line//#:---stage//#:---job//(status)</option>';
             document.getElementById("issueSelector").disabled=true;
@@ -449,7 +462,7 @@ function selectSCi(sciName){
             var myEntry = null;
         }
     }
-    sciName=sciName.toString();//明示的にストリング変換する
+    sciName=String(sciName);//明示的にストリング変換する
     if(sciName.length <= 0){return false;}
     var sciArray=sciName.split( "/" );//セパレータ"/"で兼用カットを分離
     //代表カット番号 はsciArray[0]
