@@ -216,20 +216,17 @@ if(dbg) console.log(decodeURIComponent(result));
     先に存在するリストは破棄
 */
 documentDepot.rebuildList=function(callback){
-    this.products    =[];
-    this.documents   =[];
-    this.currentProduct     =null;
-    this.currentSelection   =null;
-    this.currentDocument    =null;
-    this.currentReferenece  =null;
+    documentDepot.products    =[];
+    documentDepot.documents   =[];
+    documentDepot.currentProduct     =null;
+    documentDepot.currentSelection   =null;
+    documentDepot.currentDocument    =null;
+    documentDepot.currentReferenece  =null;
 /*=============*/
-// serviceAgent.repositories[0].getList();
-    
-//  if ( serviceAgent.repositories.length > 0 ){}
-//  for(var idr=1 ;idr < serviceAgent.repositories.length; idr ++){serviceAgent.repositories[idr].getList();}
     serviceAgent.currentRepository.getList(false,callback);
-//  テスト中はこれで良いが、その後はあまり良くない 
-    this.documentsUpdate();
+//  テスト中はこれで良いが、その後はあまり良くない
+    console.log(this)
+    documentDepot.documentsUpdate();
 }
 /**
 読み出し・請求

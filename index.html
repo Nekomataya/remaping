@@ -114,11 +114,21 @@
 <li><span id=pMdocument>Document</span>
 <ul>
 <!-- 一般ドキュメントメニュー インポート／エクスポートは別に-->
-<li id=dMos><span id=pMmenuBack-d class='pM pM-alt'>戻る</span><a id=pMmenuBack
-	href="javascript:void(0);"
-	onclick="return backToDocumentList();"
-	title="戻る"
->戻る</a></li>
+<li id=pMom><span id=pMmenuRoot-d class='pM pM-alt'>タイトル</span><a id=pMmenuRoot
+	href='javascript:void(0);'
+	onclick='return backToDocumentList("products");'
+	title="タイトル一覧へ"
+>タイトル</a></li>
+<li id=pMos><span id=pMmenuProducts-d class='pM pM-alt'>エピソード</span><a id=pMmenuProducts
+	href='javascript:void(0);'
+	onclick='return backToDocumentList("episodes");'
+	title="制作話数一覧へ"
+>エピソード</a></li>
+<li id=pMos><span id=pMmenuBack-d class='pM pM-alt'>カット</span><a id=pMmenuBack
+	href='javascript:void(0);'
+	onclick='return backToDocumentList("cuts");'
+	title="カット一覧へ"
+>カット</a></li>
 <hr>
 <li id=pMbrowseMenu><span id=pMbrowse-d class='pM pM-alt'>書類選択</span><A	id=pMbrowse
 	href = 'javascript:void(0)'
@@ -686,8 +696,8 @@
 	<button
 	id=ibMmenuBack
 		class='iconButton iconButton-eject'
-		onclick="return backToDocumentList();"
-		title="戻る"
+		onclick='return backToDocumentList("cut");'
+		title="カット一覧へ戻る"
 	>	</button>
  </span><span id="severMenu" >
 <button
@@ -3085,27 +3095,9 @@ $Id:$ index.html ,v 1.7 2016/12/24  support@nekomataya.info <br />
 <br>
       </div><hr>
 <!-- <form> -->
-<!--	<input id=startupXPS value=false>	-->
-<textarea id="startupXPS" style='width:75%;'></textarea>
+	<textarea id="startupXPS" style='width:75%;'></textarea>
     <textarea id="referenceXPS" style='width:75%;'></textarea>
-    <!-- </form> -->
   </div>
   <div id="scrollSpaceFt" class=\"screenSpace\"><br></div>
-  <!-- backend_variables
-  <span id="backend_variables"
-        data-organization_token="e7KMUxdGuxCDkCgtDHQAaK9R"
-        data-user_access_token="a81350939937f4aca3efdb3b19f9511bca2dad0ed657b22d159dd8841a793a1a"
-        data-user_token="aWWMWNKW2HAfuRHWANZKbETy"
-        data-user_name="ねこまたや"
-        data-user_email="kiyo@nekomataya.info"
-        data-episode_id="17"
-        data-cut_id="75"　
-        data-episode_token="mfjVjBUuG6Q8GHu7u6nzJTa2"
-        data-cut_token="yGRdYDMKAbWp2SSL9NUnLHXh"
-        data-line_id="0:(本線)"
-        data-stage_id="0:layout"
-        data-job_id="4:演出チェック"
-        data-status="Active"
-  ></span> -->
-  
+  <!-- backend_variables -->
 </body></html>

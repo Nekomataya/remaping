@@ -852,7 +852,7 @@ xUI.reInitBody=function(newTimelines,newDuration){
     newXPS.readIN(XPS.toString());//別オブジェクトとして複製を作る
     //変更してputメソッドに渡す
     newXPS.reInitBody(newTimelines,newDuration);
-    if(dbg) console.log(newXPS);
+if(dbg) console.log(newXPS);
     this.put(newXPS);
 };
 
@@ -1025,7 +1025,7 @@ xUI.getid=function(name){
 */
 xUI.selectCell=function(ID){
     if (typeof ID == "undefined") ID='';
-    if(dbg) document.getElementById("app_status").innerHTML=ID;//デバッグ用
+if(dbg) document.getElementById("app_status").innerHTML=ID;//デバッグ用
 //      現在のセレクトをフォーカスアウト 引数が偽ならば フォーカスアウトのみ(ここでリターン)
     if(! ID){return;};
 //      選択セルの内容をXPSの当該の値で置換 新アドレスにフォーカス処理開始 = IDをセレクト
@@ -2296,7 +2296,7 @@ if(! dup){
 /*    やり直し    */
 xUI.undo    =function (){
     if(this.undoPt==0) {
-        if(dbg) {dbgPut("UNDOバッファが空")};
+if(dbg) {dbgPut("UNDOバッファが空")};
         return;
     };
     //UNDOバッファが空
@@ -2311,7 +2311,7 @@ if(dbg) {dbgPut("putResult:\n"+putResult)};
 /*    やり直しのやり直し    */
 xUI.redo    =function(){
     if((this.undoPt+1)>=this.undoStack.length) {
-        if(dbg){dbgPut("REDOバッファが空")};
+if(dbg){dbgPut("REDOバッファが空")};
         return;
     };
         //REDOバッファが空
@@ -4572,6 +4572,7 @@ document.getElementById("iNputbOx").focus();
 引数としてuiModeを文字列で与えて　リセット後のuiModeを指定可能 未指定の場合はリセット前のモードを継続
 */
 function nas_Rmp_Init(uiMode){
+    var startupWait=false;
 //プロパティのリフレッシュ
     xUI._checkProp();
     xUI.Cgl.init();
@@ -4637,6 +4638,7 @@ document.getElementById("UIheader").style.display="none";
      エレメントが存在すればon-site
  */
 　   if(document.getElementById('backend_variables')){
+if(dbg) console.log('application server-onsite');
         if (serviceAgent.servers.length==1) {
             serviceAgent.switchService(0);
         }else{
@@ -4658,7 +4660,9 @@ document.getElementById("UIheader").style.display="none";
         myName = xUI.currentUser.toString();//旧変数互換 まとめて処理する関数が必要
 
     　   if($("#backend_variables").attr("data-episode_token").length > 0){
+if(dbg) console.log('bind single document');
 //シングルドキュメント拘束モード
+		    startupWait=true;//ウェイト表示を予約
 　           serviceAgent.currentStatus='online-single';
 document.getElementById('loginstatus_button').innerHTML='>ON-SITE<';
 document.getElementById('loginstatus_button').disabled=true;
@@ -4666,24 +4670,36 @@ document.getElementById('loginstatus_button').disabled=true;
 //document.getElementById('serverurl').innerHTML = serviceAgent.currentServer.url;
 　       $('#pMbrowseMenu').hide();
 　       $('#ibMbrowse').hide();//設定表示
-//console.log('000000000000000000000=');
+if(dbg) console.log('000000000000000000000=');
                  document.getElementById('toolbarHeader').style.backgroundColor='#ddbbbb';
 //サーバ既存エントリ
             var isNewEntry = (startupXPS.length==0)? true:false;
 //サーバ上で作成したエントリの最初の1回目は送出データが空            　           
              if($("#backend_variables").attr("data-cut_token").length){
+if(dbg) console.log('has cut token');
     　           serviceAgent.currentServer.getRepositories(function(){
                      var RepID = serviceAgent.getRepsitoryIdByToken($("#backend_variables").attr("data-organization_token"));
     　               serviceAgent.switchRepository(RepID,function(){
-    　                   var myIdentifier=serviceAgent.currentRepository.getIdentifierByToken($("#backend_variables").attr("data-cut_token"));
-                         if(Xps.getIdentifier(XPS) != myIdentifier){
+    　                   if(dbg) console.log('switched repository :' + RepID);
+/*最小の情報をトークンベースで取得*/
+var myProductToken = $('#backend_variables').attr('data-product_token');
+var myEpisodeToken = $('#backend_variables').attr('data-episode_token');
+var myCutToken = $('#backend_variables').attr('data-cut_token');
 
+serviceAgent.currentRepository.getProducts(function(){
+    serviceAgent.currentRepository.productsUpdate(function(){
+        serviceAgent.currentRepository.getEpisodes(function(){
+            serviceAgent.currentRepository.episodesUpdate(function(){
+                serviceAgent.currentRepository.getSCi(function(){
+                    serviceAgent.currentRepository.getList(false,function(){
+    　                   var myIdentifier=serviceAgent.currentRepository.getIdentifierByToken(myCutToken);
+                         if(Xps.compareIdentifier(Xps.getIdentifier(XPS),myIdentifier) < 5){
     　                       if(dbg) console.log('syncIdentifier:');
     　                       if(dbg) console.log(decodeURIComponent(myIdentifier));
-//    　                       xUI.sWitchPanel("Prog");
     　                       XPS.syncIdentifier(myIdentifier);
 //
-if(isNewEntry){
+if( startupXPS.length==0 ){
+if(dbg) console.log('detect first open no content');
 if(dbg) console.log('new Entry init');
         xUI.XPS.line     = new XpsLine(nas.pm.pmTemplate[0].line);
         xUI.XPS.stage    = new XpsStage(nas.pm.pmTemplate[0].stages[0]);
@@ -4693,17 +4709,45 @@ if(dbg) console.log('new Entry init');
         xUI.XPS.update_user=xUI.currentUser;
 }
     　                   }
-    　                   xUI.setRetrace();
 //ここで無条件でproductionへ移行せずに、チェックが組み込まれているactivateEntryメソッドを使用する
-//                        console.log('========================');
+/*
+xUI.sessionRetrace=0;
+sync('info_');
+xUI.setUImode('browsing');
+serviceAgent.activateEntry()
                         xUI.setUImode('production');
-                        //serviceAgent.activateEntry();
+                        //serviceAgent.activateEntry();*/
+//                        console.log('========================');
+                        xUI.setRetrace();
+                        xUI.setUImode('browsing');
+		                if (startupWait) xUI.sWitchPanel('Prog');//ウェイト表示消去
+                switch(xUI.XPS.currentStatus){
+                    case "Active":
+                    case "Hold":
+                    case "Fixed":
+                        serviceAgent.activateEntry();
+                    break;                        
+                    case "Startup":
+                        serviceAgent.checkinEntry();
+                    case "Aborted":
+                    default:
+                    //NOP
+                }
                         sync('info_');
+if(dbg) console.log('初期化終了');
+if(dbg) console.log(serviceAgent.currentRepository);                        
+                    });
+                },false,myEpisodeToken);
+            },false,myEpisodeToken);
+        },false,myProductToken);
+    },false,myProductToken)
+},false);
     　               });
     　           });
     　       }else{
 //ドキュメント新規作成
 /*    旧タイプの処理この状態には入らないはずなので順次削除      */
+if(dbg) console.log('old style new document');
     　           serviceAgent.currentServer.getRepositories(function(){
     　               serviceAgent.switchRepository(1,function(){
     　                   var myIdentifier = serviceAgent.currentRepository.getIdentifierByToken($("#backend_variables").attr("data-episode_token"));
@@ -4724,25 +4768,32 @@ if(dbg) console.log('new Entry init');
     　                       //var msg='新規カットです。カット番号を入力してください';
     　                       //var newCutName=prompt(msg);
     　                       //if()
-    　                   xUI.setRetrace();
-                         xUI.setUImode('production');
-    　                   sync('info_');
+                            xUI.setRetrace();
+                            xUI.setUImode('browsing');
+                            serviceAgent.activateEntry();
+//                            xUI.setUImode('production');
+                            sync('info_');
     　                   }
     　               });
     　           });
     　       }
 　       } else {
 //マルチドキュメントモード
+// リポジトリのIDは不問 とりあえず１(ローカル以外)
+if(dbg) console.log('onsite multi-document mode');
     　       serviceAgent.currentServer.getRepositories(function(){
-    　           serviceAgent.switchRepository(1);
+    　           serviceAgent.switchRepository(1,documentDepot.rebuildList);
     　       });
+            $("li#pMos").each(function(){$(this).hide()});//シングルドキュメントモード専用UI
 
 　       }
 //if(serviceAgent.currentRepository.entry(Xps.getIdentifier(xUI.XPS))),
 　   }else{
+if(dbg) console.log('Application Offsite');
 //オフサイトモード
 //オンサイト専用UIを隠す
-            $("li#dMos").each(function(){$(this).hide()});
+            $("li#pMos").each(function(){$(this).hide()});
+            $("li#pMom").each(function(){$(this).hide()});
             $("#ibMmenuBack").hide();
 /** 現在のセッションが承認済みか否かを判定して表示を更新
     
@@ -4826,8 +4877,7 @@ $("#optionPanelProg").dialog({
 //ヘッドラインの初期化
     initToolbox();
 //デバッグ関連メニューの表示
-    if(dbg)
-    {
+    if(dbg){
         $("li#debug").each(function(){$(this).show()});
         if(appHost.platform=="AIR"){$("li#airDbg").each(function(){$(this).show()})};
     }else{
@@ -5009,7 +5059,6 @@ if(dbg){
 }
 //表示内容の同期
     sync("tool_");sync("info_");
-
 if(dbg){
     var TimeFinish=new Date();
     var msg="ただいまのレンダリング所要時間は、およそ "+ Math.round((TimeFinish-TimeStart)/1000) +" 秒 でした。\n レイヤ数は、 "+XPS.xpsTracks.length+ "\nフレーム数は、"+XPS.duration()+"\tでした。\n\t現在のspin値は :"+xUI.spinValue;
@@ -5020,6 +5069,8 @@ if(dbg){
 xUI.adjustSpacer();
 /* */
 xUI.selection();
+//スタートアップ中に時間のかかる処理をしていた場合はプログレスパネルで画面ロック　解除は操作側から行う
+if(startupWait){xUI.sWitchPanel('Prog');};//ウェイト表示
 };
 /*
     ページ再ロード前に必要な手続群
@@ -6302,8 +6353,7 @@ if(useCookie.UIView){
 	ToolView=ToolView.join("");
 };//記録チェックがない場合は元のデータを変更しない
 myCookie[7]=ToolView;
-
-	if(dbg) console.log(ToolView);
+if(dbg) console.log(ToolView);
 //	alert(myCookie);
 
 return myCookie;
@@ -6436,7 +6486,7 @@ if (!navigator.cookieEnabled){return false;}
 	if(useCookie.UIView){
 	if(rEmaping[7]) ToolView	=rEmaping[7];
 	}
-	if(dbg) console.log( ToolView)
+if(dbg) console.log( ToolView)
 }
 //	クッキー削除
 function dlCk() {
@@ -7197,7 +7247,7 @@ this.chgMyName=function(newName)
 		        "\n\n ハンドル:メールアドレス / handle:uid@example.com ";
 		nas.showModalDialog("prompt",msg,localize(nas.uiMsg.userInfo),myName,function(){
 		    if(this.status==0){
-		        if(dbg) console.log(this.value)
+if(dbg) console.log(this.value)
 		        newName = this.value;
 		        myName = newName;
 		        xUI.currentUser = new nas.UserInfo(this.value);//objectc
@@ -7719,7 +7769,7 @@ this.chg =function (id)
 //テキストボックス書き換え
 this.rewrite =function (id)
 {
-	if(dbg){dbgPut(id);}
+if(dbg){dbgPut(id);}
 	this.changed=true;
 	return false;//フォーム送信抑止
 }
@@ -8177,7 +8227,6 @@ nas.FCT2Frm(document.getElementById("scnTime").value);
 // /////////
 //レイヤ数を設定
 	this.layers=1*document.getElementById("scnLayers").value;
-
 if(dbg){
 dbgPut("元タイムシートは : "+oldWidth+" 列/ "+oldduration+"コマ\n 新タイムシートは : "+newWidth+" 列/ "+duration+"コマ です。\n ");
 }
@@ -8324,7 +8373,7 @@ if(typeof console == 'undefined'){
         console=air.Introspector.Console;
     }else{
         console = {};
-        if(dbg) console.log=function(aRg){ 
+if(dbg) console.log=function(aRg){ 
         //dbg_action(aRg)
             document.getElementById('msg_well').value += (aRg+"\n");
         };

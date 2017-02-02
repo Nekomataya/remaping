@@ -122,11 +122,35 @@ function pullStore(){
 };
 
 /**
-	 同エピソードのカット一覧へロケーションを移す
+	 指定の階層へロケーションを移す
 変更フラグが立っている場合は、ロケーション移動の警告を行う
-
+root/products   作品一覧
+opus/episodes	制作話数一覧
+cuts/cut		カット一覧へ
 */
-function backToDocumentList(){
+function backToDocumentList(myTarget){
+	if(! xUI.onSite) return false;
+	if((typeof myTarget == 'undefined')||(serviceAgent.currentStatus == 'online'))
+		myTarget = 'root';
+	switch(myTarget){
+		case "cut":
+		case "cuts":
+			backLocation='/cuts?episode_token='+$('#backend_variables').attr('data-episode_token');
+		break;
+		case "opus":
+		case "episodes":
+			backLocation='/episodes?product_token='+$('#backend_variables').attr('data-product_token')
+		break;
+		case "root":
+		case "products":
+		default:
+			backLocation='/products';
+	}
+		xUI.sWitchPanel('Prog');
+	 	window.location= xUI.onSite+backLocation;
+	 	return false;
+	
+	
 	if(xUI.onSite){
 		var backLocation =　(serviceAgent.currentStatus == 'online-single')?
 			'/cuts?episode_token='+$('#backend_variables').attr('data-episode_token'):

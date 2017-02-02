@@ -2256,18 +2256,15 @@ Xps.compareIdentifier =function (target,destination){
         dstSC = destInfo.cut;
         if((! tgtSC)||(! dstSC)) return 0;
         if(tgtSC != dstSC){return 0;}
-//        if(tgtSC.join('') != dstSC.join('')){return 0;}
         var result = 1;
-        if (((tgtInfo.line)&&(destInfo.line))&&(tgtInfo.line.id == destInfo.line.id )) result ++;
-        if (((tgtInfo.stage)&&(destInfo.stage))&&(tgtInfo.stage.id== destInfo.stage.id )) result ++;
-        if (((tgtInfo.Job)&&(destInfo.Job))&&(tgtInfo.Job.id  == destInfo.Job.id )) result ++;
-        if ((tgtInfo.currentStatus)&&(destInfo.currentStatus)&&(tgtInfo.currentStatus == destInfo.currentStatus)) result ++;
-
-//        for(var ix = 2;ix <= 5;ix++){
-//            tgtInfo.line == dstInfo.line;
-//            if(tgtArray[ix] != destArray[ix]) return result;
-//            result ++;
-//        }
+    //version status
+        if (((tgtInfo.line)&&(destInfo.line))&&(tgtInfo.line.id.join() == destInfo.line.id.join() )){
+            result = 2;}else{return result;}
+        if (((tgtInfo.stage)&&(destInfo.stage))&&(tgtInfo.stage.id == destInfo.stage.id )){
+            result = 3;}else{return result;}
+        if (((tgtInfo.job)&&(destInfo.job))&&(tgtInfo.job.id  == destInfo.job.id )){
+            result = 4;}else{return result;}
+        if ((tgtInfo.currentStatus)&&(destInfo.currentStatus)&&(tgtInfo.currentStatus == destInfo.currentStatus)) result = 5;
         return result;
 }
 /**
