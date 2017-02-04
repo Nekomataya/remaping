@@ -218,71 +218,56 @@ for(var idx=0;idx<(this.XPS.xpsTracks.length-1);idx++){
     this["data_well"]       =document.getElementById("data_well");//データウェル
     this["snd_body"]        =document.getElementById("snd_body");//音声編集バッファ
 
-//以下インターフェースカラー設定
-    this.sheetbaseColor    =SheetBaseColor;        //タイムシート背景色
-     this.sheetblankColor    =SheetBlankColor;        //編集不可領域の背景色
-      this.footstampColor    =FootStampColor;        //フットスタンプの色
-       this.inputModeColor    =new Object();            //入力モード色
-        this.inputModeColor.NORMAL =SelectedColor;    //    ノーマル色
-        this.inputModeColor.EXTEND =RapidModeColor;    //    ラピッド入力基本色
-        this.inputModeColor.FLOAT  =FloatModeColor;    //    ブロック移動基本色
-        this.inputModeColor.SECTION=SectionModeColor;    //    範囲編集中の色
-         this.selectedColor    =this.inputModeColor.NORMAL;    //選択セルの背景色
-        this.selectionColor    =SelectionColor;        //選択領域の背景色
-       this.editingColor    =EditingColor;            //セル編集中のインジケータ
-      this.selectingColor    =SelectingColor;        //セル選択中のインジケータ
+//------------------------ 以下インターフェースカラー設定（ここはこのままキープして更新用のメソッドを作成するか?）
+//カラー・トラック幅等のルック決定要素はundefinedで初期化して　遅延解決に移行する
+
+    this.sheetbaseColor   ;        //タイムシート背景色
+    this.sheetblankColor;        //編集不可領域の背景色
+    this.footstampColor;        //フットスタンプの色
+    this.inputModeColor    =new Object();            //入力モード色
+    this.inputModeColor.NORMAL;    //    ノーマル色
+    this.inputModeColor.EXTEND;    //    ラピッド入力基本色
+    this.inputModeColor.FLOAT;    //    ブロック移動基本色
+    this.inputModeColor.SECTION;    //    範囲編集中の色
+         
+    this.selectedColor;    //選択セルの背景色
+    this.selectionColor;        //選択領域の背景色
+    this.editingColor;            //セル編集中のインジケータ
+    this.selectingColor;        //セル選択中のインジケータ
 //タイムライン・ラベル識別カラ－
-    this.cameraColor=nas.colorAry2Str(div(add([0,1,0],mul(nas.colorStr2Ary(SheetBaseColor),6)),7));
-    this.sfxColor=nas.colorAry2Str(div(add([0,0,1],mul(nas.colorStr2Ary(SheetBaseColor),5)),6));
-    this.stillColor=nas.colorAry2Str(div(add([1,0,0],mul(nas.colorStr2Ary(SheetBaseColor),6)),7));//タイムライン全体に着色
+    this.cameraColor;
+    this.sfxColor;
+    this.stillColor;//タイムライン全体に着色
 
 //中間色自動計算
-        this.inputModeColor.NORMALspin=
-    nas.colorAry2Str(div(add(nas.colorStr2Ary(SelectedColor),mul(nas.colorStr2Ary(SheetBaseColor),3)),4));
-        this.inputModeColor.EXTENDspin=
-    nas.colorAry2Str(div(add(nas.colorStr2Ary(RapidModeColor),mul(nas.colorStr2Ary(SheetBaseColor),3)),4));
-        this.inputModeColor.FLOATspin=
-    nas.colorAry2Str(div(add(nas.colorStr2Ary(FloatModeColor),mul(nas.colorStr2Ary(SheetBaseColor),3)),4));
-        this.inputModeColor.SECTIONspin=
-    nas.colorAry2Str(div(add(nas.colorStr2Ary(SectionModeColor),mul(nas.colorStr2Ary(SheetBaseColor),3)),4));
+        this.inputModeColor.NORMALspin;
+        this.inputModeColor.EXTENDspin;
+        this.inputModeColor.FLOATspin;
+        this.inputModeColor.SECTIONspin;
 //スピン選択状態
-        this.inputModeColor.NORMALspinselected=
-    nas.colorAry2Str(div(add(nas.colorStr2Ary(SelectedColor),mul(nas.colorStr2Ary(SelectionColor),8)),10));
-        this.inputModeColor.EXTENDspinselected=
-    nas.colorAry2Str(div(add(nas.colorStr2Ary(RapidModeColor),mul(nas.colorStr2Ary(SelectionColor),8)),10));
-        this.inputModeColor.FLOATspinselected=
-    nas.colorAry2Str(div(add(nas.colorStr2Ary(FloatModeColor),mul(nas.colorStr2Ary(SelectionColor),8)),10));
-        this.inputModeColor.SECTIONspinselected=
-    nas.colorAry2Str(div(add(nas.colorStr2Ary(SectionModeColor),mul(nas.colorStr2Ary(SelectionColor),8)),10));
+        this.inputModeColor.NORMALspinselected;
+        this.inputModeColor.EXTENDspinselected;
+        this.inputModeColor.FLOATspinselected;
+        this.inputModeColor.SECTIONspinselected;
 //選択状態
-        this.inputModeColor.NORMALselection=
-    nas.colorAry2Str(div(add(nas.colorStr2Ary(SelectedColor),mul(nas.colorStr2Ary(SelectionColor),5)),6));
-        this.inputModeColor.EXTENDselection=
-    nas.colorAry2Str(div(add(nas.colorStr2Ary(RapidModeColor),mul(nas.colorStr2Ary(SelectionColor),5)),6));
-        this.inputModeColor.FLOATselection=
-    nas.colorAry2Str(div(add(nas.colorStr2Ary(FloatModeColor),mul(nas.colorStr2Ary(SelectionColor),5)),6));
-        this.inputModeColor.SECTIONselection=
-    nas.colorAry2Str(div(add(nas.colorStr2Ary(SectionModeColor),mul(nas.colorStr2Ary(SelectionColor),5)),6));
+        this.inputModeColor.NORMALselection;
+        this.inputModeColor.EXTENDselection;
+        this.inputModeColor.FLOATselection;
+        this.inputModeColor.SECTIONselection;
 //編集中
-        this.inputModeColor.NORMALeddt=
-    nas.colorAry2Str(div(add(nas.colorStr2Ary(SelectedColor),mul([1,1,1],8)),9));
-        this.inputModeColor.EXTENDeddt=
-    nas.colorAry2Str(div(add(nas.colorStr2Ary(RapidModeColor),mul([1,1,1],8)),9));
-        this.inputModeColor.FLOATeddt=
-    nas.colorAry2Str(div(add(nas.colorStr2Ary(FloatModeColor),mul([1,1,1],8)),9));
-        this.inputModeColor.SECTIONeddt=
-    nas.colorAry2Str(div(add(nas.colorStr2Ary(SectionModeColor),mul([1,1,1],8)),9));
+        this.inputModeColor.NORMALeddt;
+        this.inputModeColor.EXTENDeddt;
+        this.inputModeColor.FLOATeddt;
+        this.inputModeColor.SECTIONeddt;
 
 //フロートテキスト色
-    this.floatTextColor =
-    nas.colorAry2Str(div(add([0,0,0],mul(nas.colorStr2Ary(SheetBaseColor),3)),4));
-
+    this.floatTextColor;
 
 //----------------------------------------------------------------------初期状態設定
-    this.spinAreaColor    =this.inputModeColor.NORMALspin;
-    this.spinAreaColorSelect=this.inputModeColor.NORMALselection;
-
-    this.sectionBodyColor = nas.colorAry2Str(div(add(nas.colorStr2Ary(SectionModeColor),mul(nas.colorStr2Ary(SheetBaseColor),3)),4));//?使わんかも
+    this.spinAreaColor;
+    this.spinAreaColorSelect;
+    this.sectionBodyColor;
+// ---------------------- ここまでカラー設定
 
 //そのほか
     this.keyMethod        =KEYMethod;    //キー変換方式
@@ -303,6 +288,165 @@ for(var idx=0;idx<(this.XPS.xpsTracks.length-1);idx++){
 //    xUIオブジェクト初期化終了 以下メソッド
 //
 /* ============================================================================ */
+/**
+    インターフェースルック設定
+    カラー・及びシートルックを更新
+    分離のみ　暗色のテーマにはまだ対応していないので注意　2017.02.04
+*/
+xUI.setSheetLook = function(sheetLooks){
+    this.sheetLooks=sheetLooks;
+/**
+    シートのカラーデータを構築
+    別の関数に分離予定
+        指定引数は　SheetBaseColorのみ？
+*/
+    if (! String(sheetLooks.SheetBaseColor).match(/^#[0-9a-f]+/i)){sheetLooks.SheetBaseColor = nas.colorAry2Str(nas.colorStr2Ary(sheetLooks.SheetBaseColor));};
+
+//編集不可領域の背景色 背景色を自動設定　やや暗　これは初期状態で対向色を設定してその間で計算を行うように変更
+
+    this.sheetbaseColor      = sheetLooks.SheetBaseColor;                                               //タイムシート背景色
+     this.sheetblankColor    = nas.colorAry2Str(mul(nas.colorStr2Ary(this.sheetbaseColor),.95));        //編集不可領域の背景色
+     this.sheetborderColor    = nas.colorAry2Str(mul(nas.colorStr2Ary(this.sheetbaseColor),.75));       //罫線基本色
+      this.footstampColor    = sheetLooks.FootStampColor;                                               //フット/差分　スタンプの色
+       this.inputModeColor   = new Object();                                            //  入力モード色
+        this.inputModeColor.NORMAL  = sheetLooks.SelectedColor;                         //  ノーマル色
+        this.inputModeColor.EXTEND  = sheetLooks.RapidModeColor;                        //  ラピッド入力基本色
+        this.inputModeColor.FLOAT   = sheetLooks.FloatModeColor;                        //  ブロック移動基本色
+        this.inputModeColor.SECTION = sheetLooks.SectionModeColor;                      //  範囲編集中の色
+         this.selectedColor    = this.inputModeColor.NORMAL;                                        //選択セルの背景色
+        this.selectionColor    = sheetLooks.SelectionColor;                                         //選択領域の背景色
+       this.editingColor       = sheetLooks.EditingColor;                                           //セル編集中のインジケータ
+      this.selectingColor      = sheetLooks.SelectingColor;                                         //セル選択中のインジケータ
+//タイムライン・ラベル識別カラ－
+    this.cameraColor    = nas.colorAry2Str(div(add([0,1,0],mul(nas.colorStr2Ary(this.sheetbaseColor),6)),7));
+    this.sfxColor       = nas.colorAry2Str(div(add([0,0,1],mul(nas.colorStr2Ary(this.sheetbaseColor),5)),6));
+    this.stillColor     = nas.colorAry2Str(div(add([1,0,0],mul(nas.colorStr2Ary(this.sheetbaseColor),6)),7));　//タイムライン全体に着色
+
+//中間色自動計算
+        this.inputModeColor.NORMALspin=
+    nas.colorAry2Str(div(add(nas.colorStr2Ary(this.inputModeColor.NORMAL),mul(nas.colorStr2Ary(this.sheetbaseColor),3)),4));
+        this.inputModeColor.EXTENDspin=
+    nas.colorAry2Str(div(add(nas.colorStr2Ary(this.inputModeColor.EXTEND),mul(nas.colorStr2Ary(this.sheetbaseColor),3)),4));
+        this.inputModeColor.FLOATspin=
+    nas.colorAry2Str(div(add(nas.colorStr2Ary(this.inputModeColor.FLOAT),mul(nas.colorStr2Ary(this.sheetbaseColor),3)),4));
+        this.inputModeColor.SECTIONspin=
+    nas.colorAry2Str(div(add(nas.colorStr2Ary(this.inputModeColor.SECTION),mul(nas.colorStr2Ary(this.sheetbaseColor),3)),4));
+//スピン選択状態
+        this.inputModeColor.NORMALspinselected=
+    nas.colorAry2Str(div(add(nas.colorStr2Ary(this.inputModeColor.NORMAL),mul(nas.colorStr2Ary(this.selectionColor),8)),10));
+        this.inputModeColor.EXTENDspinselected=
+    nas.colorAry2Str(div(add(nas.colorStr2Ary(this.inputModeColor.EXTEND),mul(nas.colorStr2Ary(this.selectionColor),8)),10));
+        this.inputModeColor.FLOATspinselected=
+    nas.colorAry2Str(div(add(nas.colorStr2Ary(this.inputModeColor.FLOAT),mul(nas.colorStr2Ary(this.selectionColor),8)),10));
+        this.inputModeColor.SECTIONspinselected=
+    nas.colorAry2Str(div(add(nas.colorStr2Ary(this.inputModeColor.SECTION),mul(nas.colorStr2Ary(this.selectionColor),8)),10));
+//選択状態
+        this.inputModeColor.NORMALselection=
+    nas.colorAry2Str(div(add(nas.colorStr2Ary(this.inputModeColor.NORMAL),mul(nas.colorStr2Ary(this.selectionColor),5)),6));
+        this.inputModeColor.EXTENDselection=
+    nas.colorAry2Str(div(add(nas.colorStr2Ary(this.inputModeColor.EXTEND),mul(nas.colorStr2Ary(this.selectionColor),5)),6));
+        this.inputModeColor.FLOATselection=
+    nas.colorAry2Str(div(add(nas.colorStr2Ary(this.inputModeColor.FLOAT),mul(nas.colorStr2Ary(this.selectionColor),5)),6));
+        this.inputModeColor.SECTIONselection=
+    nas.colorAry2Str(div(add(nas.colorStr2Ary(this.inputModeColor.SECTION),mul(nas.colorStr2Ary(this.selectionColor),5)),6));
+//編集中
+        this.inputModeColor.NORMALeddt=
+    nas.colorAry2Str(div(add(nas.colorStr2Ary(this.inputModeColor.NORMAL),mul([1,1,1],8)),9));
+        this.inputModeColor.EXTENDeddt=
+    nas.colorAry2Str(div(add(nas.colorStr2Ary(this.inputModeColor.EXTEND),mul([1,1,1],8)),9));
+        this.inputModeColor.FLOATeddt=
+    nas.colorAry2Str(div(add(nas.colorStr2Ary(this.inputModeColor.FLOAT),mul([1,1,1],8)),9));
+        this.inputModeColor.SECTIONeddt=
+    nas.colorAry2Str(div(add(nas.colorStr2Ary(this.inputModeColor.SECTION),mul([1,1,1],8)),9));
+
+//フロートテキスト色
+    this.floatTextColor =
+    nas.colorAry2Str(div(add([0,0,0],mul(nas.colorStr2Ary(this.sheetbaseColor),3)),4));
+
+
+//----------------------------------------------------------------------初期状態設定
+    this.spinAreaColor          = this.inputModeColor.NORMALspin;
+    this.spinAreaColorSelect    = this.inputModeColor.NORMALselection;
+    this.sectionBodyColor       = nas.colorAry2Str(div(add(nas.colorStr2Ary(this.inputModeColor.SECTION),mul(nas.colorStr2Ary(this.sheetbaseColor),3)),4));//?使わんかも
+// ---------------------- ここまでカラー設定(再計算)
+
+
+//================================================================================================================================ルックの適用
+//タイムシート背景色をsheetbaseColorに設定
+    document.body.style.backgroundColor     = this.sheetbaseColor;
+    console.log(this.sheetbaseColor);
+//ヘッダとフッタの背景色をシート背景色で塗りつぶし
+    document.getElementById("fixedHeader").style.backgroundColor = this.sheetbaseColor;
+
+    nas.addCssRule("table.sheet","background-color:"+this.sheetbaseColor,"screen");
+
+
+var mySections=[
+    ["th.tcSpan"        ,"width" ,(sheetLooks.TimeGuideWidth        + sheetLooks.CellWidthUnit)],
+    ["th.dialogSpan"    ,"width" ,(sheetLooks.DialogWidth           + sheetLooks.CellWidthUnit)],
+    ["td.colSep"        ,"width" ,(sheetLooks.ColumnSeparatorWidth  + sheetLooks.CellWidthUnit)],
+    ["th.referenceSpan" ,"width" ,(sheetLooks.ActionWidth           + sheetLooks.CellWidthUnit)],
+    ["th.editSpan"      ,"width" ,(sheetLooks.SheetCellWidth        + sheetLooks.CellWidthUnit)],
+    ["th.timingSpan"    ,"width" ,(sheetLooks.SheetCellWidth        + sheetLooks.CellWidthUnit)],
+    ["th.stillSpan"     ,"width" ,(sheetLooks.StillCellWidth        + sheetLooks.CellWidthUnit)],
+    ["th.sfxSpan"       ,"width" ,(sheetLooks.SfxCellWidth          + sheetLooks.CellWidthUnit)],
+    ["th.cameraSpan"    ,"width" ,(sheetLooks.CameraCellWidth       + sheetLooks.CellWidthUnit)]
+]
+
+/*    cssにルールセットを追加する関数
+    nas.addCssRule( セレクタ, プロパティ, 適用範囲 )
+        セレクタ    cssのセレクタを指定
+        プロパティ    プロパティを置く
+        適用範囲    "screen""print"または"both"
+        
+        注意してJqueryに置き換える
+ */
+//トラックの幅を設定
+/*    リスト
+class=timelabel
+class=timeguide? 
+class=dtSep
+class=ntSep
+class=colSep
+class=layerlabelR
+class=layerlabel
+ */
+
+for(var idx=0;idx<mySections.length;idx++){
+    nas.addCssRule( mySections[idx][0],mySections[idx][1]+":"+mySections[idx][2],"both");
+//    $(mySections[idx][0]).css(mySections[idx][1],mySections[idx][2])
+};
+
+//    シートブランクの色設定
+var mySeps=[
+    "ltSep","dtSep","ntSep","ntSep",
+    "lsSep","dsSep","nsSep","nsSep",
+    "lnSep","dnSep","nnSep","nnSep"
+];
+
+for(var idx=0;idx<mySeps.length;idx++){
+    nas.addCssRule("."+mySeps[idx]+"_Blank","background-color:"+xUI.sheetBlankColor)
+};
+//================================================================================================================================ シートカラーcss設定
+
+
+//================================================================================================================================ シートカラーcss設定2
+//    シート境界色設定
+    $('table').css('border-color',xUI.sheetbaseColor);
+    $('th').css('border-color',xUI.sheetBorderColor);
+    $('td').css('border-color',xUI.sheetBorderColor);
+    $("th.stilllabel").css("background-color",xUI.stillColor);// ,"screen");
+    $("th.sfxlabel").css("background-color",xUI.sfxColor);//   ,"screen");
+    $("th.cameralabel").css("background-color",xUI.cameraColor);//,"screen");
+
+//================================================================================================================================ シートカラーcss設定2
+//    if(this.footstampPaint) this.footstampPaint();
+    return true;
+}
+//初期化の一環で一度実行？
+
+// xUI.setSheetLook(SheetLooks);
+
 /**
     xUI.setDocumentStatus(myCommnad)
     ドキュメントのステータスを変更する
@@ -1436,8 +1580,8 @@ var SheetRows=Math.ceil(this.SheetLength/this.PageCols)*Math.ceil(XPS.framerate)
 /**/
 if(this.viewMode=="Compact"){
 var tableFixWidth=(
-    TimeGuideWidth +
-    ActionWidth*this.referenceLabels.length 
+    this.sheetLooks.TimeGuideWidth +
+    this.sheetLooks.ActionWidth*this.referenceLabels.length 
     );
     
 /*+
@@ -1455,12 +1599,12 @@ var tableFixWidth=(
 //alert(    DialogWidth*(xUI.dialogCount-xUI.dialogSpan) );
 var tableBodyWidth=(
     tableFixWidth+
-    DialogWidth*xUI.dialogCount +
-    StillCellWidth*xUI.stillCount +
-    SfxCellWidth*xUI.sfxCount +
-    CameraCellWidth*xUI.cameraCount +
-    SheetCellWidth*xUI.timingCount +
-    CommentWidth );//
+    this.sheetLooks.DialogWidth*xUI.dialogCount +
+    this.sheetLooks.StillCellWidth*xUI.stillCount +
+    this.sheetLooks.SfxCellWidth*xUI.sfxCount +
+    this.sheetLooks.CameraCellWidth*xUI.cameraCount +
+    this.sheetLooks.SheetCellWidth*xUI.timingCount +
+    this.sheetLooks.CommentWidth );//
 /*
 コンパクトモードで１段固定(第一象限スクロールデータ)
     (
@@ -1483,22 +1627,22 @@ var SheetLength=Math.ceil(XPS.duration()/XPS.framerate);
     第三象限ヘッダーはシート枚数分繰り返し
 UI設定に基づいて段組
 */
-var tableFixWidth=TimeGuideWidth;
+var tableFixWidth=this.sheetLooks.TimeGuideWidth;
 
 /*
     以前はテーブル内のタイムラン種別をここで判定していたが
     xUIのプロパティに変換してこちらでは計算のみを行う仕様に変更済み 2015/04.25
 */
 var tableBodyWidth=(
-    TimeGuideWidth +
-    ActionWidth*this.referenceLabels.length +
-    DialogWidth*xUI.dialogCount +
-    StillCellWidth*xUI.stillCount +
-    SfxCellWidth*xUI.sfxCount +
-    CameraCellWidth*xUI.cameraCount +
-    SheetCellWidth*xUI.timingCount +
-    CommentWidth ) * this.PageCols +
-    (ColumnSeparatorWidth*(this.PageCols-1));//
+    this.sheetLooks.TimeGuideWidth +
+    this.sheetLooks.ActionWidth*this.referenceLabels.length +
+    this.sheetLooks.DialogWidth*xUI.dialogCount +
+    this.sheetLooks.StillCellWidth*xUI.stillCount +
+    this.sheetLooks.SfxCellWidth*xUI.sfxCount +
+    this.sheetLooks.CameraCellWidth*xUI.cameraCount +
+    this.sheetLooks.SheetCellWidth*xUI.timingCount +
+    this.sheetLooks.CommentWidth ) * this.PageCols +
+    (this.sheetLooks.ColumnSeparatorWidth*(this.PageCols-1));//
 /*
     (
     参照レイヤ数*参照セル幅+
@@ -1528,10 +1672,10 @@ BODY_ += 'onMouseOver =" xUI.Mouse(event)"';
 BODY_ +='<table class=sheet cellspacing=0 ';
     if(pageNumber<=-2){
 //第2,3象限用
-BODY_ +='style="width:'+(tableFixWidth)+CellWidthUnit+'"';
+BODY_ +='style="width:'+(tableFixWidth)+this.sheetLooks.CellWidthUnit+'"';
     }else{
 //第1,4象限用
-BODY_ +='style="width:'+tableBodyWidth+CellWidthUnit+'"';
+BODY_ +='style="width:'+tableBodyWidth+this.sheetLooks.CellWidthUnit+'"';
     }
     if(pageNumber<0){
 BODY_ +='id="qdr'+(-1*pageNumber)+'" ';
@@ -1635,7 +1779,7 @@ BODY_ +='<tr>';
     for (cols=0;cols < PageCols;cols ++){
 /*********** timeguide ********************/
 BODY_ +='<th rowspan=2 class=timelabel ';
-//BODY_ +='style=" width:'+TimeGuideWidth+CellWidthUnit+'"';
+//BODY_ +='style=" width:'+this.sheetLooks.TimeGuideWidth+CellWidthUnit+'"';
 BODY_ +=' ><span class=timeguide> TIME </span></th>';
 /*********** Action Ref *************/
 BODY_ +='<th colspan="'+this.referenceLabels.length+ '" id="rnArea" class="rnArea" ondblclick=alert(this.id)';
@@ -1697,7 +1841,7 @@ var lbString=(this.referenceLabels[r].length<4)?this.referenceLabels[r]:'<a oncl
 
 
  if (this.referenceLabels[r].match(/^\s*$/)){
-    BODY_ +='<span style="color:'+SheetBorderColor+'";>'+nas.Zf(r,2)+'</span>';
+    BODY_ +='<span style="color:'+this.sheetBorderColor+'";>'+nas.Zf(r,2)+'</span>';
  }else{
     BODY_ +=lbString;
  };
@@ -2984,6 +3128,7 @@ default :	return true;
 	}
 //return false;
 }
+/*
 if(false){    if(this.Mouse.action){return false};//マウス動作優先中
 //フォーカスされたテーブル上の入力ボックスのキーダウンを検出
 //window.status = e.keyCode+'/'+String.fromCharCode(e.keyCode)
@@ -3115,16 +3260,20 @@ case    90 :        ;    //[ctrl]+[Z]/undo
         this.undo();
         return false;}else{return true};
     break;
+*/
 /* 保留
 case     :        ;    //[ctrl]+[]/
 case    8    :    this.spin("bs");    break;    //bs NOP
 case    46    :    this.spin("del");    break;    //del 
 case  :    window.status="[]";    break;    //
 */
+/*
 default :    return true;
     };
 return false;
+//return true;
 };
+*/
 /**
 //	フォーカスされたテーブル上の入力ボックスのキープレスを検出して
 //	動作コントロールのために戻り値を調整
@@ -3265,49 +3414,6 @@ default :;
 	}
 //return true;
 }
-if(false){
-
-//フォーカスされたテーブル上の入力ボックスのキープレスを検出して
-//動作コントロールのために戻り値を調整
-//alert(e);
-    key = e.keyCode;//キーコードを取得
-    switch(key) {
-case    27    : return false        ;//esc
-case    25    :if(! Safari) break;
-case    0    :
-case    9    :            ;//またはTAB および ctr-I
-    if (this.edchg)
-    {return true} else {return false};break;//ctrls
-case    13    :            ;//Enter
-    return false;break;
-case    65    :            ;//a
-case    67    :            ;//c
-case    79    :            ;//v
-case    83    :            ;//v
-case    86    :            ;//v
-case    88    :            ;//x
-case    89    :            ;//y
-case    90    :            ;//z
-case    97    :            ;//A
-case    99    :            ;//C
-case    118    :            ;//V
-case    120    :            ;//X
-case    121    :            ;//Y
-case    122    :            ;//Z
-    if (e.ctrlKey)    {return false}else{return true};
-        break;
-//case        : return false;break    ;//
-//    if (this.edchg)
-//    {return true} else {return false};
-//    ;break
-// なんか、イロイロ間違い。キープレスでは、ほとんどのコントロール関連の
-//キーコードが拾えないので、あまり気にする必要ないみたい。
-//気にするのは、ほぼ改行(enter/return)のみ。
-//case     :    return false;break;//
-default :    return true;
-    };
-return true;
-};
 //
 //xUI.keyPress    =keyPress_ ;
 //
@@ -3393,57 +3499,6 @@ if(this.Select[0]>0){syncInput(document.getElementById("iNputbOx").value);};
 	}
 return true;
 }
-if(false){
-
-    key = e.keyCode;//キーコードを取得
-    iBocs    = document.getElementById("iNputbOx").value;
-window.status='KEYUP /'+key+'/'+String.fromCharCode(e.keyCode)+'/'+iBocs+'/'+this.bkup()+'/'+this.edchg;
-    if(this.bkup()!=document.getElementById("iNputbOx").value){
-        if (!this.edchg) this.edChg(true);//変更されていたらフラグ立て
-//        syncInput(iBocs);
-    };
-    switch(key) {
-case 9    :    ;    //tab はシステムで使うのでUPは注意
-case 13    :    ;    //Enter
-case 27    :    ;    //esc
-case 32    :    ;    //space
-case 38    :    ;    //上カーソル
-case 40    :    ;    //下
-case 39    :    ;    //右
-case 37    :    ;    //左
-case  33:    ;    //ページアップ
-case  34:    ;    //ページダウン
-case  16:    ;    //シフト
-case  17:    ;    //コントロール
-case  18:    ;    //ALT
-case  45:    ;    //ins
-case  46:    ;    //del
-case  144:    ;    //clear(NumLock)
-//case  :    ;    //
-    if(!this.edchg) document.getElementById("iNputbOx").select();
-    return true;break;
-//case  :    window.status="[]";    break;    //
-case    65    :            ;//[a]
-case    67    :            ;//[c]
-case    79    :            ;//[v]
-case    83    :            ;//[v]
-case    86    :            ;//[v]
-case    88    :            ;//[x]
-case    89    :            ;//[y]
-case    90    :            ;//[z]
-    if (e.ctrlKey)    {
-        return true;
-    };
-        break;
-//case 99 :    ;    //[C]copy    このあたりは横取り
-//case 118 :    ;    //[V]paste
-//case 120 :    ;    //[X]cut    しないほうが良い?
-case 8    :    ;    //bs NOP
-default :
-    return true;
-    };
-return false;
-};
 //
 //xUI.keyUp    =    keyUp_    ;
 //
@@ -3688,22 +3743,22 @@ if(this.viewMode=="Compact"){
 //境界オフセット変数
     var borderOffset={};
 //左マージン    ２カラム
-      borderOffset.left=SheetCellWidth;
+      borderOffset.left=this.sheetLooks.SheetCellWidth;
 //上マージン    ４フレーム
       borderOffset.top=frameHeight*4;
 //右マージン    レコード末コメント除き１カラム
-      borderOffset.right=CommentWidth;
+      borderOffset.right=this.sheetLooks.CommentWidth;
 //下マージン    ４フレーム内寄り
       borderOffset.bottom=frameHeight*6
 }else{
 //境界オフセット変数
     var borderOffset={};
 //左マージン    ３カラム
-      borderOffset.left=SheetCellWidth*4;
+      borderOffset.left=this.sheetLooks.SheetCellWidth*4;
 //上マージン    ６フレーム
       borderOffset.top= frameHeight*4;
 //右マージン    レコード末コメント除き２カラム
-      borderOffset.right= CommentWidth;
+      borderOffset.right= this.sheetLooks.CommentWidth;
 //下マージン    ６フレーム
       borderOffset.bottom= frameHeight*6;
 }
@@ -4199,7 +4254,7 @@ var    xUI=new Object();
     nas_Rmp_Init
 データドキュメントロード時に毎回実行される手続　UI初期化を含む
     nas_Rmp_reStart
-ページ
+ページリロード等の際に実行される手続
 */
 function nas_Rmp_Startup(){
 //バージョンナンバーセット
@@ -4363,12 +4418,16 @@ return parseData;
     デバッグモードでのみ接続
 if(dbg)    XPS.getMap(MAP);
 */
+//================================================================================================================================
 
 /**
     シートのカラーデータを構築
     別の関数に分離予定
         指定引数は　SheetBaseColorのみ？
 */
+//    xUI.setSheetLook(SheetLooks);
+
+if(false){
     if (! SheetBaseColor.toString().match(/^#[0-9a-f]+/i)){
         SheetBaseColor = nas.colorAry2Str(nas.colorStr2Ary(SheetBaseColor));
     };
@@ -4394,25 +4453,25 @@ if(dbg)    XPS.getMap(MAP);
 //    SelectingColor    =document.getElementById("spanSelection").style.backgroundColor;
 //セル選択中のインジケータ
 /*
-    ["th.timelabel","width:"+(TimeGuideWidth + CellWidthUnit)],
-    [".dtSep","width:"+(DialogWidth + CellWidthUnit)],
-    [".ntSep","width:"+(CommentWidth + CellWidthUnit)],
-    ["td.colSep","width:"+(ColumnSeparatorWidth +CellWidthUnit)],
-    ["th.layerlabelR","width:"+(ActionWidth + CellWidthUnit)],
-    ["th.layerlabel","width:"+(SheetCellWidth + CellWidthUnit)],
-    ["th.framenoteSpan","width",(CommentWidth + CellWidthUnit)],
+    ["th.timelabel","width:"+(this.sheetLooks.TimeGuideWidth + this.sheetLooks.CellWidthUnit)],
+    [".dtSep","width:"+(this.sheetLooks.DialogWidth + this.sheetLooks.CellWidthUnit)],
+    [".ntSep","width:"+(this.sheetLooks.CommentWidth + this.sheetLooks.CellWidthUnit)],
+    ["td.colSep","width:"+(this.sheetLooks.ColumnSeparatorWidth +this.sheetLooks.CellWidthUnit)],
+    ["th.layerlabelR","width:"+(this.sheetLooks.ActionWidth + this.sheetLooks.CellWidthUnit)],
+    ["th.layerlabel","width:"+(this.sheetLooks.SheetCellWidth + this.sheetLooks.CellWidthUnit)],
+    ["th.framenoteSpan","width",(this.sheetLooks.CommentWidth + this.sheetLooks.CellWidthUnit)],
     ["timeguide","width:"+],
 */
 var mySections=[
-    ["th.tcSpan"        ,"width" ,(TimeGuideWidth + CellWidthUnit)],
-    ["th.dialogSpan"    ,"width" ,(DialogWidth + CellWidthUnit)],
-    ["td.colSep"        ,"width" ,(ColumnSeparatorWidth +CellWidthUnit)],
-    ["th.referenceSpan" ,"width" ,(ActionWidth + CellWidthUnit)],
-    ["th.editSpan"      ,"width" ,(SheetCellWidth + CellWidthUnit)],
-    ["th.timingSpan"    ,"width" ,(SheetCellWidth + CellWidthUnit)],
-    ["th.stillSpan"     ,"width" ,(StillCellWidth + CellWidthUnit)],
-    ["th.sfxSpan"       ,"width" ,(SfxCellWidth + CellWidthUnit)],
-    ["th.cameraSpan"    ,"width" ,(CameraCellWidth + CellWidthUnit)]
+    ["th.tcSpan"        ,"width" ,(this.sheetLooks.TimeGuideWidth + this.sheetLooks.CellWidthUnit)],
+    ["th.dialogSpan"    ,"width" ,(this.sheetLooks.DialogWidth + this.sheetLooks.CellWidthUnit)],
+    ["td.colSep"        ,"width" ,(this.sheetLooks.ColumnSeparatorWidth + this.sheetLooks.CellWidthUnit)],
+    ["th.referenceSpan" ,"width" ,(this.sheetLooks.ActionWidth + this.sheetLooks.CellWidthUnit)],
+    ["th.editSpan"      ,"width" ,(this.sheetLooks.SheetCellWidth + this.sheetLooks.CellWidthUnit)],
+    ["th.timingSpan"    ,"width" ,(this.sheetLooks.SheetCellWidth + this.sheetLooks.CellWidthUnit)],
+    ["th.stillSpan"     ,"width" ,(this.sheetLooks.StillCellWidth + this.sheetLooks.CellWidthUnit)],
+    ["th.sfxSpan"       ,"width" ,(this.sheetLooks.SfxCellWidth + this.sheetLooks.CellWidthUnit)],
+    ["th.cameraSpan"    ,"width" ,(this.sheetLooks.CameraCellWidth + this.sheetLooks.CellWidthUnit)]
 ]
 
 /*    cssにルールセットを追加する関数
@@ -4445,16 +4504,18 @@ var mySeps=[
 ];
 
 for(var idx=0;idx<mySeps.length;idx++){
-    nas.addCssRule("."+mySeps[idx]+"_Blank","background-color:"+SheetBlankColor)
+    nas.addCssRule("."+mySeps[idx]+"_Blank","background-color:"+ this.sheetBlankColor)
 };
 
+//================================================================================================================================ シートカラーcss設定
+}
 if(false){
 //    設定幅適用
-    $("th.tcSpan").width        = (TimeGuideWidth+CellWidthUnit);
-    $("th.referenceSpan").width = (ActionWidth+CellWidthUnit);
-    $("th.dialogSpan").width    = (DialogWidth+CellWidthUnit);
-    $("th.editSpan").width      = (SheetCellWidth+CellWidthUnit);
-    $("th.framenoteSpan").width = (CommentWidth+CellWidthUnit);
+    $("th.tcSpan").width        = (this.sheetLooks.TimeGuideWidth   + this.sheetLooks.CellWidthUnit);
+    $("th.referenceSpan").width = (this.sheetLooks.ActionWidth      + this.sheetLooks.CellWidthUnit);
+    $("th.dialogSpan").width    = (this.sheetLooks.DialogWidth      + this.sheetLooks.CellWidthUnit);
+    $("th.editSpan").width      = (this.sheetLooks.SheetCellWidth   + this.sheetLooks.CellWidthUnit);
+    $("th.framenoteSpan").width = (this.sheetLooks.CommentWidth     + this.sheetLooks.CellWidthUnit);
 }
 //サブルーチンの位置は後で一考
 
@@ -4523,8 +4584,14 @@ if(startupXPS.length > 0){
         referenceX.readIN(referenceXPS);
     }
     xUI.init(XPS,referenceX);
+/**
+    シートのカラーデータを構築
+*/
+    console.log(SheetLooks);
+    xUI.setSheetLook(SheetLooks);
     nas_Rmp_Init();
-//================================css設定
+/* ================================css設定
+//================================================================================================================================ シートカラーcss設定2
 //    シート境界色設定
     $('table').css('border-color',SheetBaseColor);
     $('th').css('border-color',SheetBorderColor);
@@ -4536,6 +4603,9 @@ if(startupXPS.length > 0){
     $("th.stilllabel").css("background-color",xUI.stillColor);// ,"screen");
     $("th.sfxlabel").css("background-color",xUI.sfxColor);//   ,"screen");
     $("th.cameralabel").css("background-color",xUI.cameraColor);//,"screen");
+
+//================================================================================================================================ シートカラーcss設定2
+*/
 
 //startupXPSがない場合でフラグがあればシートに書き込むユーザ名を問い合わせる
 if(false){    myPref.chgMyName(); document.getElementById("nas_modalInput").focus();}
@@ -4570,12 +4640,14 @@ document.getElementById("iNputbOx").focus();
 タイムシートのUIをリセットする手続き
 タイムシートの変更があった場合はxUI.init(XPS)を先にコールしてxUIのアップデートを行うこと
 引数としてuiModeを文字列で与えて　リセット後のuiModeを指定可能 未指定の場合はリセット前のモードを継続
+このルーチンの呼出回数が増えたので、もっと軽量なリセットを考慮すること　2017.02
 */
 function nas_Rmp_Init(uiMode){
     var startupWait=false;
 //プロパティのリフレッシュ
     xUI._checkProp();
-    xUI.Cgl.init();
+    xUI.Cgl.init();//特にこの処理を重点的にチェック　このルーチンは実行回数が少ないほど良い
+
 /*　表示モード増設 
 Compactモード時は強制的に
   表示１列　コンテの継続時間とページ長を一致させる
@@ -4592,15 +4664,15 @@ viewOnly
 
     sync('productStatus');
 
-//タイムシートテーブルボディ幅の算出
+//タイムシートテーブルボディ幅の再計算
 //(タイムヘッダ幅+ダイアログ幅+レイヤ数*幅+コメント欄幅+余分)×ページカラム数＋カラムセパレータ幅×(ページカラム数?1)
 
 var tableBodyWidth=(
-    TimeGuideWidth + DialogWidth + 
-    ActionWidth*xUI.referenceLabels.length + SheetCellWidth*(XPS.xpsTracks.length-2) +
-    CommentWidth )
+    xUI.sheetLooks.TimeGuideWidth + xUI.sheetLooks.DialogWidth + 
+    xUI.sheetLooks.ActionWidth*xUI.referenceLabels.length + xUI.sheetLooks.SheetCellWidth*(XPS.xpsTracks.length-2) +
+    xUI.sheetLooks.CommentWidth )
     if(xUI.viewMode!="Compact"){
-        tableBodyWidth=tableBodyWidth* xUI.PageCols +(ColumnSeparatorWidth*(xUI.PageCols-1));//
+        tableBodyWidth=tableBodyWidth* xUI.PageCols +(xUI.sheetLooks.ColumnSeparatorWidth*(xUI.PageCols-1));//
     }
 //全体幅の指定を停止
 //    nas.addCssRule("table.sheet","width:"+(tableBodyWidth + CellWidthUnit),"screen");
@@ -4608,6 +4680,7 @@ var tableBodyWidth=(
 /* この計算はシート表示初期化の際にのみ必要な計算なのでこちらに移動    07/07/08    */
 //シートを初期化
 if(dbg) var TimeStart=new Date();
+
 //UI上メモとトランジション表示をシート表示と切り分けること 関連処理注意
     sync("memo");
 if(xUI.viewMode=="Compact"){
@@ -5085,15 +5158,23 @@ storePtはオープン時および保存時に現状のundoPtを複製するの�
 */
     if(! xUI.isStored()){
     evt = event || window.event;
-    return evt.returnValue="ドキュメントの変更が保存されていません！";
+    return evt.returnValue=localize({
+        en:"",
+        ja:"ドキュメントの変更が保存されていません！"
+    });
         //xUI.setBackup();
-        var msg="このページから移動します(移動のキャンセルはできません)\nドキュメントが保存されていませんが、保存しますか？";
+        var msg=locallize({
+            en:"",
+            ja:"このページから移動します(移動のキャンセルはできません)\nドキュメントが保存されていませんが、保存しますか？"
+        });
 /*データ保全は、モード／ケースごとに振り分け必要*/
         if(confirm(msg)){
             xUI.setBackup()
         };
         //保存処理
     };
+//データ保存の有無に関係なくセッションチェックイン中ならば保留する（自動）
+if(xUI.uiMode=='production'){serviceAgent.deactivateEntry();}
 
 // if(confirm("TEST")){return true}else {return false};
 //    クッキーを使用する設定なら、
@@ -5542,7 +5623,8 @@ default	:	if(dbg){dbgPut(": "+prop+" :ソレは知らないプロパティなの
 	if(xUI.init){
 		var winTitle=xUI.XPS.getIdentifier();//これは修正予定1/9
 		if((appHost.platform == "AIR") && (fileBox.currentFile)){winTitle = fileBox.currentFile.name}
-		winTitle +=(xUI.isStored())?"":" *";
+		//winTitle +=(xUI.isStored())?"":" *";
+		if(! xUI.isStored()) winTitle = "*"+winTitle;
 		if(document.title!=winTitle){document.title=winTitle};//違ってるときのみ書き直す
         if(! xUI.isStored()){
             if(document.getElementById('pmcui-update').disabled == true) document.getElementById('pmcui-update').disabled = false;
@@ -6837,6 +6919,7 @@ dbgPut("new_dat :"+new_dat)
 }
 
 function rewriteValue(id){
+    if(xUI.edchg) xUI.put(document.getElementById('iNputbOx').value);
 var msg="";
 var prp="";
 	switch (id){

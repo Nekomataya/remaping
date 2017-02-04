@@ -1253,7 +1253,7 @@ Xps.prototype.reInitBody = function (newTimelines, newDuration) {
      return true;
 
 if(this.xpsTracks.duration){
-    
+    // NOP
 }else{
     this.xpsTracks.length = newTimelines;//配列長(タイムライン数)の設定 メソッドに置きかえ予定
 

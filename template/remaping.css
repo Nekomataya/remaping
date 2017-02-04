@@ -1305,6 +1305,7 @@ span.pmcui_ {
 	height:21px;
 }
 .jobControl-checkin {margin-left:8px;}
+.jobControl-deactivate {display:none;}
 
 .pmLabel	{
 	margin-left:16px;

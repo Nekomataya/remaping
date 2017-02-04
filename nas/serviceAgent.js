@@ -592,8 +592,11 @@ localRepository.pushEntry=function(myXps,callback,callback2){
     for (var pid=0;pid<this.entryList.length;pid++){
         if(Xps.compareIdentifier(this.entryList[pid].toString(),myIdentifier) > 3){
             //既存のエントリが有るのでストレージとリストにpushして終了
-            this.entryList[pid].push(myIdentifier);
-            try{ localStorage.setItem(this.keyPrefix+myIdentifier,myXps.toString()) }catch(err){
+            try{
+                this.entryList[pid].push(myIdentifier);
+                localStorage.setItem(this.keyPrefix+myIdentifier,myXps.toString());
+                if (xUI.XPS === myXps) xUI.setStored('current');
+            }catch(err){
                 if(callback2 instanceof Function){callback2();}                
             }
             if(callback instanceof Function){callback();}
@@ -601,19 +604,22 @@ localRepository.pushEntry=function(myXps,callback,callback2){
         };
     };
 //既存エントリが無いので新規エントリを追加
-    localStorage.setItem(this.keyPrefix+myIdentifier,myXps.toString());
+//設定制限値をオーバーしたら、 警告する。　OKならば　ローカルストレージから最も古いエントリを削除して実行
     try{
-        this.entryList.push(new listEntry(myIdentifier)) 
+        if ( this.entryList.length >= this.maxEntry ){
+            var msg=localize({en:"over limit!\n this entry will remove [%1]\n ok?",ja:"制限オーバーです!\nこのカットを登録するとかわりに[%1]が消去されます。\nよろしいですか？"},decodeURIComponent(this.entryList[0].toString()));
+            if(confirm(msg)){
+if(dbg) console.log("removed Item !");
+                for (var iid=0; iid < this.entryList[0].issues.length ; iid++ ){
+                    localStorage.removeItem( this.keyPrefix + this.entryList[0].issues[iid].identifier );
+                };
+                this.entryList=this.entryList.slice(1);
+                localStorage.setItem(this.keyPrefix+myIdentifier,myXps.toString());
+                this.entryList.push(new listEntry(myIdentifier)) 
 if(dbg) console.log(this.entryList.length +":entry/max: "+ this.maxEntry)
-        if ( this.entryList.length > this.maxEntry ){
-if(dbg) console.log("remove Item !")
-//設定制限値をオーバーしたら、ローカルストレージから最も古いエントリを削除
-            for (var iid=0; iid < this.entryList[0].issues.length ; iid++ ){
-                localStorage.removeItem( this.keyPrefix + this.entryList[0].issues[iid].identifier );
-            };
-            this.entryList=this.entryList.slice(1);
+                this.getList();
+            }
         }
-        this.getList();
     }catch(err){
         if(callback2 instanceof Function){callback2();}                
     }
@@ -719,7 +725,7 @@ if(dbg) console.log(documentDepot.currentReference);//単エントリで直前�
             xUI.sessionRetrace = myEntry.issues.length-cx-1;
             xUI.setUImode('browsing');sync("productStatus");
             //読込実行後にコールバックが存在したら実行
-            if(callback instanceof Function){setTimeout(callback,100)};
+            if(callback instanceof Function){setTimeout(callback,10)};
 //             xUI.sWitchPanel('File');
         }
     } else { 
@@ -1414,7 +1420,7 @@ if(dbg) console.log(currentEpisode);
 
 if(! currentEpisode.cuts[0][cid].description){
     currentEpisode.cuts[0][cid].description="";
-    console.log(currentEpisode.cuts[0][cid]);
+if(dbg)    console.log(currentEpisode.cuts[0][cid]);
 };
 
                 var entryArray = (
@@ -1562,7 +1568,8 @@ if(dbg) console.log(result);
 if(dbg) console.log("road :"+myContent);
 	        if(myContent){ XPS.readIN(myContent);};
 //myContent==nullのケースは、サーバに空コンテンツが登録されている場合なので単純にエラー排除してはならない
-//  エラーではなく初期化時点の初期状態のXpsのままで処理を継続する	            
+//  エラーではなく初期化時点の初期状態のXpsのままで処理を継続する
+            //xUI.userPermissions=result.permissions;
 // 読み込んだXPSが識別子と異なっていた場合識別子優先で同期する
                 XPS.syncIdentifier(myIssue.identifier);
 	            xUI.init(XPS);
@@ -1591,9 +1598,7 @@ if(dbg) console.log("road :"+myContent);
 	            nas_Rmp_Init();
                 xUI.sessionRetrace = myEntry.issues.length-cx-1;
                 xUI.setUImode('browsing');sync("productStatus");
-//            xUI.sWitchPanel('File');
                 if(callback instanceof Function) callback();
-            
             if(false){
 if(dbg) console.log(result);
                 if(callback2 instanceof Function) callback2();               
@@ -1662,12 +1667,16 @@ function(result){
 */
 NetworkRepository.prototype.addTitle = function (myTitle,myDescription,myPm,callback,callback2){
 /*
-    識別子を検出
+    識別子を検出（呼び出し側で）このルーチンまで来た場合は、引数を分解しておくこと
     2107.01.28時点でAPIにtemplateが出ていないのでpmの処理は省略　遅延で詳細編集を行っても良い
-    
+    serviceAgent.currentRepository.addTitle("tST2","testTitlewith API")
+    作成時に検査を行い、既存タイトルならば処理を中断する（呼び出し側で）
+    タイトル作成前に確認メーッセージを出す（これも呼び出し側）
 */
-    var parseData = Xps.parseIdentifier(myTitle);
-        if(parseData){myTitle=parseData.title};
+    if(! myTitle) return false;
+    if(! myDescription) myDescription="";
+//      var parseData = Xps.parseIdentifier(myTitle);
+//      if(parseData){myTitle=parseData.title};
     var data = {
         product: {
           name          : myTitle,
@@ -1678,9 +1687,17 @@ NetworkRepository.prototype.addTitle = function (myTitle,myDescription,myPm,call
 	$.ajax({
 		type : 'POST',
 		url : serviceAgent.currentRepository.url+"/api/v2/products.json",
-		data : JSON.stringify(data),
-		success : function(result) {},
-		error:function(result) {},
+		data : data,
+		success : function(result) {
+if(dbg) console.log('success');
+if(dbg) console.log(result);
+            if(callback instanceof Function) callback();
+		},
+		error:function(result) {
+if(dbg) console.log('error');
+if(dbg) console.log(result);
+            if(callback2 instanceof Function) callback2();
+		},
 		beforeSend: serviceAgent.currentRepository.service.setHeader
 	});
 }
@@ -1876,7 +1893,8 @@ if(dbg) console.log(method_type+' :'+serviceAgent.currentRepository.url+target_u
 		dataType : 'JSON',
 		scriptCharset: 'utf-8',
 		success : function(result) {
-			xUI.setStored("current");//UI上の保存ステータスをセット
+                if (xUI.XPS === myXps) xUI.setStored('current');
+//			xUI.setStored("current");//UI上の保存ステータスをセット
 			sync();//保存ステータスを同期
             
 			if( method_type == 'POST'){
@@ -2471,8 +2489,8 @@ serviceAgent.init= function(){
 }else{
     var myServers={
         devFront:{name:'devFront',url:'http://remaping.scivone-dev.com'},
-        Srage:{name:'Stage',url:'http://remaping-stg.u-at.net'},
-        UAT: {name:'U-AT',url:'http://remaping.u-at.net'}
+        Srage:{name:'Stage',url:'https://remaping-stg.u-at.net'},
+        UAT: {name:'U-AT',url:'https://u-at.net'}
     };
     for(svs in myServers){this.servers.push(new ServiceNode(myServers[svs].name,myServers[svs].url));}
 }
@@ -2806,7 +2824,8 @@ if(dbg) console.log ('noentry in repository :' +  decodeURIComponent(currentEntr
             return false;
             break;
         case 'Active':
-            //Active > Holdへ
+            //編集を確認して Active > Holdへ
+            if(xUI.edchg) xUI.put(document.getElementById('iNputbOx').value);
             this.currentRepository.deactivateEntry(callback,callback2);
         break;
     }
@@ -2894,7 +2913,8 @@ serviceAgent.checkoutEntry=function(callback,callback2){
             return false;
         break;
         case 'Active':
-            //Active > Fixed
+            //編集状態を確認の上　Active > Fixed
+            if(xUI.edchg) xUI.put(document.getElementById('iNputbOx').value);
             this.currentRepository.checkoutEntry(callback,callback2);
         break;
     }
@@ -2903,7 +2923,7 @@ serviceAgent.checkoutEntry=function(callback,callback2){
      新規カットを追加登録
      現在のタイトル及びOPUSに新規カットを登録する
      現在のTitle-Opusに既存のカットは処理できないので排除
-     データ内容の指定は不可・尺のみ指定可能　最小テンプレートでカット番号のあるカラエントリのみが処理対象
+     データ内容の指定は不可・尺のみ指定可能　最小テンプレートでカット番号のある空エントリのみが処理対象
      初期状態の、ライン／ステージ／ジョブの指定が可能
 */
 serviceAgent.addEntry = function(myXps){
@@ -2911,17 +2931,13 @@ serviceAgent.addEntry = function(myXps){
         var myProduct = documentDepot.currentProduct;
         if((myProduct == '==newTitle==')||(myProduct == null)){myProduct = documentDepot.products[0];}
         var myEntry         = this.currentRepository.entry(myProduct+"//",true);
-        var currentTitle    = decodeURIComponent(myEntry.product.split('#')[0]);
-        var currentOpus     = decodeURIComponent(myEntry.product.split('#')[1].split('[')[0]);
-        var currentSubtitle = (myEntry.product.split('#')[1].split('[').length > 1)?
-            decodeURIComponent(myEntry.product.split('#')[1].split('[')[1].slice(0,-1)):'';
+        var entryInfo       = Xps.parseIdentifier(myEntry.toString(0));
         var title = localize(nas.uiMsg.pMaddNewScene);//'新規カット追加';
         var msg  = localize(nas.uiMsg.dmPMnewDocument);
         //'新規カットを作成します。\nカット番号/継続時間を入力して[OK]ボタンで確定してください。';
         var msg2 = '<br><span>%title%</span>#<span>%opus%</span><br> S-C:<input id=newCutName type=text ></input> TIME:<input id=newCutTime type=text value="6 + 0"></input><br><input id=newLine type=text value="%lineName%"></input><input id=newStage type=text value="%stageName%"></input><input id=newJob type=text value="%jobName%"></input><br>';
-
-        msg2 = msg2.replace(/%title%/,currentTitle);
-        msg2 = msg2.replace(/%opus%/,currentOpus);
+        msg2 = msg2.replace(/%title%/,entryInfo.title);
+        msg2 = msg2.replace(/%opus%/,entryInfo.opus);
         msg2 = msg2.replace(/%lineName%/,nas.pm.pmTemplate[0].line);
         msg2 = msg2.replace(/%stageName%/,nas.pm.pmTemplate[0].stages[0]);
         msg2 = msg2.replace(/%jobName%/,nas.pm.jobNames.getTemplate(nas.pm.pmTemplate[0].stages[0],"init")[0]);
@@ -2935,9 +2951,9 @@ serviceAgent.addEntry = function(myXps){
             if ((this.status == 0)&&(newCutName)){
                 if(! newCutTime) newCutTime = "144";
                 myXps = new Xps(5,newCutTime);
-                myXps.title      = currentTitle;
-                myXps.opus       = currentOpus;
-                myXps.subtitle   = currentSubtitle;
+                myXps.title      = entryInfo.title;
+                myXps.opus       = entryInfo.opus;
+                myXps.subtitle   = entryInfo.subtitle;
                 myXps.cut        = newCutName;
                 myXps.createUser = xUI.currentUser;
                 myXps.updateUser = xUI.currentUser;

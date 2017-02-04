@@ -39,7 +39,7 @@
  *		ただし開始メッセージが抑制されている場合は表示されません。
  */
 
-	var welcomeMsg="サーバ対応版 -test- 20170129";
+	var welcomeMsg="サーバ対応版 -test- 20170202";
 	var windowTitle="ver. 1.6.1";//WindowTitleとしての役割は終了 統合バージョンです
 
 /**************************************************************************
@@ -53,7 +53,7 @@
 /*
 	var headerLogo="<b>りまぴん</b>";
 	var headerLogo="<img src='images/logo/black.gif' alt='Nekomataya' width=150 height=30 border=0 />";
-	var headerLogo="<img src='http://www.nekomataya.info/cgi-bin/garden.cgi?SET=test-logo' alt='Nekomataya' width=150 height=24 border=0 />";
+	var headerLogo="<img src='//www.nekomataya.info/cgi-bin/garden.cgi?SET=test-logo' alt='Nekomataya' width=150 height=24 border=0 />";
  */
 	var headerLogo="<img src='images/logo/DXtimesheet.png' alt='Nekomataya' width=141 height=24 border=0 />";
 
@@ -62,6 +62,7 @@
     ロゴをクリックするとこちらのurlをひらきます。
  */
 	var headerLogo_url	="http://www.nekomataya.info/remaping/";
+//	var headerLogo_url	="https://u-at.net/";
 	var headerLogo_urlComment	="UATimesheetService";//ロゴのコメントです
 /**************************************************************************
  *	作品タイトルロゴ
@@ -73,11 +74,12 @@
  *  タイトル,[画像ファイル(URL)],[ALTテキスト],[リンクURL],[コメントテキスト]
  *  こちらのタイトルは運用後にタイトルDBと換装の予定なのでデータ構造を調整すること
 タイトルDBはこちらを使用しないように変更中
+タイトルDBは別のオブジェクトに移行予定　2017 02 03
  */
 	var useworkTitle=false;
 
 	var workTitles=[
-"タイトル","","title","http://www.example.com","commentText",
+"タイトル","","title","//www.example.com","commentText",
 "かちかちやま",'',"かちかちやま","./help/katikati.html","公式サイト(のつもり)",
 "かちかち山Max",'',"ALTTxt","linkURI","commentText"
 ];
@@ -88,20 +90,18 @@
  *	このエリアを編集してタイムシートのカラーを変更できます。
  *	お好きな色合いに変更してください。
  *	リクエストがある様なら編集インターフェースがつくかもしれません。
- *
- */
 
 //タイムシート背景色(どれか選択または「お好きな値」に)
 //	SheetBaseColor	="#ffdffe"	;//アカムラサキ
 //	SheetBaseColor	="#fdeefd"	;//ドドメイロ
-//	SheetBaseColor	="#efffef"	;//わかくさ
+	SheetBaseColor	="#efffef"	;//わかくさ
 //	SheetBaseColor	="#ffffef"	;//びわ
 //	SheetBaseColor	="#edd3a1"	;//浅黄
 //	SheetBaseColor	="#b68d4c"	;//きつるばみ
 //	SheetBaseColor	="#fef4f4"	;//さくら
 //	SheetBaseColor	="#f5b199"  ;//一斤染
 //	SheetBaseColor	="#cfcfd6"	;//銀鼠
-	SheetBaseColor	="#efefef"	;//白鼠
+//	SheetBaseColor	="#efefef"	;//白鼠
 //	SheetBaseColor	="#f8f8f8"	;//白練
 
 //選択セルの背景色(通常)
@@ -113,13 +113,9 @@
 //選択セルの背景色(セクション編集モード)
 	SectionModeColor="#ccffcc"	;//ミドリ
 //区間色自体は背景色との演算で変化する
-
 //スピン領域色??
-
 	SpinAreaColor	="red"	;//
-
 //選択領域の背景色
-
 	SelectionColor	="#f8f8dd"	;//
 //フットスタンプ/diff の色
 	FootStampColor	="#fff8f8"	;//足跡機能を使用しない場合は無効
@@ -145,6 +141,33 @@
 	CameraCellWidth     =52; //カメラワーク指定欄の幅
 	CommentWidth        =120;//コメント欄の幅
 	ColumnSeparatorWidth=4;　//カラムセパレータの幅
+*/
+// ルック設定のオブジェクト化中
+
+SheetLooks = {
+	SheetBaseColor	:"#f8f8f8",
+	SelectedColor	:"#ccccff",
+	RapidModeColor	:"#ffccbb",
+	FloatModeColor	:"#88eeee",
+	SectionModeColor:"#ccffcc",
+	SpinAreaColor	:"red"	,
+	SelectionColor	:"#f8f8dd",
+	FootStampColor	:"#fff8f8",
+	EditingColor	:"#eebbbb",
+	SelectingColor	:"#ccccaa",
+	CellWidthUnit	:"px",
+	TimeGuideWidth	    :36,
+	ActionWidth         :20,
+	DialogWidth	        :36,
+	SheetCellWidth	    :42,
+	SheetCellNarrow	    :4,
+	StillCellWidth	    :12,
+	SfxCellWidth	    :46,
+	CameraCellWidth     :52,
+	CommentWidth        :120,
+	ColumnSeparatorWidth:4
+};
+
 
 //メモ編集時の単語一覧
 
@@ -319,7 +342,7 @@ var TSXEx	=false;
 			//TSX互換機能を使うか
 //var TMSEx	=false;
 		//TMS互換機能を使うか?この機能はまだありません
-		//TMS については、http://www.nekora.main.jp/ あたりを参照
+		//TMS については、//www.nekora.main.jp/ あたりを参照
 
 //---ウインドウモード	Ver1.5以降
 var ViewMode="WordProp"	;	//UIモード  コンパクトCompat/ シートワープロ WordProp
@@ -486,10 +509,10 @@ rapidMode.command["brac"]=function(){
  *
  */
 
-//var ServiceUrl="http://192.168.188.2/cgi-bin/rmpEcho.cgi?";
-var ServiceUrl="http://www.nekomataya.info/cgi-bin/remaping/rmpEcho.cgi?";
-// var ServiceUrl="http://localhost/~<your address>/rmpEcho.cgi?";//参考1
-// var ServiceUrl="http://localhost/cgi-bin/rmpEcho.cgi?";//参考2
+//var ServiceUrl="//192.168.188.2/cgi-bin/rmpEcho.cgi?";
+var ServiceUrl="//www.nekomataya.info/cgi-bin/remaping/rmpEcho.cgi?";
+// var ServiceUrl="//localhost/~<your address>/rmpEcho.cgi?";//参考1
+// var ServiceUrl="//localhost/cgi-bin/rmpEcho.cgi?";//参考2
 
 ////////////
 var SheetSubSeparator	=6;

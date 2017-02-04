@@ -51,6 +51,7 @@
 
 <!-- 下　remaping.js　にマージ予定　-->
 <script src=./nas/scripts/remaping/utils.js></script>
+<script src=./nas/parseCutEntryText.js></script>
 
 <!--     汎用ライブラリのためソース分離 一括マージ可能      -->
 <script src=./nas/lib/postscriptConvert.js></script>
@@ -143,7 +144,8 @@
 >作業開始</A></li>
 <li><span id=pMsave-d class='pM pM-alt'>作業保存</span><A	id=pMsave
 	href = 'javascript:void(0)'
-	onclick = 'serviceAgent.pushEntry(xUI.XPS,function(){xUI.setStored("current");sync();
+	onclick = 'if(xUI.edchg) xUI.put(document.getElementById("iNputbOx").value);
+serviceAgent.pushEntry(xUI.XPS,function(){xUI.setStored("current");sync();
 },function(){alert("error");});return false;'
 	title="作業保存"
 >作業保存</A></li>
@@ -520,10 +522,15 @@
 </li>
 <li><span	id=pMshow>Show</span>
 <ul>
+<li><span id=pMmanagementMode-d class='pM pM-alt'>[ 管理モード ]</span><A	id=pMmanagementMode
+	HREF='javascript:void(0);'
+	onclick='xUI.setUImode("next");sync("productStatus");return false;'
+	title="管理モード切り替え"
+>[ 管理モード ]</A></li>
 <li><span id=pMeditMode-d class='pM pM-alt'>[ 編集モード ]</span><A	id=pMeditMode
 	HREF='javascript:void(0);'
 	onclick='xUI.viewMode=(xUI.viewMode=="Compact")?"WordProp":"Compact";nas_Rmp_Init();return false'
-	title="編集モード切り替え"
+	title="表示モード切り替え"
 >[ 編集モード ]</A></li>
 <li><span id=pMcolumns-d class='pM pM-alt'>[ 段組 ]</span><A	id=pMcolumns
 	HREF='javascript:void(0);'
@@ -975,11 +982,15 @@
 	class=iNputbOx
 	type=text
 	size=24
-	onKeyDown="return xUI.keyDown(event)"
-	onKeyPress="return xUI.keyPress(event)"
-	onKeyUp="return xUI.keyUp(event)"
+	onKeyDown="return xUI.keyDown(event);"
+	onKeyPress="return xUI.keyPress(event);"
+	onKeyUp="return xUI.keyUp(event);"
 	title="シートにデータを入力します。"
 > 
+<!--
+	onBlur='xUI.put(this.value);'
+
+-->
 <button
 	name=ok
 	id=ok
@@ -1813,12 +1824,12 @@ onclick='nas.incrFCTonHTMLInput(document.getElementById("editTC"),"-(1)")'
 <table id=uiTable>
 <tr>
 <td style="text-align:left" colspan=2>
-  <input	type=checkbox
+<span style="display:none;">  <input	type=checkbox
 	id="scnNewSheet"
 	onChange=myScenePref.chgNewSheet()
   ><a	href="javascript:void(0);"
 	onClick='myScenePref.chg("scnNewSheet");return false'
- >新規作成 </a>
+ >新規作成 </a> </span>
 <input type=button value="更新/作成" style="width:7em" onClick="myScenePref.putProp();">
 <input type=button value="新規シート" style="width:7em" onClick="myScenePref.newProp();">
 <input type=button value="リセット" style="width:7em" onClick="myScenePref.getProp();">
