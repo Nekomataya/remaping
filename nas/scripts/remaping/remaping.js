@@ -39,6 +39,62 @@ function new_xUI(){
 //	初期化前にバックアップデータの処理が発生するので暫定的に初期化しておく
     xUI.backupStore    ="12345";    //作業バックアップ
 
+//------------------------ 以下インターフェースカラープロパティ
+//カラー・トラック幅等のルック決定要素はundefinedで初期化して　遅延解決に移行する
+
+    xUI.sheetbaseColor   ;        //タイムシート背景色
+    xUI.sheetblankColor;        //編集不可領域の背景色
+    xUI.footstampColor;        //フットスタンプの色
+    xUI.inputModeColor =new Object();            //入力モード色
+    xUI.inputModeColor.NORMAL;    //    ノーマル色
+    xUI.inputModeColor.EXTEND;    //    ラピッド入力基本色
+    xUI.inputModeColor.FLOAT;    //    ブロック移動基本色
+    xUI.inputModeColor.SECTION;    //    範囲編集中の色
+         
+    xUI.selectedColor;    //選択セルの背景色
+    xUI.selectionColor;        //選択領域の背景色
+    xUI.editingColor;            //セル編集中のインジケータ
+    xUI.selectingColor;        //セル選択中のインジケータ
+//タイムライン・ラベル識別カラ－
+    xUI.cameraColor;
+    xUI.sfxColor;
+    xUI.stillColor;//タイムライン全体に着色
+
+//中間色自動計算
+        xUI.inputModeColor.NORMALspin;
+        xUI.inputModeColor.EXTENDspin;
+        xUI.inputModeColor.FLOATspin;
+        xUI.inputModeColor.SECTIONspin;
+//スピン選択状態
+        xUI.inputModeColor.NORMALspinselected;
+        xUI.inputModeColor.EXTENDspinselected;
+        xUI.inputModeColor.FLOATspinselected;
+        xUI.inputModeColor.SECTIONspinselected;
+//選択状態
+        xUI.inputModeColor.NORMALselection;
+        xUI.inputModeColor.EXTENDselection;
+        xUI.inputModeColor.FLOATselection;
+        xUI.inputModeColor.SECTIONselection;
+//編集中
+        xUI.inputModeColor.NORMALeddt;
+        xUI.inputModeColor.EXTENDeddt;
+        xUI.inputModeColor.FLOATeddt;
+        xUI.inputModeColor.SECTIONeddt;
+
+//フロートテキスト色
+    xUI.floatTextColor;
+
+//----------------------------------------------------------------------初期状態設定
+    xUI.spinAreaColor;
+    xUI.spinAreaColorSelect;
+    xUI.sectionBodyColor;
+// ---------------------- ここまでカラー設定
+
+//そのほか
+    this.keyMethod        = KEYMethod;    //キー変換方式
+    this.aeVersion        = AEVersion;    //キーにつけるバージョン番号
+
+
 /**     xUIオブジェクト初期化メソッド
  *      編集対象となるXpsオブジェクトを与えて初期化する。
  *      初期化時点の参照変数はconfig.js内で設定された値及び
@@ -218,60 +274,6 @@ for(var idx=0;idx<(this.XPS.xpsTracks.length-1);idx++){
     this["data_well"]       =document.getElementById("data_well");//データウェル
     this["snd_body"]        =document.getElementById("snd_body");//音声編集バッファ
 
-//------------------------ 以下インターフェースカラー設定（ここはこのままキープして更新用のメソッドを作成するか?）
-//カラー・トラック幅等のルック決定要素はundefinedで初期化して　遅延解決に移行する
-
-    this.sheetbaseColor   ;        //タイムシート背景色
-    this.sheetblankColor;        //編集不可領域の背景色
-    this.footstampColor;        //フットスタンプの色
-    this.inputModeColor    =new Object();            //入力モード色
-    this.inputModeColor.NORMAL;    //    ノーマル色
-    this.inputModeColor.EXTEND;    //    ラピッド入力基本色
-    this.inputModeColor.FLOAT;    //    ブロック移動基本色
-    this.inputModeColor.SECTION;    //    範囲編集中の色
-         
-    this.selectedColor;    //選択セルの背景色
-    this.selectionColor;        //選択領域の背景色
-    this.editingColor;            //セル編集中のインジケータ
-    this.selectingColor;        //セル選択中のインジケータ
-//タイムライン・ラベル識別カラ－
-    this.cameraColor;
-    this.sfxColor;
-    this.stillColor;//タイムライン全体に着色
-
-//中間色自動計算
-        this.inputModeColor.NORMALspin;
-        this.inputModeColor.EXTENDspin;
-        this.inputModeColor.FLOATspin;
-        this.inputModeColor.SECTIONspin;
-//スピン選択状態
-        this.inputModeColor.NORMALspinselected;
-        this.inputModeColor.EXTENDspinselected;
-        this.inputModeColor.FLOATspinselected;
-        this.inputModeColor.SECTIONspinselected;
-//選択状態
-        this.inputModeColor.NORMALselection;
-        this.inputModeColor.EXTENDselection;
-        this.inputModeColor.FLOATselection;
-        this.inputModeColor.SECTIONselection;
-//編集中
-        this.inputModeColor.NORMALeddt;
-        this.inputModeColor.EXTENDeddt;
-        this.inputModeColor.FLOATeddt;
-        this.inputModeColor.SECTIONeddt;
-
-//フロートテキスト色
-    this.floatTextColor;
-
-//----------------------------------------------------------------------初期状態設定
-    this.spinAreaColor;
-    this.spinAreaColorSelect;
-    this.sectionBodyColor;
-// ---------------------- ここまでカラー設定
-
-//そのほか
-    this.keyMethod        =KEYMethod;    //キー変換方式
-    this.aeVersion        =AEVersion;    //キーにつけるバージョン番号
 
 ///////////
 //データ配列に対してUIオブジェクトにフォーカス関連プロパティ設置
@@ -304,19 +306,20 @@ xUI.setSheetLook = function(sheetLooks){
 
 //編集不可領域の背景色 背景色を自動設定　やや暗　これは初期状態で対向色を設定してその間で計算を行うように変更
 
-    this.sheetbaseColor      = sheetLooks.SheetBaseColor;                                               //タイムシート背景色
-     this.sheetblankColor    = nas.colorAry2Str(mul(nas.colorStr2Ary(this.sheetbaseColor),.95));        //編集不可領域の背景色
-     this.sheetborderColor    = nas.colorAry2Str(mul(nas.colorStr2Ary(this.sheetbaseColor),.75));       //罫線基本色
-      this.footstampColor    = sheetLooks.FootStampColor;                                               //フット/差分　スタンプの色
-       this.inputModeColor   = new Object();                                            //  入力モード色
-        this.inputModeColor.NORMAL  = sheetLooks.SelectedColor;                         //  ノーマル色
-        this.inputModeColor.EXTEND  = sheetLooks.RapidModeColor;                        //  ラピッド入力基本色
-        this.inputModeColor.FLOAT   = sheetLooks.FloatModeColor;                        //  ブロック移動基本色
-        this.inputModeColor.SECTION = sheetLooks.SectionModeColor;                      //  範囲編集中の色
-         this.selectedColor    = this.inputModeColor.NORMAL;                                        //選択セルの背景色
-        this.selectionColor    = sheetLooks.SelectionColor;                                         //選択領域の背景色
-       this.editingColor       = sheetLooks.EditingColor;                                           //セル編集中のインジケータ
-      this.selectingColor      = sheetLooks.SelectingColor;                                         //セル選択中のインジケータ
+    this.sheetbaseColor     = sheetLooks.SheetBaseColor;                                        //タイムシート背景色
+    this.sheetblankColor    = nas.colorAry2Str(mul(nas.colorStr2Ary(this.sheetbaseColor),.95)); //編集不可領域の背景色
+    this.sheetborderColor   = nas.colorAry2Str(mul(nas.colorStr2Ary(this.sheetbaseColor),.75)); //罫線基本色
+    this.footstampColor     = sheetLooks.FootStampColor;                                        //フット/差分　スタンプの色
+//       this.inputModeColor   = new Object();                                      //  入力モード色
+        this.inputModeColor.NORMAL  = sheetLooks.SelectedColor;                     //  ノーマル色
+        this.inputModeColor.EXTEND  = sheetLooks.RapidModeColor;                    //  ラピッド入力基本色
+        this.inputModeColor.FLOAT   = sheetLooks.FloatModeColor;                    //  ブロック移動基本色
+        this.inputModeColor.SECTION = sheetLooks.SectionModeColor;                  //  範囲編集中の色
+
+    this.selectedColor    = this.inputModeColor.NORMAL;                                     //選択セルの背景色
+    this.selectionColor    = sheetLooks.SelectionColor;                                     //選択領域の背景色
+    this.editingColor       = sheetLooks.EditingColor;                                      //セル編集中のインジケータ
+    this.selectingColor      = sheetLooks.SelectingColor;                                   //セル選択中のインジケータ
 //タイムライン・ラベル識別カラ－
     this.cameraColor    = nas.colorAry2Str(div(add([0,1,0],mul(nas.colorStr2Ary(this.sheetbaseColor),6)),7));
     this.sfxColor       = nas.colorAry2Str(div(add([0,0,1],mul(nas.colorStr2Ary(this.sheetbaseColor),5)),6));
@@ -672,7 +675,7 @@ xUI.mdChg=function(myModes,opt){
         this.selectedColor    =this.inputModeColor.NORMAL;        //選択セルの背景色
         this.spinAreaColor    =this.inputModeColor.NORMALspin;    //非選択スピン背景色
         this.spinAreaColorSelect=this.inputModeColor.NORMALspinselected;//選択スピン背景色
-        this.selectionColor    =SelectionColor;            //選択領域の背景色
+        this.selectionColor    =this.sheetLooks.SelectionColor;            //選択領域の背景色
 //if(dbg) dpgPut("select:"+this.floatSourceAddress+"\nmove:"+sub(this.floatDestAddress,this.floatSourceAddress));
 
         this.selectCell(this.floatSourceAddress);//ソースに位置を復帰して
@@ -2110,7 +2113,7 @@ var PageCount=(this.viewMode=="Compact")?1:Math.ceil(XPS.duration()/this.PageLen
         for (cols=0;cols < PageCols;cols ++){
             alert("L"+Target+"_"+Page+"_"+cols+" : "+document.getElementById("L"+Target+"_"+Page+"_"+cols).style.width);
             var isNarrow=(document.getElementById("L"+Target+"_"+Page+"_"+cols).style.width=="4px")?true:false;
-            document.getElementById("L"+Target+"_"+Page+"_"+cols).style.width=(isNarrow)? SheetCellWidth:SheetCellNarrow;
+            document.getElementById("L"+Target+"_"+Page+"_"+cols).style.width=(isNarrow)? this.sheetLooks.SheetCellWidth:this.sheetLooks.SheetCellNarrow;
             alert(document.getElementById("L"+Target+"_"+Page+"_"+cols).style.width+" : "+isNarrow);
 
         };
@@ -2129,7 +2132,7 @@ var PageCount=(this.viewMode=="Compact")?1:Math.ceil(XPS.duration()/this.PageLen
             alert("rL"+Target+"_"+Page+"_"+cols+" : "+document.getElementById("rL"+Target+"_"+Page+"_"+cols).style.width);
 
             var isNarrow=(document.getElementById("rL"+Target+"_"+Page+"_"+cols).style.width=="4px")?true:false;
-            document.getElementById("rL"+Target+"_"+Page+"_"+cols).style.width=(isNarrow)? SheetCellWidth:SheetCellNarrow;
+            document.getElementById("rL"+Target+"_"+Page+"_"+cols).style.width=(isNarrow)? this.sheetLooks.SheetCellWidth:this.sheetLooks.SheetCellNarrow;
 //            alert(document.getElementById("rL"+Target+"_"+Page+"_"+cols).style.width+" : "+isNarrow);
 
         };
@@ -4664,7 +4667,7 @@ viewOnly
 
     sync('productStatus');
 
-//タイムシートテーブルボディ幅の再計算
+//タイムシートテーブルボディ幅の再計算 ここにトラック種別が反映されていない　注意
 //(タイムヘッダ幅+ダイアログ幅+レイヤ数*幅+コメント欄幅+余分)×ページカラム数＋カラムセパレータ幅×(ページカラム数?1)
 
 var tableBodyWidth=(

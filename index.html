@@ -2929,23 +2929,23 @@ onDblClick='if (! document.getElementById("single").checked) chkValue(this.id)'
 <hr>
 <div><form>
 name:
-<select name=soundLabelSelector id=saundLabelSelector>
-
- <option value=1>桃太郎
- <option value=2>おじいさん
- <option value=3>おばあさん
- <option value=4>いぬ
- <option value=7>さる
- <option value=5>きじ
- <option value=6>おに
-</select>
+<input name=soundLabelSelector id=saundLabelSelector list='nameLabels'>
+<datalist id=nameLabels>
+ <option value=桃太郎>桃太郎
+ <option value=おじいさん>おじいさん
+ <option value=おばあさん>おばあさん
+ <option value=いぬ>いぬ
+ <option value=さる>さる
+ <option value=きじ>きじ
+ <option value=おに>おに
+</datalist>
 kind:
-<select name=soundPropSelector id=saundPropSelector>
-
- <option value=1>台詞
- <option value=2>SE
- <option value=3>音楽
-</select>
+<input name=soundPropSelector id=saundPropSelector list='propLabels'>
+<datalist id=propLabels>
+ <option value=台詞>台詞
+ <option value=SE>SE
+ <option value=音楽>音楽
+</datalist>
 <!-- 
 パネルの初期化が必要
 呼び出し時点のフレーム（ヘッド位置）で最寄りの音声トラックへ移動

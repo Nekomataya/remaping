@@ -114,7 +114,7 @@
 	SectionModeColor="#ccffcc"	;//ミドリ
 //区間色自体は背景色との演算で変化する
 //スピン領域色??
-	SpinAreaColor	="red"	;//
+	SpinAreaColor	="red"	;// これ参照してない
 //選択領域の背景色
 	SelectionColor	="#f8f8dd"	;//
 //フットスタンプ/diff の色

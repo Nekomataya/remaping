@@ -2778,13 +2778,13 @@ XpsTimelineTrack.prototype.getSectionByFrame = function(myFrame){
  
  */
 XpsTimelineTrack.prototype.pushEntry = function (elementName,groupName){
-    var myGroup= this.getElementByName(groupName);
-    var myElement= this.getElementByName([groupName,elementName].join(""));//請求するターゲットジョブ処理は保留
-    if(!myElement){
+    var myGroup   = this.xParent.parentXps.xMap.getElementByName(groupName);
+    var myElement = this.xParent.parentXps.xMap.getElementByName([groupName,elementName].join(""));//請求するターゲットジョブ処理は保留
+        if(!myElement){
         if(!myGroup){;//new_xMapElement(name,type,Object Job)
-            myGroup = this.new_xMapElement(groupName,this.option,this.xParent.parentXps.xMap.currentJob);
+            myGroup = this.xParent.parentXps.xMap.new_xMapElement(groupName,this.option,this.xParent.parentXps.xMap.currentJob);
         }
-        myElement = this.new_xMapElement(elementName,myGroup,this.xParent.parentXps.xMap.currentJob);
+        myElement = this.xParent.parentXps.xMap.new_xMapElement(elementName,myGroup,this.xParent.parentXps.xMap.currentJob);
     }
     return myElement;
 }
