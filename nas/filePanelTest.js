@@ -76,7 +76,20 @@ documentDepot.documentsUpdate=function(){
     } 
 */
     myDocuments = serviceAgent.currentRepository.entryList;//カレントリポジトリのリストのみ
-    
+if(serviceAgent.currentRepository instanceof NetworkRepository){
+    for (var idx = 0 ; idx < serviceAgent.currentRepository.productsData.length ; idx ++){
+        var myTitle = serviceAgent.currentRepository.productsData[idx].name;
+        for (var ide = 0 ; ide < serviceAgent.currentRepository.productsData[idx].episodes[0].length ; ide ++){
+            var myOpus = serviceAgent.currentRepository.productsData[idx].episodes[0][ide].name;
+            var mySubtitle = serviceAgent.currentRepository.productsData[idx].episodes[0][ide].description;
+            var myIdentifier = 
+                      encodeURIComponent(myTitle)+
+                "#" + encodeURIComponent(myOpus)+
+                ((mySubtitle.length)?"["+mySubtitle+"]":"")
+            myProducts.push(myIdentifier);
+        }
+    }
+}else{
     for (var idx = 0 ; idx < myDocuments.length ; idx ++ ){
         var currentProduct=myDocuments[idx].toString().split( '//' )[0];
         var hasProduct =false;
@@ -103,6 +116,7 @@ documentDepot.documentsUpdate=function(){
 //if(dbg) console.log("newEntry:"+decodeURIComponent(myProducts[idp])+':'+decodeURIComponent(myDocuments[idx]));
         }
     }
+}
     this.products  = myProducts;
     this.documents = myDocuments;
     this.updateOpusSelector();
@@ -135,14 +149,15 @@ documentDepot.updateDocumentSelector=function(myRegexp){
 // 選択済みタイトルで抽出
     var myDocuments = [];
     for ( var dcid = 0 ; dcid < this.documents.length ; dcid ++){
-        if(this.documents[dcid].toString().split('//')[0] == this.currentProduct){
+if(dbg) console.log([this.documents[dcid],this.currentProduct]);
+        if((this.currentProduct)&&(Xps.compareIdentifier(this.documents[dcid].toString(),this.currentProduct) > -1)){
             myDocuments.push(this.documents[dcid]);
         }
          continue;
     }
 //if(dbg) console.log()
     myDocuments.sort(documentDepot.sortBySCi);
-    if(dbg) if(dbg) console.log(myDocuments);
+if(dbg) console.log(myDocuments);
 //  正規表現フィルタで抽出してHTMLを組む
     var myContents = "";
     myContents += '<option value="==newDocument==">（*-- no document selected--*）';
@@ -215,17 +230,19 @@ if(dbg) console.log(decodeURIComponent(result));
     得たリストをブラウザの保持リストとして更新する
     先に存在するリストは破棄
 */
-documentDepot.rebuildList=function(callback){
+documentDepot.rebuildList=function(force,callback){
     documentDepot.products    =[];
     documentDepot.documents   =[];
-    documentDepot.currentProduct     =null;
-    documentDepot.currentSelection   =null;
-    documentDepot.currentDocument    =null;
-    documentDepot.currentReferenece  =null;
+//    documentDepot.currentProduct     =null;
+//    documentDepot.currentSelection   =null;
+//    documentDepot.currentDocument    =null;
+//    documentDepot.currentReferenece  =null;
 /*=============*/
-    serviceAgent.currentRepository.getList(false,callback);
+    if(typeof force == 'undefined') force = true;
+    serviceAgent.currentRepository.getList(force,callback);
 //  テスト中はこれで良いが、その後はあまり良くない
-    console.log(this)
+console.log(this);
+console.log(callback);
     documentDepot.documentsUpdate();
 }
 /**
@@ -476,16 +493,16 @@ function selectSCi(sciName){
 //　パネルテキスト更新
     document.getElementById("cutInput").value    = (cutNumber.length)? cutNumber:"(*--c#--*)";
     document.getElementById("timeInput").value     = (cutTime)? nas.Frm2FCT(nas.FCT2Frm(cutTime),3):"6 + 00 .";
+/*
 if(myEntry){
     document.getElementById("statusSelector").value = decodeURIComponent(myEntry.issues[myEntry.issues.length-1].join('//'));
-
-
-
 }else{
     document.getElementById("statusSelector").value = '#:---line//#:---stage//#:---job//(status)';
 }
+*/
 //UIボタンの更新
-    var myInputText=["titleInput","opusInput","subtitleInput","cutInput","timeInput","statusSelector"];
+//    var myInputText=["titleInput","opusInput","subtitleInput","cutInput","timeInput","statusSelector"];
+    var myInputText=["titleInput","opusInput","subtitleInput","cutInput","timeInput"];
 
     if (document.getElementById("cutList").selectedIndex <= 0){}
     if (! myEntry){

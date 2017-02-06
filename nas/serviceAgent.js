@@ -367,6 +367,7 @@ issuesSorter =function(val1,val2){
     カット番号（文字列内の最初の整数クラスタ）を整数化して比較
 */
 numSorter =function(val1,val2){ return (nas.parseNumber(val1) - nas.parseNumber(val2))};
+
 /**
 初期化引数:カット識別子[タイトルID,話数ID,カットID]
 
@@ -522,7 +523,11 @@ localRepository={
     keyPrefix:"info.nekomataya.remaping.dataStore.",
     maxEntry:5
 };
-
+/** productList追加
+    プロダクトは　OPUSに等価タイトル情報を含む
+    内部的にデータを整理して利用するためのコレクション
+    listProdut オブジェクトを格納
+*/
 /**
     getListメソッドは、ストアリストをクリア
     ローカルストレージ内のデータをすべて走査してストアリストに格納
@@ -585,9 +590,18 @@ if(dbg) console.log("add :: "+decodeURIComponent(currentIdentifier));
     エントリ数は、キーの総数でなく識別子の第一、第二要素を結合してエントリとして認識する
 */
 localRepository.pushEntry=function(myXps,callback,callback2){
-    if(myXps.cut==''){return false};
+    if(myXps.cut==''){
+        var msg=localize({
+            en:"you can't save entry without cutNo.",
+            ja:"カット番号のないエントリは記録できません。"
+        });
+        alert(msg);
+        console.log("can't save without cut name");
+        return false;
+    };
 //クラスメソッドで識別子取得
     var myIdentifier=Xps.getIdentifier(myXps);
+if (dbg) console.log("pushEntry :"+myIdentifier);
 //識別子に相当するアイテムがローカルストレージ内に存在するかどうかを比較メソッドで検査
     for (var pid=0;pid<this.entryList.length;pid++){
         if(Xps.compareIdentifier(this.entryList[pid].toString(),myIdentifier) > 3){
@@ -603,6 +617,7 @@ localRepository.pushEntry=function(myXps,callback,callback2){
             return this.entryList[pid];
         };
     };
+if (dbg) console.log("既存エントリなし :追加処理");
 //既存エントリが無いので新規エントリを追加
 //設定制限値をオーバーしたら、 警告する。　OKならば　ローカルストレージから最も古いエントリを削除して実行
     try{
@@ -619,6 +634,10 @@ if(dbg) console.log("removed Item !");
 if(dbg) console.log(this.entryList.length +":entry/max: "+ this.maxEntry)
                 this.getList();
             }
+        }else{
+            localStorage.setItem(this.keyPrefix+myIdentifier,myXps.toString());
+            this.entryList.push(new listEntry(myIdentifier)) 
+            //this.getList();
         }
     }catch(err){
         if(callback2 instanceof Function){callback2();}                
@@ -638,10 +657,7 @@ if(dbg) console.log(this.entryList.length +":entry/max: "+ this.maxEntry)
 localRepository.getEntry=function(myIdentifier,isReference,callback){
     if(typeof isReference == 'undefined'){isReference = false;}
     //識別子をパース
-    var targetInfo = Xps.parseIdentifier(myIdentifier);//?
-    //引数の識別子を分解して配列化
-    var targetArray = String(myIdentifier).split( '//' );//引数検査は行わない
-    var myProductUnit   = targetArray.slice(0,2).join( '//' );//引数の状況に関係なく設定
+    var targetInfo = Xps.parseIdentifier(myIdentifier);//
 
     var myIssue = false;
     var refIssue = false;
@@ -659,8 +675,6 @@ if(dbg) console.log("noProduct : "+ decodeURIComponent(myIdentifier));//プロ�
     //指定管理部分からissueを特定する 連結して文字列比較（後方から検索) リスト内に指定エントリがなければ失敗
         checkIssues:{
             for (var cx = (myEntry.issues.length-1) ; cx >= 0 ;cx--){
-//                 if(dbg) console.log ( String(myEntry.issues[cx].identifier)+'\n'+String(myIdentifier));
-//                 if(dbg) console.log ( Xps.compareIdentifier(myEntry.issues[cx].identifier,myIdentifier))
                 if ( Xps.compareIdentifier(myEntry.issues[cx].identifier,myIdentifier) > 4){
                     myIssue = myEntry.issues[cx];
                     break checkIssues;
@@ -672,6 +686,7 @@ if(dbg) console.log( 'no target data :'+ decodeURIComponent(myIdentifier) );//�
             }
         }
     }
+
     // 構成済みの情報を判定 (リファレンス置換 or 新規セッションか)
     // ソースデータ取得
 if(dbg) console.log("readin XPS");
@@ -681,6 +696,7 @@ if(dbg) console.log(decodeURIComponent(myIssue.identifier));
 //識別子を再結合してもキーが得られない場合があるのでエントリから対応キーの引き出しを行う
 
     if(myXpsSource){
+//if((xUI.uiMode=='production')&&(xUI.XPS.currentStatus=='Active')){serviceAgent.deactivateEntry(function(){});
         if(isReference){            
         //データ単独で現在のセッションのリファレンスを置換
             documentDepot.currentReference = new Xps();
@@ -838,14 +854,17 @@ if(dbg) console.log('deactivated');
             //保存に失敗
 if(dbg) console.log('保留失敗')
                 delete newXps ;
+			    if(callback2 instanceof Function) setTimeout(callback2,10);
                 return false;
             }
             //データをホールドしたので、リストを更新 編集対象をクリアしてUIを初期化
             xUI.setUImode('browsing');
             xUI.sWitchPanel();//パネルクリア
+			if(callback instanceof Function) setTimeout(callback,10);
         }else{
 if(dbg) console.log('保留可能エントリが無い :'+ Xps.getIdentifier(newXps));
-             return false ;
+			if(callback2 instanceof Function) setTimeout(callback2,10);
+            return false ;
         }
 }
 /** 
@@ -1502,8 +1521,8 @@ NetworkRepository.prototype.buildProducts=function(){
 詳細情報を受け取った際に補助情報又は受け取ったオブジェクトそのものをバックアップすること
 */
 NetworkRepository.prototype.getEntry = function (myIdentifier,isReference,callback,callback2){
-if(dbg) console.log('getEntry ::' + decodeURIComponent(myIdentifier));
     if(typeof isReference == 'undefined'){isReference = false;}
+    //識別子をパース
     var targetInfo     = Xps.parseIdentifier(myIdentifier);//?
 
     var myIssue = false;
@@ -1522,7 +1541,6 @@ if(dbg) console.log("noProduct : "+ decodeURIComponent(myIdentifier));//プロ�
     //指定管理部分からissueを特定する 連結して比較（後方から検索)リスト内に指定エントリがなければ失敗
         checkIssues:{
             for (var cx = (myEntry.issues.length-1) ; cx >= 0 ;cx--){
-if(dbg) console.log ( decodeURIComponent(myEntry.issues[cx].identifier)+'\n'+decodeURIComponent(myIdentifier))
                if ( Xps.compareIdentifier(myEntry.issues[cx].identifier,myIdentifier) > 4){
                     myIssue = myEntry.issues[cx];
                     break checkIssues;
@@ -1564,14 +1582,17 @@ if(dbg) console.log(targetURL);
         dataType: 'json',
         success: function(result) {
 if(dbg) console.log(result);
+//データ請求に成功したので、現在のデータを判定して処理の必要があれば処理
+//if((xUI.uiMode=='production')&&(xUI.XPS.currentStatus=='Active')){serviceAgent.deactivateEntry(,callback2);}
+            
         	var myContent=result.content;//XPSソーステキストをセット
 if(dbg) console.log("road :"+myContent);
-	        if(myContent){ XPS.readIN(myContent);};
+	        if(myContent){ xUI.XPS.readIN(myContent);};
 //myContent==nullのケースは、サーバに空コンテンツが登録されている場合なので単純にエラー排除してはならない
 //  エラーではなく初期化時点の初期状態のXpsのままで処理を継続する
             //xUI.userPermissions=result.permissions;
 // 読み込んだXPSが識別子と異なっていた場合識別子優先で同期する
-                XPS.syncIdentifier(myIssue.identifier);
+                xUI.XPS.syncIdentifier(myIssue.identifier);
 	            xUI.init(XPS);
 	            if(myEntry.issues.length>1){
                     documentDepot.currentReference = new Xps(5,144);//カラオブジェクトをあらかじめ新規作成
@@ -1660,10 +1681,12 @@ function(result){
     DBにタイトルを作成する。
     confirmあり
 引数
-    タイトル　または識別子
+    タイトル
     備考テキスト
     Pmオブジェクト
     コールバック関数２種
+
+識別子は受け入れない　必要に従って前段で分解のこと
 */
 NetworkRepository.prototype.addTitle = function (myTitle,myDescription,myPm,callback,callback2){
 /*
@@ -1702,12 +1725,12 @@ if(dbg) console.log(result);
 	});
 }
 /**
-    DBにタイトルを作成する。
+    DBにエピソードを作成する。
 引数
-    タイトル　または識別子
-    備考テキスト
-    Pmオブジェクト
+    エピソード番号文字列
+    備考テキスト=サブタイトルとして利用
     コールバック関数２種
+識別子は受け入れない　必要に従って前段で分解のこと
 */
 NetworkRepository.prototype.addEpisode = function (myName,mySubtitle,callback,callback2){
 /*
@@ -2288,6 +2311,7 @@ if(dbg) console.log('deactivated');
 			    sync();//保存ステータスを同期
                 xUI.setUImode('browsing');
                 xUI.sWitchPanel();//パネルクリア
+                if(serviceAgent.currentStatus=="online-single"){backToDocumentList('cut');}
                 if(callback instanceof Function){ setTimeout (callback,10);}
 		    },
 		    error :function(result) {
@@ -2483,8 +2507,9 @@ serviceAgent.init= function(){
     var loc = String(window.location).split('/');//
     var locOffset = (loc[loc.length-1]=="edit")? 3:2;
     var myUrl = loc.splice(0,loc.length-locOffset).join('/');
-//    var myUrl = 'http://remaping.scivone-dev.com';//テスト用決め打ち
-//    var myUrl = 'http://remaping-stg.u-at.net';//テスト用決め打ち
+    var myUrl = 'http://remaping.scivone-dev.com';//テスト用決め打ち
+//    var myUrl = 'https://remaping-stg.u-at.net';//テスト用決め打ち
+//    var myUrl = 'https://u-at.net';//テスト用決め打ち
     this.servers.push(new ServiceNode("CURRENT",myUrl));
 }else{
     var myServers={
@@ -2582,7 +2607,7 @@ serviceAgent.authorized = function(status){
 サービスの切り替えは内部での呼び出しのみになるので引数は整理する
 */
 serviceAgent.switchService = function(myServer){
-    if(myServer instanceof ServiceNode ) {
+    if((myServer instanceof ServiceNode )&&(myServer !== this.currentServer)) {
         this.currentServer = myServer; 
     }else if((myServer >= 0)&&(myServer<this.servers.length)){
         this.currentServer = this.servers[myServer];
@@ -2604,26 +2629,31 @@ return this.currentServer;
     リポジトリIDは以下のように決定
     
     0:ローカルリポジトリ固定
-    1~ 以降登録順
+    1~ 以降登録順　現在同時に処理できるサーバは１つ サーバ内のリポジトリは複数
     
      リポジトリ切替時にドキュメントリストの更新をバックグラウンドで行う
+     
 */
 serviceAgent.switchRepository = function(myRepositoryID,callback){
-    this.currentRepository=this.repositories[myRepositoryID];
-    if((myRepositoryID > 0)&&(myRepositoryID<this.repositories.length)){
-        this.currentServer=this.currentRepository.service;
-    } else {
-        this.currentServer     = null;
-    }
-    if(document.getElementById('repositorySelector').value != myRepositoryID){
-         document.getElementById('repositorySelector').value　=　myRepositoryID;
-    }
-    if(callback instanceof Function){
-        callback();
+    if(this.currentRepository === this.repositories[myRepositoryID]){
+        //同オブエジェクトに切り替える必要はないのでそのままリターン
+        return this.currentRepository;
     }else{
-    /*== ドキュメントリスト更新 ==*/
-        documentDepot.rebuildList(callback);
-    }
+        this.currentRepository = this.repositories[myRepositoryID];
+        if((myRepositoryID > 0)&&(myRepositoryID<this.repositories.length)){
+            this.currentServer=this.currentRepository.service;
+        } else {
+            this.currentServer     = null;
+        };
+        if(document.getElementById('repositorySelector').value != myRepositoryID){
+            document.getElementById('repositorySelector').value　=　myRepositoryID;
+        }
+        if(callback instanceof Function){ callback(); }else{
+        /*== ドキュメントリスト更新 ==*/
+            documentDepot.rebuildList(callback);
+        }
+    };
+    return this.currentRepository;
 };
 /**
     title-token  又は　episode-token が含まれるRepositoryをカレントに切り替えて返す
@@ -2664,10 +2694,69 @@ serviceAgent.getRepsitoryIdByToken = function(myToken){
     コールバック関数以降の引数はコールバックに渡される
 */
 serviceAgent.getEntry = function(myIdentifier,isReference,callback){
-    this.currentRepository.getEntry(myIdentifier,isReference,function(){
-        sync('historySelector');
-        if (callback instanceof Function) callback();
-    });
+if(dbg) console.log('getEntry ::' + decodeURIComponent(myIdentifier));
+    if(typeof isReference == 'undefined'){isReference = false;}
+    //識別子をパース
+    var targetInfo = Xps.parseIdentifier(myIdentifier);
+    var myIssue = false;
+    var refIssue = false;
+
+    var myEntry = serviceAgent.currentRepository.entry(myIdentifier);
+    if(! myEntry){
+if(dbg) console.log("noProduct : "+ decodeURIComponent(myIdentifier));//プロダクトが無い
+        return false;
+    }
+    if(! targetInfo.currentStatus){
+   //引数に管理部分がないので、最新のissueとして補う
+        var cx = myEntry.issues.length-1;//最新のissue
+        myIssue = myEntry.issues[cx];//配列で取得
+    } else {
+    //指定管理部分からissueを特定する 連結して文字列比較（後方から検索) リスト内に指定エントリがなければ失敗
+        checkIssues:{
+            for (var cx = (myEntry.issues.length-1) ; cx >= 0 ;cx--){
+//if(dbg) console.log ( String(myEntry.issues[cx].identifier)+'\n'+String(myIdentifier));
+//if(dbg) console.log ( Xps.compareIdentifier(myEntry.issues[cx].identifier,myIdentifier))
+                if ( Xps.compareIdentifier(myEntry.issues[cx].identifier,myIdentifier) > 4){
+                    myIssue = myEntry.issues[cx];
+                    break checkIssues;
+                }
+            }
+            if (! myIssue){
+if(dbg) console.log( 'no target data :'+ decodeURIComponent(myIdentifier) );//ターゲットのデータが無い
+                return false;
+            }
+        }
+    }
+    console.log(myEntry.issues[cx].identifier);
+if((! isReference)&&(Xps.compareIdentifier(myEntry.issues[cx].identifier,Xps.getIdentifier(xUI.XPS)) > 3)){
+    console.log('ジョブ一致　ロードスキップ');
+}
+    if((xUI.uiMode=='production')&&(xUI.XPS.currentStatus=='Active')){
+console.log("need deactivate");
+            if(xUI.edchg) xUI.put(document.getElementById('iNputbOx').value);
+            this.currentRepository.deactivateEntry(function(){
+                serviceAgent.currentRepository.getEntry(myIdentifier,isReference,function(){
+console.log("get ");
+                    sync('historySelector');
+                    //if($("#optionPanelFile").is(':visible')) xUI.sWitchPanel('File');
+                    if (callback instanceof Function) callback();
+                },function(){
+console.log("fail getting ");
+                    if (callback2 instanceof Function) callback2();
+                });
+            },function(){
+console.log("fail getting ");
+                    if (callback2 instanceof Function) callback2();
+            });
+    }else{
+        this.currentRepository.getEntry(myIdentifier,isReference,function(){
+            sync('historySelector');
+            if (callback instanceof Function) callback();
+        },function(){
+console.log("fail getting ");
+            if (callback2 instanceof Function) callback2();
+        });
+    }
     if($("#optionPanelFile").is(':visible')) xUI.sWitchPanel('File');
 };
 
@@ -3120,3 +3209,139 @@ if(dbg) console.log(Repos.productsData);
 Repos.getList();
 
 */
+/**
+    入力テキストをパースしてカットを集計した配列を返す
+    入力書式は別紙
+*/
+function parseCutText(sourceText){
+    var sepChar      = '\t';//セパレータ初期値H-TAB
+    var commentRegex = new RegExp('(#|;|//)');
+    var cutRegex     = new RegExp('cut(#|＃|no\.|№)?','i');
+    var timeRegex    = new RegExp('(time|duration|seconds|秒|時間|尺)','i');
+    var sourceArray=sourceText.split('\n');
+    var dataStartLine     = -1;
+    var namePosition = -1;var timePosition= -1;
+    
+    for (var lid=0;lid<sourceArray.length;lid++){
+        if(String(sourceArray[lid]).match(/^\s*$/)||String(sourceArray[lid]).match(commentRegex)){
+            continue;
+        }else{
+            dataStartLine = lid;
+            if(String(sourceArray[lid]).match(/,/)){sepChar = ','};
+            var myFields = String(sourceArray[lid]).split(sepChar);
+            for (var fid=(myFields.length-1);fid>=0;fid--){
+                if(myFields[fid].match(cutRegex)) {namePosition=fid};
+                if(myFields[fid].match(timeRegex)){timePosition=fid};
+            }
+            break;
+        }
+    }
+console.log(dataStartLine)
+    
+    if(namePosition==-1){
+        namePosition=0;
+        if(timePosition != -1){dataStartLine ++};
+        timePosition=1;
+    }else{
+        dataStartLine ++;
+    }
+
+console.log(dataStartLine)
+    var resultArray=[];
+    var cutName="";var cutTime="";
+    var currentName="";var currentTime=0;
+    
+    for (var lid=dataStartLine;lid<sourceArray.length;lid++){
+        if(String(sourceArray[lid]).match(/^\s*$/)||String(sourceArray[lid]).match(commentRegex)){
+            continue;
+        }else{
+            var myFields = String(sourceArray[lid]).split(sepChar);
+            cutName = (myFields[namePosition])? String(myFields[namePosition]) :currentName;
+                if (cutName.match(/^"([^"]*)"$/)){cutName=RegExp.$1};//"
+            cutTime = (timePosition < 0)? "":String(myFields[timePosition]);
+                if (cutTime.match(/^"([^"]*)"$/)){cutTime=RegExp.$1};//"
+                cutTime = parseInt(nas.FCT2Frm(decodeURI(cutTime)),10);
+//            console.log(cutName+":"+currentName);
+            if((cutName != currentName)&&(currentName.length>0)){
+                resultArray.push([currentName,currentTime]);
+                currentTime = cutTime;
+            }else{
+                currentTime+=cutTime;
+            }
+            currentName = cutName;
+        }
+    }
+    resultArray.push([currentName,currentTime]);
+    return resultArray;
+}
+// test
+//sourceText="1,24\n2,48\n3,12\n,12";
+/**
+sourceText=([
+"cut\tb\ttime\td\te",
+"1\tX\t30\tA\tA",
+"2\tW\t30\tA\tA",
+"3\tZ\t30\tA\tA",
+"\t''\t30\tA\tA",
+]).join("\n");
+sourceText=document.getElementById('data_well').value;
+parseCutText(sourceText);
+*/
+
+/*
+     インポート/エクスポートウェルに置いたカット登録テキストを識別子に変換して
+     entryQueueを作成
+     これを引数にしてpushEntryを順次コールする。
+     
+*/
+    serviceAgent.entryQueue = [];
+    serviceAgent.entryQueue.select = 0;
+
+makeNewEntriesFromFormatedText = function(ix){
+    if(typeof ix == 'undefined'){
+        var sourceText=document.getElementById('data_well').value;
+        serviceAgent.entryQueue = parseCutText(sourceText);
+        for (var qid=0;qid<serviceAgent.entryQueue.length;qid++){
+            var cutNo   = serviceAgent.entryQueue[qid][0];
+            var cutTime = serviceAgent.entryQueue[qid][1];//整数化が済んでいるものとする
+            if((String(cutNo).length > 0)&&(cutTime > 0)){
+                // ビルドの際にXPSを参照するのはあまり良くない これは引数で与えるか、またはdocumentDepotのプロパティから取得する
+                var myXps = new Xps(5,cutTime);
+                myXps.title     = xUI.XPS.title;
+                myXps.opus      = xUI.XPS.opus;
+                myXps.subtitle  = xUI.XPS.subtitle;
+                myXps.cut       = cutNo;//sciはやく
+                myXps.create_user = xUI.currentUser;
+            }else{
+                myXps=null;
+            }
+                serviceAgent.entryQueue[qid] = myXps;
+        }
+        serviceAgent.entryQueue.select = 0;//エントリ用のキューを初期化
+        ix = 0;
+    }
+        //カット番号が空・カット尺が0　の場合は処理スキップ
+        
+console.log("queue entry : "+ix);
+
+        if(serviceAgent.entryQueue[ix]){
+console.log(serviceAgent.entryQueue[ix]);
+console.log(decodeURIComponent(Xps.getIdentifier(serviceAgent.entryQueue[ix])));
+            serviceAgent.currentRepository.pushEntry(serviceAgent.entryQueue[ix],function(){
+                serviceAgent.entryQueue.select ++;
+                if(serviceAgent.entryQueue.select < serviceAgent.entryQueue.length){
+                    makeNewEntriesFromFormatedText(serviceAgent.entryQueue.select);
+                }else{
+                    //終了
+                    alert('エントリ終了だと思われるナリ :' + serviceAgent.entryQueue.select+"/"+serviceAgent.entryQueue.length)
+                }
+            });
+        }else{
+                 //エントリ不正の場合は、処理スキップ
+                serviceAgent.entryQueue.select ++;
+                if(serviceAgent.entryQueue.select < serviceAgent.entryQueue.length)
+                    makeNewEntriesFromFormatedText(serviceAgent.entryQueue.select);
+        }
+};
+
+//makeNewEntriesFromFormatedText();

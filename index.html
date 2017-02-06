@@ -51,7 +51,7 @@
 
 <!-- 下　remaping.js　にマージ予定　-->
 <script src=./nas/scripts/remaping/utils.js></script>
-<script src=./nas/parseCutEntryText.js></script>
+
 
 <!--     汎用ライブラリのためソース分離 一括マージ可能      -->
 <script src=./nas/lib/postscriptConvert.js></script>
@@ -65,7 +65,6 @@
 
 <!-- /*  開発用テストコード   2016.07.16  追加*/ これらはすべてremaping.jsへ統合予定-->
 <script src=./nas/serviceAgent.js></script>
-
 <script src=./nas/scripts/serverio_test.js></script>
 <script src=./nas/filePanelTest.js></script>
 
@@ -2073,13 +2072,13 @@ onclick='nas.incrFCTonHTMLInput(document.getElementById("editTC"),"-(1)")'
 	value='3 + 0 .'
 	disabled=true
 	onChange="documentDepot.currentSelection=documentDepot.buildIdentifier();"
-><br><input	type=text
+><br><!-- <input	type=text
 	id=statusSelector
 	size=64
 	disabled=true
 	value='#:--- / #--- / #--- /(status)'
 	onChange="documentDepot.currentSelection=documentDepot.buildIdentifier(true);"
-><br>
+><br>-->
 <select
 	id=issueSelector
 	disabled=true
@@ -2113,6 +2112,28 @@ onclick='nas.incrFCTonHTMLInput(document.getElementById("editTC"),"-(1)")'
 <hr>
 </span>
 <!-- メニューバー と ロゴ -->
+<!-- for management -->
+<div id=ddp-man class='documentPanelTools documentPanelTools-man' >
+<button
+ onClick='serviceAgent.currentRepository.removeEntry(documentDepot.currentSelection);'
+ class='documentPanelButton-management'
+ title="local repository only"
+>removeDocument </button><button
+ onClick='hello();'
+ class='documentPanelButton-management'
+ title=""
+>makeTitle</button><button
+ onClick='hello();'
+ class='documentPanelButton-management'
+ title=""
+>makeEpisode</button><button
+ onClick='hello();'
+ class='documentPanelButton-management'
+ title=""
+>pushEntry</button>
+</div>
+<!-- for management -->
+<div class='documentPanelTools'>
 <button
  id='ddp-reference'
  onClick='console.log("read to reference :" + decodeURIComponent(documentDepot.currentSelection));serviceAgent.getEntry(documentDepot.currentSelection,true);'
@@ -2154,26 +2175,7 @@ onclick='nas.incrFCTonHTMLInput(document.getElementById("editTC"),"-(1)")'
  class='documentPanelButton'
  title=" ウインドウを閉じる "
 >Cancel</button>
-<br>
-<!-- for debug -->
-<div style='background-color:#888888;'>
-<button
- onClick='serviceAgent.currentRepository.removeEntry(documentDepot.currentSelection);'
- class='documentPanelButton-debug'
- title="local repository only"
->removeDocument </button>
-<!--
-<button
- onClick=''
- class='documentPanelButton-debug'
- title=""
-> </button>
-<button
- onClick=''
- class='documentPanelButton-debug'
- title=""
-></button>--></div>
-<!-- for debug -->
+</div>
 	<select
 	id="repositorySelector"
 	title="リポジトリ選択"
@@ -2213,7 +2215,7 @@ onChange='setProduct();'
 <span align=left>
 <button
  id='ddp-refresh'
- onClick='documentDepot.rebuildList();'
+ onClick='documentDepot.rebuildList(true);'
  class='iconButton iconButton-reload'
  title="リストを最新の情報に更新"
 > </button>
@@ -2244,9 +2246,11 @@ onclick='document.getElementById("productFilterText").value=".*";'
 <span style="float:right;">
 
 <button
+id='ddp-refresh2'
 class='iconButton iconButton-reload'
-onclick="alert(this.innerHTML);"
-    > </button><button
+onclick="alert(this.id);"
+title="ドキュメントを更新"
+    ></button><button
 class=numberFilter
 onclick="alert(this.innerHTML);"
     >-100</button><button
@@ -3110,5 +3114,6 @@ $Id:$ index.html ,v 1.7 2016/12/24  support@nekomataya.info <br />
     <textarea id="referenceXPS" style='width:75%;'></textarea>
   </div>
   <div id="scrollSpaceFt" class=\"screenSpace\"><br></div>
+
   <!-- backend_variables -->
 </body></html>

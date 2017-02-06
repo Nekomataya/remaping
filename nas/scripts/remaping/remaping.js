@@ -161,7 +161,7 @@ xUI.init    =function(XPS,referenceXps){
 */
     this.viewMode    = ViewMode;        //表示モード Compact/WordProp
     this.uiMode      = 'browsing';    // ui基本動作モード production/management/browsing
-    this.viewOnly    = false;           //編集禁止フラグ
+    this.viewOnly    = true;           //編集禁止フラグ
     this.hideSource  = false;           //グラフィック置き換え時にシートテキストを隠す
     this.showGraphic = true;            //置き換えグラフィックを非表示　＝　テキスト表示
 
@@ -550,6 +550,7 @@ xUI.setUImode = function (myMode){
         case 'production':;
             if(xUI.XPS.currentStatus != 'Active'){return this.setUImode('browsing');}
             　xUI.viewOnly = false;//メニュー切替
+    $('#ddp-man').hide();
 	$('#pmaui').hide();
     $("li#auiMenu").each(function(){$(this).hide()});
             //作業中のドキュメントステータスは、必ずActiveなので以下のボタン状態
@@ -565,7 +566,8 @@ xUI.setUImode = function (myMode){
             break;
         case 'management':;
             //メニュー切替
-            　xUI.viewOnly = true;
+            　xUI.viewOnly =  true;
+    $('#ddp-man').show();
 	$('#pmaui').show();
     $("li#auiMenu").each(function(){$(this).show()});
             document.getElementById('pmcui-checkin').disabled    =true;//すべてのボタンを無効
@@ -580,6 +582,7 @@ xUI.setUImode = function (myMode){
         case 'browsing':;
             //メニュー切替
             　xUI.viewOnly = true;
+    $('#ddp-man').hide();
 	$('#pmaui').hide();
     $("li#auiMenu").each(function(){$(this).hide()});
             document.getElementById('pmcui-checkin').disabled    = ((xUI.sessionRetrace==0)&&((xUI.XPS.currentStatus=='Startup')||(xUI.XPS.currentStatus=='Fixed')))? false:true;                
@@ -2360,6 +2363,7 @@ xUI.move(dest,dup);
 UNDOデータが第４要素を保つ場合のみ、そのデータをもとにカーソル位置の復帰が行われる
 */
 xUI.move    =function(dest,dup){
+    if(xUI.viewOnly) return false;
     if(typeof dest =="undefined"){return false};//移動指定なし
     if ((dest[0]==0) && (dest[1]==0)){return false};//指定は存在するが移動はなし
 
@@ -4661,9 +4665,11 @@ Compactモード時は強制的に
 /** 動作モードを新設
 production/management/browsing
 managementモードではシート編集はブロック
-viewOnly
+viewOnly プロパティは再初期化前の状態を再生
 */
+    var vOcurrent=xUI.viewOnly;
     if(typeof uiMode != 'undefined'){xUI.setUImode(uiMode);}else{xUI.setUImode(xUI.setUImode());}
+    xUI.viewOnly=vOcurrent;
 
     sync('productStatus');
 
@@ -5162,22 +5168,20 @@ storePtはオープン時および保存時に現状のundoPtを複製するの�
     if(! xUI.isStored()){
     evt = event || window.event;
     return evt.returnValue=localize({
-        en:"",
+        en:"The document change is not saved!",
         ja:"ドキュメントの変更が保存されていません！"
     });
         //xUI.setBackup();
         var msg=locallize({
-            en:"",
+            en:"I will move from this page (move can not be canceled).\n The document is not saved, but save it?",
             ja:"このページから移動します(移動のキャンセルはできません)\nドキュメントが保存されていませんが、保存しますか？"
         });
 /*データ保全は、モード／ケースごとに振り分け必要*/
-        if(confirm(msg)){
-            xUI.setBackup()
-        };
+        if(confirm(msg)){ xUI.setBackup() };
         //保存処理
     };
 //データ保存の有無に関係なくセッションチェックイン中ならば保留する（自動）
-if(xUI.uiMode=='production'){serviceAgent.deactivateEntry();}
+if(xUI.uiMode=='production'){setTimeout(serviceAgent.deactivateEntry,10);}
 
 // if(confirm("TEST")){return true}else {return false};
 //    クッキーを使用する設定なら、
@@ -5976,7 +5980,7 @@ switch (myAction){
 case "body":
 		if(XPS.readIN(xUI.data_well.value)){
 			xUI.init(XPS);nas_Rmp_Init();xUI.sWitchPanel("clear");
-		}else{alert("reading-Body : "+localize(xUI.errorMsg[XPS.errorCode]) )};
+		}else{alert("reading-Body : "+localize(xUI.errorMsg[xUI.errorCode]) )};
 break;
 case "ref":
 		if(xUI.referenceXPS.readIN(convertXps(xUI.data_well.value))){
@@ -7269,16 +7273,26 @@ function initToolbox(){
 	reWriteWS();//wordセレクタの書き直し
 }
 
-//セルのセレクタを書き直す。
+//入力補助セレクタを書き直す。
 function reWriteCS(){
 	var Selector='';
-	if(xUI.Select[0] >= xUI.dialogSpan || xUI.Select[0] < (XPS.xpsTracks.length-1)){
+//セレクタはカレントのトラック種別で書き換えを行う。基本的にxMapエレメントを選択可能にするセレクタ
+//xMapにグループが存在しないか、または不十分なときは基本データで埋める
+switch (xUI.XPS.xpsTracks[xUI.Select[0]].option){
+    case "timing":
 		if(xUI.Select[0] < (XPS.xpsTracks.length-1))
-	var cOunt=
-	(isNaN(XPS["xpsTracks"][xUI.Select[0]]["lot"]))?
-20 : XPS["xpsTracks"][xUI.Select[0]]["lot"];
-for(f=1;f<=cOunt;f++){Selector+='<option />'+f.toString()}
-	};
+	        var cOunt = (isNaN(XPS["xpsTracks"][xUI.Select[0]]["lot"]))?
+            20 : XPS["xpsTracks"][xUI.Select[0]]["lot"];
+        for(f=1;f<=cOunt;f++){Selector+='<option />'+String(f);};
+    break;
+    case "dialog":
+//        var wOrds=["____","<SE>","<BGM>","<V.O>","<背>","!"];
+//        for(f=1;f<=wOrds.length;f++){Selector+='<option value ="'+wOrds[f]+'">'+xUI.trTd(wOrds[f])+"</option>"};
+//    break;
+    default:
+}
+//	if(xUI.Select[0] >= xUI.dialogSpan || xUI.Select[0] < (XPS.xpsTracks.length-1)){};
+	
 	document.getElementById("tBitemSelect").innerHTML=Selector;
 }
 //お気に入り単語のセレクタを書き直す。

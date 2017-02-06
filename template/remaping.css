@@ -1170,8 +1170,20 @@ div.application_status {
 	width:48px;
 	vertical-align:middle;
 }
+.documentPanelTools {
+	text-align:right;
+	background-color:#bbddbb;
+}
+.documentPanelTools-man {
+	background-color:#ddbbbb;
+}
 .documentPanelButton {
 	height:27px;
+	width:120px;
+	vertical-align:middle;
+}
+.documentPanelButton-management {
+	height:20px;
 	width:120px;
 	vertical-align:middle;
 }

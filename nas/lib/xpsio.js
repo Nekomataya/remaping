@@ -2238,8 +2238,8 @@ Xps.getIdentifier=function(myXps){
     SCiオブジェクトに統合予定
     一致推測は未実装
     戻値:数値   -1  :no match
-                0   :title match
-                1   :title+cut match
+                0   :product match
+                1   :product + cut match
                 2   :line match
                 3   :stage match
                 4   :job match

@@ -114,7 +114,7 @@
 	SectionModeColor="#ccffcc"	;//ミドリ
 //区間色自体は背景色との演算で変化する
 //スピン領域色??
-	SpinAreaColor	="red"	;// これ参照してない
+	SpinAreaColor	="red"	;// これ参照してない スピンエリアは背景色と選択色の中間値を計算する
 //選択領域の背景色
 	SelectionColor	="#f8f8dd"	;//
 //フットスタンプ/diff の色
@@ -143,7 +143,8 @@
 	ColumnSeparatorWidth=4;　//カラムセパレータの幅
 */
 // ルック設定のオブジェクト化中
-
+// 後からルックを変更する手続は　xUI.setSheetLook(SheetLooks);xUI.footstampPaint();
+// 後方のペイント更新が重要
 SheetLooks = {
 	SheetBaseColor	:"#f8f8f8",
 	SelectedColor	:"#ccccff",
