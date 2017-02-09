@@ -79,19 +79,21 @@ documentDepot.documentsUpdate=function(){
 if(serviceAgent.currentRepository instanceof NetworkRepository){
     for (var idx = 0 ; idx < serviceAgent.currentRepository.productsData.length ; idx ++){
         var myTitle = serviceAgent.currentRepository.productsData[idx].name;
+        if(serviceAgent.currentRepository.productsData[idx].episodes){
         for (var ide = 0 ; ide < serviceAgent.currentRepository.productsData[idx].episodes[0].length ; ide ++){
-            var myOpus = serviceAgent.currentRepository.productsData[idx].episodes[0][ide].name;
-            var mySubtitle = serviceAgent.currentRepository.productsData[idx].episodes[0][ide].description;
-            var myIdentifier = 
-                      encodeURIComponent(myTitle)+
-                "#" + encodeURIComponent(myOpus)+
-                ((mySubtitle.length)?"["+mySubtitle+"]":"")
-            myProducts.push(myIdentifier);
+                var myOpus = serviceAgent.currentRepository.productsData[idx].episodes[0][ide].name;
+                var mySubtitle = serviceAgent.currentRepository.productsData[idx].episodes[0][ide].description;
+                var myIdentifier = 
+                        encodeURIComponent(myTitle)+
+                    "#" + encodeURIComponent(myOpus)+
+                    ((String(mySubtitle).length)?"["+mySubtitle+"]":"")
+                myProducts.push(myIdentifier);
+            }
         }
     }
 }else{
     for (var idx = 0 ; idx < myDocuments.length ; idx ++ ){
-        var currentProduct=myDocuments[idx].toString().split( '//' )[0];
+        var currentProduct=myDocuments[idx].toString(0).split( '//' )[0];
         var hasProduct =false;
 
         for (var idp = 0 ; idp < myProducts.length ; idp ++ ){
@@ -201,19 +203,22 @@ documentDepot.getEntry =function(myIdentifier){
 */
 documentDepot.buildIdentifier = function(addStatus){
     var result="";
-    result += (document.getElementById('titleInput').value.match(/\(\*/)) ? "no-Title":
+    result += (document.getElementById('titleInput').value.match(/\(\*.*\*/)) ? "":
         encodeURIComponent(document.getElementById('titleInput').value);
-    result += (document.getElementById('opusInput').value.match(/\(\*/)) ? "#":
+    result += (document.getElementById('opusInput').value.match(/\(\*.*\*/)) ? "#":
         '#'+encodeURIComponent(document.getElementById('opusInput').value);
-    result += (document.getElementById('subtitleInput').value.match(/\(\*/)) ? '':
-        '['+encodeURIComponent(document.getElementById('opusInput').value)+']';
+    result += (document.getElementById('subtitleInput').value.match(/\(\*.*\*/)) ? '':
+        '['+encodeURIComponent(document.getElementById('subtitleInput').value)+']';
     result += '//';
-    var mySCi = Xps.parseSCi(document.getElementById('cutInput').value+'('+document.getElementById('timeInput').value+')');
+    var mySCi =Xps.parseSCi(((document.getElementById('cutInput').value.match(/\(\*.*\*\)/)) ? '':
+        document.getElementById('cutInput').value )+'('+document.getElementById('timeInput').value+')');
+if(dbg) console.log(mySCi);
     var myNames = Xps.parseCutIF(mySCi[0].cut);
     result += (myNames.length > 1) ? 's'+encodeURIComponent(myNames[1])+'-c':'s-c';
-    result += (typeof myNames[0] == 'undefined')?encodeURIComponent(myNames[0]):"";
-  if(mySCi[0].time != "*--c#--*"){
-    result += '( '+nas.Frm2FCT(nas.FCT2Frm(mySCi[0].time),3)+' )';
+    result += (typeof myNames[0] == 'undefined')?"":encodeURIComponent(myNames[0]);
+    var timeSpc = parseInt(nas.FCT2Frm(String(mySCi[0].time)));
+  if(timeSpc > 0){
+    result += '( '+String(timeSpc)+' )';
   }
     if(addStatus){
         result +='//';
@@ -394,17 +399,23 @@ function selectBrowser(){
 function setProduct(productName){
     if(typeof productName == "undefined"){
     //プロダクト名が引数で与えられない場合はセレクタの値をとる
-//        productName= document.getElementById("opusSelect").options[document.getElementById("opusSelect").selectedIndex].text;
-    //プロダクト名が引数で与えられない場合はセレクタの値をとる
     //選択されたアイテムがない場合は、デフォルト値を使用してフリー要素を選択する
-    if ( document.getElementById("opusSelect").selectedIndex >= 0 ){
-        productName = document.getElementById("opusSelect").options[document.getElementById("opusSelect").selectedIndex].text;
-    }else{
-        document.getElementById("opusSelect").selectedIndex = 0;
-        productName = "(*-- new title --*)#(*--opus--*)";
+        if ( document.getElementById("opusSelect").selectedIndex >= 0 ){
+            productName = ( document.getElementById("opusSelect").selectedIndex == 0 )?
+            "#[]":
+            document.getElementById("opusSelect").options[document.getElementById("opusSelect").selectedIndex].text;
+console.log(productName);
+        }else{
+            document.getElementById("opusSelect").selectedIndex = 0;
+            productName = "#[]";
+        }
     }
-    }
-    prductName=productName.toString();//明示的にストリング変換する
+    prductName=String(productName);//明示的にストリング変換する
+    var productInfo=Xps.parseProduct(productName);
+        var subTitle    = productInfo.subtitle;
+        var opus        = productInfo.opus;
+        var title       = productInfo.title;
+/*
     if(productName.length <= 0){return false;}
     if(productName.match(/^(.+)(\[([^\]]+)\]|「([^」]+)」|\"([^\"]+)\"|\'([^\']+)\')$/)){
         productName = RegExp.$1;
@@ -419,6 +430,7 @@ function setProduct(productName){
         var title = productName;
         var opus  = "";
     }
+*/
 // タイトルからカットのリストを構築して右ペインのリストを更新
     documentDepot.currentProduct=document.getElementById("opusSelect").options[document.getElementById("opusSelect").selectedIndex].value;
 // 更新したリストからリスト表示を更新
@@ -457,11 +469,13 @@ function selectSCi(sciName){
                 myContents += decodeURIComponent(myEntry.issues[ix].join('//'))+"</option>";
             }
             document.getElementById("issueSelector").innerHTML=myContents;
-            document.getElementById("issueSelector").disabled=false;
+            if(xUI.uiMode=='management') document.getElementById("issueSelector").disabled=false;
 
             sciName = document.getElementById("cutList").options[document.getElementById("cutList").selectedIndex].text;
             }else{console.log(myEntry)}
+
             if(false){
+                //テキスト入力用エリア不使用
             document.getElementById("issueSelector").innerHTML='<option value="" selected>#:---line//#:---stage//#:---job//(status)</option>';
             document.getElementById("issueSelector").disabled=true;
             document.getElementById("cutList").selectedIndex = 0;
@@ -511,7 +525,7 @@ if(myEntry){
  //       document.getElementById("ddp-activate").disabled    = true;
         document.getElementById("ddp-readout").disabled     = true;
         document.getElementById("ddp-reference").disabled   = true;
-
+        if(xUI.uiMode=='management')
         for ( var tidx = 0 ; tidx < myInputText.length ; tidx ++ ){
             document.getElementById(myInputText[tidx]).disabled = false;
         }
@@ -531,6 +545,11 @@ var currentStatus = myEntry.issues[myEntry.issues.length-1][3];
             document.getElementById(myInputText[tidx]).disabled = true;
         }
         documentDepot.currentSelection = document.getElementById("cutList").options[document.getElementById("cutList").selectedIndex].value;
+    }
+    if((xUI.uiMode=='management')&&(!myEntry)){
+        document.getElementById('ddp-addentry').disabled=false;
+    }else{
+        document.getElementById('ddp-addentry').disabled=true;        
     }
 }
 

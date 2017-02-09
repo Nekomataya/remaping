@@ -609,10 +609,16 @@ if (dbg) console.log("pushEntry :"+myIdentifier);
             try{
                 this.entryList[pid].push(myIdentifier);
                 localStorage.setItem(this.keyPrefix+myIdentifier,myXps.toString());
-                if (xUI.XPS === myXps) xUI.setStored('current');
+                if (xUI.XPS === myXps){
+                    xUI.setStored('current');
+                    sync();
+                }
             }catch(err){
                 if(callback2 instanceof Function){callback2();}                
             }
+            sync();
+            serviceAgent.currentRepository.getList(true);//リストステータスを同期
+            documentDepot.rebuildList();
             if(callback instanceof Function){callback();}
             return this.entryList[pid];
         };
@@ -747,6 +753,35 @@ if(dbg) console.log(documentDepot.currentReference);//単エントリで直前�
     } else { 
         return false;
     }
+}
+/**
+    DBにタイトルを作成する。
+    confirmなし 呼び出し側で済ませること
+    必要あれば編集UI追加
+引数
+    タイトル（必須）
+    備考テキスト
+    Pmオブジェクト
+    コールバック関数２種
+識別子は受け入れない　必要に従って前段で分解のこと
+*/
+localRepository.addTitle = function (myTitle,myDescription,myPm,callback,callback2){
+//現在ローカルリポジトリ側で行う処理は存在しない コールバックの実行のみを行う
+　if(callback instanceof Function) callback();
+    return true;
+}
+/**
+    DBにOPUS(エピソード)を作成する。
+引数
+    タイトルを含む識別子　カット番号は求めない
+    コールバック関数２種
+    識別子のみ受け入れ
+    このルーチンを呼び出す時点で、タイトルは存在すること
+*/
+localRepository.addOpus = function (myIdentifier,prodIdentifier,callback,callback2){
+//現在ローカルリポジトリ側で行う処理は存在しない コールバックの実行のみを行う
+　if(callback instanceof Function) callback();
+    return true;
 }
 /**
     識別子を指定してローカルリポジトリから相当エントリを消去する
@@ -1679,9 +1714,10 @@ function(result){
  */
 /**
     DBにタイトルを作成する。
-    confirmあり
+    confirmなし 呼び出し側で済ませること
+    必要あれば編集UI追加
 引数
-    タイトル
+    タイトル（必須）
     備考テキスト
     Pmオブジェクト
     コールバック関数２種
@@ -1694,7 +1730,8 @@ NetworkRepository.prototype.addTitle = function (myTitle,myDescription,myPm,call
     2107.01.28時点でAPIにtemplateが出ていないのでpmの処理は省略　遅延で詳細編集を行っても良い
     serviceAgent.currentRepository.addTitle("tST2","testTitlewith API")
     作成時に検査を行い、既存タイトルならば処理を中断する（呼び出し側で）
-    タイトル作成前に確認メーッセージを出す（これも呼び出し側）
+    タイトル作成前に確認メッセージを出す（これも呼び出し側）
+    現在はPmオブジェクトは機能していない　2/9 2017
 */
     if(! myTitle) return false;
     if(! myDescription) myDescription="";
@@ -1725,27 +1762,41 @@ if(dbg) console.log(result);
 	});
 }
 /**
-    DBにエピソードを作成する。
+    DBにOPUS(エピソード)を作成する。
 引数
-    エピソード番号文字列
-    備考テキスト=サブタイトルとして利用
+    タイトルを含む識別子　カット番号は求めない
     コールバック関数２種
-識別子は受け入れない　必要に従って前段で分解のこと
+    識別子のみ受け入れ
+    このルーチンを呼び出す時点で、タイトルは存在すること
 */
-NetworkRepository.prototype.addEpisode = function (myName,mySubtitle,callback,callback2){
+NetworkRepository.prototype.addOpus = function (myIdentifier,prodIdentifier,callback,callback2){
 /*
     listEntry.titleID
 */
-    var parseData = Xps.parseIdentifier(myName);
-        if(! parseData){
-            var myProduct = serviceAgent.currentRepository.entry(Xps.getIdentifier(xUI.XPS)).product;
-            myProduct.opus = myName;
-            myProduct.subtitle = mySubtitle;
-        }else{
-            var myProduct=parseData.product;
-        }
-    var myEntry = serviceAgent.currentRepository.entry(Xps.getIdentifier(xUI.XPS));
-
+    var parseData = Xps.parseIdentifier(myIdentifier);
+    if(! parseData){
+        if(callback2 instanceof Function) callback2;
+        return;
+    }
+    var myProduct = parseData.product;
+    
+    var myEntry=false;
+    if(typeof prodIdentifier == 'undefined'){
+        for (var pid=0;pid<documentDepot.products.length;pid ++){
+        //productsのメンバをオブジェクト化したほうが良いかも
+            var prdInfo=Xps.parseProduct(documentDepot.products[pid]);
+            if(prdInfo.title==myProduct.title) {
+                 myEntry = serviceAgent.currentRepository.entry(documentDepot.products[pid]);
+                break;
+            }
+        };
+    }else{
+        myEntry = serviceAgent.currentRepository.entry(prodIdentifier+"//",true);
+    }
+    if(!myEntry){
+        if(callback2 instanceof Function) callback2;
+        return;
+    }
     var data = {
         episode: {
           product_token : myEntry.productID,
@@ -1758,8 +1809,12 @@ NetworkRepository.prototype.addEpisode = function (myName,mySubtitle,callback,ca
 		type : 'POST',
 		url : serviceAgent.currentRepository.url+"/api/v2/episodes.json",
 		data : JSON.stringify(data),
-		success : function(result) {},
-		error:function(result) {},
+		success : function(result) {
+		    if( callback instanceof Function) callback();
+		},
+		error:function(result) {
+		    if( callback2 instanceof Function) callback2();
+		},
 		beforeSend: serviceAgent.currentRepository.service.setHeader
 	});
 }
@@ -3010,71 +3065,82 @@ serviceAgent.checkoutEntry=function(callback,callback2){
 }
 /**
      新規カットを追加登録
-     現在のタイトル及びOPUSに新規カットを登録する
+     現在のリポジトリに存在しないタイトル・エピソードを指定する場合は、必ずXpsオブジェクトを指定すること
+     引数無しで呼び出された場合は、現在のタイトル・エピソードに新規カットを登録するダイアログを開く
      現在のTitle-Opusに既存のカットは処理できないので排除
      データ内容の指定は不可・尺のみ指定可能　最小テンプレートでカット番号のある空エントリのみが処理対象
      初期状態の、ライン／ステージ／ジョブの指定が可能
 */
 serviceAgent.addEntry = function(myXps){
     if(!myXps){
-        var myProduct = documentDepot.currentProduct;
-        if((myProduct == '==newTitle==')||(myProduct == null)){myProduct = documentDepot.products[0];}
-        var myEntry         = this.currentRepository.entry(myProduct+"//",true);
-        var entryInfo       = Xps.parseIdentifier(myEntry.toString(0));
-        var title = localize(nas.uiMsg.pMaddNewScene);//'新規カット追加';
-        var msg  = localize(nas.uiMsg.dmPMnewDocument);
-        //'新規カットを作成します。\nカット番号/継続時間を入力して[OK]ボタンで確定してください。';
-        var msg2 = '<br><span>%title%</span>#<span>%opus%</span><br> S-C:<input id=newCutName type=text ></input> TIME:<input id=newCutTime type=text value="6 + 0"></input><br><input id=newLine type=text value="%lineName%"></input><input id=newStage type=text value="%stageName%"></input><input id=newJob type=text value="%jobName%"></input><br>';
-        msg2 = msg2.replace(/%title%/,entryInfo.title);
-        msg2 = msg2.replace(/%opus%/,entryInfo.opus);
-        msg2 = msg2.replace(/%lineName%/,nas.pm.pmTemplate[0].line);
-        msg2 = msg2.replace(/%stageName%/,nas.pm.pmTemplate[0].stages[0]);
-        msg2 = msg2.replace(/%jobName%/,nas.pm.jobNames.getTemplate(nas.pm.pmTemplate[0].stages[0],"init")[0]);
-        nas.showModalDialog('confirm',[msg,msg2],title,false,function(){
-            if(this.status>1){return};//cancel
-            var newCutName  = document.getElementById('newCutName').value;
-            var newCutTime  = nas.FCT2Frm(String(document.getElementById('newCutTime').value));
-            var newLine     = document.getElementById('newLine').value;
-            var newStage    = document.getElementById('newStage').value;
-            var newJob      = document.getElementById('newJob').value;
-            if ((this.status == 0)&&(newCutName)){
-                if(! newCutTime) newCutTime = "144";
-                myXps = new Xps(5,newCutTime);
+        var myIdentifier = documentDepot.buildIdentifier();
+if(dbg)console.log(decodeURIComponent(myIdentifier));
+        var entryInfo = Xps.parseIdentifier(myIdentifier);
+                myXps = new Xps(5,entryInfo.time);
                 myXps.title      = entryInfo.title;
                 myXps.opus       = entryInfo.opus;
                 myXps.subtitle   = entryInfo.subtitle;
-                myXps.cut        = newCutName;
+                myXps.cut        = entryInfo.cut;
                 myXps.createUser = xUI.currentUser;
                 myXps.updateUser = xUI.currentUser;
-                myXps.line       = '0:'+ newLine;
-                myXps.stage      = '0:'+ newStage;
-                myXps.job        = '0:'+ newJob;
-                var myIdentifier = Xps.getIdentifier(myXps,true);
-            }
-            if((!newCutName)||(serviceAgent.currentRepository.entry(myIdentifier))){
-                var msg = "";
-                if (!newCutName){
-                    msg += localize(nas.uiMsg.alertCutIllegal);//"カット番号不正"
-                }else{
-                    msg += localize(nas.uiMsg.alertCutConflict);//"カット番号衝突"
-                }
-                alert(msg);
-                setTimeout (function(){serviceAgent.addEntry();},10);
+
+        if((String(myXps.cut).length==0)||(serviceAgent.currentRepository.entry(myIdentifier))){
+            var msg = "";
+            if (String(myXps.cut).length==0){
+                msg += localize(nas.uiMsg.alertCutIllegal);//"カット番号不正"
             }else{
-                serviceAgent.addEntry(myXps);
-            };
-        });
+                msg += localize(nas.uiMsg.alertCutConflict);//"カット番号衝突"
+            }
+            alert(msg);
+            return false;
+        }else{
+            serviceAgent.addEntry(myXps);
+        };
         return;
+
     }else{
         var myIdentifier = Xps.getIdentifier(myXps);
+//既存カットと一致(排除)
         if(this.currentRepository.entry(myIdentifier)){
                 alert(localize(nas.uiMsg.alertCutConflict));
              return false
         }
-//        var tmpEntry= new listEntry(myIdentifier);
-        serviceAgent.currentRepository.pushEntry(myXps);
-    }
-}
+        if(this.currentRepository.entry(myIdentifier,true)){
+//既存プロダクトあり（作成処理不用）
+            serviceAgent.currentRepository.pushEntry(myXps);
+        }else{
+//既存のタイトルがあるか？あればエピソードのみ新作
+//なければタイトルを作成後にエピソードを新作して処理続行
+// confirmあり
+            　var hasTitle = false;
+            　for (var pid=0;pid<documentDepot.products.length;pid ++){
+            　   //productsのメンバをオブジェクト化したほうが良いかも
+            　   var prdInfo=Xps.parseProduct(documentDepot.products[pid]);
+            　   if(prdInfo.title==myXps.title) {hasTitle = documentDepot.products[pid];break;}
+            　};
+            　if(hasTitle){
+            　   var msg=localize({
+            　       en:"",
+            　       ja:"この共有には指定の制作話数 #%1[%2] が登録されていません。\n新規に制作話数 #%1[%2] を登録しますか？\n共有を変更するする場合は一旦キャンセルして手続をやり直してください。"},myXps.opus,myXps.subtitle);
+            　   if(confirm(msg))
+            　   serviceAgent.currentRepository.addOpus(myIdentifier,hasProd,function(){
+            　       serviceAgent.currentRepository.pushEntry(myXps);
+            　   });
+            　 }else{
+            　   var msg=localize({
+            　       en:"",
+            　       ja:"この共有には指定された作品 %1#%2[%3] が登録されていません。\n新規に %1#%2[%3] を登録しますか？\n共有を変更するする場合は一旦キャンセルして手続をやり直してください。"},myXps.title,myXps.opus,myXps.subtitle);
+            　   if(confirm(msg))
+            　   serviceAgent.currentRepository.addTitle(myXps.title,"","",function(){
+            　       serviceAgent.currentRepository.addOpus(myIdentifier,function(){
+            　           serviceAgent.currentRepository.pushEntry(myXps);
+            　       });
+            　   });
+            　};
+            　          
+        };
+    };
+};
 /**
      工程を閉じて次の工程を開始する手続き
      逆戻り不能なのでチェックを厳重に

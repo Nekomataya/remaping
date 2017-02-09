@@ -987,8 +987,10 @@ td.colSep {
 .screenSpace{
 	display:none;
 }
+.
 .printSpace {
 	width:100%;
+	height:4.5cm;
 }
 .pageBreak {
 		page-break-before:always;

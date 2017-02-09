@@ -1660,6 +1660,14 @@ Xps.prototype.parseXps = function (datastream) {
                     SrcData[props[nAme]] = tm;
 
                     break;
+                　  /**
+                　   *  user_info
+                　   *   ユーザ関連情報はオブジェクトに置き換え
+                　   */
+                  case  "CREATE_USER":
+                  case  "UPDATE_USER":
+                　   SrcData[props[nAme]] = new nas.UserInfo(vAlue);
+                    break;
                     /**
                      * 管理情報　シングルステージドキュメントの際のみ処理
                      *

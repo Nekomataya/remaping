@@ -173,9 +173,9 @@ serviceAgent.pushEntry(xUI.XPS,function(){xUI.setStored("current");sync();
 <!-- 制作管理用ドキュメントメニュー -->
 <li id=auiMenu><span id=pMnewEntry-d class='pM pM-alt'>新規カット</span><A	id=pMnewEntry
 	href = 'javascript:void(0)'
-	onclick = 'serviceAgent.addEntry();return false;'
-	title="新規カット追加"
->新規カット</A></li>
+	onclick = 'xUI.sWitchPanel("File");return false;'
+	title="タイトルやカットを新規に登録"
+>新規登録</A></li>
 
 <li id=auiMenu><hr><span id=pMreceipt-d class='pM pM-alt'>作業検収</span><A	id=pMreceipt
 	href = 'javascript:void(0)'
@@ -1062,9 +1062,9 @@ class=optionPanel id=optionPanelProductManagement
 <button
 	id=pmaui-new
     class='pmControl pmControl-new' 
-    title='新規カットを作成'
-	onclick="serviceAgent.addEntry();"
->新規カット</button>
+    title='新規カットを登録'
+	onclick='xUI.sWitchPanel("File");'
+>新規登録</button>
 
 <button
 	id=pmaui-receipt
@@ -2041,24 +2041,28 @@ onclick='nas.incrFCTonHTMLInput(document.getElementById("editTC"),"-(1)")'
 <!-- タイトル、カット等の新規作成（登録）UI-->
 <span style="text-align:right;">
 <input type=text
+	class = ddpInput
     id = titleInput
     size=32
 	disabled=true
     value='(*--title--*)'
 	onChange="documentDepot.currentSelection=documentDepot.buildIdentifier();"
 ><input type=text
+	class = ddpInput
     id = opusInput
     size=12
 	disabled=true
     value='(*--opus--*)'
 	onChange="documentDepot.currentSelection=documentDepot.buildIdentifier();"
 ><input type=text
+	class = ddpInput
     id = subtitleInput
     size=32
 	disabled=true
     value='(*--subtitle--*)'
 	onChange="documentDepot.currentSelection=documentDepot.buildIdentifier();"
 ><input	type=text
+	class = ddpInput
 	name=fileTest
 	id=cutInput
 	size=12
@@ -2066,13 +2070,35 @@ onclick='nas.incrFCTonHTMLInput(document.getElementById("editTC"),"-(1)")'
 	disabled=true
 	onChange="documentDepot.currentSelection=documentDepot.buildIdentifier();"
 ><input	type=text
+	class = ddpInput
 	name=fileTest
 	id=timeInput
 	size=8
 	value='3 + 0 .'
 	disabled=true
 	onChange="documentDepot.currentSelection=documentDepot.buildIdentifier();"
-><br><!-- <input	type=text
+><span style="position:relative;height:24px;width:64px;left:64px;"><button
+    class='subControl subControl-incrS subControl-left-top'
+    onClick='document.getElementById("timeInput").value=nas.Frm2FCT(nas.FCT2Frm(document.getElementById("timeInput").value)+24,3);document.getElementById("timeInput").onchange();'> 
+</button><button
+    class='subControl subControl-decrS subControl-left-bottom'
+    onclick='document.getElementById("timeInput").value=nas.Frm2FCT(nas.FCT2Frm(document.getElementById("timeInput").value)-24,3);document.getElementById("timeInput").onchange();'>
+</button><button
+    class='subControl subControl-incr6 subControl-mid-top'
+    onclick='document.getElementById("timeInput").value=nas.Frm2FCT(nas.FCT2Frm(document.getElementById("timeInput").value)+6,3);document.getElementById("timeInput").onchange();'> 
+</button><button
+    class='subControl subControl-decr6 subControl-mid-bottom'
+    onclick='document.getElementById("timeInput").value=nas.Frm2FCT(nas.FCT2Frm(document.getElementById("timeInput").value)-6,3);document.getElementById("timeInput").onchange();'>
+</button><button
+    class='subControl subControl-incr subControl-right-top'
+    onclick='document.getElementById("timeInput").value=nas.Frm2FCT(nas.FCT2Frm(document.getElementById("timeInput").value)+1,3);document.getElementById("timeInput").onchange();'>
+</button><button
+    class='subControl subControl-decr subControl-right-bottom'
+    onclick='document.getElementById("timeInput").value=nas.Frm2FCT(nas.FCT2Frm(document.getElementById("timeInput").value)-1,3);document.getElementById("timeInput").onchange();'>
+</button>
+</span>
+
+<br><!-- <input	type=text
 	id=statusSelector
 	size=64
 	disabled=true
@@ -2087,27 +2113,8 @@ onclick='nas.incrFCTonHTMLInput(document.getElementById("editTC"),"-(1)")'
 >
 	<option value=-1>#:---line//#:---stage//#:---job//(status)</option>
 </select>
-<!--
-<span style="position:relative;height:24px;width:64px;"><button
-    class='subControl subControl-incrS subControl-left-top'
-    onclick='document.getElementById("timeInput").value=nas.Frm2FCT(nas.FCT2Frm(document.getElementById("timeInput").value)+24,3);document.getElementById("timeInput").onChange();'> 
-</button><button
-    class='subControl subControl-decrS subControl-left-bottom'
-    onclick='document.getElementById("timeInput").value=nas.Frm2FCT(nas.FCT2Frm(document.getElementById("timeInput").value)-24,3);document.getElementById("timeInput").onChange();'>
-</button><button
-    class='subControl subControl-incr6 subControl-mid-top'
-    onclick='document.getElementById("timeInput").value=nas.Frm2FCT(nas.FCT2Frm(document.getElementById("timeInput").value)+6,3);document.getElementById("timeInput").onChange();'> 
-</button><button
-    class='subControl subControl-decr6 subControl-mid-bottom'
-    onclick='document.getElementById("timeInput").value=nas.Frm2FCT(nas.FCT2Frm(document.getElementById("timeInput").value)-6,3);document.getElementById("timeInput").onChange();'>
-</button><button
-    class='subControl subControl-incr subControl-right-top'
-    onclick='document.getElementById("timeInput").value=nas.Frm2FCT(nas.FCT2Frm(document.getElementById("timeInput").value)+1,3);document.getElementById("timeInput").onChange();'>
-</button><button
-    class='subControl subControl-decr subControl-right-bottom'
-    onclick='document.getElementById("timeInput").value=nas.Frm2FCT(nas.FCT2Frm(document.getElementById("timeInput").value)-1,3);document.getElementById("timeInput").onChange();'>
-</button>
-</span>--> 
+
+ 
 <div id=current_identifier></div>
 <hr>
 </span>
@@ -2116,21 +2123,23 @@ onclick='nas.incrFCTonHTMLInput(document.getElementById("editTC"),"-(1)")'
 <div id=ddp-man class='documentPanelTools documentPanelTools-man' >
 <button
  onClick='serviceAgent.currentRepository.removeEntry(documentDepot.currentSelection);'
- class='documentPanelButton-management'
+ class='documentPanelButton-management debug'
  title="local repository only"
 >removeDocument </button><button
  onClick='hello();'
- class='documentPanelButton-management'
- title=""
+ class='documentPanelButton-management debug'
+ title="タイトル登録（デバッグ）"
 >makeTitle</button><button
  onClick='hello();'
- class='documentPanelButton-management'
- title=""
+ class='documentPanelButton-management debug'
+ title="エピソード登録（デバッグ）"
 >makeEpisode</button><button
- onClick='hello();'
+ id=ddp-addentry
+ onClick='serviceAgent.addEntry();'
  class='documentPanelButton-management'
- title=""
->pushEntry</button>
+ disabled=true
+ title="カットを新規に登録します"
+>新規登録</button>
 </div>
 <!-- for management -->
 <div class='documentPanelTools'>
@@ -2182,10 +2191,7 @@ onclick='nas.incrFCTonHTMLInput(document.getElementById("editTC"),"-(1)")'
 	style="width:200;text-align:right"
 	onchange="serviceAgent.switchRepository(this.value)"
 >
-<option selected>[HOME]
-<option>会社/url
-<option>団体/url
-<option>プロジェクト/url
+<option selected>[localRspitory]
 </select>
 
 
@@ -3110,7 +3116,228 @@ $Id:$ index.html ,v 1.7 2016/12/24  support@nekomataya.info <br />
 <br>
       </div><hr>
 <!-- <form> -->
-	<textarea id="startupXPS" style='width:75%;'></textarea>
+	<textarea id="startupXPS" style='width:75%;'>nasTIME-SHEET 0.5
+##MAPPING_FILE=
+##TITLE=nameChange
+##SUB_TITLE=なんだか１話
+##OPUS=001
+##SCENE=
+##CUT=34
+##TIME=6 + 00 .
+##TRIN=0 + 00 .,trin
+##TROUT=0 + 00 .,trout
+##CREATE_USER=handle:uid@example.com
+##UPDATE_USER=handle:uid@example.com
+##CREATE_TIME=2017/2/9 18:30:54
+##UPDATE_TIME=2017/2/9 18:30:54
+##FRAME_RATE=24
+##Line=(本線):0
+##Stage=layout:0
+##Job=init:0
+##CurrentStatus=Startup
+#
+#========================================================
+[sizeX	640	640	640	640	640	640	640]
+[sizeY	480	480	480	480	480	480	480]
+[aspect	1	1	1	1	1	1	1]
+[lot	=AUTO=	=AUTO=	=AUTO=	=AUTO=	=AUTO=	=AUTO=	=AUTO=]
+[blmtd	file	file	file	file	file	file	file]
+[blpos	end	end	end	end	end	end	end]
+[option	dialog	timing	timing	timing	timing	timing	comment]
+[link	.	.	.	.	.	.	.]
+[CELL	N	A	B	C	D	E	]
+#========================================================
+.							
+.							
+.							
+.							
+.							
+.							
+#--------------------------------------------------------
+.							
+.							
+.							
+.							
+.							
+.							
+#--------------------------------------------------------
+.							
+.							
+.							
+.							
+.							
+.							
+#--------------------------------------------------------
+.							
+.							
+.							
+.							
+.							
+.							
+#========================================================
+.							
+.							
+.							
+.							
+.							
+.							
+#--------------------------------------------------------
+.							
+.							
+.							
+.							
+.							
+.							
+#--------------------------------------------------------
+.							
+.							
+.							
+.							
+.							
+.							
+#--------------------------------------------------------
+.							
+.							
+.							
+.							
+.							
+.							
+#========================================================
+.							
+.							
+.							
+.							
+.							
+.							
+#--------------------------------------------------------
+.							
+.							
+.							
+.							
+.							
+.							
+#--------------------------------------------------------
+.							
+.							
+.							
+.							
+.							
+.							
+#--------------------------------------------------------
+.							
+.							
+.							
+.							
+.							
+.							
+#========================================================
+.							
+.							
+.							
+.							
+.							
+.							
+#--------------------------------------------------------
+.							
+.							
+.							
+.							
+.							
+.							
+#--------------------------------------------------------
+.							
+.							
+.							
+.							
+.							
+.							
+#--------------------------------------------------------
+.							
+.							
+.							
+.							
+.							
+.							
+#========================================================
+.							
+.							
+.							
+.							
+.							
+.							
+#--------------------------------------------------------
+.							
+.							
+.							
+.							
+.							
+.							
+#--------------------------------------------------------
+.							
+.							
+.							
+.							
+.							
+.							
+#--------------------------------------------------------
+.							
+.							
+.							
+.							
+.							
+.							
+#========================================================
+.							
+.							
+.							
+.							
+.							
+.							
+#--------------------------------------------------------
+.							
+.							
+.							
+.							
+.							
+.							
+#--------------------------------------------------------
+.							
+.							
+.							
+.							
+.							
+.							
+#--------------------------------------------------------
+.							
+.							
+.							
+.							
+.							
+.							
+#========================================================
+#========================================================
+[END]
+</textarea>
+    <textarea id="referenceXPS" style='width:75%;'></textarea>
+  </div>
+  <div id="scrollSpaceFt" class=\"screenSpace\"><br></div>
+  <!-- backend_variables -->
+  <span id="backend_variables"
+        data-organization_token="aZnVwPym4r7WSSGDHzFqMfko"
+        data-user_access_token="257a8a33a7897db674a2b0f5834095ba0b52a577191eed1084072af5ccba1ac7"
+        data-user_token="aWWMWNKW2HAfuRHWANZKbETy"
+        data-user_name="ねこまたや"
+        data-user_email="kiyo@nekomataya.info"
+        data-episode_id="18"
+        data-cut_id="103"
+        data-product_token="B2Reb15K1hjZVVSPkWf8xe7r"
+        data-episode_token="5eD8pksh3FNZm1UHHjGFD7d1"
+        data-cut_token="YMDwcZpTcPAnYC7E5zaSMZQc"
+        data-line_id="0:(本線)"
+        data-stage_id="0:layout"
+        data-job_id="0:init"
+        data-status="Startup"
+  ></span><!-- </textarea>
     <textarea id="referenceXPS" style='width:75%;'></textarea>
   </div>
   <div id="scrollSpaceFt" class=\"screenSpace\"><br></div>

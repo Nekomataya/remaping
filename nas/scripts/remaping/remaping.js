@@ -552,6 +552,7 @@ xUI.setUImode = function (myMode){
             　xUI.viewOnly = false;//メニュー切替
     $('#ddp-man').hide();
 	$('#pmaui').hide();
+	$('button.subControl').each(function(){$(this).hide()})
     $("li#auiMenu").each(function(){$(this).hide()});
             //作業中のドキュメントステータスは、必ずActiveなので以下のボタン状態
             //Active以外の場合はこのモードに遷移しない
@@ -569,6 +570,7 @@ xUI.setUImode = function (myMode){
             　xUI.viewOnly =  true;
     $('#ddp-man').show();
 	$('#pmaui').show();
+	$('button.subControl').each(function(){$(this).show()})
     $("li#auiMenu").each(function(){$(this).show()});
             document.getElementById('pmcui-checkin').disabled    =true;//すべてのボタンを無効
             document.getElementById('pmcui-update').disabled     =true;
@@ -584,6 +586,7 @@ xUI.setUImode = function (myMode){
             　xUI.viewOnly = true;
     $('#ddp-man').hide();
 	$('#pmaui').hide();
+	$('button.subControl').each(function(){$(this).hide()})
     $("li#auiMenu").each(function(){$(this).hide()});
             document.getElementById('pmcui-checkin').disabled    = ((xUI.sessionRetrace==0)&&((xUI.XPS.currentStatus=='Startup')||(xUI.XPS.currentStatus=='Fixed')))? false:true;                
             document.getElementById('pmcui-update').disabled     =true;
@@ -1471,17 +1474,17 @@ if(pageNumber==1){
     };
     _BODY+='</span>';
 
-        _BODY+='<div id="memo_prt">';
+        _BODY+='<div id="memo_prt" class=printSpace >';
         if(XPS.xpsTracks.noteText.toString().length){
             _BODY+=XPS.xpsTracks.noteText.toString().replace(/(\r)?\n/g,"<br>");
         }else{
-            _BODY+="<br><br><br><br>";
+            _BODY+="<br><br><br><br><br><br>";
         };
         _BODY+='</div>';
 
     _BODY+='</span>';
 }else{
-    _BODY+='<div class=printSpace ><br><br><br></div>';
+    _BODY+='<div class=printSpace ><br><br><br><br><br><br></div>';
 };
     _BODY+='</td></tr></table>';
 
@@ -4960,9 +4963,11 @@ $("#optionPanelProg").dialog({
     initToolbox();
 //デバッグ関連メニューの表示
     if(dbg){
+        $("button.debug").each(function(){$(this).show()});
         $("li#debug").each(function(){$(this).show()});
         if(appHost.platform=="AIR"){$("li#airDbg").each(function(){$(this).show()})};
     }else{
+        $("button.debug").each(function(){$(this).hide()});
         $("li#debug").each(function(){$(this).hide()});
         $("li#airDbg").each(function(){$(this).hide()});
     }
@@ -5145,7 +5150,7 @@ if(dbg){
     var TimeFinish=new Date();
     var msg="ただいまのレンダリング所要時間は、およそ "+ Math.round((TimeFinish-TimeStart)/1000) +" 秒 でした。\n レイヤ数は、 "+XPS.xpsTracks.length+ "\nフレーム数は、"+XPS.duration()+"\tでした。\n\t現在のspin値は :"+xUI.spinValue;
 //    if(dbg) alert(msg);
-    dbg=false;
+   // dbg=false;
 }
 /* ヘッダ高さの初期調整*/
 xUI.adjustSpacer();
@@ -5158,6 +5163,7 @@ if(startupWait){xUI.sWitchPanel('Prog');};//ウェイト表示
     ページ再ロード前に必要な手続群
 */
 function nas_Rmp_reStart(evt){
+console.log('fier reStart');
 //ファイルがオープン後に変更されていたら、警告する
 /*
     変更判定は xUI.storePt と xUI.undoPtの比較で行う
@@ -5165,7 +5171,8 @@ storePtはオープン時および保存時に現状のundoPtを複製するの�
 内容変化があれば (xUI.storePt != xUI.undoPt) となる
 
 */
-    if(! xUI.isStored()){
+//    if(! xUI.isStored()){
+        /*
     evt = event || window.event;
     return evt.returnValue=localize({
         en:"The document change is not saved!",
@@ -5176,18 +5183,31 @@ storePtはオープン時および保存時に現状のundoPtを複製するの�
             en:"I will move from this page (move can not be canceled).\n The document is not saved, but save it?",
             ja:"このページから移動します(移動のキャンセルはできません)\nドキュメントが保存されていませんが、保存しますか？"
         });
+        */
 /*データ保全は、モード／ケースごとに振り分け必要*/
-        if(confirm(msg)){ xUI.setBackup() };
+//        if(confirm(msg)){ xUI.setBackup() };
+//console.log('backup');
+//        xUI.setBackup();
         //保存処理
+//    };
+    if(! xUI.isStored()){
+        console.log('backup');
+        xUI.setBackup();
     };
-//データ保存の有無に関係なくセッションチェックイン中ならば保留する（自動）
-if(xUI.uiMode=='production'){setTimeout(serviceAgent.deactivateEntry,10);}
-
 // if(confirm("TEST")){return true}else {return false};
 //    クッキーを使用する設定なら、
 //    現在のウィンドウサイズを取得してクッキーかき出し
- if (useCookie[0]) {writeCk(buildCk());};//現在　cookie:0 は常にfalse
+    if (useCookie[0]) {
+console.log('storeCookie');
+        writeCk(buildCk());
+    };//現在　cookie:0 は常にfalse
 
+//データ保存の有無に関係なくセッションチェックイン中ならば保留する（自動）
+    if(xUI.uiMode=='production'){
+console.log('deactivate');
+        serviceAgent.deactivateEntry();
+    }
+return true;
 };
 
 /*
