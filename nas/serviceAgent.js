@@ -2562,7 +2562,7 @@ serviceAgent.init= function(){
     var loc = String(window.location).split('/');//
     var locOffset = (loc[loc.length-1]=="edit")? 3:2;
     var myUrl = loc.splice(0,loc.length-locOffset).join('/');
-    var myUrl = 'http://remaping.scivone-dev.com';//テスト用決め打ち
+//    var myUrl = 'http://remaping.scivone-dev.com';//テスト用決め打ち
 //    var myUrl = 'https://remaping-stg.u-at.net';//テスト用決め打ち
 //    var myUrl = 'https://u-at.net';//テスト用決め打ち
     this.servers.push(new ServiceNode("CURRENT",myUrl));
