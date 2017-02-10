@@ -648,6 +648,9 @@ if(dbg) console.log(this.entryList.length +":entry/max: "+ this.maxEntry)
     }catch(err){
         if(callback2 instanceof Function){callback2();}                
     }
+    sync();
+    serviceAgent.currentRepository.getList(true);//リストステータスを同期
+    documentDepot.rebuildList();
     if(callback instanceof Function){callback();}
     return this.entryList[this.entryList.length-1];
 }
@@ -2568,9 +2571,9 @@ serviceAgent.init= function(){
     this.servers.push(new ServiceNode("CURRENT",myUrl));
 }else{
     var myServers={
-        devFront:{name:'devFront',url:'http://remaping.scivone-dev.com'},
+        UAT: {name:'U-AT',url:'https://u-at.net'},
         Srage:{name:'Stage',url:'https://remaping-stg.u-at.net'},
-        UAT: {name:'U-AT',url:'https://u-at.net'}
+        devFront:{name:'devFront',url:'http://remaping.scivone-dev.com'}
     };
     for(svs in myServers){this.servers.push(new ServiceNode(myServers[svs].name,myServers[svs].url));}
 }
@@ -2580,7 +2583,7 @@ serviceAgent.init= function(){
     var mylistContents="";
     mylistContents +='<option selected value="-1" > +no server selected+';
     for(var ids=0; ids < this.servers.length;ids ++){
-        mylistContents +='<option value="'+ids+'" >'+this.servers[ids].name; 
+        mylistContents +='<option value="'+ids+((ids==0)? '" selected >':'" >')+this.servers[ids].name; 
     }
     document.getElementById('serverSelector').innerHTML = mylistContents;
 
@@ -2598,7 +2601,8 @@ serviceAgent.init= function(){
     document.getElementById('repositorySelector').innerHTML = myContents;
 
     this.switchRepository(0);
-    this.currentServer = null;//初期化時点のサーバは　null 
+    this.switchService(0);
+//    this.currentServer = this.severs[0];//初期化時点のサーバは 最初のサーバ(U-AT);
 }
 /**
     ユーザ認証

@@ -428,7 +428,7 @@ var mySeps=[
 ];
 
 for(var idx=0;idx<mySeps.length;idx++){
-    nas.addCssRule("."+mySeps[idx]+"_Blank","background-color:"+xUI.sheetBlankColor)
+    nas.addCssRule("."+mySeps[idx]+"_Blank","background-color:"+xUI.sheetblankColor)
 };
 //================================================================================================================================ シートカラーcss設定
 
@@ -552,7 +552,7 @@ xUI.setUImode = function (myMode){
             　xUI.viewOnly = false;//メニュー切替
     $('#ddp-man').hide();
 	$('#pmaui').hide();
-	$('button.subControl').each(function(){$(this).hide()})
+	$('span.subControl_TC').each(function(){$(this).hide()})
     $("li#auiMenu").each(function(){$(this).hide()});
             //作業中のドキュメントステータスは、必ずActiveなので以下のボタン状態
             //Active以外の場合はこのモードに遷移しない
@@ -570,7 +570,7 @@ xUI.setUImode = function (myMode){
             　xUI.viewOnly =  true;
     $('#ddp-man').show();
 	$('#pmaui').show();
-	$('button.subControl').each(function(){$(this).show()})
+	$('span.subControl_TC').each(function(){$(this).show()})
     $("li#auiMenu").each(function(){$(this).show()});
             document.getElementById('pmcui-checkin').disabled    =true;//すべてのボタンを無効
             document.getElementById('pmcui-update').disabled     =true;
@@ -586,7 +586,7 @@ xUI.setUImode = function (myMode){
             　xUI.viewOnly = true;
     $('#ddp-man').hide();
 	$('#pmaui').hide();
-	$('button.subControl').each(function(){$(this).hide()})
+	$('span.subControl_TC').each(function(){$(this).hide()})
     $("li#auiMenu").each(function(){$(this).hide()});
             document.getElementById('pmcui-checkin').disabled    = ((xUI.sessionRetrace==0)&&((xUI.XPS.currentStatus=='Startup')||(xUI.XPS.currentStatus=='Fixed')))? false:true;                
             document.getElementById('pmcui-update').disabled     =true;
@@ -3313,7 +3313,7 @@ if(xUI.edmode==1){
 }else{
 //セクション編集モード
 }
-	  return;
+	  return true;
 	}
 /*
 	ラピッドモード!=0 分岐処理
@@ -4727,7 +4727,7 @@ if(dbg) console.log('application server-onsite');
         if (serviceAgent.servers.length==1) {
             serviceAgent.switchService(0);
         }else{
-            serviceAgent.switchService(1);//デフォルトサーバのIDを置く
+            serviceAgent.switchService(0);//デフォルトサーバのIDを置く
         }
         xUI.onSite = serviceAgent.currentServer.url.split('/').slice(0,3).join('/');
 　       serviceAgent.currentStatus='online';
@@ -5150,7 +5150,7 @@ if(dbg){
     var TimeFinish=new Date();
     var msg="ただいまのレンダリング所要時間は、およそ "+ Math.round((TimeFinish-TimeStart)/1000) +" 秒 でした。\n レイヤ数は、 "+XPS.xpsTracks.length+ "\nフレーム数は、"+XPS.duration()+"\tでした。\n\t現在のspin値は :"+xUI.spinValue;
 //    if(dbg) alert(msg);
-   // dbg=false;
+    dbg=false;
 }
 /* ヘッダ高さの初期調整*/
 xUI.adjustSpacer();

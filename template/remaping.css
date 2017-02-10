@@ -684,12 +684,18 @@ input.iNputbOx {
 	height:12px(1px overlap)
 	width:20px;
 */
+span.subControl_TC {
+	display:none;
+	position:relative;
+	height:24px;
+	width:64px;
+	left:64px;
+}
 button.subControl {
 	width:21px;
 	height:12px;
 	background-color:#666666;
 	border-width:1px;
-	display:none;
 /*アイコンイメージ*/
 	background-image: url(images/ui/subControlButtons.png);
 }

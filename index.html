@@ -4,6 +4,8 @@
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 <title>remaping..</title>
 
+<link rel="shortcut icon" href="./icons/favicon.ico">
+
 <link href="template/jquery-ui.css" type="text/css" rel="stylesheet">
 <link href="template/remaping.css" type="text/css" rel=stylesheet media="screen,tv">
 <link href="template/printout.css" type="text/css" rel=stylesheet media="print">
@@ -684,6 +686,7 @@ serviceAgent.pushEntry(xUI.XPS,function(){xUI.setStored("current");sync();
 <!--	ログインパネル	-->
 <div class=loginPanel id=optionPanelLogin style="text-align:right;">
 <hr>	<select id=serverSelector
+				class=debug
 		onChange="serviceAgent.switchService(this.value)"
 	>
 <option value='-1'>+no server selected+
@@ -988,6 +991,8 @@ serviceAgent.pushEntry(xUI.XPS,function(){xUI.setStored("current");sync();
 > 
 <!--
 	onBlur='xUI.put(this.value);'
+	
+	onKeyPress="console.log(xUI.keyPress(event));return true;"
 
 -->
 <button
@@ -2077,7 +2082,7 @@ onclick='nas.incrFCTonHTMLInput(document.getElementById("editTC"),"-(1)")'
 	value='3 + 0 .'
 	disabled=true
 	onChange="documentDepot.currentSelection=documentDepot.buildIdentifier();"
-><span style="position:relative;height:24px;width:64px;left:64px;"><button
+><span class='subControl_TC'><button
     class='subControl subControl-incrS subControl-left-top'
     onClick='document.getElementById("timeInput").value=nas.Frm2FCT(nas.FCT2Frm(document.getElementById("timeInput").value)+24,3);document.getElementById("timeInput").onchange();'> 
 </button><button
