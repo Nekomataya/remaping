@@ -469,7 +469,7 @@ function selectSCi(sciName){
                 myContents += decodeURIComponent(myEntry.issues[ix].join('//'))+"</option>";
             }
             document.getElementById("issueSelector").innerHTML=myContents;
-            if(xUI.uiMode=='management') document.getElementById("issueSelector").disabled=false;
+            if(xUI.uiMode!='management') document.getElementById("issueSelector").disabled=false;
 
             sciName = document.getElementById("cutList").options[document.getElementById("cutList").selectedIndex].text;
             }else{console.log(myEntry)}

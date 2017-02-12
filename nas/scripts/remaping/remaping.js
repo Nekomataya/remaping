@@ -4808,10 +4808,21 @@ serviceAgent.activateEntry()
 		                if (startupWait) xUI.sWitchPanel('Prog');//ウェイト表示消去
                 switch(xUI.XPS.currentStatus){
                     case "Active":
+                        // チェックイン直後の処理の際はactivate処理が余分なのでケースわけが必要
+                        // jobIDがフラグになる　スタートアップ直後の自動チェックインの場合のみ処理をスキップしてモード変更
+                        if(xUI.XPS.job.id==1){
+                            xUI.setUImode('production');
+                        }else{
+                            serviceAgent.activateEntry();
+                        }
+                        break;
                     case "Hold":
-                    case "Fixed":
+                        // 常にactivate
                         serviceAgent.activateEntry();
-                    break;                        
+                        break;
+                    case "Fixed":
+                        //ユーザが一致しているケースでもactivateとは限らないので、Fixedに関してはスキップ 
+                    break;
                     case "Startup":
                         serviceAgent.checkinEntry();
                     case "Aborted":
@@ -5143,6 +5154,7 @@ if(dbg){
 //    $("#optionPanelTrackLabel").show();
 //    $("#optionPanelEfxTrack").show();
 //    $("#optionPanelTrsTrack").show();
+//        $("#serverSelector").show();
 }
 //表示内容の同期
     sync("tool_");sync("info_");

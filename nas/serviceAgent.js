@@ -2262,21 +2262,18 @@ if(dbg) console.log ('noentry in repository :' +  decodeURIComponent(currentEntr
       }
             //次のJobへチェックイン 
             //リポジトリのステータスを変更する XPSの内容は変更不用
-if(false){
-        var newXps = Object.create(xUI.XPS);//現在のデータの複製をとる
-}else{
         var newXps = new Xps();
         var currentContents = xUI.XPS.toString();
         newXps.readIN(currentContents);
-};//下の複製のほうが安全？
         // ユーザ判定は不用（権利チェックは後ほど実装）
     if (newXps){
         newXps.job.increment(myJob);
         newXps.update_user = xUI.currentUser;
         newXps.currentStatus = 'Active';
 if(dbg) console.log(newXps.toString());//
-             //引数でステータスを変更したエントリを作成 新規に保存 JobIDは必ず繰り上る
-    //ここでサーバに現在のエントリへのステータス変更要求を送信する 成功時と失敗時の処理を渡し、かつcallback を再度中継
+    //引数でステータスを変更したエントリを作成 新規に保存 JobIDは必ず繰り上げる
+    //ここでサーバに現在のエントリへのステータス変更要求を送信する 
+    //成功時と失敗時の処理を渡し、かつcallback を再度中継
     //カットを送信してステータスを変更(ステータスのみの変更要求は意味が無い・内部データと不整合を起こすので却下)
     //descriptionのステータスを優先するならその方法も可能だが、バックアップタイミングを逃す？
 
@@ -2922,6 +2919,7 @@ if(dbg) console.log ('noentry in this repository :' +  decodeURIComponent(curren
     編集中に保存せずに作業セッションを失った場合 この状態となる
     また同一ユーザで編集中に他のブラウザからログインした場合も可能性あり
     ここに確認用のメッセージが必要
+    checkinの手続内でここがコールされている？
 */
             if(xUI.currentUser.sameAs(xUI.XPS.update_user)){
                 var msg = localize(nas.uiMsg.alertAbnomalPrccs);
