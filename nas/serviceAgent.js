@@ -746,7 +746,6 @@ if(dbg) console.log(myRefSource);
                 }
             }
 if(dbg) console.log(documentDepot.currentReference);//単エントリで直前のエントリ取得不能の可能性あり
-//            XPS.readIN(myXpsSource);xUI.init(XPS,documentDepot.currentReference);nas_Rmp_Init();
             XPS.readIN(myXpsSource);xUI.resetSheet(undefined,documentDepot.currentReference);
             xUI.sessionRetrace = myEntry.issues.length-cx-1;
             xUI.setUImode('browsing');sync("productStatus");
@@ -1002,8 +1001,6 @@ if(dbg) console.log(decodeURIComponent(currentEntry.toString(0)));
                 xUI.setUImode('browsing');//モードをbrousingへ
                 if(callback instanceof Function){ setTimeout('callback()',10)};
                 return result;
-            // データをFixしたので、編集対象をクリアしてUIを初期化
-            // XPS=new Xps(5,144);xUI.init(XPS);nas_Rmp_Init();
             }
         }
 if(dbg) console.log('終了更新失敗');
@@ -1124,7 +1121,6 @@ if(dbg) console.log ('noentry in repository :' +  decodeURIComponent(currentEntr
     try {
         localStorage.removeItem(this.keyPrefix+currentEntry.toString(0));
 		currentEntry.issues.pop();
-//        xUI.XPS.readIN(new Xps(5,144).toString()) ; xUI.init(XPS,new Xps(5,144)) ; nas_Rmp_Init();
         xUI.resetSheet(new Xps(5,144),new Xps(5,144));
         if(callback instanceof Function) callback();
     }catch(er){
@@ -1704,7 +1700,7 @@ if(dbg) console.log(result);
 function(result){
 	var myContent=result.content;//XPSソーステキストをセット
 //以下が標準の読み込み時の初期化
-	if(xUI.XPS.readIN(myContent)){xUI.init(xUI.XPS);nas_Rmp_Init();}
+	if(xUI.XPS.readIN(myContent)){xUI.resetSheet(xUI.XPS);}
     if(that.
 }
 function(result){
@@ -2512,7 +2508,6 @@ if(dbg) console.log(currentEntry.issues[0].cutID);
 		    url : this.url+'/api/v2/cuts/:'+currentEntry.issues[0].cutID+'/discard',
 		    success : function(result) {
 		        currentEntry.issues.pop();
-//                xUI.XPS.readIN(new Xps(5,144).toString()) ; xUI.init(XPS,new Xps(5,144)) ; nas_Rmp_Init();
                 xUI.resetSheet(new Xps(5,144),new Xps(5,144)) ;
                 serviceAgent.currentRepository.getList(true);//リストステータスを同期
                 documentDepot.rebuildList();
@@ -2565,7 +2560,7 @@ serviceAgent.init= function(){
     var loc = String(window.location).split('/');//
     var locOffset = (loc[loc.length-1]=="edit")? 3:2;
     var myUrl = loc.splice(0,loc.length-locOffset).join('/');
-    var myUrl = 'http://remaping.scivone-dev.com';//テスト用決め打ち
+//    var myUrl = 'http://remaping.scivone-dev.com';//テスト用決め打ち
 //    var myUrl = 'https://remaping-stg.u-at.net';//テスト用決め打ち
 //    var myUrl = 'https://u-at.net';//テスト用決め打ち
     this.servers.push(new ServiceNode("CURRENT",myUrl));
@@ -3212,8 +3207,6 @@ serviceAgent.closeEntry=function(){
      if((xUI.currentStatus=="Active")&&(! xUI.isStored())){
     //  成功したらカレントドキュメントをクリアしてロック
         this.currentRepository.deactivateEntry(function(){
-//            xUI.XPS.readIN(new Xps(5,144).toString()) ; xUI.init(XPS,new Xps(5,144)) ; nas_Rmp_Init();   
-//            xUI.init(new Xps(5,144),new Xps(5,144)) ;
             xUI.resetSheet(new Xps(5,144),new Xps(5,144)) ;
         },function(){
             xUI.errorCode=9;
