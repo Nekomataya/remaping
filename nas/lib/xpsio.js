@@ -87,21 +87,32 @@ dialog
 sound
     サウンドセクション開ノード
     サウンドセクション閉ノード
+still
+cell
 timing
 replacement
     プロパティサイン　原画、原画アタリ（参考）、中間値補間サイン、ブランクサイン
 camera
 camerawork
+geometry
     セクション開ノード
     セクション閉ノード
     中間値補間サイン
 effect
 sfx
+composite
     セクション開ノード
     セクション閉ノード
     中間値補間サイン
 */
-
+var XpsTrackProperties=[
+    "dialog","sound",
+    "cell","timing","replacement","still",
+    "camerawork","camera","geometry",
+    "effect","sfx","composit",
+    "comment"
+];
+var XpsTrackPropRegex=new RegExp(XpsTrackProperties.join("|"),"i");
 /**
  * @constructor XpsStageオブジェクトコンストラクタ
  *
@@ -792,9 +803,67 @@ XpsTimelineSubSection.prototype.strtOffset = _getSectionStartOffset;
  * @constructor object Xps コンストラクタ
  * @param Layers タイムライントラックのうちデフォルトのダイアログ(1)を抜いた数
  * @param Length 継続長 フレーム数
+ * 
+ *     Xpsオブジェクトの初期化引数を拡張
+ * 第一引数はかつて「レイヤ数」であったが、これを拡張して配列を受け取れるようにする
+ * 引数がスカラの場合は、従来互換として　「リプレースメントトラック数」とする
+ * 配列であった場合は、以下の順で解決を行う
+ * 
+[リプレースメントトラック数]
+[ダイアログトラック数,リプレースメントトラック数]
+[ダイアログトラック数,リプレースメントトラック数,ジオメトリトラック数]
+[ダイアログトラック数,リプレースメントトラック数,ジオメトリトラック数,コンポジットトラック数]
+
+配列長が1の場合は、特例でリプレースメントトラック数とする
+ダイアログトラック数は、1以上とする　1以下の値が与えられた際は1として初期化される。
+
+完全な指定を行う場合は、引数として専用の指定オブジェクトを渡す
+例:
+{
+    dialog:1,
+    still:1,
+    replacement:2,
+    still:1,
+    replacement:2,
+    camera:1,
+    replacement:2,
+    effects:1,
+    sound:2
+}
+ *  各プロパティの出現順位置・回数は任意
+ *  冒頭は基本的にdialigで　1以上の値にすること
+ *  末尾プロパティはcommentで値1とすること
+ *  冒頭プロパティがdialogでない場合は、{dialog:1} が補われる
+ *  末尾プロパティがcommentでない場合にはデフォルトの{comment:1}が補われる
+ * 
  */
 function Xps(Layers, Length) {
     if (!Layers) Layers = 4;	//標準的なA,B,C,D の4レイヤで初期化
+    if(!isNaN(Layers)) Layers = [Layers];//単独スカラ引数の場合配列化
+    //配列引数の場合トラック配置用のオブジェクトに展開
+    var trackSpec=[];
+    if(! (Layers[0] instanceof Array)){
+        switch (Layers.length){
+            case 0:trackSpec=[["dialog",1],["timing",4]];break;
+            case 1:trackSpec=[["dialog",1],["timing",Layers[0]]];break;
+            case 2:trackSpec=[["dialog",Layers[0]],["timing",Layers[1]]];break;
+            case 3:trackSpec=[["dialog",Layers[0]],["timing",Layers[1]],["camera",Layers[2]]];break;
+            case 4:
+            default:
+                trackSpec=[["dialog",Layers[0]],["timing",Layers[1]],["camera",Layers[2]],["effect",Layers[3]]];
+        }
+    }else{
+        for(var pix=0;pix<Layers.length;pix++){
+            if(! String(Layers[pix][0]).match(XpsTrackPropRegex)){
+                trackSpec=[["dialog",1],["timing",4]];
+                break;
+            }else{
+                trackSpec.push(Layers[pix]);
+            }
+        };
+    //引数が配置オブジェクトでなければ、デフォルトの配置オブジェクトを置いてブレイク
+    }
+    console.log(trackSpec);
     if (!Length) Length = (!nas) ? 24 : Math.round(nas.FRATE);//現状のレートで1秒を初期化
 
     /**
@@ -858,9 +927,9 @@ function Xps(Layers, Length) {
 
     var Now = new Date();
     this.create_time = (!nas) ? Now.toString() : Now.toNASString();
-    this.create_user = new nas.UserInfo ();
-    this.update_time = '';
-    this.update_user = new nas.UserInfo ();
+    this.create_user = (xUI.currentUser)? xUI.currentUser:new nas.UserInfo(myName);
+    this.update_time = (!nas) ? Now.toString() : Now.toNASString();
+    this.update_user = (xUI.currentUser)? xUI.currentUser:new nas.UserInfo(myName);
 
 //  this.memo = "";
     //メモはトラックコレクションのプロパティへ移行　プロパティ名は　Xps.xpsTracks.noteText
@@ -868,7 +937,9 @@ function Xps(Layers, Length) {
     /**
      * タイムライントラックコレクション配列
      */
-    this.xpsTracks = this.newTracks(Layers, Length);
+//    this.xpsTracks = this.newTracks(Layers, Length);
+    this.xpsTracks = this.newTracks(trackSpec, Length);
+console.log(this.xpsTracks);
     //コレクションの初期化で同時にシートメモが空文字列で初期化される
 }
 
@@ -878,6 +949,7 @@ function Xps(Layers, Length) {
  * この二つのタイムラインは、レコードの開始及び終了マーカーを兼ねるため削除できないので注意
  *　現状で以前の引数を踏襲しているため旧のレイヤーカウントで初期化が行なわれる
  *  トラックカウントに変更の予定
+trackSpec オブジェクトで初期化に変更
  * @param trackCount
  * @param frameCount
  * @returns {Array}
@@ -885,7 +957,81 @@ function Xps(Layers, Length) {
  * 初期化時のみ利用
  * 初期化時にカメラトラックを作成しない
  */
-Xps.prototype.newTracks = function (layerCount,trackDuration) {
+Xps.prototype.newTracks = function (trackSpec,trackDuration) {
+    var myTimelineTracks = new XpsTrackCollection(this,this.jobIndex,trackDuration);//parent,index,duration
+    var trackCount  = 0;
+    var dialogIndex = 1;
+    var soundIndex = 1;
+    var stilIndex = 1;
+    var cellIndex = 0;
+    var cameraIndex = 1;
+    var effectIndex = 1;
+    var defaultNames = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+
+    for(var pix=0;pix<trackSpec.length;pix++){
+        switch (trackSpec[pix][0]){
+            case "dialog":
+                if(trackCount==0) {trackSpec[pix][1] --;trackCount ++;}
+                for(var ix=0;ix <trackSpec[pix][1];ix++){
+                    myTimelineTracks.splice( myTimelineTracks.length-1, 0,
+                        new XpsTimelineTrack("N"+dialogIndex, trackSpec[pix][0],this.xpsTracks,trackDuration,trackCount)
+                    );
+                    dialogIndex ++;
+                };
+            break;
+            case "sound":
+                for(var ix=0;ix <trackSpec[pix][1];ix++){
+                    myTimelineTracks.splice( myTimelineTracks.length-1, 0,
+                        new XpsTimelineTrack("S"+dialogIndex, trackSpec[pix][0],this.xpsTracks,trackDuration,trackCount)
+                    );
+                    soundIndex ++;
+                };
+            break;
+            case "cell":
+            case "replacement":
+            case "timing":
+                for(var ix=0;ix <trackSpec[pix][1];ix++){
+                    myTimelineTracks.splice( myTimelineTracks.length-1, 0,
+                        new XpsTimelineTrack(defaultNames.charAt(cellIndex % 26), trackSpec[pix][0],this.xpsTracks,trackDuration,trackCount)
+                    );
+                    cellIndex ++;
+                };
+            break;
+            case "still":
+                for(var ix=0;ix <trackSpec[pix][1];ix++){
+                    myTimelineTracks.splice( myTimelineTracks.length-1, 0,
+                        new XpsTimelineTrack(nas.Zf(trackCount,2), trackSpec[pix][0],this.xpsTracks,trackDuration,trackCount)
+                    );
+                    stillIndex ++;
+                };
+            break;
+            case "camera":
+            case "camerawork":
+            case "geometry":
+                for(var ix=0;ix <trackSpec[pix][1];ix++){
+                    myTimelineTracks.splice( myTimelineTracks.length-1, 0,
+                        new XpsTimelineTrack("cam"+cameraIndex, trackSpec[pix][0],this.xpsTracks,trackDuration,trackCount)
+                    );
+                    cameraIndex ++;
+                };
+            break;
+            case "sxf":
+            case "effect":
+            case "composite":
+                for(var ix=0;ix <trackSpec[pix][1];ix++){
+                    myTimelineTracks.splice( myTimelineTracks.length-1, 0,
+                        new XpsTimelineTrack("ex"+effectIndex, trackSpec[pix][0],this.xpsTracks,trackDuration,trackCount)
+                    );
+                    effectIndex ++;
+                };
+            break;
+            default:
+                continue;//コメント等　他のトラックはスキップ
+        }
+        trackCount ++;
+    }
+/*
+//old-one
     var trackCount = layerCount+2;
     var camCount = 0;
     var sfxCount = 0;
@@ -908,10 +1054,10 @@ if(true){
 //    myTimelineTracks.push(new XpsTimelineTrack("","comment",this.xpsTracks,trackDuration,cellCount+1));
     //コレクションのプロパティとしてメモ欄の伝達事項を置く
 //    myTimelineTracks.noteText="";
-
+*/
     //トラックのインデックス更新正規化
     myTimelineTracks.renumber();
-
+console.log(myTimelineTracks);
     return myTimelineTracks;
 };
 
@@ -935,6 +1081,31 @@ Xps.prototype.timeline = function (idx) {
  */
 Xps.prototype.init = function (Tracks, Length) {
     if (!Tracks) Tracks = 6;
+//trackSpec の作成コードが複製なので後ほど処理を検討
+    if(!isNaN(Tracks)) Tracks = [Tracks];//単独スカラ引数の場合配列化
+    //配列引数の場合トラック配置用のオブジェクトに展開
+    var trackSpec=[];
+    if(! (Tracks[0] instanceof Array)){
+        switch (Tracks.length){
+            case 0:trackSpec=[["dialog",1],["timing",4]];break;
+            case 1:trackSpec=[["dialog",1],["timing",Tracks[0]]];break;
+            case 2:trackSpec=[["dialog",Tracks[0]],["timing",Tracks[1]]];break;
+            case 3:trackSpec=[["dialog",Tracks[0]],["timing",Tracks[1]],["camera",Tracks[2]]];break;
+            case 4:
+            default:
+                trackSpec=[["dialog",Tracks[0]],["timing",Tracks[1]],["camera",Tracks[2]],["effect",Tracks[3]]];
+        }
+    }else{
+        for(var pix=0;pix<Tracks.length;pix++){
+            if(! String(Tracks[pix][0]).match(XpsTrackPropRegex)){
+                trackSpec=[["dialog",1],["timing",4]];
+                break;
+            }else{
+                trackSpec.push(Tracks[pix]);
+            }
+        };
+    //引数が配置オブジェクトでなければ、デフォルトの配置オブジェクトを置いてブレイク
+    }
     if (!Length) Length = Math.round(nas.FRATE);
     /**
      * Xps標準のプロパティ設定
@@ -955,9 +1126,9 @@ Xps.prototype.init = function (Tracks, Length) {
     this.framerate = (!nas) ? 24 : nas.FRATE;
     var Now = new Date();
     this.create_time = (!nas) ? Now.toString() : Now.toNASString();
-    this.create_user = myName;
-    this.update_time = "";
-    this.update_user = new nas.UserInfo(myName);
+    this.create_user = (xUI.currentUser)? xUI.currentUser:new nas.UserInfo(myName);
+    this.update_time = (!nas) ? Now.toString() : Now.toNASString();
+    this.update_user = (xUI.currentUser)? xUI.currentUser:new nas.UserInfo(myName);
 
 //    this.memo = "";
 
@@ -965,7 +1136,8 @@ Xps.prototype.init = function (Tracks, Length) {
      * タイムライントレーラー作成
      * @type {Array}
      */
-    this.xpsTracks = this.newTracks(Tracks, Length);
+//    this.xpsTracks = this.newTracks(Tracks, Length);
+    this.xpsTracks = this.newTracks(trackSpec, Length);
 };
 
 /**
@@ -1222,7 +1394,7 @@ Xps.prototype.setDuration =function(myDuration){
  * @returns {boolean}
  */
 Xps.prototype.reInitBody = function (newTimelines, newDuration) {
-    var oldWidth = (this.xpsTracks.length - 2);
+    var oldWidth = (this.xpsTracks.length);
     if (!newTimelines) newTimelines = oldWidth;
     var oldDuration = this.duration();//this.xpsTracks.duration;
     if (!newDuration) newDuration = oldDuration;
@@ -1258,7 +1430,7 @@ if(this.xpsTracks.duration){
     this.xpsTracks.length = newTimelines;//配列長(タイムライン数)の設定 メソッドに置きかえ予定
 
     /**
-     * 延長したらカラデータで埋めとく
+     * 延長したらカラデータで埋める
      * この部分はxpsTracksへの変更にともなって更新が必要
      */
     if (widthUp) {
@@ -2732,6 +2904,7 @@ XpsTimelineTrack.prototype.parseCompositeTrack=_parseCompositeTrack;//コンポ�
     セクションパースは、非同期で実行される場合がありそうなので、重複リクエストを排除するためにキュー列を作って運用する必要ありそう
     その場合は、このルーチンがコントロールとなる?1105memo
     もう一つ外側（トラックコレクション又はXps側）に必要かも
+
 */
 XpsTimelineTrack.prototype.parseTimelineTrack = function(){
     var myResult = false;

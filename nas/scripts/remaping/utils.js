@@ -901,7 +901,8 @@ putReference=function()
 		};
 		xUI.referenceXPS.put(mStart,xUI.getRange())
 	}
-	nas_Rmp_Init();
+	//nas_Rmp_Init();
+	xUI.resetSheet();
 }
 
 getReference=function()
@@ -931,7 +932,8 @@ getReference=function()
 		};
 		xUI.put(xUI.referenceXPS.getRange([mStart,mEnd]));
 	}
-	nas_Rmp_Init();
+//	nas_Rmp_Init();
+	xUI.resetSheet();
 }
 /*	セルの内容を繰り上げる/下げる
 数値部分を持ったタイムラインセルの数値部分を引数分だけ操作する

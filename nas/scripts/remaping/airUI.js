@@ -240,7 +240,8 @@ return;
 //alert("open:"+myResult)
 //document.getElementById("mainText").value = str;//メインバッファにストリームを流し込む
 //document.title = "Text Editor - " + currentFile.name;//ドキュメントラベル更新
-					if(myResult){xUI.init(XPS);nas_Rmp_Init();}
+					if(myResult){xUI.resetSheet(XPS);//nas_Rmp_Init();
+					}
 					// ここで取得したストリームをそのまま返す
 					document.title=fileBox.currentFile;//ちょと注意　一括変更部分が必要
 					return myResult;
@@ -841,7 +842,7 @@ function selectCommand(event) {
 	break;
 	case "copyFromRef":getReference();
 	break;
-	case "clearReference":xUI.referenceXPS=new Xps(XPS.layers.length,XPS.duration());nas_Rmp_Init();
+	case "clearReference":xUI.resetSheet(undefined,new Xps(XPS.xpsTracks.length-2,XPS.duration()));
 	break;
 	case "dataPanel":xUI.sWitchPanel("Data");
 	break;
@@ -1157,7 +1158,9 @@ if(appHost.platform=="CSX"){
 
 //取得したストリームを検査する 空ストリームXPS以外のストリームなら破棄してエラーコードを返す
 
-					if(myResult){xUI.init(XPS);nas_Rmp_Init();}
+					if(myResult){xUI.resetSheet(XPS);
+					//nas_Rmp_Init();
+					}
 
 					// ここで取得したストリームをそのまま返す
 
@@ -1178,7 +1181,8 @@ if(appHost.platform=="CSX"){
 				var myResult=false;
 			}
 //取得したストリームを検査する 空ストリームXPS以外のストリームなら破棄してエラーコードを返す
-					if(myResult){xUI.init(XPS);nas_Rmp_Init();}
+					if(myResult){xUI.resetSheet(XPS);//nas_Rmp_Init();
+					}
 					// ここで取得したストリームをそのまま返す
 	//				document.title=fileBox.currentFile.name;//ちょと注意　一括変更部分が必要
 					return myResult;

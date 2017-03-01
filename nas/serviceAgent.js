@@ -746,7 +746,8 @@ if(dbg) console.log(myRefSource);
                 }
             }
 if(dbg) console.log(documentDepot.currentReference);//単エントリで直前のエントリ取得不能の可能性あり
-            XPS.readIN(myXpsSource);xUI.init(XPS,documentDepot.currentReference);nas_Rmp_Init();
+//            XPS.readIN(myXpsSource);xUI.init(XPS,documentDepot.currentReference);nas_Rmp_Init();
+            XPS.readIN(myXpsSource);xUI.resetSheet(undefined,documentDepot.currentReference);
             xUI.sessionRetrace = myEntry.issues.length-cx-1;
             xUI.setUImode('browsing');sync("productStatus");
             //読込実行後にコールバックが存在したら実行
@@ -1123,7 +1124,8 @@ if(dbg) console.log ('noentry in repository :' +  decodeURIComponent(currentEntr
     try {
         localStorage.removeItem(this.keyPrefix+currentEntry.toString(0));
 		currentEntry.issues.pop();
-        xUI.XPS.readIN(new Xps(5,144).toString()) ; xUI.init(XPS,new Xps(5,144)) ; nas_Rmp_Init();
+//        xUI.XPS.readIN(new Xps(5,144).toString()) ; xUI.init(XPS,new Xps(5,144)) ; nas_Rmp_Init();
+        xUI.resetSheet(new Xps(5,144),new Xps(5,144));
         if(callback instanceof Function) callback();
     }catch(er){
         if(callback2 instanceof Function) callback2();
@@ -1631,7 +1633,7 @@ if(dbg) console.log("road :"+myContent);
             //xUI.userPermissions=result.permissions;
 // 読み込んだXPSが識別子と異なっていた場合識別子優先で同期する
                 xUI.XPS.syncIdentifier(myIssue.identifier);
-	            xUI.init(XPS);
+	            xUI.resetSheet(XPS);
 	            if(myEntry.issues.length>1){
                     documentDepot.currentReference = new Xps(5,144);//カラオブジェクトをあらかじめ新規作成
                     //自動設定されるリファレンスはあるか？
@@ -1654,7 +1656,7 @@ if(dbg) console.log("road :"+myContent);
 	                }
 	                if(refIssue) serviceAgent.currentRepository.getEntry(refIssue.identifier,true);
 	            }
-	            nas_Rmp_Init();
+	            xUI.resetSheet();//nas_Rmp_Init();
                 xUI.sessionRetrace = myEntry.issues.length-cx-1;
                 xUI.setUImode('browsing');sync("productStatus");
                 if(callback instanceof Function) callback();
@@ -1901,9 +1903,9 @@ if(dbg) console.log(myEntry);
     var job_id         = lastIssue[2];
     var status         = lastIssue[3];
 */
-//オンサイトの場合は優先してbackend_variablesから情報を取得
-
-  if(document.getElementById('backend_variables')){
+//オンサイト・シングルドキュメントバインドの場合はbackend_variablesから情報を取得
+  if(serviceAgent.currentStatus=="online-single"){
+//  if(document.getElementById('backend_variables')){}
 	var episode_token   = $('#backend_variables').attr('data-episode_token');
 	var cut_token       = $('#backend_variables').attr('data-cut_token');
   }else{
@@ -2510,7 +2512,8 @@ if(dbg) console.log(currentEntry.issues[0].cutID);
 		    url : this.url+'/api/v2/cuts/:'+currentEntry.issues[0].cutID+'/discard',
 		    success : function(result) {
 		        currentEntry.issues.pop();
-                xUI.XPS.readIN(new Xps(5,144).toString()) ; xUI.init(XPS,new Xps(5,144)) ; nas_Rmp_Init();
+//                xUI.XPS.readIN(new Xps(5,144).toString()) ; xUI.init(XPS,new Xps(5,144)) ; nas_Rmp_Init();
+                xUI.resetSheet(new Xps(5,144),new Xps(5,144)) ;
                 serviceAgent.currentRepository.getList(true);//リストステータスを同期
                 documentDepot.rebuildList();
                 xUI.setStored("current");//UI上の保存ステータスをセット
@@ -2562,7 +2565,7 @@ serviceAgent.init= function(){
     var loc = String(window.location).split('/');//
     var locOffset = (loc[loc.length-1]=="edit")? 3:2;
     var myUrl = loc.splice(0,loc.length-locOffset).join('/');
-//    var myUrl = 'http://remaping.scivone-dev.com';//テスト用決め打ち
+    var myUrl = 'http://remaping.scivone-dev.com';//テスト用決め打ち
 //    var myUrl = 'https://remaping-stg.u-at.net';//テスト用決め打ち
 //    var myUrl = 'https://u-at.net';//テスト用決め打ち
     this.servers.push(new ServiceNode("CURRENT",myUrl));
@@ -3209,11 +3212,15 @@ serviceAgent.closeEntry=function(){
      if((xUI.currentStatus=="Active")&&(! xUI.isStored())){
     //  成功したらカレントドキュメントをクリアしてロック
         this.currentRepository.deactivateEntry(function(){
-            xUI.XPS.readIN(new Xps(5,144).toString()) ; xUI.init(XPS,new Xps(5,144)) ; nas_Rmp_Init();   
+//            xUI.XPS.readIN(new Xps(5,144).toString()) ; xUI.init(XPS,new Xps(5,144)) ; nas_Rmp_Init();   
+//            xUI.init(new Xps(5,144),new Xps(5,144)) ;
+            xUI.resetSheet(new Xps(5,144),new Xps(5,144)) ;
         },function(){
             xUI.errorCode=9;
         }
         );
+    }else{
+            xUI.resetSheet(new Xps(5,144),new Xps(5,144)) ;        
     }
 }
 /**

@@ -117,7 +117,7 @@ function pullStore(){
 	
 	var myContent=XPS.toString();//XPSテキストをセットしてください
 //以下が標準の読み込み時の初期化です
-	if(XPS.readIN(myContent)){xUI.init(XPS);}
+	if(XPS.readIN(myContent)){xUI.resetSheet(XPS);}
 
 };
 

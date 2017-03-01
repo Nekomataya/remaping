@@ -452,7 +452,7 @@ serviceAgent.pushEntry(xUI.XPS,function(){xUI.setStored("current");sync();
 >copy from Ref</A></li>
 <li><span id=pMclearReference-d class='pM pM-alt'></span><A	id=pMclearReference
 	HREF='javascript:void(0);'
-	onclick='xUI.referenceXPS=new Xps(XPS.layers.length,XPS.duration());nas_Rmp_Init();return false;'
+	onclick='xUI.referenceXPS=new Xps(XPS.xpsTracks.length-2,XPS.duration());xUI.resetSheet();return false;'
 	title="参照エリア消去"
 >clear Ref</A></li>
 <hr>
@@ -530,12 +530,12 @@ serviceAgent.pushEntry(xUI.XPS,function(){xUI.setStored("current");sync();
 >[ 管理モード ]</A></li>
 <li><span id=pMeditMode-d class='pM pM-alt'>[ 編集モード ]</span><A	id=pMeditMode
 	HREF='javascript:void(0);'
-	onclick='xUI.viewMode=(xUI.viewMode=="Compact")?"WordProp":"Compact";nas_Rmp_Init();return false'
+	onclick='xUI.viewMode=(xUI.viewMode=="Compact")?"WordProp":"Compact";xUI.resetSheet();return false'
 	title="表示モード切り替え"
 >[ 編集モード ]</A></li>
 <li><span id=pMcolumns-d class='pM pM-alt'>[ 段組 ]</span><A	id=pMcolumns
 	HREF='javascript:void(0);'
-	onclick='xUI.PageCols=(xUI.PageCols==1)?2:1;nas_Rmp_Init();return false'
+	onclick='xUI.PageCols=(xUI.PageCols==1)?2:1;xUI.resetSheet();return false'
 	title="二段組"
 >[ 段組 ]</A></li>
 <li><span id=pMchgLoacle-d class='pM pM-alt'>[言語切替]</span><A	id=pMchgLoacle
@@ -618,7 +618,7 @@ serviceAgent.pushEntry(xUI.XPS,function(){xUI.setStored("current");sync();
 >debugConsole</A></li>
 <li><span id=pMdbgMode-d class='pM pM-alt'></span><A id=pMdbgMode
 	HREF='javascript:void(0);'
-	onclick='dbg=(dbg)?false:true;nas_Rmp_Startup();xUI.init(XPS,referenceXPS);'
+	onclick='dbg=(dbg)?false:true;nas_Rmp_Init();'
 	title="デバッグモード切り替え"
 >dbgON/OFF</A> </li>
 
@@ -1768,10 +1768,10 @@ onclick='nas.incrFCTonHTMLInput(document.getElementById("editTC"),"-(1)")'
 	onClick="document.getElementById('loadShortcut').value='body';document.getElementById('myCurrentFile').click();"
 ><input type=button
     id=dataLoaderRef value="参照取込" style="width:10%"
-	onClick="if(xUI.referenceXPS.parseXps(convertXps(xUI.data_well.value))){nas_Rmp_Init();}"
+	onClick="if(xUI.referenceXPS.parseXps(convertXps(xUI.data_well.value))){xUI.resetSheet();}"
 ><input type=button
     id=dataLoaderGet value="取込" style="width:10%"
-	onClick="if(XPS.readIN(xUI.data_well.value)){xUI.init(XPS);nas_Rmp_Init();}"
+	onClick="if(XPS.readIN(xUI.data_well.value)){xUI.resetSheet(XPS);}"
 ><input type=button
     id=dataLoaderSelectAll value="全選択" style="width:10%"
 	onClick="xUI.data_well.select()"
@@ -2322,7 +2322,7 @@ onclick="alert(this.innerHTML);"
 	</tr>
 	<tr>
 		<td id=prefLbMode colspan=2 class=toolbarR>画面モード<br />
-		<input type="radio" name="viewMode" id=vMWordProp value="WordProp" onClick='myPref.chgVM(this.value)' checked onChange="alert(this.value)">
+		<input type="radio" name="viewMode" id=vMWordProp value="WordProp" onClick='myPref.chgVM(this.value)' >
 		<a id=prefModeWP href="javascript:" onClick='return myPref.chgVM("WordProp")'>タイムシートワープロ</a>　/
 		<input type="radio" name="viewMode" id=vMCompact value="Compact" onClick='myPref.chgVM(this.value)'>
 		<a id=prefModeCP href="javascript:" onClick='return myPref.chgVM("Compact")'>コンパクトエディタ</a>
@@ -2542,13 +2542,11 @@ debug console
 	value="nas_Rm.."
 	style="width:64px"
 	onClick="nas_Rmp_Init();"
-trash="xUI.init(XPS)";
 ><input	type=button
 	id=dbgChangeUiMode
 	value="uiMode"
 	style="width:64px"
 	onClick='xUI.setUImode("next");sync("productStatus");'
-trash="xUI.init(XPS)";
 ><input	type=reset
 	id=dbgResetWell
 	value="reset"
@@ -3125,6 +3123,26 @@ $Id:$ index.html ,v 1.7 2016/12/24  support@nekomataya.info <br />
     <textarea id="referenceXPS" style='width:75%;'></textarea>
   </div>
   <div id="scrollSpaceFt" class=\"screenSpace\"><br></div>
-
+  <!-- backend_variables -->
+  <span id="backend_variables"
+        data-organization_token="aZnVwPym4r7WSSGDHzFqMfko"
+        data-user_access_token="a3e04b475408f592d532d19a676c36177e54acb57020ec0b5a640d7058a81411"
+        data-user_token="aWWMWNKW2HAfuRHWANZKbETy"
+        data-user_name="ねこまたや"
+        data-user_email="kiyo@nekomataya.info"
+        data-episode_id=""
+        data-cut_id=""
+        data-product_token=""
+        data-episode_token=""
+        data-cut_token=""
+        data-line_id=""
+        data-stage_id=""
+        data-job_id=""
+        data-status=""
+  ></span><!--</textarea>
+    <textarea id="referenceXPS" style='width:75%;'></textarea>
+  </div>
+  <div id="scrollSpaceFt" class=\"screenSpace\"><br></div>
+-->
   <!-- backend_variables -->
 </body></html>
