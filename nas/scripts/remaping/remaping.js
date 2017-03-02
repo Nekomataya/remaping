@@ -1030,17 +1030,16 @@ xUI.switchStage=function(){
     引数がない場合は、現在のデータをそのまま利用する
 */
 xUI.setReferenceXPS=function(myXps){
-    if(typeof myXps == 'undefined'){
-        this.referenceXPS.readIN(xUI.XPS.toString());
-//        xUI.resetSheet();
+    documentDepot.currentReference = new Xps();
+    documentDepot.currentReference.readIN(myXpsSource);
+                if(typeof myXps == 'undefined'){
+        documentDepot.currentReference.readIN(xUI.XPS.toString());
     } else if (myXps instanceof Xps) {
-        this.referenceXPS=myXps;
-//        xUI.resetSheet(undefined,myXps)
+        documentDepot.currentReference=myXps;
     } else {
         return false
     }
-//        nas_Rmp_Init();
-        xUI.resetSheet()
+        xUI.resetSheet(undefined,documentDepot.currentReference);
         return true;
     }
 //////
@@ -1052,10 +1051,13 @@ xUI.setReferenceXPS=function(myXps){
 xUI.drawSheetCell = function (myElement){
 if(typeof myElement =="undefined"){return false;}
 var target=myElement;
-
+    var formPostfix='';
+        
 if(this.showGraphic){
     var tgtID=target.id.split("_").reverse();
     var myXps=(tgtID.length==2)? this.XPS:this.referenceXPS;
+        formPostfix += (tgtID.length==2)? '':'-ref';
+      if (myXps.xpsTracks[tgtID[1]].option.match(/^(efect|sfx|composite)$/)) formPostfix +='-sfx';
     var myStr = myXps.xpsTracks[tgtID[1]][tgtID[0]];
     var drawForm = false;
     var sectionDraw = false;
@@ -1089,6 +1091,7 @@ if(this.showGraphic){
             else if (myStr.match(/[:：]/)){
                 myStr=(this.showGraphic)?"<br>":":";                
                 drawForm = "wave";
+                formPostfix += (tgtID[0] % 2)? '-odd':'-evn';
             }
             else if (myStr.match(/\(([^\)]+)\)/)){
                 myStr=(this.showGraphic)?RegExp.$1:myStr;
@@ -1101,9 +1104,11 @@ if(this.showGraphic){
 break;
         case "camera":;
         case "camerawork":;
+        case "geometry":;
             if (myStr.match(/^[\|｜]$/)){
                 myStr=(this.showGraphic)?"<br>":"｜";                
                 drawForm = "line";
+                formPostfix +='-cam';
             }
             else if (myStr.match(/^[▼▽]$/)){
                 myStr=(this.showGraphic)?"<br>":myStr;                
@@ -1146,7 +1151,7 @@ if(this.showGraphic){
 //        if(console) if(dbg) console.log([tgtID[1],mySection.startOffset()].join("_")+":"+formStr+":"+drawForm+":"+mySection.duration);
         setTimeout(function(){xUI.Cgl.sectionDraw([tgtID[1],mySection.startOffset()].join("_"),drawForm,mySection.duration);},0);
     }else{
-        setTimeout(function(){xUI.Cgl.draw(target.id,drawForm)},0);
+        setTimeout(function(){xUI.Cgl.draw(target.id,drawForm+formPostfix)},0);
     }
 }
     return myStr;
@@ -2588,45 +2593,144 @@ xUI.getRange    =function(Range)
 };
 
 
+/*    xUI.putReference(dataStream[,direction])
+引数
+    :dataStream    シートに設定するデータ　単一の文字列　またはXpsオブジェクト または　配列　省略可
+    :direction    データ開始位置ベクトル　配列　省略可　省略時は[0,0]
+      参照シートに外部から値を流し込むメソッド
+        xUI.putReference(データストリーム)
+        読み込み時も使用
+    xUI.put オブジェクトの機能サブセット
+    undo/redo処理を行わない
+    
+    グラフィックレイヤー拡張によりシート上の画像パーツを更新する操作を追加
+    Xps更新後に、xUI.syncSheetCell()メソッドで必要範囲を更新
+*/
+xUI.putReference    =function(datastream,direction){
+    this.put(datastream,direction,true);
+    return ;
+  if(typeof datastream == "undefined") datastream="";
+  if(typeof direction  == "undefined") direction=[0,0];
+console.log(datastream)
+/*
+処理データが、Xpsオブジェクトだった場合は、dataStreamのXpsでXPSを初期化する
+*/
+/*    入力データを判定    */
+if(datastream instanceof Xps){
+/*    Xpsならばシートの入れ替え　*/
+    this.referenceXPS.readIN(datastream.toString());
+    xUI.resetSheet();//画面全体更新
+}else if(datastream instanceof Array){
+/*    引数が配列の場合は、Xps のプロパティを編集する
+    ただし、この入力はxUI.putとの互換のための機能で、現在これを呼び出すUIは存在しない
+    将来的にput/getがトラック単位に拡張された場合は使用される？かもしれない
+    使用時はコードの見直しに注意
+*/
+    var myTarget= datastream[0].split(".");
+//    新規設定値    datastream[1];
+//現在のプロパティの値をバックアップして新規の値をセット
+    if(myTarget.length>1){
+//ターゲットの要素数が1以上の場合はタイムラインプロパティの変更
+        this.referenceXPS.xpsTracks[myTarget[1]][myTarget[0]]=datastream[1];//入力値を設定
+        if(myTarget[0] =="option"){this.referenceXPS.xpsTracks[myTarget[1]].sectionTrust = false;}
+    }else{
+//単独プロパティ変更
+        this.referenceXPS[myTarget[0]]=datastream[1];
+    }
+    xUI.resetSheet();//resetSheetに部分書換の機能が欲しい
+}else if(this.inputFlag != "move"){
+//通常のデータストリームを配列に変換
+        var srcData=datastream.toString().split("\n");
+        for (var n=0;n<srcData.length;n++){
+            srcData[n]=srcData[n].split(",");
+        }
+//配列に変換したソースからデータのサイズと方向を出す。
+    var sdWidth    =Math.abs(srcData.length-1);
+    var sdHeight    =Math.abs(srcData[0].length-1);
+//データ処理範囲調整
+    if (this.Selection.join() != "0,0"){
+//セレクションあり。操作範囲を取得
+        var actionRange=this.actionRange([sdWidth,sdHeight]);
+//カレントセレクションの左上端から現在の配列にデータを流し込む。
+        var TrackStartAddress=actionRange[0][0];//    左端
+        var FrameStartAddress=actionRange[0][1];//    上端
+//セレクションとソースのデータ幅の小さいほうをとる
+        var TrackEndAddress=actionRange[1][0];//    右端
+        var FrameEndAddress=actionRange[1][1];//    下端
+    } else {
+//セレクション無し
+        var TrackStartAddress= this.Select[0];//    左端
+        var FrameStartAddress= this.Select[1];//    上端
+//シート第2象限とソースデータの幅 の小さいほうをとる
+        var TrackEndAddress=((xUI.SheetWidth-this.Select[0])<sdWidth)?
+    (this.SheetWidth-1):(TrackStartAddress+sdWidth)    ;//    右端
+        var FrameEndAddress=((this.referenceXPS.duration()-this.Select[1])<sdHeight)?
+    (this.referenceXPS.duration()-1):(FrameStartAddress+sdHeight)    ;//    下端
+    };
+//バックアップは遅延処理に変更・入力クリップをここで行う
+        var Tracklimit=TrackEndAddress-TrackStartAddress+1;
+        var Framelimit=FrameEndAddress-FrameStartAddress+1;
+    if(srcData.length>Tracklimit){srcData.length=Tracklimit};
+    if(srcData[0].length>Framelimit){for (var ix=0;ix<srcData.length;ix++){srcData[ix].length=Framelimit}};
+//入力値をオブジェクトメソッドで設定
+    switch(this.inputFlag){
+    case "redo":
+    case "undo":
+    default:
+        this.selectionHi("clear");//選択範囲のハイライトを払う
+        var putResult=this.referenceXPS.put([TrackStartAddress,FrameStartAddress],srcData.join("\n"));
+    this.syncSheetCell([TrackStartAddress,FrameStartAddress],[TrackEndAddress,FrameEndAddress],true);
+    }
+//設定値に従って、表示を更新（別メソッドにしてフォーカスを更新）
+    lastAddress=[TrackEndAddress,FrameEndAddress];
+}
+return lastAddress;
+};
+
 /*    xUI.put(dataStream[,direction])
 引数    :dataStream    シートに設定するデータ　単一の文字列　またはXpsオブジェクト または　配列　省略可
     :direction    データ開始位置ベクトル　配列　省略可　省略時は[0,0]
     シートに外部から値を流し込むメソッド
         xUI.put(データストリーム)
-        読み込みとかにもつかえるべし
-    Xps.put オブジェクトメソッドを変更したのでそれに対応
-    戻り値から書き換えに成功した範囲と書き換え前後のデータが取得できるのでその戻値を利用する
+        読込み時にも使用
+    Xps.put オブジェクトメソッドに対応
+    undo処理は戻り値から書き換えに成功した範囲と書き換え前後のデータが取得できるのでその戻値を利用する
     このメソッド内では、選択範囲方向の評価を行わないためフォーカス／セレクションは事前・事後に調整を要する場合がある
     選択範囲によるクリップはオブジェクトメソッドに渡す前に行う必要あり
     
     グラフィックレイヤー拡張によりシート上の画像パーツを更新する操作を追加
-    Xps更新後に、xUI.syncSheetCell()メソッドで必要範囲を更新のこと
+    Xps更新後に、xUI.syncSheetCell()メソッドで必要範囲を更新
+    
+    参照エリアに対する描画高速化のために、このメソッドでリファレンスの書換をサポートする
+    引数に変更がなければ従来動作　フラグが立っていればリファレンスを書換
+    リファレンス操作時はundo/redoは働かない
 */
-xUI.put    =function(datastream,direction){
-  if(xUI.viewOnly) return false;
+xUI.put = function(datastream,direction,toReference){
+  if(! toReference) toReference = false;
+  if((xUI.viewOnly)&&(! toReference)) return false;
+  var targetXps= (toReference)? xUI.referenceXPS:xUI.XPS;
+  
   if(typeof datastream == "undefined") datastream="";
   if(typeof direction  == "undefined") direction=[0,0];
-// var Cexpand=true;//コンマ展開フラグ 不使用
-  switch (this.inputFlag){
-  case "redo":        this.undoPt++;                //REDO処理時
-  case "undo":    ;//UNDO処理時
-    var undoTarget=this.undoStack[this.undoPt];    //処理データ取得
+  if(! toReference){
+//  undo/redo 事前処理
+    switch (this.inputFlag){
+    case "redo":        this.undoPt++             ;   //REDO処理時
+    case "undo":                                  ;   //UNDO処理時
+        var undoTarget=this.undoStack[this.undoPt];    //処理データ取得
 // undo内容をオブジェクトメソッドでputするためにホットポイントを作成する
-// Select=undoTarget[0] Selection=undoTarget[1];
 // ホットポイント設定
-    var hotPoint=[
-        (undoTarget[1][0]>0)?undoTarget[0][0]:undoTarget[0][0]+undoTarget[1][0],
-        (undoTarget[1][1]>0)?undoTarget[0][1]:undoTarget[0][1]+undoTarget[1][1]
-    ]
-    this.selection();//セレクション解除
-//    this.selection(add(undoTarget[0],undoTarget[1]));//処理範囲を直接設定（負数を）指定可能 startDirection=undoTarget[1];
-
-//    this.selectCell(undoTarget[0]);//ターゲットのシートセルにフォーカス
-    this.selectCell(hotPoint);//ターゲットのシートセルにフォーカス
-    datastream=undoTarget[2];
-        break;
-  default:                ;//通常のデータ入力
-                    //
+        var hotPoint=[
+            (undoTarget[1][0]>0)?undoTarget[0][0]:undoTarget[0][0]+undoTarget[1][0],
+            (undoTarget[1][1]>0)?undoTarget[0][1]:undoTarget[0][1]+undoTarget[1][1]
+        ]
+        this.selection();//セレクション解除
+        this.selectCell(hotPoint);//ターゲットのシートセルにフォーカス
+        datastream=undoTarget[2];
+            break;
+    default:              ;//通常のデータ入力
+                        ;//NOP
+    }
   };
 /*
 処理データが、Xpsオブジェクトだった場合は、現在のXPS（編集対象データ全体）を複製してUndoバッファに格納
@@ -2668,23 +2772,27 @@ dataBodyは データストリーム,Xpsオブジェクト,またはプロパテ
 
 */
     var lastAddress=this.Select.slice();//最終操作アドレス初期化
+    if(!toReference){
 //UNDO配列
     var UNDO=new Array(3);
         UNDO[0]    =this.Select.slice();
         UNDO[1]    =this.Selection.slice();
-
+    }
 /*    入力データを判定    */
 if(datastream instanceof Xps){
 /*    Xpsならばシートの入れ替えを行うので
     現在のシートを複製してundoStackに格納
 */
-    var prevXPS=new Xps();
-    prevXPS.readIN(this.XPS.toString());
-    UNDO[2]=prevXPS;
-//入力データをXPSに設定（複製か？）
-    this.XPS.readIN(datastream.toString());
-//新規のXpsのサイズを確認して    
-    xUI.resetSheet();//nas_Rmp_Init();//画面全体更新
+    if(toReference){
+//入力データをXPSに設定   
+        xUI.resetSheet(undefined,datastream);//リファレンス更新
+    }else{
+        var prevXPS=new Xps();
+        prevXPS.readIN(this.XPS.toString());
+        UNDO[2]=prevXPS;
+//入力データをXPSに設定   
+        xUI.resetSheet(datastream);//編集画面更新
+    }
 }else if(datastream instanceof Array){
 /*    引数が配列の場合は、Xps のプロパティを編集する
 形式:    [kEyword,vAlue]
@@ -2735,17 +2843,19 @@ xpsTimelineTrackオブジェクトのプロパティ
     if(myTarget.length>1){
 //ターゲットの要素数が1以上の場合はタイムラインプロパティの変更
 //        UNDO[2]=[入力ターゲット複製,現在値];
-        UNDO[2]=[datastream[0],this.XPS.xpsTracks[myTarget[1]][myTarget[0]]];
-        this.XPS.xpsTracks[myTarget[1]][myTarget[0]]=datastream[1];//入力値を設定
-        if(myTarget[0] =="option"){this.XPS.xpsTracks[myTarget[1]].sectionTrust = false;}
+        UNDO[2]=[datastream[0],targetXps.xpsTracks[myTarget[1]][myTarget[0]]];
+        targetXps.xpsTracks[myTarget[1]][myTarget[0]]=datastream[1];//入力値を設定
+        if(myTarget[0] =="option"){targetXps.xpsTracks[myTarget[1]].sectionTrust = false;}
     }else{
 //単独プロパティ変更
-        UNDO[2]=[datastream[0],this.XPS[myTarget[0]]];
-        this.XPS[myTarget[0]]=datastream[1];
+        UNDO[2]=[datastream[0],targetXps[myTarget[0]]];
+        targetXps[myTarget[0]]=datastream[1];
     }
-    xUI.resetSheet();//nas_Rmp_Init();//sync系で置き換えが望ましい
-
-/*  if{}else if((this.inputFlag != "move")&&(typeof datastream != "undefined")){} */
+    if(toReference){
+        xUI.resetSheet(undefined,targetXps);
+    }else{
+        xUI.resetSheet(targetXps);
+    }
 }else if(this.inputFlag != "move"){
 //moveを増設したのでひとまずスキップ
 //alert(this.inputFlag);
@@ -2755,13 +2865,11 @@ xpsTimelineTrackオブジェクトのプロパティ
 */
 //通常のデータストリームを配列に変換
 //        try {var srcData=datastream.toString().split("\n");}catch(err){alert(err +":\n"+datastream)}
-        var srcData=datastream.toString().split("\n");
+        var srcData=String(datastream).split("\n");
         for (var n=0;n<srcData.length;n++){
             srcData[n]=srcData[n].split(",");
         }
-
 //配列に変換(済) ソースからデータのサイズと方向を出す。
-
     var sdWidth    =Math.abs(srcData.length-1);
     var sdHeight    =Math.abs(srcData[0].length-1);
 //データ処理範囲調整
@@ -2781,59 +2889,35 @@ xpsTimelineTrackオブジェクトのプロパティ
 //シート第2象限とソースデータの幅 の小さいほうをとる
         var TrackEndAddress=((xUI.SheetWidth-this.Select[0])<sdWidth)?
     (this.SheetWidth-1):(TrackStartAddress+sdWidth)    ;//    右端
-        var FrameEndAddress=((this.XPS.duration()-this.Select[1])<sdHeight)?
-    (this.XPS.duration()-1):(FrameStartAddress+sdHeight)    ;//    下端
+        var FrameEndAddress=((targetXps.duration()-this.Select[1])<sdHeight)?
+    (targetXps.duration()-1):(FrameStartAddress+sdHeight)    ;//    下端
     };
 //バックアップは遅延処理に変更・入力クリップをここで行う
         var Tracklimit=TrackEndAddress-TrackStartAddress+1;
         var Framelimit=FrameEndAddress-FrameStartAddress+1;
     if(srcData.length>Tracklimit){srcData.length=Tracklimit};
     if(srcData[0].length>Framelimit){for (var ix=0;ix<srcData.length;ix++){srcData[ix].length=Framelimit}};
-/*
-バックアップを遅延処理に変更
-//レンジ内のデータをストリームでバックアップする***
-    UNDO[2]=this.getRange(
-        [[TrackStartAddress,FrameStartAddress],
-         [TrackEndAddress  ,FrameEndAddress  ]]
-    );
-*/
 //入力値をオブジェクトメソッドで設定
     switch(this.inputFlag){
     case "redo":
     case "undo":
-//        var putReslt=this.XPS.put(undoTarget[0],srcData.join("\n"));
-//    this.syncSheetCell([TrackStartAddress,FrameStartAddress],[TrackEndAddress,FrameEndAddress]);
-//    break;
     default:
         this.selectionHi("clear");//選択範囲のハイライトを払う
-        var putResult=this.XPS.put([TrackStartAddress,FrameStartAddress],srcData.join("\n"));
+        var putResult=targetXps.put([TrackStartAddress,FrameStartAddress],srcData.join("\n"));
     this.syncSheetCell([TrackStartAddress,FrameStartAddress],[TrackEndAddress,FrameEndAddress]);
     }
 //設定値に従って、表示を更新（別メソッドにしてフォーカスを更新）
-//    alert("SYNC :\n"+ [[TrackStartAddress,FrameStartAddress],[TrackEndAddress,FrameEndAddress]]);
     lastAddress=[TrackEndAddress,FrameEndAddress];
-//{}
-
 /*UNDO配列を作成 Xps.put()メソッド以外は、各オブジェクトで*/
-    if(putResult){
+    if((! toReference)&&(putResult)){
 if(dbg){dbgPut("XPS.put :\n"+putResult.join("\n"));}
 //        UNDO[0]=putResult[0][0];//レンジが戻るので左上を設定する
 //        UNDO[1]=sub(putResult[0][1],putResult[0][0]);//セレクションに変換
 //        UNDO[1]=[0,0];//通常処理は選択解除で記憶
         UNDO[2]=putResult[2];//入れ替え前の内容
-
-    }else{
-
-if((dbg)&&(typeof dataStream!="Xps")&&(typeof dataStream!="Array")){
-    dbgPut(
-        "XPS.put :\n!!!fault!!! :"+putResult+
-        "\nAddress:"+[TrackStartAddress,FrameStartAddress]+
-        "\nsrcData:"+srcData.join("\n")
-    );
-}
-//        UNDO[2]="!!!fault!!!"
     }
 }
+  if(! toReference){
 //操作別に終了処理
 switch (this.inputFlag){
 case "undo":
@@ -2884,6 +2968,7 @@ if(dbg){
 //編集バッファをクリア・編集フラグを下げる(バッファ変数をモジュールスコープに変更したので副作用発生)
     if(this.edchg)    this.edChg(false);
     if(this.eXMode==1){this.eXMode=0;this.eXCode=0;};//予備モード解除
+  }
 // 処理終了アドレスを配列で返す(使わなくなったような気がする)
 return lastAddress;
 };
@@ -4032,6 +4117,7 @@ default:	;//	デフォルトアクションはクリアと同値
 xUI.Cgl = new Object();
 
 xUI.Cgl.body={};
+xUI.Cgl.formCashe = {};     // セル画像部品キャッシュ
 
 xUI.Cgl.show=function(myId){
 	if(! this.body[myId]){	this.body[myId] = document.getElementById("cgl"+myId)	;}
@@ -4051,9 +4137,13 @@ xUI.Cgl.init=function(){
         delete this.body[prp];
     }
 }
+
+
 /**
 	セル画像部品描画コマンド
 位置計算をブラウザに任せるため　絶対座標でなく相対座標で各テーブルセル自体にCANVASをアタッチする
+
+基本部品はすべてキャッシュを行い　image Objectを作成する。
 
 */
 xUI.Cgl.draw=function addGraphElement(myId,myForm) {
@@ -4085,6 +4175,20 @@ if(appHost.platform != "AIR"){
         var myTop     = objTarget.offsetTop  + "px";
         var myLeft      = objTarget.offsetLeft + "px";
 }
+/**
+    formCache　を作成する
+    単一セルに対するformは初回描画時にpngにレンダリングCacheに格納される
+    ２度め以降はその都度利用される。
+    トランジション系は形状が安定しないため都度描画
+*/
+    if(xUI.Cgl.formCashe[myForm]){
+	    var element = new Image(objTarget.clientWidth,objTarget.clientHeight); 
+	    element.id      = 'cgl' + myId; 
+	    element.className   = 'cgl';
+        element.style.top  = myTop
+        element.style.left = myLeft;
+        element.src = xUI.Cgl.formCashe[myForm];
+    }else{
 	    var element = document.createElement('canvas'); 
 	    element.id      = 'cgl' + myId; 
 	    element.className   = 'cgl';
@@ -4095,16 +4199,28 @@ if(appHost.platform != "AIR"){
 	    element.width  = objTarget.clientWidth;
 	    element.height = objTarget.clientHeight;
 	    var ctx = element.getContext("2d");
+
 switch(myForm){
 case "line":	    //vertical-line
+case "line-ref":	    //vertical-line
+case "line-cam":	    //vertical-line
+case "line-sfx":	    //vertical-line
+    if(typeof xUI.Cgl.formCashe[myForm] == 'undefined'){
 		var lineWidth  =3;
 		ctx.strokeStyle="rgb(0,0,0)";
 		ctx.strokeWidth=lineWidth;
 		ctx.moveTo(element.width*0.5, 0);
 		ctx.lineTo(element.width*0.5, element.height);
 	    ctx.stroke();
+	    xUI.Cgl.formCashe[myForm] = element.toDataURL("image/png");
+	}
 break;
-case "wave":;			//wave-line	 
+case "wave":;			//wave-line
+case "wave-odd":;		//wave-line 偶数フレーム
+case "wave-evn":;		//wave-line 奇数フレーム
+case "wave-ref-odd":;		//wave-line 偶数フレーム
+case "wave-ref-evn":;		//wave-line 奇数フレーム
+    if(typeof xUI.Cgl.formCashe[myForm] == 'undefined'){
 		var waveSpan  =5;		var lineWidth  =3;
 		ctx.strokeStyle="rgb(0,0,0)";
 		ctx.strokeWidth=lineWidth;
@@ -4115,6 +4231,8 @@ case "wave":;			//wave-line
 	ctx.bezierCurveTo(element.width*0.5+waveSpan, element.height*0.5,element.width*0.5+waveSpan, element.height*0.5,  element.width*0.5, element.height);
 		}
 	    ctx.stroke();
+	    xUI.Cgl.formCashe[myForm] = element.toDataURL("image/png");
+	}
 break;
 case "fi":;		//fade-in
 	var startValue = arguments[2]; var endValue= arguments[3];
@@ -4143,14 +4261,20 @@ case "transition":;		//transition
 		ctx.lineTo(endValue*element.width,element.height);
 		ctx.fill();
 break;
-case "circle":;		//circle
+case "circle":;		 //circle
+case "circle-ref":;	 //circle-reference
+    if(typeof xUI.Cgl.formCashe[myForm] == 'undefined'){
 		var phi  = .9;		var lineWidth  =3;
 		ctx.strokeStyle="rgb(0,0,0)";
 		ctx.strokeWidth=lineWidth;
 		ctx.arc(element.width * 0.5, element.height * 0.5, element.height*phi*0.5, 0, Math.PI*2, true);
 	    ctx.stroke();
+	    xUI.Cgl.formCashe[myForm] = element.toDataURL("image/png");
+	}
 break;
 case "triangle":;		//triangle
+case "triangle-ref":;	//triangle
+    if(typeof xUI.Cgl.formCashe[myForm] == 'undefined'){
 		var lineWidth  =4;
 		ctx.strokeStyle="rgb(0,0,0)";
 		ctx.strokeWidth=lineWidth;
@@ -4159,8 +4283,11 @@ case "triangle":;		//triangle
 		ctx.lineTo(element.width*0.5 - (element.height-2)/Math.sqrt(3), element.height-2);
 		ctx.closePath();
 	    ctx.stroke();
+	    xUI.Cgl.formCashe[myForm] = element.toDataURL("image/png");
+	}
 break;
 case "section-open":;		//section-open
+    if(typeof xUI.Cgl.formCashe[myForm] == 'undefined'){
 	var formFill = arguments[2];
 	    ctx.fillStyle="rgba(0,0,0,1)";
 		ctx.moveTo(element.width * 0.5 - element.height/Math.sqrt(3), 0);
@@ -4168,8 +4295,11 @@ case "section-open":;		//section-open
 		ctx.lineTo(element.width * 0.5 , element.height);
 		ctx.closePath();
 		if(formFill) {ctx.fill();}else{ctx.stroke();}
+	    xUI.Cgl.formCashe[myForm] = element.toDataURL("image/png");
+	}
 break;
 case "section-close":;		//section-close
+    if(typeof xUI.Cgl.formCashe[myForm] == 'undefined'){
 	var formFill = arguments[2];
 	    ctx.fillStyle="rgba(0,0,0,1)";
 		ctx.moveTo(element.width * 0.5, 0);
@@ -4177,27 +4307,39 @@ case "section-close":;		//section-close
 		ctx.lineTo(element.width * 0.5 - element.height/Math.sqrt(3), element.height);
 		ctx.closePath();
 		if(formFill) {ctx.fill();}else{ctx.stroke();}
+	    xUI.Cgl.formCashe[myForm] = element.toDataURL("image/png");
+	}
 break;
 case "sound-section-open":;		//section-open
+    if(typeof xUI.Cgl.formCashe[myForm] == 'undefined'){
 	var lineWidth = 3;
 	    ctx.fillStyle="rgba(0,0,0,1)";
 		ctx.moveTo(0, element.height-lineWidth);
 		ctx.lineTo(element.width, element.height-lineWidth);
 		ctx.stroke();
+	    xUI.Cgl.formCashe[myForm] = element.toDataURL("image/png");
+	}
 break;
 case "sound-section-close":;		//section-close
+    if(typeof xUI.Cgl.formCashe[myForm] == 'undefined'){
 	var lineWidth = 3;
 	    ctx.fillStyle="rgba(0,0,0,1)";
 		ctx.moveTo(0, lineWidth);
 		ctx.lineTo(element.width, lineWidth);
 		ctx.stroke();
+	    xUI.Cgl.formCashe[myForm] = element.toDataURL("image/png");
+	}
 break;
 case "area-fill":;	//fill sheet cell
+    if(typeof xUI.Cgl.formCashe[myForm] == 'undefined'){
 		ctx.moveTo(0, 0);
 	    ctx.fillStyle="rgba(0,0,0,1)";
 	    ctx.fillRect(0, 0, targetRect.width, targetRect.height);
+	    xUI.Cgl.formCashe[myForm] = element.toDataURL("image/png");
+	}
 break;
 }
+    }
 	    element=objParent.appendChild(element); 
 //	    element=objTarget.appendChild(objParent);
 //	    element.top = myTop;
@@ -4259,11 +4401,15 @@ xUI.resetSheet=function(editXps,referenceXps){
     var restorePoint = this.getid('Select');
     var restoreSelection=this.getid('Selection');
 //    var sheetSame=((this.XPS.isSame(editXps))&&(this.referenceXPS.isSame(referenceXps)));
+    var reWriteXPS = false;
+    var reWriteREF = false;
 /*
     editXPSが与えられなかった場合は、現在のXPSのまま処理を続行（画面のrefreshのみを行う）
  */
     if ((typeof editXps != "undefined") && (editXps instanceof Xps)){
         this.XPS.readIN(editXps.toString());    //XPSをバッファ更新
+        // 書換え範囲にXPS全体を追加
+        reWriteXPS = true;
     }
 /*
         引数に参照シートが渡されていたら、優先して解決
@@ -4271,12 +4417,14 @@ xUI.resetSheet=function(editXps,referenceXps){
  */
     if ((typeof referenceXps != "undefined") && (referenceXps instanceof Xps)){
         this.referenceXPS=referenceXps;
+        // 書換え範囲に 参照XPS全体を追加
+        reWriteREF=true;
     };
 //表示プロパティのリフレッシュを行う　シートが変更されていなければ不用
 //    if(! sheetSame) this._checkProp();
     this._checkProp();
 //セルグラフィック初期化( = 画面クリア)
-    this.Cgl.init();
+//    this.Cgl.init();
 //  グラフィック部品をクリア後再描画が必要
     //特にこの処理を重点的にチェック　このルーチンは実行回数が少ないほど良い　リセットメソッドを作成してそちらに移行する方針で調整　再処理時ではキャッシュの初期化を行わない
 //タイムシートテーブルボディ幅の再計算
@@ -4328,8 +4476,8 @@ xUI.resetSheet=function(editXps,referenceXps){
     document.getElementById("sheet_body").innerHTML=SheetBody+"<div class=\"screenSpace\"></div>";
 // グラフィックパーツを配置(setTimeoutで無名関数として非同期実行)
     window.setTimeout(function(){
-        xUI.syncSheetCell(0,0,false);//シートグラフィック置換
-        xUI.syncSheetCell(0,0,true);//referenceシートグラフィック置換
+        if (reWriteXPS) xUI.syncSheetCell(0,0,false);//シートグラフィック置換
+        if (reWriteREF) xUI.syncSheetCell(0,0,true);//referenceシートグラフィック置換
 //フットスタンプの再表示
 //        if(this.footMark){this.footstampPaint()};
 //  カーソル位置復帰（範囲外は自動でまるめる）
@@ -4708,7 +4856,7 @@ if(startupXPS.length > 0){
     XPS.readIN(startupXPS);NameCheck=false;
 }
 //リファレンスシートデータがあればオブジェクト化して引数を作成
-        var referenceX=new Xps();
+        var referenceX=new Xps(5,144);
     if((referenceXPS)&&(referenceXPS.length)){
         referenceX.readIN(referenceXPS);
     }
@@ -4718,7 +4866,8 @@ if(startupXPS.length > 0){
 */
     console.log(SheetLooks);
     xUI.setSheetLook(SheetLooks);
-    xUI.resetSheet();nas_Rmp_Init();
+    xUI.resetSheet();
+    nas_Rmp_Init();
 /* ================================css設定
 //================================================================================================================================ シートカラーcss設定2
 //    シート境界色設定

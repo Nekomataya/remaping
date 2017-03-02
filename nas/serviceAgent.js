@@ -710,7 +710,8 @@ if(dbg) console.log(decodeURIComponent(myIssue.identifier));
         //データ単独で現在のセッションのリファレンスを置換
             documentDepot.currentReference = new Xps();
             documentDepot.currentReference.readIN(myXpsSource);
-            xUI.setReferenceXPS(documentDepot.currentReference);
+            //xUI.setReferenceXPS(documentDepot.currentReference);
+            xUI.resetSheet(undefined,documentDepot.currentReference);
         }else{
         //新規セッションを開始する
             documentDepot.currentDocument = new Xps();
@@ -746,7 +747,9 @@ if(dbg) console.log(myRefSource);
                 }
             }
 if(dbg) console.log(documentDepot.currentReference);//単エントリで直前のエントリ取得不能の可能性あり
-            XPS.readIN(myXpsSource);xUI.resetSheet(undefined,documentDepot.currentReference);
+
+//            XPS.readIN(myXpsSource);
+            xUI.resetSheet(documentDepot.currentDocument,documentDepot.currentReference);
             xUI.sessionRetrace = myEntry.issues.length-cx-1;
             xUI.setUImode('browsing');sync("productStatus");
             //読込実行後にコールバックが存在したら実行
@@ -1619,17 +1622,16 @@ if(dbg) console.log(targetURL);
         success: function(result) {
 if(dbg) console.log(result);
 //データ請求に成功したので、現在のデータを判定して処理の必要があれば処理
-//if((xUI.uiMode=='production')&&(xUI.XPS.currentStatus=='Active')){serviceAgent.deactivateEntry(,callback2);}
-            
         	var myContent=result.content;//XPSソーステキストをセット
-if(dbg) console.log("road :"+myContent);
-	        if(myContent){ xUI.XPS.readIN(myContent);};
+        	var currentXps = new Xps(5,144);
+	        if(myContent){ currentXps.parseXps(myContent);};
 //myContent==nullのケースは、サーバに空コンテンツが登録されている場合なので単純にエラー排除してはならない
-//  エラーではなく初期化時点の初期状態のXpsのままで処理を継続する
+//エラーではなく初期化時点の初期状態のXpsのままで処理を継続する
             //xUI.userPermissions=result.permissions;
-// 読み込んだXPSが識別子と異なっていた場合識別子優先で同期する
+//読み込んだXPSが識別子と異なっていた場合識別子優先で同期する
+	            xUI.resetSheet(currentXps);
+console.log(xUI.XPS);
                 xUI.XPS.syncIdentifier(myIssue.identifier);
-	            xUI.resetSheet(XPS);
 	            if(myEntry.issues.length>1){
                     documentDepot.currentReference = new Xps(5,144);//カラオブジェクトをあらかじめ新規作成
                     //自動設定されるリファレンスはあるか？
@@ -1652,14 +1654,10 @@ if(dbg) console.log("road :"+myContent);
 	                }
 	                if(refIssue) serviceAgent.currentRepository.getEntry(refIssue.identifier,true);
 	            }
-	            xUI.resetSheet();//nas_Rmp_Init();
+	            //xUI.resetSheet(XPS);
                 xUI.sessionRetrace = myEntry.issues.length-cx-1;
                 xUI.setUImode('browsing');sync("productStatus");
                 if(callback instanceof Function) callback();
-            if(false){
-if(dbg) console.log(result);
-                if(callback2 instanceof Function) callback2();               
-            }
         },
         error:function(result){
 if(dbg) console.log(result);

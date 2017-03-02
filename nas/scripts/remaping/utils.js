@@ -899,18 +899,21 @@ putReference=function()
 				(durationUp)? mEnd[1]:xUI.referenceXPS.duration()
 			);
 		};
-		xUI.referenceXPS.put(mStart,xUI.getRange())
+//		xUI.referenceXPS.put(mStart,xUI.getRange())
+		xUI.putReference(xUI.getRange([mStart,mEnd]))
 	}
 	//nas_Rmp_Init();
-	xUI.resetSheet();
+    xUI.selectionHi("hilite");
 }
 
-getReference=function()
-{
+getReference=function(){
 	//xUIに範囲設定があれば、その範囲を、無ければすべてのシートを操作対象にする
 	if((xUI.Selection[0]==0)&&(xUI.Selection[1]==0)){
-		XPS.readIN(xUI.referenceXPS.toString());//選択範囲指定がない場合は、すべてコピー
+		xUI.put(xUI.referenceXPS);//選択範囲指定がない場合は、参照シートをすべてコピー
 	}else{
+	//現在のカーソル位置と選択範囲を取得
+    var restorePoint     = xUI.getid('Select');
+    var restoreSelection = xUI.getid('Selection');
 //	return false;
 		var mStart=[
 			(xUI.Selection[0]>0)?xUI.Select[0]:xUI.Select[0]+xUI.Selection[0],
@@ -931,9 +934,12 @@ getReference=function()
 			);
 		};
 		xUI.put(xUI.referenceXPS.getRange([mStart,mEnd]));
+        xUI.selectCell(restorePoint);
+        xUI.selection(restoreSelection);
 	}
 //	nas_Rmp_Init();
-	xUI.resetSheet();
+//	xUI.resetSheet();
+    xUI.selectionHi("hilite");
 }
 /*	セルの内容を繰り上げる/下げる
 数値部分を持ったタイムラインセルの数値部分を引数分だけ操作する
