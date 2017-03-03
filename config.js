@@ -28,8 +28,8 @@
  *		2015/10/17	クッキーの記録内容に編集モードを追加
  *		2016/01/27  クッキーの記録内容にUIツールの表示状態を追加
  *      2016/08/12  WEBサービス開始のための改装
- 
- * $Id: config.js,v2.0 2016/4/30  $
+        2017/03/03  画像部品キャッシュ・書き換えの高速化
+ * $Id: config.js,v2.0 2017/3/3  $
  */
 	var dbg=true	;	//デバッグモード
 
@@ -39,8 +39,8 @@
  *		ただし開始メッセージが抑制されている場合は表示されません。
  */
 
-	var welcomeMsg="サーバ対応版 -test- 20170202";
-	var windowTitle="ver. 1.6.1";//WindowTitleとしての役割は終了 統合バージョンです
+	var welcomeMsg="サーバ対応版 -test- 20170303";
+	var windowTitle="ver. 1.6.2";//WindowTitleとしての役割は終了 統合バージョンです
 
 /**************************************************************************
  *	ロゴ等
@@ -61,8 +61,8 @@
 	var headerLogo_url	="./help/index.html";試験中
     ロゴをクリックするとこちらのurlをひらきます。
  */
-	var headerLogo_url	="http://www.nekomataya.info/remaping/";
-//	var headerLogo_url	="https://u-at.net/";
+//	var headerLogo_url	="http://www.nekomataya.info/remaping/";
+	var headerLogo_url	="https://u-at.net/";
 	var headerLogo_urlComment	="UATimesheetService";//ロゴのコメントです
 /**************************************************************************
  *	作品タイトルロゴ
@@ -153,7 +153,7 @@ SheetLooks = {
 	SectionModeColor:"#ccffcc",
 	SpinAreaColor	:"red"	,
 	SelectionColor	:"#f8f8dd",
-	FootStampColor	:"#fff8f8",
+	FootStampColor	:"#fff0f0",
 	EditingColor	:"#eebbbb",
 	SelectingColor	:"#ccccaa",
 	CellWidthUnit	:"px",

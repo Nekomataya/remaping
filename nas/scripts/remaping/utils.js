@@ -890,7 +890,6 @@ putReference=function()
 			(xUI.Selection[1]>0)?xUI.Select[1]+xUI.Selection[1]:xUI.Select[1]
 		];
 	//選択範囲がreferenceXPSよりも広かった場合は、参照XPSを拡張する
-		
 		var widthUp=   (mEnd[0]>xUI.referenceXPS.xpsTracks.length)? true:false;
 		var durationUp=(mEnd[1]>xUI.referenceXPS.duration())?     true:false;
 		if((widthUp)||(durationUp)){
@@ -899,8 +898,8 @@ putReference=function()
 				(durationUp)? mEnd[1]:xUI.referenceXPS.duration()
 			);
 		};
-//		xUI.referenceXPS.put(mStart,xUI.getRange())
-		xUI.putReference(xUI.getRange([mStart,mEnd]))
+		xUI.put(xUI.getRange(),[0,0],true)
+//		xUI.putReference(xUI.getRange([mStart,mEnd]));
 	}
 	//nas_Rmp_Init();
     xUI.selectionHi("hilite");
@@ -914,7 +913,6 @@ getReference=function(){
 	//現在のカーソル位置と選択範囲を取得
     var restorePoint     = xUI.getid('Select');
     var restoreSelection = xUI.getid('Selection');
-//	return false;
 		var mStart=[
 			(xUI.Selection[0]>0)?xUI.Select[0]:xUI.Select[0]+xUI.Selection[0],
 			(xUI.Selection[1]>0)?xUI.Select[1]:xUI.Select[1]+xUI.Selection[1]
@@ -924,7 +922,6 @@ getReference=function(){
 			(xUI.Selection[1]>0)?xUI.Select[1]+xUI.Selection[1]:xUI.Select[1]
 		];
 	//選択範囲がreferenceXPSよりも広かった場合は、参照XPSを拡張する
-		
 		var widthUp=   (mEnd[0]>xUI.referenceXPS.xpsTracks.length)? true:false;
 		var durationUp=(mEnd[1]>xUI.referenceXPS.duration())?     true:false;
 		if((widthUp)||(durationUp)){
@@ -937,8 +934,6 @@ getReference=function(){
         xUI.selectCell(restorePoint);
         xUI.selection(restoreSelection);
 	}
-//	nas_Rmp_Init();
-//	xUI.resetSheet();
     xUI.selectionHi("hilite");
 }
 /*	セルの内容を繰り上げる/下げる

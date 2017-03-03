@@ -1027,12 +1027,11 @@ xUI.switchStage=function(){
 };
 /**
     リファレンスエリアにデータをセットする
-    引数がない場合は、現在のデータをそのまま利用する
+    引数がない場合は、現在のXPSデータをそのままセットする
 */
 xUI.setReferenceXPS=function(myXps){
     documentDepot.currentReference = new Xps();
-    documentDepot.currentReference.readIN(myXpsSource);
-                if(typeof myXps == 'undefined'){
+    if(typeof myXps == 'undefined'){
         documentDepot.currentReference.readIN(xUI.XPS.toString());
     } else if (myXps instanceof Xps) {
         documentDepot.currentReference=myXps;
@@ -2602,93 +2601,14 @@ xUI.getRange    =function(Range)
         読み込み時も使用
     xUI.put オブジェクトの機能サブセット
     undo/redo処理を行わない
-    
-    グラフィックレイヤー拡張によりシート上の画像パーツを更新する操作を追加
-    Xps更新後に、xUI.syncSheetCell()メソッドで必要範囲を更新
+    xUI.putのラッパ関数
 */
 xUI.putReference    =function(datastream,direction){
-    this.put(datastream,direction,true);
-    return ;
-  if(typeof datastream == "undefined") datastream="";
-  if(typeof direction  == "undefined") direction=[0,0];
-console.log(datastream)
-/*
-処理データが、Xpsオブジェクトだった場合は、dataStreamのXpsでXPSを初期化する
-*/
-/*    入力データを判定    */
-if(datastream instanceof Xps){
-/*    Xpsならばシートの入れ替え　*/
-    this.referenceXPS.readIN(datastream.toString());
-    xUI.resetSheet();//画面全体更新
-}else if(datastream instanceof Array){
-/*    引数が配列の場合は、Xps のプロパティを編集する
-    ただし、この入力はxUI.putとの互換のための機能で、現在これを呼び出すUIは存在しない
-    将来的にput/getがトラック単位に拡張された場合は使用される？かもしれない
-    使用時はコードの見直しに注意
-*/
-    var myTarget= datastream[0].split(".");
-//    新規設定値    datastream[1];
-//現在のプロパティの値をバックアップして新規の値をセット
-    if(myTarget.length>1){
-//ターゲットの要素数が1以上の場合はタイムラインプロパティの変更
-        this.referenceXPS.xpsTracks[myTarget[1]][myTarget[0]]=datastream[1];//入力値を設定
-        if(myTarget[0] =="option"){this.referenceXPS.xpsTracks[myTarget[1]].sectionTrust = false;}
-    }else{
-//単独プロパティ変更
-        this.referenceXPS[myTarget[0]]=datastream[1];
-    }
-    xUI.resetSheet();//resetSheetに部分書換の機能が欲しい
-}else if(this.inputFlag != "move"){
-//通常のデータストリームを配列に変換
-        var srcData=datastream.toString().split("\n");
-        for (var n=0;n<srcData.length;n++){
-            srcData[n]=srcData[n].split(",");
-        }
-//配列に変換したソースからデータのサイズと方向を出す。
-    var sdWidth    =Math.abs(srcData.length-1);
-    var sdHeight    =Math.abs(srcData[0].length-1);
-//データ処理範囲調整
-    if (this.Selection.join() != "0,0"){
-//セレクションあり。操作範囲を取得
-        var actionRange=this.actionRange([sdWidth,sdHeight]);
-//カレントセレクションの左上端から現在の配列にデータを流し込む。
-        var TrackStartAddress=actionRange[0][0];//    左端
-        var FrameStartAddress=actionRange[0][1];//    上端
-//セレクションとソースのデータ幅の小さいほうをとる
-        var TrackEndAddress=actionRange[1][0];//    右端
-        var FrameEndAddress=actionRange[1][1];//    下端
-    } else {
-//セレクション無し
-        var TrackStartAddress= this.Select[0];//    左端
-        var FrameStartAddress= this.Select[1];//    上端
-//シート第2象限とソースデータの幅 の小さいほうをとる
-        var TrackEndAddress=((xUI.SheetWidth-this.Select[0])<sdWidth)?
-    (this.SheetWidth-1):(TrackStartAddress+sdWidth)    ;//    右端
-        var FrameEndAddress=((this.referenceXPS.duration()-this.Select[1])<sdHeight)?
-    (this.referenceXPS.duration()-1):(FrameStartAddress+sdHeight)    ;//    下端
-    };
-//バックアップは遅延処理に変更・入力クリップをここで行う
-        var Tracklimit=TrackEndAddress-TrackStartAddress+1;
-        var Framelimit=FrameEndAddress-FrameStartAddress+1;
-    if(srcData.length>Tracklimit){srcData.length=Tracklimit};
-    if(srcData[0].length>Framelimit){for (var ix=0;ix<srcData.length;ix++){srcData[ix].length=Framelimit}};
-//入力値をオブジェクトメソッドで設定
-    switch(this.inputFlag){
-    case "redo":
-    case "undo":
-    default:
-        this.selectionHi("clear");//選択範囲のハイライトを払う
-        var putResult=this.referenceXPS.put([TrackStartAddress,FrameStartAddress],srcData.join("\n"));
-    this.syncSheetCell([TrackStartAddress,FrameStartAddress],[TrackEndAddress,FrameEndAddress],true);
-    }
-//設定値に従って、表示を更新（別メソッドにしてフォーカスを更新）
-    lastAddress=[TrackEndAddress,FrameEndAddress];
+    xUI.put(datastream,direction,true);
 }
-return lastAddress;
-};
-
 /*    xUI.put(dataStream[,direction])
-引数    :dataStream    シートに設定するデータ　単一の文字列　またはXpsオブジェクト または　配列　省略可
+引数
+    :dataStream    シートに設定するデータ　単一の文字列　またはXpsオブジェクト または　配列　省略可
     :direction    データ開始位置ベクトル　配列　省略可　省略時は[0,0]
     シートに外部から値を流し込むメソッド
         xUI.put(データストリーム)
@@ -2904,7 +2824,11 @@ xpsTimelineTrackオブジェクトのプロパティ
     default:
         this.selectionHi("clear");//選択範囲のハイライトを払う
         var putResult=targetXps.put([TrackStartAddress,FrameStartAddress],srcData.join("\n"));
-    this.syncSheetCell([TrackStartAddress,FrameStartAddress],[TrackEndAddress,FrameEndAddress]);
+        if(toReference){
+            this.syncSheetCell([TrackStartAddress,FrameStartAddress],[TrackEndAddress,FrameEndAddress],true);
+        }else{
+            this.syncSheetCell([TrackStartAddress,FrameStartAddress],[TrackEndAddress,FrameEndAddress]);
+        }
     }
 //設定値に従って、表示を更新（別メソッドにしてフォーカスを更新）
     lastAddress=[TrackEndAddress,FrameEndAddress];
@@ -4476,8 +4400,10 @@ xUI.resetSheet=function(editXps,referenceXps){
     document.getElementById("sheet_body").innerHTML=SheetBody+"<div class=\"screenSpace\"></div>";
 // グラフィックパーツを配置(setTimeoutで無名関数として非同期実行)
     window.setTimeout(function(){
-        if (reWriteXPS) xUI.syncSheetCell(0,0,false);//シートグラフィック置換
-        if (reWriteREF) xUI.syncSheetCell(0,0,true);//referenceシートグラフィック置換
+//        if (reWriteXPS) 
+            xUI.syncSheetCell(0,0,false);//シートグラフィック置換
+//        if (reWriteREF)
+            xUI.syncSheetCell(0,0,true);//referenceシートグラフィック置換
 //フットスタンプの再表示
 //        if(this.footMark){this.footstampPaint()};
 //  カーソル位置復帰（範囲外は自動でまるめる）

@@ -705,12 +705,10 @@ if(dbg) console.log(decodeURIComponent(myIssue.identifier));
 //識別子を再結合してもキーが得られない場合があるのでエントリから対応キーの引き出しを行う
 
     if(myXpsSource){
-//if((xUI.uiMode=='production')&&(xUI.XPS.currentStatus=='Active')){serviceAgent.deactivateEntry(function(){});
         if(isReference){            
         //データ単独で現在のセッションのリファレンスを置換
             documentDepot.currentReference = new Xps();
             documentDepot.currentReference.readIN(myXpsSource);
-            //xUI.setReferenceXPS(documentDepot.currentReference);
             xUI.resetSheet(undefined,documentDepot.currentReference);
         }else{
         //新規セッションを開始する
@@ -720,7 +718,7 @@ if(dbg) console.log(decodeURIComponent(myIssue.identifier));
            //自動設定されるリファレンスはあるか？
             //指定管理部分からissueを特定する 文字列化して比較
             if ( cx > 0 ){
-                if(parseInt(decodeURIComponent(myIssue[2]).split(':')[0]) > 0 ){
+                if(parseInt(decodeURIComponent(myIssue[2]).split(':')[0]) > 0 ){　　  
                 //ジョブIDが１以上なので 単純に一つ前のissueを選択する
                 //必ず先行jobがある  =  通常処理の場合は先行JOBが存在するが、単データをエントリした場合そうでないケースがあるので対処が必要　2016 12 29
                     refIssue = myEntry.issues[cx-1];
@@ -747,14 +745,11 @@ if(dbg) console.log(myRefSource);
                 }
             }
 if(dbg) console.log(documentDepot.currentReference);//単エントリで直前のエントリ取得不能の可能性あり
-
-//            XPS.readIN(myXpsSource);
             xUI.resetSheet(documentDepot.currentDocument,documentDepot.currentReference);
             xUI.sessionRetrace = myEntry.issues.length-cx-1;
             xUI.setUImode('browsing');sync("productStatus");
             //読込実行後にコールバックが存在したら実行
             if(callback instanceof Function){setTimeout(callback,10)};
-//             xUI.sWitchPanel('File');
         }
     } else { 
         return false;
@@ -2741,7 +2736,6 @@ serviceAgent.getRepsitoryIdByToken = function(myToken){
     myIdentifier    カット識別子 完全状態で指定されなかった場合は、検索で補う
     isReference    リファレンスとして呼び込むか否かのフラグ 指定がなければ自動判定
     callback    コールバック関数指定が可能コールバックは以下の型式で
-        function(xpsSourceText,callbackArguments){    }
     コールバックの指定がない場合は指定データをアプリケーションに読み込む
     コールバック関数以降の引数はコールバックに渡される
 */
