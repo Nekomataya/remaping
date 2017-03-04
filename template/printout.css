@@ -82,9 +82,10 @@ iframe.UIhidden {
 }
 /*
 	table
+	border-color:#eeeeee;
+	border-color:#bbbbbb;
 */
 table {
-	border-color:#eeeeee;
 	margin:0px 0px 0px 0px;
 	padding:0px 0px 0px 16px;
 	border-width:2px 1px 0px 0px;
@@ -93,7 +94,6 @@ table {
 	max-height:100%;
 }
 table.UItable{
-	border-color:#bbbbbb;
 	margin:0px 0px 0px 0px;
 	padding:0px 0px 0px 0px;
 	border-width:2px 1px 0px 0px;
@@ -117,9 +117,9 @@ table.toolbox {
 }
 /*
 		テーブル要素
+	border-color:#bbbbbb;
 */
 th {
-	border-color:#bbbbbb;
 	text-align:center;
 	border-style:solid;
 	border-width:4px 1px 1px 0px;
@@ -156,6 +156,7 @@ th.timelabel{
 	}
 
 /*		リファレンス
+	color:gray;
 
 */
 th.referenceSpan {
@@ -165,7 +166,6 @@ th.referenceSpan {
 th.layerlabelR {
 	text-align:center;
 	border-style:solid;
-	color:gray;
 	border-width:3px 1px 3px 0px;
 	font-size:9pt;
 }
@@ -1029,11 +1029,11 @@ td#scene_cut {
 
 /*
 その他のエレメントid は、ソースを直接読むか、取扱説明書をご覧ください。
+	border-color:snow;
 */
 div.application_status {
 	z-index:88;
 	border-style:solid;
-	border-color:snow;
 	border-width:0px 0px 1px 0px;
 	padding:0px 0px 0px 16px 
 }

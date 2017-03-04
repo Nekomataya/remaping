@@ -877,7 +877,9 @@ putReference=function()
 {
 	//xUIに範囲設定があれば、その範囲を、無ければすべてのシートを操作対象にする
 	if((xUI.Selection[0]==0)&&(xUI.Selection[1]==0)){
-		xUI.referenceXPS.readIN(XPS.toString());//選択範囲指定がない場合は、すべてコピー
+		documentDepot.currentReference=new Xps();
+		documentDepot.currentReference.readIN(XPS.toString());//選択範囲指定がない場合は、すべてコピー
+		xUI.resetSheet(undefined,documentDepot.currentReference);
 	}else{
 	//return false;
 	

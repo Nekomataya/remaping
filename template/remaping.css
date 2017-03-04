@@ -95,9 +95,9 @@ iframe.UIhidden {
 }
 /*
 	table
+	border-color:#bbbbbb;
 */
 table {
-	border-color:#bbbbbb;
 	margin:0px 0px 0px 0px;
 	padding:0px 0px 0px 16px;
 	border-width:2px 1px 0px 0px;
@@ -106,7 +106,6 @@ table {
 	max-height:100%;
 }
 table.UItable{
-	border-color:#bbbbbb;
 	margin:0px 0px 0px 0px;
 	padding:0px 0px 0px 0px;
 	border-width:2px 1px 0px 0px;
@@ -130,9 +129,9 @@ table.toolbox {
 }
 /*
 		テーブル要素
+	border-color:#bbbbbb;
 */
 th {
-	border-color:#bbbbbb;
 	text-align:center;
 	border-style:solid;
 	border-width:4px 1px 1px 0px;
@@ -269,10 +268,12 @@ th.framenotelabel {
 }
 /*		テーブルデータ基本
 */
-/*	font-size:9pt;*/
+/*
+	font-size:9pt;
+	border-color:#bbbbbb;
+*/
 td {
 	position:relative;
-	border-color:#bbbbbb;
 	text-align:center;
 	vertical-align:middle;
 	border-style:solid;

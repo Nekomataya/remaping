@@ -324,12 +324,13 @@ xUI.setSheetLook = function(sheetLooks){
     this.sheetbaseColor     = sheetLooks.SheetBaseColor;                                        //タイムシート背景色
     this.sheetblankColor    = nas.colorAry2Str(mul(nas.colorStr2Ary(this.sheetbaseColor),.95)); //編集不可領域の背景色
     this.sheetborderColor   = nas.colorAry2Str(mul(nas.colorStr2Ary(this.sheetbaseColor),.75)); //罫線基本色
-    this.footstampColor     = sheetLooks.FootStampColor;                                        //フット/差分　スタンプの色
+    this.footstampColor     = nas.colorAry2Str(div( add (nas.colorStr2Ary(sheetLooks.FootStampColor),nas.colorStr2Ary(this.sheetbaseColor)),2));                        //フット/差分　スタンプの色 背景色との中間値
+//    this.footstampColor     = sheetLooks.FootStampColor;                                        //フット/差分　スタンプの色 背景色との中間値
 //       this.inputModeColor   = new Object();                                      //  入力モード色
-        this.inputModeColor.NORMAL  = sheetLooks.SelectedColor;                     //  ノーマル色
-        this.inputModeColor.EXTEND  = sheetLooks.RapidModeColor;                    //  ラピッド入力基本色
-        this.inputModeColor.FLOAT   = sheetLooks.FloatModeColor;                    //  ブロック移動基本色
-        this.inputModeColor.SECTION = sheetLooks.SectionModeColor;                  //  範囲編集中の色
+        this.inputModeColor.NORMAL  = nas.colorAry2Str(div( add (nas.colorStr2Ary(sheetLooks.SelectedColor),nas.colorStr2Ary(this.sheetbaseColor)),2));                      //  ノーマル色
+        this.inputModeColor.EXTEND  = nas.colorAry2Str(div( add (nas.colorStr2Ary(sheetLooks.RapidModeColor),nas.colorStr2Ary(this.sheetbaseColor)),2));                    //  ラピッド入力基本色
+        this.inputModeColor.FLOAT   = nas.colorAry2Str(div( add (nas.colorStr2Ary(sheetLooks.FloatModeColor),nas.colorStr2Ary(this.sheetbaseColor)),2));                    //  ブロック移動基本色
+        this.inputModeColor.SECTION = nas.colorAry2Str(div( add (nas.colorStr2Ary(sheetLooks.SectionModeColor),nas.colorStr2Ary(this.sheetbaseColor)),2));                  //  範囲編集中の色
 
     this.selectedColor    = this.inputModeColor.NORMAL;                                     //選択セルの背景色
     this.selectionColor    = sheetLooks.SelectionColor;                                     //選択領域の背景色
@@ -392,12 +393,13 @@ xUI.setSheetLook = function(sheetLooks){
 //================================================================================================================================ルックの適用
 //タイムシート背景色をsheetbaseColorに設定
     document.body.style.backgroundColor     = this.sheetbaseColor;
-    console.log(this.sheetbaseColor);
 //ヘッダとフッタの背景色をシート背景色で塗りつぶし
     document.getElementById("fixedHeader").style.backgroundColor = this.sheetbaseColor;
 
     nas.addCssRule("table.sheet","background-color:"+this.sheetbaseColor,"screen");
-
+    nas.addCssRule("table","border-color:"+this.sheetbaseColor,"screen");
+    nas.addCssRule("th","border-color:"+this.sheetborderColor,"screen");
+    nas.addCssRule("td","border-color:"+this.sheetborderColor,"screen");
 
 var mySections=[
     ["th.tcSpan"        ,"width" ,(sheetLooks.TimeGuideWidth        + sheetLooks.CellWidthUnit)],
@@ -451,8 +453,8 @@ for(var idx=0;idx<mySeps.length;idx++){
 //================================================================================================================================ シートカラーcss設定2
 //    シート境界色設定
     $('table').css('border-color',xUI.sheetbaseColor);
-    $('th').css('border-color',xUI.sheetBorderColor);
-    $('td').css('border-color',xUI.sheetBorderColor);
+    $('th').css('border-color',xUI.sheetborderColor);
+    $('td').css('border-color',xUI.sheetborderColor);
     $("th.stilllabel").css("background-color",xUI.stillColor);// ,"screen");
     $("th.sfxlabel").css("background-color",xUI.sfxColor);//   ,"screen");
     $("th.cameralabel").css("background-color",xUI.cameraColor);//,"screen");
@@ -871,7 +873,9 @@ xUI.getBackup =function(){
     var myReference=localStorage.getItem("info.nekomataya.remaping.referenceData");
         if(this.XPS.readIN(xUI.data_well.value)){
             if(myReference){xUI.referenceXPS.parseXps(myReference);}
-            xUI.resetSheet()
+            xUI.resetSheet(xUI.XPS,xUI.referenceXPS);
+            //if(xUI.footMark){xUI.footstampPaint()};
+            //xUI.footstampPaint();
         }
      }
     }else{
@@ -1869,7 +1873,7 @@ var lbString=(this.referenceLabels[r].length<4)?this.referenceLabels[r]:'<a oncl
 
 
  if (this.referenceLabels[r].match(/^\s*$/)){
-    BODY_ +='<span style="color:'+this.sheetBorderColor+'";>'+nas.Zf(r,2)+'</span>';
+    BODY_ +='<span style="color:'+this.sheetborderColor+'";>'+nas.Zf(r,2)+'</span>';
  }else{
     BODY_ +=lbString;
  };
@@ -1902,13 +1906,13 @@ default:BODY_ +='" class="layerlabel" ';
 BODY_ +=' >';
 if(this.XPS.xpsTracks[r].option=="still"){
  if (this.XPS.xpsTracks[r].id.match(/^\s*$/)){
-    BODY_ +='<span style="color:'+xUI.sheetBorderColor+'";>'+nas.Zf(r,2)+'</span>';
+    BODY_ +='<span style="color:'+xUI.sheetborderColor+'";>'+nas.Zf(r,2)+'</span>';
  }else{
     BODY_ +='<a onclick="return false" title="'+this.XPS.xpsTracks[r].id+'">▼</a>';
  };
 }else{
  if (this.XPS.xpsTracks[r].id.match(/^\s*$/)){
-    BODY_ +='<span style="color:'+xUI.sheetBorderColor+'";>'+nas.Zf(r,2)+'</span>';
+    BODY_ +='<span style="color:'+xUI.sheetborderColor+'";>'+nas.Zf(r,2)+'</span>';
  }else{
     BODY_ +=this.XPS.xpsTracks[r].id;
  };
@@ -2478,6 +2482,9 @@ if(dbg) {dbgPut("undoPt:"+this.undoPt+":\n"+this.undoStack[this.undoPt].join("\n
     var putResult=this.put();
     if(putResult){
 if(dbg) {dbgPut("putResult:\n"+putResult)};
+            this.selectCell(putResult[0]);
+            this.selection (putResult[1]);
+            this.selection ();
     }
 };
 
@@ -2493,6 +2500,9 @@ if(dbg) {dbgPut("undoPt:"+this.undoPt+"\n:"+this.undoStack[this.undoPt].join("\n
     var putResult=this.put();
     if(putResult){
 if(dbg) {dbgPut("putResult:\n"+putResult)};
+            this.selectCell(putResult[0]);
+            this.selection (putResult[1]);
+            this.selection ();
     }
 };
 
@@ -2620,6 +2630,8 @@ xUI.putReference    =function(datastream,direction){
     
     グラフィックレイヤー拡張によりシート上の画像パーツを更新する操作を追加
     Xps更新後に、xUI.syncSheetCell()メソッドで必要範囲を更新
+    マクロ展開後には同様に必要範囲内のフットマーク再表示を行う
+    
     
     参照エリアに対する描画高速化のために、このメソッドでリファレンスの書換をサポートする
     引数に変更がなければ従来動作　フラグが立っていればリファレンスを書換
@@ -2861,17 +2873,20 @@ if(undoTarget.length==4){
 };
         if(this.inputFlag=="undo")this.undoPt--;
         break;
-case "nomal":    ;//通常のデータ入力
+case "nomal":   ;//通常のデータ入力
+case "cut":     ;
 if(datastream instanceof Xps){
     this.selectCell("1_0");//
 }else{
 //一行入力の際のみ処理後のスピン操作で次の入力位置へ移動できるポジションへ
+//( = マクロ展開時に画面処理を行う)
   if(putResult){
-//    alert(putResult[0]+":"+add(putResult[0][1],[0,-(this.spinValue-1)]).join("_"));
-//    this.selectCell(add(putResult[0][1],[0,-(this.spinValue-1)]).join("_"));
+if(dbg){
+    dbgPut(putResult[0]+":"+add(putResult[0][1],[0,-(this.spinValue-1)]).join("_"));
+}
+    if(xUI.footMark){ this.selection(putResult[0][1]) };
     this.selection();
     this.selectCell(putResult[0][1].join("_"));//操作なしに最終アドレスへ
-//
   }
 }
 case "move":
@@ -2884,6 +2899,12 @@ if(dbg){
         this.undoStack[this.undoPt]=UNDO;
         if (this.undoStack.length>(this.undoPt+1))
             this.undoStack.length=(this.undoPt+1);
+        //if(xUI.footMark){}
+        if(false){
+            this.selectCell([TrackStartAddress,FrameStartAddress]);
+            this.selection ([TrackEndAddress,FrameEndAddress]);
+            this.selection ();
+        }
 //        this.selectCell([TrackStartAddress,FrameStartAddress]);
 };
         this.inputFlag="nomal";
@@ -2894,7 +2915,7 @@ if(dbg){
     if(this.eXMode==1){this.eXMode=0;this.eXCode=0;};//予備モード解除
   }
 // 処理終了アドレスを配列で返す(使わなくなったような気がする)
-return lastAddress;
+return [[TrackStartAddress,FrameStartAddress],lastAddress];
 };
 /*xUI.syncSheetCell(startAddress,endAddress,isReference)
     指定されたレンジのシートセルの内容を更新
@@ -4405,7 +4426,7 @@ xUI.resetSheet=function(editXps,referenceXps){
 //        if (reWriteREF)
             xUI.syncSheetCell(0,0,true);//referenceシートグラフィック置換
 //フットスタンプの再表示
-//        if(this.footMark){this.footstampPaint()};
+        if(xUI.footMark){xUI.footstampPaint()};
 //  カーソル位置復帰（範囲外は自動でまるめる）
         xUI.selectCell(restorePoint);
         xUI.selection(restoreSelection);
@@ -4641,10 +4662,10 @@ if(false){
     nas.addCssRule("table.sheet","background-color:"+SheetBaseColor,"screen")
 
 //編集不可領域の背景色
-    SheetBlankColor    = nas.colorAry2Str(mul(nas.colorStr2Ary(SheetBaseColor),.95));
+//    SheetBlankColor    = nas.colorAry2Str(mul(nas.colorStr2Ary(SheetBaseColor),.95));
 
 //シート境界色
-    xUI.sheetBorderColor    =nas.colorAry2Str(mul(nas.colorStr2Ary(SheetBaseColor),.75));
+//    xUI.sheetborderColor    =nas.colorAry2Str(mul(nas.colorStr2Ary(SheetBaseColor),.75));
 
 //フットスタンプの色    FootStampColor    =document.getElementById("bgStamp").style.backgroundColor;
 
@@ -4791,15 +4812,15 @@ if(startupXPS.length > 0){
     シートのカラーデータを構築
 */
     console.log(SheetLooks);
-    xUI.setSheetLook(SheetLooks);
+    xUI.setSheetLook(SheetLooks);//タイムシートルック初期化
     xUI.resetSheet();
     nas_Rmp_Init();
 /* ================================css設定
 //================================================================================================================================ シートカラーcss設定2
 //    シート境界色設定
     $('table').css('border-color',SheetBaseColor);
-    $('th').css('border-color',xUI.sheetBorderColor);
-    $('td').css('border-color',xUI.sheetBorderColor);
+    $('th').css('border-color',xUI.sheetborderColor);
+    $('td').css('border-color',xUI.sheetborderColor);
 //    識別用ラベル背景色設定
 //    nas.addCssRule("th.stilllabel" ,"background-color:"+xUI.stillColor ,"screen");
 //    nas.addCssRule("th.sfxlabel"   ,"background-color:"+xUI.sfxColor   ,"screen");
@@ -5822,8 +5843,8 @@ case	"lbl":	;
 //隠れる分のヘッダと固定ヘッダをを書き換え
 	for(r=xUI.dialogSpan-1 ;r<XPS.xpsTracks.length;r++){
 if(XPS.xpsTracks[r].id.match(/^\s*$/)){
-		document.getElementById("L"+r.toString()+"_0_0").innerHTML='<span style="color:'+xUI.sheetBorderColor+'";>'+nas.Zf(r+1,2)+'</span>';
-		document.getElementById("L"+r.toString()+"_-1_0").innerHTML='<span style="color:'+xUI.sheetBorderColor+'";>'+nas.Zf(r+1,2)+'</span>';
+		document.getElementById("L"+r.toString()+"_0_0").innerHTML='<span style="color:'+xUI.sheetborderColor+'";>'+nas.Zf(r+1,2)+'</span>';
+		document.getElementById("L"+r.toString()+"_-1_0").innerHTML='<span style="color:'+xUI.sheetborderColor+'";>'+nas.Zf(r+1,2)+'</span>';
 }else{
 		document.getElementById("L"+r.toString()+"_0_0").innerHTML=XPS.xpsTracks[r].id;
 		document.getElementById("L"+r.toString()+"_-1_0").innerHTML=XPS.xpsTracks[r].id;
@@ -5835,7 +5856,7 @@ if(XPS.xpsTracks[r].id.match(/^\s*$/)){
 	for(Cm=0;Cm<xUI.PageCols;Cm++){
 //		alert("L"+r.toString()+"_"+Pg+"+"+Cm);
 if(XPS.xpsTracks[r].id.match(/^\s*$/)){
-		document.getElementById("L"+r.toString()+"_"+Pg+"_"+Cm).innerHTML='<span style="color:'+xUI.sheetBorderColor+'";>'+nas.Zf(r+1,2)+'</span>';
+		document.getElementById("L"+r.toString()+"_"+Pg+"_"+Cm).innerHTML='<span style="color:'+xUI.sheetborderColor+'";>'+nas.Zf(r+1,2)+'</span>';
 }else{
 		document.getElementById("L"+r.toString()+"_"+Pg+"_"+Cm).innerHTML=XPS.xpsTracks[r].id;
 
