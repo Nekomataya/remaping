@@ -621,7 +621,7 @@ XpsTimelineTrack.prototype.countSectionLength=function(startFrame){
  *
  * トラック・セクションオブジェクトのプロパティとなるセクショントレーラー配列
  * セクションオブジェクトは、内包サブセクションを持つことができる
- * @param myParent
+ * @param myParent as nas.XpsTimelineTrack
  */
 function XpsTimelineSectionCollection(myParent) {
     this.parent = myParent;
@@ -633,7 +633,7 @@ XpsTimelineSectionCollection.prototype = Array.prototype;
  セクション追加の際の引数はタイムラインに必要な値オブジェクト
  値オブジェクトは、直接AnimationValueを持つオブジェクト又はxMapElementとして与える
  値のみが与えられた場合はエレメントなしで登録する。
- 中間値補間セクション    を初期化する場合 キーワード"interpolation"を引数として与える
+ 中間値補間セクションを初期化する場合 キーワード"interpolation"を引数として与える
  中間値補間サブセクションを初期化する場合指定されたValueを無視して新規にValueInterpolator Objectを作成して初期化する
  エレメント新規作成が必要な場合はあらかじめ事前にエレメント新規作成を行って引数とする
  * @param myValue
@@ -678,8 +678,160 @@ XpsTimelineSectionCollection.prototype.addSection = function (myValue) {
         }
         return myDuration;
     };
+/*  セクション編集メソッド
+ *      insertSection(id,newSection)
+ *  指定idの前方にセクションを挿入する後方のセクションは、継続時間を維持したままさらに後方へ再配置される
+ *  カットの時間範囲を越えたセクションは消去または後方をカットされる（配列データとして後方へ「ブロックインサート」してフレーム単位で削除　その後再パース）
 
+ *      removeSection(id)
+ *  指定されたidのセクションを消去、前後のセクションの値が同じ場合は結合　異なる場合は別のセクションとして残置（相当部分の配列要素を削除して前方へ詰める「ブロックデリート」のほうが良いかも…）
 
+ *      editSection(id,startOffset,duration)
+ *      manipulateSection(id,startOffset,duration)
+ *  指定idのセクションを指定の開始時間+継続時間で再配置する。
+ *  前後のセクションは以下のルールで自動的に再配置される
+
+    新規の開始位置は０フレームよりも小さくなることは許されない
+    新規の終了位置がカットの継続時間を超えることは許されない
+
+    開始位置が移動した場合　前方区間は可能な限り　editSection(前方区間id,前方既存startOffset,修正後の新規継続時間)　で処理される。
+    新規の開始位置が前方区間の開始時間よりも小さくなった場合は、前方区間が消失してさらに前方の区間を影響区間とする
+ 
+    終了位置が移動する場合　後方区間は可能な限り　editSection(後方区間id,新規後方startOffset,既存の終了位置から導かれる新規継続時間)　で処理される。
+    新規の終了位置が後方区間の終了時間よりも大きくなった場合は、後方区間が消失してさらに後方の区間を影響区間とする 
+
+    値の再配置は値の種別ごとに処理が異なるので要注意
+
+戻り値は、セクションを加工したトラック全体のストリーム（xUI.put Xps.putメソッドの引数として使用可能なストリーム）
++ フォーカス位置のオフセット(0~)
+例：　['1,,,3,,,4,,,7,,,8,,,9,,,0,,',0]
+     */
+XpsTimelineSectionCollection.prototype.manipulateSection = function (id,headOffset,tailOffset) {
+console.log([id,headOffset,tailOffset]);
+    var targetSection = this[id];
+    var myResult=[];//Collectionの編集を行わず、直接トラックのセル値を組み上げる=区間のメソッドは最低限で使う
+    var resultCount=[];
+    var allowInvert = false;//現在ダイアログのみなので反転は不用
+    if(allowInvert){
+        var startOffset = headOffset;
+        var endOffset = tailOffset;
+    }else{
+        var startOffset = (tailOffset < 0)? headOffset + tailOffset  : headOffset;
+        var endOffset = Math.abs(tailOffset);
+    }
+console.log([id,startOffset,endOffset])
+/*==========================*/
+//区間外に新規 (空白)区間挿入
+    if((id==0)&&(startOffset>0)){
+        console.log('add new '+(startOffset)+' blank frames');
+        myResult=new Array(startOffset);
+        resultCount.push(startOffset);
+    }
+        var topMargin = 0;
+        var topFlow   = 0;
+        var tailFlow  = 0;
+//ターゲット前方区間を処理
+    for (var ix=0;ix<id;ix++){
+console.log('前方区間処理 : '+ix)
+        var sectionHead = this[ix].startOffset();
+        var sectionTail = this[ix].startOffset() + this[ix].duration - 1;
+        if((sectionHead > startOffset)&&(sectionTail >= startOffset)){
+        //残存範囲外全消去
+            continue;
+        }else if((ix==(id-1))&&(sectionHead < startOffset)){
+        //前方隣接ID && ヘッドノードがスタートオフセットよりも小さい 
+//        if( (sectionHead < startOffset)&&(sectionTail >= startOffset)){}
+            var duration =　startOffset-this[ix].startOffset();
+            var newContent = (this[ix].value)? this[ix].value.toString(duration).split(','):new Array(duration);
+        }else if(sectionTail < startOffset){
+            var duration =　this[ix].duration;
+            var newContent = this[ix].toString(true).split(',');            
+        }else{
+            continue;
+        }
+    //Flowはダイアログのみの処理なので要注意
+        if(tailFlow) newContent.splice(0,tailFlow);//先のセクションのフロー分だけ先頭からカット
+        if(newContent.length > duration){
+            myResult.splice(-(newContent.length-duration-1));//リザルトの末尾カット
+            tailFlow=1;        
+        }else{
+            tailFlow=0;
+        };
+//console.log(newContent.length);
+//console.log(newContent.join());
+//console.log('old Length : '+myResult.length);
+        myResult = myResult.concat(newContent);
+        resultCount.push(duration);
+//console.log('new Length : '+myResult.length)
+    }
+/*
+    ターゲットセクションの値種別が範囲外記述を含む場合
+    かつ
+    ターゲット前方区間の合計継続時間がターゲットセクションの前方範囲外記述(topFlow)の数を下回る場合
+     (* この時点で　myResult.length=0)
+     前方範囲外記述分のオフセットが必要になる
+*/
+//ターゲット区間の処理
+console.log('ターゲット区間処理')
+//console.log('current Length : '+myResult.length)
+        var newContent = (targetSection.value)?
+            targetSection.value.toString(endOffset+1).split(','):new Array(endOffset+1);
+        topMargin = myResult.length;
+        if(tailFlow) newContent.splice(0,tailFlow);
+        if(newContent.length > endOffset+1){
+            topFlow = (newContent.length-endOffset-2);
+            myResult.splice(-1*(topFlow));
+            tailFlow=1;        
+        }else{
+            tailFlow=0;
+        };
+
+//console.log(newContent.length);
+//console.log(newContent);
+//console.log('old Length : '+myResult.length)
+        myResult=myResult.concat(newContent);
+        resultCount.push(targetSection.duration);
+//console.log('new Length : '+myResult.length)
+//ターゲット後方区間を処理
+    for (var ix=id+1;ix<this.length;ix++){
+console.log('後方区間処理 : '+(ix));//処理区間の情報取得
+        var sectionHead = this[ix].startOffset();
+        var sectionTail = this[ix].startOffset() + this[ix].duration -1;
+        var outPoint = startOffset+endOffset;
+        if((sectionHead < outPoint)&&(sectionTail <= outPoint)){
+        //全消去
+            continue 
+        }else if((ix==(id+1)) && (sectionTail > outPoint )){
+//            var duration = (this[ix].startOffset()+this[ix].duration+1)-(startOffset+endOffset);
+            var duration = sectionTail-outPoint-1;
+            var newContent = (this[ix].value)? this[ix].value.toString(duration).split(','):new Array(duration);
+        }else if(sectionHead > outPoint){
+            var duration =　this[ix].duration;
+            var newContent = this[ix].toString(true).split(',');
+        }else{
+            continue;
+        }
+        if(tailFlow) newContent.slice(0,tailFlow);
+        if(newContent.length > duration){
+            myResult.splice(-(newContent.length-duration-1));
+            tailFlow=1;        
+        }else{
+            tailFlow=0;
+        };
+//console.log(newContent.length);
+//console.log(newContent);
+        myResult=myResult.concat(newContent);
+        resultCount.push(duration);
+//console.log('new Length : '+myResult.length)
+    }
+//console.log(myResult.length);
+//console.log(myResult);
+    if ((topFlow)&&(topMargin < topFlow)){
+        return [myResult.join(),topFlow-topMargin];
+    }else{
+        return [myResult.join(),0];
+    }
+}
 /**
  * @constructor XpsTimelineSection
  *
@@ -768,12 +920,22 @@ function XpsTimelineSection(myParent, myDuration, isInterp) {
     this.value;//valueは this.mapElement.contentへの参照又はundefined
     this.subSections =(isInterp)? new XpsTimelineSectionCollection(this):undefined;
         }
-    this.toString = function () {
-        return this.duration + ":" + this.value;
+    this.toString = function (opt) {
+        if(opt){
+            if(this.value){
+                return this.value.toString(this.duration);
+                // **値によって戻り値がdurationと異なる場合があるので要注意
+            　}else{
+                return new Array(this.duration).join();
+            }
+        }else{
+            return this.duration + ":" + this.value;
+        }
     }
 }
 XpsTimelineSection.prototype.id = _getSectionId;
 XpsTimelineSection.prototype.startOffset = _getSectionStartOffset;
+
 
 /**
  * @constructor XpsTimelineSubSection
@@ -2816,7 +2978,7 @@ _parseSoundTrack =function(){
             continue;
         }
         //セクションセパレータ　少ない
-        if(this[fix].match(/^[-_]{3,4}$/)){
+        if(this[fix].match(/^[-_~^〜＿ー￣]{3,4}$/)){
             if(currentSection.value){
                 currentSection.duration --;//加算した継続長をキャンセル
                 currentSection.value.contentText=currentSound.toString();//先の有値セクションをフラッシュして

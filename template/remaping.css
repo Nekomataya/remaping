@@ -692,6 +692,12 @@ span.subControl_TC {
 	width:64px;
 	left:64px;
 }
+span.subControl_XTC {
+	position:relative;
+	height:24px;
+	width:64px;
+	left:64px;
+}
 button.subControl {
 	width:21px;
 	height:12px;

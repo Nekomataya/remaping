@@ -108,7 +108,9 @@
 
 
 <!-- 固定コントロール fixedHeaderは、UIのマージン等を取得するためのエレメント -->
-	<div id="fixedHeader">
+	<div id="fixedHeader"
+		onMouseOver=xUI.Mouse(event);
+	>
 
 <!-- dropdown menu for browser ブラウザ用ドロップダウンメニュー　-->
 <div id=pMenu>
@@ -2938,27 +2940,22 @@ onDblClick='if (! document.getElementById("single").checked) chkValue(this.id)'
 <hr>
 <!--	ラベル付き音響編集	-->
 <div class=optionPanel id=optionPanelSnd>
-<span id=soundPnl class=SoundPanel>音声編集</span>
-<hr>
+<!-- <span id=soundPnl class=SoundPanel>音声編集</span>
+<hr>-->
 <div><form>
-name:
-<input name=soundLabelSelector id=saundLabelSelector list='nameLabels'>
-<datalist id=nameLabels>
- <option value=桃太郎>桃太郎
- <option value=おじいさん>おじいさん
- <option value=おばあさん>おばあさん
- <option value=いぬ>いぬ
- <option value=さる>さる
- <option value=きじ>きじ
- <option value=おに>おに
-</datalist>
-kind:
-<input name=soundPropSelector id=saundPropSelector list='propLabels'>
-<datalist id=propLabels>
- <option value=台詞>台詞
- <option value=SE>SE
- <option value=音楽>音楽
-</datalist>
+label:
+<select id=saundLabelSelector>
+	<option value=0>name 
+	<option value=1>name1
+	<option value=2>name2
+</select>
+attributes:
+<input type=text name=soundProps id=saundProps>
+<select id=saundPropSelector>
+	<option>prop0
+	<option>prop1
+	<option>prop2
+</select>
 <!-- 
 パネルの初期化が必要
 呼び出し時点のフレーム（ヘッド位置）で最寄りの音声トラックへ移動
@@ -2980,43 +2977,86 @@ kind:
 <hr>
 
 </div>
-content: 	duration : <input type=button value="○" style="width:20px"
-	onClick='return false;'
->
-<input type=text
-    id=soundDuration value="00:00:00" style="width:96px"
-><input type=button
-    id=soundPnlIncrFrame value="▲" style="width:32px"
-	onClick='return false;'
-><input type=button
-    id=soundPnlDecrFrame value="▼" style="width:32px"
-	onClick='return false;'
->
-<br><textarea name=SndBody id=sndBody style="width:80%;height:72px"
->(すみません　これは試験中のパネルなので機能していません 2015/04/25)</textarea><br>
+content:
+<br><textarea name=SndBody id=sndBody style="width:100%;height:128px"
+>たぬき(off)「ポンポコリン！<SE>」</textarea><br>
 	IN : <input type=button value="○" style="width:20px"
 	onClick='return false;'
 >
 <input type=test id=soundInPoint value="00:00:00" style="width:96px"
-><input type=button
-    id=sountIPinc
-    value="▲" style="width:20px"
-	onClick='return false;'
-><input type=button
-    id=soundIPdec value="▼" style="width:20px"
-	onClick='return false;'
->
+><span class='subControl_XTC'><button
+    class='subControl subControl-incrS subControl-left-top'
+    onClick='document.getElementById("timeInput").value=nas.Frm2FCT(nas.FCT2Frm(document.getElementById("timeInput").value)+24,3);document.getElementById("timeInput").onchange();'> 
+</button><button
+    class='subControl subControl-decrS subControl-left-bottom'
+    onclick='document.getElementById("timeInput").value=nas.Frm2FCT(nas.FCT2Frm(document.getElementById("timeInput").value)-24,3);document.getElementById("timeInput").onchange();'>
+</button><button
+    class='subControl subControl-incr6 subControl-mid-top'
+    onclick='document.getElementById("timeInput").value=nas.Frm2FCT(nas.FCT2Frm(document.getElementById("timeInput").value)+6,3);document.getElementById("timeInput").onchange();'> 
+</button><button
+    class='subControl subControl-decr6 subControl-mid-bottom'
+    onclick='document.getElementById("timeInput").value=nas.Frm2FCT(nas.FCT2Frm(document.getElementById("timeInput").value)-6,3);document.getElementById("timeInput").onchange();'>
+</button><button
+    class='subControl subControl-incr subControl-right-top'
+    onclick='document.getElementById("timeInput").value=nas.Frm2FCT(nas.FCT2Frm(document.getElementById("timeInput").value)+1,3);document.getElementById("timeInput").onchange();'>
+</button><button
+    class='subControl subControl-decr subControl-right-bottom'
+    onclick='document.getElementById("timeInput").value=nas.Frm2FCT(nas.FCT2Frm(document.getElementById("timeInput").value)-1,3);document.getElementById("timeInput").onchange();'>
+</button>
+</span>
+
 	OUT : <input type=button value="○" style="width:20px"
 	onClick='return false;'
 >
 <input type=test id=soundOutPoint value="00:00:00" style="width:96px"
-><input type=button
-    id=soundOPinc value="▲" style="width:20px"
+><span class='subControl_XTC'><button
+    class='subControl subControl-incrS subControl-left-top'
+    onClick='document.getElementById("timeInput").value=nas.Frm2FCT(nas.FCT2Frm(document.getElementById("timeInput").value)+24,3);document.getElementById("timeInput").onchange();'> 
+</button><button
+    class='subControl subControl-decrS subControl-left-bottom'
+    onclick='document.getElementById("timeInput").value=nas.Frm2FCT(nas.FCT2Frm(document.getElementById("timeInput").value)-24,3);document.getElementById("timeInput").onchange();'>
+</button><button
+    class='subControl subControl-incr6 subControl-mid-top'
+    onclick='document.getElementById("timeInput").value=nas.Frm2FCT(nas.FCT2Frm(document.getElementById("timeInput").value)+6,3);document.getElementById("timeInput").onchange();'> 
+</button><button
+    class='subControl subControl-decr6 subControl-mid-bottom'
+    onclick='document.getElementById("timeInput").value=nas.Frm2FCT(nas.FCT2Frm(document.getElementById("timeInput").value)-6,3);document.getElementById("timeInput").onchange();'>
+</button><button
+    class='subControl subControl-incr subControl-right-top'
+    onclick='document.getElementById("timeInput").value=nas.Frm2FCT(nas.FCT2Frm(document.getElementById("timeInput").value)+1,3);document.getElementById("timeInput").onchange();'>
+</button><button
+    class='subControl subControl-decr subControl-right-bottom'
+    onclick='document.getElementById("timeInput").value=nas.Frm2FCT(nas.FCT2Frm(document.getElementById("timeInput").value)-1,3);document.getElementById("timeInput").onchange();'>
+</button>
+</span>
+
+ 	duration : <input type=button value="○" style="width:20px"
 	onClick='return false;'
-><input type=button
-    id=soundOPdec value="▼" style="width:20px"
-	onClick='return false;'
-><br>
+>
+<input type=text
+    id=soundDuration value="00:00:00" style="width:96px"
+><span class='subControl_XTC'><button
+    class='subControl subControl-incrS subControl-left-top'
+    onClick='document.getElementById("timeInput").value=nas.Frm2FCT(nas.FCT2Frm(document.getElementById("timeInput").value)+24,3);document.getElementById("timeInput").onchange();'> 
+</button><button
+    class='subControl subControl-decrS subControl-left-bottom'
+    onclick='document.getElementById("timeInput").value=nas.Frm2FCT(nas.FCT2Frm(document.getElementById("timeInput").value)-24,3);document.getElementById("timeInput").onchange();'>
+</button><button
+    class='subControl subControl-incr6 subControl-mid-top'
+    onclick='document.getElementById("timeInput").value=nas.Frm2FCT(nas.FCT2Frm(document.getElementById("timeInput").value)+6,3);document.getElementById("timeInput").onchange();'> 
+</button><button
+    class='subControl subControl-decr6 subControl-mid-bottom'
+    onclick='document.getElementById("timeInput").value=nas.Frm2FCT(nas.FCT2Frm(document.getElementById("timeInput").value)-6,3);document.getElementById("timeInput").onchange();'>
+</button><button
+    class='subControl subControl-incr subControl-right-top'
+    onclick='document.getElementById("timeInput").value=nas.Frm2FCT(nas.FCT2Frm(document.getElementById("timeInput").value)+1,3);document.getElementById("timeInput").onchange();'>
+</button><button
+    class='subControl subControl-decr subControl-right-bottom'
+    onclick='document.getElementById("timeInput").value=nas.Frm2FCT(nas.FCT2Frm(document.getElementById("timeInput").value)-1,3);document.getElementById("timeInput").onchange();'>
+</button>
+</span>
+
+<br>
 <input type=button
     id=soundPnlGet value="↑：取込" style="width:10%"
 	onClick="document.getElementById('loadShortcut').value='body';document.getElementById('myCurrentFile').click();"
@@ -3105,10 +3145,12 @@ content: 	duration : <input type=button value="○" style="width:20px"
 
 <!--   以降シート本体     -->
     <div id=sheet_body
-	onMouseDown =" return xUI.Mouse(event)"
-	onMouseUp =" return xUI.Mouse(event)"
-	onDblClick =" return xUI.Mouse(event)"
-	onMouseOver =" xUI.Mouse(event)"
+	onMouseDown = " return xUI.Mouse(event)"
+	onMouseUp   = " return xUI.Mouse(event)"
+	onClick  	= " return xUI.Mouse(event)"
+	onDblClick  = " return xUI.Mouse(event)"
+	onMouseOver = " xUI.Mouse(event)"
+	onMouseOut  = " xUI.Mouse(event)"
 >
       <div align=center>
 <br><br><br><br><br><br><br><br>ただいま準備中…ちょっぴりお待ちください<br>

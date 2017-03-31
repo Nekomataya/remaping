@@ -1313,6 +1313,7 @@ if(dbg) console.log('get episode details:');
 if(dbg) console.log(result);
 //オブジェクト入れ替えでなくデータの追加アップデートに変更
 //内容は等価だがAPIの変更時は注意
+//この時点でカットの総数が取得されるのでカット一覧詳細取得時総数を参照して分割取得
                 myEpisode.cuts = result.cuts;
                 myEpisode.created_at = result.created_at;
                 myEpisode.updated_at = result.updated_at;
@@ -1335,12 +1336,19 @@ if(dbg) console.log(result);
     エピソード毎にカットリストを再取得
     エピソード詳細の内部情報にコンバート
     カット一覧にdescriptionを出してもらう
-引数    episode_token
+    
+引数
+    episode_token   ターゲットの話数キー
+    page_id         リストのページID
+    par_pg          ページごとのエントリ数
  */
 NetworkRepository.prototype.getSCi = function (callback,callback2,epToken) {
+    
     var myEpisode = this.getNodeElementByToken(epToken);
     if(! myEpisode) return false;
-    var targetURL = serviceAgent.currentRepository.url+ '/api/v2/cuts.json?episode_token='+epToken ;
+    var targetURL = serviceAgent.currentRepository.url+ '/api/v2/cuts.json?episode_token='+epToken;
+//    　+'&page_no='+'1'+'&per_page='+'5';
+    　console.log(targetURL);
 	            $.ajax({
                     url: targetURL,
                     type: 'GET',

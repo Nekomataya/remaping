@@ -589,6 +589,7 @@ name;    String    ラベルとなる名称    "たぬきさん"
 bodyText;    String    台詞本体のテキスト　"ぽん！ぽこ！りん！"
 attributes;    Array    オブジェクト属性配列 ["(off)"] 
 comments;    Array    ノートコメントコレクション配列 [[3,"(SE:ポン)"],[6,"<BGM:開始>"],[9,"[光る！]"]]
+コメントのインデックスはbodyText内の挿入点　シート展開時は、bodyText.length+comments.length のフレームを再配置する
 */
 nas.AnimationSound=function(myContent){
 //    this.source;
@@ -638,21 +639,56 @@ nas.AnimationSound.prototype.parseContent=function(){
 }
 /*
 プロパティを組み上げてシナリオ型式のテキストを返す
+
+引数に正の数値が与えられた場合は、XPS上への展開配列で戻す
+＊各Valueの標準形式
 */
-nas.AnimationSound.prototype.toString=function(){
+nas.AnimationSound.prototype.toString=function(counts){
+  if(counts){
+    //durationCountが与えられることが前提で配列を組む
+    //ダイアログ展開時に限り、与えられた引数に対して　前方側にname,attributes+開始セパレータ　後方側に終了セパレータ分のフレームが追加される
+    var myResult=[];
+    myResult.push(this.name);
+    for(var aid=0;aid<this.attributes.length;aid++){myResult.push(this.attributes[aid])};
+    myResult.push('----');
+    var entryCount = this.bodyText.length+this.comments.length;//テキスト文字数とコメント数を加算
+    var dataCount = 0;//データカウントを０で初期化
+    var textIndex = 0;//テクストインデックス
+    var commentIndex = 0;//コメントインデックス
+    var dataStep = counts/entryCount ;//データステップ
+    for(var cnt = 0; cnt < counts; cnt ++){
+        var myIndex = (entryCount >= counts) ? cnt:Math.floor(cnt/dataStep);//配置Index
+        //挿入点判定
+        if(dataCount==myIndex){
+            if((this.comments[commentIndex])&&(this.comments[commentIndex][0]==textIndex)){
+                myResult.push(this.comments[commentIndex][1]);
+                commentIndex++;
+            }else{
+                myResult.push(this.bodyText.charAt(textIndex));
+                textIndex++;
+            }
+            dataCount++;
+        }else{
+            myResult.push('');
+        }
+    } 
+    myResult.push('----');
+    return myResult.join();
+  }else{
     var myResult=this.name;
     myResult+=this.attributes.join("");
     myResult+="「";
     var startPt=0;
     if(this.comments.length){var endPt=this.comments[0][0]}else{var endPt=0};
-for(var cix=0;cix<this.comments.length;cix++){
-    myResult+=this.bodyText.slice(startPt,endPt)+this.comments[cix][1];
-    startPt=endPt;
-    if(cix<this.comments.length-1){endPt=this.comments[cix+1][0]};
-}
-if(startPt<this.bodyText.length){myResult+=this.bodyText.slice(startPt)};
+      for(var cix=0;cix<this.comments.length;cix++){
+        myResult+=this.bodyText.slice(startPt,endPt)+this.comments[cix][1];
+        startPt=endPt;
+        if(cix<this.comments.length-1){endPt=this.comments[cix+1][0]};
+      }
+    if(startPt<this.bodyText.length){myResult+=this.bodyText.slice(startPt)};
     myResult+="」";
- return myResult;
+    return myResult;
+  }
 }
 //    test
 //A=new  nas.AnimationSound("たぬきさん(off)「ぽん！(SE:ポン)ぽこ！<BGM:開始>りん！[光る！]とうりゃぁー！！」");

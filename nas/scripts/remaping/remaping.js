@@ -234,13 +234,23 @@ xUI.init    =function(editXps,referenceXps){
     this.eddt   ="";        //編集バッファ
     this.edchg  =false;     //編集フラグ
     this.edmode=0;          //編集操作モード　0:通常入力　1:ブロック移動　2:区間編集
-    this.floatSourceAddress = [0,0];
-    this.floatDestAddress   = [0,0];
-    this.spinBackup         = this.spin();//スピン量をバックアップ
-
+    this.floatSourceAddress = [0,0];//選択範囲及び区間移動元アドレス
+    this.floatDestAddress   = [0,0];//同移動先アドレス
+    this.selectBackup       ;//カーソル位置バックアップ
+    this.selectionBackup    ;//選択範囲バックアップ
+    this.spinBackup         ;//スピン量をバックアップ
+//区間編集バッファ
+    this.floatTrack         ;//区間編集対象トラック
+    this.floatSectionId     ;//編集対象セクションのID（オブジェクトそのものだと変動するのでIDのみ）
+    this.floatTrackBackup   ;//区間編集トラックバックアップ（加工参照用）
+    this.floatSection       ;//編集ターゲット区間
+    this.floatUpdateCount   ;//フロート編集中の更新カウント
+//セクション操作変数
+    this.sectionManipulateOffset = ['tail',0];//区間編集ハンドルオフセット
+    
 //    アクセス頻度の高いDOMオブジェクトの参照保持用プロパティ
-    this["data_well"]       =document.getElementById("data_well");//データウェル
-    this["snd_body"]        =document.getElementById("snd_body");//音声編集バッファ
+    this["data_well"]       = document.getElementById("data_well");//データウェル
+    this["snd_body"]        = document.getElementById("snd_body");//音声編集バッファ
 
 
 ///////////
@@ -330,10 +340,13 @@ xUI.setSheetLook = function(sheetLooks){
         this.inputModeColor.NORMAL  = nas.colorAry2Str(div( add (nas.colorStr2Ary(sheetLooks.SelectedColor),nas.colorStr2Ary(this.sheetbaseColor)),2));                      //  ノーマル色
         this.inputModeColor.EXTEND  = nas.colorAry2Str(div( add (nas.colorStr2Ary(sheetLooks.RapidModeColor),nas.colorStr2Ary(this.sheetbaseColor)),2));                    //  ラピッド入力基本色
         this.inputModeColor.FLOAT   = nas.colorAry2Str(div( add (nas.colorStr2Ary(sheetLooks.FloatModeColor),nas.colorStr2Ary(this.sheetbaseColor)),2));                    //  ブロック移動基本色
-        this.inputModeColor.SECTION = nas.colorAry2Str(div( add (nas.colorStr2Ary(sheetLooks.SectionModeColor),nas.colorStr2Ary(this.sheetbaseColor)),2));                  //  範囲編集中の色
+        this.inputModeColor.SECTION = nas.colorAry2Str(mul( add (nas.colorStr2Ary(sheetLooks.SectionModeColor),nas.colorStr2Ary(this.sheetbaseColor)),.5));                  //  範囲編集中の色
+        this.inputModeColor.SECTIONtail = nas.colorAry2Str(mul( add (nas.colorStr2Ary(sheetLooks.SectionModeColor),nas.colorStr2Ary(this.sheetbaseColor)),.45));                  //  範囲編集中の色
+        this.inputModeColor.SECTIONselection = nas.colorAry2Str( mul( add (nas.colorStr2Ary(sheetLooks.SectionModeColor),nas.colorStr2Ary(this.sheetbaseColor)),0.5));                  //  範囲編集中の色
 
     this.selectedColor    = this.inputModeColor.NORMAL;                                     //選択セルの背景色
     this.selectionColor    = sheetLooks.SelectionColor;                                     //選択領域の背景色
+    this.selectionColorTail    = sheetLooks.SelectionColor;                                     //選択領域末尾背景色(sectionTail)デフォルトは同色
     this.editingColor       = sheetLooks.EditingColor;                                      //セル編集中のインジケータ
     this.selectingColor      = sheetLooks.SelectingColor;                                   //セル選択中のインジケータ
 //タイムライン・ラベル識別カラ－
@@ -647,7 +660,7 @@ xUI.setUImode = function (myMode){
 /*    xUI.edChg(status boolean)
     セル編集フラグ 切り替えと同時に表示を調整
 */
-xUI.edChg=function(status){
+xUI.edChg=function(status,opt){
     if(this.viewOnly) return false;
     this.edchg=status;
     document.getElementById("edchg").style.backgroundColor=
@@ -663,45 +676,162 @@ xUI.edChg=function(status){
     リフレッシュつき
 */
 xUI.mdChg=function(myModes,opt){
-            //編集操作モード　0:通常入力　1:ブロック移動　2:区間編集
+            //編集操作モード　0:通常入力　1:ブロック移動　2:区間編集　3:領域フロート状態
     if(typeof myModes == "undefined") myModes="normal";
 //モード遷移にあわせてUIカラーの変更
     switch(myModes){
-    case "section":
-    case 2:
-    this.edmode=2;
-        this.selectedColor    =this.inputModeColor.SECTION;        //選択セルの背景色
-        this.spinAreaColor    =this.inputModeColor.SECTIONspin;    //非選択スピン背景色
-        this.spinAreaColorSelect    =this.inputModeColor.SECTIONspinselected;    //選択スピン背景色
-        this.selectionColor    =this.inputModeColor.SECTIONselection;    //選択領域の背景色
-    break;
-    case "block":    //フロートモードに遷移
-    case "float":    //前モードがsectionだった場合は編集を解決
-    case 1:        //前モードがノーマルだった場合はNOP
-      if(this.emode==2){}
-      this.edmode=1;
-      this.spinBackup=this.spin();this.spin(0);//スピン量をバックアップしてクリア
+    case "float":
+    case "section-float":
+    case 3:
+//セクション編集時のフローティングモード
+// emode==2以外ではこの状態に入れない
+    if((this.edmode==2)&&(! this.viewOnly)){
+       this.edmode=3;
+       console.log(this.edmode);
       this.floatSourceAddress=this.Select.slice();    //移動ソースアドレスを退避
         this.selectedColor    =this.inputModeColor.FLOAT;    //選択セルの背景色
         this.spinAreaColor    =this.inputModeColor.FLOATspin;    //非選択スピン背景色
         this.spinAreaColorSelect    =this.inputModeColor.FLOATspinselected;    //選択スピン背景色
         this.selectionColor    =this.inputModeColor.FLOATselection;    //選択領域の背景色
+        this.selectionColorTail    =this.inputModeColor.FLOAT;    //
+    };
+    break;
+    case "section":
+    case 2:
+/*
+ *  モード'normal'かつトラックのダブルクリックでセクション編集モードに入る　抜けるには明示的にmdChg('normal')をコールする必要がある
+ *  現行でタイムライン種別トラップあり　ダイアログトラックのみ遷移可能
+  さらにダイアログトラックでは値のない区間は選択を抑制中
+*/
+//sectionManipulateOffsetは、ここでは初期化されない
+//if((this.XPS.xpsTracks[this.Select[0]].option.match(/dialog|effect|camera/))){}
+if((this.XPS.xpsTracks[this.Select[0]].option=='dialog')){
+  if(this.edmode<2){
+      if(this.spin() > 1){this.spinBackup=this.spin();this.spin(1);};//スピン量をバックアップしてクリア
+      this.selectBackup       = this.Select.concat();//カーソル位置バックアップ
+      this.selectionBackup    = this.Selection.concat();//選択範囲バックアップ
+      this.floatSourceAddress = this.Select.concat();    //移動元ソースアドレスを退避
+      
+      this.floatTrack       = this.XPS.xpsTracks[this.Select[0]];//編集破棄の際に復帰するためモード変更時のトラック全体を記録
+      this.floatTrackBackup = this.floatTrack.duplicate();      //編集確定時のためトラック全体をバッファにとる
+
+      this.floatSection     = this.floatTrackBackup.getSectionByFrame(this.Select[1]);
+      if((this.floatTrack.option=='dialog')&&(! this.floatSection.value)){
+    //操作対象セクションを選択状態にする
+      this.selectCell([
+	    this.Select[0],
+	    this.floatSection.startOffset()
+      ]);
+      this.selection([
+	    this.Select[0],
+	    this.floatSection.startOffset()+this.floatSection.duration-1
+      ]);
+
+        this.floatTrack         = null;
+        this.floatTrackBackup   = null;
+        this.floatSection       = null;
+        this.spin(this.spinBackup);
+        return false;
+      }
+      this.floatSectionId   = this.floatSection.id();
+      this.floatUpdateCount = 0;//フロート編集中の更新カウントをリセット
+
+    //操作対象セクションを選択状態にする
+      this.selectCell([
+	    this.Select[0],
+	    this.floatSection.startOffset()
+      ]);
+      this.selection([
+	    this.Select[0],
+	    this.floatSection.startOffset()+this.floatSection.duration-1
+      ]);
+  }
+      this.edmode=2;
+     
+      //未確定編集はxUI.put でなくxUI.XPS.putで更新する。
+      //範囲確定はここで行う？
+        this.selectedColor    =this.inputModeColor.SECTION;        //選択セルの背景色
+        this.spinAreaColor    =this.inputModeColor.SECTIONselection;    //非選択スピン背景色
+        this.spinAreaColorSelect    =this.inputModeColor.SECTIONselection;    //選択スピン背景色
+        this.selectionColor    =this.inputModeColor.SECTIONselection;    //選択領域の背景色
+        this.selectionColorTail    = this.inputModeColor.SECTIONtail;    //選択領域の末尾
+        this.Mouse.action=false;
+}
+    break;
+    case "block":    //ブロックフロートモードに遷移
+    case 1:        //前モードがノーマルだった場合のみ遷移可能
+    if(this.edmode==0){
+      this.edmode=1;
+      if(this.spin()){this.spinBackup=this.spin();this.spin(1);};//スピン量をバックアップしてクリア
+        this.floatSourceAddress  = this.Select.concat();    //移動ソースアドレスを退避
+        this.selectedColor       = this.inputModeColor.FLOAT;    //選択セルの背景色
+        this.spinAreaColor       = this.inputModeColor.FLOATspin;    //非選択スピン背景色
+        this.spinAreaColorSelect = this.inputModeColor.FLOATspinselected;    //選択スピン背景色
+        this.selectionColor      = this.inputModeColor.FLOATselection;    //選択領域の背景色
+        this.selectionColorTail  = this.inputModeColor.FLOATselection;    //選択領域の背景色
+    }
     break;
     case "normal":    //ノーマルモードに復帰
     case 0:        //前モードに従って終了処理をここで行う
     default :    //
-    if(this.edmode==2){
-        
-    }
-    if(this.edmode==1){
+    if(this.edmode>=2){
+        //区間編集モード確定または編集破棄処理
+/*
+console.log(this.floatSourceAddress);
+console.log(this.floatDestAddress);
+console.log(this.floatSectionId);
+console.log(this.floatSection);
+*/
+        if(true){
+        //  確定処理はリリース毎に実行される
+        /*
+        //現在のトラックのストリームを処理バッファにとる
+        var currentStream = this.floatTrack.join();
+        var backupStream  = this.floatTrackBackup.join();
+
+    var currentFrame=xUI.Select[1];
+    var currentSelection=xUI.Selection[1];
+    xUI.selectCell([xUI.Select[0],0]);//トラック冒頭へ移動
+    xUI.selection();
+    xUI.put(trackContents);
+    xUI.selectCell([xUI.Select[0],currentFrame]);
+    xUI.selection([xUI.Select[0],currentFrame+currentSelection]);
+
+        //一旦バックアップを書き戻して
+        xUI.XPS.put([xUI.Select[0],0],backupStream);
+//        xUI.syncSheetCell([xUI.Select[0],0],[xUI.Select[0],xUI.XPS.xpsTracks[0].duration]);
+        //改めてundo付きで処理
+        xUI.selectCell([xUI.Select[0],0]);
+        xUI.put(currentStream);
+console.log(currentStream);
+        */
+        this.floatTrack         = null;
+        this.floatTrackBackup   = null;
+        this.floatSection       = null;
+        this.floatSectionId     = null;
+        this.floatUpdateCount   = 0;
+        //  編集破棄はカウントした変更回数分のundoで行う
+        }
         this.edmode=0;
         this.selectedColor    =this.inputModeColor.NORMAL;        //選択セルの背景色
         this.spinAreaColor    =this.inputModeColor.NORMALspin;    //非選択スピン背景色
         this.spinAreaColorSelect=this.inputModeColor.NORMALspinselected;//選択スピン背景色
         this.selectionColor    =this.sheetLooks.SelectionColor;            //選択領域の背景色
+        this.selectionColorTail    =this.sheetLooks.SelectionColor;            //選択領域の背景色
+
+//        this.selectCell(this.floatSourceAddress);//ソース位置を復帰廃止
+//        this.selection(add(this.floatSourceAddress,this.selectionBackup));//選択範囲の復帰廃止
+        this.spin(this.spinBackup);//スピン量をバックアップから復帰
+    }else if(this.edmode==1){
+        this.edmode=0;
+        this.selectedColor    =this.inputModeColor.NORMAL;        //選択セルの背景色
+        this.spinAreaColor    =this.inputModeColor.NORMALspin;    //非選択スピン背景色
+        this.spinAreaColorSelect=this.inputModeColor.NORMALspinselected;//選択スピン背景色
+        this.selectionColor    =this.sheetLooks.SelectionColor;            //選択領域の背景色
+        this.selectionColorTail    =this.sheetLooks.SelectionColor;            //選択領域の背景色
 //if(dbg) dpgPut("select:"+this.floatSourceAddress+"\nmove:"+sub(this.floatDestAddress,this.floatSourceAddress));
 
-        this.selectCell(this.floatSourceAddress);//ソースに位置を復帰して
+        this.selectCell(this.floatSourceAddress);//ソース位置復帰
         this.move(sub(this.floatDestAddress,this.floatSourceAddress),opt);//ムーブコマンド発行
 
         this.spin(this.spinBackup);//スピン量をバックアップから復帰
@@ -711,12 +841,87 @@ xUI.mdChg=function(myModes,opt){
     this.selection(add(this.Select,this.Selection));
     return this.edmode;
 }
+/**
+    移動先セルを指定して区間選択範囲を更新する
+    セクションの内容を自動編集してUndoバッファを更新せずに画面を書き換える処理はここで行う
+    ここでの選択範囲はすべて編集中の仮範囲
+    確定後にバックアップの選択範囲と置き換えまたは編集破棄の際はバックアップに復帰
+    自動編集は常にバックアップ内容をベースに行う
+引数:
+    destination 移動先フレーム
+参照プロパティ:    
+    xUI.sectionManipulateOffset は[編集サブモード,選択中のセル（ヘッド）に対するオフセット]　ターゲットから計算する
+    
+ */
+xUI.sectionPreview=function(destination){
+    if((xUI.edmode<2)||(xUI.viewOnly)) return false;
+    if(typeof destination == 'undefined')   destination = this.Select[1];
+    var hotpoint    = xUI.Select[1]+xUI.sectionManipulateOffset[1];
+ //   this.sectionManipulateOffset[1]=hotpoint-this.Select[1];//オフセットがでる
+//    if(        Math.abs(xUI.sectionManipulateOffset[1]-((xUI.Selection[1]+xUI.Select[1])/2)) >        Math.abs(xUI.Selection[1]/2)    ) return 'overRange';//有効範囲外指定
+    switch(xUI.sectionManipulateOffset[0]){
+    case    0   :
+    case 'head' :
+//先頭指定　末尾固定で伸縮
+        var tail=xUI.getid('Selection');
+        xUI.selectCell([xUI.Select[0],destination-xUI.sectionManipulateOffset[1]]);
+        xUI.selection(tail);
+        break;
+    case    1   :
+    case 'body' :
+//移動 
+        xUI.selectCell([xUI.Select[0],destination-xUI.sectionManipulateOffset[1]]);
+        break;
+    case    2   :
+    case 'tail' :
+    default     :
+//末尾指定　先頭固定で伸縮 sectionManipulateOffsetを更新
+        var duration=xUI.Selection[1]+(destination-hotpoint);
+        xUI.selection(add(xUI.Select,[0,duration]));
+        xUI.sectionManipulateOffset[1]=xUI.Selection[1];
+    }
+    return true;
+}
 
+//test
+//xUI.mdChg(2);
+//xUI.sectionPreview(3,4);
+// 
+/*
+引数：　action
+    セクション操作の結果を実際の画面に反映させるメソッド
+    Xps.sctionManipulate()に対応するxUI側の処理
+    データ配置の際にトラック全体を書き直すので、カーソル位置を復帰させるためにundoStackに第４要素を積む
+    xUI.putメソッドを経由せずにこのルーチン内で完結させる.
+*/
+xUI.sectionUpdate=function(){
+     if(this.viewOnly) return false;
+    var trackContents = xUI.floatTrack.sections.manipulateSection(xUI.floatSectionId,xUI.Select[1],xUI.Selection[1]);
+//undo   保留の場合は以下のルーチンを使用
+/* undo保留ではなくユーザが各工程を辿れるように１操作毎に書換を行い、一括undoのために操作回数を記録する。*/
+//    xUI.XPS.put([xUI.Select[0],0],trackContents[0]);
+//    xUI.syncSheetCell([xUI.Select[0],0],[xUI.Select[0],xUI.XPS.xpsTracks[0].duration]);
+
+    var currentFrame     = xUI.Select[1];
+    var currentSelection = xUI.Selection[1];
+    var currentScroll    = xUI.autoScroll;
+    xUI.autoScroll = false;
+      xUI.selectCell([xUI.Select[0],0]);
+        xUI.selection();
+          xUI.put(trackContents[0]);
+//対象トラックのセクションが（ダイアログ等）すべての要素を内包しない場合セレクション位置を更新する必要がある
+//セクションの先頭を取得するためにパースするか
+        xUI.floatUpdateCount ++;//increment
+        xUI.selectCell([xUI.Select[0],currentFrame+trackContents[1]]);
+      xUI.selection([xUI.Select[0],xUI.Select[1]+currentSelection]);
+    xUI.autoScroll = currentScroll;
+}
 /*    xUI.floatTextHi()
 引数:なし　モード変数を確認して動作
 モードチェンジの際に編集（保留）中のテキストを薄く表示する/もどす
 */
 xUI.floatTextHi=function(){
+    if(this.edmode>1) return false;
     var paintColor=(this.edmode==0)?"black":this.floatTextColor;
 var range=[this.floatSourceAddress,add(this.floatSourceAddress,this.Selection)];
 //    dbgPut("selectionHi :\n"+range.join("\n"));
@@ -780,7 +985,8 @@ xUI.flush=function(content){
         [セレクト座標,セレクション,入力データストリーム,[セレクト座標,セレクション]]
     または    [セレクト座標,セレクション,Xpsオブジェクト]
 
-    座標と選択範囲は配列で、入力データはcomma、改行区切りで2次元のstream
+    座標と選択範囲(セレクション)は配列、入力データはcomma,改行区切りの2次元のstream
+    第４要素が存在する場合は、その位置にカーソル移動を行う
     第３要素がXpsオブジェクトであった場合は、ドキュメント全体の更新が行われた場合である
     その際は、処理系を切り替えて以下の操作を行う
     従来、UNDOバッファをフラッシュしていた操作が行われた場合
@@ -792,13 +998,16 @@ xUI.flush=function(content){
 clear    :    セッション開始/ユーザ指定時
 NOP    :    新規作成/保存/ダウンロード
 
+    undoに画面描画保留機能を追加
+    undoカウンタが立っている限り画面の再描画を行わない
  */
 xUI.flushUndoBuf=function(){
     this.inputFlag="nomal";//入力フラグ["nomal","undo","redo"]
     this.undoStack=new Array();//アンドウスタック
         this.undoStack.push([[0,1],[0,0],'']);
-    this.undoPt=0;    //アンドウポインタ初期化
-    this.storePt=0;    //保存ポインタ初期化
+    this.undoPt  =0 ;      //アンドウポインタ初期化
+    this.skipCt  =0 ;      //再描画抑制カウンタ初期化
+    this.storePt =0 ;     //保存ポインタ初期化
 };
 /*
     保存ポインタを参照してドキュメントが保存されているか否かを返す関数
@@ -1065,6 +1274,7 @@ if(this.showGraphic){
     var drawForm = false;
     var sectionDraw = false;
     var mySection = myXps.xpsTracks[tgtID[1]].getSectionByFrame(tgtID[0]);
+//セクションキャッシュが信頼できる限りはセクションパースが保留されるように調整済み
 /**
     判定時にトラック種別を考慮する
     ダイアログ、サウンド
@@ -1080,11 +1290,15 @@ if(this.showGraphic){
     switch(currentTrackOption){
         case "sound":;
         case "dialog":;
-            if (myStr.match(/[-_─━~]{2,}?/)){
-               myStr=(this.showGraphic)?"<br>":"<hr>";
-               drawForm = "sound-section-open";
+            if (myStr.match(/[-_─━~＿￣〜]{2,}?/)){
+              myStr=(this.showGraphic)?"<br>":"<hr>";
+              if((mySection.startOffset()+mySection.duration-1) == tgtID[0]){
+                drawForm =(myStr.match(/[_＿]/))? "line":"sound-section-open";
+              }else{
+                drawForm =(myStr.match(/[_＿]/))? "line":"sound-section-close";
+              }
             };//あとでセクションパース版と置き換え
-        break;
+          break;
         case "timing":;
         case "replacement":;
             if (myStr.match(/[\|｜]/)){
@@ -1104,7 +1318,7 @@ if(this.showGraphic){
                 myStr=(this.showGraphic)?RegExp.$1:myStr;
                 drawForm = "triangle";
             }
-break;
+          break;
         case "camera":;
         case "camerawork":;
         case "geometry":;
@@ -1121,8 +1335,7 @@ break;
                 myStr=(this.showGraphic)?"<br>":myStr;                
                 drawForm = "section-close";
            }
-        
-break;
+          break;
         case "effect":;
         case "sfx":;
         var drawForms ={"▲":"fi","▼":"fo","]><[":"transition"};//この配分は仮ルーチン　良くない
@@ -1144,7 +1357,7 @@ break;
             drawForm = drawForms[formStr];
             sectionDraw = true;
         }
-break;
+      break;
     }
 //    if(dbg) console.log(target.id+":"+currentTrackOption+":"+myXps.xpsTracks[tgtID[1]][tgtID[0]]+":"+myStr);
 //    target.innerHTML=myStr;
@@ -1194,25 +1407,25 @@ xUI.getid=function(name){
         return this[name].join("_");
   }
 };
-/*    指定のシートセルを選択状態にする
+/*    指定のシートセルを選択状態にしてカレントのカーソル位置を返す
         xUI.selectCell(HTMLElementID)
         xUI.selectCell([myTrack,myFrame]);
 引数が配列の場合も受け付ける
+フレームオフセットが加算される
 */
-xUI.selectCell=function(ID){
-    if (typeof ID == "undefined") ID='';
+xUI.selectCell=function(ID,frameOffset){
+//    if (typeof ID == "undefined") ID = '';//
+    if (typeof ID == "undefined") ID = this.selectBackup;//バックアップ位置と換装
+    if (typeof frameOffset == "undefined") frameOffset = 0;
 if(dbg) document.getElementById("app_status").innerHTML=ID;//デバッグ用
 //      現在のセレクトをフォーカスアウト 引数が偽ならば フォーカスアウトのみ(ここでリターン)
     if(! ID){return;};
 //      選択セルの内容をXPSの当該の値で置換 新アドレスにフォーカス処理開始 = IDをセレクト
 //      指定IDが稼働範囲外だったら丸め込む
-if(ID instanceof Array){
-    var tRack = ID[0];
-    var fRame = ID[1];
-}else{
-    var tRack = ID.split("_")[0]*1;
-    var fRame = ID.split("_")[1]*1;
-}
+if(! (ID instanceof Array)) ID = ID.split('_') ;
+    var tRack = Number(ID[0]);
+    var fRame = Number(ID[1])+frameOffset;
+
     if (tRack<0 || tRack>=this.SheetWidth){    tRack=(tRack<0)?0:this.XPS.xpsTracks.length-1;};
     if (fRame<0 || fRame>=this.XPS.duration()) {    fRame=(fRame<0)?0:this.XPS.duration()-1;};
     ID=tRack+'_'+fRame;
@@ -1250,14 +1463,21 @@ if(ID instanceof Array){
 
     全体の位置に加えて、現在のスクーンサイズを条件に追加して使用感を改善すること
     2015-0331
+    
+  　区間選択状態または選択状態のドラグ時に選択セルに対するフォーカスオフセットが働くように改装
+  　2017-0324
 
 オートスクロール起動条件
 縦方向    セルフォーカスが表示範囲上下一定（６または８？）フレーム以内であること(上下別の条件に)
 横方向　セルフォーカスが表示範囲左右一定（２～４？）カラム以内であること（左右別条件に）
 かつ移動余裕があること=各条件がシート端からの距離以上であること
 */
-    if (this.autoScroll){ this.scrollTo(ID) };
+    if (this.autoScroll){
+        var targetID=add(xUI.Select,[0,xUI.sectionManipulateOffset[1]]).join('_');
+        this.scrollTo(targetID); 
+    };
     document.getElementById("iNputbOx").select();
+    return this.Select;
 };
 /*    カラム移動
         xUI.changeColumn(カラムID,カラムブロック番号)
@@ -1329,6 +1549,7 @@ default            :
 var range=this.actionRange();
 //    dbgPut("selectionHi :\n"+range.join("\n"));
 //新選択範囲をハイライト スタートアドレスに負数を許容　150919
+//セクション編集のために選択範囲の末尾を色変え可能に拡張
     for (C=range[0][0];C<=range[1][0];C++){
         for (L=range[0][1];L<=range[1][1];L++){
 try{
@@ -1340,7 +1561,11 @@ try{
                 {
                     if(Method=="hilite")
                     {
-                        paintColor=xUI.selectionColor
+                        if(((L==range[1][1])||(L==range[0][1]))&&(xUI.edmode>1)){
+                            paintColor=xUI.selectionColorTail;
+                        }else{
+                            paintColor=xUI.selectionColor;
+                        }
                     }else{
                         if(this.footMark && this.diff([C,L]))
                         {
@@ -1403,8 +1628,13 @@ if(nas.colorAry2Str(nas.colorStr2Ary(document.getElementById(this.Select[0]+"_"+
             };
         };
     };
+//スピン表示が現状と異なっていた場合更新
+    if ( document.getElementById("spin_V").value != xUI.spinValue){
+         document.getElementById("spin_V").value  = xUI.spinValue;
+    }
 };
 //spinHi
+
 /*    足跡をクリア
         xUI.footstampClear();
  */
@@ -1846,7 +2076,7 @@ BODY_ +=' onMouseDown=\'xUI.changeColumn("memo" ,'+ (2 * pageNumber+cols) +');\'
 ***/
 BODY_ +=' >MEMO.</th>';
 //カラムセパレータの空セル挿入
-if (cols < PageCols-1) BODY_ +=('<td rowspan='+(2+SheetRows)+' class=colSep ></td>');
+if (cols < PageCols-1) BODY_ +=('<td rowspan='+(2+SheetRows)+' id=colSep class=colSep ></td>');
     };
 
     }
@@ -1987,6 +2217,8 @@ if(restFrm==(Math.ceil(this.XPS.framerate)-1)){
     var tcStyle='<td nowrap ';
 
 BODY_ +=tcStyle +tH_border+cellClassExtention;
+BODY_ +=' id=tcg_';
+BODY_ +=String(current_frame);
 BODY_ +=' >';
     if (restFrm==0) {BODY_ += "<span class=timeguide>[ "+ currentSec.toString()+"' ]</span>"};
     if  (((n+1)%2 ==0)&&(! isBlankLine))
@@ -2464,46 +2696,59 @@ if(! dup){
 // undoバッファの状態を表示
     sync("undo");sync("redo");
 
-    if(this.edMode!=0){this.mdChg("normal")};//編集モードをノーマルに復帰
+    if(this.edmode!=0){this.mdChg("normal")};//編集モードをノーマルに復帰
 
     this.selectCell(fkPos.join("_"));
     this.selection(add(fkPos,bkRange));
 }
 
-/*    やり直し    */
-xUI.undo    =function (){
+/**
+    やり直し
+引数: undoOffset 遡るべきundo回数 undoポインタを超えることはできない　省略時は 1
+   
+ */
+xUI.undo    =function (undoOffset){
     if(this.undoPt==0) {
 if(dbg) {dbgPut("UNDOバッファが空")};
         return;
     };
-    //UNDOバッファが空
+    //UNDOバッファが空なので失敗
+    if(typeof undoOffset == 'undefined') undoOffset = 1;
+    this.skipCt=(undoOffset-1);
+while(undoOffset>0){
 if(dbg) {dbgPut("undoPt:"+this.undoPt+":\n"+this.undoStack[this.undoPt].join("\n"))};
     this.inputFlag="undo";
     var putResult=this.put();
     if(putResult){
 if(dbg) {dbgPut("putResult:\n"+putResult)};
-            this.selectCell(putResult[0]);
-            this.selection (putResult[1]);
-            this.selection ();
+//            this.selectCell(putResult[0]);
+//            this.selection (putResult[1]);
+//            this.selection ();
     }
+    undoOffset --;
+  }
 };
 
 /*    やり直しのやり直し    */
-xUI.redo    =function(){
+xUI.redo    =function(redoOffset){
     if((this.undoPt+1)>=this.undoStack.length) {
 if(dbg){dbgPut("REDOバッファが空")};
         return;
     };
         //REDOバッファが空
+    if(typeof redoOffset == 'undefined') redoOffset = 1;
+while(redoOffset>0){
 if(dbg) {dbgPut("undoPt:"+this.undoPt+"\n:"+this.undoStack[this.undoPt].join("\n"))};
     this.inputFlag="redo";
     var putResult=this.put();
     if(putResult){
 if(dbg) {dbgPut("putResult:\n"+putResult)};
-            this.selectCell(putResult[0]);
-            this.selection (putResult[1]);
-            this.selection ();
+//            this.selectCell(putResult[0]);
+//            this.selection (putResult[1]);
+//            this.selection ();
     }
+    redoOffset --;
+}
 };
 
 /*    ヤンクバッファに選択範囲の方向と値を退避    */
@@ -2630,12 +2875,18 @@ xUI.putReference    =function(datastream,direction){
     
     グラフィックレイヤー拡張によりシート上の画像パーツを更新する操作を追加
     Xps更新後に、xUI.syncSheetCell()メソッドで必要範囲を更新
+
+    グラフィック描画queueを設置してキューに操作を追加してから更新メソッドをコールする形に変更する
+    更新メソッドはキューを処理して不用な描画をスキップするようにする（未実装20170330）
+
     マクロ展開後には同様に必要範囲内のフットマーク再表示を行う
-    
     
     参照エリアに対する描画高速化のために、このメソッドでリファレンスの書換をサポートする
     引数に変更がなければ従来動作　フラグが立っていればリファレンスを書換
     リファレンス操作時はundo/redoは働かない
+
+    再描画抑制undoカウンタを設置
+    カウンタの残値がある限り再描画をスキップしてカウンタを減算する
 */
 xUI.put = function(datastream,direction,toReference){
   if(! toReference) toReference = false;
@@ -2649,7 +2900,8 @@ xUI.put = function(datastream,direction,toReference){
     switch (this.inputFlag){
     case "redo":        this.undoPt++             ;   //REDO処理時
     case "undo":                                  ;   //UNDO処理時
-        var undoTarget=this.undoStack[this.undoPt];    //処理データ取得
+        var selectBackup = [this.Select.concat(),this.Selection.concat()];//カーソル配置をバックアップ
+        var undoTarget   = this.undoStack[this.undoPt];    //処理データ取得
 // undo内容をオブジェクトメソッドでputするためにホットポイントを作成する
 // ホットポイント設定
         var hotPoint=[
@@ -2698,9 +2950,10 @@ undoGroupは優先度低い　ほぼいらないような気がするのでま�
 2015.09.14 
 
 undoスタックに格納する値は
-[Select],[Selection],[dataBody]
+[Select],[Selection],[dataBody],[カーソル位置,選択範囲]
 dataBodyは データストリーム,Xpsオブジェクト,またはプロパティの配列
 プロパティ配列のフォーマットは後記
+第４要素のカーソル位置と選択範囲はオプション
 
 */
     var lastAddress=this.Select.slice();//最終操作アドレス初期化
@@ -2710,6 +2963,9 @@ dataBodyは データストリーム,Xpsオブジェクト,またはプロパテ
         UNDO[0]    =this.Select.slice();
         UNDO[1]    =this.Selection.slice();
     }
+if(this.edmode >= 2){
+    UNDO[3]=[this.floatSourceAddress.concat(),this.selectionBackup.concat()];
+};
 /*    入力データを判定    */
 if(datastream instanceof Xps){
 /*    Xpsならばシートの入れ替えを行うので
@@ -2836,11 +3092,7 @@ xpsTimelineTrackオブジェクトのプロパティ
     default:
         this.selectionHi("clear");//選択範囲のハイライトを払う
         var putResult=targetXps.put([TrackStartAddress,FrameStartAddress],srcData.join("\n"));
-        if(toReference){
-            this.syncSheetCell([TrackStartAddress,FrameStartAddress],[TrackEndAddress,FrameEndAddress],true);
-        }else{
-            this.syncSheetCell([TrackStartAddress,FrameStartAddress],[TrackEndAddress,FrameEndAddress]);
-        }
+        this.syncSheetCell([TrackStartAddress,FrameStartAddress],[TrackEndAddress,FrameEndAddress],toReference);
     }
 //設定値に従って、表示を更新（別メソッドにしてフォーカスを更新）
     lastAddress=[TrackEndAddress,FrameEndAddress];
@@ -2851,67 +3103,67 @@ if(dbg){dbgPut("XPS.put :\n"+putResult.join("\n"));}
 //        UNDO[1]=sub(putResult[0][1],putResult[0][0]);//セレクションに変換
 //        UNDO[1]=[0,0];//通常処理は選択解除で記憶
         UNDO[2]=putResult[2];//入れ替え前の内容
+//処理前のカーソル位置とUNDO[0]が異なっていた場合修正要素を加える
+//        if(UNDO[0].join()!=selectBackup[0].join()) UNDO[3]=selectBackup;
     }
 }
+
+//  if(this.undoStack[this.undoPt][0].join()!=selectBackup[0].join()) this.undoStack[this.undoPt][3]=selectBackup;
   if(! toReference){
 //操作別に終了処理
 switch (this.inputFlag){
 case "undo":
 case "redo":
         this.undoStack[this.undoPt][2]=UNDO[2];    //UNDO処理時
-if(undoTarget.length==4){
+if(undoTarget.length>=4){
 //第４要素がある場合のみredo用のデータを設定して、カーソル復帰処理を行う
-    var currentAddress=undoTarget[3][0].slice();
-    var currentRange=undoTarget[3][1].slice();
-    this.undoStack[this.undoPt][3]=[this.Select.slice(),this.Selection.slice()];
+    var currentAddress =undoTarget[3][0].slice();
+    var currentRange   =undoTarget[3][1].slice();
+//console.log("currentAddress:currentRabge");console.log(currentAddress+':'+currentRange);
+
+//    this.undoStack[this.undoPt][3]=selectBackup;
+    if(this.undoStack[this.undoPt][0].join()!=selectBackup[0].join()) this.undoStack[this.undoPt][3]=selectBackup;
+
+//console.log([this.undoStack[this.undoPt][0],this.undoStack[this.undoPt][1]].join());
+//console.log(selectBackup.join());
 
     this.selection (add(this.Select,currentRange));
     this.selectCell(currentAddress);
 }else{
     this.selection(add(undoTarget[0],undoTarget[1]));
-    this.selectCell(undoTarget[0]);
+    this.selectCell(undoTarget[0].join('_'));
 };
-        if(this.inputFlag=="undo")this.undoPt--;
+        if(this.inputFlag=="undo") this.undoPt--;
         break;
 case "nomal":   ;//通常のデータ入力
 case "cut":     ;
-if(datastream instanceof Xps){
+  if(datastream instanceof Xps){
     this.selectCell("1_0");//
-}else{
+  }else{
 //一行入力の際のみ処理後のスピン操作で次の入力位置へ移動できるポジションへ
 //( = マクロ展開時に画面処理を行う)
-  if(putResult){
+    if(putResult){
 if(dbg){
-    dbgPut(putResult[0]+":"+add(putResult[0][1],[0,-(this.spinValue-1)]).join("_"));
+   dbgPut(putResult[0]+":"+add(putResult[0][1],[0,-(this.spinValue-1)]).join("_"));
 }
-    if(xUI.footMark){ this.selection(putResult[0][1]) };
-    this.selection();
-    this.selectCell(putResult[0][1].join("_"));//操作なしに最終アドレスへ
+      if(xUI.footMark){ this.selection(putResult[0][1]) };
+      this.selection();
+      this.selectCell(putResult[0][1].join("_"));//操作なしに最終アドレスへ
+    } 
   }
-}
 case "move":
 default:    ;//カット・コピー・ペースト操作の際はカーソル移動無し
         this.undoPt++;
         this.undoGc=0;
-if(dbg){
-    dbgPut(    "UNDO stack add:\n"+UNDO.join("\n"));
-}
+if(dbg){    dbgPut(    "UNDO stack add:\n"+UNDO.join("\n")); }
         this.undoStack[this.undoPt]=UNDO;
-        if (this.undoStack.length>(this.undoPt+1))
-            this.undoStack.length=(this.undoPt+1);
-        //if(xUI.footMark){}
-        if(false){
-            this.selectCell([TrackStartAddress,FrameStartAddress]);
-            this.selection ([TrackEndAddress,FrameEndAddress]);
-            this.selection ();
-        }
-//        this.selectCell([TrackStartAddress,FrameStartAddress]);
+        if (this.undoStack.length>(this.undoPt+1)){ this.undoStack.length=(this.undoPt+1)};
 };
-        this.inputFlag="nomal";
+    this.inputFlag="nomal";
 // undoバッファの状態を表示
     sync("undo");sync("redo");
 //編集バッファをクリア・編集フラグを下げる(バッファ変数をモジュールスコープに変更したので副作用発生)
-    if(this.edchg)    this.edChg(false);
+    if(this.edchg){ this.edChg(false) };
     if(this.eXMode==1){this.eXMode=0;this.eXCode=0;};//予備モード解除
   }
 // 処理終了アドレスを配列で返す(使わなくなったような気がする)
@@ -2923,6 +3175,7 @@ return [[TrackStartAddress,FrameStartAddress],lastAddress];
     アドレス一致の場合は、一コマのみ
 */
 xUI.syncSheetCell=function(startAddress,endAddress,isReference){
+    if(this.skipCt > 0) {this.skipCt --;return;};//?
     var targetXps=(isReference)? this.referenceXPS:this.XPS;
     if((! startAddress)||(! endAddress)){
         startAddress=[0,0];
@@ -3025,39 +3278,79 @@ if (! this.tabSpin) {
 	return false;break;
 }
 case	13	:		//Enter 標準/次スピン・シフト/前スピン・コントロール/interpSpin
-	if(e.ctrlKey){interpSign();return false;}
-	if (this.edchg){
+	if(xUI.edmode>=2){
+// 区間編集中
+	    if(e.shiftKey){
+	      if((e.ctrlKey)||(e.metaKey)){
+	        if(xUI.edmode==3) this.sectionUpdate();
+	        this.mdChg('normal');                           //[ctrl]+[shift]+[ENTER]:モード解除
+	      }else{
+	        this.mdChg('float');	                        //[shift]+[ENTER]:float遷移
+	      }
+	    }else if((e.ctrlKey)||(e.metaKey)){
+            if(xUI.edmode==3) this.sectionUpdate();                           //[ctrl]+[ENTER]:確定のみ
+	    }else{
+	        if(xUI.edmode==3) this.sectionUpdate();
+	        this.mdChg((xUI.edmode==3)?'section':'normal'); //[ENTER]:確定してモード遷移
+	    }
+	    return false;//スピン動作キャンセルのためここでリターン
+    } else {
+	    if((e.shiftKey)&&((e.ctrlKey)||(e.metaKey))){
+	        xUI.mdChg('section');	               //[ctrl]+[shift]+[ENTER]:カーソル位置でモード遷移
+	        return false;//スピン動作キャンセルのためここでリターン
+	    }
+/*   
+     if(e.shiftKey){
+	    }else{
+	        interpSign();                           //[shift]+[ENTER]:中間値サイン
+	    }
+	}
+*/	
+	  if (this.edchg){
 		this.put(nas_expdList(this.eddt));//更新
-//		alert("xstop");
-//		this.selection();
 		this.selectCell(add(this.Select,[0,1]));//入力あり
-	}else{
+	  }else{
 	    if(e.shiftKey){
 		if(expd_repFlag){
-			this.spin("up");expd_repFlag=false;
+			this.spin("up");expd_repFlag=false;     //<マクロ展開中>[shift]+[ENTER]:スピンアップ
 		}else{
-			this.spin("back");
+			this.spin("back");                      //[shift]+[ENTER]:スピンバック
 		}
 	    }else{
-		if(expd_repFlag){
-		this.spin("down");expd_repFlag=false;
-		}else{
-			this.spin("fwd");//入力なしカラ送り
-//			this.selectCell(add(this.Select,[0,1]));//入力あり
-		}
+		  if(expd_repFlag){
+		    this.spin("down");expd_repFlag=false;   //<マクロ展開中>[ENTER]:スピンダウン
+		  }else{
+			this.spin("fwd");                       //[ENTER]:スピンフォワード
+		  }
 	    };
-//	if(! e.ctrlKey){}
-	    if(! e.ctrlKey){
+//処理終了時にコントロール（メタ）キーの同時押しがない場合は選択範囲を解除
+	    if((! e.ctrlKey)&&(! e.metaKey)){
 		if(this.getid("Selection")!="0_0")
 			{this.selection();this.spinHi();};//選択範囲解除
 	    }
+	  }
 	}
 	return false;
 	break;
 case	27	:	//esc 選択範囲解除
 //		編集中
 	if (this.edchg){return false;}//バックアップ復帰のためスキップ(実処理はUP)
-//		複数セレクト状態
+//      区間操作中
+    if(this.edmode == 3 ){
+//        this.selection(add(this.Select,this.selection));
+        this.selectCell(this.floatSourceAddress);
+        this.mdChg('section');
+       break;
+    } else if(this.edmode == 2 ){
+        this.undo(this.floatUpdateCount);//まとめて開始点までUNDO
+        this.mdChg('normal');
+
+        this.selectCell();
+        this.selection(add(this.selectBackup,this.selectionBackup));
+        
+        break;//編集を解除してバックアップ状態へ復帰
+    }
+//		複数セレクト状態 
 	if(this.getid("Selection")!="0_0")
 		{this.selection();this.spinHi();break;};//選択範囲解除
 		return false;break;//標準処理(NOP)
@@ -3066,32 +3359,102 @@ case	27	:	//esc 選択範囲解除
 //	this.edchg=false;
 //	this.focusCell();	break;
 case	38	:		//カーソル上・下
-case	40	:		//[shift]+時はセレクションの調整 [ctrl]+時はさらにスピン量の調整も兼ねる
- 	if (	e.shiftKey &&
-		this.Select[1]+this.Selection[1]>=0 &&
-		this.Select[1]+this.Selection[1]<(this.XPS.duration()-1)
-	){
-		var kOffset=(key==38)? -1:1;
-		this.selection(this.Select[0]+"_"+
-		(this.Select[1]+this.Selection[1]+kOffset));
-		if((e.ctrlKey)||(this.spinSelect)) this.spin("update");
-	}else{
+case	40	:		//
+/*
+    通常編集時
+        [shift]+[↑]/[↓] セレクションの調整
+        [ctrl]+[shift]+[↑]/[↓]  セレクションの調整にスピン量の調整も兼ねる
+    区間編集時
+        [↑]/[↓] 全体移動に遷移
+        [ctrl] +[↑]/[↓] 先頭移動に遷移
+        [shift]+[↑]/[↓] 末尾移動に遷移
+        [ctrl]+[shift]+[↑]/[↓]  現在の編集を確定して選択している区間を前後の区間に変更？
+    区間フロート時
+        [↑]/[↓] モードに従って移動
+ */
+		    var kOffset=(key==38)? -1:1;
+//    if ( this.edmode == 3){		    this.sectionPreview(this.Select[1]+kOffset);}else
+    if ( this.edmode == 3){
+ 	   if (	e.shiftKey &&
+		    this.Select[1]+this.Selection[1]>=0 &&
+		    this.Select[1]+this.Selection[1]<(this.XPS.duration()-1)
+	    ){
+	        this.sectionManipulateOffset=['tail',0];
+//		    this.sectionPreview((this.Select[1]+this.Selection[1]+kOffset));
+//		    if((e.ctrlKey)||(e.metaKey)) ;
+		}else if(((e.ctrlKey)||(e.metaKey)) &&
+		    this.Select[1]+this.Selection[1]>=0 &&
+		    this.Select[1]+this.Selection[1]<(this.XPS.duration()-1)
+		){
+	        this.sectionManipulateOffset=['head',0];
+	    }else{
+		//通常移動処理
+//	    if(! e.ctrlKey){
+//		    if(this.getid("Selection")!="0_0"){this.selection();this.spinHi();};//選択範囲解除
+//	    }
+//		    if (this.edchg){this.put(this.eddt);}//更新
+	        this.sectionManipulateOffset=['body',0];
+//		    if(key==38){this.spin("up")}else{this.spin("down")};
+	    };        
+		    this.sectionPreview(this.Select[1]+kOffset);
+//		    this.sectionUpdate();
+/*		    
+            var trackContents = xUI.floatTrack.sections.manipulateSection(xUI.floatSectionId,xUI.Select[1],xUI.Selection[1]);
+    　if(false){
+//undo保留の場合は上のルーチン
+            xUI.XPS.put([xUI.Select[0],0],trackContents);
+            xUI.syncSheetCell([xUI.Select[0],0],[xUI.Select[0],xUI.XPS.xpsTracks[0].duration]);
+      }else{
+            var currentFrame=xUI.Select[1];
+            var currentSelection=xUI.Selection[1];
+            xUI.selectCell([xUI.Select[0],0]);
+            xUI.selection();
+            xUI.put(trackContents);
+            xUI.selectCell([xUI.Select[0],currentFrame]);
+            xUI.selection([xUI.Select[0],currentFrame+currentSelection]);
+      }
+*/
+    }else if(this.edmode == 2){
+ 	   if (	e.shiftKey &&
+		    this.Select[1]+this.Selection[1]>=0 &&
+		    this.Select[1]+this.Selection[1]<(this.XPS.duration()-1)
+	    ){
+	        this.sectionManipulateOffset=['tail',0];
+		}else if(((e.ctrlKey)||(e.metaKey)) &&
+		    this.Select[1]+this.Selection[1]>=0 &&
+		    this.Select[1]+this.Selection[1]<(this.XPS.duration()-1)
+		){
+	        this.sectionManipulateOffset=['head',0];
+	    }else{
+		//通常移動処理
+	    };
+	    this.mdChg('float');         
+    }else{
+ 	   if (	e.shiftKey &&
+		    this.Select[1]+this.Selection[1]>=0 &&
+		    this.Select[1]+this.Selection[1]<(this.XPS.duration()-1)
+	    ){
+		    var kOffset=(key==38)? -1:1;
+		    this.selection(this.Select[0]+"_"+
+		    (this.Select[1]+this.Selection[1]+kOffset));
+		    if((e.ctrlKey)||(e.metaKey)||(this.spinSelect)) this.spin("update");
+	    }else{
 		//通常入力処理
-	 if(! e.ctrlKey){
-		if(this.getid("Selection")!="0_0"){this.selection();this.spinHi();};//選択範囲解除
-	 }
-		if (this.edchg){this.put(this.eddt);}//更新
-		if(key==38){this.spin("up")}else{this.spin("down")};
-	}	;return false;	break;
-case	39	:		//右
-	if ((! this.edchg)||(this.viewOnly)) {this.spin("right")	;return false;
+	    if((! e.ctrlKey)&&(! e.metaKey)){
+		    if(this.getid("Selection")!="0_0"){this.selection();this.spinHi();};//選択範囲解除
+	    }
+		    if (this.edchg){this.put(this.eddt);}//更新
+		    if(key==38){this.spin("up")}else{this.spin("down")};
+	    };
+	};
+	return false;	break;
+case	39	:		//右[→]
+case	37	:		//左[←]
+	if ((this.edmode < 2)&&((! this.edchg)||(this.viewOnly))) {
+	    if(key==37) {this.spin("left")} else {this.spin("right")};
+	    return false;
 	}else{
-	return true;
-	};	break;
-case	37	:		//左?
-	if ((! this.edchg)||(this.viewOnly)) {this.spin("left")	;return false;
-	}else{
-	return true;
+	    return true;
 	};	break;
 case 	33:		//ページアップ
 	if (this.edchg){this.put(this.eddt);}//更新
@@ -3106,7 +3469,7 @@ case	36 :;//[HOME]
 	this.selectCell(this.Select[0]+"_0");
 	break;
 case	65 :		;	//[ctrl]+[A]/selectAll
- 	if (e.ctrlKey)	{
+ 	if ((e.ctrlKey)||(e.metaKey))	{
 		this.selectCell(this.Select[0]+"_0");
 		this.selection(
 			this.Select[0]+"_"+this.XPS.duration()
@@ -3114,7 +3477,7 @@ case	65 :		;	//[ctrl]+[A]/selectAll
 		return false;}else{return true}
 	break;
 case	67 :		;	//[ctrl]+[C]/copy
-	if (e.ctrlKey)	{
+	if ((e.ctrlKey)||(e.metaKey))	{
 		this.yank();
 		return false;}else{return true}
 	break;
@@ -3134,22 +3497,22 @@ case	83 :	alert("SSS");	//[ctrl]+[S]/ Save or Store document
 	break;
 */
 case	86 :		;	//[ctrl]+[V]/paste
-	if (e.ctrlKey)	{
+	if ((e.ctrlKey)||(e.metaKey))	{
 		this.paste();
 		return false;}else{return true}
 	break;
 case	88 :		;	//[ctrl]+[X]/cut
-	if (e.ctrlKey)	{
+	if ((e.ctrlKey)||(e.metaKey))	{
 		this.cut();
 		return false;}else{return true}
 	break;
 case	89 :		;	//[ctrl]+[Y]/redo
-	if (e.ctrlKey)	{
+	if ((e.ctrlKey)||(e.metaKey))	{
 		this.redo();
 		return false;}else{return true}
 	break;
 case	90 :		;	//[ctrl]+[Z]/undo
-	if (e.ctrlKey)	{
+	if ((e.ctrlKey)||(e.metaKey))	{
 		this.undo();
 		return false;}else{return true}
 	break;
@@ -3343,10 +3706,11 @@ return false;
 [enter][5]			確定>モードアウト
 [esc][0]			モードアウト
 -------------------------------------------------セクション編集：
-[ctrl] +[↑]/[↓]		端点移動
-[shift]+[↑]/[↓]		セクション移動
-[enter][5]			確定>モードアウト
-[esc][0]			モードアウト
+[↑]/[↓]             区間移動
+[ctrl] +[↑]/[↓]     前端点移動
+[shift]+[↑]/[↓]     後端点移動
+[enter][5]          確定>モードアウト
+[esc][0]            モードアウト
 
 */
 xUI.keyPress = function(e){
@@ -3354,7 +3718,6 @@ xUI.keyPress = function(e){
 	if(xUI.edmode>0){
 if(xUI.edmode==1){
 //ブロック移動モード
-
 }else{
 //セクション編集モード
 }
@@ -3394,16 +3757,14 @@ if(xUI.eXMode){
 			syncInput(xUI.bkup());
 		};
 	for (idx=0;idx<(rapidMode.length-1)/2;idx++){if(key==rapidMode[idx*2].charCodeAt(0))break;};
-		if(idx<(rapidMode.length-1)/2)
-		{
+		if(idx<(rapidMode.length-1)/2){
 			xUI.doRapid([rapidMode[idx*2+1]]);
 			return false;
 		}else{
 			if (key!=13 && key!=8 && key!=9)
 			{
 		//モード解除
-				if(xUI.eXMode)
-				{
+				if(xUI.eXMode){
 		xUI.eXMode=0;	xUI.eXCode=0;
 
 		xUI.selectedColor=xUI.inputModeColor.NORMAL;
@@ -3461,7 +3822,7 @@ case	118	:			;//V
 case	120	:			;//X
 case	121	:			;//Y
 case	122	:			;//Z
-	if (e.ctrlKey)	{return false;}else{return true;};
+	if ((e.ctrlKey)||(e.metaKey))	{return false;}else{return true;};
 		break;
 //case		: ;	//
 default :;
@@ -3534,7 +3895,7 @@ case	86	:	;//[v]
 case	88	:	;//[x]
 case	89	:	;//[y]
 case	90	:	;//[z]
-	if (e.ctrlKey)	{
+	if ((e.ctrlKey)||(e.metaKey))	{
 		return true;
 	}
 		break;
@@ -3564,9 +3925,13 @@ return true;
 マウス処理を集中的にコントロールするファンクション
  */
 xUI.Mouse=function(e){
-//alert("mouse:"+e.type.toString())
-//document.dbg.Console.value=("mouse:"+e.type.toString())+"\n"+document.dbg.Console.value;
-//if(dbg) dbgPut("mouse:"+e.type.toString());
+    if((this.edmode==3)&&(e.target.id=='sheet_body')&&(e.type=='mouseout')){
+        xUI.sectionUpdate();
+        this.mdChg(2);
+        this.Mouse.action=false;
+        return false;
+    };
+if(dbg) dbgPut(e.target.id+":"+e.type.toString());
 //document.getElementById("iNputbOx").focus();
 
 if(this.edchg){ this.eddt= document.getElementById("iNputbOx").value };
@@ -3576,8 +3941,11 @@ if(this.edchg){ this.eddt= document.getElementById("iNputbOx").value };
         var TargeT=e.target;var Bt=e.which;//ターゲットオブジェクト取得
 // dbgPut(TargeT.id);
 //IDの無いエレメントは処理スキップ
-    if(! TargeT.id){return false;}
-
+    if(! TargeT.id){
+        xUI.Mouse.action = false;
+//         if (this.edmode==3){this.Mouse()}
+        return false;
+    }
 //カラム移動処理の前にヘッダ処理を追加 2010/08
     if(TargeT.id.match(/^L([0-9]+)_(-?[0-9]+)_([0-9]+)$/)) {
         var tln=1*RegExp.$1;var pgn=1*RegExp.$2;var cbn=1*RegExp.$3;//timeline(column)ID/pageID/columnBlockID
@@ -3589,15 +3957,184 @@ case    "mousedown":
     if(this.edmode==0)xUI.changeColumn(tln,2*pgn+cbn);
 break;
 }
-return         ;
+    xUI.Mouse.action = false;
+    return ;
     }
 //-------------------ヘッダ処理解決
 
 //    if(TargeT.id.split("_").length>2){return false};//判定を変更
 //ページヘッダ処理終了
 //=============================================モード別処理
-if(this.edmode==2){
+if(this.edmode==3){
+    var hottrack=TargeT.id.split('_')[0];
+    var hotpoint=TargeT.id.split('_')[1];
+/*
+    セクション編集フローティング
+*/
+switch (e.type){
+case    "dblclick"    :
+case    "mousedown"    :    
+	document.getElementById("iNputbOx").focus();
+break;
+case    "click"    :
+case    "mouseup"    ://終了位置で解決
+//[ctrl][shift]同時押しでオプション動作？
+    xUI.sectionUpdate();
+    this.mdChg(2);
+    this.Mouse.action=false;
+
+//    this.floatTextHi();
+break;
+case    "mouseover"    :
+    if((hottrack!=xUI.Select[0])||(! xUI.Mouse.action)) {
+        if(TargeT.id && TargeT.id.match(/r?L\d/)){
+            xUI.sectionUpdate();
+            this.mdChg(2);
+            this.Mouse.action=false;
+        }
+        return false
+    };
+if(! this.Mouse.action){
+    return false;
+
+    if(this.Mouse.action){
+        if (TargeT.id && xUI.Mouse.rID!=TargeT.id ){
+            this.selection(TargeT.id);
+            if(((e.ctrlKey)||(e.metaKey))||(this.spinSelect)) this.spin("update");
+            return false;
+        }else{
+            return true;
+        };
+    };
+}else{
+        this.sectionPreview(hotpoint);
+}
+    break;
+default    :    return true;
+};
+    return false;
+
+}else if(this.edmode==2){
+	document.getElementById("iNputbOx").focus();
+    var hottrack=TargeT.id.split('_')[0];
+    var hotpoint=TargeT.id.split('_')[1];
+/*
+    モード遷移は他の状態からコール
+    セクション編集モード
+    トラック内限定で区間編集を行う。
+    モード変更コマンドの発行はemode==0の際のみ有効
+    モード変更のトリガは、ダブルクリック
+基本操作
+３種のターゲットがある
+        body
+セクション全体がトラック内を前後に移動する
+フローティングムーブに準ずる処理　ホットポイントオフセットが存在する
+        head
+        tail
+トラック内でセクションが伸縮
+他のノードを固定してヘッドまたはテールノードが移動することでセクションを伸縮する　
+
+edmode==3　中は、マウスオーバーでセクション body||head||tail 移動
+リリースで移動（＝編集）を解決　1回毎に更新回数を記録
+ダブルクリックまたは対象トラック外をクリックで解決してモード解除
+エスケープまたは対象トラック外右クリックで変更を廃棄して編集前に戻す
+
+キーボード操作(1フレームづつ移動なので要注意)
+    モード遷移・確定 [ctrl]+[shift]+[ENTER]
+    ボディ移動       [↑]/[↓]
+    ヘッド移動       [ctrl]+[↑]/[↓]
+    テール移動       [shift]+[↑]/[↓]
+                     [shift]+[ctrl]+[↑]/[↓]
+     編集破棄＋モード解除
+                     [esc]
+                     
+    セクション操作オフセットをxUIのプロパティで設定する
+    値が０なら前方伸長　値が末尾なら後方伸長それ以外は移動
+    継続時間が1の場合は末尾として扱う
+    解決順が　末尾＞先頭＞以外になれば操作種別を１種にできる
+    すべてsectionMove(start,duration)に集約できそう
     
+*/
+switch (e.type){
+case    "dblclick"    :
+//セクション操作モードを抜けて確定処理を行う
+//確定処理はmdChg メソッド内で実行
+              this.mdChg("normal");
+//              this.floatTextHi();//導入処理
+//            this.selectCell(TargeT.id);
+//    this.floatDestAddress=this.Select.slice();
+break;            
+case    "mousedown"    :
+    //サブモードを設定
+    if((
+        Math.abs(hotpoint -(xUI.Select[1]+(xUI.Selection[1]/2))) >
+        Math.abs(xUI.Selection[1]/2)
+        )&&(hottrack == xUI.Select[0])
+    ){
+// return false;//レンジ外 処理スキップ
+        if (e.shiftKey){
+    xUI.sectionManipulateOffset[1] = this.Selection[1];
+        xUI.sectionManipulateOffset[0] = 'tail'; 
+        }else if((e.ctrlKey)||(e.metaKey)){
+    xUI.sectionManipulateOffset[1] = 0;
+        xUI.sectionManipulateOffset[0] = 'head'; 
+        }else{
+    xUI.sectionManipulateOffset[1] = Math.floor(this.Selection[1]/2);
+        xUI.sectionManipulateOffset[0] = 'body';
+        }
+        this.sectionPreview(hotpoint);
+        this.sectionUpdate();
+}else{    xUI.sectionManipulateOffset[1] = hotpoint-this.Select[1];
+        xUI.sectionManipulateOffset[0] = 'body';
+    if(xUI.sectionManipulateOffset[1]==xUI.Selection[1]){
+        xUI.sectionManipulateOffset[0] = 'tail';
+    } else if(xUI.sectionManipulateOffset[1]==0){
+        xUI.sectionManipulateOffset[0] = 'head';
+    }
+}
+    xUI.mdChg(3);    
+    xUI.Mouse.action=true;
+//    console.log([xUI.edmode,hotpoint,xUI.sectionManipulateOffset,xUI.Mouse.action]);
+break;
+case    "click"    :;//クリックしたセルで解決　(any):body/+[ctrl]:head/+[shift]:tail 
+    if(hottrack!=xUI.Select[0]) {
+        //対象トラック外なら確定して解除
+        this.mdChg("normal");        
+    }
+break;
+
+case    "mouseup"    ://終了位置で解決
+//[ctrl]同時押しで複製処理
+    //  this.mdChg(0,(e.ctrlKey));
+    this.Mouse.action=false;
+    this.floatTextHi();
+break;
+case    "mouseover"    :
+    
+//トラックが異なる場合 NOP return
+//    var sectionRegex=new RegExp('^'+String(xUI.Select[0])+'_([0-9]+)$');
+//    if((!(TargeT.id.match(sectionRegex)))||(! xUI.Mouse.action)){return false};//ターゲットトラック以外を排除
+    if((hottrack!=xUI.Select[0])||(! xUI.Mouse.action)) {return false};
+if(! this.Mouse.action){
+    return false;
+
+    if(this.Mouse.action){
+        if (TargeT.id && xUI.Mouse.rID!=TargeT.id ){
+            this.selection(TargeT.id);
+            if(((e.ctrlKey)||(e.metaKey))||(this.spinSelect)) this.spin("update");
+            return false;
+        }else{
+            return true;
+        };
+    };
+}else{
+            this.sectionPreview(hotpoint);
+}
+    break;
+default    :    return true;
+};
+    return false;
+
 }else if(this.edmode==1){
 //return false;
 //ブロックムーブ（フローティングモード）
@@ -3617,18 +4154,22 @@ case    "dblclick"    :
 case    "mousedown"    :
 case    "click"    :
 case    "mouseup"    ://終了位置で解決
+    console.log("<<<<<<")
 //[ctrl]同時押しで複製処理
-      this.mdChg(0,(e.ctrlKey));
+      this.mdChg(0,((e.ctrlKey)||(e.metaKey)));
       this.floatTextHi();
 break;
 case    "mouseover"    ://可能な限り現在位置で変数を更新
     if(!(TargeT.id.match(/^([0-9]+)_([0-9]+)$/))){return false};//シートセル以外を排除
-
+//オフセットを参照して　.Select .Selection を操作する
+/*
+    
+*/
 if(false){
     if(this.Mouse.action){
         if (TargeT.id && xUI.Mouse.rID!=TargeT.id ){
             this.selection(TargeT.id);
-            if((e.ctrlKey)||(this.spinSelect)) this.spin("update");
+            if(((e.ctrlKey)||(e.metaKey))||(this.spinSelect)) this.spin("update");
             return false;
         }else{
             return true;
@@ -3641,20 +4182,17 @@ if(false){
     break;
 default    :    return true;
 };
-    return false;    
+    return false;
 }
 //=============================================カラム移動処理
     if(!(TargeT.id.match(/^([0-9]+)_([0-9]+)$/))){return false};//シートセル以外を排除
 
 switch (e.type){
 case    "dblclick"    :
-              //ダブルクリック時はモード保留して（解除か？）タイムラインセクション編集モードに入る
-//              alert("section edit mode :"+TargeT.id);
-//              this.mdChg("section");
-//              this.floatTextHi();//導入処理
+            //ダブルクリック時はモード保留して（解除か？）タイムラインセクション編集モードに入る
+            this.mdChg("section",TargeT.id);
             this.Mouse.action=false;
             return false;
-    
 break;
 case    "mousedown"    :
 //document.getElementById("iNputbOx").value=("mouseDown")
@@ -3682,7 +4220,7 @@ case    "mousedown"    :
               //フォーカスセルにマウスダウンしてブロック移動へモード遷移
             //クリック時とダブルクリック時の判定をしてスキップしたほうが良い
 //            if(TargeT.id!=this.floatDestAddress.join("_")){}
-            this.mdChg("block");
+            this.mdChg('block');
             this.floatTextHi();
             this.selectCell(TargeT.id);
             this.floatDestAddress=this.Select.slice();
@@ -3692,7 +4230,7 @@ case    "mousedown"    :
           }else{
         if(e.shiftKey){
             this.selection(TargeT.id);
-            if((e.ctrlKey)||(this.spinSelect)) this.spin("update");
+            if(((e.ctrlKey)||(e.metaKey))||(this.spinSelect)) this.spin("update");
             return false;//マルチセレクト
         }else{
             this.selection();//セレクション解除
@@ -3708,10 +4246,10 @@ case    "mousedown"    :
 
         if(e.shiftKey){
             this.selection(TargeT.id);
-            if((e.ctrlKey)||(this.spinSelect)) this.spin("update");
+            if(((e.ctrlKey)||(e.metaKey))||(this.spinSelect)) this.spin("update");
             return false;//マルチセレクト
         }else{
-            if (!e.ctrlKey){this.selection()};//コントロールなければ選択範囲の解除
+            if ((! e.ctrlKey)&&(! e.metaKey)){this.selection()};//コントロールなければ選択範囲の解除
 
             //this.Mouse.action=false;
             this.selectCell(TargeT.id);
@@ -3723,7 +4261,7 @@ case    "mouseup"    :
     if( this.Mouse.sID!=TargeT.id){
         if(e.shiftKey){
             this.selection(TargeT.id);
-            if((e.ctrlKey)||(this.spinSelect)) this.spin("update");
+            if(((e.ctrlKey)||(e.metaKey))||(this.spinSelect)) this.spin("update");
             return false;//マルチセレクト
         }else{
             return false;//セレクトしたまま移動
@@ -3731,12 +4269,13 @@ case    "mouseup"    :
     };
     break;
 case    "click"    :
+
     break;
 case    "mouseover"    :
     if(this.Mouse.action){
         if (TargeT.id && xUI.Mouse.rID!=TargeT.id ){
             this.selection(TargeT.id);
-            if((e.ctrlKey)||(this.spinSelect)) this.spin("update");
+            if(((e.ctrlKey)||(e.metaKey))||(this.spinSelect)) this.spin("update");
             return false;
         }else{
             return true;
@@ -3900,6 +4439,8 @@ Pref	#optionPanelPref	//環境設定（モーダル）
 Ver	#optionPanelVer	//about(モーダル)
 File	#optionPanelFile	//ファイルブラウザ（モーダル）
 
+Snd  #optionPnaleSnd    //音響パネル(共)
+
 Dbg	#optionPanelDbg	//デバッグコンソール（　排他）
 Prog	#optionPanelProg	//プログレスバー（使ってないけど…排他モーダルにする）
 //フローティングツール
@@ -3956,6 +4497,7 @@ case	"Ver":	;//バージョンパネル
 case	"Pref":	;//環境設定
 case	"Scn":	;//ドキュメント設定
 case	"Prog":	;//プログレスパネル
+case	"Snd":	;//音声編集パネル
 	var myStatus=(myTarget.is(':visible'))? true:false;
 		this.sWitchPanel("clear");
 		if(myStatus){myTarget.dialog("close")}else{myTarget.dialog("open")};
@@ -3964,7 +4506,6 @@ case	"Prog":	;//プログレスパネル
 case	"Login":;//ログインパネル
 case	"Data":	;//データパネル
 case	"Dbg":	;//デバッグパネル
-case	"Snd":	;//音声編集パネル
 	var myStatus=(myTarget.is(':visible'))? true:false;
 		this.sWitchPanel("clear");
 		if(myStatus){myTarget.hide()}else{myTarget.show()};
@@ -3975,6 +4516,9 @@ case	"TimeUI":	;//ツールボックス
 case	"Tbx":	;//ツールボックス
 		if(myTarget.is(':visible')){myTarget.hide()}else{myTarget.show()};
 	break;
+//case	"Snd":	;//音声編集パネル
+//		if(myTarget.is(':visible')){myTarget.hide()}else{myTarget.show()};
+//	break;
 case	"Utl":	;//ユーティリテーメニューパネル
 	if(! myTarget.is(':visible')){
 		myTarget.show();
@@ -4876,12 +5420,10 @@ xUI.initの初期化手続は１回のみに変更　コードを組み替えて
 */
 function nas_Rmp_Init(uiMode){
     var startupWait=false;
-
-
+/*
 console.log(xUI.XPS.toString())
 console.log(xUI.referenceXPS.toString())
-
-
+*/
 if(false){
 //プロパティのリフレッシュ
     xUI._checkProp();
@@ -5205,6 +5747,13 @@ $("#optionPanelProg").dialog({
 	width	:720,
 	title	:localize(nas.uiMsg.processing)
 });
+//:nas.uiMsg.Sounds
+$("#optionPanelSnd").dialog({
+	autoOpen:false,
+	modal	:false, 
+	width	:680,
+	title	:localize(nas.uiMsg.Sounds)
+});
 })();
 
 
@@ -5371,7 +5920,7 @@ default:
         $("#localFileLoaderSelect").hide();
     }
 //initInfosheet();
-//xUI.spin(0);xUI.spin(SpinValue);
+//xUI.spin(1);xUI.spin(SpinValue);
 //ドキュメント設定オブジェクト初期化
     myScenePref    =new ScenePref();
 //UI設定オブジェクト初期化
@@ -5392,7 +5941,7 @@ if(dbg){
 //    $("#optionPanelTrackLabel").show();
 //    $("#optionPanelEfxTrack").show();
 //    $("#optionPanelTrsTrack").show();
-//        $("#serverSelector").show();
+        $("#serverSelector").show();
 }
 //表示内容の同期
     sync("tool_");sync("info_");
@@ -5908,7 +6457,7 @@ default	:	if(dbg){dbgPut(": "+prop+" :ソレは知らないプロパティなの
             xUI.pMenu('pMsave','false');
        }
 	}else{
-console.log('dont init xUI');
+console.log('yet init xUI');
 	}
 //
 }
@@ -8756,7 +9305,7 @@ if(typeof console == 'undefined'){
         console=air.Introspector.Console;
     }else{
         console = {};
-if(dbg) console.log=function(aRg){ 
+if(dbg) console.log=function(aRg){
         //dbg_action(aRg)
             document.getElementById('msg_well').value += (aRg+"\n");
         };
