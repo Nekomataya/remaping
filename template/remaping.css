@@ -698,6 +698,16 @@ span.subControl_XTC {
 	width:64px;
 	left:64px;
 }
+span.subControl_SPIN {
+	position:relative;
+	height:24px;
+	width:24px;
+	left:24px;
+}
+input.tcInput {
+	width:96px;
+}
+
 button.subControl {
 	width:21px;
 	height:12px;
@@ -717,23 +727,25 @@ button.subControl:disabled {
 .subControl-incrS { background-position: -2px 0; }
 .subControl-incr6 { background-position: -26px 0; }
 .subControl-incr { background-position: -50px 0; }
-.subControl-incrT { background-position: -54px 0; }
+.subControl-decrT { background-position: -74px 0; }
 
 .subControl-decrS { background-position: -2px -12px; }
 .subControl-decr6 { background-position: -26px -12px; }
 .subControl-decr { background-position: -50px -12px; }
-.subControl-decrT { background-position: -54px -12px; }
+.subControl-incrT { background-position: -74px -12px; }
 
 .subControl-leftStop { background-position: -2px -24px; }
 .subControl-left { background-position: -26px -24px; }
-.subControl-right { background-position: -50px -24px; }
+.subControl-right { background-position: -70px -24px; }
 .subControl-rightStop { background-position: -54px -24px; }
 
 .subControl-playT { background-position: -2px -36px; }
 .subControl-circle { background-position: -26px -36px; }
 .subControl-stop { background-position: -50px -36px; }
-.subControl-pause { background-position: -54px -36px; }
+.subControl-pause { background-position: -74px -36px; }
 
+.subControl-lock { background-position: -2px -48px; }
+.subControl-unlock { background-position: -26px -48px; }
 
 input.spinCtl {
 	width:48px;
@@ -1091,7 +1103,7 @@ div.application_status {
 #optionPanelLogin{
     display:none;
 }
-#optionPanelTbx{
+#optionPanelTbx {
     display:none;
     position:absolute;
     top:64px;
@@ -1139,7 +1151,50 @@ div.application_status {
     line-height:1.5;
     text-indent:1em;
 }
+/*音響フローティングパネル*/
+#optionPanelSnd {
+    display:none;
+    position:absolute;
+    top:64px;
+    left:120px;
+    width:660px;
+    height:240px;
+    background-color:#efefef;
+    padding:0;
+    border-style:double;
+}
+#optionPanelSnd a.minimize{
+    position:absolute;
+    right:32px;
+    top:1px;
+}
+#optionPanelSnd a.close{
+    position:absolute;
+    right:8px;
+    top:1px;
+}
+#optionPanelSnd a.minimize img{
+    border:none;
+}
+#optionPanelSnd a.close img{
+    border:none;
+}
+#optionPanelSnd dl dt{
+    height:25px;
+    line-height:25px;
+    text-indent:1em;
+    font-weight:bold;
+    cursor:move;
+}
+#optionPanelSnd dl dd{
+    margin:0;
+    padding:2em;
+    line-height:1.5;
+    text-indent:1em;
+}
 
+
+/* 以下オプションパネル群 */
 #optionPanelVer {
     display:none;
     width:480px;

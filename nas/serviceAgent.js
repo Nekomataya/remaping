@@ -807,7 +807,7 @@ localRepository.removeEntry=function(myIdentifier){
     識別子でエントリリストを検索して該当するリストエントリを返す操作をメソッド可
     issuesは受取先で評価
     NetroekRepositoryにも同メソッドを
-    引数　opt を加えると　タイトルまで一致で最初のエントリを返す
+    引数　opt を加えると　プロダクトまで一致で最初のエントリを返す
  */
 localRepository.entry=function(myIdentifier,opt){
     if(! opt) {opt = 0}else{opt = -1};
@@ -1132,7 +1132,7 @@ if(dbg) console.log ('noentry in repository :' +  decodeURIComponent(currentEntr
         リポジトリとしての共通メソッド
     .getList()
     .getEntry(myIdentifier)
-    .putEntry(myXps)
+    .pushEntry(myXps)
         
 リポジトリに 相当する構造は Team
 チームごとにリポジトリが設定される
@@ -1718,11 +1718,13 @@ function(result){
     DBにタイトルを作成する。
     confirmなし 呼び出し側で済ませること
     必要あれば編集UI追加
-引数
+引数:
     タイトル（必須）
     備考テキスト
     Pmオブジェクト
     コールバック関数２種
+戻値:
+     なし
 
 識別子は受け入れない　必要に従って前段で分解のこと
 */
@@ -1770,6 +1772,9 @@ if(dbg) console.log(result);
     コールバック関数２種
     識別子のみ受け入れ
     このルーチンを呼び出す時点で、タイトルは存在すること
+    手続的には、カット作成を主眼にして
+    Title/Opus 等の上位のオブジェクトが存在しない時点で自動でコールされるように調整する？
+    
 */
 NetworkRepository.prototype.addOpus = function (myIdentifier,prodIdentifier,callback,callback2){
 /*
@@ -1856,7 +1861,11 @@ NetworkRepository.prototype.pushEntry = function (myXps,callback,callback2){
 /**
     サーバにデータを送信する（メンテナンスメソッド）
     引数:
+        メソッド
+        myProduct
         Xpsオブジェクト
+        成功時コールバック関数
+        失敗時コールバック関数
 
 リポジトリ上に既存エントリはPUT 新規エントリはPOSTで　送信
 タイトルや、エピソードが存在しないデータはリジェクト
@@ -1879,13 +1888,14 @@ NetworkRepository.prototype.pushEntry = function (myXps,callback,callback2){
                                data-job_id="1:work"
                                data-status="Active"
   ></span>
-  
+  myEntry を myProduct に換装
+  ListEntry > productsData.episodes[0]
 */
 NetworkRepository.prototype.pushData = function (myMethod,myEntry,myXps,callback,callback2){
 if(dbg) console.log(myEntry);
-//    return;
+if (myEntry instanceof ListEntry){
+//エントリオブジェクト渡し
 	var lastIssue   = myEntry.issues[myEntry.issues.length-1];
-//	var method_type = myMethod;
 
     var title_name     = myEntry.product.split('#')[0];
     var episode_name   = myEntry.product.split('#')[1];
@@ -1900,6 +1910,25 @@ if(dbg) console.log(myEntry);
     var job_id         = lastIssue[2];
     var status         = lastIssue[3];
 */
+}else{
+//プロダクト(該当カットはなし)
+	var lastIssue   = ['0:','0:','0:','Startup'];
+
+    var title_name     = myEntry.product.split('#')[1];
+    var episode_name   = encodeURIComponent(myEntry.name);
+    var cut_name       = (myMethod == 'PUT')? myEntry.sci:'s'+((myXps.scene)? myXps.scene:'-')+'c'+myXps.cut+"("+nas.Frm2FCT(myXps.time(),3)+")";
+    var line_id        = myXps.line.toString(true);
+    var stage_id       = myXps.stage.toString(true);
+    var job_id         = myXps.job.toString(true);
+    var status         = myXps.currentStatus;
+/*
+    var line_id        = lastIssue[0];
+    var stage_id       = lastIssue[1];
+    var job_id         = lastIssue[2];
+    var status         = lastIssue[3];
+*/
+    
+}
 //オンサイト・シングルドキュメントバインドの場合はbackend_variablesから情報を取得
   if(serviceAgent.currentStatus=="online-single"){
 //  if(document.getElementById('backend_variables')){}
@@ -2016,19 +2045,40 @@ NetworkRepository.prototype.removeEntry = function (myIdentifier){
 };
 /**
     エントリリストを検索して該当するリストエントリを返す操作をメソッド可
+引数:
+    識別子
+    プロダクト検索オプション
+戻値:
+    識別子に該当するListEntry
+    または episode情報
+    データ照合に失敗した場合はnull
+    
     issues他のプロパティは受取先で評価
     指定の識別子との比較は
     title,opus,scene,cut の４点の比較で行う(秒数とサブタイトルは比較しない)
     optを加えるとtitle,opusのみを比較
-    
 */
 NetworkRepository.prototype.entry=function(myIdentifier,opt){
     opt = (opt)? -1 : 0;
+  if(serviceAgent.currentRepository.entryList.length){
     for (var pid=0;pid<serviceAgent.currentRepository.entryList.length;pid++){
         if(Xps.compareIdentifier(serviceAgent.currentRepository.entryList[pid].toString(),myIdentifier) > opt){
                 return serviceAgent.currentRepository.entryList[pid]
         }
     }
+  }else if(opt){
+    for (var pid=0;pid<serviceAgent.currentRepository.productsData.length;pid++){
+      for (var oid=0;oid<serviceAgent.currentRepository.productsData[pid].episodes[0].length;oid++){
+        var checkTitle = serviceAgent.currentRepository.productsData[pid].name;
+        var checkOpus  = serviceAgent.currentRepository.productsData[pid].episodes[0][oid].name;
+        if(
+    Xps.compareIdentifier([decodeURIComponent(checkTitle),decodeURIComponent(checkOpus)].join('#')+'//',myIdentifier) > opt
+        ){
+                return opt;
+        }
+      }
+    }
+  }
     return null;        
 }
 /**
@@ -3113,12 +3163,16 @@ if(dbg)console.log(decodeURIComponent(myIdentifier));
 //なければタイトルを作成後にエピソードを新作して処理続行
 // confirmあり
             　var hasTitle = false;
+            　var hasOpus  = false;
             　for (var pid=0;pid<documentDepot.products.length;pid ++){
             　   //productsのメンバをオブジェクト化したほうが良いかも
             　   var prdInfo=Xps.parseProduct(documentDepot.products[pid]);
-            　   if(prdInfo.title==myXps.title) {hasTitle = documentDepot.products[pid];break;}
-            　};
-            　if(hasTitle){
+            　   if(prdInfo.title== myXps.title) {
+            　       hasTitle = documentDepot.products[pid];
+            　       if(prdInfo.opus == myXps.opus) {hasOpus  = documentDepot.products[pid];break;}
+            　   }
+            　}
+            　if((hasTitle)&&(! hasOpus)){
             　   var msg=localize({
             　       en:"",
             　       ja:"この共有には指定の制作話数 #%1[%2] が登録されていません。\n新規に制作話数 #%1[%2] を登録しますか？\n共有を変更するする場合は一旦キャンセルして手続をやり直してください。"},myXps.opus,myXps.subtitle);
@@ -3126,7 +3180,7 @@ if(dbg)console.log(decodeURIComponent(myIdentifier));
             　   serviceAgent.currentRepository.addOpus(myIdentifier,hasProd,function(){
             　       serviceAgent.currentRepository.pushEntry(myXps);
             　   });
-            　 }else{
+            　 }else if((! hasTitle)&&(! hasOpus)){
             　   var msg=localize({
             　       en:"",
             　       ja:"この共有には指定された作品 %1#%2[%3] が登録されていません。\n新規に %1#%2[%3] を登録しますか？\n共有を変更するする場合は一旦キャンセルして手続をやり直してください。"},myXps.title,myXps.opus,myXps.subtitle);
@@ -3136,6 +3190,8 @@ if(dbg)console.log(decodeURIComponent(myIdentifier));
             　           serviceAgent.currentRepository.pushEntry(myXps);
             　       });
             　   });
+            　}else{
+            　   serviceAgent.currentRepository.pushEntry(myXps);
             　};
             　          
         };

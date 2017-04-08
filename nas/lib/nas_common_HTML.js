@@ -317,7 +317,7 @@ function MVSlider_NS_(event) {
 	newValue = Math.floor(newValue * exN)/exN;
 	if(this.sliderTarget.value != newValue) {
 		this.sliderTarget.value = newValue ;
-		this.sliderTarget.onchanging();
+		if(this.sliderTarget.onchanging) this.sliderTarget.onchanging();
 	}
 }
 //	nas.MVSlider_NS	=	MVSlider_NS_ ;
@@ -337,7 +337,7 @@ function MVSlider_IE_() {
 	newValue = Math.floor(newValue * exN)/exN;
 	if(this.sliderTarget.value != newValue) {
 		this.sliderTarget.value = newValue;
-		this.sliderTarget.onchanging();
+		if(this.sliderTarget.onchanging)this.sliderTarget.onchanging();
 	}
 }
 //	nas.MVSlider_IE	=	MVSlider_IE_	;//

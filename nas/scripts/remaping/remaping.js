@@ -205,6 +205,7 @@ xUI.init    =function(editXps,referenceXps){
     this.favoriteWords      =FavoriteWords;                             // お気に入り単語
     this.footMark           =FootMark;                                  // フットマーク機能フラグ
     this.autoScroll         =AutoScroll;                                // 自動スクロールフラグ
+    this.scrollStop         =false;                                     // 自動スクロール抑制フラグ
     this.tabSpin            =TabSpin;                                   // TABキーで確定操作
 
     this.noSync             =NoSync;                                    // 入力同期停止
@@ -342,7 +343,7 @@ xUI.setSheetLook = function(sheetLooks){
         this.inputModeColor.FLOAT   = nas.colorAry2Str(div( add (nas.colorStr2Ary(sheetLooks.FloatModeColor),nas.colorStr2Ary(this.sheetbaseColor)),2));                    //  ブロック移動基本色
         this.inputModeColor.SECTION = nas.colorAry2Str(mul( add (nas.colorStr2Ary(sheetLooks.SectionModeColor),nas.colorStr2Ary(this.sheetbaseColor)),.5));                  //  範囲編集中の色
         this.inputModeColor.SECTIONtail = nas.colorAry2Str(mul( add (nas.colorStr2Ary(sheetLooks.SectionModeColor),nas.colorStr2Ary(this.sheetbaseColor)),.45));                  //  範囲編集中の色
-        this.inputModeColor.SECTIONselection = nas.colorAry2Str( mul( add (nas.colorStr2Ary(sheetLooks.SectionModeColor),nas.colorStr2Ary(this.sheetbaseColor)),0.5));                  //  範囲編集中の色
+//        this.inputModeColor.SECTIONselection = nas.colorAry2Str( mul( add (nas.colorStr2Ary(sheetLooks.SectionModeColor),nas.colorStr2Ary(this.sheetbaseColor)),1));                  //  範囲編集中の色
 
     this.selectedColor    = this.inputModeColor.NORMAL;                                     //選択セルの背景色
     this.selectionColor    = sheetLooks.SelectionColor;                                     //選択領域の背景色
@@ -378,9 +379,9 @@ xUI.setSheetLook = function(sheetLooks){
         this.inputModeColor.EXTENDselection=
     nas.colorAry2Str(div(add(nas.colorStr2Ary(this.inputModeColor.EXTEND),mul(nas.colorStr2Ary(this.selectionColor),5)),6));
         this.inputModeColor.FLOATselection=
-    nas.colorAry2Str(div(add(nas.colorStr2Ary(this.inputModeColor.FLOAT),mul(nas.colorStr2Ary(this.selectionColor),5)),6));
+    nas.colorAry2Str(div(add(nas.colorStr2Ary(this.inputModeColor.FLOAT),mul(nas.colorStr2Ary(this.sheetbaseColor),5)),6));
         this.inputModeColor.SECTIONselection=
-    nas.colorAry2Str(div(add(nas.colorStr2Ary(this.inputModeColor.SECTION),mul(nas.colorStr2Ary(this.selectionColor),5)),6));
+    nas.colorAry2Str(div(add(nas.colorStr2Ary(this.inputModeColor.SECTION),mul(nas.colorStr2Ary(this.sheetbaseColor),5)),6));
 //編集中
         this.inputModeColor.NORMALeddt=
     nas.colorAry2Str(div(add(nas.colorStr2Ary(this.inputModeColor.NORMAL),mul([1,1,1],8)),9));
@@ -584,6 +585,8 @@ xUI.setUImode = function (myMode){
 	$('#pmaui').hide();
 	$('span.subControl_TC').each(function(){$(this).hide()})
     $("li#auiMenu").each(function(){$(this).hide()});
+    document.getElementById('cutList').multiple = false;
+
             //作業中のドキュメントステータスは、必ずActiveなので以下のボタン状態
             //Active以外の場合はこのモードに遷移しない
             document.getElementById('pmcui-checkin').disabled    =true;
@@ -602,6 +605,7 @@ xUI.setUImode = function (myMode){
 	$('#pmaui').show();
 	$('span.subControl_TC').each(function(){$(this).show()})
     $("li#auiMenu").each(function(){$(this).show()});
+    document.getElementById('cutList').multiple = true;
             document.getElementById('pmcui-checkin').disabled    =true;//すべてのボタンを無効
             document.getElementById('pmcui-update').disabled     =true;
             document.getElementById('pmcui-checkout').disabled   =true;
@@ -618,6 +622,7 @@ xUI.setUImode = function (myMode){
 	$('#pmaui').hide();
 	$('span.subControl_TC').each(function(){$(this).hide()})
     $("li#auiMenu").each(function(){$(this).hide()});
+    document.getElementById('cutList').multiple = false;
             document.getElementById('pmcui-checkin').disabled    = ((xUI.sessionRetrace==0)&&((xUI.XPS.currentStatus=='Startup')||(xUI.XPS.currentStatus=='Fixed')))? false:true;                
             document.getElementById('pmcui-update').disabled     =true;
             document.getElementById('pmcui-checkout').disabled   = true;
@@ -661,7 +666,7 @@ xUI.setUImode = function (myMode){
     セル編集フラグ 切り替えと同時に表示を調整
 */
 xUI.edChg=function(status,opt){
-    if(this.viewOnly) return false;
+    if(this.viewOnly) return xUI.headerFlash('#bb8080');
     this.edchg=status;
     document.getElementById("edchg").style.backgroundColor=
     (this.edchg)?
@@ -854,7 +859,8 @@ console.log(currentStream);
     
  */
 xUI.sectionPreview=function(destination){
-    if((xUI.edmode<2)||(xUI.viewOnly)) return false;
+    if((xUI.edmode<2)||(xUI.viewOnly)) return xUI.headerFlash('#ff8080');
+//    if((xUI.edmode<2)||(xUI.viewOnly)) return false;
     if(typeof destination == 'undefined')   destination = this.Select[1];
     var hotpoint    = xUI.Select[1]+xUI.sectionManipulateOffset[1];
  //   this.sectionManipulateOffset[1]=hotpoint-this.Select[1];//オフセットがでる
@@ -890,12 +896,12 @@ xUI.sectionPreview=function(destination){
 /*
 引数：　action
     セクション操作の結果を実際の画面に反映させるメソッド
-    Xps.sctionManipulate()に対応するxUI側の処理
+    Xps.manipulateSection()に対応するxUI側の処理
     データ配置の際にトラック全体を書き直すので、カーソル位置を復帰させるためにundoStackに第４要素を積む
     xUI.putメソッドを経由せずにこのルーチン内で完結させる.
 */
 xUI.sectionUpdate=function(){
-     if(this.viewOnly) return false;
+     if(this.viewOnly) return xUI.headerFlash('#ff8080');
     var trackContents = xUI.floatTrack.sections.manipulateSection(xUI.floatSectionId,xUI.Select[1],xUI.Selection[1]);
 //undo   保留の場合は以下のルーチンを使用
 /* undo保留ではなくユーザが各工程を辿れるように１操作毎に書換を行い、一括undoのために操作回数を記録する。*/
@@ -904,8 +910,7 @@ xUI.sectionUpdate=function(){
 
     var currentFrame     = xUI.Select[1];
     var currentSelection = xUI.Selection[1];
-    var currentScroll    = xUI.autoScroll;
-    xUI.autoScroll = false;
+    xUI.scrollStop = true;
       xUI.selectCell([xUI.Select[0],0]);
         xUI.selection();
           xUI.put(trackContents[0]);
@@ -914,7 +919,8 @@ xUI.sectionUpdate=function(){
         xUI.floatUpdateCount ++;//increment
         xUI.selectCell([xUI.Select[0],currentFrame+trackContents[1]]);
       xUI.selection([xUI.Select[0],xUI.Select[1]+currentSelection]);
-    xUI.autoScroll = currentScroll;
+    xUI.scrollStop = false;
+    if(SoundEdit)SoundEdit.getProp();
 }
 /*    xUI.floatTextHi()
 引数:なし　モード変数を確認して動作
@@ -1290,6 +1296,9 @@ if(this.showGraphic){
     switch(currentTrackOption){
         case "sound":;
         case "dialog":;
+            if (myStr.match(/<([^>]+)>/)){
+                myStr=xUI.trTd(myStr);
+            }
             if (myStr.match(/[-_─━~＿￣〜]{2,}?/)){
               myStr=(this.showGraphic)?"<br>":"<hr>";
               if((mySection.startOffset()+mySection.duration-1) == tgtID[0]){
@@ -1471,8 +1480,10 @@ if(! (ID instanceof Array)) ID = ID.split('_') ;
 縦方向    セルフォーカスが表示範囲上下一定（６または８？）フレーム以内であること(上下別の条件に)
 横方向　セルフォーカスが表示範囲左右一定（２～４？）カラム以内であること（左右別条件に）
 かつ移動余裕があること=各条件がシート端からの距離以上であること
+スクロール停止フラグが立っていないこと
+
 */
-    if (this.autoScroll){
+    if ((this.autoScroll)&&(! this.scrollStop)){
         var targetID=add(xUI.Select,[0,xUI.sectionManipulateOffset[1]]).join('_');
         this.scrollTo(targetID); 
     };
@@ -1605,8 +1616,7 @@ if(Method == "clear") {
 };
 
 //    スピン 1 以上を処理 選択範囲内外で色分け
-    for(L=this.Select[1]+1;L<this.spinValue+this.Select[1];L++)
-    {
+    for(L=this.Select[1]+1;L<this.spinValue+this.Select[1];L++){
         if(L > 0 && L < this.XPS.xpsTracks[0].length){
             if(Method=="clear"){
 //if(XPS.xpsTracks[this.Select[0]][L]!="" && this.footMark){}
@@ -1676,6 +1686,30 @@ xUI.footstampPaint    =function(){
         this.selectCell(restoreValue);
 };
 //
+/**
+    ヘッダ部分の背景色を点滅させる
+引数:点滅色 未指定の際は'#808080'<> 背景色
+
+*/
+xUI.headerFlash = function(hilightColor){
+var originalColor=xUI.sheetLooks.SheetBaseColor;
+if(!hilightColor) hilightColor='#808080';
+
+    $("#fixedHeader").css("background-color",hilightColor);
+    setTimeout(function(){
+        $("#fixedHeader").css("background-color",originalColor);
+/*        setTimeout(function(){
+            $("#fixedHeader").css("background-color",hilightColor);
+            setTimeout(function(){
+                $("#fixedHeader").css("background-color",originalColor);
+            },75);
+        },120);*/        
+    },150);
+    return false;
+};
+
+//test xUI.headerFlash();
+
 /*    タイムシート本体のヘッダを返すメソッド(ページ単位)
         xUI.headerView(pageNumber)
         引数はページ番号を整数で
@@ -2261,7 +2295,7 @@ BODY_ +='</td>';
 */
     var outputColumus=(pageNumber<-2)?xUI.dialogSpan-1:this.XPS.xpsTracks.length-2;
 for (var r=0;r<=outputColumus;r++){
-if((r==0)||(this.XPS.xpsTracks[r].option=="dialog"))    {
+    if((r==0)||(this.XPS.xpsTracks[r].option=="dialog"))    {
 //ダイアログセル
 BODY_ +='<td ';
 //    if ((current_frame != null)&&(current_frame < this.XPS.duration())){}
@@ -2621,7 +2655,7 @@ xUI.move(dest,dup);
 UNDOデータが第４要素を保つ場合のみ、そのデータをもとにカーソル位置の復帰が行われる
 */
 xUI.move    =function(dest,dup){
-    if(xUI.viewOnly) return false;
+    if(xUI.viewOnly) return xUI.headerFlash('#ff8080');
     if(typeof dest =="undefined"){return false};//移動指定なし
     if ((dest[0]==0) && (dest[1]==0)){return false};//指定は存在するが移動はなし
 
@@ -2890,7 +2924,7 @@ xUI.putReference    =function(datastream,direction){
 */
 xUI.put = function(datastream,direction,toReference){
   if(! toReference) toReference = false;
-  if((xUI.viewOnly)&&(! toReference)) return false;
+  if((xUI.viewOnly)&&(! toReference)) return xUI.headerFlash('#ff8080');
   var targetXps= (toReference)? xUI.referenceXPS:xUI.XPS;
   
   if(typeof datastream == "undefined") datastream="";
@@ -3342,13 +3376,16 @@ case	27	:	//esc 選択範囲解除
         this.mdChg('section');
        break;
     } else if(this.edmode == 2 ){
-        this.undo(this.floatUpdateCount);//まとめて開始点までUNDO
-        this.mdChg('normal');
-
-        this.selectCell();
-        this.selection(add(this.selectBackup,this.selectionBackup));
-        
-        break;//編集を解除してバックアップ状態へ復帰
+	    if((e.ctrlKey)||(e.metaKey)){
+            this.undo(this.floatUpdateCount);//まとめて開始点までUNDO
+            this.mdChg('normal');
+            this.selectCell();//編集を解除してバックアップ状態へ復帰
+            this.selection(add(this.selectBackup,this.selectionBackup));
+        }else{
+            this.mdChg('normal');
+            this.selection();
+        }
+        break;
     }
 //		複数セレクト状態 
 	if(this.getid("Selection")!="0_0")
@@ -4492,12 +4529,12 @@ var myPanels=["#optionPanelMemo",
 switch(status){
 //ダイアログ
 case	"File":	;//ファイルブラウザ
-	if(documentDepot.documents.length==0){documentDepot.rebuildList();}
+	if((documentDepot.documents.length==0)&&(status=='File')){documentDepot.rebuildList();}
 case	"Ver":	;//バージョンパネル
 case	"Pref":	;//環境設定
 case	"Scn":	;//ドキュメント設定
 case	"Prog":	;//プログレスパネル
-case	"Snd":	;//音声編集パネル
+//case	"Snd":	;//音声編集パネル(スクロール追従)
 	var myStatus=(myTarget.is(':visible'))? true:false;
 		this.sWitchPanel("clear");
 		if(myStatus){myTarget.dialog("close")}else{myTarget.dialog("open")};
@@ -4506,6 +4543,7 @@ case	"Snd":	;//音声編集パネル
 case	"Login":;//ログインパネル
 case	"Data":	;//データパネル
 case	"Dbg":	;//デバッグパネル
+//case	"Snd":	;//音声編集パネル(固定時)
 	var myStatus=(myTarget.is(':visible'))? true:false;
 		this.sWitchPanel("clear");
 		if(myStatus){myTarget.hide()}else{myTarget.show()};
@@ -4516,9 +4554,9 @@ case	"TimeUI":	;//ツールボックス
 case	"Tbx":	;//ツールボックス
 		if(myTarget.is(':visible')){myTarget.hide()}else{myTarget.show()};
 	break;
-//case	"Snd":	;//音声編集パネル
-//		if(myTarget.is(':visible')){myTarget.hide()}else{myTarget.show()};
-//	break;
+case	"Snd":	;//音声編集パネル(fixed)
+		if(myTarget.is(':visible')){myTarget.hide()}else{myTarget.show()};
+	break;
 case	"Utl":	;//ユーティリテーメニューパネル
 	if(! myTarget.is(':visible')){
 		myTarget.show();
@@ -4984,11 +5022,30 @@ xUI.resetSheet=function(editXps,referenceXps){
 //画像部品の表示前のカーソル位置描画
     this.selectCell(restorePoint);
     this.selection(restoreSelection);
- 
+//セクション編集状態であれば解除
+    if(this.edmode>0){this.mdChg('normal');}
     return ;
 };
 
 //test-    xUI.reset(new Xps(3,24),new Xps(5,72));
+
+/**
+    tcサブコントロールに設定してターゲット要素の値を編集する関数
+    関数の最期にonChangeがあれば実行
+引数:
+    targetId   ターゲット要素のIDまたはターゲット要素
+    tcForm     使用するTC型式
+    myStep     クリック毎に加算するフレーム数値 
+*/
+xUI.tcControl = function(targetId,tcForm,myStep){
+    var myTraget = document.getElementById(targetId);
+    myTraget.value=nas.Frm2FCT(nas.FCT2Frm(myTraget.value)+myStep,tcForm);
+    if(document.getElementById(targetId).onchange) document.getElementById(targetId).onchange();
+    return false;
+}
+
+
+
 //オブジェクト戻す
 return xUI;
 };
@@ -5748,12 +5805,19 @@ $("#optionPanelProg").dialog({
 	title	:localize(nas.uiMsg.processing)
 });
 //:nas.uiMsg.Sounds
+/* ダイアログをスクロール追従型にする場合はJQuiry UIで初期化
 $("#optionPanelSnd").dialog({
 	autoOpen:false,
 	modal	:false, 
 	width	:680,
-	title	:localize(nas.uiMsg.Sounds)
+	title	:localize(nas.uiMsg.Sounds),
+    position: {
+        of : window,
+        at: 'center top',
+        my: 'senter top'
+    }
 });
+*/
 })();
 
 
@@ -7123,13 +7187,11 @@ default:url="./template/timeSheet_eps.txt";
 /*
 	試験的にjQueryでフローティングウインドウ
 */
-
 jQuery(function(){
     jQuery("a.openTbx").click(function(){
         jQuery("#optionPanelTbx").show();
         return false;
     })
-    
     jQuery("#optionPanelTbx a.close").click(function(){
         jQuery("#optionPanelTbx").hide();
         return false;
@@ -7145,23 +7207,53 @@ jQuery(function(){
         return false;
     })
     jQuery("#optionPanelTbx dl dt").mousedown(function(e){
-        
         jQuery("#optionPanelTbx")
             .data("clickPointX" , e.pageX - jQuery("#optionPanelTbx").offset().left)
             .data("clickPointY" , e.pageY - jQuery("#optionPanelTbx").offset().top);
-        
         jQuery(document).mousemove(function(e){
 var myOffset=document.body.getBoundingClientRect();
             jQuery("#optionPanelTbx").css({
-//                top:e.pageY  - jQuery("#optionPanelTbx").data("clickPointY")-document.getElementById("fixedHeader").clientHeight+myOffset.top+"px",
                 top:e.pageY  - jQuery("#optionPanelTbx").data("clickPointY")+myOffset.top+"px",
                 left:e.pageX - jQuery("#optionPanelTbx").data("clickPointX")+myOffset.left+"px"
             })
         })
-        
     }).mouseup(function(){
         jQuery(document).unbind("mousemove")
-        
+    })
+});
+//Panel Snd
+jQuery(function(){
+    jQuery("a.openSnd").click(function(){
+        jQuery("#optionPanelSnd").show();
+        return false;
+    })
+    jQuery("#optionPanelSnd a.close").click(function(){
+        jQuery("#optionPanelSnd").hide();
+        return false;
+    })
+    jQuery("#optionPanelSnd a.minimize").click(function(){
+        if(jQuery("#optionPanelSnd").height()>100){
+           jQuery("#formSnd").hide();
+           jQuery("#optionPanelSnd").height(24);
+	}else{
+           jQuery("#formSnd").show();
+           jQuery("#optionPanelSnd").height(240);
+	}
+        return false;
+    })
+    jQuery("#optionPanelSnd dl dt").mousedown(function(e){
+        jQuery("#optionPanelSnd")
+            .data("clickPointX" , e.pageX - jQuery("#optionPanelSnd").offset().left)
+            .data("clickPointY" , e.pageY - jQuery("#optionPanelSnd").offset().top);
+        jQuery(document).mousemove(function(e){
+var myOffset=document.body.getBoundingClientRect();
+            jQuery("#optionPanelSnd").css({
+                top:e.pageY  - jQuery("#optionPanelSnd").data("clickPointY")+myOffset.top+"px",
+                left:e.pageX - jQuery("#optionPanelSnd").data("clickPointX")+myOffset.left+"px"
+            })
+        })
+    }).mouseup(function(){
+        jQuery(document).unbind("mousemove")
     })
 });
 /*
@@ -7793,29 +7885,44 @@ case	"update_user":
 xUI.setStored("force");sync();
 }
 /*	暫定版データエコーCGI 呼び出し
+引数:DLファイル名    
+
 	CGI呼び出しの際に、フォイル名の確認を行うように変更
 	ただしオブションで機能を切り離し可能に
-
-
+    引数によってダイアログを省略
+    引数がなければ、自動生成のファイル名を作成してダイアログで確認
  */
-function callEcho()
-{
+function callEcho(dlName,callback){
 var msg = localize(nas.uiMsg.confirmCallecho);
 var title = localize(nas.uiMsg.saveToDonloadfolder);
+    if(!dlName){
 nas.showModalDialog(" prompt",msg,title,xUI.getFileName()+'\.xps',function(){
 	if(this.status==0){
-	var storeName=this.value;
-	xUI.setStored("current");
-	sync();
+	  var storeName=this.value;
+	  xUI.setStored("current");
+	  sync();
 		//ファイル保存を行うのであらかじめリセットする;
-	document.saveXps.action=ServiceUrl+'COMMAND=save&';
-	document.saveXps.COMMAND.value ='save';
-	document.saveXps.encode.value  ='utf8';
-	document.saveXps.XPSBody.value=encodeURI(XPS.toString());
-	document.saveXps.XPSFilename.value=storeName;
-	document.saveXps.submit();
+	  document.saveXps.action=ServiceUrl+'COMMAND=save&';
+	  document.saveXps.COMMAND.value ='save';
+	  document.saveXps.encode.value  ='utf8';
+	  document.saveXps.XPSBody.value=encodeURI(XPS.toString());
+	  document.saveXps.XPSFilename.value=storeName;
+	  document.saveXps.submit();
+      if(callback instanceof Function){callback();}; 
 	}
 })
+    }else{
+	  xUI.setStored("current");
+	  sync();
+		//ファイル保存を行うのであらかじめリセットする;
+	  document.saveXps.action=ServiceUrl+'COMMAND=save&';
+	  document.saveXps.COMMAND.value ='save';
+	  document.saveXps.encode.value  ='utf8';
+	  document.saveXps.XPSBody.value=encodeURI(XPS.toString());
+	  document.saveXps.XPSFilename.value=dlName+'.xps';
+	  document.saveXps.submit();
+      if(callback instanceof Function){callback();}; 
+    }
 }
 /*	拡張子を引数にしてコールする
 txt,html,ard,tsh,eps,ard　など
@@ -9290,6 +9397,277 @@ this.close=function (){
 
 };
 //ScenePrefオブジェクト終了
+/**
+    サウンド関連オブジェクト編集パネル
+    201704現在はダイアログ関連のみ
+*/
+/*
+    ダイアログ(SoundEdit)編集パネル
+    サウンドオブジェクトプロパティを表示編集するUI
+    変更内容は常時タイムシートと同期させる
+*/
+SoundEdit ={
+    panel:document.getElementById('optionPanelSnd'),
+    changed:false,
+    duration:0,
+    timeLock:0,
+//0:inPointLock,1:outPointLock,2:durationLock
+/*
+label参照配列　カット／作品内のラベルをストアして入力候補として提示するためのデータ
+タイトルごとの集積データを持つ　タイトルDB内の香盤データとして監理する
+新規に入力されたラベルがあれば、香盤に加える（最終的にはそうする）
+*/
+    labels:[
+        "通行人",
+        "男",
+        "女",
+        "子供",
+        "警官",
+        "医者"
+    ],
+/*
+    ダイアログプロパティは、個人データとして監理する
+    デフォルトでシステムに持たせる
+*/
+    props:[
+        '背',
+        'off',
+        'V.O.',
+        'N',
+        ''
+    ]
+}
+/*
+    パネル初期化
+    ダイアログトラックが選択されていな場合は、ウインドウを閉じて終了
+    既にedmode>=2の場合は選択されているセクションの値でパネルを初期化する
+     :edmode==0
+    フォーカスが値セクションの場合はフォーカスのあるセクションを選択
+    null値セクションの場合は、選択範囲の前後にセクションノードを挿入して空の値セクションを作成して選択
+    その後　mdChg(2)
+    
+    パネルの編集中（changeing）は edmode==3 その後(change)イベントを送出
+
+    メインのテキストエリアの内容は、dialogText
+    編集内容は適用スイッチで反映？
+    またはonChanging?
+    
+*/
+SoundEdit.init = function(){
+    //var targetTrack   = xUI.XPS.xpsTracks[xUI.Select[0]];
+    //this.targetSection = this.targetTrack.sections[xUI.floatSectionId];
+    if (xUI.edmode<2){
+        var currentFrame=(xUI.Select[1]==0)? 1:xUI.Select[1];
+//フロートセクションがないのでモード遷移をトライ
+//モード遷移に失敗したら新規の有値セクションを作成してそれを選択する
+        if(! xUI.mdChg('section')){
+            xUI.selectCell([xUI.Select[0],currentFrame-1]);
+            xUI.put('----,,----');//
+            xUI.selectCell([xUI.Select[0],currentFrame]);
+            xUI.mdChg('section');
+        };
+    }
+    this.getProp();
+}
+/*  UIロックパラメータ同期
+引数：ロックするパラメータを文字列または数値 引数なしは同期のみ
+
+*/
+SoundEdit.syncTCL=function(ix){
+    switch(ix){
+    case 'inPoint':
+    case 0:
+        this.timeLock=0;
+    break;
+    case 'outPoint':
+    case 1:
+        this.timeLock=1;
+    break;
+    case 'duration':
+    case 2:
+        this.timeLock=2;
+    default:
+        //NOP
+    }
+    for(var idx=0;idx<3;idx++){
+        var targetId = ['soundInpointLock','soundOutpointLock','soundDurationLock'][idx];
+        if(this.timeLock==idx){
+            document.getElementById(targetId).innerHTML= '🔒';//Lock
+        }else{
+            document.getElementById(targetId).innerHTML= '🔓';//unLock
+        }
+    }   
+}
+/*　編集対象のパネルのラベルを入れ替える
+引数:ダイアログラベル文字列
+*/
+SoundEdit.setLabel = function(myName){
+    if(typeof myName == 'undefined') return false;
+    if(xUI.edmode<2) return;//NOP
+    var targetTrack   = xUI.XPS.xpsTracks[xUI.Select[0]];
+    var targetSection = targetTrack.sections[xUI.floatSectionId]
+    targetSection.value.name = myName;
+    document.getElementById('sndBody').value=targetSection.value.toString();
+    xUI.sectionUpdate();
+}
+/** 編集対象のパネルの値をセットする
+引数: 
+    tc  TC文字列
+    target 目的のプロパティ"inPoint","outPoint","duration"
+ロックされているプロパティに値を設定しようとすると、自動でロックが入れ替わる
+　　in点     → out点
+　　out点    → in点
+　　duration → in点
+　　ただしあらかじめ他のロックが行われている場合は、自動変更は働かない
+*/
+SoundEdit.setTime = function(tc,target){
+    if(xUI.edmode<2) return;//NOP
+    var myFrame = nas.FCT2Frm(tc);
+    if(myFrame < 0) myFrame = 0;
+    if(myFrame > xUI.XPS.xpsTracks.duration) myFrame = xUI.XPS.xpsTracks.duration;
+//     xUI.mdChg(3);
+    switch(target){
+    case 0:
+    case 'inPoint':
+        if(this.timeLock==0){this.syncTCL(1);}
+        var headOffset = myFrame;
+        var tailOffset = (this.timeLock == 1)?
+            nas.FCT2Frm(document.getElementById('soundOutPoint').value)-tc:
+            nas.FCT2Frm(document.getElementById('soundDuration').value);
+    break;
+    case 1:
+    case 'outPoint':
+        if(this.timeLock==1){this.syncTCL(0);}
+        var headOffset = (this.timeLock == 0)?
+            nas.FCT2Frm(document.getElementById('soundInPoint').value):
+            tc-nas.FCT2Frm(document.getElementById('soundDuration').value);
+        var tailOffset = (this.timeLock == 0)?
+            tc-headOffset:nas.FCT2Frm(document.getElementById('soundDuration').value);
+    break;
+    case 2:
+    case 'duration':
+        if(this.timeLock==2){this.syncTCL(0);}
+        var headOffset = (this.timeLock == 0)?
+            nas.FCT2Frm(document.getElementById('soundInPoint').value):
+            nas.FCT2Frm(document.getElementById('soundOutPoint').value)-tc;
+        var tailOffset = tc;
+    break;
+    }
+//  xUI.XPS.xpsTracks[xUI.Select[0]].sections.manipulateSection(xUI.floatSectionId,myFrame,tailOffset);
+    xUI.selectCell([xUI.Select[0],headOffset]);
+    xUI.selection([xUI.Select[0],headOffset+tailOffset])
+    xUI.sectionUpdate();
+}
+/*
+    編集パネル上の値を変更して仮の範囲を表示する
+    モードをフロートに変更
+*/
+SoundEdit.floatTC = function(changeID){
+    if(xUI.edmode<2) return false;
+    if(xUI.edmode==2) if(xUI.mdChg('float') != 3) return false; //モード変更に失敗したのでメソッド終了
+        var inPoint = nas.FCT2Frm(document.getElementById('soundInPoint').value);
+        var outPoint = nas.FCT2Frm(document.getElementById('soundOutPoint').value);
+        var duration = nas.FCT2Frm(document.getElementById('soundDuration').value);
+    switch(changeID){
+    case 0:
+    case 'inPoint':
+        if (inPoint < 0) inPoint = 0;
+        if (inPoint >= xUI.XPS.xpsTracks.duration) inPoint = (xUI.XPS.xpsTracks.duration-1);
+        if (this.timeLock == 0) this.syncTCL(1);
+        if (this.timeLock == 1) duration = (outPoint+1)-inPoint;
+    break;
+    case 1:
+    case 'outPoint':
+        if (outPoint < 0) outPoint = 0;
+        if (outPoint >= xUI.XPS.xpsTracks.duration) outPoint = (xUI.XPS.xpsTracks.duration-1);
+        if (this.timeLock == 1) this.syncTCL(0);
+        if (this.timeLock == 2) inPoint  = outPoint+1-duration;
+        if (this.timeLock == 0) duration = outPoint+1-inPoint;
+    break;
+    case 2:
+    case 'duration':
+        if (duration < 1) duration = 1;
+        if (duration > xUI.XPS.xpsTracks.duration) duration = xUI.XPS.xpsTracks.duration;
+        if (this.timeLock == 2) this.syncTCL(0);
+        if (this.timeLock == 1) inPoint = outPoint+1 - duration;
+    break;
+    }
+    document.getElementById('soundInPoint').value  = nas.Frm2FCT(inPoint ,2);
+    document.getElementById('soundOutPoint').value = nas.Frm2FCT(outPoint,2);
+    document.getElementById('soundDuration').value = nas.Frm2FCT(duration,2);
+    xUI.selection([xUI.Select[0],xUI.Select[1]+duration]);
+    xUI.selectCell([xUI.Select[0],inPoint]);
+//    xUI.sectionUpdate();
+}
+/**
+    シート上のダイアログのプロパティをパネルに反映
+*/
+SoundEdit.getProp = function(){
+    if(xUI.edmode<2) return;//NOP
+    var targetTrack   = xUI.XPS.xpsTracks[xUI.Select[0]];
+    var targetSection = targetTrack.sections[xUI.floatSectionId]
+//ターゲットセクションの値を取得して表示同期
+    var inPoint  = targetSection.startOffset();
+    var outPoint = inPoint + targetSection.duration - 1;
+    document.getElementById('sndBody').value=targetSection.value.toString();
+    document.getElementById('soundInPoint').value  = nas.Frm2FCT(inPoint ,2);
+    document.getElementById('soundOutPoint').value = nas.Frm2FCT(outPoint,2);
+    document.getElementById('soundDuration').value = nas.Frm2FCT(targetSection.duration,2);
+}
+/** パネルの内容をシートに同期反映させる　値が同じプロパティはスキップ
+    
+*/
+SoundEdit.sync = function(){
+    if(xUI.edmode<2) return;//NOP
+//台詞
+    var targetTrack   = xUI.XPS.xpsTracks[xUI.Select[0]];
+    var targetSection = targetTrack.sections[xUI.floatSectionId]
+    targetSection.value.contentText = document.getElementById('sndBody').value;
+    //テキストエリアの内容が正しいコンテンツ型式であるか保証されないので注意！
+    //パーサにチェック機能を設けるか　またはフィルタすること
+    targetSection.value.parseContent();
+    
+    targetTrack.sections.manipulateSection(
+        xUI.floatSectionId,
+        nas.FCT2Frm(document.getElementById('soundInPoint').value),
+        nas.FCT2Frm(document.getElementById('soundDuration').value)
+    );
+    xUI.sectionUpdate();
+}
+SoundEdit.close = function(){
+	if($("#optionPanelSnd").is(":visible")){
+	    //閉じる時に編集内容を確定しておく
+	    if(xUI.edmode > 0) {
+	        this.sync();
+	        xUI.mdChg(0);
+	    }
+		xUI.sWitchPanel("Snd");
+		
+	}else{
+		return false;
+	}
+	return null;
+}
+//パネルを開く
+//すでに開いていたら最小化されていないか確認して開く　最小化もされていなければ　NOP Return
+SoundEdit.open=function(){
+
+    if(
+    (xUI.XPS.xpsTracks[xUI.Select[0]].option != 'dialog')||
+	($("#optionPanelSnd").is(":visible"))
+	){
+	    if(document.getElementById('optionPanelSnd').style.display=='none')
+	      document.getElementById('optionPanelSnd').style.display='inline';
+		return false;
+	}else{
+		this.init();
+		xUI.sWitchPanel("Snd");
+	}
+	return null;
+}
+
+
+
 
 // debaug デバグ用ルーチン		------ dbg.js
 
@@ -9307,7 +9685,7 @@ if(typeof console == 'undefined'){
         console = {};
 if(dbg) console.log=function(aRg){
         //dbg_action(aRg)
-            document.getElementById('msg_well').value += (aRg+"\n");
+            try{document.getElementById('msg_well').value += (String(aRg) + "\n");}catch(err){alert(err)}
         };
     }
 }

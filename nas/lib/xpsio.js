@@ -497,8 +497,9 @@ XpsTimelineTrack.prototype.remove=function(){
  実質使いドコロが無さそう？
  */
 XpsTimelineTrack.prototype.duplicate=function(){
-        var newOne=new XpsTimelineTrack(this.id, this.type, this.xParent, this.length);
-        Object.assign(newOne,this);
+//        var newOne=new XpsTimelineTrack(this.id, this.type, this.xParent, this.length);
+//        Object.assign(newOne,this);
+        var newOne = Object.create(this);
         return newOne;
 }
 /**
@@ -707,7 +708,7 @@ XpsTimelineSectionCollection.prototype.addSection = function (myValue) {
 例：　['1,,,3,,,4,,,7,,,8,,,9,,,0,,',0]
      */
 XpsTimelineSectionCollection.prototype.manipulateSection = function (id,headOffset,tailOffset) {
-console.log([id,headOffset,tailOffset]);
+//console.log([id,headOffset,tailOffset]);
     var targetSection = this[id];
     var myResult=[];//Collectionの編集を行わず、直接トラックのセル値を組み上げる=区間のメソッドは最低限で使う
     var resultCount=[];
@@ -719,7 +720,7 @@ console.log([id,headOffset,tailOffset]);
         var startOffset = (tailOffset < 0)? headOffset + tailOffset  : headOffset;
         var endOffset = Math.abs(tailOffset);
     }
-console.log([id,startOffset,endOffset])
+//console.log([id,startOffset,endOffset])
 /*==========================*/
 //区間外に新規 (空白)区間挿入
     if((id==0)&&(startOffset>0)){
@@ -785,7 +786,6 @@ console.log('ターゲット区間処理')
         }else{
             tailFlow=0;
         };
-
 //console.log(newContent.length);
 //console.log(newContent);
 //console.log('old Length : '+myResult.length)
@@ -793,14 +793,20 @@ console.log('ターゲット区間処理')
         resultCount.push(targetSection.duration);
 //console.log('new Length : '+myResult.length)
 //ターゲット後方区間を処理
-    for (var ix=id+1;ix<this.length;ix++){
+//後方区間が存在しないケースを検出の（残フレームを空要素で埋める）必要がある
+    if((this.length-1) == id){
+console.log('後方区間処理 : blanks');//処理区間の情報取得
+        var duration   =  xUI.XPS.xpsTracks.duration-(startOffset+endOffset-1);
+        var newContent = (new Array(duration)).join();
+        myResult       = myResult.concat(newContent);
+    }else{
+      for (var ix=id+1;ix<this.length;ix++){
 console.log('後方区間処理 : '+(ix));//処理区間の情報取得
         var sectionHead = this[ix].startOffset();
         var sectionTail = this[ix].startOffset() + this[ix].duration -1;
-        var outPoint = startOffset+endOffset;
+        var outPoint = startOffset+endOffset;//編集対象区間のアウト点
         if((sectionHead < outPoint)&&(sectionTail <= outPoint)){
-        //全消去
-            continue 
+            continue;        //全消去
         }else if((ix==(id+1)) && (sectionTail > outPoint )){
 //            var duration = (this[ix].startOffset()+this[ix].duration+1)-(startOffset+endOffset);
             var duration = sectionTail-outPoint-1;
@@ -819,10 +825,11 @@ console.log('後方区間処理 : '+(ix));//処理区間の情報取得
             tailFlow=0;
         };
 //console.log(newContent.length);
-//console.log(newContent);
+console.log(newContent);
         myResult=myResult.concat(newContent);
         resultCount.push(duration);
 //console.log('new Length : '+myResult.length)
+      }
     }
 //console.log(myResult.length);
 //console.log(myResult);
@@ -2579,7 +2586,8 @@ Xps.getIdentifier=function(myXps){
     仮の比較関数
     SCiオブジェクトに統合予定
     一致推測は未実装
-    戻値:数値   -1  :no match
+    戻値:数値  -2   :no match
+               -1   :title match
                 0   :product match
                 1   :product + cut match
                 2   :line match
@@ -2591,8 +2599,12 @@ Xps.getIdentifier=function(myXps){
 Xps.compareIdentifier =function (target,destination){
     var tgtInfo  = Xps.parseIdentifier(target);
     var destInfo = Xps.parseIdentifier(destination);
+console.log(tgtInfo);
+console.log(destInfo);
+    //title
+        if(tgtInfo.title != destInfo.title) { return -2;}
     //title+opus
-        if((tgtInfo.title+tgtInfo.opus) != (destInfo.title+destInfo.opus)){ return -1;}
+        if( tgtInfo.opus != destInfo.opus ) { return -1;}
     //Scene,Cut
         tgtSC = tgtInfo.cut;
         dstSC = destInfo.cut;
@@ -2706,6 +2718,8 @@ Xps.parseCutIF = function(myIdentifier){
      データ判定を兼ねる
      分割要素がカット番号を含まない（データ識別子でない）場合はfalseを戻す
      SCi/listEntryオブジェクトとの兼ね合いを要調整　20170104
+     
+     asign/
 */
 Xps.parseIdentifier = function(myIdentifier){
     if(! myIdentifier.split){console.log(myIdentifier)};
@@ -3012,7 +3026,7 @@ XPS.xpsTracks[0].parseSoundTrack();
 XPS.xpsTracks[0].sections[1].toString();
 
 XpsTimelineTrack.prototype.parseSoundTrack=_parseSoundTrack;
-//XpsTimelineTrack.prototype.parseDialogTrack=_parseDialogTrack;
+//XpsTimelineTrack.prototype.parseDialogTrack=_sectionTrack;
 
 //XpsTimelineTrack.prototype.parseKeyAnimationTrack=_parsekeyAnimationTrack;
 //XpsTimelineTrack.prototype.parseAnimationTrack=_parseAnimationTrack;

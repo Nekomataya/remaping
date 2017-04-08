@@ -583,12 +583,31 @@ nas.AnimationSound Object
 　タイムシートサウンドトラックの値となる
 　外部ファイルリンクはこの際割愛
 
-bodyStream();    タイムシート内のストリームをテキストで取り出す（メソッド）
-contentText;    String    内容テキスト原文　"たぬきさん(off)「ぽん！(SE:ポン)ぽこ！<BGM:開始>りん！[光る！]」"
-name;    String    ラベルとなる名称    "たぬきさん"
-bodyText;    String    台詞本体のテキスト　"ぽん！ぽこ！りん！"
-attributes;    Array    オブジェクト属性配列 ["(off)"] 
-comments;    Array    ノートコメントコレクション配列 [[3,"(SE:ポン)"],[6,"<BGM:開始>"],[9,"[光る！]"]]
+    現在のプロパティ
+
+    getStream(cellCount);
+タイムシート用のストリームを配列で返す（内部利用メソッド）
+引数のカウントはデータを配置するオブジェクト継続フレーム数　０〜
+（値は継続時間を持たない）
+引数０の際はラベルとセパレータ分の配列を返す
+
+    toString(cellCount);
+引数のカウントに従ってタイムシート上での利用のためcsvストリームで戻す
+それ以外の場合はコンテントテクストを戻す（メソッド）
+
+    contentText;    String
+内容テキスト原文　"たぬきさん(off)「ぽん！(SE:ポン)ぽこ！<BGM:開始>りん！[光る！]」"
+    name;    String
+ラベルとなる名称    "たぬきさん"
+
+    bodyText;    String
+台詞本体のテキスト　"ぽん！ぽこ！りん！"
+
+    attributes;    Array
+オブジェクト属性の配列 ["(off)"] 
+
+    comments;    Array
+ノートコメントコレクション配列 [[3,"(SE:ポン)"],[6,"<BGM:開始>"],[9,"[光る！]"]]
 コメントのインデックスはbodyText内の挿入点　シート展開時は、bodyText.length+comments.length のフレームを再配置する
 */
 nas.AnimationSound=function(myContent){
@@ -605,6 +624,7 @@ nas.AnimationSound=function(myContent){
 /*
     初期化時の内容テキスト（シナリオ型式）をパースしてオブジェクト化するメソッド
     本来は自動実行だが、今回は必要に従ってコールする
+    
 */
 nas.AnimationSound.prototype.parseContent=function(){
     if(this.contentText.length){
@@ -635,45 +655,24 @@ nas.AnimationSound.prototype.parseContent=function(){
             this.bodyText=this.bodyText.replace(/(<[^<>]+>|\[[^\[\]]+\]|\([^\(\)]+\))/g,"");
         }
         return this.toString();
-    }else{return false;}    
+    }else{
+    //内容テキストが空
+        return false;
+    }    
 }
 /*
-プロパティを組み上げてシナリオ型式のテキストを返す
+toStringはプロパティを組み上げてMap記述用のテキストを返す
+ダイアログの場合はシナリオ型式のテキスト
 
-引数に正の数値が与えられた場合は、XPS上への展開配列で戻す
+引数に正の数値でセルカウントが与えられた場合は、XPS上への展開配列ストリームで戻す。
+展開配列は　getStream() メソッドで得る
 ＊各Valueの標準形式
 */
 nas.AnimationSound.prototype.toString=function(counts){
   if(counts){
-    //durationCountが与えられることが前提で配列を組む
-    //ダイアログ展開時に限り、与えられた引数に対して　前方側にname,attributes+開始セパレータ　後方側に終了セパレータ分のフレームが追加される
-    var myResult=[];
-    myResult.push(this.name);
-    for(var aid=0;aid<this.attributes.length;aid++){myResult.push(this.attributes[aid])};
-    myResult.push('----');
-    var entryCount = this.bodyText.length+this.comments.length;//テキスト文字数とコメント数を加算
-    var dataCount = 0;//データカウントを０で初期化
-    var textIndex = 0;//テクストインデックス
-    var commentIndex = 0;//コメントインデックス
-    var dataStep = counts/entryCount ;//データステップ
-    for(var cnt = 0; cnt < counts; cnt ++){
-        var myIndex = (entryCount >= counts) ? cnt:Math.floor(cnt/dataStep);//配置Index
-        //挿入点判定
-        if(dataCount==myIndex){
-            if((this.comments[commentIndex])&&(this.comments[commentIndex][0]==textIndex)){
-                myResult.push(this.comments[commentIndex][1]);
-                commentIndex++;
-            }else{
-                myResult.push(this.bodyText.charAt(textIndex));
-                textIndex++;
-            }
-            dataCount++;
-        }else{
-            myResult.push('');
-        }
-    } 
-    myResult.push('----');
-    return myResult.join();
+//受け渡しをJSON経由にするか否かはペンディング　JSONStringの場合はString.split厳禁 
+//    return JSON.stringify(this.getStream(counts));
+    return (this.getStream(counts)).join();
   }else{
     var myResult=this.name;
     myResult+=this.attributes.join("");
@@ -694,7 +693,48 @@ nas.AnimationSound.prototype.toString=function(counts){
 //A=new  nas.AnimationSound("たぬきさん(off)「ぽん！(SE:ポン)ぽこ！<BGM:開始>りん！[光る！]とうりゃぁー！！」");
 //A.parseContent();
 //A
-
+/** 値を配列でもどす
+引数: cellCount
+戻値: セルのデータ並び配列
+cellCountが与えられることが前提で配列を組む
+ダイアログ展開時に限り、与えられた引数に対して　前方側にname,attributes+開始セパレータ　後方側に終了セパレータ分のフレームが追加される
+引数が０でもラベルとセパレータ分のデータが戻る
+指定の継続フレーム数より要素数が増えるので注意
+*/
+nas.AnimationSound.prototype.getStream=function(cellCounts){
+    if(isNaN(cellCounts)) cellCounts = (this.contents.length+this.comments.length+this.attributes.length+3);
+    if(cellCounts<0)cellCounts=Math.abs(cellCounts);
+  if(cellCounts){
+    var myResult=[];
+    myResult.push(this.name);//ラベル
+    for(var aid=0;aid<this.attributes.length;aid++){myResult.push(this.attributes[aid])};//アトリビュート
+    myResult.push('----');//開始セパレータ
+    var entryCount = this.bodyText.length+this.comments.length;//テキスト文字数とコメント数を加算
+    var dataCount = 0;//データカウントを０で初期化
+    var textIndex = 0;//テクストインデックス
+    var commentIndex = 0;//コメントインデックス
+    var dataStep = cellCounts/entryCount ;//データステップ
+    for(var cnt = 0; cnt < cellCounts; cnt ++){
+        var myIndex = (entryCount >= cellCounts) ? cnt:Math.floor(cnt/dataStep);//配置Index
+        //挿入点判定
+        if(dataCount==myIndex){
+            if((this.comments[commentIndex])&&(this.comments[commentIndex][0]==textIndex)){
+                myResult.push(this.comments[commentIndex][1]);
+                commentIndex++;
+            }else{
+                myResult.push(this.bodyText.charAt(textIndex));
+                textIndex++;
+            }
+            dataCount++;
+        }else{
+            myResult.push('');
+        }
+    } 
+    myResult.push('----');
+    return myResult;
+  }
+}
+//TEST 
 /*
         タイムラインをダイアログパースする
     タイムライントラックのメソッド

@@ -34,11 +34,20 @@ UI上のドキュメントパネルのオプションリストは、表示用の
 nas.Pm.Opus オブジェクトを使用　リポジトリへの参照を加える
 opusが同じでもリポジトリが異なる場合は、同エントリ内で複数を保持
 
-主にローカルリポジトリや、ホームリポジトリでの使用を前提とする
+空プロダクトを作成する際は、リポジトリ内に対応する　TITLE及びOPUSを同時に作成するようにトライする
+対応するオブジェクトが存在しないエントリは処理に失敗する
+
+カット（＝ドキュメント）のエントリは空のままでも良いがOPUSを持たないタイトルはアプリの表示規則上許可されない
+
+
+主にローカルリポジトリや、ホームリポジトリでの使用を前提とする?
+
 
     documentDepot.documents
+    
 ドキュメントエントリーコレクション　サービスにアクセスするごとに更新
 ドキュメントエントリはカプセル化されたオブジェクトにする　SCi互換
+ListEntry オブジェクトのコレクションとして実装
 
     currentProduct      　　現在ブラウザで選択中のプロダクト識別子
     currentSelection        現在ブラウザで選択中のドキュメント識別子
@@ -126,11 +135,15 @@ if(serviceAgent.currentRepository instanceof NetworkRepository){
     this.updateDocumentSelector();
     return this.documents.length;
 }
-//OPUSセレクタを更新する
+/*  OPUSセレクタを更新する
+引数:エントリフィルタ用正規表現
+戻値:フィルタリング済のリスト配列
+ */
 documentDepot.updateOpusSelector=function(myRegexp){
     if(typeof myRegexp != "RegExp"){ myRegexp = new RegExp(".+");}
 // ここで正規表現フィルタを引数にする
-    var myContents = ""
+    var myContents = "";
+    var myResult   = [];
     myContents += '<option value="==newTitle==">（*-- no title selected --*）';
     for( var opid = 0 ; opid < this.products.length ; opid ++){
         var currentText = decodeURIComponent(this.products[opid]);
@@ -141,28 +154,26 @@ documentDepot.updateOpusSelector=function(myRegexp){
             myContents += this.products[opid];
             myContents += (this.currentProduct == this.products[opid])? '" selected>':'">';
             myContents += currentText;
+            myResult.push(this.products[opid]);
         }
     }
     document.getElementById( "opusSelect" ).innerHTML = myContents;
+    return myResult;
 }
-//Documentセレクタを更新する
-documentDepot.updateDocumentSelector=function(myRegexp){
+/*  Documentセレクタを更新
+引数:エントリフィルタ用正規表現
+戻値:フィルタリング済のリスト配列
+ */
+ documentDepot.updateDocumentSelector=function(myRegexp){
 // ここで正規表現フィルタを引数にする
     if(typeof myRegexp != "RegExp"){ myRegexp = new RegExp(".+");}
 // 選択済みタイトルで抽出
-    var myDocuments = [];
-    for ( var dcid = 0 ; dcid < this.documents.length ; dcid ++){
-if(dbg) console.log([this.documents[dcid],this.currentProduct]);
-        if((this.currentProduct)&&(Xps.compareIdentifier(this.documents[dcid].toString(),this.currentProduct) > -1)){
-            myDocuments.push(this.documents[dcid]);
-        }
-         continue;
-    }
-//if(dbg) console.log()
-    myDocuments.sort(documentDepot.sortBySCi);
+    var myDocuments = this.getEntriesByOpusid(this.currentProduct);
+//    myDocuments.sort(documentDepot.sortBySCi);
 if(dbg) console.log(myDocuments);
 //  正規表現フィルタで抽出してHTMLを組む
     var myContents = "";
+    var myResult   = [];
     myContents += '<option value="==newDocument==">（*-- no document selected--*）';
     for ( var dlid = 0 ; dlid < myDocuments.length ; dlid ++){
         var currentText = decodeURIComponent(myDocuments[dlid].toString(0).split('//')[1]);
@@ -172,11 +183,31 @@ if(dbg) console.log(myDocuments);
             myContents += myDocuments[dlid];
             myContents += (this.currentSelection == myDocuments[dlid])? '" selected >':'">';
             myContents += currentText;
+            myResult.push(myDocuments[dlid]);
         }
     }
     document.getElementById( "cutList" ).innerHTML = myContents;
-    
+    return myResult;//抽出したリスト
 }
+
+/*
+  現在の全エントリから　プロダクトIDが一致するエントリを抽出してカット順にソートして返す
+引数:プロダクト識別子
+ */
+documentDepot.getEntriesByOpusid=function(myIdentifier){
+    if(! myIdentifier) myIdentifier=this.currentProduct;
+// タイトルIDで抽出
+    var myDocuments = [];
+    for ( var dcid = 0 ; dcid < this.documents.length ; dcid ++){
+        if((this.currentProduct)&&(Xps.compareIdentifier(this.documents[dcid].toString(),myIdentifier) > -1)){
+            myDocuments.push(this.documents[dcid]);
+        }
+         continue;
+    }
+    myDocuments.sort(documentDepot.sortBySCi);
+    return myDocuments;    
+}
+
 /**
 listEntryのカット番号順にソートする　評価関数
 */
@@ -540,8 +571,8 @@ var currentStatus = myEntry.issues[myEntry.issues.length-1][3];
         document.getElementById("ddp-activate").disabled =
             ((currentStatus == "Hold")||(currentStatus == "Fixed"))?false:true;//hold||fixed　アクティベート可能
           */  
-        document.getElementById("ddp-readout").disabled     = false;//無条件読出可能
-        document.getElementById("ddp-reference").disabled   = false;//同上
+        document.getElementById("ddp-readout").disabled     = (xUI.onSite)? true:false;//オンサイト時読出抑制
+        document.getElementById("ddp-reference").disabled   = false;//参照は無条件読出可能
         for ( var tidx = 0 ; tidx < myInputText.length ; tidx ++ ){
             document.getElementById(myInputText[tidx]).disabled = true;
         }
