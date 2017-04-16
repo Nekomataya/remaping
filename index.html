@@ -564,7 +564,7 @@ serviceAgent.pushEntry(xUI.XPS,function(){xUI.setStored("current");sync();
 >loginPanel</A></li>
 <li id=debug><span id=pMsoundPnl-d class='pM pM-alt'></span><A	id=pMsoundPnl
 	HREF='javascript:void(0);'
-	onclick='SoundEdit.open();return false'
+	onclick='xUI.sWitchPanel("Snd");return false'
 	title="Snd"
 >soundPanel</A></li>
 <li id=debug><span id=pMfilePnl-d class='pM pM-alt'></span><A	id=pMfilePnl
@@ -2985,12 +2985,14 @@ onDblClick='if (! document.getElementById("single").checked) chkValue(this.id)'
 <!-- <span id=soundPnl class=SoundPanel>音声編集</span>
 <hr>-->
 <dl><dt style="background-color:#888888;"><span id=soundPnl class=SoundPanel>音声編集</span><a href="" class=minimize ><img src=images/ui/minimize.png alt="＿"></a><a href="" class=close ><img src=images/ui/close.png alt="×"></a></dt></dl>
-<div id=formSnd style="margin-left:12px;"><form>
+<div id=formSnd style="margin-left:12px;"><fieldset id='dialogEdit'>
 label:
-<select id='soundLabelSelector'>
-	<option value=たぬき　>　たぬき 
-	<option value=キツネ　>　キツネ
-	<option value=ねこ　　>　ねこ
+<select id='soundLabelSelector'
+    onChange="SoundEdit.setLabel(this.value);"
+>
+	<option value="たぬき">　たぬき 
+	<option value="キツネ">　キツネ
+	<option value="ねこ"  >　ねこ
 </select>
 attributes:
 <input type=text id=soundProps>
@@ -3020,10 +3022,9 @@ attributes:
 データ保存を行って次セッション以降も使用可能な状態にすることも可能
 -->
 <hr>
-
-
 content:
 <br><textarea name=SndBody id=sndBody style="width:96%;height:96px"
+onchange="xUI.mdChg(3);"
 ></textarea>
 <div id=dialogWords>
 <span 
@@ -3052,7 +3053,7 @@ IN :
 	title="IN点調整"
 > </button></span>
 
-<span style="margin-right:48px;"> </span>
+<span style="margin-right:36px;"> </span>
 OUT :
 <button id=soundOutpointLock type=button class="iconButton"
 	onClick='SoundEdit.syncTCL(1);'
@@ -3072,7 +3073,7 @@ OUT :
     onClick='return xUI.tcControl("soundOutPoint",2,1);'
 	title="OUT点調整"
 > </button></span>
-<span style="margin-right:48px;"> </span>
+<span style="margin-right:36px;"> </span>
 duration :
 <button id=soundDurationLock type=button class="iconButton"
 	onClick='SoundEdit.syncTCL(2);'
@@ -3092,9 +3093,17 @@ duration :
 	class="subControl subControl-decr spinCtl spinCtl-bottom"
     onClick='return xUI.tcControl("soundDuration",2,-1);'
 	title="duration点調整"
+> </button>
+<button
+	id=durationSetSpin
+	class="iconButton"
+    onClick='var currentData=new nas.AnimationSound(document.getElementById("sndBody").value);currentData.parseContent();document.getElementById("soundDuration").value=xUI.spinValue*(currentData.bodyText.length+currentData.comments.length);SoundEdit.floatTC(2);SoundEdit.sync();'
+	title="スピン適用"
 > </button></span>
 <br>
-<input type=button
+</fieldset>
+<!-- 共通ボタン -->
+<!-- <input type=button
     id=soundPnlGet value="↑：取込" style="width:10%"
 	onClick="SoundEdit.init();"
 ><input type=button
@@ -3109,13 +3118,30 @@ duration :
 ><input
 	type=reset id=soundPnlReset value="リセット" style="width:10%"
 ><input type=button
-	id=soundPnlClear value="消去" style="width:10%"
-	onClick="document.getElementById('sndBody').value='';"
+	id=soundPnlClear value="解除" style="width:10%"
+	onClick='SoundEdit.close();'
 ><input
 	type=button id=soundPnlClose value="閉じる" style="width:10%"
+	onClick='xUI.sWitchPanel("Snd");'
+><br>-->
+<button
+    id=soundPanelApply
+    style='width:96px;'
+	onClick="SoundEdit.sync();"
+>適用</button><button
+    id=soundPanelFix
+    style='width:96px;'
+	onClick="SoundEdit.sync();xUI.mdChg((xUI.edmode==3)?2:0);"
+>確定</button><button
+    id=soundPanelRelease
+    style='width:96px;'
 	onClick='SoundEdit.close();'
->
-</form>
+>解除</button><button
+    id=soundPanelClose
+    style='width:96px;'
+	onClick='xUI.sWitchPanel("Snd");'
+>閉じる</button>
+
 </div>
 </div>
 <!--	ラベル付き音響編集パネル	-->
@@ -3204,4 +3230,28 @@ $Id:$ index.html ,v 1.7 2017/03/04  support@u-at.net <br />
   </div>
   <div id="scrollSpaceFt" class=\"screenSpace\"><br></div>
   <!-- backend_variables -->
+  <span id="backend_variables"
+        data-organization_token="6kT3SX2Mg8Er1w63RhzgVfzH"
+        data-user_access_token="4a9a2dba0f661dffdaf0db2d7169e6729ca0ba16bc4cbcc1f8b6d0fd4ad07ceb"
+        data-user_token="vwNW7gjUuHbbZZpkC7Y4ydBs"
+        data-user_name="Nekomataya-STG1"
+        data-user_email="kiyo@nekomataya.info"
+        data-episode_id="25"
+        data-cut_id="1401"
+        data-product_token="8fRmfvarRijSpNDjPJcvnzE4"
+        data-episode_token="DSnUg31WdzQ86bLB2VikFDFj"
+        data-cut_token="r8siFpTxjkp5ZWvnKC5dXhTo"
+        data-line_id=""
+        data-stage_id=""
+        data-job_id=""
+        data-status=""
+        data-server_url='http://remaping.scivone-dev.com'
+  ></span>
+<!--
+	サーバーオンサイトの状況を真似る場合
+	この位置に　backend_variables　を置いて
+	プロパティに以下の１行を加える
+    data-server_url='https://remaping-stg.u-at.net'
+    アドレスはサーバーのルートを使用　2017.04.13
+-->
 </body></html>

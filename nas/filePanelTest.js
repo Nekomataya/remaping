@@ -75,18 +75,26 @@ documentDepot = {
     リポジトリのエントリリストを走査してコレクションを再構築してブラウザをアップデートする
     ** リポジトリ(エントリリスト)の更新は行わない　必要に従って事前に更新の要あり
     逐次的に画面の再描画が可能なように変更する20170322
+    引数リストを受けて、現在のエントリと比較を行い逐次更新を行うように変更する?　事前に引数リスト組む必要パリ
+    または、参照するエントリリストの複製を持って差分のみの更新を行う？　複製が大変？
 */
-documentDepot.documentsUpdate=function(){
-//既存データをクリア
-    var myProducts  =[];
+documentDepot.documentsUpdate=function(myEntries){
+//既存データをクリアしない
     var myDocuments =[];
+    var myProducts  =[];
+//    this.products=[];
+//    this.documents =[];
 /*======
     for (var idx = 0 ; idx < serviceAgent.repositories.length ; idx ++ ){
         myDocuments=myDocuments.concat(serviceAgent.repositories[idx].entryList);
     } 
 */
     myDocuments = serviceAgent.currentRepository.entryList;//カレントリポジトリのリストのみ
+//    myDocuments = myEntries;//引数リストを使う
+
 if(serviceAgent.currentRepository instanceof NetworkRepository){
+//ネットワークエントリの場合、エントリリストを遡ってプロダクトリストを作成する
+//後ほどプロダクト一覧との照合を行ってエントリを整理する
     for (var idx = 0 ; idx < serviceAgent.currentRepository.productsData.length ; idx ++){
         var myTitle = serviceAgent.currentRepository.productsData[idx].name;
         if(serviceAgent.currentRepository.productsData[idx].episodes){
@@ -102,10 +110,10 @@ if(serviceAgent.currentRepository instanceof NetworkRepository){
         }
     }
 }else{
+//ローカルリポジトリ
     for (var idx = 0 ; idx < myDocuments.length ; idx ++ ){
         var currentProduct=myDocuments[idx].toString(0).split( '//' )[0];
         var hasProduct =false;
-
         for (var idp = 0 ; idp < myProducts.length ; idp ++ ){
             //判定が完全一致なので比較メソッドを使う　//で補って０以上
             // if (currentProduct == myProducts[idp]){hasProduct = true;break;}

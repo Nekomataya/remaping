@@ -255,8 +255,8 @@ if(dbg) console.log("url : "+serviceAgent.currentServer.url + '/api/v2/organizat
           type : 'GET',
           dataType : 'json',
           success : function(result) {
-if(dbg) console.log("getRepositories:::::::::::");
-if(dbg) console.log(result);
+//if(dbg) console.log("getRepositories:::::::::::");
+//if(dbg) console.log(result);
             serviceAgent.repositories.splice(1);//ローカルリポジトリを残してクリア(要素数１)
             for( var rix=0 ; rix<result.length ; rix ++){
                 serviceAgent.repositories.push(new NetworkRepository(result[rix].name,serviceAgent.currentServer));
@@ -271,8 +271,8 @@ if(dbg) console.log(result);
     if(callback instanceof Function){setTimeout(function(){callback();},10)};
           },
           error : function(result){
-if(dbg) console.log("getRepositories::fail");
-if(dbg) console.log(JSON.stringify(result));
+console.log("getRepositories::fail");
+console.log(JSON.stringify(result));
           },
           beforeSend: serviceAgent.currentServer.setHeader
         });
@@ -498,7 +498,22 @@ A
 listEntry.prototype.getStatus=function(){
     return this.issues[this.issues.length-1][3];
 }
-
+/**
+    エントリリストを操作する拡張メソッド
+    エントリリストは配列ベースなので配列に拡張するメソッドとして記述
+.store(entry)       ;
+.remove(idf)        ;
+.getByIdf(idf)      ;idf指定でエントリを戻す
+.getByToken(token)  ;ネットワークのみ
+*/
+_getByIdf=function getByIdf(myIdentifier,opt){
+    if(typeof opt == 'undefined') opt = 1;
+    for (var ix = 0 ; ix < this.length ; ix ++){
+        if (this[ix].toString().split('//')[0] != myIdentifier.split('//')[0]) continue;
+        if (Xps.compareIdentifier(this[ix].toString(true),myIdentifier()) >= opt ) return this[ix];
+    }
+    return null;
+}
 /**
     ローカルリポジトリ
     主に最近の作業データをキャッシュする役目
@@ -521,7 +536,7 @@ localRepository={
 //    currentJob:"",
     entryList:[],
     keyPrefix:"info.nekomataya.remaping.dataStore.",
-    maxEntry:5
+    maxEntry:10
 };
 /** productList追加
     プロダクトは　OPUSに等価タイトル情報を含む
@@ -543,7 +558,7 @@ localRepository={
     if(typeof myFilter == "undefined") {myFilter=".+";};
     var myFilterRegex =(isRegex)? new RegExp(myFilter):new RegExp(".*"+myFilter+".*");
 //エントリ数を少なく制限するのでここでは実際はフィルタは意味をなさない フィルタのフォーマットは一考
-forceオプションは、引数の統一のための
+forceオプションは、引数の統一のために存在するNetworkRepositoryで必要なオプション
 localStorageでは意味を持たないダミーオプション
 */
 
@@ -1170,14 +1185,12 @@ NetworkRepository=function(repositoryName,myServer,repositoryURI){
 */
 NetworkRepository.prototype.getProducts = function (callback,callback2){
     //this.productsData.length = 0;
-    serviceAgent.currentRepository.productsData.length = 0;
+    serviceAgent.currentRepository.productsData.length = 0;//プロパティを初期化（クリア）
     $.ajax({
         url: serviceAgent.currentRepository.url+'/api/v2/products.json',
         type: 'GET',
         dataType: 'json',
         success: function(result) {
-if(dbg) console.log('get productsData');
-if(dbg) console.log(result);
 		    serviceAgent.currentRepository.productsData=result;
 		    if(callback instanceof Function){
 		        callback();
@@ -1186,8 +1199,8 @@ if(dbg) console.log(result);
 		    }
         },
         error : function(result){
-if(dbg) console.log('fail productsData::');
-if(dbg) console.log(result);
+            if(dbg) console.log('fail productsData::');
+            if(dbg) console.log(result);
 		    if(callback2 instanceof Function){callback2()}
         },
         beforeSend: serviceAgent.currentRepository.service.setHeader
@@ -1259,20 +1272,21 @@ if(dbg) console.log(result);
     引数 product_token
 */
 NetworkRepository.prototype.getEpisodes = function (callback,callback2,myToken) {
-        var myProduct = this.getNodeElementByToken(myToken);
+//        var myProduct = this.getNodeElementByToken(myToken);
+        var myProduct = serviceAgent.currentRepository.getNodeElementByToken(myToken);
         if(! myProduct) return false;
-if(dbg) console.log("getEpisodeList : "+myToken+' : '+myProduct.name) ;
+console.log("getEpisodeList : "+myToken+' : '+myProduct.name) ;
     $.ajax({
         url: serviceAgent.currentRepository.url+'/api/v2/episodes.json?product_token='+myProduct.token ,
         type: 'GET',
         dataType: 'json',
         success: function(result) {
                 //プロダクトデータのエピソード一覧を「入替」
-if(dbg) console.log(result);
+console.log(result);
 		    if(result){
 //		      serviceAgent.currentRepository.productsData[pid].episodes[0]=result ;
 		        myProduct.episodes[0]=result
-if(dbg) console.log(myProduct);
+console.log(myProduct);
 //        if(dbg) console.log('get Episodes :'+myProduct.name);
                 if(callback instanceof Function){
                     callback();
@@ -1282,14 +1296,14 @@ if(dbg) console.log(myProduct);
 		            }
 		        }
 		    }else{
-if(dbg) console.log('fail get no episodes::');
-if(dbg) console.log(result);
+console.log('fail get no episodes::');
+console.log(result);
 		        if(callback2 instanceof Function){callback2();}		        
 		    }
         },
         error : function(result){
-if(dbg) console.log('fail getting Episodes::');
-if(dbg) console.log(result);
+console.log('fail getting Episodes::');
+console.log(result);
 		    if(callback2 instanceof Function){callback2();}
         },
         beforeSend: serviceAgent.currentRepository.service.setHeader
@@ -1301,16 +1315,18 @@ if(dbg) console.log(result);
 NetworkRepository.prototype.episodesUpdate = function (callback,callback2,epToken) {
         var  myEpisode = this.getNodeElementByToken(epToken);
         if(! myEpisode) return false;
-if(dbg) console.log("get Episodes Detail for : "+myEpisode.name) ;
+console.log("get Episodes Detail for : "+myEpisode.name) ;
+console.log("get Episodes Token : "+myEpisode.token) ;
 	            // /api/v2
                 var targetURL = serviceAgent.currentRepository.url+ '/api/v2/episodes/'+myEpisode.token +'.json';
+console.log(targetURL);
 	    $.ajax({
             url: targetURL,
             type: 'GET',
             dataType: 'json',
             success: function(result) {
-if(dbg) console.log('get episode details:');
-if(dbg) console.log(result);
+console.log('get episode details:');
+console.log(result);
 //オブジェクト入れ替えでなくデータの追加アップデートに変更
 //内容は等価だがAPIの変更時は注意
 //この時点でカットの総数が取得されるのでカット一覧詳細取得時総数を参照して分割取得
@@ -1321,12 +1337,13 @@ if(dbg) console.log(result);
                 if(callback instanceof Function){
                     callback();
                 }else{
+                    //標準処理
                     serviceAgent.currentRepository.getSCi(callback,callback2,myEpisode.token);
                 }
             },
             error : function(result){
-if(dbg) console.log('fail getting episode details::');
-if(dbg) console.log(result);
+console.log('fail getting episode details::');
+console.log(result);
 		        if(callback2 instanceof Function){callback2();}
             },
             beforeSend: serviceAgent.currentRepository.service.setHeader
@@ -1338,26 +1355,27 @@ if(dbg) console.log(result);
     カット一覧にdescriptionを出してもらう
     
 引数
-    episode_token   ターゲットの話数キー
-    page_id         リストのページID
-    par_pg          ページごとのエントリ数
+    epToken   ターゲットの話数キー
+    pgNo      リストのページID　1 origin
+    ppg       ページごとのエントリ数
  */
-NetworkRepository.prototype.getSCi = function (callback,callback2,epToken) {
-    
+NetworkRepository.prototype.getSCi = function (callback,callback2,epToken,pgNo,ppg) {
     var myEpisode = this.getNodeElementByToken(epToken);
-    if(! myEpisode) return false;
-    var targetURL = serviceAgent.currentRepository.url+ '/api/v2/cuts.json?episode_token='+epToken;
-//    　+'&page_no='+'1'+'&per_page='+'5';
-    　console.log(targetURL);
+    if((! myEpisode)||(! myEpisode.cuts)) return false;
+    if(typeof pgNo == 'undefined') pgNo = '1';
+    if(typeof ppg  == 'undefined')  ppg = myEpisode.cuts[0].length;
+    var targetURL = serviceAgent.currentRepository.url+ '/api/v2/cuts.json?episode_token='+epToken+'&page_no='+parseInt(pgNo)+'&per_page='+parseInt(ppg);
+console.log(targetURL);
 	            $.ajax({
                     url: targetURL,
                     type: 'GET',
                     dataType: 'json',
                     success: function(result){
-if(dbg) console.log('episode:'+myEpisode.name);
-if(dbg) console.log(result);
-if(dbg) console.log(myEpisode);
+console.log('episode:'+myEpisode.name);
+console.log(result);
+console.log(myEpisode);
 //                        if(myEpisode.cuts){};
+                            if(myEpisode.cuts[0].length!=result.length)
                             myEpisode.cuts[0]=result;
 //                            myEpisode.cuts[1]=result;
                         
@@ -1418,30 +1436,55 @@ if(dbg) console.log(result);
 /**
 リポジトリ内のentryListを更新する
 documentsDataの更新が必要なケースでは、force スイッチを置く
+force スイッチが与えられるかまたはプロダクトリストに値がない場合はプロダクトの取得から処理が開始され
+現在のリストはクリアされずに（バッファリストを作って比較）更新が行われる
+
+このメソッド自体　サービス内のエントリを取得してentryListを更新するのが目的なので
+一括取得をやめるまたはこのメソッドの再帰的な呼び出しをやめるかいずれかの処置が必要
+getProductsからの再呼び出しは再クリアがあるのでOK
+それ以外のメソッドからの再呼び出しは厳禁
+代わりに　entryListに編集メソッドを設けて出力はそちらにつなぐものとする
+entryList.store(entry)    エントリを加える　同じidfのエントリは上書きする
+entryList.remove(idf)    エントリを削除する　idf指定
+entryList.get(idf)    エントリを加える　同じトークンのエントリは上書きする
+
+
+documentDepot.documents は　serviceAgent.currentRepository.entryList への参照
+
+更新時点の新規データを常に参照可能　リポジトリを切り替える際に参照を切り替えれば、特に問題はない？
+
+オブジェクトをクリアしなければ問題ないはず
+entryListの機能性を高めてスタティックオブジェクト化する
+
+getList等のentrListを更新するメソッドはリストのメソッドを使ってリストを更新する
+
+store(listEntry)
+
 
 */
 NetworkRepository.prototype.getList = function (force,callback){
-if(dbg) console.log("clear entryList \n rebuild entryList from docmentsData");
-if(dbg) console.log(this.productsData);
+console.log("clear entryList \n rebuild entryList from documentsData");
+console.log(this.productsData);
 //    serviceAgent.currentRepository.entryList.length=0;
-    this.entryList.length=0;
 
+    this.entryList.length=0;//エントリリスト初期化
 
+    var newList = []; //新規配列作成
+    
     if((force)||(serviceAgent.currentRepository.productsData.length==0)) {
-if(dbg) console.log('call getProducts');
+console.log('call getProducts');//プロダクト取得を設定して関数終了＝一旦処理を中断
         serviceAgent.currentRepository.getProducts();
-        return;//最終工程でこの関数が再度呼び出されるので一旦処理を中断
+        return;//最終工程でこの関数が再度呼び出される
     }else{
-if(dbg) console.log('exec build LOooooooooooooooooooooooooop');
+console.log('call productsUpdate');//プロダクト情報更新
        for(var idx = 0 ;idx < serviceAgent.currentRepository.productsData.length ;idx ++){
-            var currentTitle = serviceAgent.currentRepository.productsData[idx];//
-if(dbg) console.log(currentTitle);
+            var currentTitle = serviceAgent.currentRepository.productsData[idx];//Object取得
             if(typeof currentTitle.episodes == "undefined"){
                 if(! force){console.log('skiped :') ;continue;}
                 serviceAgent.currentRepository.productsUpdate(function(){
                     serviceAgent.currentRepository.getEpisodes(false,false,currentTitle.token);
                 },false,currentTitle.token);
-                return;//情報不足 中断
+                return;//情報不足中断
             }
             if( currentTitle.episodes[0].length == 0 ) continue;
             for(var eid = 0 ;eid < serviceAgent.currentRepository.productsData[idx].episodes[0].length ; eid ++){
@@ -1451,19 +1494,18 @@ if(dbg) console.log(currentTitle);
                     serviceAgent.currentRepository.episodesUpdate(false,false,currentEpisode.token);
                     return;//中断
                 }
-if(dbg) console.log('products check clear');
-if(dbg) console.log(currentEpisode);
+console.log('products check clear');console.log(currentEpisode);
 //                if( currentEpisode.cuts.length==1){serviceAgent.currentRepository.getSCi(false,false,currentEpisode.token);return;}
                 if( currentEpisode.cuts[0].length == 0 ) continue;
                 for(var cid = 0 ; cid < currentEpisode.cuts[0].length ;cid ++){
-
-                //管理情報は識別子から取得する
-                //APIの情報は、識別子と一致しているはずなので照合の上異なる場合はAPIの情報で上書きを行う
-                //識別子として　cut.description を使用　上位情報は、エントリから再作成
-                //サブタイトルは　episode.discriptionを使用
-                //兼用カット情報はペンディング
+/*
+    管理情報は識別子から取得する
+APIの情報は、識別子と一致しているはずだが　照合の上異なる場合はAPIの情報で上書きを行う
+識別子として　cut.description を使用　上位情報は、エントリから再作成
+サブタイトルは　episode.discriptionを使用
+兼用カット情報はペンディング
+*/
                 var myCutToken = currentEpisode.cuts[0][cid].token;
-
                 var myCutLine  = (currentEpisode.cuts[0][cid].line_id)?
                     currentEpisode.cuts[0][cid].line_id:
                     (new XpsLine(nas.pm.pmTemplate[0].line.toString())).toString(true);
@@ -1476,18 +1518,18 @@ if(dbg) console.log(currentEpisode);
                 var myCutStatus= (currentEpisode.cuts[0][cid].status)?
                     currentEpisode.cuts[0][cid].status:'Startup';
 
-                //管理情報が不足の場合は初期値で補う
-                //description情報が未登録の場合は、APIの情報からビルドする？
-
+//管理情報が不足の場合は初期値で補う description情報が未登録の場合は、APIの情報からビルドする？
 if(! currentEpisode.cuts[0][cid].description){
     currentEpisode.cuts[0][cid].description="";
 if(dbg)    console.log(currentEpisode.cuts[0][cid]);
 };
-
                 var entryArray = (
-                    String(currentEpisode.cuts[0][cid].description).split('//').concat(
-                    [encodeURIComponent(myCutLine),encodeURIComponent(myCutStage),encodeURIComponent(myCutJob),myCutStatus]
-                    )
+                    String(currentEpisode.cuts[0][cid].description).split('//').concat([
+                        encodeURIComponent(myCutLine),
+                        encodeURIComponent(myCutStage),
+                        encodeURIComponent(myCutJob),
+                        myCutStatus
+                    ])
                 ).slice(0,6);//
 
                 var myEntry=entryArray.slice(0,2).join( "//" );//管理情報を外してSCi部のみ抽出
@@ -1511,7 +1553,7 @@ if(! currentEpisode.cuts[0][cid].versions){
         new XpsStage(nas.pm.jobNames.getTemplate(nas.pm.pmTemplate[0].stages[0],"init")[0]).toString(true),
         "Startup"
 */
-    console.log(currentEpisode.cuts[0][cid]);
+//    console.log(currentEpisode.cuts[0][cid]);
 };
                     for (var vid = 0;vid<currentEpisode.cuts[0][cid].versions.length;vid++){
                         var myVersionString=(currentEpisode.cuts[0][cid].versions[vid].description)?
@@ -1526,6 +1568,8 @@ if(dbg) console.log("push entry : "+ myVersionString);
     }
     }
     documentDepot.documentsUpdate();
+    //現在すべてのデータを取得後にドキュメントブラウザの更新を行っているためレスポンスが途絶える
+    //これを解消するためにドキュメントブラウザが逐次更新を行えるように改装を行う
     if(callback instanceof Function) callback();
     return serviceAgent.currentRepository.entryList.length;
 }
@@ -1889,11 +1933,11 @@ NetworkRepository.prototype.pushEntry = function (myXps,callback,callback2){
                                data-status="Active"
   ></span>
   myEntry を myProduct に換装
-  ListEntry > productsData.episodes[0]
+  listEntry > productsData.episodes[0]
 */
 NetworkRepository.prototype.pushData = function (myMethod,myEntry,myXps,callback,callback2){
 if(dbg) console.log(myEntry);
-if (myEntry instanceof ListEntry){
+if (myEntry instanceof listEntry){
 //エントリオブジェクト渡し
 	var lastIssue   = myEntry.issues[myEntry.issues.length-1];
 
@@ -2049,7 +2093,7 @@ NetworkRepository.prototype.removeEntry = function (myIdentifier){
     識別子
     プロダクト検索オプション
 戻値:
-    識別子に該当するListEntry
+    識別子に該当するlistEntry
     または episode情報
     データ照合に失敗した場合はnull
     
@@ -2606,23 +2650,26 @@ serviceAgent.init= function(){
     this.repositories=[localRepository]; //ローカルリポジトリを0番として加える
     if(document.getElementById('backend_variables')){
     ;//本番用
-//if(true){}
-    //テスト時はこちらで
-    var loc = String(window.location).split('/');//
-    var locOffset = (loc[loc.length-1]=="edit")? 3:2;
-    var myUrl = loc.splice(0,loc.length-locOffset).join('/');
-//    var myUrl = 'http://remaping.scivone-dev.com';//テスト用決め打ち
-//    var myUrl = 'https://remaping-stg.u-at.net';//テスト用決め打ち
-//    var myUrl = 'https://u-at.net';//テスト用決め打ち
-    this.servers.push(new ServiceNode("CURRENT",myUrl));
-}else{
-    var myServers={
+      if($("#backend_variables").attr("data-server_url")){
+//ローカルテスト時はこちらで
+      　var myUrl = $("#backend_variables").attr("data-server_url");
+      }else{
+        var loc = String(window.location).split('/');//
+        var locOffset = (loc[loc.length-1]=="edit")? 3:2;
+        var myUrl = loc.splice(0,loc.length-locOffset).join('/');
+//      var myUrl = 'http://remaping.scivone-dev.com';//テスト用決め打ち
+//      var myUrl = 'https://remaping-stg.u-at.net';//テスト用に決め打ち
+//      var myUrl = 'https://u-at.net';//テスト用決め打ち
+      }
+      this.servers.push(new ServiceNode("CURRENT",myUrl));
+    }else{
+      var myServers={
         UAT: {name:'U-AT',url:'https://u-at.net'},
         Srage:{name:'Stage',url:'https://remaping-stg.u-at.net'},
         devFront:{name:'devFront',url:'http://remaping.scivone-dev.com'}
-    };
-    for(svs in myServers){this.servers.push(new ServiceNode(myServers[svs].name,myServers[svs].url));}
-}
+      };
+      for(svs in myServers){this.servers.push(new ServiceNode(myServers[svs].name,myServers[svs].url));}
+    }
 /*
     仮のサーバセレクタを設定
 */

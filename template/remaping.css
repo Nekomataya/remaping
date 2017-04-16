@@ -977,6 +977,17 @@ th.editArea {
 		border-width:0px 1px 0px 0px;
 		width:36px;
 }
+
+.soundbody{
+        font-weight:9;
+}
+/*
+    display:inline-block;
+	writing-mode: vertical-lr;
+	-ms-writing-mode: tb-lr;
+	-webkit-writing-mode:vertical-lr;
+	text-orientation: mixed;
+*/
 /*	カラムセパレータ	*/
 td.colSep {
 	border-style:none;
@@ -1162,6 +1173,9 @@ div.application_status {
     background-color:#efefef;
     padding:0;
     border-style:double;
+}
+#dialogEdit {
+    border-style:none;
 }
 #optionPanelSnd a.minimize{
     position:absolute;

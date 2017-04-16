@@ -239,7 +239,7 @@ xUI.init    =function(editXps,referenceXps){
     this.floatDestAddress   = [0,0];//同移動先アドレス
     this.selectBackup       ;//カーソル位置バックアップ
     this.selectionBackup    ;//選択範囲バックアップ
-    this.spinBackup         ;//スピン量をバックアップ
+//    this.spinBackup         ;//スピン量をバックアップ
 //区間編集バッファ
     this.floatTrack         ;//区間編集対象トラック
     this.floatSectionId     ;//編集対象セクションのID（オブジェクトそのものだと変動するのでIDのみ）
@@ -712,7 +712,7 @@ xUI.mdChg=function(myModes,opt){
 //if((this.XPS.xpsTracks[this.Select[0]].option.match(/dialog|effect|camera/))){}
 if((this.XPS.xpsTracks[this.Select[0]].option=='dialog')){
   if(this.edmode<2){
-      if(this.spin() > 1){this.spinBackup=this.spin();this.spin(1);};//スピン量をバックアップしてクリア
+//      if(this.spin() > 1){this.spinBackup=this.spin();this.spin(1);};//スピン量をバックアップしてクリア ? これ実はいらない？
       this.selectBackup       = this.Select.concat();//カーソル位置バックアップ
       this.selectionBackup    = this.Selection.concat();//選択範囲バックアップ
       this.floatSourceAddress = this.Select.concat();    //移動元ソースアドレスを退避
@@ -735,7 +735,7 @@ if((this.XPS.xpsTracks[this.Select[0]].option=='dialog')){
         this.floatTrack         = null;
         this.floatTrackBackup   = null;
         this.floatSection       = null;
-        this.spin(this.spinBackup);
+//        this.spin(this.spinBackup);
         return false;
       }
       this.floatSectionId   = this.floatSection.id();
@@ -767,7 +767,7 @@ if((this.XPS.xpsTracks[this.Select[0]].option=='dialog')){
     case 1:        //前モードがノーマルだった場合のみ遷移可能
     if(this.edmode==0){
       this.edmode=1;
-      if(this.spin()){this.spinBackup=this.spin();this.spin(1);};//スピン量をバックアップしてクリア
+//      if(this.spin()){this.spinBackup=this.spin();this.spin(1);};//スピン量をバックアップしてクリア
         this.floatSourceAddress  = this.Select.concat();    //移動ソースアドレスを退避
         this.selectedColor       = this.inputModeColor.FLOAT;    //選択セルの背景色
         this.spinAreaColor       = this.inputModeColor.FLOATspin;    //非選択スピン背景色
@@ -787,6 +787,7 @@ console.log(this.floatDestAddress);
 console.log(this.floatSectionId);
 console.log(this.floatSection);
 */
+    this.sectionManipulateOffset = ['tail',0];//区間編集ハンドルオフセット
         if(true){
         //  確定処理はリリース毎に実行される
         /*
@@ -826,7 +827,7 @@ console.log(currentStream);
 
 //        this.selectCell(this.floatSourceAddress);//ソース位置を復帰廃止
 //        this.selection(add(this.floatSourceAddress,this.selectionBackup));//選択範囲の復帰廃止
-        this.spin(this.spinBackup);//スピン量をバックアップから復帰
+//        this.spin(this.spinBackup);//スピン量をバックアップから復帰
     }else if(this.edmode==1){
         this.edmode=0;
         this.selectedColor    =this.inputModeColor.NORMAL;        //選択セルの背景色
@@ -839,11 +840,12 @@ console.log(currentStream);
         this.selectCell(this.floatSourceAddress);//ソース位置復帰
         this.move(sub(this.floatDestAddress,this.floatSourceAddress),opt);//ムーブコマンド発行
 
-        this.spin(this.spinBackup);//スピン量をバックアップから復帰
+//        this.spin(this.spinBackup);//スピン量をバックアップから復帰
     }
     }
     //var bkRange=this.Selection.slice();
     this.selection(add(this.Select,this.Selection));
+    SoundEdit.init();
     return this.edmode;
 }
 /**
@@ -1297,7 +1299,8 @@ if(this.showGraphic){
         case "sound":;
         case "dialog":;
             if (myStr.match(/<([^>]+)>/)){
-                myStr=xUI.trTd(myStr);
+                myStr=xUI.trTd(target.id.split('_'));
+                //myStr=xUI.trTd(myStr);
             }
             if (myStr.match(/[-_─━~＿￣〜]{2,}?/)){
               myStr=(this.showGraphic)?"<br>":"<hr>";
@@ -1306,7 +1309,16 @@ if(this.showGraphic){
               }else{
                 drawForm =(myStr.match(/[_＿]/))? "line":"sound-section-close";
               }
-            };//あとでセクションパース版と置き換え
+            };//セクションパース情報を参照
+	        myStr=myStr.replace(/[-−ー─━]/g,"｜");//音引き縦棒
+	        myStr=myStr.replace(/[~〜]/g,"⌇");//音引き縦棒
+	        myStr=myStr.replace(/[…]/g,"︙");//三点リーダー
+	        myStr=myStr.replace(/[‥]/g,"︰");//二点リーダー
+/* 台詞中の文字置換のうち音引き、句読点は画面置き換えで処理
+    ListStr=ListStr.replace(/\」/g,"---");//閉じ括弧は横棒
+	ListStr=ListStr.replace(/\、/g,"・");//読点中黒
+	ListStr=ListStr.replace(/\。/g,"");//句点空白(null)
+*/
           break;
         case "timing":;
         case "replacement":;
@@ -1385,14 +1397,26 @@ if(this.showGraphic){
 /**
     テーブル表示用文字列置換
         xUI.trTd(Str);
+引数:テーブルセルID配列または単独文字列
+    テーブルセルのID からターゲット求め
     タグ等htmlで表示不能な文字を置き換える
     戻り値は変換後の文字列
+    画面（テーブル）表示のみに使用する
+    ＝XPSのデータは保全される
+    要素が配列でない場合は直接ターゲットにする
 */
-xUI.trTd=function(){
-if(typeof arguments[0] =="undefined"){return false;}
-var target=arguments[0];
-
-    target=target.toString().replace( />/ig, "&gt;").replace(/</ig,"&lt;");//<>
+xUI.trTd=function(myID){
+if(typeof myID =="undefined"){return false;}
+//if(typeof arguments[0] =="undefined"){return false;}
+    if(! (myID instanceof Array)){
+        var target = myID;
+        //var target=arguments[0];
+    }else{
+        var target = (myID[0]=='r') ?
+            xUI.referenceXPS.xpsTracks[myID[1]][myID[2]]:
+            xUI.XPS.xpsTracks[myID[0]][myID[1]];
+    }
+    target=String(target).replace( />/ig, "&gt;").replace(/</ig,"&lt;");//<>
 //    if(this.Select[0]>0 && this.Select[0]<(this.SheetWidth-1)) target=target.toString().replace(/[\|｜]/ig,'|<br>');
 //    if(target.match(/^[:：]$/)) return ':<br>';//波線
 //    if(target.match(/[-_─━~]{2,}?/)) return "<hr>";//
@@ -2212,23 +2236,23 @@ BODY_ += '<tr>';
 //セパレータ(境界線)設定
 if(restFrm==(Math.ceil(this.XPS.framerate)-1)){
 //秒セパレータ
-    var tH_border= 'class=ltSep';
-    var dL_border= 'class=dtSep';
-    var sC_border= 'class="ntSep';
-    var mO_border= 'class=ntSep';
+    var tH_border= 'ltSep';
+    var dL_border= 'dtSep';
+    var sC_border= 'ntSep';
+    var mO_border= 'ntSep';
 }else{
     if (n%this.sheetSubSeparator==(this.sheetSubSeparator-1)){
 //    サブセパレータ
-        var tH_border= 'class=lsSep';
-        var dL_border= 'class=dsSep';
-        var sC_border= 'class="nsSep';
-        var mO_border= 'class=nsSep';
+        var tH_border= 'lsSep';
+        var dL_border= 'dsSep';
+        var sC_border= 'nsSep';
+        var mO_border= 'nsSep';
     }else{
 //    ノーマル(通常)指定なし
-        var tH_border= 'class=lnSep';
-        var dL_border= 'class=dnSep';
-        var sC_border= 'class="nnSep';
-        var mO_border= 'class=nnSep';
+        var tH_border= 'lnSep';
+        var dL_border= 'dnSep';
+        var sC_border= 'nnSep';
+        var mO_border= 'nnSep';
     };
 };
 //背景色設定
@@ -2250,7 +2274,10 @@ if(restFrm==(Math.ceil(this.XPS.framerate)-1)){
 //タイムヘッダ
     var tcStyle='<td nowrap ';
 
-BODY_ +=tcStyle +tH_border+cellClassExtention;
+BODY_ +=tcStyle ;
+BODY_ +='class="';
+BODY_ +=tH_border+cellClassExtention;
+BODY_ +='"';
 BODY_ +=' id=tcg_';
 BODY_ +=String(current_frame);
 BODY_ +=' >';
@@ -2269,9 +2296,13 @@ BODY_ +='<td ';
 BODY_ += 'id=\"r_';
 BODY_ +=r.toString()+'_'+ current_frame.toString();
 BODY_ +='" ';
-BODY_ +=sC_border+cellClassExtention + ' ref"';
+BODY_ +='class="';
+BODY_ +=sC_border+cellClassExtention + ' ref';
+BODY_ +='"';
     }else{
-BODY_ +=sC_border+'_Blank"';
+BODY_ +='class="';
+BODY_ +=sC_border+'_Blank';
+BODY_ +='"';
 };
 BODY_ +='>';
         if (current_frame>=this.referenceXPS.xpsTracks[r].length){
@@ -2279,7 +2310,8 @@ BODY_ +='>';
         }else{
     this.Select=[r,current_frame];
     if (this.referenceXPS.xpsTracks[r][current_frame]!=""){
-        BODY_ += this.trTd(this.referenceXPS.xpsTracks[r][current_frame]);
+        BODY_ += this.trTd(['r',r,current_frame]);
+//        BODY_ += this.trTd(this.referenceXPS.xpsTracks[r][current_frame]);
 //        BODY_ += this.trTd(document.getElementById(["r",[r],[current_frame]].join("_")));
     }else{
         BODY_+='<br>';
@@ -2305,15 +2337,21 @@ BODY_ +=r.toString()+'_'+ current_frame.toString();
 BODY_ +='" ';
 //BODY_ +='onclick="return xUI.Mouse(event)" ';
     };
+BODY_ +='class="';
 BODY_ += dL_border+cellClassExtention;
+BODY_ +=' soundbody" ';
+BODY_ +='"';
 BODY_ +='>';
 //        if((current_frame==null)||(current_frame>=this.XPS.duration()))
         if (isBlankLine){
     BODY_+="<br>";
         }else{
     this.Select=[0,current_frame];
+
+
     if (this.XPS.xpsTracks[r][current_frame]!=""){
-        BODY_+=this.trTd(this.XPS.xpsTracks[r][current_frame]);
+        BODY_+=this.trTd([r,current_frame]);
+//        BODY_+=this.trTd(this.XPS.xpsTracks[r][current_frame]);
     }else{
         BODY_ += '<BR>';
     }    };
@@ -2330,7 +2368,9 @@ BODY_ +=r.toString()+'_'+ current_frame.toString();
 BODY_ +='" ';
 //BODY_ +='onclick="xUI.Mouse(event)" ';
     };
+BODY_ +='class="';
 BODY_ +=sC_border+cellClassExtention +'"';
+BODY_ +='"';
 BODY_ +='>';
 //        if((current_frame==null)||(current_frame>=this.XPS.duration())){}
         if (isBlankLine){
@@ -2338,7 +2378,8 @@ BODY_ +='>';
         }else{
     this.Select=[r,current_frame];
     if ( this.XPS.xpsTracks[r][current_frame]!=""){
-        BODY_ += this.trTd(this.XPS.xpsTracks[r][current_frame]);
+        BODY_+=this.trTd([r,current_frame]);
+//        BODY_ += this.trTd(this.XPS.xpsTracks[r][current_frame]);
     }else{
         BODY_+='<br>';
     };
@@ -2361,7 +2402,9 @@ BODY_ += (this.XPS.xpsTracks.length-1).toString()+'_'+ current_frame.toString();
 BODY_ +='" ';
 //BODY_ +='onclick="xUI.Mouse(event)" ';
     };
+BODY_ +='class="';
 BODY_ +=mO_border+cellClassExtention;
+BODY_ +='"';
 BODY_ +='>';
 //        if(current_frame>=this.XPS.duration()){}
         if (isBlankLine){
@@ -2369,7 +2412,8 @@ BODY_ +='>';
         }else{
     this.Select=[this.XPS.xpsTracks.length-1,current_frame];
     if ( this.XPS.xpsTracks[this.XPS.xpsTracks.length-1][current_frame]!=""){
-        BODY_ += this.trTd(this.XPS.xpsTracks[this.XPS.xpsTracks.length-1][current_frame]);
+        BODY_ += this.trTd([this.XPS.xpsTracks.length-1,current_frame]);
+//        BODY_ += this.trTd(this.XPS.xpsTracks[this.XPS.xpsTracks.length-1][current_frame]);
     }else{
         BODY_+='<br>';
     };
@@ -5592,7 +5636,8 @@ if(dbg) console.log('000000000000000000000=');
                  document.getElementById('toolbarHeader').style.backgroundColor='#ddbbbb';
 //サーバ既存エントリ
             var isNewEntry = (startupXPS.length==0)? true:false;
-//サーバ上で作成したエントリの最初の1回目は送出データが空            　           
+//サーバ上で作成したエントリの最初の1回目は送出データが空
+//空の状態でかつトークンがある場合が存在するので判定に注意！       　           
              if($("#backend_variables").attr("data-cut_token").length){
 if(dbg) console.log('has cut token');
     　           serviceAgent.currentServer.getRepositories(function(){
@@ -5611,10 +5656,11 @@ serviceAgent.currentRepository.getProducts(function(){
                 serviceAgent.currentRepository.getSCi(function(){
                     serviceAgent.currentRepository.getList(false,function(){
     　                   var myIdentifier=serviceAgent.currentRepository.getIdentifierByToken(myCutToken);
-                         if(Xps.compareIdentifier(Xps.getIdentifier(XPS),myIdentifier) < 5){
+                         if((myIdentifier)&&                        (Xps.compareIdentifier(Xps.getIdentifier(XPS),myIdentifier) < 5)){
     　                       if(dbg) console.log('syncIdentifier:');
     　                       if(dbg) console.log(decodeURIComponent(myIdentifier));
     　                       XPS.syncIdentifier(myIdentifier);
+    　                   }
 //
 if( startupXPS.length==0 ){
 if(dbg) console.log('detect first open no content');
@@ -5626,7 +5672,6 @@ if(dbg) console.log('new Entry init');
         xUI.XPS.create_user=xUI.currentUser;
         xUI.XPS.update_user=xUI.currentUser;
 }
-    　                   }
 //ここで無条件でproductionへ移行せずに、チェックが組み込まれているactivateEntryメソッドを使用する
 /*
 xUI.sessionRetrace=0;
@@ -6631,6 +6676,7 @@ if (ListStr.match(/「(.+)」?/)) {
 	ListStr=ListStr.replace(/\、/g,"・");//読点中黒
 	ListStr=ListStr.replace(/\。/g,"");//句点空白(null)
 	ListStr=ListStr.replace(/\ー/g,"｜");//音引き縦棒
+	ListStr=ListStr.replace(/〜/g,"⌇");//音引き縦棒
 	};
 
 //		r導入リピートならば専用展開プロシージャへ渡してしまう
@@ -9439,36 +9485,32 @@ label参照配列　カット／作品内のラベルをストアして入力候
 }
 /*
     パネル初期化
-    ダイアログトラックが選択されていな場合は、ウインドウを閉じて終了
-    既にedmode>=2の場合は選択されているセクションの値でパネルを初期化する
+    xUI.edmode に従ってパネル状態を設定
+    各コントロールの有効無効化　視覚化隠蔽等を行う
+    
+    現在はダイアログ関連のコントロールのみ
+
+    フォーカス位置が有値のダイアログセクションであれば(既にedmode>=2の場合)
+    コントロールを有効化して選択されているセクションの値を反映(getProp)
      :edmode==0
     フォーカスが値セクションの場合はフォーカスのあるセクションを選択
-    null値セクションの場合は、選択範囲の前後にセクションノードを挿入して空の値セクションを作成して選択
-    その後　mdChg(2)
-    
-    パネルの編集中（changeing）は edmode==3 その後(change)イベントを送出
-
-    メインのテキストエリアの内容は、dialogText
-    編集内容は適用スイッチで反映？
-    またはonChanging?
     
 */
 SoundEdit.init = function(){
-    //var targetTrack   = xUI.XPS.xpsTracks[xUI.Select[0]];
-    //this.targetSection = this.targetTrack.sections[xUI.floatSectionId];
-    if (xUI.edmode<2){
-        var currentFrame=(xUI.Select[1]==0)? 1:xUI.Select[1];
-//フロートセクションがないのでモード遷移をトライ
-//モード遷移に失敗したら新規の有値セクションを作成してそれを選択する
-        if(! xUI.mdChg('section')){
-            xUI.selectCell([xUI.Select[0],currentFrame-1]);
-            xUI.put('----,,----');//
-            xUI.selectCell([xUI.Select[0],currentFrame]);
-            xUI.mdChg('section');
-        };
+    if(xUI.edmode<2){
+        document.getElementById('dialogEdit').disabled=true;
+            document.getElementById('soundPanelApply').disabled=true;
+            document.getElementById('soundPanelFix').disabled=true;
+            document.getElementById('soundPanelRelease').disabled=true;
+    }else{
+        this.getProp();
+        document.getElementById('dialogEdit').disabled=false;
+            document.getElementById('soundPanelApply').disabled=false;
+            document.getElementById('soundPanelFix').disabled=false;
+            document.getElementById('soundPanelRelease').disabled=false;
     }
-    this.getProp();
 }
+
 /*  UIロックパラメータ同期
 引数：ロックするパラメータを文字列または数値 引数なしは同期のみ
 
@@ -9574,28 +9616,30 @@ SoundEdit.floatTC = function(changeID){
         if (inPoint < 0) inPoint = 0;
         if (inPoint >= xUI.XPS.xpsTracks.duration) inPoint = (xUI.XPS.xpsTracks.duration-1);
         if (this.timeLock == 0) this.syncTCL(1);
-        if (this.timeLock == 1) duration = (outPoint+1)-inPoint;
+        if (this.timeLock == 1) duration = outPoint - inPoint + 1;
+        else if (this.timeLock == 2) outPoint = inPoint + duration - 1 ;
     break;
     case 1:
     case 'outPoint':
         if (outPoint < 0) outPoint = 0;
         if (outPoint >= xUI.XPS.xpsTracks.duration) outPoint = (xUI.XPS.xpsTracks.duration-1);
         if (this.timeLock == 1) this.syncTCL(0);
-        if (this.timeLock == 2) inPoint  = outPoint+1-duration;
-        if (this.timeLock == 0) duration = outPoint+1-inPoint;
+        if (this.timeLock == 2) inPoint  = outPoint - duration + 1;
+        else if (this.timeLock == 0) duration = outPoint - inPoint + 1;
     break;
     case 2:
     case 'duration':
         if (duration < 1) duration = 1;
         if (duration > xUI.XPS.xpsTracks.duration) duration = xUI.XPS.xpsTracks.duration;
         if (this.timeLock == 2) this.syncTCL(0);
-        if (this.timeLock == 1) inPoint = outPoint+1 - duration;
+        if (this.timeLock == 1) inPoint  = outPoint - duration + 1;
+        else if (this.timeLock == 0) outPoint = inPoint + duration - 1;
     break;
     }
     document.getElementById('soundInPoint').value  = nas.Frm2FCT(inPoint ,2);
     document.getElementById('soundOutPoint').value = nas.Frm2FCT(outPoint,2);
     document.getElementById('soundDuration').value = nas.Frm2FCT(duration,2);
-    xUI.selection([xUI.Select[0],xUI.Select[1]+duration]);
+    xUI.selection([xUI.Select[0],xUI.Select[1]+duration-1]);
     xUI.selectCell([xUI.Select[0],inPoint]);
 //    xUI.sectionUpdate();
 }
@@ -9630,7 +9674,7 @@ SoundEdit.sync = function(){
     targetTrack.sections.manipulateSection(
         xUI.floatSectionId,
         nas.FCT2Frm(document.getElementById('soundInPoint').value),
-        nas.FCT2Frm(document.getElementById('soundDuration').value)
+        nas.FCT2Frm(document.getElementById('soundDuration').value)-1
     );
     xUI.sectionUpdate();
 }
@@ -9648,18 +9692,32 @@ SoundEdit.close = function(){
 	}
 	return null;
 }
-//パネルを開く
-//すでに開いていたら最小化されていないか確認して開く　最小化もされていなければ　NOP Return
+/*  パネルを開く
+    すでに開いていたら最小化されていないか確認して開く　最小化もされていなければ　NOP Return
+    開く際モードを確認して必要に合わせてモードを変更する
+    null値セクションの場合は、選択範囲の前後にセクションノードを挿入して空の値セクションを作成して選択
+    その後　mdChg(2)
+*/
 SoundEdit.open=function(){
+    var targetTrack   = xUI.XPS.xpsTracks[xUI.Select[0]];
 
-    if(
-    (xUI.XPS.xpsTracks[xUI.Select[0]].option != 'dialog')||
-	($("#optionPanelSnd").is(":visible"))
-	){
+    if($("#optionPanelSnd").is(":visible")){
 	    if(document.getElementById('optionPanelSnd').style.display=='none')
 	      document.getElementById('optionPanelSnd').style.display='inline';
 		return false;
 	}else{
+    //this.targetSection = this.targetTrack.sections[xUI.floatSectionId];
+    if ((! xUI.viewOnly)&&(targetTrack.option=='dialog')&&(xUI.edmode<2)){
+        var currentFrame=(xUI.Select[1]==0)? 1:xUI.Select[1];
+//フロートセクションがないのでモード遷移をトライ
+//モード遷移に失敗したら新規のセリフ(有値セクション)を作成してそれを選択する
+        if(! xUI.mdChg('section')){
+            xUI.selectCell([xUI.Select[0],currentFrame-1]);
+            xUI.put('----,,----');//
+            xUI.selectCell([xUI.Select[0],currentFrame]);
+            xUI.mdChg('section');
+        };
+    }
 		this.init();
 		xUI.sWitchPanel("Snd");
 	}

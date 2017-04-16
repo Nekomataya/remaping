@@ -2599,8 +2599,8 @@ Xps.getIdentifier=function(myXps){
 Xps.compareIdentifier =function (target,destination){
     var tgtInfo  = Xps.parseIdentifier(target);
     var destInfo = Xps.parseIdentifier(destination);
-console.log(tgtInfo);
-console.log(destInfo);
+//console.log(tgtInfo);
+//console.log(destInfo);
     //title
         if(tgtInfo.title != destInfo.title) { return -2;}
     //title+opus
