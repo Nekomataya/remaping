@@ -1,4 +1,4 @@
-﻿/**
+﻿ /**
  * Remaping本体スクリプト
  *     XPSオブジェクトとMAPオブジェクトについては、
  *     以下のドキュメントを参照のこと
@@ -5600,7 +5600,7 @@ document.getElementById("UIheader").style.display="none";
      エレメントが存在すればon-site
  */
 　   if(document.getElementById('backend_variables')){
-if(dbg) console.log('application server-onsite');
+console.log('application server-onsite');
         if (serviceAgent.servers.length==1) {
             serviceAgent.switchService(0);
         }else{
@@ -5622,7 +5622,7 @@ if(dbg) console.log('application server-onsite');
         myName = xUI.currentUser.toString();//旧変数互換 まとめて処理する関数が必要
 
     　   if($("#backend_variables").attr("data-episode_token").length > 0){
-if(dbg) console.log('bind single document');
+console.log('bind single document');
 //シングルドキュメント拘束モード
 		    startupWait=true;//ウェイト表示を予約
 　           serviceAgent.currentStatus='online-single';

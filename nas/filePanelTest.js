@@ -67,19 +67,35 @@ documentDepot = {
     currentReferenece:null
 };
 /**
-    ドキュメントブラウザの初期化を行って
-*/
-/**
+    ドキュメントブラウザの保持データ初期化
+
     ドキュメントセレクタのアップデートを行う
     タイトルリスト及びドキュメントコレクションをクリア後
     リポジトリのエントリリストを走査してコレクションを再構築してブラウザをアップデートする
     ** リポジトリ(エントリリスト)の更新は行わない　必要に従って事前に更新の要あり
+
     逐次的に画面の再描画が可能なように変更する20170322
-    引数リストを受けて、現在のエントリと比較を行い逐次更新を行うように変更する?　事前に引数リスト組む必要パリ
-    または、参照するエントリリストの複製を持って差分のみの更新を行う？　複製が大変？
+
+    引数リストを受けて、現在のエントリと比較を行い逐次更新を行うように変更するか?
+    ならば　事前に引数リスト組む必要あり
+    または　参照するエントリリストの複製を持って差分のみの更新を行う？　複製が大変？
 */
-documentDepot.documentsUpdate=function(myEntries){
-//既存データをクリアしない
+documentDepot.documentsUpdate=function(){
+//console.log('=+=============+++===== documtntsUpdate ')
+/*  既存データをクリアしない
+引数で受け取ったデータ群は、新規のデータ構造を組んで従来のデータと照合しながら更新を行う
+    既存エントリ＞新規データで置き換え
+    新規エントリ＞新規データから追加
+リムーブの機能が必要となるが、それをどうするか？
+    ○エントリそのものにリムーブメソッドを設ける
+    ○アップデートメソッドに第二引数を設けてリストを与えて処理する
+
+大量のリストが与えられた場合に、逐次的に一定数で画面をリフレッシュする（リストを分割処理する）機能を作る?
+エントリ全体の比較更新と、逐次リフレッシュを機能分割したほうが良さそう？
+
+ただし全体のパフォーマンスをひどく下げているのは、ServiceAgent.getList の再帰呼び出しなのでこの処理は後回しでもOK　2017.04.19
+
+*/
     var myDocuments =[];
     var myProducts  =[];
 //    this.products=[];
@@ -93,8 +109,8 @@ documentDepot.documentsUpdate=function(myEntries){
 //    myDocuments = myEntries;//引数リストを使う
 
 if(serviceAgent.currentRepository instanceof NetworkRepository){
-//ネットワークエントリの場合、エントリリストを遡ってプロダクトリストを作成する
-//後ほどプロダクト一覧との照合を行ってエントリを整理する
+//ネットワークエントリの場合、productsData を走査してプロダクトリストを作成する
+
     for (var idx = 0 ; idx < serviceAgent.currentRepository.productsData.length ; idx ++){
         var myTitle = serviceAgent.currentRepository.productsData[idx].name;
         if(serviceAgent.currentRepository.productsData[idx].episodes){
@@ -110,13 +126,13 @@ if(serviceAgent.currentRepository instanceof NetworkRepository){
         }
     }
 }else{
-//ローカルリポジトリ
+//ローカルリポジトリは、エントリリストからプロダクトを抽出してリストをビルドする
+/*将来的にネットワークリポジトリと同様の拡張を行う＝ プロダクトエントリをローカルストレージに置くように改修される*/
     for (var idx = 0 ; idx < myDocuments.length ; idx ++ ){
         var currentProduct=myDocuments[idx].toString(0).split( '//' )[0];
         var hasProduct =false;
         for (var idp = 0 ; idp < myProducts.length ; idp ++ ){
-            //判定が完全一致なので比較メソッドを使う　//で補って０以上
-            // if (currentProduct == myProducts[idp]){hasProduct = true;break;}
+            //判定: 比較メソッドを使う　//で補って０以上
             if (Xps.compareIdentifier(myDocuments[idx].toString(),myProducts[idp]+"//")>-1){
                 hasProduct = true;
                 if(currentProduct.length > myProducts[idp].length){myProducts[idp]=currentProduct;}
@@ -137,32 +153,39 @@ if(serviceAgent.currentRepository instanceof NetworkRepository){
         }
     }
 }
-    this.products  = myProducts;
-    this.documents = myDocuments;
-    this.updateOpusSelector();
-    this.updateDocumentSelector();
-    return this.documents.length;
+    documentDepot.products  = myProducts;
+    documentDepot.documents = myDocuments;
+    documentDepot.updateOpusSelector();
+    documentDepot.updateDocumentSelector();
 }
 /*  OPUSセレクタを更新する
 引数:エントリフィルタ用正規表現
 戻値:フィルタリング済のリスト配列
+更新後のセレクタ内に現在の被選択アイテムがある場合はそれを選択状態にする
+ない場合は選択アイテムを空に
  */
 documentDepot.updateOpusSelector=function(myRegexp){
+//    if(! serviceAgent.currentRepository.opusList.updated){return;}
     if(typeof myRegexp != "RegExp"){ myRegexp = new RegExp(".+");}
 // ここで正規表現フィルタを引数にする
     var myContents = "";
     var myResult   = [];
     myContents += '<option value="==newTitle==">（*-- no title selected --*）';
-    for( var opid = 0 ; opid < this.products.length ; opid ++){
-        var currentText = decodeURIComponent(this.products[opid]);
+    for( var opid = 0 ; opid < documentDepot.products.length ; opid ++){
+        var currentText = decodeURIComponent(documentDepot.products[opid]);
 //if(dbg) console.log(currentText);
         if(currentText.match(myRegexp)){
             myContents += '<option';
             myContents += ' value="';
-            myContents += this.products[opid];
-            myContents += (this.currentProduct == this.products[opid])? '" selected>':'">';
+            myContents += documentDepot.products[opid];
+            if (documentDepot.currentProduct == documentDepot.products[opid]){
+                myContents += '" selected>';
+            }else{
+                myContents += '">';
+                documentDepot.currentProduct = null;
+            }
             myContents += currentText;
-            myResult.push(this.products[opid]);
+            myResult.push(documentDepot.products[opid]);
         }
     }
     document.getElementById( "opusSelect" ).innerHTML = myContents;
@@ -171,14 +194,16 @@ documentDepot.updateOpusSelector=function(myRegexp){
 /*  Documentセレクタを更新
 引数:エントリフィルタ用正規表現
 戻値:フィルタリング済のリスト配列
+被選択ドキュメントが更新後のセレクタ内に存在する場合は、それを選択状態にする
+ない場合は選択アイテムを空にする
  */
  documentDepot.updateDocumentSelector=function(myRegexp){
 // ここで正規表現フィルタを引数にする
     if(typeof myRegexp != "RegExp"){ myRegexp = new RegExp(".+");}
 // 選択済みタイトルで抽出
-    var myDocuments = this.getEntriesByOpusid(this.currentProduct);
+    var myDocuments = documentDepot.getEntriesByOpusid(documentDepot.currentProduct);
 //    myDocuments.sort(documentDepot.sortBySCi);
-if(dbg) console.log(myDocuments);
+console.log('docSelectorUpdate '+ myDocuments);
 //  正規表現フィルタで抽出してHTMLを組む
     var myContents = "";
     var myResult   = [];
@@ -189,7 +214,12 @@ if(dbg) console.log(myDocuments);
             myContents += '<option';
             myContents += ' value="';
             myContents += myDocuments[dlid];
-            myContents += (this.currentSelection == myDocuments[dlid])? '" selected >':'">';
+            if(this.currentSelection == myDocuments[dlid]){
+                myContents += '" selected >';
+            }else{
+                myContents += '">';
+                this.currentSelection = null;
+            };
             myContents += currentText;
             myResult.push(myDocuments[dlid]);
         }
@@ -203,12 +233,12 @@ if(dbg) console.log(myDocuments);
 引数:プロダクト識別子
  */
 documentDepot.getEntriesByOpusid=function(myIdentifier){
-    if(! myIdentifier) myIdentifier=this.currentProduct;
+    if(! myIdentifier) myIdentifier=documentDepot.currentProduct;
 // タイトルIDで抽出
     var myDocuments = [];
-    for ( var dcid = 0 ; dcid < this.documents.length ; dcid ++){
-        if((this.currentProduct)&&(Xps.compareIdentifier(this.documents[dcid].toString(),myIdentifier) > -1)){
-            myDocuments.push(this.documents[dcid]);
+    for ( var dcid = 0 ; dcid < documentDepot.documents.length ; dcid ++){
+        if((documentDepot.currentProduct)&&(Xps.compareIdentifier(documentDepot.documents[dcid].toString(),myIdentifier) > -1)){
+            myDocuments.push(documentDepot.documents[dcid]);
         }
          continue;
     }
@@ -228,11 +258,11 @@ documentDepot.sortBySCi = function(val1,val2){return (nas.parseNumber(val1.sci)-
 */
 documentDepot.getEntry =function(myIdentifier){
     if(typeof myIdentifier == 'undefined'){
-        myIdentifier = this.currentSelection;
+        myIdentifier = documentDepot.currentSelection;
     }
-    for (var did = 0;did < this.documents.length ; did ++){
-        if (this.documents[did].toString() == myIdentifier){
-            this.documents[did].parent.getEntry(myIdentifier);
+    for (var did = 0;did < documentDepot.documents.length ; did ++){
+        if (documentDepot.documents[did].toString() == myIdentifier){
+            documentDepot.documents[did].parent.getEntry(myIdentifier);
             return true;
         }
     }
@@ -274,6 +304,12 @@ if(dbg) console.log(decodeURIComponent(result));
     カレントリポジトリの内容を取得
     得たリストをブラウザの保持リストとして更新する
     先に存在するリストは破棄
+    この処理をカットのステータス変更の度に行うとレスポンスの低下が著しいので
+    要変更
+    当該のカットの状況のみをアップデートする手続が必要
+    実際は
+    LocalRepositoryの場合listEntryのアップデートのみでOK
+    NetworkRepositoryの場合はサーバのレスポンスからlistEntryをアップデートする
 */
 documentDepot.rebuildList=function(force,callback){
     documentDepot.products    =[];
@@ -287,8 +323,9 @@ documentDepot.rebuildList=function(force,callback){
     serviceAgent.currentRepository.getList(force,callback);
 //  テスト中はこれで良いが、その後はあまり良くない
 console.log(this);
-console.log(callback);
-    documentDepot.documentsUpdate();
+// console.log(callback);
+//    documentDepot.documentsUpdate();
+    
 }
 /**
 読み出し・請求

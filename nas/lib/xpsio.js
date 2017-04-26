@@ -2594,6 +2594,7 @@ Xps.getIdentifier=function(myXps){
                 3   :stage match
                 4   :job match
                 5   :status match
+
                 
 */
 Xps.compareIdentifier =function (target,destination){
@@ -2621,6 +2622,19 @@ Xps.compareIdentifier =function (target,destination){
         if ((tgtInfo.currentStatus)&&(destInfo.currentStatus)&&(tgtInfo.currentStatus == destInfo.currentStatus)) result = 5;
         return result;
 }
+/*  TEST
+var A =[
+    "うなぎ",0,"ニョロ",
+    "","12","2+0",
+    "0:(本線)","1:原画","2:演出チェック","Startup"
+    ];
+var B =[
+    "うなぎ",0,"ニョロ",
+    "","12","2+0",
+    "0:(本線)","1:原画","2:演出チェック","Startup"
+    ];
+console.log(Xps.compareIdentifier(Xps.stringifyIdf(A),Xps.stringifyIdf(B)))
+*/
 /**
     識別子をパースする関数
     SCiオブジェクトで戻す？
@@ -2713,6 +2727,43 @@ Xps.parseCutIF = function(myIdentifier){
 //test
 //    if(dbg) console.log(Xps.parseCutIF("s-c123"));
 //
+/**
+    配列指定で識別子をビルドするテスト用関数
+引数: [title,opus,subtitle,scene,cut,time,line,stage,job,status]
+*/
+Xps.stringifyIdf = function(myData){
+//myDataはlength==10の配列であること
+//この識別子作成は実験コードです　2016.11.14
+    var myIdentifier=[
+            encodeURIComponent(String(myData[0]))+
+        "#"+encodeURIComponent(String(myData[1]))+
+        ((String(myData[2]).length > 0)? "["+encodeURIComponent(myData[2])+"]":''),
+            encodeURIComponent(
+                "s" + ((myData[3])? myData[3] : "-" )+
+                "c" + myData[4]) +
+                "(" + myData[5] +")",
+            encodeURIComponent(myData[6]),
+            encodeURIComponent(myData[7]),
+            encodeURIComponent(myData[8]),
+            encodeURIComponent(myData[9])
+    ].join("//");
+    return myIdentifier;
+}
+//TEST
+/*
+Xps.stringifyIdf([
+    "たぬき",
+    "12",
+    "ポンポコリン",
+    "",
+    123,
+    "1+12",
+    "0:(本線)",
+    "1:原画",
+    "2:演出チェック",
+    "Startup:kiyo@nekomataya.info"
+]);
+*/
 /**
      データ識別子をパースして無名オブジェクトで戻す
      データ判定を兼ねる
