@@ -1752,7 +1752,7 @@ console.log('products check clear');console.log(currentEpisode);
                 for(var cid = 0 ; cid < currentEpisode.cuts[0].length ;cid ++){
                 }
             };//エピソード更新ループ終了
-            documentDepot.updateOpusSeletor();
+            documentDepot.updateOpusSelector();
         };//プロダクト更新ループ終了
     }
     //現在すべてのデータを取得後にドキュメントブラウザの更新を行っているためレスポンスが途絶える
