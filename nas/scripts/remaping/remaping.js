@@ -5650,11 +5650,11 @@ var myEpisodeToken = $('#backend_variables').attr('data-episode_token');
 var myCutToken = $('#backend_variables').attr('data-cut_token');
 
 serviceAgent.currentRepository.getProducts(function(){
-    serviceAgent.currentRepository.productsUpdate(function(){
+//    serviceAgent.currentRepository.productsUpdate(function(){}
         serviceAgent.currentRepository.getEpisodes(function(){
-            serviceAgent.currentRepository.episodesUpdate(function(){
+//            serviceAgent.currentRepository.episodesUpdate(function(){}
                 serviceAgent.currentRepository.getSCi(function(){
-                    serviceAgent.currentRepository.getList(false,function(){
+//                    serviceAgent.currentRepository.getList(false,function(){});
     　                   var myIdentifier=serviceAgent.currentRepository.getIdentifierByToken(myCutToken);
                          if((myIdentifier)&&                        (Xps.compareIdentifier(Xps.getIdentifier(XPS),myIdentifier) < 5)){
     　                       if(dbg) console.log('syncIdentifier:');
@@ -5710,11 +5710,11 @@ serviceAgent.activateEntry()
                         sync('info_');
 if(dbg) console.log('初期化終了');
 if(dbg) console.log(serviceAgent.currentRepository);                        
-                    });
+//                    ({});
                 },false,myEpisodeToken);
-            },false,myEpisodeToken);
+//            {},false,myEpisodeToken);
         },false,myProductToken);
-    },false,myProductToken)
+//    {},false,myProductToken)
 },false);
     　               });
     　           });

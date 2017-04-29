@@ -81,7 +81,7 @@ documentDepot = {
     または　参照するエントリリストの複製を持って差分のみの更新を行う？　複製が大変？
 */
 documentDepot.documentsUpdate=function(){
-//console.log('=+=============+++===== documtntsUpdate ')
+console.log('=+=============+++===== documtntsUpdate ')
 /*  既存データをクリアしない
 引数で受け取ったデータ群は、新規のデータ構造を組んで従来のデータと照合しながら更新を行う
     既存エントリ＞新規データで置き換え
@@ -96,21 +96,19 @@ documentDepot.documentsUpdate=function(){
 ただし全体のパフォーマンスをひどく下げているのは、ServiceAgent.getList の再帰呼び出しなのでこの処理は後回しでもOK　2017.04.19
 
 */
-    var myDocuments =[];
-    var myProducts  =[];
-//    this.products=[];
-//    this.documents =[];
-/*======
-    for (var idx = 0 ; idx < serviceAgent.repositories.length ; idx ++ ){
-        myDocuments=myDocuments.concat(serviceAgent.repositories[idx].entryList);
-    } 
+    documentDepot.products  = [];
+    documentDepot.getProducts();
+    documentDepot.documents = serviceAgent.currentRepository.entryList;//カレントリポジトリのリストのみ
+//    documentDepot.documents = myDocuments;
+//    documentDepot.updateOpusSelector();
+//    documentDepot.updateDocumentSelector();
+}
+/**
+    カレントのドキュメント情報からプロダクト識別子の配列を抽出して戻す関数
 */
-    myDocuments = serviceAgent.currentRepository.entryList;//カレントリポジトリのリストのみ
-//    myDocuments = myEntries;//引数リストを使う
-
-if(serviceAgent.currentRepository instanceof NetworkRepository){
-//ネットワークエントリの場合、productsData を走査してプロダクトリストを作成する
-
+documentDepot.getProducts=function(){
+    var myProducts  =[];
+//productsData を走査してプロダクトリストを作成する
     for (var idx = 0 ; idx < serviceAgent.currentRepository.productsData.length ; idx ++){
         var myTitle = serviceAgent.currentRepository.productsData[idx].name;
         if(serviceAgent.currentRepository.productsData[idx].episodes){
@@ -125,67 +123,40 @@ if(serviceAgent.currentRepository instanceof NetworkRepository){
             }
         }
     }
-}else{
-//ローカルリポジトリは、エントリリストからプロダクトを抽出してリストをビルドする
-/*将来的にネットワークリポジトリと同様の拡張を行う＝ プロダクトエントリをローカルストレージに置くように改修される*/
-    for (var idx = 0 ; idx < myDocuments.length ; idx ++ ){
-        var currentProduct=myDocuments[idx].toString(0).split( '//' )[0];
-        var hasProduct =false;
-        for (var idp = 0 ; idp < myProducts.length ; idp ++ ){
-            //判定: 比較メソッドを使う　//で補って０以上
-            if (Xps.compareIdentifier(myDocuments[idx].toString(),myProducts[idp]+"//")>-1){
-                hasProduct = true;
-                if(currentProduct.length > myProducts[idp].length){myProducts[idp]=currentProduct;}
-                break;
-            }
-        }
-        if(hasProduct) {
-            if(myProducts[idp].scis){
-                myProducts[idp].scis.push(myDocuments[idx]);
-//if(dbg) console.log("push:"+decodeURIComponent(myProducts[idp])+':'+decodeURIComponent(myDocuments[idx]));
-            }else{
-//if(dbg) console.log("skip!!:"+decodeURIComponent(myProducts[idp])+':'+decodeURIComponent(myDocuments[idx]));
-            }
-        }else{
-            myProducts.push(currentProduct);
-            myProducts[myProducts.length-1].scis=[myDocuments[idx]];
-//if(dbg) console.log("newEntry:"+decodeURIComponent(myProducts[idp])+':'+decodeURIComponent(myDocuments[idx]));
-        }
-    }
+    documentDepot.products=myProducts
+    return myProducts;
 }
-    documentDepot.products  = myProducts;
-    documentDepot.documents = myDocuments;
-    documentDepot.updateOpusSelector();
-    documentDepot.updateDocumentSelector();
-}
+
 /*  OPUSセレクタを更新する
 引数:エントリフィルタ用正規表現
 戻値:フィルタリング済のリスト配列
 更新後のセレクタ内に現在の被選択アイテムがある場合はそれを選択状態にする
 ない場合は選択アイテムを空に
+プロダクトリストは、都度生成に変更（スタティックには持たない）
  */
 documentDepot.updateOpusSelector=function(myRegexp){
 //    if(! serviceAgent.currentRepository.opusList.updated){return;}
     if(typeof myRegexp != "RegExp"){ myRegexp = new RegExp(".+");}
 // ここで正規表現フィルタを引数にする
     var myContents = "";
+    var myProducts = documentDepot.getProducts();
     var myResult   = [];
     myContents += '<option value="==newTitle==">（*-- no title selected --*）';
-    for( var opid = 0 ; opid < documentDepot.products.length ; opid ++){
-        var currentText = decodeURIComponent(documentDepot.products[opid]);
+    for( var opid = 0 ; opid < myProducts.length ; opid ++){
+        var currentText = decodeURIComponent(myProducts[opid]);
 //if(dbg) console.log(currentText);
         if(currentText.match(myRegexp)){
             myContents += '<option';
             myContents += ' value="';
-            myContents += documentDepot.products[opid];
-            if (documentDepot.currentProduct == documentDepot.products[opid]){
+            myContents += myProducts[opid];
+            if (documentDepot.currentProduct == myProducts[opid]){
                 myContents += '" selected>';
             }else{
                 myContents += '">';
                 documentDepot.currentProduct = null;
             }
             myContents += currentText;
-            myResult.push(documentDepot.products[opid]);
+            myResult.push(myProducts[opid]);
         }
     }
     document.getElementById( "opusSelect" ).innerHTML = myContents;
@@ -313,14 +284,16 @@ if(dbg) console.log(decodeURIComponent(result));
 */
 documentDepot.rebuildList=function(force,callback){
     documentDepot.products    =[];
-    documentDepot.documents   =[];
+    documentDepot.getProducts();
+    documentDepot.documents   = serviceAgent.currentRepository.entryList;
 //    documentDepot.currentProduct     =null;
 //    documentDepot.currentSelection   =null;
 //    documentDepot.currentDocument    =null;
 //    documentDepot.currentReferenece  =null;
 /*=============*/
     if(typeof force == 'undefined') force = true;
-    serviceAgent.currentRepository.getList(force,callback);
+//    serviceAgent.currentRepository.getProducts(force,callback);
+//    serviceAgent.currentRepository.getList(force,callback);
 //  テスト中はこれで良いが、その後はあまり良くない
 console.log(this);
 // console.log(callback);
@@ -492,6 +465,7 @@ console.log(productName);
         var subTitle    = productInfo.subtitle;
         var opus        = productInfo.opus;
         var title       = productInfo.title;
+console.log("select :" + decodeURIComponent(productName));
 /*
     if(productName.length <= 0){return false;}
     if(productName.match(/^(.+)(\[([^\]]+)\]|「([^」]+)」|\"([^\"]+)\"|\'([^\']+)\')$/)){
@@ -508,10 +482,17 @@ console.log(productName);
         var opus  = "";
     }
 */
+//ブラウザの選択を解除
+    documentDepot.currentSelection=null;
 // タイトルからカットのリストを構築して右ペインのリストを更新
     documentDepot.currentProduct=document.getElementById("opusSelect").options[document.getElementById("opusSelect").selectedIndex].value;
+// 選択したプロダクトのカットを取得
+    var currentOpus = serviceAgent.currentRepository.opus(documentDepot.currentProduct);
+console.log(currentOpus);
+    serviceAgent.currentRepository.getSCi(function(){
 // 更新したリストからリスト表示を更新
-    documentDepot.updateDocumentSelector();
+        documentDepot.updateDocumentSelector();
+    },false,currentOpus.token);
 
 /** パネルテキスト更新
 リストに存在しないプロダクトの場合は、リスト側で'(* new product *)'を選択する

@@ -1835,7 +1835,7 @@ nas.Zf = function (N, f) {
         prefix = "-"
     }
     if (String(N).length < f) {
-        return prefix + ('00000000' + String(N)).slice(String(N).length + 8 - f, String(N).length + 8);
+        return prefix + ('000000000000000000000000000000000000000000000000' + String(N)).slice(String(N).length + 48 - f, String(N).length + 48);
     } else {
         return String(N);
     }
@@ -1851,7 +1851,7 @@ nas.Zf = function (N, f) {
  */
 nas.RZf = function (myName, num) {
     if (typeof num == "undefined") num = 4;
-    if (myName.match(/([^\d]*)([\d]+)([^\d]?.*)/)) {
+    if (String(myName).match(/([^\d]*)([\d]+)([^\d]?.*)/)) {
         return RegExp.$1 + nas.Zf(RegExp.$2, num) + RegExp.$3;
     } else {
         return myName;
@@ -3417,7 +3417,7 @@ nas.decodeUnit = function (myValue, resultUnit) {
  * 戻値:正規化されたラベル文字列
  * ラベル文字列を正規化する
  * セパレータを払ってプレフィックス,12桁あわせ整数,ポストフィックスを指定のセパレータで結合したもの
- * セパレータが指定されない場合は""
+ * セパレータが指定されない場合は"-(ハイフンマイナス)"
  *
  * @param myString
  * @param mySep
@@ -3428,13 +3428,13 @@ nas.labelNormalization = function (myString, mySep) {
         return false
     }
     if (typeof mySep == "undefined") {
-        mySep = ""
+        mySep = "-"
     }
-    if (myString.toString().match(/([^\s\._\-]*)[\s\._\-]?([0-9]+)[\s\._\-]?([^0-9].*)/)) {
+    if (String(myString).match(/([^\s\._\-0-9]*)[\s\._\-]?([0-9]+)[\s\._\-]?([^0-9].*)/)) {
         var myPrefix = RegExp.$1;
         var myBodyNum = parseInt(RegExp.$2);
         var myPostfix = RegExp.$3;
-        return [myPrefix, nas.Zf(myBodyNum, 32), myPostfix].join(mySep);
+        return [myPrefix, nas.Zf(myBodyNum, 12), myPostfix].join(mySep);
     } else {
         return myString.toString();
     }
@@ -3442,6 +3442,8 @@ nas.labelNormalization = function (myString, mySep) {
 
 
 //nas.labelNormalization("a 012a下")
+//nas.labelNormalization("01223 Ax")
+//nas.labelNormalization("B-01223雨森Ax")
 
 //比較補助関数
 /** nas.normalizeStr(myString)
@@ -3488,4 +3490,20 @@ nas.parseNumber=function(str){
 nas.parseNumber("A-125.3");
 nas.parseNumber("１２３９３２");
 nas.parseNumber("Final-A 123-under");
+*/
+nas.compareCutIdf=function(tgt,dst){
+    var tgtArray = Xps.parseCutIF("-"+tgt);
+    var dstArray = Xps.parseCutIF("-"+dst);
+    if (
+    (((tgtArray[1]=="")&&(dstArray[1]==""))||
+    (nas.RZf(nas.normalizeStr(tgtArray[1]),12)==nas.RZf(nas.normalizeStr(dstArray[1]),12)))&&
+    (nas.RZf(nas.normalizeStr(tgtArray[0]),12)==nas.RZf(nas.normalizeStr(dstArray[0]),12))
+    ) return true ;
+    return false ;
+}
+/*TEST
+nas.compareCutIdf("C12","s-c012");
+nas.compareCutIdf("0012","title_opus_s-c012");
+nas.compareCutIdf("C００１２","s-c012");
+nas.compareCutIdf("S#1-32","s01-c0３２");
 */

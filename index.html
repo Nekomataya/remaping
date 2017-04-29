@@ -1046,7 +1046,7 @@ serviceAgent.pushEntry(xUI.XPS,function(){xUI.setStored("current");sync();
 	id=pmcui-update
 		class='jobControl  jobControl-save'
 		onclick='serviceAgent.pushEntry(xUI.XPS,function(){xUI.setStored("current");sync();
-},function(){alert("error")});'
+},function(){alert("error :"+this.id)});'
 		title="保存"
 	>作業保存
 	</button><button
@@ -2317,7 +2317,10 @@ onclick="alert(this.innerHTML);"
 class=numberFilter
 onclick="alert(this.innerHTML);"
     >-400</button></span></div>
-
+<button onClick='documentDepot.documentsUpdate()'>documentsUpdate</button>
+<button onClick='documentDepot.updateOpusSelector()'>updateOpusSelector</button>
+<button onClick='documentDepot.updateDocumentSelector()'>updateDocumentSelector</button>
+<button onClick='documentDepot.rebuildList()'>rebuildList</button>
 </div>
 <!--	ファイルブラウザ試験中	-->
 

@@ -1032,7 +1032,7 @@ function Xps(Layers, Length) {
         };
     //引数が配置オブジェクトでなければ、デフォルトの配置オブジェクトを置いてブレイク
     }
-    console.log(trackSpec);
+if(dbg)    console.log(trackSpec);
     if (!Length) Length = (!nas) ? 24 : Math.round(nas.FRATE);//現状のレートで1秒を初期化
 
     /**
@@ -1108,7 +1108,7 @@ function Xps(Layers, Length) {
      */
 //    this.xpsTracks = this.newTracks(Layers, Length);
     this.xpsTracks = this.newTracks(trackSpec, Length);
-console.log(this.xpsTracks);
+if(dbg) console.log(this.xpsTracks);
     //コレクションの初期化で同時にシートメモが空文字列で初期化される
 }
 
@@ -1226,7 +1226,7 @@ if(true){
 */
     //トラックのインデックス更新正規化
     myTimelineTracks.renumber();
-console.log(myTimelineTracks);
+if(dbg) console.log(myTimelineTracks);
     return myTimelineTracks;
 };
 
