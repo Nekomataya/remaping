@@ -141,7 +141,7 @@ documentDepot.updateOpusSelector=function(myRegexp){
     var myContents = "";
     var myProducts = documentDepot.getProducts();
     var myResult   = [];
-    myContents += '<option value="==newTitle==">（*-- no title selected --*）';
+    myContents += '<option value="==newTitle==">（*-- no title selected --*）</option>';
     for( var opid = 0 ; opid < myProducts.length ; opid ++){
         var currentText = decodeURIComponent(myProducts[opid]);
 //if(dbg) console.log(currentText);
@@ -156,10 +156,14 @@ documentDepot.updateOpusSelector=function(myRegexp){
                 documentDepot.currentProduct = null;
             }
             myContents += currentText;
+            myContents += '</option>';
             myResult.push(myProducts[opid]);
         }
     }
-    document.getElementById( "opusSelect" ).innerHTML = myContents;
+    if(document.getElementById( "opusSelect" ).innerHTML != myContents){
+        document.getElementById( "opusSelect" ).innerHTML = myContents;
+        document.getElementById( "opusSelect" ).disabled  = false;
+    }
     return myResult;
 }
 /*  Documentセレクタを更新
@@ -174,11 +178,10 @@ documentDepot.updateOpusSelector=function(myRegexp){
 // 選択済みタイトルで抽出
     var myDocuments = documentDepot.getEntriesByOpusid(documentDepot.currentProduct);
 //    myDocuments.sort(documentDepot.sortBySCi);
-console.log('docSelectorUpdate '+ myDocuments);
 //  正規表現フィルタで抽出してHTMLを組む
     var myContents = "";
     var myResult   = [];
-    myContents += '<option value="==newDocument==">（*-- no document selected--*）';
+    myContents += '<option value="==newDocument==">（*-- no document selected--*）</option>';
     for ( var dlid = 0 ; dlid < myDocuments.length ; dlid ++){
         var currentText = decodeURIComponent(myDocuments[dlid].toString(0).split('//')[1]);
         if(currentText.match(myRegexp)){
@@ -192,10 +195,14 @@ console.log('docSelectorUpdate '+ myDocuments);
                 this.currentSelection = null;
             };
             myContents += currentText;
+            myContents += '</option>';
             myResult.push(myDocuments[dlid]);
         }
     }
-    document.getElementById( "cutList" ).innerHTML = myContents;
+    if (document.getElementById( "cutList" ).innerHTML != myContents){
+        document.getElementById( "cutList" ).innerHTML = myContents;
+        document.getElementById( "cutList" ).disabled  = false;
+    }
     return myResult;//抽出したリスト
 }
 
@@ -465,30 +472,13 @@ console.log(productName);
         var subTitle    = productInfo.subtitle;
         var opus        = productInfo.opus;
         var title       = productInfo.title;
-console.log("select :" + decodeURIComponent(productName));
-/*
-    if(productName.length <= 0){return false;}
-    if(productName.match(/^(.+)(\[([^\]]+)\]|「([^」]+)」|\"([^\"]+)\"|\'([^\']+)\')$/)){
-        productName = RegExp.$1;
-        var subTitle = RegExp.$3; 
-    }else{
-        var subTitle = "";   
-    }
-    if(productName.match(/(.*)\s*[#＃№](.+)/)){
-        var title = RegExp.$1;
-        var opus  = RegExp.$2;
-    }else{
-        var title = productName;
-        var opus  = "";
-    }
-*/
 //ブラウザの選択を解除
     documentDepot.currentSelection=null;
+    document.getElementById( "cutList" ).disabled=true;
 // タイトルからカットのリストを構築して右ペインのリストを更新
     documentDepot.currentProduct=document.getElementById("opusSelect").options[document.getElementById("opusSelect").selectedIndex].value;
 // 選択したプロダクトのカットを取得
     var currentOpus = serviceAgent.currentRepository.opus(documentDepot.currentProduct);
-console.log(currentOpus);
     serviceAgent.currentRepository.getSCi(function(){
 // 更新したリストからリスト表示を更新
         documentDepot.updateDocumentSelector();
@@ -500,9 +490,7 @@ console.log(currentOpus);
     document.getElementById("titleInput").value    = (title.length)? title:"(*--title--*)";
     document.getElementById("opusInput").value     = (opus.length)? opus:"(*--opus--*)";
     document.getElementById("subtitleInput").value = (subTitle.length)? subTitle:"(*--subtitle--*)";
-//
     selectSCi();    
-//    document.getElementById("opusSelect").selected
 }
 //setProduct("源氏物語＃二十三帖「初音」");
 /**
@@ -563,24 +551,14 @@ function selectSCi(sciName){
 
 //  状態更新
 //　パネルテキスト更新
-    document.getElementById("cutInput").value    = (cutNumber.length)? cutNumber:"(*--c#--*)";
-    document.getElementById("timeInput").value     = (cutTime)? nas.Frm2FCT(nas.FCT2Frm(cutTime),3):"6 + 00 .";
-/*
-if(myEntry){
-    document.getElementById("statusSelector").value = decodeURIComponent(myEntry.issues[myEntry.issues.length-1].join('//'));
-}else{
-    document.getElementById("statusSelector").value = '#:---line//#:---stage//#:---job//(status)';
-}
-*/
+    document.getElementById("cutInput").value   = (cutNumber.length)? cutNumber:"(*--c#--*)";
+    document.getElementById("timeInput").value  = (cutTime)? nas.Frm2FCT(nas.FCT2Frm(cutTime),3):"6 + 00 .";
 //UIボタンの更新
-//    var myInputText=["titleInput","opusInput","subtitleInput","cutInput","timeInput","statusSelector"];
     var myInputText=["titleInput","opusInput","subtitleInput","cutInput","timeInput"];
 
     if (document.getElementById("cutList").selectedIndex <= 0){}
     if (! myEntry){
 //選択されたドキュメントがリスト内に無い　
- //       document.getElementById("ddp-checkin").disabled     = true;
- //       document.getElementById("ddp-activate").disabled    = true;
         document.getElementById("ddp-readout").disabled     = true;
         document.getElementById("ddp-reference").disabled   = true;
         if(xUI.uiMode=='management')
@@ -591,12 +569,6 @@ if(myEntry){
     }else{
 //リポジトリ内に指定データが存在する
 var currentStatus = myEntry.issues[myEntry.issues.length-1][3];
-        /*
-        document.getElementById("ddp-checkin").disabled =
-            ((currentStatus == "Startup")||(currentStatus == "Fixed"))?false:true;//startup||fixed チェックイン可能
-        document.getElementById("ddp-activate").disabled =
-            ((currentStatus == "Hold")||(currentStatus == "Fixed"))?false:true;//hold||fixed　アクティベート可能
-          */  
         document.getElementById("ddp-readout").disabled     = (xUI.onSite)? true:false;//オンサイト時読出抑制
         document.getElementById("ddp-reference").disabled   = false;//参照は無条件読出可能
         for ( var tidx = 0 ; tidx < myInputText.length ; tidx ++ ){
