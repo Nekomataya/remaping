@@ -2161,15 +2161,15 @@ onclick='nas.incrFCTonHTMLInput(document.getElementById("editTC"),"-(1)")'
 </form></div>
 
 <button
- onClick='serviceAgent.currentRepository.removeEntry(documentDepot.currentSelection);'
+ onClick='alert("お待ち下さい");'
  class='documentPanelButton-management debug'
  title="local repository only"
 >一括ダウンロード </button><button
- onClick='serviceAgent.currentRepository.removeEntry(documentDepot.currentSelection);'
+ onClick='alert("お待ち下さい");'
  class='documentPanelButton-management debug'
  title="local repository only"
 >一括登録 </button><button
- onClick='serviceAgent.currentRepository.removeEntry(documentDepot.currentSelection);'
+ onClick='alert("お待ち下さい");'
  class='documentPanelButton-management debug'
  title="local repository only"
 >removeDocument </button><button
@@ -2281,20 +2281,20 @@ class=productFilter
 onclick="documentDepot.products.reverse();documentDepot.updateOpusSelector();"
     >reverse</button><button
 class=productFilter
-onclick="alert(this.innerHTML);"
+onclick='documentDepot.updateOpusSelector(new RegExp(document.getElementById("productFilterText").value),true);'
     >hide</button><input
 id = productFilterText
 class = productFilter
 type = text
 size =12
 style="height:20px;"
-value=".*"
+value=".+"
     ><button
 class=productFilter
-onclick="alert(this.innerHTML);"
+onclick='documentDepot.updateOpusSelector(new RegExp(document.getElementById("productFilterText").value));'
     >apply</button><button
 class=productFilter
-onclick='document.getElementById("productFilterText").value=".*";'
+onclick='document.getElementById("productFilterText").value=".+";'
     >reset</button>
     </span>
 <span style="float:right;">
@@ -2302,25 +2302,35 @@ onclick='document.getElementById("productFilterText").value=".*";'
 <button
 id='ddp-refresh2'
 class='iconButton iconButton-reload'
-onclick="alert(this.id);"
+onclick="documentDepot.updateDocumentSelector();"
 title="ドキュメントを更新"
     ></button><button
 class=numberFilter
-onclick="alert(this.innerHTML);"
-    >-100</button><button
+onclick='documentDepot.updateDocumentSelector(new RegExp("[^1-9][0-9][0-9][^0-9]*$"));'
+    >~99</button><button
 class=numberFilter
-onclick="alert(this.innerHTML);"
-    >-200</button><button
+onclick='documentDepot.updateDocumentSelector(new RegExp("1[0-9][0-9][^0-9]*$"));'
+    >~199</button><button
 class=numberFilter
-onclick="alert(this.innerHTML);"
-    >-300</button><button
+onclick='documentDepot.updateDocumentSelector(new RegExp("2[0-9][0-9][^0-9]*$"));'
+    >~299</button><button
 class=numberFilter
-onclick="alert(this.innerHTML);"
-    >-400</button></span></div>
+onclick='documentDepot.updateDocumentSelector(new RegExp("3[0-9][0-9][^0-9]*$"));'
+    >~399</button></span></div>
+<!-- 
 <button onClick='documentDepot.documentsUpdate()'>documentsUpdate</button>
 <button onClick='documentDepot.updateOpusSelector()'>updateOpusSelector</button>
 <button onClick='documentDepot.updateDocumentSelector()'>updateDocumentSelector</button>
 <button onClick='documentDepot.rebuildList()'>rebuildList</button>
+<br>
+<button onClick='serviceAgent.currentRepository.getProducts()'>getProducts</button>
+<button onClick='serviceAgent.currentRepository.getEpisodes(false,false,documentDepot.currentProduct)'>getEpisodes</button>
+<button onClick='console.log(documentDepot.currentSelection);serviceAgent.currentRepository.getSCi(false,false,documentDepot.currentSelection)'>getSCi</button>
+
+<button onClick='console.log(serviceAgent.currentRepository)'>Repository</button>
+<button onClick='console.log(serviceAgent.currentRepository.productsData)'>productsData</button>
+<button onClick='console.log(serviceAgent.currentRepository.entryList)'>entryList</button>
+-->
 </div>
 <!--	ファイルブラウザ試験中	-->
 
@@ -3027,7 +3037,7 @@ attributes:
 <hr>
 content:
 <br><textarea name=SndBody id=sndBody style="width:96%;height:96px"
-onchange="xUI.mdChg(3);"
+onchange='SoundEdit.sync();'
 ></textarea>
 <div id=dialogWords>
 <span 
@@ -3223,38 +3233,23 @@ duration :
 <br><br><br><br><br><br><br><br>ただいま準備中…ちょっぴりお待ちください<br>
 あ、非常に申し訳ありませんがりまぴんはIEでは正常に動作しません。<br>サポート外です。<br>
 <h3> タイムシート編集サービス　テスト中 </h3><img src=images/remaping.gif border=0 /><br /><img src=images/ui/wait.gif width=320 height=20><br>
-$Id:$ index.html ,v 1.7 2017/03/04  support@u-at.net <br />
+$Id:$ index.html ,v 1.7 2017/05/06  support@u-at.net <br />
 <span id=myVer1></span> <span id=myServer1>[no-server]</span>
 <br>
       </div><hr>
 <!-- <form> -->
-	<textarea id="startupXPS" style='width:75%;'></textarea>
+    <textarea id="startupXPS" style='width:75%;'></textarea>
     <textarea id="referenceXPS" style='width:75%;'></textarea>
   </div>
   <div id="scrollSpaceFt" class=\"screenSpace\"><br></div>
-  <!-- backend_variables
-  <span id="backend_variables"
-        data-organization_token="6kT3SX2Mg8Er1w63RhzgVfzH"
-        data-user_access_token="4a9a2dba0f661dffdaf0db2d7169e6729ca0ba16bc4cbcc1f8b6d0fd4ad07ceb"
-        data-user_token="vwNW7gjUuHbbZZpkC7Y4ydBs"
-        data-user_name="Nekomataya-STG1"
-        data-user_email="kiyo@nekomataya.info"
-        data-episode_id="25"
-        data-cut_id="1401"
-        data-product_token="8fRmfvarRijSpNDjPJcvnzE4"
-        data-episode_token="DSnUg31WdzQ86bLB2VikFDFj"
-        data-cut_token="r8siFpTxjkp5ZWvnKC5dXhTo"
-        data-line_id=""
-        data-stage_id=""
-        data-job_id=""
-        data-status=""
-        data-server_url='http://remaping.scivone-dev.com'
-  ></span> -->
+  <!-- backend_variables -->
 <!--
 	サーバーオンサイトの状況を真似る場合
 	この位置に　backend_variables　を置いて
 	プロパティに以下の１行を加える
     data-server_url='https://remaping-stg.u-at.net'
     アドレスはサーバーのルートを使用　2017.04.13
+        data-server_url='http://remaping.scivone-dev.com'
+        data-server_url='http://u-at.net'
 -->
 </body></html>

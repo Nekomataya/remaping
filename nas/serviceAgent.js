@@ -246,25 +246,22 @@ if(dbg) console.log(result.access_token)
 */
 ServiceNode.prototype.getRepositories=function(callback){
 if(dbg) console.log("url : "+serviceAgent.currentServer.url + '/api/v2/organizations.json');
-//      var myURL = serviceAgent.currentRepository.service.url + '/api/v2/organizations.json',
         var myURL = serviceAgent.currentServer.url + '/api/v2/organizations.json';
         $.ajax({
           url : myURL,
           type : 'GET',
           dataType : 'json',
           success : function(result) {
-//if(dbg) console.log("getRepositories:::::::::::");
-//if(dbg) console.log(result);
             serviceAgent.repositories.splice(1);//ローカルリポジトリを残してクリア(要素数１)
             for( var rix=0 ; rix<result.length ; rix ++){
                 serviceAgent.repositories.push(new NetworkRepository(result[rix].name,serviceAgent.currentServer));
                 serviceAgent.repositories[serviceAgent.repositories.length - 1].token = result[rix].token;
             };
             var myContents="";
-    myContents += '<option selected value=0> = local Repository =' ;
+    myContents += '<option selected value=0> = local Repository =</option>' ;
     for(var idr=1; idr < serviceAgent.repositories.length;idr ++){
-        myContents +='<option value="'+idr+'" >'+serviceAgent.repositories[idr].name; 
-    }
+        myContents +='<option value="'+idr+'" >'+serviceAgent.repositories[idr].name+'</option>'; 
+    };
     document.getElementById('repositorySelector').innerHTML = myContents;
     document.getElementById('repositorySelector').disabled  = false;
     if(callback instanceof Function){setTimeout(function(){callback();},10)};
@@ -530,7 +527,6 @@ Fixed   > Active/Aborted(要権限)
     statusの変更に従って必ず変わる
 */
 listEntry.prototype.setStatus=function(myStatus){
-console.log('setStatus :' + myStatus);
     var currentIssue  = this.issues[this.issues.length-1];
     var currentStatus = currentIssue[3].split(":");
     var newStatus = String(myStatus).split(":");
@@ -733,7 +729,10 @@ localRepository={
 localRepository.title=function(myIdentifier){
     var curerntTitle = decodeURIComponent(String(myIdentifier).split("#")[0]);
     for ( var idx = 0 ;idx <this.productsData.length;idx ++){
-        if(curerntTitle == this.productsData[idx].name) return this.productsData[idx];
+        if(
+            (curerntTitle == this.productsData[idx].name)||
+            (myIdentifier == this.productsData[idx].token)
+        ) return this.productsData[idx];
     };
     return null;
 }
@@ -742,10 +741,18 @@ localRepository.title=function(myIdentifier){
 */
 localRepository.opus=function(myIdentifier){
     var currentOpus = Xps.parseProduct(myIdentifier);
+    var isTkn = (currentOpus.opus=='undefined')? true:false;
     for ( var idx = 0 ;idx <this.productsData.length;idx ++){
-      if(currentOpus.title != this.productsData[idx].name) continue;
+      if(
+        ((currentOpus.title.indexOf(this.productsData[idx].name) < 0) &&
+        (! isTkn ))||
+        (! this.productsData[idx].episodes )
+      ) continue;
       for (var eid = 0 ;eid < this.productsData[idx].episodes[0].length; eid ++){
-        if (currentOpus.opus == this.productsData[idx].episodes[0][eid].name) return this.productsData[idx].episodes[0][eid];
+        if (
+            (currentOpus.opus == this.productsData[idx].episodes[0][eid].name)||
+            (myIdentifier == this.productsData[idx].episodes[0][eid].token)
+        ) return this.productsData[idx].episodes[0][eid];
       };
     };
     return null;
@@ -755,13 +762,24 @@ localRepository.opus=function(myIdentifier){
 */
 localRepository.cut=function(myIdentifier){
     var target = Xps.parseIdentifier(myIdentifier);
+    var isTkn = (target.cut=='undefined')? true:false;
     for ( var idx = 0 ;idx <this.productsData.length;idx ++){
-      if(target.title != this.productsData[idx].name) continue;
+      if(
+        (target.title.indexOf(this.productsData[idx].name) < 0) &&
+        (! isTkn ) &&
+        (! this.productsData[idx].episodes )
+      ) continue;
       for (var eid = 0 ;eid < this.productsData[idx].episodes[0].length; eid ++){
-        if (target.opus != this.productsData[idx].episodes[0][eid].name) continue;
+        if (
+            (target.opus.indexOf(this.productsData[idx].episodes[0][eid].name) < 0) &&
+            (! isTkn ) &&
+            (! this.productsData[idx].episodes[0][eid].cuts )
+        ) continue;
         for (var cid = 0 ; cid < this.productsData[idx].episodes[0][eid].cuts[0].length ; cid ++) {
-            if ( nas.compareCutIdf(target.sci[0].cut,this.productsData[idx].episodes[0][eid].cuts[0][cid].name))
-             return this.productsData[idx].episodes[0][eid].cuts[0][cid];
+            if (
+                ( nas.compareCutIdf(target.sci[0].cut,this.productsData[idx].episodes[0][eid].cuts[0][cid].name))||
+                (myIdentifier == this.productsData[idx].episodes[0][eid].cuts[0][cid].token)
+            ) return this.productsData[idx].episodes[0][eid].cuts[0][cid];
         };
       };
     };
@@ -777,16 +795,23 @@ localRepository.cut=function(myIdentifier){
     引き続きの処理を行う際はコールバック渡し
     コールバックがない場合は、全プロダクトの詳細を取得？
     プロダクトデータ取得のみの場合は　空動作のコールバックを渡す必要あり
+    myToken 引数がある場合はtokenが一致したエントリのみを処理する
+    myToken は配列でも良い
 */
-localRepository.getProducts=function(callback,callback2){
+localRepository.getProducts=function(callback,callback2,myToken){
+        if(typeof myToken == 'undefined') myToken =[];
+        if(!(myToken instanceof Array)) myToken = [myToken];
     try{
         var keyCount=localStorage.length;
         for (var kid=0;kid<keyCount;kid++){
             if(localStorage.key(kid).indexOf(this.keyPrefix)==0){
                 var currentIdentifier=localStorage.key(kid).slice(this.keyPrefix.length);
-//タイトルリストにすでに登録されているか検査 未登録エントリはDBに追加
+//タイトルリストにすでに登録されているか検査 未登録エントリをDBに追加
+//token指定がある場合は、登録タイトルを抹消して新しい情報で上書き？
                 var currentTitle = this.title(currentIdentifier);
                 if(! currentTitle){
+// console.log(currentIdentifier);
+                if((myToken.indexOf(localStorage.key(kid)) >= 0)||(! myToken.length)){
                     var myData=Xps.parseIdentifier(currentIdentifier);
                     localRepository.productsData.push({
                         token:localStorage.key(kid),
@@ -796,14 +821,14 @@ localRepository.getProducts=function(callback,callback2){
                         updated_at:null,
                         episodes:[[]]
                     });
-                };
+                }};
             };
         };
         if(callback instanceof Function){
             callback();
         }else{
-            for(var ix =0;ix < this.productsData.length; ix ++){
-                this.getEpisodes(callback,callback2,this.productsData[ix].token);
+            for(var ix =0;ix < localRepository.productsData.length; ix ++){
+                localRepository.getEpisodes(false,false,localRepository.productsData[ix].token);
             }    
         };
     }catch(err){
@@ -813,42 +838,42 @@ localRepository.getProducts=function(callback,callback2){
 /**
     opusデータ更新
 引数:成功時コールバック,失敗時コールバック,タイトルキー
-
+myOpusToken 引数がある場合は、引数で制限された処理を行う
 */
-localRepository.getEpisodes=function(callback,callback2,myToken){
+localRepository.getEpisodes=function(callback,callback2,myProductToken,myOpusToken){
+        if(typeof myOpusToken == 'undefined') myOpusToken =[];
+        if(!(myOpusToken instanceof Array)) myOpusToken = [myOpusToken];
     try{
-        for (var ix=0 ;ix < this.productsData.length; ix++){
-            if(myToken != this.productsData[ix].token) continue;//
-            var currentTitle = this.productsData[ix];
-            var keyCount     = localStorage.length;
-            for (var kid = 0;kid < keyCount; kid++){
-                if(localStorage.key(kid).indexOf(this.keyPrefix)==0){
-                    var currentIdentifier=localStorage.key(kid).slice(this.keyPrefix.length);
-                    var myData = Xps.parseIdentifier(currentIdentifier);
-                    if(myData.title != currentTitle.name) continue;//タイトル違いを排除
+        var myProduct=localRepository.title(myProductToken);
+        var keyCount     = localStorage.length;
+        for (var kid = 0;kid < keyCount; kid++){
+// console.log(myProduct.name);
+            if(localStorage.key(kid).indexOf(this.keyPrefix)==0){
+                var currentIdentifier=localStorage.key(kid).slice(this.keyPrefix.length);
+                var myData = Xps.parseIdentifier(currentIdentifier);
+                if(myData.title != myProduct.name) continue;//タイトル違いを排除
 //OPUSリストにすでに登録されているか検査 未登録エントリはDBに追加 tokenは初出のkey
-                    var currentOpus = this.opus(currentIdentifier);
-                    if(! currentOpus){
-                        var Ex = this.productsData[ix].episodes[0].push({
-                            token:localStorage.key(kid),
-                            name:myData.opus,
-                            description:myData.subtitle,
-                            created_at:null,
-                            updated_at:null,
-                            cuts:[[]]
-                        });
-                        currentOpus = this.productsData[ix].episodes[0][Ex-1];
-                        if(!(callback instanceof Function)){
-                            this.getSCi(false,false,currentOpus.token);
-                        };
+                var currentOpus = localRepository.opus(currentIdentifier);
+                if(! currentOpus){
+                if((! myOpusToken.length)||(myOpusToken.indexOf(localStorage.key(kid)) >= 0)){
+                    var Ex = myProduct.episodes[0].push({
+                        token:localStorage.key(kid),
+                        name:myData.opus,
+                        description:myData.subtitle,
+                        created_at:null,
+                        updated_at:null,
+                        cuts:[[]]
+                    });
+                    currentOpus = myProduct.episodes[0][Ex-1];
+                    if(!(callback instanceof Function)){
+                        localRepository.getSCi(false,false,currentOpus.token);
                     };
-                };
+                }};
             };
-            break;
         };
 //エピソード１取得毎に実行したほうが良いかも？
 //このままだと必ずタイトル内の全エピソード取得になる
-        if(callback instanceof Function){console.log(currentOpus); callback();}   
+        if(callback instanceof Function){ callback();}   
     } catch(err) {
         if(callback2 instanceof Function){ callback2();}
     }
@@ -861,72 +886,62 @@ localRepository.getEpisodes=function(callback,callback2,myToken){
     pgNo      リストのページID　1 origin
     ppg       ページごとのエントリ数
  */
-localRepository.getSCi=function (callback,callback2,epToken,pgNo,ppg) {
-console.log(["localRepository.getSCi",epToken,pgNo,ppg]);
-//現在、epToken,pgNo,ppgは意味を持たない引数
+localRepository.getSCi=function (callback,callback2,myOpusToken,pgNo,ppg) {
+//現在、pgNo,ppgは意味を持たない引数
     try{
-        for (var ix = 0 ;ix < this.productsData.length; ix++){
-            var currentTitle = this.productsData[ix];
-//console.log(currentTitle);
-            for (var ex = 0 ;ex < currentTitle.episodes[0].length; ex++){
-                var currentOpus=currentTitle.episodes[0][ex];
-                if(epToken != currentOpus.token) continue;//
-                var keyCount=localStorage.length;
-                for (var kid = 0; kid < keyCount; kid ++){
-                    if(localStorage.key(kid).indexOf(this.keyPrefix)==0){
-                        var currentIdentifier=localStorage.key(kid).slice(this.keyPrefix.length);
-                        var myData = Xps.parseIdentifier(currentIdentifier);
-//console.log([currentOpus.name,myData.opus]);
-                        if(currentOpus.name != myData.opus) continue;
-                        var myCut = this.cut(currentIdentifier);
-                        var currentEntry= this.entry(currentIdentifier);
-//console.log([myCut,currentEntry]);
-                        if(myCut){
-                        //登録済みカットなのでissues追加
-if(dbg) console.log("push version :" + decodeURIComponent(currentIdentifier));
-                            myCut.versions.push({
-                                updated_at:null,
-                                description:currentIdentifier,
-                                version_token:localStorage.key(kid)
-                            });
-                            if(currentEntry){
-                //登録済みプロダクトなのでエントリに管理情報を追加
-                currentEntry.push(currentIdentifier);
-                            }else{
-                //情報不整合
-                            
-                            }
-                        }else{
-                        //未登録カット  新規登録
-                        //エントリが既に登録済みなので不整合 消去
-                            if(currentEntry) currentEntry.remove();
-// console.log("add :: "+decodeURIComponent(currentIdentifier));
-                            var myCut = currentOpus.cuts[0].push({
-                                token:localStorage.key(kid),
-                                name:myData.cut,
-                                description:currentIdentifier,
-                                created_at:null,
-                                updated_at:null,
-                                versions:[{
-                                    updated_at:null,
-                                    description:currentIdentifier,
-                                    version_token:localStorage.key(kid)
-                                }]
-                            });
+        var myOpus = this.opus(myOpusToken);
+        if(! myOpus){console.log('noOpus');return false;}
+//console.log('prcessing : '+myOpus.name);
+        var keyCount=localStorage.length;
+        for (var kid = 0; kid < keyCount; kid ++){
+            if(localStorage.key(kid).indexOf(this.keyPrefix)==0){
+                var currentIdentifier=localStorage.key(kid).slice(this.keyPrefix.length);
+                var myData = Xps.parseIdentifier(currentIdentifier);
+                if(myOpus.name != myData.opus) continue;
+                var myCut = this.cut(currentIdentifier);
+                var currentEntry= this.entry(currentIdentifier);
+                if(myCut){
+                //登録済みカットなのでissues追加
+//console.log("push version :" + decodeURIComponent(currentIdentifier));
+                    myCut.versions.push({
+                        updated_at:null,
+                        description:currentIdentifier,
+                        version_token:localStorage.key(kid)
+                    });
+                    if(currentEntry){
+        //登録済みプロダクトなのでエントリに管理情報を追加
+                        currentEntry.push(currentIdentifier);
+                    }else{
+                //情報不整合                            
+                    }
+                }else{
+                //未登録カット  新規登録
+                //エントリが既に登録済みなので不整合 消去
+                    if(currentEntry) currentEntry.remove();
+//console.log("add :: "+decodeURIComponent(currentIdentifier));
+                    var myCut = myOpus.cuts[0].push({
+                        token:localStorage.key(kid),
+                        name:myData.cut,
+                        description:currentIdentifier,
+                        created_at:null,
+                        updated_at:null,
+                        versions:[{
+                            updated_at:null,
+                            description:currentIdentifier,
+                            version_token:localStorage.key(kid)
+                        }]
+                    });
                 //未登録新規プロダクトなのでエントリ追加
-                var newEntry = new listEntry(currentIdentifier);
-                newEntry.parent = this;
-                this.entryList.push(newEntry);
-                        }
-                    };
-                };
+                    var newEntry = new listEntry(currentIdentifier);
+                    newEntry.parent = this;
+                    this.entryList.push(newEntry);
+                }
             };
         };
         if(callback instanceof Function){ callback();}   
     } catch(err) {
         if(callback2 instanceof Function){ callback2();}
     }
-    
 }
 /**
     getListメソッドは、entryList/productsData の更新を行う
@@ -997,7 +1012,6 @@ localRepository.pushEntry=function(myXps,callback,callback2){
     };
 //クラスメソッドで識別子取得
     var myIdentifier=Xps.getIdentifier(myXps);
-console.log("pushEntry :"+myIdentifier);
 //識別子に相当するアイテムがローカルストレージ内に存在するかどうかを比較メソッドで検査
     for (var pid=0;pid<this.entryList.length;pid++){
         if(Xps.compareIdentifier(this.entryList[pid].toString(),myIdentifier) > 3){
@@ -1377,7 +1391,7 @@ console.log('編集権利取得失敗');
 /**
     作業終了
 */
-localRepository.checkoutEntry=function(callback,callback2){
+localRepository.checkoutEntry=function(assignData,callback,callback2){
     var currentEntry = this.entry(Xps.getIdentifier(xUI.XPS));
     var currentCut   = this.cut(currentEntry.toString());
     if(! currentEntry) {
@@ -1391,7 +1405,8 @@ console.log ('noentry in repository :' +  decodeURIComponent(currentEntry))
         //ユーザ判定は不用 JobID変わらず
         if (newXps){
              //同内容でステータスを変更したエントリを作成 新規に保存して成功したら先のエントリを消す
-            newXps.currentStatus = 'Fixed';
+//            newXps.currentStatus = ['Fixed',assignData].join(":");
+            newXps.currentStatus = 'Fixed';//いったん元に戻す　assignData は宙に保留（ここで消失）
             localStorage.setItem(this.keyPrefix+Xps.getIdentifier(newXps),newXps.toString());
 
             var result = (localStorage.getItem(this.keyPrefix+Xps.getIdentifier(newXps))==newXps.toString())? true:false;
@@ -1598,26 +1613,34 @@ NetworkRepository.prototype.opus=localRepository.opus;
 */
 NetworkRepository.prototype.cut=localRepository.cut;
 /**
-    タイトル一覧をクリアして更新する エピソード更新を呼び出す
-    受信したデータを複合させてサービス上のデータ構造を保持する単一のオブジェクトに
+    タイトル一覧を取得して情報を更新する エピソード更新を呼び出す
+    受信したデータを複合させてサービス上のデータ構造を保持する単一のthis.productsDataオブジェクトにする
     getXx で概要（一覧）を取得
     xxUpdateが詳細を取得して this.productsData を上書きしてゆく
-    プロダクト詳細は、各個に取得するように変更
+    プロダクト詳細は、各個に取得できるように変更
     引き続きの処理を行う際はコールバック渡し
-    コールバックがない場合は、全プロダクトの詳細を取得？
+    トークン指定がない場合は、全プロダクトの詳細を取得
     プロダクトデータ取得のみの場合は　空動作のコールバックを渡す必要あり
 */
-NetworkRepository.prototype.getProducts=function (callback,callback2){
-//    serviceAgent.currentRepository.productsData.length = 0;//プロパティを初期化（クリア）クリア不用　上書きかけるので
+NetworkRepository.prototype.getProducts=function (callback,callback2,prdToken){
+    if(typeof prdToken == 'undefined'){prdToken = [];}
+    if(!(prdToken instanceof Array)) prdToken=[prdToken];
     $.ajax({
         url: serviceAgent.currentRepository.url+'/api/v2/products.json',
         type: 'GET',
         dataType: 'json',
         success: function(result) {
 		    serviceAgent.currentRepository.productsData=result;
-		    for (var tId = 0 ; tId < serviceAgent.currentRepository.productsData.length ; tId ++ ){
-		        //タイトルごとの分散処理に変更
-		        serviceAgent.currentRepository.productsUpdate(callback,callback2,serviceAgent.currentRepository.productsData[tId].token);
+		    if(prdToken.length){
+		    //引数があれば引数のプロダクトを順次処理
+		        for (var tId = 0 ; tId < prdToken.length ; tId ++ ){
+		            serviceAgent.currentRepository.productsUpdate(callback,callback2,prdToken[tId]);
+		        }
+		    }else{
+		    //引数がない場合はすべてのプロダクトの詳細を取得更新
+		        for (var tId = 0 ; tId < serviceAgent.currentRepository.productsData.length ; tId ++ ){
+		            serviceAgent.currentRepository.productsUpdate(callback,callback2,serviceAgent.currentRepository.productsData[tId].token);
+		        }
 		    }
         },
         error : function(result){
@@ -1627,48 +1650,41 @@ NetworkRepository.prototype.getProducts=function (callback,callback2){
         },
         beforeSend: serviceAgent.currentRepository.service.setHeader
     });
-
 }
 /**
     タイトルごとの詳細（エピソードリスト含む）を取得してタイトルに関連付ける
     myToken 引数がない場合はすべてのプロダクトを更新
-    必要に従ってエントリリストの更新を行う
-    引数がカラの場合は動作が止まるので注意
+    必要に従ってエピソードリストの更新を行う
     コールバック引数がない場合はタイトルのエピソード毎に情報を取得
 */
 NetworkRepository.prototype.productsUpdate=function(callback,callback2,myToken){
     if(typeof myToken == 'undefined'){
             myToken = [];
-        for(var idx = 0 ;idx < serviceAgent.currentRepository.productsData.length ;idx ++){
-            myToken.push(serviceAgent.currentRepository.productsData[idx].token);
+        for(var tknId = 0 ;tknId < serviceAgent.currentRepository.productsData.length ;tknId ++){
+            myToken.push(serviceAgent.currentRepository.productsData[tknId].token);
         }
     }else{
         if(!(myToken instanceof Array)) myToken=[myToken];
     }
-    for(var idx = 0 ;idx < myToken.length ;idx ++){
+    for(var ix = 0 ;ix < myToken.length ;ix ++){
     $.ajax({
-        url: serviceAgent.currentRepository.url+'/api/v2/products/'+myToken[idx]+'.json' ,
+        url: serviceAgent.currentRepository.url+'/api/v2/products/'+myToken[ix]+'.json' ,
         type: 'GET',
         dataType: 'json',
         success: function(result) {
             var productUpdated=false;
             for(var idx = 0 ;idx < serviceAgent.currentRepository.productsData.length ;idx ++){
-                //プロダクトデータを詳細データに「入替」
-		            if(result.token == serviceAgent.currentRepository.productsData[idx].token){
+		        if(result.token != serviceAgent.currentRepository.productsData[idx].token) continue;
+                //プロダクトデータを詳細データに「入替」エピソードの概要を取得する
 if(dbg) console.log("update product data detail:"+serviceAgent.currentRepository.productsData[idx].name) ;
-if(dbg) console.log(serviceAgent.currentRepository.productsData);
+//console.log(serviceAgent.currentRepository.productsData);
 		                serviceAgent.currentRepository.productsData[idx]=result ;
 		                productUpdated=true;
 		                break;
-		            }
 		    };
-console.log("updated : "+serviceAgent.currentRepository.productsData[idx].name);
+//console.log("updated : "+serviceAgent.currentRepository.productsData[idx].name);
 		    if(productUpdated) {
-		        if(callback instanceof Function){
-		            callback();
-		        }else{
-		            serviceAgent.currentRepository.getEpisodes(false,false,serviceAgent.currentRepository.productsData[idx].token);
-                };
+		            serviceAgent.currentRepository.updateEpisodes(callback,callback2,serviceAgent.currentRepository.productsData[idx].token);
 		    }else{
 console.log('fail productsData update no entry in Repository::');
 console.log(result);
@@ -1687,24 +1703,31 @@ console.log(result);
 }
 /**
     プロダクトごとにエピソード一覧を再取得してデータ内のエピソード一覧を更新
-    引数 product_token
+    引数 product_tokenが存在する場合は、指定のプロダクト以外の処理をスキップ
 */
-NetworkRepository.prototype.getEpisodes=function (callback,callback2,myToken) {
-        var myProduct = serviceAgent.currentRepository.getNodeElementByToken(myToken);
+NetworkRepository.prototype.updateEpisodes=function (callback,callback2,prdToken) {
+//       var myProduct = serviceAgent.currentRepository.getNodeElementByToken(prdToken);
+       var myProduct = serviceAgent.currentRepository.title(prdToken);
         if(! myProduct) return false;
-console.log("getEpisodeList : "+myToken+' : '+myProduct.name) ;
+console.log("getEpisodeList : "+myProduct.token+' : '+myProduct.name) ;
     $.ajax({
         url: serviceAgent.currentRepository.url+'/api/v2/episodes.json?product_token='+myProduct.token ,
         type: 'GET',
         dataType: 'json',
         success: function(result) {
                 //プロダクトデータのエピソード一覧を「入替」
+
 		    if(result){
-		        if(! myProduct.episodes) {myProduct.episodes=[];}
-		        myProduct.episodes[0]=result
-console.log('get Episodes :'+myProduct.name);
-                for(var eid=0;eid<myProduct.episodes[0].length;eid++){
-		            serviceAgent.currentRepository.episodesUpdate(callback,callback2,myProduct.episodes[0][eid].token);
+		        if(! myProduct.episodes) {myProduct.episodes=[[]];}
+		        myProduct.episodes[0]=result;
+//console.log('success getting episodes :'+myProduct.name);
+//console.log(myProduct);
+                if(callback instanceof Function){
+		            callback();
+		        }else{
+                    for(var eid=0;eid<myProduct.episodes[0].length;eid++){
+		                serviceAgent.currentRepository.getEpisodes(callback,callback2,myProduct.token,myProduct.episodes[0][eid].token);
+		            }
 		        }
 		    }else{
 console.log('fail get no episodes::');
@@ -1722,29 +1745,64 @@ console.log(result);
 }
 /**
     episode_token を指定して詳細を取得 内部リストにコンバート
+    コールバックリンクのためこのあたりの機能は統合かける
+リポジトリ取得 server.getRepositories()
+    サーバ指定＝引数なしでサーバの管理するリポジトリの情報を取得
+
+プロダクト取得 repositoriy.getProducts(識別子)
+
+下位ファンクションを組み合わせてプロダクトレベルの情報取得を行う
+識別子でコントロール
+識別子を引数にするとその配下を取得
+
+    タイトル取得  repositoriy.getTitle(myTitel,callback,callback2)
+        リポジトリ指定＝引数なし　で全タイトル
+        タイトル指定で特定タイトルの情報を更新
+        引数が配列の場合は配列内のタイトルを更新
+        下位情報には踏み込まないコールバックリレーは行わない
+
+    エピソード取得 repository.getOpus(myTitle,myOpus,callback,callback2)
+        タイトル指定で、そのタイトル配下のエピソード
+        OPUS指定があれば、そのOPUSのみを更新
+    カット取得       repository.getSCi(myOpus,pgNo,ppg,callback,callback2)
+        プロダクト指定,エピソード指定,ページ数,単位
+    エピソードの指定が存在する場合は、指定エピソードの処理を行う　配列OK
+    それ以外は指定プロダクトのすべてを更新
  */
-NetworkRepository.prototype.episodesUpdate=function (callback,callback2,epToken) {
-        var  myEpisode = this.getNodeElementByToken(epToken);
-        if(! myEpisode) return false;
-console.log("get Episodes Detail for : "+myEpisode.name) ;
-console.log("get Episodes Token : "+myEpisode.token) ;
+NetworkRepository.prototype.getEpisodes=function (callback,callback2,prdToken,epToken) {
+    if(typeof epToken == 'undefined'){
+        epToken=[];
+//console.log(prdToken)
+        var myProduct=this.title(prdToken);
+//console.log(myProduct)
+        if((! myProduct)||(! myProduct.episodes)||(myProduct.episodes[0].length == 0)){console.log('stop'); return false};
+        for (var px = 0 ;px < myProduct.episodes[0].length;px ++){epToken.push(myProduct.episodes[0][px].token);}
+    }
+    if(!(epToken instanceof Array)) epToken = [epToken];
+    for(var ex = 0;ex < epToken.length ;ex ++){
+        var myEpisode=this.opus(epToken[ex]);
+        if(! myEpisode) continue;
+console.log("get episodes details for : "+myEpisode.name) ;
+console.log("Token : "+myEpisode.token) ;
 	            // /api/v2
                 var targetURL = serviceAgent.currentRepository.url+ '/api/v2/episodes/'+myEpisode.token +'.json';
-console.log(targetURL);
 	    $.ajax({
             url: targetURL,
             type: 'GET',
             dataType: 'json',
             success: function(result) {
-console.log('get episode details:');
+console.log('success : episode details for:'+result.name);
 console.log(result);
+        var 　updateTarget = serviceAgent.currentRepository.opus(result.token);
+        if(! updateTarget){console.log(updateTarget)};   
+//非同期処理中に変数を共有するのでmyEpisodeが変動するためターゲットをリザルトから再キャプチャ
 //オブジェクト入れ替えでなくデータの追加アップデートに変更
 //内容は等価だがAPIの変更時は注意
 //この時点でカットの総数が取得されるのでカット一覧詳細取得時総数を参照して分割取得
-                myEpisode.cuts = result.cuts;
-                myEpisode.created_at = result.created_at;
-                myEpisode.updated_at = result.updated_at;
-//    console.log(serviceAgent.currentRepository.getNodeElementByToken(myEpisode.token));
+                updateTarget.cuts = result.cuts;
+                updateTarget.created_at = result.created_at;
+                updateTarget.updated_at = result.updated_at;
+console.log(updateTarget);
                 if(callback instanceof Function){
                     callback();
                 }else{
@@ -1759,6 +1817,7 @@ console.log(result);
             },
             beforeSend: serviceAgent.currentRepository.service.setHeader
         });
+    }
 };
 /**
     エピソード毎にカットリストを再取得
@@ -1771,39 +1830,53 @@ console.log(result);
     ppg       ページごとのエントリ数
  */
 NetworkRepository.prototype.getSCi=function (callback,callback2,epToken,pgNo,ppg) {
-    var myEpisode = this.getNodeElementByToken(epToken);
+//    var myEpisode = this.getNodeElementByToken(epToken);
+    var myEpisode = this.opus(epToken);
+console.log('getSCi :');console.log(myEpisode);
     if((! myEpisode)||(! myEpisode.cuts)) return false;
+　//    if(! myEpisode) return false;
+  //  if(! myEpisode.cuts) myEpisode.cuts=[[]]; //これがダメ　ここであらかじめカット数を取得しておく必要があるナリよ
+//カットエントリが既に無いというのは前段のエピソード詳細が取得できていないってことなのでこれはアウト
     if(typeof pgNo == 'undefined') pgNo = '1';
     if(typeof ppg  == 'undefined')  ppg = myEpisode.cuts[0].length;
-    var targetURL = serviceAgent.currentRepository.url+ '/api/v2/cuts.json?episode_token='+epToken+'&page_no='+parseInt(pgNo)+'&per_page='+parseInt(ppg);
-console.log(targetURL);
+
+    var targetURL = serviceAgent.currentRepository.url+ '/api/v2/cuts.json?episode_token='+myEpisode.token+'&page_no='+parseInt(pgNo)+'&per_page='+parseInt(ppg);
 	            $.ajax({
                     url: targetURL,
                     type: 'GET',
                     dataType: 'json',
                     success: function(result){
-console.log('episode:'+myEpisode.name);//console.log(result);console.log(myEpisode);
+console.log(result);console.log(myEpisode);
 //                                if(myEpisode.cuts[0].length!=result.length){}
                                         myEpisode.cuts[0]=result;
+                                        var currentTitle = serviceAgent.currentRepository.title(myEpisode.cuts[0][0].description);
+/*
                       searchLoop:{
-                        for( var idx = 0 ; idx < serviceAgent.currentRepository.productsData.length ; idx ++){
+                        for(var idx = 0 ; idx < serviceAgent.currentRepository.productsData.length ; idx ++){
                             var currentTitle=serviceAgent.currentRepository.productsData[idx];
                             if((typeof currentTitle.episodes == 'undefined')||(currentTitle.episodes[0].length == 0)) continue;//エピソード数０の際は処理スキップ
                             for( var eid = 0 ; eid < serviceAgent.currentRepository.productsData[idx].episodes[0].length ; eid ++){
-                                var currentEpisode=serviceAgent.currentRepository.productsData[idx].episodes[0][eid];
-                                if(epToken == currentEpisode.token ){
+                                if(epToken == serviceAgent.currentRepository.productsData[idx].episodes[0][eid].token ){
+//                                    var currentEpisode=serviceAgent.currentRepository.productsData[idx].episodes[0][eid];
+                                    break searchLoop;
+                                };//episode serch hit
+                            };//episodes
+                        };//products
+                      };//serchloop
+*/
 /**
 エントリ取得タイミングで仮にcutのdescription を追加するcuts[1][cid].description を作成して調整に使用する
 本番ではデータ比較ありで、入替えを行う　サーバ側のプロパティ優先
 */
     var myIdentifier_opus =
-        encodeURIComponent(serviceAgent.currentRepository.productsData[idx].name) +
-        '#'+encodeURIComponent(serviceAgent.currentRepository.productsData[idx].episodes[0][eid].name) +
-        ((serviceAgent.currentRepository.productsData[idx].episodes[0][eid].description)?
-            '['+encodeURIComponent(serviceAgent.currentRepository.productsData[idx].episodes[0][eid].description) +']':''
+        encodeURIComponent(currentTitle.name) +
+        '#'+encodeURIComponent(myEpisode.name) +
+        ((myEpisode.description)?
+            '['+encodeURIComponent(myEpisode.description) +']':''
         );
+if(! myEpisode.cuts){console.log(myEpisode.cuts);}
 for ( var cid = 0 ; cid < result.length ; cid ++){
-    var myCut = serviceAgent.currentRepository.productsData[idx].episodes[0][eid].cuts[0][cid];
+    var myCut = myEpisode.cuts[0][cid];
     if(myCut.name == null) myCut.name = "";//この状態は実際にはエラー
     var myIdentifier_cut = encodeURIComponent(myCut.name);
     // デスクリプションに識別子がない場合issuen部の無い識別子を補う
@@ -1848,7 +1921,7 @@ APIの情報は、識別子と一致しているはずだが　照合の上異�
                 var currentEntry=serviceAgent.currentRepository.entry(myCut.description);//既登録エントリを確認
                 if(currentEntry) {console.log(currentEntry);console.log(currentEntry.remove());console.log('removed')}
                     //登録されていた場合は削除して新設
-                var newEntry = new listEntry(entryArray.join('//'),currentTitle.token,currentEpisode.token,myCutToken);
+                var newEntry = new listEntry(entryArray.join('//'),currentTitle.token,myEpisode.token,myCutToken);
                 newEntry.parent = serviceAgent.currentRepository;
                 serviceAgent.currentRepository.entryList.push(newEntry);
                 // エントリ配下にversionsがあればそのままpush
@@ -1857,15 +1930,10 @@ APIの情報は、識別子と一致しているはずだが　照合の上異�
                     var myVersionString=(myCut.versions[vid].description)?
                     myCut.versions[vid].description:entryArray.join("//");
                     var myVersionToken = myCut.versions[vid].version_token;
-                    newEntry.push(myVersionString,currentTitle.token,currentEpisode.token,myCutToken,myVersionToken);
+                    newEntry.push(myVersionString,currentTitle.token,myEpisode.token,myCutToken,myVersionToken);
                 }
 //============エントリ更新　
 }
-                                   break searchLoop;
-                                };//epsode serch hit
-                            };//episodes
-                        };//products
-                      };//serchloop
                         if(callback instanceof Function){
                             callback();
                         }else{
@@ -2455,7 +2523,8 @@ NetworkRepository.prototype.pushEntry=function (myXps,callback,callback2){
 //識別子取得（全要素で取得）
     var myIdentifier=Xps.getIdentifier(myXps,true);
 //識別子に相当するアイテムがリポジトリに存在するかどうかをチェック
-    var currentEntry=this.entry(myIdentifier);
+    var currentEntry = this.entry(myIdentifier);
+    var currentCut   = this.cut(myIdentifier);
     if(currentEntry){
             //既存のエントリが有るのでストレージとリストにpushして処理終了
         this.pushData('PUT',currentEntry,myXps,callback,callback2)
@@ -2566,7 +2635,7 @@ console.log("ctName  : "+decodeURIComponent(cut_name));
 タイトル作成及びエピソード作成は別に用意する	
 */
 if(myMethod=='POST'){
-//新規エントリ作成
+//新規エントリ作成 POST
 	json_data = {cut:{
 		     		episode_token   : episode_token,
 	                name            : decodeURIComponent(cut_name),
@@ -2580,7 +2649,7 @@ if(myMethod=='POST'){
 		method_type = 'POST';
 		target_url = '/api/v2/cuts.json';
 }else{
-//エントリ更新
+//エントリ更新 PUT
 	json_data = {
 		     		token: cut_token,
 		     		cut:{
@@ -2615,9 +2684,7 @@ if(dbg) console.log(method_type+' :'+serviceAgent.currentRepository.url+target_u
 		scriptCharset: 'utf-8',
 		success : function(result) {
                 if (xUI.XPS === myXps) xUI.setStored('current');
-//			xUI.setStored("current");//UI上の保存ステータスをセット
 			sync();//保存ステータスを同期
-            
 			if( method_type == 'POST'){
 if(dbg) console.log("new cut!");
 console.log(result);
@@ -2625,24 +2692,18 @@ console.log(result);
 			}else{
 if(dbg) console.log('existing cut!');
 			}
-//            serviceAgent.currentRepository.getList(true);//リストステータスを同期
 // リストプッシュ 等の内部　DB操作は前段で適用を済ませるかまたはコールバック渡しにする
-//            documentDepot.documentsUpdate();
-//            documentDepot.updateDocumentSelector();
-//            documentDepot.rebuildList();
             if(callback instanceof Function){callback();}
 		},
 		error : function(result) {
             if(callback2 instanceof Function){callback2();}
 			// Error
-if(dbg) console.log("error");
-if(dbg) console.log(result);
+console.log("error");
+console.log(result);
 		},
 		beforeSend: serviceAgent.currentRepository.service.setHeader
 	});
-
 };
-
 /**
     ネットワークリポジトリのエントリをアプリケーションから削除することは無いので以下のメソッドは不用？
     APIにハードデリートとソフトデリートを出してもらう？
@@ -2650,8 +2711,6 @@ if(dbg) console.log(result);
     自分自身が開始した作業セッションであること && 最終の作業セッションであること
     エントリをすべて削除するにはオプションが必要
     識別子がフル（）
-    
-    
 */
 NetworkRepository.prototype.removeEntry=function (myIdentifier){
 //
@@ -2671,7 +2730,6 @@ NetworkRepository.prototype.removeEntry=function (myIdentifier){
     指定の識別子との比較は
     title,opus,scene,cut の４点の比較で行う(秒数とサブタイトルは比較しない)
     optを加えるとtitle,opus(= product)のみを比較
-
     現在カットが０（未登録）の登録済みプロダクトの場合　true/-1 false/0 を戻す
 */
 NetworkRepository.prototype.entry=function(myIdentifier,opt){
@@ -2785,46 +2843,83 @@ NetworkRepository.prototype.activateEntry=function(callback,callback2){
         console.log(serviceAgent.currentRepository);
         return false;
     }
-    var newXps = Object.create(xUI.XPS);//現在のデータの複製をとる
-if(dbg) console.log(xUI.currentUser.sameAs(newXps.update_user));
-    if (xUI.currentUser.sameAs(newXps.update_user)){
-    //同内容でステータスを変更したエントリを作成 新規に保存して成功したら先のエントリを消す
-if(dbg) console.log('activate : '+decodeURIComponent(Xps.getIdentifier(newXps)));
-        newXps.currentStatus = 'Active';
 /*
     サーバからデータの最新状況を取得する
-    ステータスを確認して
+    ステータスを確認してから、新規のステータスを設定する
  */
-        var data = {
-                token: currentEntry.issues[0].cutID,
-                cut: {
-                    name:   decodeURIComponent(currentEntry.toString().split('//')[1]),
-                    description: Xps.getIdentifier(newXps)
-                }
-        };
-if(dbg) console.log(data);
 	    $.ajax({
 		    type : 'GET',
 		    url : this.url+'/api/v2/cuts/'+currentEntry.issues[0].cutID+'.json',
-		    data : data,
 		    success : function(result){
-console.log('success activated :' + decodeURIComponent(currentEntry.toString()));
 console.log(result);
-                currentEntry.setStatus(newXps.currentStatus);
-                currentCut.versions[currentCut.versions.length-1]=result.versions[currentCut.versions.length-1];
-//                  myVersion.updated_at=result.updated_at;
-//                  myVersion.description=result.description;
-//                  myVersion.version_token=;
-//                documentDepot.documentsUpdate();
-                xUI.XPS.currentStatus=newXps.currentStatus;//ドキュメントステータスを更新
-			    xUI.setStored("current");//UI上の保存ステータスをセット
-			    sync();//保存ステータスを同期
-                selectSCi();//カレントデータを再セレクトして情報更新
-                sync('historySelector');//履歴セレクタ更新
+/*
+手順　GET serverURL(token).json
+サーバリザルトのdescriptionから状態と内容を確認して
+Activate可能な場合は新しいコンテンツとdescriptionを送信　            
+それ以外は失敗
+*/
+                currentCut.versions = result.versions;
+                var currentServerXps=new Xps();
+                    currentServerXps.parseXps(result.content);
+                var currentDataInfo=Xps.parseIdentifier(result.description);
+                if(
+                    (result.permissions.write)&&
+                    (result.permissions.read)&&
+                    ((currentDataInfo.currentStatus=="Fixed")||(currentDataInfo.currentStatus=="Hold"))&&
+                    (xUI.currentUser.sameAs(currentServerXps.update_user))
+                ){
+//同内容でステータスを変更したエントリを作成 新規に保存して成功したら先のエントリを消す
+                    var newXps = Object.create(xUI.XPS);//現在のデータの複製をとる
+console.log('activate : '+decodeURIComponent(Xps.getIdentifier(newXps)));
+                        newXps.currentStatus = 'Active';
+                        newXps.update_time   = new Date().toNASString();
+                    var data = {
+                        token: currentCut.token,
+                        cut: {
+                            name:   decodeURIComponent(currentEntry.toString().split('//')[1]),
+                            content:    newXps.toString(),
+                            description: Xps.getIdentifier(newXps)
+                        }
+                    };
+if(dbg) console.log(data);
+                    $.ajax({
+		                type : 'PUT',
+		                url : serviceAgent.currentRepository.url+'/api/v2/cuts/'+currentEntry.issues[0].cutID+'.json',
+		                data : data,
+		                success : function(result){
+console.log('success activated :' + decodeURIComponent(currentEntry.toString()));
+console.log(result)
+                            currentEntry.setStatus(newXps.currentStatus);
+
+                            currentCut.versions[currentCut.versions.length-1].description = Xps.getIdentifier(newXps);
+                            currentCut.versions[currentCut.versions.length-1].updated_at  = newXps.update_time;
+//PUTのリザルトは200コードのみ
+                            xUI.XPS.currentStatus=newXps.currentStatus;//ドキュメントステータスを更新
+			                xUI.setStored("current");//UI上の保存ステータスをセット
+			                sync();//保存ステータスを同期
+                            selectSCi();//カレントデータを再セレクトして情報更新
+                            sync('historySelector');//履歴セレクタ更新
                 
-                xUI.setUImode('production');
-                xUI.sWitchPanel();//パネルクリア
-                if(callback instanceof Function) {setTimeout(callback,10);}
+                            xUI.setUImode('production');
+                            xUI.sWitchPanel();//パネルクリア
+                            if(callback instanceof Function) {setTimeout(callback,10);}
+                        },
+                        error : function(result){
+console.log('fail activate :'+ decodeURIComponent(currentEntry.toString()));
+console.log(result);
+console.log('ステータス変更失敗 :');
+                            if(callback2 instanceof Function) {setTimeout(callback2,10);}
+                                return false;
+                        },
+		                beforeSend: serviceAgent.currentRepository.service.setHeader
+                    });                    
+                }else{
+console.log('fail activate :'+ decodeURIComponent(currentEntry.toString()));
+console.log(result);
+console.log('ステータス変更できません :');
+                    if(callback2 instanceof Function) {setTimeout(callback2,10);}
+                        return false;
+                }
             },
 		    error : function(result) {
 			// Error
@@ -2835,11 +2930,8 @@ if(dbg) console.log('ステータス変更不可 :'+ Xps.getIdentifier(newXps));
 		    },
 		    beforeSend: this.service.setHeader
 	    });
-
 /**
-    サービス側での排他が完了したら下の処理でOK
-*/
-if (false) {
+    サービス側での排他が完了したら下の簡単な処理でOKのはず
         var data = {
                 token: currentEntry.issues[0].cutID,
                 cut: {
@@ -2877,33 +2969,26 @@ if(dbg) console.log('ステータス変更不可 :'+ Xps.getIdentifier(newXps));
 		    },
 		    beforeSend: this.service.setHeader
 	    });
-}
-    }else{
-            return false
-    }
+*/
 }
 /**
-    作業を保留する リポジトリ内の対応エントリデータを更新してステータスを変更 
+    作業を保留する リポジトリ内の対応エントリデータを更新してステータスを変更
+    基本的にデータはActiveなので、変更権利は取得済みとみなして操作を行う
+    失敗の可能性はあり
 */
 NetworkRepository.prototype.deactivateEntry=function(callback,callback2){
     var currentEntry = this.entry(Xps.getIdentifier(xUI.XPS));
     var currentCut   = this.cut(currentEntry.toString());
-            //Active > Holdへ
-if(true){
+        //Active > Holdへ
     var newXps = Object.create(xUI.XPS);//現在のデータの複製をとる
-}else{
-    var newXps = new Xps();
-    var currentContents = xUI.XPS.toString();
-        newXps.readIN(currentContents);
-}
         //ユーザ判定は不用
         if (newXps){
-             //同内容でステータスを変更したエントリを作成 新規に保存して成功したら先のエントリを消す
+             //同内容でステータスを変更したエントリを作成 新規に上書き保存（先行データは上書きされる）
             newXps.currentStatus = 'Hold';//（ジョブID等）status以外の変更はない
     //ここでサーバに現在のエントリへのステータス変更要求を送信する 成功時と失敗時の処理を渡し、かつcallback を再度中継
     //カットの name,description のみを送信してステータスを変更
         var data = {
-                token: currentEntry.issues[0].cutID,
+                token: currentCut.token,
                 cut: {
                     name        : decodeURIComponent(currentEntry.toString().split('//')[1]),
                     description : Xps.getIdentifier(newXps),
@@ -2923,7 +3008,9 @@ if(dbg) console.log(data);
 console.log('network repository deactivated :'+decodeURIComponent(currentEntry.toString().split('//')[1]));
 console.log(result);
                 currentEntry.setStatus(newXps.currentStatus);
-                currentCut.versions[currentCut.versions.length-1]=result.versions[currentCut.versions.length-1];
+//                currentCut.versions[currentCut.versions.length-1]=result.versions[currentCut.versions.length-1];
+                currentCut.versions[currentCut.versions.length-1].description = Xps.getIdentifier(newXps);
+                currentCut.versions[currentCut.versions.length-1].updated_at= newXps.update_time;
                 xUI.XPS.currentStatus=newXps.currentStatus;//ドキュメントステータスを更新
 			    xUI.setStored("current");//UI上の保存ステータスをセット
 			    sync();//保存ステータスを同期
@@ -2997,13 +3084,16 @@ console.log(data);
 		    data : data,
 		    success : function(result) {
 console.log('check-in :'+decodeURIComponent(currentEntry.toString()));
-console.log(result);
-//リザルトに含まれるカットのデータでリストを更新する
-                currentEntry.push(result.cut.description,currentEntry.titleID,currentEntry.episodeID,result.cut.token);
+console.log(result);//PUTなので200番のみ
+//リザルトに含まれるカットのデータでリストを更新する（ムリ）
 
+//                currentEntry.push(result.cut.description,currentEntry.titleID,currentEntry.episodeID,result.cut.token);
+                currentEntry.push(Xps.getIdentifier(newXps),currentEntry.titleID,currentEntry.episodeID,currentEntry.issues[0].cutID);
+
+                if(! currentCut.versions) currentCut.versions = [];
                 currentCut.versions.push({
-                    updated_at:result.cut.updated_at,
-                    description:result.cut.description,
+                    updated_at:newXps.updated_time,
+                    description:Xps.getIdentifier(newXps),
                     version_token:null
                 });
 
@@ -3035,7 +3125,7 @@ if(dbg) console.log('ステータス変更不可 :'+ Xps.getIdentifier(newXps));
 /**
     作業終了
 */
-NetworkRepository.prototype.checkoutEntry=function(callback,callback2){
+NetworkRepository.prototype.checkoutEntry=function(assignData,callback,callback2){
     var currentEntry = this.entry(Xps.getIdentifier(xUI.XPS));
     var currentCut   = this.cut(currentEntry.toString());
     if(! currentEntry) {
@@ -3054,6 +3144,7 @@ if(true){
     if (newXps){
              //同内容でステータスを変更したエントリを作成 新規に保存して成功したら先のエントリを消す
             newXps.currentStatus = 'Fixed';//（ジョブID等）status以外の変更はない
+//            newXps.currentStatus = ['Fixed',assignData].join(":"); アサインデータはまだUIのみでペンディング
     //ここでサーバに現在のエントリへのステータス変更要求を送信する 成功時と失敗時の処理を渡し、かつcallback を再度中継
     //カットの name,description のみを送信してステータスを変更
         var data = {
@@ -3074,8 +3165,8 @@ if(dbg) console.log(data);
 		    url : this.url+'/api/v2/cuts/'+currentEntry.issues[0].cutID+'.json',
 		    data : data,
 		    success : function(result) {
-console.log('check out entry :' + decodeURIComponent(currentEntry.toString()));
-console.log(result);
+//console.log('check out entry :' + decodeURIComponent(currentEntry.toString()));
+//console.log(result);
                 currentEntry.setStatus(newXps.currentStatus);//result.cut.status も可
                 if(result.versions)
                 currentCut.versions[currentCut.versions.length-1] = result.versions[currentCut.versions.length-1];
@@ -3480,18 +3571,24 @@ console.log("deactivate current document");
         /*== ドキュメントリスト更新 ==*/
         console.log("change repository :"+ myRepositoryID);
         serviceAgent.currentRepository.getProducts(function(){
-                    documentDepot.documentsUpdate();//クリア
-            for(var ix =0;ix < serviceAgent.currentRepository.productsData.length; ix ++){
-                serviceAgent.currentRepository.getEpisodes(function(){
-                    documentDepot.getProducts();
-                    documentDepot.currentProduct=null;
-                    documentDepot.currentSelection=null;
-                    documentDepot.updateOpusSelector();
-                    documentDepot.updateDocumentSelector();
-                },false,
-                serviceAgent.currentRepository.productsData[ix].token);
-            };
-        },false);
+          for(var ix=0;ix<serviceAgent.currentRepository.productsData.length;ix ++){
+            var myProduct = serviceAgent.currentRepository.productsData[ix];
+            serviceAgent.currentRepository.getEpisodes(function(){
+//                documentDepot.documentsUpdate();//クリア
+//                for(var ex =0 ;ex < myProduct.episodes[0].length;ex++){
+//                    var myEpisode = myProduct.episodes[0][ex];
+//                    serviceAgent.currentRepository.getSCi(function(){},false,myEpisode.token);
+//                }
+ //             console.log(myEpisode.name);
+                        documentDepot.getProducts();
+                        documentDepot.currentProduct=null;
+                        documentDepot.currentSelection=null;
+                        documentDepot.updateOpusSelector();
+                        documentDepot.updateDocumentSelector();
+                    
+            },false,myProduct.token);//getEpisode
+          }
+        },false);//getProduct
         
 //        this.currentRepository.getList()
 //                documentDepot.updateDocumentSelector();
@@ -3714,6 +3811,7 @@ console.log(currentEntry.getStatus());
     ここに確認用のメッセージが必要
     checkinの手続内でここがコールされている？
 */
+console.log('recover acitivate');
             if(xUI.currentUser.sameAs(xUI.XPS.update_user)){
                 var msg = localize(nas.uiMsg.alertAbnomalPrccs);
                 msg += '\n'+localize(nas.uiMsg.dmPMrecoverLostSession);
@@ -3752,6 +3850,7 @@ console.log(currentEntry.getStatus());
 */
 serviceAgent.deactivateEntry=function(callback,callback2){
     var currentEntry = this.currentRepository.entry(Xps.getIdentifier(xUI.XPS));
+    var currentCut   = this.currentRepository.cut(currentEntry.toString());
     if(! currentEntry) {
 if(dbg) console.log ('noentry in repository :' +  decodeURIComponent(currentEntry))
         return false;
@@ -3801,7 +3900,7 @@ if(dbg) console.log('fail checkin so :'+ currentEntry.getStatus(myJob,callback,c
             var title   = localize(nas.uiMsg.pMcheckin);//'作業開始 / チェックイン';
             var msg     = localize(nas.uiMsg.dmPMnewItemSwap,localize(nas.uiMsg.pMjob));
             //'新規作業を開始します。\n新しい作業名を入力してください。\nリストにない場合は、作業名を入力してください。';
-            var msg2    = '<br> <input id=newJobName  type=text list=newJobList></input><datalist id=newJobList>';
+            var msg2    = '<br> <input id=newJobName class=mdInputText type=text list=newJobList></input><datalist id=newJobList>';
 //            if(dbg) console.log(xUI.XPS.stage.name +","+ ((xUI.XPS.job.id == 0) ? 'primary':'*'));
             var newJobList = nas.pm.jobNames.getTemplate(xUI.XPS.stage.name,((xUI.XPS.job.id == 0) ? 'primary':'*'));//ここは後ほどリポジトリ個別のデータと差替
             for(var idx = 0 ; idx < newJobList.length;idx ++){
@@ -3840,12 +3939,11 @@ if(dbg) console.log('fail checkin so :'+ currentEntry.getStatus(myJob,callback,c
 */
 serviceAgent.checkoutEntry=function(callback,callback2){
     var currentEntry = this.currentRepository.entry(Xps.getIdentifier(xUI.XPS));
-//    this.currentRepository.checkoutEntry(callback,callback2);
 console.log('networkRepository checkoutEntry');
 console.log(currentEntry.toString(true));
 console.log(currentEntry.getStatus());
     if(! currentEntry) {
-//        if(dbg) console.log ('noentry in repository :' +  decodeURIComponent(currentEntry))
+console.log ('noentry in repository :' +  decodeURIComponent(currentEntry))
         //当該リポジトリにエントリが無い
         alert(localize(nas.uiMsg.dmAlertNoEntry)+'\n>'+decodeURIComponent(currentEntry));//対応エントリが無い
         return false;
@@ -3860,7 +3958,38 @@ console.log(currentEntry.getStatus());
         case 'Active':
             //編集状態を確認の上　Active > Fixed
             if(xUI.edchg) xUI.put(document.getElementById('iNputbOx').value);
-            this.currentRepository.checkoutEntry(callback,callback2);
+            //Jobチェックアウト
+            //アサイン情報を請求
+            var title   = localize(nas.uiMsg.pMcheckout);//'作業終了 / チェックアウト';
+            var msg     = localize(nas.uiMsg.dmPMnewAssign,xUI.XPS.cut);
+
+            var msg2    = '<br>';
+            msg2   += localize(nas.uiMsg.toPrefix);
+            msg2   += ' <input id=assignNextUser class=mdInputText type=text list=assignUserList></input> ';
+            msg2   += localize(nas.uiMsg.toPostfix);
+            msg2   += '<datalist id=assignUserList>';
+            var assignUserList = ["演出","作画監督","監督","美術監督","美術","原画","動画","仕上","特効"];//ここは後ほどタイトル個別のデータを請求して差替
+            for(var idx = 0 ; idx < assignUserList.length;idx ++){
+                msg2   += '<option value="';
+                msg2   += assignUserList[idx];
+                msg2   += '"></option>';
+            };
+                msg2 += '</datalist><br>';
+                msg2 += '<textarea id=assignNoteText class=mdInputArea >指名及び申し送りは開発中のダミー画面です。\n指名データを選択または入力して先に進めてください。</textarea>'
+            nas.showModalDialog('confirm',[msg,msg2],title,false,function(){
+                var assignUserName=document.getElementById('assignNextUser').value;
+                var assignNoteText=document.getElementById('assignNoteText').value;
+                if((this.status == 0)&&(assignUserName)){
+                    var assignData=encodeURIComponent(JSON.stringify([assignUserName,assignNoteText]));
+                    serviceAgent.currentRepository.checkoutEntry(assignData,function(){
+                        if(callback instanceof Function) callback();
+                    },
+                    function(){
+                        alert(localize(nas.uiMsg.dmAlertCheckoutFail));//チェックアウト失敗
+                //        if(callback2 instanceof Function) callback2();
+                    });
+                }
+            });
         break;
     }
 }
@@ -4073,7 +4202,7 @@ console.log('serviceAgent.pushEntry');
         return false;
     }
     if (!( myXps instanceof Xps)){
-        if(callback2 instanceof Function){callbakc2();}
+        if(callback2 instanceof Function){callback2();}
         return false;
     }
     this.currentRepository.pushEntry(myXps,callback,callback2);

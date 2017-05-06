@@ -29,7 +29,8 @@
  *		2016/01/27  クッキーの記録内容にUIツールの表示状態を追加
  *      2016/08/12  WEBサービス開始のための改装
         2017/03/03  画像部品キャッシュ・書き換えの高速化
- * $Id: config.js,v2.0 2017/3/3  $
+        2017/05/06  高速化＋デバッグ　バックグラウンド更新の準備
+ * $Id: config.js,v2.0 2017/5/6  $
  */
 	var dbg=true	;	//デバッグモード
 
@@ -39,8 +40,8 @@
  *		ただし開始メッセージが抑制されている場合は表示されません。
  */
 
-	var welcomeMsg="サーバ対応版 -test- 20170408";
-	var windowTitle="ver. 1.6.3";//WindowTitleとしての役割は終了 統合バージョンです
+	var welcomeMsg="サーバ対応版 -test- 20170506";
+	var windowTitle="ver. 1.6.4";//WindowTitleとしての役割は終了 統合バージョンです
 
 /**************************************************************************
  *	ロゴ等
@@ -146,7 +147,7 @@
 // 後からルックを変更する手続は　xUI.setSheetLook(SheetLooks);xUI.footstampPaint();
 // 後方のペイント更新が重要
 SheetLooks = {
-	SheetBaseColor	:"#eeeece",
+	SheetBaseColor	:"#dfefdf",
 	SelectedColor	:"#9999ff",
 	RapidModeColor	:"#ffff44",
 	FloatModeColor	:"#88eeee",

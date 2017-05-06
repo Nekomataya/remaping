@@ -1343,9 +1343,16 @@ input.ddpInput	{
 	coror:AAA;
 	display:none;
 }
-
-
-
+/**
+モーダルダイアログ内のフォーム
+*/
+.mdInputText {
+	width:50%;
+}
+.mdInputArea {
+	width:100%;
+	height: 192px;
+}
 
 input{
 	vertical-align:middle;

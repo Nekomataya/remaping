@@ -134,18 +134,21 @@ documentDepot.getProducts=function(){
 ない場合は選択アイテムを空に
 プロダクトリストは、都度生成に変更（スタティックには持たない）
  */
-documentDepot.updateOpusSelector=function(myRegexp){
+documentDepot.updateOpusSelector=function(myRegexp,rev){
 //    if(! serviceAgent.currentRepository.opusList.updated){return;}
-    if(typeof myRegexp != "RegExp"){ myRegexp = new RegExp(".+");}
+    if(!(myRegexp instanceof RegExp)){ myRegexp = new RegExp(".+");}
+    if(!rev ) rev = false;
 // ここで正規表現フィルタを引数にする
     var myContents = "";
-    var myProducts = documentDepot.getProducts();
+//    var myProducts = documentDepot.getProducts();
+    var myProducts = documentDepot.products;
     var myResult   = [];
     myContents += '<option value="==newTitle==">（*-- no title selected --*）</option>';
     for( var opid = 0 ; opid < myProducts.length ; opid ++){
         var currentText = decodeURIComponent(myProducts[opid]);
-//if(dbg) console.log(currentText);
-        if(currentText.match(myRegexp)){
+        var show = (currentText.match(myRegexp))? true:false;
+        if(rev) show = !show;
+        if(show){
             myContents += '<option';
             myContents += ' value="';
             myContents += myProducts[opid];
@@ -171,20 +174,23 @@ documentDepot.updateOpusSelector=function(myRegexp){
 戻値:フィルタリング済のリスト配列
 被選択ドキュメントが更新後のセレクタ内に存在する場合は、それを選択状態にする
 ない場合は選択アイテムを空にする
+
+引数は正規表現よりも[開始番号,終了番号（表示個数？）]あたりにしたほうが何かと良いので順次変更
  */
  documentDepot.updateDocumentSelector=function(myRegexp){
-// ここで正規表現フィルタを引数にする
-    if(typeof myRegexp != "RegExp"){ myRegexp = new RegExp(".+");}
+// ここで正規表現フィルタを引数にする？
+    if(!(myRegexp instanceof RegExp)){ myRegexp = new RegExp(".+");}
 // 選択済みタイトルで抽出
     var myDocuments = documentDepot.getEntriesByOpusid(documentDepot.currentProduct);
-//    myDocuments.sort(documentDepot.sortBySCi);
 //  正規表現フィルタで抽出してHTMLを組む
     var myContents = "";
     var myResult   = [];
     myContents += '<option value="==newDocument==">（*-- no document selected--*）</option>';
     for ( var dlid = 0 ; dlid < myDocuments.length ; dlid ++){
         var currentText = decodeURIComponent(myDocuments[dlid].toString(0).split('//')[1]);
-        if(currentText.match(myRegexp)){
+        var currentData = Xps.parseSCi(currentText);
+        var myIdf=Xps.parseCutIF(currentData[0].cut);
+        if(currentData[0].cut.match(myRegexp)){
             myContents += '<option';
             myContents += ' value="';
             myContents += myDocuments[dlid];
@@ -290,11 +296,12 @@ if(dbg) console.log(decodeURIComponent(result));
     NetworkRepositoryの場合はサーバのレスポンスからlistEntryをアップデートする
 */
 documentDepot.rebuildList=function(force,callback){
+    
+    documentDepot.currentProduct     =null;
+    documentDepot.currentSelection   =null;
     documentDepot.products    =[];
     documentDepot.getProducts();
     documentDepot.documents   = serviceAgent.currentRepository.entryList;
-//    documentDepot.currentProduct     =null;
-//    documentDepot.currentSelection   =null;
 //    documentDepot.currentDocument    =null;
 //    documentDepot.currentReferenece  =null;
 /*=============*/
@@ -467,11 +474,12 @@ console.log(productName);
             productName = "#[]";
         }
     }
-    prductName=String(productName);//明示的にストリング変換する
+    productName=String(productName);//明示的にストリング変換する
     var productInfo=Xps.parseProduct(productName);
         var subTitle    = productInfo.subtitle;
         var opus        = productInfo.opus;
         var title       = productInfo.title;
+//console.log(productInfo);
 //ブラウザの選択を解除
     documentDepot.currentSelection=null;
     document.getElementById( "cutList" ).disabled=true;
@@ -479,8 +487,10 @@ console.log(productName);
     documentDepot.currentProduct=document.getElementById("opusSelect").options[document.getElementById("opusSelect").selectedIndex].value;
 // 選択したプロダクトのカットを取得
     var currentOpus = serviceAgent.currentRepository.opus(documentDepot.currentProduct);
+// console.log(currentOpus.token);
     serviceAgent.currentRepository.getSCi(function(){
 // 更新したリストからリスト表示を更新
+        documentDepot.documentsUpdate();
         documentDepot.updateDocumentSelector();
     },false,currentOpus.token);
 
@@ -512,22 +522,13 @@ function selectSCi(sciName){
             for (var ix=0;ix<myEntry.issues.length;ix++){
                 myContents += '<option value="'+myEntry.issues[ix].join('//')+'"';
                 myContents += (ix==(myEntry.issues.length-1))? ' selected >':' >';
-                myContents += decodeURIComponent(myEntry.issues[ix].join('//'))+"</option>";
+                myContents += decodeURIComponent(decodeURIComponent(myEntry.issues[ix].join('//')))+"</option>";
             }
             document.getElementById("issueSelector").innerHTML=myContents;
             if(xUI.uiMode!='management') document.getElementById("issueSelector").disabled=false;
 
             sciName = document.getElementById("cutList").options[document.getElementById("cutList").selectedIndex].text;
             }else{console.log(myEntry)}
-
-            if(false){
-                //テキスト入力用エリア不使用
-            document.getElementById("issueSelector").innerHTML='<option value="" selected>#:---line//#:---stage//#:---job//(status)</option>';
-            document.getElementById("issueSelector").disabled=true;
-            document.getElementById("cutList").selectedIndex = 0;
-            sciName = "(*--c#--*)";
-            var myEntry = null;
-            }
         }else{
             document.getElementById("issueSelector").innerHTML='<option value="" selected>#:---line//#:---stage//#:---job//(status)</option>';
             document.getElementById("issueSelector").disabled=true;
@@ -569,7 +570,8 @@ function selectSCi(sciName){
     }else{
 //リポジトリ内に指定データが存在する
 var currentStatus = myEntry.issues[myEntry.issues.length-1][3];
-        document.getElementById("ddp-readout").disabled     = (xUI.onSite)? true:false;//オンサイト時読出抑制
+    
+        document.getElementById("ddp-readout").disabled     = ((xUI.onSite)&&(serviceAgent.currentStatus=='online-single'))? true:false;//シングルドキュメント拘束時読出抑制
         document.getElementById("ddp-reference").disabled   = false;//参照は無条件読出可能
         for ( var tidx = 0 ; tidx < myInputText.length ; tidx ++ ){
             document.getElementById(myInputText[tidx]).disabled = true;

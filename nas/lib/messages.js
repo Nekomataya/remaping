@@ -171,6 +171,10 @@ nas.uiMsg.pMcurrentJob          ={en:"curent job",ja:"現在の作業"};
 nas.uiMsg.pMnewJob              ={en:"new job",ja:"新規作業"};
 nas.uiMsg.pMaddNewScene         ={en:"add new scene",ja:"新規カット追加"};
 nas.uiMsg.pMreseiptStage        ={en:"check out job/check in new stage",ja:"作業検収/新規工程"};
+
+nas.uiMsg.toPrefix              ={en:"to:",ja:" "};
+nas.uiMsg.toPostfix             ={en:" ",ja:"様へ"};
+
 nas.uiMsg.dmPMnewDocument = {
     en:"I will create a new document.\nPlease enter scene number/duration and confirm with OK button.",
     ja:"新規カットを作成します。\nカット番号/継続時間を入力して[OK]ボタンで確定してください。"
@@ -183,7 +187,10 @@ nas.uiMsg.dmPMnewStage = {
     en:"Close the current stage and open the next stage.\nPlease enter a new stage name.\nIf it is not on the list, please enter it with the keyboard.",
     ja:'現在の工程を閉じて次の工程を開きます。\n新しい工程名を入力してください。\nリストにない場合は、工程名を入力してください。'
 };
-
+nas.uiMsg.dmPMnewAssign = {
+    en:"We finish the job for %1 and make it editable by other users.\nIt is possible to assign the next user.\nTo assign please choose a name from the list or enter the user name directly.\nPlease input if there is a message to send.",
+    ja:"カット%1の作業を終了して、他のユーザが編集可能な状態にします。\n次の作業者を指名することが可能です。\n指名する場合はリストから名前を選ぶか、または直接ユーザ名を入力してください。\n申し送りメッセージがあれば、入力してください。"
+};
 //合成モード分離
 nas.uiMsg.NORMAL                = {en: "NORMAL"             , ja: "通常"};
 nas.uiMsg.MULTIPLY              = {en: "MULTIPLY"           , ja: "乗算"};
@@ -383,6 +390,10 @@ ja:"止めないけど…そんなにレイヤが多いとツライよ\nレイ�
 nas.uiMsg.dmAlertCheckinFail = {
     en:"Check-in failed.\nplease check the status of document",
     ja:"作業開始に失敗しました\nドキュメントの状態を確認してください"
+};
+nas.uiMsg.dmAlertCheckoutFail = {
+    en:"Check-out failed.\nplease check the status of document",
+    ja:"作業終了に失敗しました\nドキュメントの状態を確認してください"
 };
 nas.uiMsg.dmAlertDataBusy = {
     em:"Another user has this scene working. \nYou can not work on this scene.",
