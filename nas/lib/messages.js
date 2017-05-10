@@ -189,7 +189,7 @@ nas.uiMsg.dmPMnewStage = {
 };
 nas.uiMsg.dmPMnewAssign = {
     en:"We finish the job for %1 and make it editable by other users.\nIt is possible to assign the next user.\nTo assign please choose a name from the list or enter the user name directly.\nPlease input if there is a message to send.",
-    ja:"カット%1の作業を終了して、他のユーザが編集可能な状態にします。\n次の作業者を指名することが可能です。\n指名する場合はリストから名前を選ぶか、または直接ユーザ名を入力してください。\n申し送りメッセージがあれば、入力してください。"
+    ja:"カット%1の作業を終了して、他のユーザが編集可能な状態にします。\n次の担当者を指名することが可能です。\n指名する場合はリストから名前を選ぶか、または直接ユーザ名を入力してください。\n申し送りメッセージがあれば、入力してください。"
 };
 //合成モード分離
 nas.uiMsg.NORMAL                = {en: "NORMAL"             , ja: "通常"};

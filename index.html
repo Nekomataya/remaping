@@ -2055,7 +2055,7 @@ onclick='nas.incrFCTonHTMLInput(document.getElementById("editTC"),"-(1)")'
 </button></span><br>
 <hr></div>
 <!-- 時間編集UI -->
-<!--	ファイルブラウザ試験中	-->
+<!--	ファイルブラウザ	-->
 <div class=optionPanelModal id=optionPanelFile >
 <!-- りまぴん(新) ファイルブラウザインターフェース -->
 <!-- タイトル、カット等の新規作成（登録）UI-->
@@ -2142,6 +2142,23 @@ onclick='nas.incrFCTonHTMLInput(document.getElementById("editTC"),"-(1)")'
 
  
 <div id=current_identifier></div>
+<div id='ddp_assignment' style='text-align:left;'>
+<!--
+<button
+title = "＊担当者指定があった場合表示される　（指定がないときは、何も表示されない）"
+onclick = 'var trgt = $("#ddp_assingn_notoText");if(trgt.is(":visible")){trgt.hide()}else{trgt.show()};'
+>▶To:<span>(担当)</span>様へ(アサインされた担当者が表示される)</button>
+<div id='ddp_assingn_notoText' style='text-align:left;display:none;'><hr>
+申し送りが存在すれば　担当名がボタン化　またはひねり矢印が表示される。
+クリックすると担当者への申し送りが表示される…トグル表示<br>
+HTML（画像を使用可能）か？<br>
+申し送りです…<br>
+申し送りです…<br>
+申し送りです…<br>
+申し送りです…<br>
+</div> -->
+
+</div>
 <hr>
 </span>
 <!-- メニューバー と ロゴ -->
@@ -2189,6 +2206,7 @@ onclick='nas.incrFCTonHTMLInput(document.getElementById("editTC"),"-(1)")'
 >新規登録</button>
 </div>
 <!-- for management -->
+
 <div class='documentPanelTools'>
 <button
  id='ddp-reference'
@@ -2203,22 +2221,6 @@ onclick='nas.incrFCTonHTMLInput(document.getElementById("editTC"),"-(1)")'
  title="読出 readout"
  disabled=true
 >読出</button>
-
-<!--
-<button
- id='ddp-checkin'
- onClick='console.log( "open :" + decodeURIComponent(documentDepot.currentSelection));serviceAgent.getEntry(documentDepot.currentSelection,false,fucntion(){serviceAgent.checkinEntry();});'
- class='documentPanelButton'
- title="読み出して作業開始 xUI.setDocumentStatus('checkin')"
- disabled=true
->+ check-in</button><button
- id='ddp-activate'
- onClick='console.log("new document :"+decodeURIComponent(documentDepot.currentSelection));serviceAgent.getEntry(documentDepot.currentSelection,false,function(){serviceAgent.activateEntry();});'
- class='documentPanelButton'
- title="読み出して保留解除 xUI.setDocumentStatus('activate')"
- disabled=true
->+ activate</button>
--->
 
 <input type='text' id='ddp-searchtext' size=20 ><button
  id='ddp-search'

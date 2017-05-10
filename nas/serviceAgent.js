@@ -1555,9 +1555,11 @@ if(dbg) console.log ('noentry in repository :' +  decodeURIComponent(currentEntr
     try {
         localStorage.removeItem(this.keyPrefix+currentEntry.toString(0));
 		currentEntry.issues.pop();
-        xUI.resetSheet(new Xps(5,144),new Xps(5,144));
+//        xUI.resetSheet(new Xps(5,144),new Xps(5,144));
+        xUI.resetSheet();
         if(callback instanceof Function) callback();
     }catch(er){
+        console.log(er) 
         if(callback2 instanceof Function) callback2();
     }
 }
@@ -3633,6 +3635,7 @@ serviceAgent.getRepsitoryIdByToken=function(myToken){
     callback    コールバック関数指定が可能コールバックは以下の型式で
     コールバックの指定がない場合は指定データをアプリケーションに読み込む
     コールバック関数以降の引数はコールバックに渡される
+    リファレンス取得の際にアプリケーションステータスをリセットする場合があるので注意
 */
 serviceAgent.getEntry=function(myIdentifier,isReference,callback,callback2){
 if(dbg) console.log('getEntry ::' + decodeURIComponent(myIdentifier));
@@ -3668,12 +3671,14 @@ if(dbg) console.log( 'no target data :'+ decodeURIComponent(myIdentifier) );//�
             }
         }
     }
-    console.log(myEntry.issues[cx].identifier);
+    console.log(decodeURIComponent(myEntry.issues[cx].identifier));
 if((! isReference)&&(Xps.compareIdentifier(myEntry.issues[cx].identifier,Xps.getIdentifier(xUI.XPS)) > 3)){
+    console.log(decodeURIComponent(Xps.getIdentifier(xUI.XPS)))
     console.log('ジョブ一致　ロードスキップ');
 }
 //読み込み前に現在のデータの状態を確認して必要ならば編集状態を解除　その後読み込み
-    if((xUI.uiMode=='production')&&(xUI.XPS.currentStatus=='Active')){
+//参照読み込みに際しては、編集状態を維持
+    if((! isReference ) && ( xUI.uiMode=='production' )&&( xUI.XPS.currentStatus=='Active' )){
 console.log("need deactivate");
             if(xUI.edchg) xUI.put(document.getElementById('iNputbOx').value);
             serviceAgent.currentRepository.deactivateEntry(function(){
@@ -3960,10 +3965,16 @@ console.log ('noentry in repository :' +  decodeURIComponent(currentEntry))
             if(xUI.edchg) xUI.put(document.getElementById('iNputbOx').value);
             //Jobチェックアウト
             //アサイン情報を請求
+            //このあたりはアサイン関連のDB構成が済むまで保留　要調製
             var title   = localize(nas.uiMsg.pMcheckout);//'作業終了 / チェックアウト';
-            var msg     = localize(nas.uiMsg.dmPMnewAssign,xUI.XPS.cut);
+//            var msg     = localize(nas.uiMsg.dmPMnewAssign,xUI.XPS.cut);
+var msg = localize({
+  en:"",
+  ja:"%1\n作業終了します"  
+},decodeURIComponent(Xps.getIdentifier(xUI.XPS)))
 
             var msg2    = '<br>';
+/*
             msg2   += localize(nas.uiMsg.toPrefix);
             msg2   += ' <input id=assignNextUser class=mdInputText type=text list=assignUserList></input> ';
             msg2   += localize(nas.uiMsg.toPostfix);
@@ -3976,9 +3987,12 @@ console.log ('noentry in repository :' +  decodeURIComponent(currentEntry))
             };
                 msg2 += '</datalist><br>';
                 msg2 += '<textarea id=assignNoteText class=mdInputArea >指名及び申し送りは開発中のダミー画面です。\n指名データを選択または入力して先に進めてください。</textarea>'
+*/
             nas.showModalDialog('confirm',[msg,msg2],title,false,function(){
-                var assignUserName=document.getElementById('assignNextUser').value;
-                var assignNoteText=document.getElementById('assignNoteText').value;
+//                var assignUserName=document.getElementById('assignNextUser').value;
+//                var assignNoteText=document.getElementById('assignNoteText').value;
+                var assignUserName=true
+                var assignNoteText="";
                 if((this.status == 0)&&(assignUserName)){
                     var assignData=encodeURIComponent(JSON.stringify([assignUserName,assignNoteText]));
                     serviceAgent.currentRepository.checkoutEntry(assignData,function(){
@@ -4158,15 +4172,42 @@ serviceAgent.closeEntry=function(){
     破棄可能な条件は、
     現在作業中のジョブまたは作業可能なジョブであること（Activeドキュメントのみに適用）
     closeに手順がにているが、ハードデリートを伴う点が異なる
-    ハードデリートを伴うため　バックアップコピーを作成して保険として使う    
+    ハードデリートを伴うため　バックアップコピーを作成して保険として使うべき
+     
 */
 serviceAgent.destroyJob=function(callback,callback2){
-    if(xUI.XPS.currentStatus!="Active"){return false;}
+    if(xUI.XPS.currentStatus!="Active"){alert("this entry is not active.");return false;}
 //ドキュメントがアクティブでない場合は操作不能
-    xUI.setBackup();//自動でバックアップをとる（undoではない）
-    serviceAgent.currentRepository.destroyJob(callback,callback2)
+    var currentEntry = serviceAgent.currentRepository.entry(Xps.getIdentifier(xUI.XPS));
+    var currentOpus  = serviceAgent.currentRepository.opus(currentEntry.toString(0));
+    console.log(currentOpus)
+    var currentWork = [
+        xUI.XPS.line,
+        xUI.XPS.stage,
+        xUI.XPS.job       
+    ].join("//"); 
+    var msg=currentEntry.toString() + "\n" +localize({
+        en:"%1 : Discard the current work and return it to the state of the previous work. Is it OK?",
+        ja:"%1 : 現在の作業を廃棄して、一つ前の作業の状態にもどします。よろしいですか？"
+    },currentWork);
+    if(confirm(msg)){
+        console.log('bkup');
+        xUI.setBackup();//自動でバックアップをとる（undoではない）
+        serviceAgent.currentRepository.destroyJob(function(){
+            alert("destroyed job :" +currentWork);
+            serviceAgent.currentRepository.getSCi(false,false,currentOpus.token);
+            documentDepot.documentsUpdate();
+            console.log(serviceAgent.currentRepository);
+            alert(currentEntry.toString(1));
+            serviceAgent.getEntry(currentEntry.toString(1),function(){
+                xUI.setUImode("browsing");sync("productStatus");                
+            })
+        },function(result){
+            console.log(result)
+            alert("作業取り消しに失敗しました。");
+        });
+    }
 }
-
 /**
     選択可能な参考ジョブリストの更新
     更新されたリスト以外のジョブ名称も認められる
