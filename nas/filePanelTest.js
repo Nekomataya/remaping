@@ -479,21 +479,24 @@ console.log(productName);
         var subTitle    = productInfo.subtitle;
         var opus        = productInfo.opus;
         var title       = productInfo.title;
-//console.log(productInfo);
+console.log(productInfo);
+
 //ブラウザの選択を解除
     documentDepot.currentSelection=null;
     document.getElementById( "cutList" ).disabled=true;
 // タイトルからカットのリストを構築して右ペインのリストを更新
     documentDepot.currentProduct=document.getElementById("opusSelect").options[document.getElementById("opusSelect").selectedIndex].value;
-// 選択したプロダクトのカットを取得
+// 選択したプロダクトが存在すればカットを取得
     var currentOpus = serviceAgent.currentRepository.opus(documentDepot.currentProduct);
+if(currentOpus){
 // console.log(currentOpus.token);
     serviceAgent.currentRepository.getSCi(function(){
 // 更新したリストからリスト表示を更新
         documentDepot.documentsUpdate();
         documentDepot.updateDocumentSelector();
     },false,currentOpus.token);
-
+}
+//else{        documentDepot.updateDocumentSelector();    }
 /** パネルテキスト更新
 リストに存在しないプロダクトの場合は、リスト側で'(* new product *)'を選択する
 */ 

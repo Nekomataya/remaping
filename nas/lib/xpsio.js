@@ -2685,6 +2685,7 @@ Xps.parseProduct = function(productString){
     カット番号情報は、ここではscene-cutの分離を行わない
     比較の必要がある場合に始めて比較を行う方針でコーディングする
     sciStringに時間情報が含まれないケースあり
+    time指定の存在しない識別子の場合"6+0"を補う
 */
 Xps.parseSCi = function(sciString){
     var dataArray = String(sciString).split('/');
@@ -2775,14 +2776,9 @@ Xps.stringifyIdf([
 Xps.parseIdentifier = function(myIdentifier){
     if(! myIdentifier.split){console.log(myIdentifier)};
     var dataArray = myIdentifier.split('//');
-//    if((dataArray.length<2)||(String(dataArray[1]).length==0)) return false;
-//    if(dbg) console.log(dataArray);
     var result={};
     result.product  = Xps.parseProduct(dataArray[0]);
-//        if(! result.product) return false;
     result.sci      = Xps.parseSCi(dataArray[1]);
-//        if(! result.sci) return false;
-
     result.title    = result.product.title;
     result.opus     = result.product.opus;
     result.subtitle = result.product.subtitle;

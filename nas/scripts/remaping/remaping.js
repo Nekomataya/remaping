@@ -5258,8 +5258,11 @@ XPS.readIN=function(datastream){
         新シートに合わせる
     の二択となるので要注意
     新規作成時にライン〜ステータス情報が欠落するのでそれは判定して補う
+    識別子に含まれる時間情報を同期させる場合は、引数withoutTimeをにfalseを与える
+    初期値はtrue(時間同期なし)
 */
-XPS.syncIdentifier =function(myIdentifier){
+XPS.syncIdentifier =function(myIdentifier,withoutTime){
+    if(typeof withoutTime == 'undefined') withoutTime = true;
     var parseData   = Xps.parseIdentifier(myIdentifier);
     this.title      = parseData.title;
     this.opus       = parseData.opus;
@@ -5278,6 +5281,11 @@ XPS.syncIdentifier =function(myIdentifier){
         this.job      = new XpsStage(nas.pm.jobNames.getTemplate(nas.pm.pmTemplate[0].stages[0],"init")[0]);
         this.currentStatus   = "Startup";     
     }*/
+    if (! withoutTime){
+        var newTime = nas.FCT2Frm(parseData.sci[0].time)+Math.ceil((this.trin[0]+this.trout[0])/2);
+        console.log('時間調整 : '+newTime)
+        this.setDuration(newTime);
+    }
 return parseData;
 }
 
@@ -5634,11 +5642,10 @@ document.getElementById('loginstatus_button').disabled=true;
 //document.getElementById('serverurl').innerHTML = serviceAgent.currentServer.url;
 　       $('#pMbrowseMenu').hide();
 　       $('#ibMbrowse').hide();//設定表示
-console.log('000000000000000000000=');
                  document.getElementById('toolbarHeader').style.backgroundColor='#ddbbbb';
 //サーバ既存エントリ
             var isNewEntry = (startupXPS.length==0)? true:false;
-//サーバ上で作成したエントリの最初の1回目は送出データが空
+//サーバ上で作成したエントリの最初の1回目はサーバの送出データが空
 //空の状態でかつトークンがある場合が存在するので判定に注意！       　           
              if($("#backend_variables").attr("data-cut_token").length){
 console.log('has cut token');
@@ -5658,7 +5665,7 @@ serviceAgent.currentRepository.getProducts(function(){
                     if((myIdentifier)&&(Xps.compareIdentifier(Xps.getIdentifier(XPS),myIdentifier) < 5)){
 console.log('syncIdentifier:');
 console.log(decodeURIComponent(myIdentifier));
-                        XPS.syncIdentifier(myIdentifier);
+                        XPS.syncIdentifier(myIdentifier,false);
                     }
                     if( startupXPS.length==0 ){
 console.log('detect first open no content');//初回起動を検出　コンテント未設定
@@ -5669,6 +5676,13 @@ console.log('new Entry init');
                         xUI.XPS.currentStatus   = "Startup";     
                         xUI.XPS.create_user=xUI.currentUser;
                         xUI.XPS.update_user=xUI.currentUser;
+//syncIdentifierでカット尺は調整されているはずだが、念のためここで変数を取得して再度調整をおこなう
+//data-scale を廃止した場合は、不用
+                        var myCutTime = nas.FCT2Frm($('#backend_variables').attr('data-scale'));
+                        if(!(isNaN(myCutTime)) && (myCutTime != xUI.XPS.time())){
+                            xUI.resetSheet(new Xps(xUI.XPS.xpsTracks.length-2,myCutTime));
+                        }
+
                     }
 //ここで無条件でproductionへ移行せずに、チェックが組み込まれているactivateEntryメソッドを使用する
 /*
@@ -5727,7 +5741,7 @@ if(dbg) console.log('old style new document');
     　                       if(dbg) console.log(Xps.getIdentifier(xUI.XPS));
     　                       if(dbg) console.log(myIdentifier);
     　                       if(dbg) console.log(Xps.compareIdentifier(Xps.getIdentifier(xUI.XPS),myIdentifier));
-    　                       XPS.syncIdentifier(myIdentifier);
+    　                       XPS.syncIdentifier(myIdentifier,false);
         xUI.XPS.line     = new XpsLine(nas.pm.pmTemplate[0].line);
         xUI.XPS.stage    = new XpsStage(nas.pm.pmTemplate[0].stages[0]);
         xUI.XPS.job      = new XpsStage(nas.pm.jobNames.getTemplate(nas.pm.pmTemplate[0].stages[0],"init")[0]);
