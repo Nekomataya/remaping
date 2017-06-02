@@ -726,7 +726,7 @@ localRepository={
 /**
     TITLE取得
 */
-localRepository.title=function(myIdentifier){
+_title=function(myIdentifier){
     var curerntTitle = decodeURIComponent(String(myIdentifier).split("#")[0]);
     for ( var idx = 0 ;idx <this.productsData.length;idx ++){
         if(
@@ -736,10 +736,12 @@ localRepository.title=function(myIdentifier){
     };
     return null;
 }
+
+localRepository.title;
 /**
     OPUS取得
 */
-localRepository.opus=function(myIdentifier){
+_opus=function(myIdentifier){
     var currentOpus = Xps.parseProduct(myIdentifier);
     var isTkn = (currentOpus.opus=='undefined')? true:false;
     for ( var idx = 0 ;idx <this.productsData.length;idx ++){
@@ -757,24 +759,28 @@ localRepository.opus=function(myIdentifier){
     };
     return null;
 }
+
+localRepository.opus=_opus;
 /**
     CUT取得
     myIdentifier は識別子またはトークンを与える
 */
-localRepository.cut=function(myIdentifier){
+_cut=function(myIdentifier){
     var target = Xps.parseIdentifier(myIdentifier);
     var isTkn = (target.cut=='undefined')? true:false;
     for ( var idx = 0 ;idx <this.productsData.length;idx ++){
-      if(
-        (target.title.indexOf(this.productsData[idx].name) < 0) &&
-        (! isTkn ) &&
-        (! this.productsData[idx].episodes )
+    if(
+        (! this.productsData[idx].episodes )||(
+         (target.title.indexOf(this.productsData[idx].name) < 0) &&
+         (! isTkn )
+        )
       ) continue;
       for (var eid = 0 ;eid < this.productsData[idx].episodes[0].length; eid ++){
         if (
-            (target.opus.indexOf(this.productsData[idx].episodes[0][eid].name) < 0) &&
-            (! isTkn ) &&
-            (! this.productsData[idx].episodes[0][eid].cuts )
+            (! this.productsData[idx].episodes[0][eid].cuts )||(
+             (target.opus.indexOf(this.productsData[idx].episodes[0][eid].name) < 0) &&
+             (! isTkn ) 
+            )
         ) continue;
         for (var cid = 0 ; cid < this.productsData[idx].episodes[0][eid].cuts[0].length ; cid ++) {
             if (
@@ -786,6 +792,9 @@ localRepository.cut=function(myIdentifier){
     };
     return null;
 }
+
+localRepository.cut=_cut;
+
 /**
     プロダクト(タイトル)データを更新
     タイトル一覧をクリアして更新する エピソード更新を呼び出す
@@ -933,7 +942,9 @@ localRepository.getSCi=function (callback,callback2,myOpusToken,pgNo,ppg) {
                         }]
                     });
                 //未登録新規プロダクトなのでエントリ追加
-                    var newEntry = new listEntry(currentIdentifier);
+                    //ここにローカルストレージのキーIDを置く　タイトルとエピソードの情報取得キーは現在エントリなし
+                    //初出エントリのキーか？　0524
+                    var newEntry = new listEntry(currentIdentifier,null,null,localStorage.key(kid));
                     newEntry.parent = this;
                     this.entryList.push(newEntry);
                 }
@@ -1243,8 +1254,8 @@ localRepository.entry=function(myIdentifier,opt){
 */
 localRepository.activateEntry=function(callback,callback2){
     var currentEntry = this.entry(Xps.getIdentifier(xUI.XPS));
-//    var currentCut   = this.cut(currentEntry.toString());
-    var currentCut   = this.cut(currentEntry.issues[0].cutID);
+    var currentCut   = this.cut(currentEntry.toString());
+//    var currentCut   = this.cut(currentEntry.issues[0].cutID);
         var newXps = new Xps();
         var currentContents = localStorage.getItem(this.keyPrefix+currentEntry.toString(0));
         if (currentContents) { newXps.readIN(currentContents); }else {return false;}
@@ -1286,8 +1297,8 @@ console.log('ステータス変更不可 :'+ Xps.getIdentifier(newXps));
 //作業を保留する リポジトリ内のエントリを更新してステータスを変更 
 localRepository.deactivateEntry=function(callback,callback2){
     var currentEntry = this.entry(Xps.getIdentifier(xUI.XPS));
-//    var currentCut   = this.cut(currentEntry.toString());
-    var currentCut   = this.cut(currentEntry.issues[0].cutID);
+    var currentCut   = this.cut(currentEntry.toString());
+//    var currentCut   = this.cut(currentEntry.issues[0].cutID);
             //Active > Holdへ
         var newXps = new Xps();
         var currentContents = xUI.XPS.toString();
@@ -1339,8 +1350,8 @@ localRepository.checkinEntry=function(myJob,callback,callback2){
     if( typeof myJob == 'undefined') return false;
     myJob = (myJob)? myJob:xUI.currentUser.handle;
     var currentEntry = this.entry(Xps.getIdentifier(xUI.XPS));
-//    var currentCut   = this.cut(currentEntry.toString());
-    var currentCut   = this.cut(currentEntry.issues[0].cutID);
+    var currentCut   = this.cut(currentEntry.toString());
+//    var currentCut   = this.cut(currentEntry.issues[0].cutID);
     if(! currentEntry){
 if(dbg) console.log ('noentry in repository :' +  decodeURIComponent(currentEntry))
         //当該リポジトリにエントリが無い
@@ -1397,8 +1408,8 @@ console.log('編集権利取得失敗');
 */
 localRepository.checkoutEntry=function(assignData,callback,callback2){
     var currentEntry = this.entry(Xps.getIdentifier(xUI.XPS));
-//    var currentCut   = this.cut(currentEntry.toString());
-    var currentCut   = this.cut(currentEntry.issues[0].cutID);
+    var currentCut   = this.cut(currentEntry.toString());
+//    var currentCut   = this.cut(currentEntry.issues[0].cutID);
     if(! currentEntry) {
 console.log ('noentry in repository :' +  decodeURIComponent(currentEntry))
         return false;
@@ -1449,8 +1460,8 @@ localRepository.receiptEntry=function(stageName,jobName,callback,callback2){
     /*  2016-12 の実装では省略して　エラー終了*/
     if(! myStage) return false;
     var currentEntry = this.entry(Xps.getIdentifier(xUI.XPS));
-//    var currentCut   = this.cut(currentEntry.toString());
-    var currentCut   = this.cut(currentEntry.issues[0].cutID);
+    var currentCut   = this.cut(currentEntry.toString());
+//    var currentCut   = this.cut(currentEntry.issues[0].cutID);
     if(! currentEntry){
 if(dbg) console.log ('noentry in repository :' +  decodeURIComponent(currentEntry))
         //当該リポジトリにエントリが無い
@@ -1611,15 +1622,15 @@ NetworkRepository=function(repositoryName,myServer,repositoryURI){
 各層のエントリを識別子で取得
     TITLE取得
 */
-NetworkRepository.prototype.title=localRepository.title;
+NetworkRepository.prototype.title=_title;
 /**
     OPUS取得
 */
-NetworkRepository.prototype.opus=localRepository.opus;
+NetworkRepository.prototype.opus=_opus;
 /**
     CUT取得
 */
-NetworkRepository.prototype.cut=localRepository.cut;
+NetworkRepository.prototype.cut=_cut;
 /**
     タイトル一覧を取得して情報を更新する エピソード更新を呼び出す
     受信したデータを複合させてサービス上のデータ構造を保持する単一のthis.productsDataオブジェクトにする
