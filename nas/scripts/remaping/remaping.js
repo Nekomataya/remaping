@@ -5681,8 +5681,9 @@ console.log('new Entry init');
                         var myCutTime = nas.FCT2Frm($('#backend_variables').attr('data-scale'));
                         if(!(isNaN(myCutTime)) && (myCutTime != xUI.XPS.time())){
                             xUI.resetSheet(new Xps(xUI.XPS.xpsTracks.length-2,myCutTime));
+                        }else{
+                            xUI.resetSheet();
                         }
-
                     }
 //ここで無条件でproductionへ移行せずに、チェックが組み込まれているactivateEntryメソッドを使用する
 /*
