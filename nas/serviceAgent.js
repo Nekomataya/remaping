@@ -725,23 +725,53 @@ localRepository={
 };
 /**
     TITLE取得
+引数:
+    myIdentifier    識別子またはトークン
+    searchDepth     検索深度 0:タイトルのみ　1:エピソードからもタイトルを探す　2:カットからも
+
+    エピソードやカットのトークンからもタイトルノードを返す
+    深度指定省略時は 0
+    該当するオブジェクトがない場合はnullを戻す
 */
-_title=function(myIdentifier){
-    var curerntTitle = decodeURIComponent(String(myIdentifier).split("#")[0]);
+_title=function(myIdentifier,searchDepth){
+    if(! searchDepth)searchDepth = 0;
+    var myIdf= Xps.parseIdentifier(myIdentifier);
     for ( var idx = 0 ;idx <this.productsData.length;idx ++){
         if(
-            (curerntTitle == this.productsData[idx].name)||
+            (myIdf.title == this.productsData[idx].name)||
             (myIdentifier == this.productsData[idx].token)
         ) return this.productsData[idx];
+        if(searchDepth >0){
+             for(var epx = 0 ;epx <this.productsData[idx].episodes[0].length;epx++){
+                if(
+                    (myIdf.opus == this.productsData[idx].episodes[0][epx].name)||
+                    (myIdentifier == this.productsData[idx].episodes[0][epx].token)
+                ) return this.productsData[idx];
+            }
+            if(searchDepth >1){
+                 for(var ctx = 0 ;ctx <this.productsData[idx].episodes[0].cuts[0].length;ctx++){
+                    if(
+                        (myIdf.sci[0].cut == this.productsData[idx].episodes[0][epx].cuts[0][ctx].name)||
+                        (myIdentifier == this.productsData[idx].episodes[0][epx].cuts[0][ctx].token)
+                    ) return this.productsData[idx];
+                }
+            }
+        }
     };
     return null;
 }
 
-localRepository.title;
+localRepository.title=_title;
 /**
     OPUS取得
+引数:
+    myIdentifier    識別子またはトークン
+
+    識別子またはトークンからエピソードノードを戻す
+    該当するオブジェクトがない場合はnullを戻す
 */
-_opus=function(myIdentifier){
+_opus=function(myIdentifier,searchDepth){
+    if(! searchDepth)searchDepth = 0;
     var currentOpus = Xps.parseProduct(myIdentifier);
     var isTkn = (currentOpus.opus=='undefined')? true:false;
     for ( var idx = 0 ;idx <this.productsData.length;idx ++){
@@ -763,7 +793,7 @@ _opus=function(myIdentifier){
 localRepository.opus=_opus;
 /**
     CUT取得
-    myIdentifier は識別子またはトークンを与える
+    myIdentifier は識別子またはトークンからカットノードを戻す
 */
 _cut=function(myIdentifier){
     var target = Xps.parseIdentifier(myIdentifier);
@@ -1649,6 +1679,8 @@ NetworkRepository.prototype.getProducts=function (callback,callback2,prdToken){
         type: 'GET',
         dataType: 'json',
         success: function(result) {
+            //resultにデータが無いケース{}があるので分離が必要
+          　//権限等で
 		    serviceAgent.currentRepository.productsData=result;
 		    if(prdToken.length){
 		    //引数があれば引数のプロダクトを順次処理
@@ -1868,21 +1900,12 @@ console.log('getSCi :');console.log(myEpisode);
 console.log(result);console.log(myEpisode);
 //                                if(myEpisode.cuts[0].length!=result.length){}
                                         myEpisode.cuts[0]=result;
-                                        var currentTitle = serviceAgent.currentRepository.title(myEpisode.cuts[0][0].description);
-/*
-                      searchLoop:{
-                        for(var idx = 0 ; idx < serviceAgent.currentRepository.productsData.length ; idx ++){
-                            var currentTitle=serviceAgent.currentRepository.productsData[idx];
-                            if((typeof currentTitle.episodes == 'undefined')||(currentTitle.episodes[0].length == 0)) continue;//エピソード数０の際は処理スキップ
-                            for( var eid = 0 ; eid < serviceAgent.currentRepository.productsData[idx].episodes[0].length ; eid ++){
-                                if(epToken == serviceAgent.currentRepository.productsData[idx].episodes[0][eid].token ){
-//                                    var currentEpisode=serviceAgent.currentRepository.productsData[idx].episodes[0][eid];
-                                    break searchLoop;
-                                };//episode serch hit
-                            };//episodes
-                        };//products
-                      };//serchloop
-*/
+                                        if (! myEpisode.cuts[0][0].description)console.log(myEpisode.token)
+                                        var currentTitle = (myEpisode.cuts[0][0].description)?
+                                        serviceAgent.currentRepository.title(myEpisode.cuts[0][0].description):serviceAgent.currentRepository.title(myEpisode.token,1);
+//カットのディスクリプションからタイトルを取得しようとしている
+//初回エントリにはディスクリプションがあるとは限らないのでNG トークン取得に変更
+if(! currentTitle){console.log(currentTitle)}
 /**
 エントリ取得タイミングで仮にcutのdescription を追加するcuts[1][cid].description を作成して調整に使用する
 本番ではデータ比較ありで、入替えを行う　サーバ側のプロパティ優先

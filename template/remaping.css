@@ -669,6 +669,10 @@ button.iconButton:disabled {
 
 /*一文字用ボタン*/
 button.oneChr {width:1.5em;margin:0px;padding:0px;}
+
+/*サインイン／アウトボタン*/
+button.sign {width:10em;}
+
 /*		UI　AEキー　コンバートスイッチ
 */
 input.aekConvert {
