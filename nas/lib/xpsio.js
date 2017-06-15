@@ -1530,6 +1530,7 @@ Xps.prototype.deleteTL = function (args) {
      現在の値と同じ場合は何もしない
      継続時間が減少する場合はシート後方から削除
      増加の場合は""で初期化
+     0は処理失敗
 */
 Xps.prototype.setDuration =function(myDuration){
     if(! myDuration) return false;

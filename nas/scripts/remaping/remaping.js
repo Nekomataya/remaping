@@ -5265,26 +5265,20 @@ XPS.syncIdentifier =function(myIdentifier,withoutTime){
     if(typeof withoutTime == 'undefined') withoutTime = true;
     var parseData   = Xps.parseIdentifier(myIdentifier);
     this.title      = parseData.title;
+    this.cut        = parseData.cut;
     this.opus       = parseData.opus;
     this.subtitle   = parseData.subtitle;
     this.scene      = parseData.scene;
-    this.cut        = parseData.cut;
     if(parseData.currentStatus){
         this.line       = parseData.line;
         this.stage      = parseData.stage;
         this.job        = parseData.job;
         this.currentStatus = parseData.currentStatus;
     }
-/*    {
-        this.line     = new XpsLine(nas.pm.pmTemplate[0].line);
-        this.stage    = new XpsStage(nas.pm.pmTemplate[0].stages[0]);
-        this.job      = new XpsStage(nas.pm.jobNames.getTemplate(nas.pm.pmTemplate[0].stages[0],"init")[0]);
-        this.currentStatus   = "Startup";     
-    }*/
     if (! withoutTime){
         var newTime = nas.FCT2Frm(parseData.sci[0].time)+Math.ceil((this.trin[0]+this.trout[0])/2);
         console.log('時間調整 : '+newTime)
-        this.setDuration(newTime);
+        console.log(this.setDuration(newTime));
     }
 return parseData;
 }
@@ -5665,7 +5659,7 @@ serviceAgent.currentRepository.getProducts(function(){
                     if((myIdentifier)&&(Xps.compareIdentifier(Xps.getIdentifier(XPS),myIdentifier) < 5)){
 console.log('syncIdentifier:');
 console.log(decodeURIComponent(myIdentifier));
-                        XPS.syncIdentifier(myIdentifier,false);
+                        xUI.XPS.syncIdentifier(myIdentifier,false);
                     }
                     if( startupXPS.length==0 ){
 console.log('detect first open no content');//初回起動を検出　コンテント未設定
@@ -5676,14 +5670,12 @@ console.log('new Entry init');
                         xUI.XPS.currentStatus   = "Startup";     
                         xUI.XPS.create_user=xUI.currentUser;
                         xUI.XPS.update_user=xUI.currentUser;
+
+console.log(xUI.XPS.title);
 //syncIdentifierでカット尺は調整されているはずだが、念のためここで変数を取得して再度調整をおこなう
 //data-scale を廃止した場合は、不用
                         var myCutTime = nas.FCT2Frm($('#backend_variables').attr('data-scale'));
-                        if(!(isNaN(myCutTime)) && (myCutTime != xUI.XPS.time())){
-                            xUI.resetSheet(new Xps(xUI.XPS.xpsTracks.length-2,myCutTime));
-                        }else{
-                            xUI.resetSheet();
-                        }
+                        if(!(isNaN(myCutTime)) && (myCutTime != xUI.XPS.time())){xUI.XPS.setDuration(myCutTime)}
                     }
 //ここで無条件でproductionへ移行せずに、チェックが組み込まれているactivateEntryメソッドを使用する
 /*

@@ -741,8 +741,8 @@ _title=function(myIdentifier,searchDepth){
             (myIdf.title == this.productsData[idx].name)||
             (myIdentifier == this.productsData[idx].token)
         ) return this.productsData[idx];
-        if(searchDepth >0){
-             for(var epx = 0 ;epx <this.productsData[idx].episodes[0].length;epx++){
+        if((searchDepth > 0)&&(this.productsData[idx].episodes)){
+            for(var epx = 0 ;epx <this.productsData[idx].episodes[0].length;epx++){
                 if(
                     (myIdf.opus == this.productsData[idx].episodes[0][epx].name)||
                     (myIdentifier == this.productsData[idx].episodes[0][epx].token)
@@ -1900,9 +1900,10 @@ console.log('getSCi :');console.log(myEpisode);
 console.log(result);console.log(myEpisode);
 //                                if(myEpisode.cuts[0].length!=result.length){}
                                         myEpisode.cuts[0]=result;
-                                        if (! myEpisode.cuts[0][0].description)console.log(myEpisode.token)
-                                        var currentTitle = (myEpisode.cuts[0][0].description)?
-                                        serviceAgent.currentRepository.title(myEpisode.cuts[0][0].description):serviceAgent.currentRepository.title(myEpisode.token,1);
+                                        if (! myEpisode.cuts[0][0].description) console.log(myEpisode.token)
+                                        var currentTitle = (! myEpisode.cuts[0][0].description)?
+                                            serviceAgent.currentRepository.title(myEpisode.token,1):
+                                            serviceAgent.currentRepository.title(myEpisode.cuts[0][0].description);
 //カットのディスクリプションからタイトルを取得しようとしている
 //初回エントリにはディスクリプションがあるとは限らないのでNG トークン取得に変更
 if(! currentTitle){console.log(currentTitle)}
@@ -2353,14 +2354,23 @@ console.log(result);
 //データ請求に成功したので、現在のデータを判定して処理の必要があれば処理
         	var myContent=result.content;//XPSソーステキストをセット
         	var currentXps = new Xps(5,144);
-	        if(myContent){ currentXps.parseXps(myContent);};
+	        if(myContent){
+	            currentXps.parseXps(myContent);
+	        }else{
+	            console.log('contents :'+ myContent);
+	            var myParseData = Xps.parseSCi(result.name);
+	            currentXps.cut = myParseData.cut;
+	            currentXps.setDuration(nas.FCT2Frm(String(myParseData.time)));
+	        }
 //myContent==nullのケースは、サーバに空コンテンツが登録されている場合なので単純にエラー排除してはならない
+//currentXpsのプロパティをリザルトに同期させる
 //エラーではなく初期化時点の初期状態のXpsのままで処理を継続する
             //xUI.userPermissions=result.permissions;
 //読み込んだXPSが識別子と異なっていた場合識別子優先で同期する
 	            xUI.resetSheet(currentXps);
 	            var durationChange=xUI.XPS.duration();
-console.log(xUI.XPS);
+//console.log(xUI.XPS);
+//console.log(myIssue.identifier);
                 xUI.XPS.syncIdentifier(myIssue.identifier,false);
                 durationChange = (durationChange == xUI.XPS.duration())? false:true;
 	            if(myEntry.issues.length>1){
@@ -3722,7 +3732,9 @@ if((! isReference)&&(Xps.compareIdentifier(myEntry.issues[cx].identifier,Xps.get
     console.log(decodeURIComponent(Xps.getIdentifier(xUI.XPS)))
     console.log('ジョブ一致　ロードスキップ');
 }
-//読み込み前に現在のデータの状態を確認して必要ならば編集状態を解除　その後読み込み
+//読み込み前に現在のデータの状態を確認して必要ならば編集状態を解除
+//その後読み込み
+//読込の前にカーソル位置を　1_0　にリセット
 //参照読み込みに際しては、編集状態を維持
     if((! isReference ) && ( xUI.uiMode=='production' )&&( xUI.XPS.currentStatus=='Active' )){
 console.log("need deactivate");
@@ -3735,12 +3747,14 @@ console.log("need deactivate");
 console.log("get ");
                     sync('historySelector');
                     if (callback instanceof Function) callback();
+}
 */
             },function(){
 console.log("fail getting ");
                     if (callback2 instanceof Function) callback2();
             });
     }else{
+        xUI.selectCell([1,0]);
         this.currentRepository.getEntry(myIdentifier,isReference,function(){
             sync('historySelector');
             if (callback instanceof Function) callback();
@@ -3932,8 +3946,10 @@ serviceAgent.checkinEntry=function(myJob,callback,callback2){
 //  ここで処理前にリストを最新に更新する
 /*リストの更新では、ムダに待ち時間が長いので「エントリ情報の更新」に変更したい 後ほど処理　今は保留　０４２２*/
 //    this.currentRepository.getList(true);
+console.log(Xps.getIdentifier(xUI.XPS))
     var currentEntry = this.currentRepository.entry(Xps.getIdentifier(xUI.XPS));
 //    var currentCut   = this.currentRepository.cut(currentEntry.toString());
+console.log(currentEntry);
     var currentCut   = this.currentRepository.cut(currentEntry.issues[0].cutID);
 console.log(currentEntry)
     if(! currentEntry){
