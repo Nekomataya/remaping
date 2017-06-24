@@ -11,6 +11,7 @@
 <link href="template/printout.css" type="text/css" rel=stylesheet media="print">
 
 <!-- 以下　AIR動作時のライブラリ
+
 <script src="./lib/AIR/servicemonitor.swf" type="application/x-shockwave-flash"></script>
 <script src="./lib/AIR/aircore.swf" type="application/x-shockwave-flash"></script>
 <script src="./lib/AIR/applicationupdater_ui.swf" type="application/x-shockwave-flash"></script>
@@ -21,7 +22,6 @@
 <script type="text/javascript" src="./lib/AIR/AIRAliases.js"></script>
 <!-- 以下　AIR動作時のデバッグライブラリ -->
 <!-- 
-
 		<script type="text/javascript" src="./lib/AIR/AIRLocalizer.js"></script>
 		<script type="text/javascript" src="./lib/AIR/AIRMenuBuilder.js"></script>
 		<script type="text/javascript" src="./lib/AIR/AIRIntrospector.js"></script>
@@ -508,10 +508,21 @@ serviceAgent.pushEntry(xUI.XPS,function(){xUI.setStored("current");sync();
 	onclick='if(confirm("アプリケーションを再読み込みします\nデータは破棄されます\nよろしいですか？")){document.location.reload()};return false;'
 	title="reload application"
 >reload</A> </li>
-<li><hr><span id=pMpreviousVer-d class='pM pM-alt'></span><A	id=pMpreviousVer
+<li><hr><span id=pMpreviousVer-d class='pM pM-alt'></span><A	id=pMpreviousVer14
 	HREF='http://www.nekomataya.info/tools/remaping/'
-	title="old version"
->前バージョン</A> </li>
+	target = '_blank'
+	title="old version 1.4"
+>りまぴん1.4</A> </li>
+<li><span id=pMpreviousVer-d class='pM pM-alt'></span><A	id=pMpreviousVer15
+	HREF='http://www.nekomataya.info/test/remaping/'
+	target = '_blank'
+	title="old version 1.5"
+>りまぴん1.5</A> </li>
+<li><span id=pMpreviousVer-d class='pM pM-alt'></span><A	id=pMtestVer
+	HREF='http://www.nekomataya.info/tools/remaping/'
+	target = '_blank'
+	title="next version 1.7"
+>テストバージョン</A> </li>
 <!--
 <li>
 <hr><span id=pMstb-d class='pM pM-alt'></span><A	id=pMstb
@@ -572,11 +583,12 @@ serviceAgent.pushEntry(xUI.XPS,function(){xUI.setStored("current");sync();
 	onclick='xUI.sWitchPanel("File");return false'
 	title="File"
 >filePanel</A></li>
+<!--
 <li id=debug><span id=pMlogo-d class='pM pM-alt'></span><A	id=pMlogo
 	HREF='javascript:void(0);'
 	onclick='$("#logoTable").hide();return false'
 	title="Logo"
->logo</A></li>
+>logo</A></li>-->
 <li id=dMair><span id=pMpMenu-d class='pM pM-alt'></span><A	id=pMpMenu
 	HREF='javascript:void(0);'
 	onclick='xUI.sWitchPanel("memu");return false'
@@ -1283,8 +1295,12 @@ class=optionPanel id=optionPanelProductManagement
 <tr onDblClick ="return rewriteValueByEvt(event)" >
 <td rowspan=2>
 
-<select name=jobSelector id=jobSelector onChange='serviceAgent.getEntry(this.value);'  style="width:100%;margin:0;padding:0;text-align:center;">
-					<option>----</option>
+<select name=jobSelector id=jobSelector onChange='if(xUI.XPS.currentStatus=="Active"){serviceAgent.getEntry(this.value,true)}else{serviceAgent.getEntry(this.value)};'  style="width:100%;margin:0;padding:0;text-align:center;">
+<!--Jobセレクタの動作をもうすこしインテリジェントに変更
+編集時はリファレンスエリアの書き換え
+閲覧時は全体の変更にケース分けして処理
+
+-->					<option>----</option>
 				</select>
 
 </td><td id=opus lock="yes" >
@@ -2320,7 +2336,7 @@ onclick='documentDepot.updateDocumentSelector(new RegExp("2[0-9][0-9][^0-9]*$"))
 class=numberFilter
 onclick='documentDepot.updateDocumentSelector(new RegExp("3[0-9][0-9][^0-9]*$"));'
     >~399</button></span></div>
-
+<!-- 
 <button onClick='documentDepot.documentsUpdate()'>documentsUpdate</button>
 <button onClick='documentDepot.updateOpusSelector()'>updateOpusSelector</button>
 <button onClick='documentDepot.updateDocumentSelector()'>updateDocumentSelector</button>
@@ -2333,7 +2349,7 @@ onclick='documentDepot.updateDocumentSelector(new RegExp("3[0-9][0-9][^0-9]*$"))
 <button onClick='console.log(serviceAgent.currentRepository)'>Repository</button>
 <button onClick='console.log(serviceAgent.currentRepository.productsData)'>productsData</button>
 <button onClick='console.log(serviceAgent.currentRepository.entryList)'>entryList</button>
-<!-- -->
+-->
 </div>
 <!--	ファイルブラウザ試験中	-->
 
@@ -2549,7 +2565,7 @@ Under examination<br />
 	style="font-size:x-small;color:red"
 > WEB APPLICATION </span><br />
 <span style="font-size:small" id=versionString>
- $Id: index.html 2016/  kiyo Exp $ <br />
+index.html 2017/  kiyo <br />
 <span id=myVer0></span> <span id=myServer0>[no-server]</span><br />
 
 XPS File Ver. :nasTIME-SHEET 0.5<br />
@@ -3236,7 +3252,7 @@ duration :
 <br><br><br><br><br><br><br><br>ただいま準備中…ちょっぴりお待ちください<br>
 あ、非常に申し訳ありませんがりまぴんはIEでは正常に動作しません。<br>サポート外です。<br>
 <h3> タイムシート編集サービス　テスト中 </h3><img src=images/remaping.gif border=0 /><br /><img src=images/ui/wait.gif width=320 height=20><br>
-$Id:$ index.html ,v 1.7 2017/06/15  support@u-at.net <br />
+index.html ,v 1.6 2017/06/23  support@u-at.net <br />
 <span id=myVer1></span> <span id=myServer1>[no-server]</span>
 <br>
       </div><hr>

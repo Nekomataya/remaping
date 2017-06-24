@@ -8,7 +8,10 @@
  */
 // http://d.hatena.ne.jp/amachang/20071010/1192012056 //
 /*@cc_on _d=document;eval('var document=_d')@*/
-
+//  JQ isVisible mathod
+$.fn.isVisible = function() {
+    return $.expr.filters.visible(this[0]);
+};
 /* xUI
  *     UIコントロールオブジェクト
  * 
@@ -174,7 +177,7 @@ xUI.init    =function(editXps,referenceXps){
     this.spinSelect  = SpinSelect;      // 選択範囲でスピン指定
     this.sLoop       = SLoop;           // スピンループ
     this.cLoop       = CLoop;           // カーソルループ
-    this.utilBar     = true;            // サブツールバーの初期状態
+//    this.utilBar     = true;            // サブツールバーの初期状態
     this.SheetLength    = SheetLength;  // タイムシート1枚の表示上の秒数 コンパクトモードではシート長が収まる秒数に強制される
 //コンパクトモード時はこのプロパティとcolsの値を無視するように変更
     this.SheetWidth= this.XPS.xpsTracks.length; // シートの幅(編集範囲)
@@ -1469,13 +1472,15 @@ if(! (ID instanceof Array)) ID = ID.split('_') ;
 //    セレクションクリア
         this.selectionHi("clear");
 //    フットマーク機能がオンならば選択範囲とそしてホットポイントをフミツケ
-    if(this.footMark && this.diff(this.getid('Select'))){
+    var myTgtId = this.getid('Select');
+    if(this.footMark && this.diff(myTgtId)){
         paintColor=this.footstampColor;//                    == footmark ==
     }else{
         paintColor=this.sheetbaseColor;//                    == clear ==
     };
-//      footstamp
-    document.getElementById(this.getid("Select")).style.backgroundColor=paintColor;
+    if(document.getElementById(myTgtId))
+    document.getElementById(myTgtId).style.backgroundColor=paintColor;
+
 //フレームの移動があったらカウンタ更新フラグ立てる
         var fctrefresh = (fRame==this.Select[1])? false : true ;
 //レイヤの移動があったらボタンラベル更新フラグ立てる
@@ -2104,8 +2109,8 @@ BODY_ +='<th rowspan=2 class=timelabel ';
 //BODY_ +='style=" width:'+this.sheetLooks.TimeGuideWidth+CellWidthUnit+'"';
 BODY_ +=' ><span class=timeguide> TIME </span></th>';
 /*********** Action Ref *************/
-BODY_ +='<th colspan="'+this.referenceLabels.length+ '" id="rnArea" class="rnArea" ondblclick=alert(this.id)';
-//　ここは参照ステージ名に置き換え予定
+BODY_ +='<th colspan="'+this.referenceLabels.length+ '" id="rnArea" class="rnArea" ondblclick=sync("referenceLabel") title=""';
+//　ここは参照シートの識別名に置き換え 
 BODY_ +=' >Reference</th>';
 /*********** Dialog Area*************/
 BODY_ +='<th rowspan=2 class="dialoglabel" ';
@@ -2119,13 +2124,13 @@ BODY_ +=' onMouseDown=\'xUI.changeColumn(0 ,'+ (2 * pageNumber+cols) +');\'';
 BODY_ +='>台<BR>詞</th>';
     if(pageNumber>=-1){
 /*********** Edit Area 1 (timing) *************/
-BODY_ +='<th colspan='+xUI.timingSpan+' id=editArea class=editArea ondblclick="alert(this.id)"; '
+BODY_ +='<th colspan='+xUI.timingSpan+' id=editArea class=editArea ondblclick=sync("editLabel") title=""';
 //ここは編集中のステージ名に置き換え予定
 BODY_ +='>Animation</th>';
 
 /*********** Edit Area 2 (camera+sfx) *************/
 if(xUI.cameraSpan>0){
-BODY_ +='<th colspan='+xUI.cameraSpan+' id=editArea class=editArea ondblclick="alert(this.id)"; '
+BODY_ +='<th colspan='+xUI.cameraSpan+' id=camArea class=camArea" ';
 //
 BODY_ +='>camera</th>';
 }
@@ -4971,13 +4976,13 @@ xUI.setRetrace = function(){
  */
 xUI.resetSheet=function(editXps,referenceXps){
 //  現在のカーソル配置をバックアップ
-    var restorePoint = this.getid('Select');
-    var restoreSelection=this.getid('Selection');
+    var restorePoint = this.Select.concat();
+    var restoreSelection=this.Selection.concat();
 //    var sheetSame=((this.XPS.isSame(editXps))&&(this.referenceXPS.isSame(referenceXps)));
     var reWriteXPS = false;
     var reWriteREF = false;
 /*
-    editXPSが与えられなかった場合は、現在のXPSのまま処理を続行（画面のrefreshのみを行う）
+    引数にeditXPSが与えられなかった場合は、現在のXPSのまま処理を続行（画面のrefreshのみを行う）
  */
     if ((typeof editXps != "undefined") && (editXps instanceof Xps)){
         this.XPS.readIN(editXps.toString());    //XPSをバッファ更新
@@ -4993,29 +4998,23 @@ xUI.resetSheet=function(editXps,referenceXps){
         // 書換え範囲に 参照XPS全体を追加
         reWriteREF=true;
     };
+
+//  バックアップしたカーソル位置が新しいシートで範囲外になる場合は範囲内にまるめる
+    if(restorePoint[0] >= xUI.XPS.xpsTracks.length)   restorePoint[0] = xUI.XPS.xpsTracks.length -1;
+    if(restorePoint[1] >= xUI.XPS.xpsTracks.duration) restorePoint[1] = xUI.XPS.xpsTracks.duration -1;
 //表示プロパティのリフレッシュを行う　シートが変更されていなければ不用
-//    if(! sheetSame) this._checkProp();
     this._checkProp();
 //セルグラフィック初期化( = 画面クリア)
 //    this.Cgl.init();
-//  グラフィック部品をクリア後再描画が必要
-    //特にこの処理を重点的にチェック　このルーチンは実行回数が少ないほど良い　リセットメソッドを作成してそちらに移行する方針で調整　再処理時ではキャッシュの初期化を行わない
 //タイムシートテーブルボディ幅の再計算
-/*
-(タイムヘッダ幅+ダイアログ幅+レイヤ数*幅+コメント欄幅+余分)×ページカラム数＋カラムセパレータ幅×(ページカラム数?1)
-ここ現在トラック種別が反映されていない　＊＊要注意＊＊
-トラック幅算出系はthis.reInit()メソッドを作成してそちらへ移行
-*/
     var tableBodyWidth=(
         this.sheetLooks.TimeGuideWidth +
         this.sheetLooks.ActionWidth * this.referenceLabels.length +
         this.sheetLooks.DialogWidth * this.dialogCount + 
-
         this.sheetLooks.SheetCellWith * this.timingCount +
         this.sheetLooks.StillCellWidth * this.stillCount +
         this.sheetLooks.CameraCellWidth * this.cameraCount +
         this.sheetLooks.SfxCellWidth * this.sfxCount +
-
         this.sheetLooks.CommentWidth
     );//タイムシートの基礎トラック専有幅を算出
     if(this.viewMode != "Compact"){
@@ -5057,7 +5056,7 @@ xUI.resetSheet=function(editXps,referenceXps){
         if(xUI.footMark){xUI.footstampPaint()};
 //  カーソル位置復帰（範囲外は自動でまるめる）
         xUI.selectCell(restorePoint);
-        xUI.selection(restoreSelection);
+        xUI.selection(add(restorePoint,restoreSelection));
     },0);
     this.bkup([XPS.xpsTracks[1][0]]);
 //表示内容の同期
@@ -5291,109 +5290,7 @@ return parseData;
     デバッグモードでのみ接続
 if(dbg)    XPS.getMap(MAP);
 */
-//================================================================================================================================
-
-/**
-    シートのカラーデータを構築
-    別の関数に分離予定
-        指定引数は　SheetBaseColorのみ？
-*/
-//    xUI.setSheetLook(SheetLooks);
-
-if(false){
-    if (! SheetBaseColor.toString().match(/^#[0-9a-f]+/i)){
-        SheetBaseColor = nas.colorAry2Str(nas.colorStr2Ary(SheetBaseColor));
-    };
-//タイムシート背景色をconfigで設定した色に置き換え(css固定に変更)
-    document.body.style.backgroundColor=SheetBaseColor;
-//ヘッダとフッタの背景色をシート背景色で塗りつぶし
-    document.getElementById("fixedHeader").style.backgroundColor=SheetBaseColor;
-    nas.addCssRule("table.sheet","background-color:"+SheetBaseColor,"screen")
-
-//編集不可領域の背景色
-//    SheetBlankColor    = nas.colorAry2Str(mul(nas.colorStr2Ary(SheetBaseColor),.95));
-
-//シート境界色
-//    xUI.sheetborderColor    =nas.colorAry2Str(mul(nas.colorStr2Ary(SheetBaseColor),.75));
-
-//フットスタンプの色    FootStampColor    =document.getElementById("bgStamp").style.backgroundColor;
-
-//選択セルの背景色    SelectedColor    =document.getElementById("bgSelect").style.backgroundColor;
-//選択領域の背景色    SelectionColor    =document.getElementById("bgSelection").style.backgroundColor;
-
-//    EditingColor    =document.getElementById("spanEdit").style.backgroundColor;
-//セル編集中のインジケータ
-//    SelectingColor    =document.getElementById("spanSelection").style.backgroundColor;
-//セル選択中のインジケータ
-/*
-    ["th.timelabel","width:"+(this.sheetLooks.TimeGuideWidth + this.sheetLooks.CellWidthUnit)],
-    [".dtSep","width:"+(this.sheetLooks.DialogWidth + this.sheetLooks.CellWidthUnit)],
-    [".ntSep","width:"+(this.sheetLooks.CommentWidth + this.sheetLooks.CellWidthUnit)],
-    ["td.colSep","width:"+(this.sheetLooks.ColumnSeparatorWidth +this.sheetLooks.CellWidthUnit)],
-    ["th.layerlabelR","width:"+(this.sheetLooks.ActionWidth + this.sheetLooks.CellWidthUnit)],
-    ["th.layerlabel","width:"+(this.sheetLooks.SheetCellWidth + this.sheetLooks.CellWidthUnit)],
-    ["th.framenoteSpan","width",(this.sheetLooks.CommentWidth + this.sheetLooks.CellWidthUnit)],
-    ["timeguide","width:"+],
-*/
-var mySections=[
-    ["th.tcSpan"        ,"width" ,(this.sheetLooks.TimeGuideWidth + this.sheetLooks.CellWidthUnit)],
-    ["th.dialogSpan"    ,"width" ,(this.sheetLooks.DialogWidth + this.sheetLooks.CellWidthUnit)],
-    ["td.colSep"        ,"width" ,(this.sheetLooks.ColumnSeparatorWidth + this.sheetLooks.CellWidthUnit)],
-    ["th.referenceSpan" ,"width" ,(this.sheetLooks.ActionWidth + this.sheetLooks.CellWidthUnit)],
-    ["th.editSpan"      ,"width" ,(this.sheetLooks.SheetCellWidth + this.sheetLooks.CellWidthUnit)],
-    ["th.timingSpan"    ,"width" ,(this.sheetLooks.SheetCellWidth + this.sheetLooks.CellWidthUnit)],
-    ["th.stillSpan"     ,"width" ,(this.sheetLooks.StillCellWidth + this.sheetLooks.CellWidthUnit)],
-    ["th.sfxSpan"       ,"width" ,(this.sheetLooks.SfxCellWidth + this.sheetLooks.CellWidthUnit)],
-    ["th.cameraSpan"    ,"width" ,(this.sheetLooks.CameraCellWidth + this.sheetLooks.CellWidthUnit)]
-]
-
-/*    cssにルールセットを追加する関数
-    nas.addCssRule( セレクタ, プロパティ, 適用範囲 )
-        セレクタ    cssのセレクタを指定
-        プロパティ    プロパティを置く
-        適用範囲    "screen""print"または"both"
- */
-//トラックの幅を設定
-/*    リスト
-class=timelabel
-class=timeguide? 
-class=dtSep
-class=ntSep
-class=colSep
-class=layerlabelR
-class=layerlabel
- */
-
-for(var idx=0;idx<mySections.length;idx++){
-    nas.addCssRule( mySections[idx][0],mySections[idx][1]+":"+mySections[idx][2],"both");
-//    $(mySections[idx][0]).css(mySections[idx][1],mySections[idx][2])
-};
-
-//    シートブランクの色設定
-var mySeps=[
-    "ltSep","dtSep","ntSep","ntSep",
-    "lsSep","dsSep","nsSep","nsSep",
-    "lnSep","dnSep","nnSep","nnSep"
-];
-
-for(var idx=0;idx<mySeps.length;idx++){
-    nas.addCssRule("."+mySeps[idx]+"_Blank","background-color:"+ this.sheetBlankColor)
-};
-
-//================================================================================================================================ シートカラーcss設定
-}
-if(false){
-//    設定幅適用
-    $("th.tcSpan").width        = (this.sheetLooks.TimeGuideWidth   + this.sheetLooks.CellWidthUnit);
-    $("th.referenceSpan").width = (this.sheetLooks.ActionWidth      + this.sheetLooks.CellWidthUnit);
-    $("th.dialogSpan").width    = (this.sheetLooks.DialogWidth      + this.sheetLooks.CellWidthUnit);
-    $("th.editSpan").width      = (this.sheetLooks.SheetCellWidth   + this.sheetLooks.CellWidthUnit);
-    $("th.framenoteSpan").width = (this.sheetLooks.CommentWidth     + this.sheetLooks.CellWidthUnit);
-}
-//サブルーチンの位置は後で一考
-
 /*============*     初期化時のデータ取得    *============*/
-
 /*
  *  再優先・レンダリング時にドキュメント内にスタートアップデータが埋め込まれている
  */
@@ -5412,7 +5309,6 @@ if(document.getElementById( "referenceXPS" ) && document.getElementById( "refere
 //    起動時に AIR環境で引数があれば引数を解釈実行する。
 //同様のルーチンで  invorkイベントがあれば引数を解釈して実行するルーチンが必要
 //実態はair_UI.jsxに
-
 
 //    UI生成
     xUI=new_xUI();
@@ -5503,8 +5399,8 @@ if((NameCheck)||(myName=="")){   var msg=welcomeMsg+"\n"+localize(nas.uiMsg.dmAs
 
 //    クッキーで設定されたspinValueがあれば反映
     if(xUI.spinValue){document.getElementById("spin_V").value=xUI.spinValue} ;
-//ツールバー表示指定があれば表示
-    if((xUI.utilBar)&&(!$("#optionPanelUtl").is(':visible'))){$("#optionPanelUtl").show();};//xUI.sWitchPanel('Utl');
+//ツールバー表示指定があれば表示 プロパティ廃止
+//    if((xUI.utilBar)&&(!$("#optionPanelUtl").is(':visible'))){$("#optionPanelUtl").show();};//xUI.sWitchPanel('Utl');
 
 document.getElementById("iNputbOx").focus();
 
@@ -6266,13 +6162,80 @@ data_	;//
 dbg_	;//
 winTitle;//ウィンドウタイトル文字列
 productStatus	;//制作ステータス 
-server-info
+server-info     ;//
+historySelector ;//ヒストリセレクタ
+referenceLabel  ;//リファレンスエリアのラベル
 */
 function sync(prop){
 if (typeof prop == 'undefined') prop = 'NOP_';
 	switch (prop){
+case    "editLabel":
+//XPS編集エリアのラベル更新
+/*
+タイトルテキストは
+    IDFをすべて
+ラベル表示
+    jobName
+*/
+    var myIdf  =Xps.getIdentifier(xUI.XPS);
+    var editLabel = xUI.XPS.job.name;
+    var editTitle = decodeURIComponent(myIdf);
+// ラベルをすべて更新
+    $("th").each(function(){
+        if(this.id=='editArea'){
+            this.innerHTML =(this.innerHTML == 'Animation')? editLabel:'Animation';
+            this.title 　　= editTitle;
+        };
+    });
+    break;
+case    "referenceLabel":
+//referenceXPSエリアのラベル更新
+/*
+    リファレンスが編集中のデータと同エントリーでステージ・ジョブ違いの場合はissueの差分表示を行う。
+タイトルテキストは
+    同ステージのジョブなら　　jobID:jobName
+    別ステージのジョブならば　stageID:stageName//jobID:jobName
+    別ラインのジョブならば　　lineID:lineName//stageID:stageName//jobID:jobName
+    別カットならば　IDFをすべて
+ラベル表示は上記の1単語省略形で
+    同ステージのジョブなら　　jobName
+    別ステージのジョブならば　stageName
+    別ラインのジョブならば　　lineName
+    別カットならば　cutIdf(Xps.getIdentifier(true))
+*/
+    var myIdf  =Xps.getIdentifier(xUI.XPS);
+    var refIdf =Xps.getIdentifier(xUI.referenceXPS);
+    var refDistance = Xps.compareIdentifier(myIdf,refIdf);
+    if(refDistance < 1){
+        var referenceLabel = xUI.referenceXPS.getIdentifier(true);
+        var referenceTitle = decodeURIComponent(refIdf);
+    }else if(refDistance == 1){
+        var referenceLabel = xUI.referenceXPS.line.name;
+        var referenceTitle = [
+            xUI.referenceXPS.line.toString(true),
+            xUI.referenceXPS.stage.toString(true),
+            xUI.referenceXPS.job.toString(true)
+        ].join('//');
+    }else if(refDistance == 2){
+        var referenceLabel = xUI.referenceXPS.stage.name;
+        var referenceTitle = [
+            xUI.referenceXPS.stage.toString(true),
+            xUI.referenceXPS.job.toString(true)
+        ].join('//');
+    }else if(refDistance >= 3){
+        var referenceLabel = xUI.referenceXPS.job.name;
+        var referenceTitle = xUI.referenceXPS.job.toString(true);
+    }
+// ラベルをすべて更新
+    $("th").each(function(){
+        if(this.id=='rnArea'){
+            this.innerHTML = (this.innerHTML == referenceLabel)? 'Referenece' : referenceLabel;
+            this.title 　　= referenceTitle;
+        };
+    });
+    break;
 case    "historySelector":;
-    var currentIdentifier = Xps.getIdentifier(xUI.XPS);
+    var currentIdentifier = (xUI.uiMode == 'production')? Xps.getIdentifier(xUI.referenceXPS):Xps.getIdentifier(xUI.XPS);
     var currentEntry = serviceAgent.currentRepository.entry(currentIdentifier);
     if(! currentEntry) break;
     var myContentsStage='';var stid=-1;
@@ -7398,9 +7361,12 @@ myCookie[6]=[SLoop,CLoop,AutoScroll,TabSpin,ViewMode];
 if(useCookie.UIView){
 	ToolView=[];
 	for (var ix=0;ix<UIViewIdList.length;ix++){
-		ToolView.push(($('#'+UIViewIdList[ix]).is(':visible'))?1:0);				
+//		ToolView.push(($('#'+UIViewIdList[ix]).is(':visible'))?1:0);				
+//		ToolView.push(($('#'+UIViewIdList[ix]).isVisible())?1:0);				
+		ToolView.push(($('#'+UIViewIdList[ix]).css('display')=='none')? 0:1);				
 	};
 	ToolView=ToolView.join("");
+	alert(ToolView);
 };//記録チェックがない場合は元のデータを変更しない
 myCookie[7]=ToolView;
 if(dbg) console.log(ToolView);
@@ -7415,6 +7381,7 @@ function writeCk(myCookie){
 		return false;
 	}
 if(typeof myCookie == "undefined") myCookie=buildCk();
+alert(myCookie);
 var myCookieExpiers="";
 
 if(useCookie.expiers) {
@@ -7536,7 +7503,7 @@ if (!navigator.cookieEnabled){return false;}
 	if(useCookie.UIView){
 	if(rEmaping[7]) ToolView	=rEmaping[7];
 	}
-if(dbg) console.log( ToolView)
+console.log(rEmaping)
 }
 //	クッキー削除
 function dlCk() {
@@ -7546,9 +7513,8 @@ function dlCk() {
 }
 function resetCk()
 {
-// alert(myPreferences)
 	dlCk();
-	writeCk(myPreferences);
+	writeCk();
 	ldCk();
 }
 //
@@ -9733,12 +9699,12 @@ SoundEdit.open=function(){
 
 // debaug デバグ用ルーチン		------ dbg.js
 
-/*	デバグ汎用
+/*
+	デバグ汎用
 		デバッグ対象ルーチン側でロードすること
+*/
 
- */
 
-if (dbg){
 	var dbg_info=new Array();
 if(typeof console == 'undefined'){
     if(air.Introspector){
@@ -9773,6 +9739,6 @@ function dbg_action(cmd){
 //	if(console){if(dbg) console.log(body);}
 
 }
-}
+
 
  

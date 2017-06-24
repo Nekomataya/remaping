@@ -142,8 +142,9 @@ ServiceNode.prototype.setHeader=function(xhr){
     
     var oauth_token = (xUI.onSite)? 
     $('#backend_variables').attr('data-user_access_token'):$('#server-info').attr('oauth_token');
-if(dbg) console.log("setHeader :: ");
-if(dbg) console.log(oauth_token);
+console.log("setHeader :: ");
+console.log(oauth_token);
+console.log(xhr);
     var organizationToken = (typeof serviceAgent.currentRepository.token != 'undefined')? serviceAgent.currentRepository.token:'';
     if(oauth_token.length==0) return false;
         xhr.setRequestHeader('Access-Control-Allow-Origin', '*' );
@@ -245,14 +246,15 @@ if(dbg) console.log(result.access_token)
     リポジトリ（TEAM）一覧を取得してUIを更新する
 */
 ServiceNode.prototype.getRepositories=function(callback){
-if(dbg) console.log("url : "+serviceAgent.currentServer.url + '/api/v2/organizations.json');
+ console.log("url : "+serviceAgent.currentServer.url + '/api/v2/organizations.json');
+// console.log(serviceAgent.currentServer.setHeader);
         var myURL = serviceAgent.currentServer.url + '/api/v2/organizations.json';
         $.ajax({
           url : myURL,
           type : 'GET',
           dataType : 'json',
           success : function(result) {
-            serviceAgent.repositories.splice(1);//ローカルリポジトリを残してクリア(要素数１)
+            serviceAgent.repositories.splice(1); // ローカルリポジトリを残してクリア(要素数１)
             for( var rix=0 ; rix<result.length ; rix ++){
                 serviceAgent.repositories.push(new NetworkRepository(result[rix].name,serviceAgent.currentServer));
                 serviceAgent.repositories[serviceAgent.repositories.length - 1].token = result[rix].token;
@@ -1148,7 +1150,7 @@ if(dbg) console.log( 'no target data :'+ decodeURIComponent(myIdentifier) );//�
 
     // 構成済みの情報を判定 (リファレンス置換 or 新規セッションか)
     // ソースデータ取得
-if(dbg) console.log("readin XPS");
+if(dbg) console.log("readIn XPS");
 if(dbg) console.log(decodeURIComponent(myIssue.identifier));
 
     var myXpsSource=localStorage.getItem(this.keyPrefix+myIssue.identifier);
@@ -1196,6 +1198,7 @@ if(dbg) console.log(decodeURIComponent(myIssue.identifier));
             xUI.resetSheet(documentDepot.currentDocument,documentDepot.currentReference);
             xUI.sessionRetrace = myEntry.issues.length-cx-1;
             xUI.setUImode('browsing');sync("productStatus");
+            xUI.flushUndoBuf();sync('undo');sync('redo');
             if(callback instanceof Function){setTimeout(callback,10)};
         }
     } else { 
@@ -1215,6 +1218,7 @@ if(dbg) console.log(decodeURIComponent(myIssue.identifier));
 */
 localRepository.addTitle=function (myTitle,myDescription,myPm,callback,callback2){
 //現在ローカルリポジトリ側で行う処理は存在しない コールバックの実行のみを行う
+//タイトルDBが実装された場合はDBにエントリを加える
 　if(callback instanceof Function) callback();
     return true;
 }
@@ -1881,31 +1885,26 @@ console.log(result);
     ppg       ページごとのエントリ数
  */
 NetworkRepository.prototype.getSCi=function (callback,callback2,epToken,pgNo,ppg) {
-//    var myEpisode = this.getNodeElementByToken(epToken);
     var myEpisode = this.opus(epToken);
 console.log('getSCi :');console.log(myEpisode);
     if((! myEpisode)||(! myEpisode.cuts)) return false;
-　//    if(! myEpisode) return false;
-  //  if(! myEpisode.cuts) myEpisode.cuts=[[]]; //これがダメ　ここであらかじめカット数を取得しておく必要があるナリよ
-//カットエントリが既に無いというのは前段のエピソード詳細が取得できていないってことなのでこれはアウト
     if(typeof pgNo == 'undefined') pgNo = '1';
     if(typeof ppg  == 'undefined')  ppg = myEpisode.cuts[0].length;
-
     var targetURL = serviceAgent.currentRepository.url+ '/api/v2/cuts.json?episode_token='+myEpisode.token+'&page_no='+parseInt(pgNo)+'&per_page='+parseInt(ppg);
 	            $.ajax({
                     url: targetURL,
                     type: 'GET',
                     dataType: 'json',
                     success: function(result){
-console.log(result);console.log(myEpisode);
+// console.log(result);console.log(myEpisode);
 //                                if(myEpisode.cuts[0].length!=result.length){}
-                                        myEpisode.cuts[0]=result;
-                                        if (! myEpisode.cuts[0][0].description) console.log(myEpisode.token)
+                                      myEpisode.cuts[0]=result;
+//カット登録数1以上の場合のみ処理
+if(myEpisode.cuts[0].length){
+if (! myEpisode.cuts[0][0].description) console.log(myEpisode.token)
                                         var currentTitle = (! myEpisode.cuts[0][0].description)?
                                             serviceAgent.currentRepository.title(myEpisode.token,1):
                                             serviceAgent.currentRepository.title(myEpisode.cuts[0][0].description);
-//カットのディスクリプションからタイトルを取得しようとしている
-//初回エントリにはディスクリプションがあるとは限らないのでNG トークン取得に変更
 if(! currentTitle){console.log(currentTitle)}
 /**
 エントリ取得タイミングで仮にcutのdescription を追加するcuts[1][cid].description を作成して調整に使用する
@@ -1975,7 +1974,8 @@ APIの情報は、識別子と一致しているはずだが　照合の上異�
                     var myVersionToken = myCut.versions[vid].version_token;
                     newEntry.push(myVersionString,currentTitle.token,myEpisode.token,myCutToken,myVersionToken);
                 }
-//============エントリ更新　
+//============エントリ更新
+    }
 }
                         if(callback instanceof Function){
                             callback();
@@ -2398,6 +2398,7 @@ console.log(result);
 	            //xUI.resetSheet(XPS);
                 xUI.sessionRetrace = myEntry.issues.length-cx-1;
                 xUI.setUImode('browsing');sync("productStatus");
+                xUI.flushUndoBuf();sync('undo');sync('redo');
                 if(durationChange) xUI.resetSheet();
                 if(callback instanceof Function) callback();
         },

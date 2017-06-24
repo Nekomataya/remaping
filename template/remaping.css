@@ -970,7 +970,7 @@ th.rnArea{
 
 
 
-th.editArea {
+th.editArea , th.camArea{
 		border-width:2px 1px 0px 0px;
 }
 /*		ダイアログ*/

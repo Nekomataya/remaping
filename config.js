@@ -33,7 +33,7 @@
         2017/06/15  スタートアップ時のバグを修正
  * $Id: config.js,v2.0 2017/6/15  $
  */
-	var dbg=true	;	//デバッグモード
+	var dbg=false	;	//デバッグモード
 
 /** @desc
  *	開始メッセージ
@@ -41,7 +41,7 @@
  *		ただし開始メッセージが抑制されている場合は表示されません。
  */
 
-	var welcomeMsg="サーバ対応版 -test- 20170615";
+	var welcomeMsg="サーバ対応版 -test- 20170623";
 	var windowTitle="ver. 1.6.5";//WindowTitleとしての役割は終了 統合バージョンです
 
 /**************************************************************************
@@ -64,7 +64,7 @@
     ロゴをクリックするとこちらのurlをひらきます。
  */
 //	var headerLogo_url	="http://www.nekomataya.info/remaping/";
-	var headerLogo_url	="https://u-at.net/";
+	var headerLogo_url	="https://www.u-at.net/";
 	var headerLogo_urlComment	="UATimesheetService";//ロゴのコメントです
 /**************************************************************************
  *	作品タイトルロゴ
@@ -304,7 +304,7 @@ var SheetPageCols=2;
 			//	実際問題としては１または２以外は
 			//	使いづらくてダメだと思うよ。
 var FootMark	=true;
-			//足跡機能
+			//差分機能
 			// 使う=true / 使わない=false
 var TabSpin	=true
 			//TABキーで確定
