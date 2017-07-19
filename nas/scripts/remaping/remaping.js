@@ -2239,7 +2239,8 @@ BODY_ += '<tr>';
 // var current_frame=(this.PageLength*currentPageNumber)+cols*SheetRows+n;//カレントフレームの計算がTCベースになる必要あり
 //現在処理中のフレームは有効か否かをフラグ　フレームがドロップまたは継続時間外の場合は無効フレーム
     var isBlankLine =((current_frame != null)&&(current_frame < this.XPS.duration()))? false:true;
-//alert(isBlankLine+" : "+current_frame)
+// alert(isBlankLine+" : "+current_frame)
+
 //セパレータ(境界線)設定
 if(restFrm==(Math.ceil(this.XPS.framerate)-1)){
 //秒セパレータ
@@ -2271,6 +2272,9 @@ if(restFrm==(Math.ceil(this.XPS.framerate)-1)){
         var bgStyle='';
         var bgProp='';
         var cellClassExtention=''
+
+// 継続時間終了時のエンドマーカーを配置するため判定
+        var endMarker=(current_frame == (this.XPS.duration()))?true:false;
     }else{
 //無効フレーム
         var bgStyle='background-color:'+this.sheetblankColor+';';
@@ -6790,11 +6794,12 @@ myBody+='<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3
 myBody+='<head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"><title>';
 myBody+=XPS.scene.toString()+XPS.cut.toString();
 // myBody+='</title><link REL=stylesheet TYPE="text/css" HREF="http://www.nekomataya.info/test/remaping/template/printout.css">';
-
-myBody+='</title><link REL=stylesheet TYPE="text/css" HREF="'+location+'template/printout.css">';//for TEST
-//myBody+='</title><link REL=stylesheet TYPE="text/css" HREF="http://www.nekomataya.info/test/remaping.js/template/printout.css">';//for TEST onWeb
-//myBody+='</title><link REL=stylesheet TYPE="text/css" HREF="https://nekomataya.sakura.ne.jp/test/remaping.js/template/printout.css">';//for TEST on https
-
+//myBody+='</title><link REL=stylesheet TYPE="text/css" HREF="'+location+'template/printout.css">';//for TEST
+if(String(location).indexOf('https')!=0){
+myBody+='</title><link REL=stylesheet TYPE="text/css" HREF="http://www.nekomataya.info/test/remaping.js/template/printout.css">';//for TEST onWeb
+}else{
+myBody+='</title><link REL=stylesheet TYPE="text/css" HREF="https://nekomataya.sakura.ne.jp/test/remaping.js/template/printout.css">';//for TEST on https
+}
 //myBody+='</title><link REL=stylesheet TYPE="text/css" HREF="./template/printout.css">';
 myBody+='<style type="text/css"> * { margin: 0; padding: 0;} #fixed {position: fixed;} #sheet_view {  margin:0; }</style></head><body><div id="sheet_body">';
 
