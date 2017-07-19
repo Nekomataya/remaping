@@ -64,8 +64,8 @@
     ロゴをクリックするとこちらのurlをひらきます。
  */
 //	var headerLogo_url	="http://www.nekomataya.info/remaping/";
-	var headerLogo_url	="https://www.u-at.net/";
-	var headerLogo_urlComment	="UATimesheetService";//ロゴのコメントです
+	var headerLogo_url	="https://docs.google.com/document/d/14XIjRraSci35fLcZdCtrwIJ7G1Z13Wku5e1hzu1QOCc/edit?usp=sharing";
+	var headerLogo_urlComment	="UATimesheet簡易マニュアル";//ロゴのコメントです
 /**************************************************************************
  *	作品タイトルロゴ
  *		タイトル置換機能を使う場合は、useworkTitleの値を"true"にして、
@@ -513,6 +513,7 @@ rapidMode.command["brac"]=function(){
 
 //var ServiceUrl="//192.168.188.2/cgi-bin/rmpEcho.cgi?";
 var ServiceUrl="//www.nekomataya.info/cgi-bin/remaping/rmpEcho.cgi?";
+var HttpsServiceUrl="//nekomataya.sakura.ne.jp/cgi-bin/remaping/rmpEcho.cgi?";
 // var ServiceUrl="//localhost/~<your address>/rmpEcho.cgi?";//参考1
 // var ServiceUrl="//localhost/cgi-bin/rmpEcho.cgi?";//参考2
 

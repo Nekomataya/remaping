@@ -2203,7 +2203,7 @@ HTML（画像を使用可能）か？<br>
  class='documentPanelButton-management debug'
  title="local repository only"
 >一括登録 </button><button
- onClick='alert("お待ち下さい");'
+ onClick='if(serviceAgent.currentRepository===localRepository)localRepository.removeEntry(documentDepot.currentSelection);'
  class='documentPanelButton-management debug'
  title="local repository only"
 >removeDocument </button><button
@@ -2336,7 +2336,7 @@ onclick='documentDepot.updateDocumentSelector(new RegExp("2[0-9][0-9][^0-9]*$"))
 class=numberFilter
 onclick='documentDepot.updateDocumentSelector(new RegExp("3[0-9][0-9][^0-9]*$"));'
     >~399</button></span></div>
-<!-- 
+
 <button onClick='documentDepot.documentsUpdate()'>documentsUpdate</button>
 <button onClick='documentDepot.updateOpusSelector()'>updateOpusSelector</button>
 <button onClick='documentDepot.updateDocumentSelector()'>updateDocumentSelector</button>
@@ -2349,7 +2349,7 @@ onclick='documentDepot.updateDocumentSelector(new RegExp("3[0-9][0-9][^0-9]*$"))
 <button onClick='console.log(serviceAgent.currentRepository)'>Repository</button>
 <button onClick='console.log(serviceAgent.currentRepository.productsData)'>productsData</button>
 <button onClick='console.log(serviceAgent.currentRepository.entryList)'>entryList</button>
--->
+<!-- -->
 </div>
 <!--	ファイルブラウザ試験中	-->
 

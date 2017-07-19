@@ -712,6 +712,7 @@ productsData追加
     JSONで通信を行う場合に必須
     entryList(listEntryコレクション)はこのデータから生成するように変更される？
     またはentryListからproductsDataを生成する　同時か？
+    動作試験のため　maxEntryを増やしてある　10>32 170705
 */
 localRepository={
     name:'localStrageStore',
@@ -723,7 +724,7 @@ localRepository={
     productsData:[],
     entryList:new listEntryCollection(),
     keyPrefix:"info.nekomataya.remaping.dataStore.",
-    maxEntry:10
+    maxEntry:32
 };
 /**
     TITLE取得
@@ -4012,7 +4013,7 @@ if(dbg) console.log('fail checkin so :'+ currentEntry.getStatus(myJob,callback,c
 serviceAgent.checkoutEntry=function(callback,callback2){
     var currentEntry = this.currentRepository.entry(Xps.getIdentifier(xUI.XPS));
 //    var currentCut   = this.currentRepository.cut(currentEntry.toString());
-    var currentCut   = this.currentRepository.cut(currentEntry.issues[0].cutID);
+    var currentCut   = (currentEntry.issues[0].cutID) ?this.currentRepository.cut(currentEntry.issues[0].cutID):this.currentRepository.cut(currentEntry.toString());
 console.log('networkRepository checkoutEntry');
 console.log(currentEntry.toString(true));
 console.log(currentEntry.getStatus());
