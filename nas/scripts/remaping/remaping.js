@@ -1831,6 +1831,8 @@ if(pageNumber==1){
  *-2    第三象限(-3)
  *    内部パラメータでは各値ともに減算して使用　--
  *    0以上は通常ページの出力（0 org）
+ *
+ *
  */
 xUI.pageView =function(pageNumber)
 {
@@ -1840,9 +1842,11 @@ xUI.pageView =function(pageNumber)
 if(this.viewMode=="Compact"){
 var Pages=1;//コンパクトモードでは固定
 var SheetRows=Math.ceil(this.XPS.duration()/this.XPS.framerate)*Math.ceil(this.XPS.framerate);
+var endMarker=true;// 継続時間終了時のエンドマーカー配置判定(必ず描画)
 }else{
 var Pages=Math.ceil((this.XPS.duration()/this.XPS.framerate)/this.SheetLength);//総尺をページ秒数で割って切り上げ
 var SheetRows=Math.ceil(this.SheetLength/this.PageCols)*Math.ceil(this.XPS.framerate);
+var endMarker=false;// 継続時間終了時のエンドマーカー配置判定(初期値)
 }
 /*
 (2010/11/06)
@@ -1873,6 +1877,11 @@ var SheetRows=Math.ceil(this.SheetLength/this.PageCols)*Math.ceil(this.XPS.frame
     初期状態ではセル（置きかえ＋スチル）のみを表示する
 (2016/08/19)
     xpsTracksとlayersの統合に伴うチューニング
+(2017/07/20)
+    リファレンスエリアのシート内容表示の際トラック抽出のバグがあったのを修正
+(2017/07/21)
+ ページ内に最終フレームが含まれるか否かを判定してカット記述終了マーカーを配置する拡張
+
 */
 //ページ番号が現存のページ外だった場合丸める
     if (pageNumber >=Pages){
@@ -1910,7 +1919,15 @@ var tableFixWidth=(
     this.sheetLooks.TimeGuideWidth +
     this.sheetLooks.ActionWidth*this.referenceLabels.length 
     );
-    
+var tableColumnWidth=(
+    tableFixWidth+
+    this.sheetLooks.DialogWidth*xUI.dialogCount +
+    this.sheetLooks.StillCellWidth*xUI.stillCount +
+    this.sheetLooks.SfxCellWidth*xUI.sfxCount +
+    this.sheetLooks.CameraCellWidth*xUI.cameraCount +
+    this.sheetLooks.SheetCellWidth*xUI.timingCount +
+    this.sheetLooks.CommentWidth );//
+
 /*+
     DialogWidth*(xUI.dialogSpan-1)
         (第二・第三象限固定幅)
@@ -1924,14 +1941,7 @@ var tableFixWidth=(
     DialogWidth*(xUI.dialogCount-xUI.dialogSpan)+
 */
 //alert(    DialogWidth*(xUI.dialogCount-xUI.dialogSpan) );
-var tableBodyWidth=(
-    tableFixWidth+
-    this.sheetLooks.DialogWidth*xUI.dialogCount +
-    this.sheetLooks.StillCellWidth*xUI.stillCount +
-    this.sheetLooks.SfxCellWidth*xUI.sfxCount +
-    this.sheetLooks.CameraCellWidth*xUI.cameraCount +
-    this.sheetLooks.SheetCellWidth*xUI.timingCount +
-    this.sheetLooks.CommentWidth );//
+var tableBodyWidth=tableColumnWidth;
 /*
 コンパクトモードで１段固定(第一象限スクロールデータ)
     (
@@ -1956,11 +1966,7 @@ UI設定に基づいて段組
 */
 var tableFixWidth=this.sheetLooks.TimeGuideWidth;
 
-/*
-    以前はテーブル内のタイムラン種別をここで判定していたが
-    xUIのプロパティに変換してこちらでは計算のみを行う仕様に変更済み 2015/04.25
-*/
-var tableBodyWidth=(
+var tableColumnWidth=(
     this.sheetLooks.TimeGuideWidth +
     this.sheetLooks.ActionWidth*this.referenceLabels.length +
     this.sheetLooks.DialogWidth*xUI.dialogCount +
@@ -1968,7 +1974,12 @@ var tableBodyWidth=(
     this.sheetLooks.SfxCellWidth*xUI.sfxCount +
     this.sheetLooks.CameraCellWidth*xUI.cameraCount +
     this.sheetLooks.SheetCellWidth*xUI.timingCount +
-    this.sheetLooks.CommentWidth ) * this.PageCols +
+    this.sheetLooks.CommentWidth );
+/*
+    以前はテーブル内のタイムラン種別をここで判定していたが
+    xUIのプロパティに変換してこちらでは計算のみを行う仕様に変更済み 2015/04.25
+*/
+var tableBodyWidth=tableColumnWidth * this.PageCols +
     (this.sheetLooks.ColumnSeparatorWidth*(this.PageCols-1));//
 /*
     (
@@ -1983,10 +1994,9 @@ var tableBodyWidth=(
     )×ページカラム数＋カラムセパレータ幅×(ページカラム数?1)
 */
 
-
-
 var PageCols=this.PageCols;
 var SheetLength=this.SheetLength
+if(pageNumber==(Pages-1)) endMarker=true;
 }
 
 /*
@@ -2272,9 +2282,6 @@ if(restFrm==(Math.ceil(this.XPS.framerate)-1)){
         var bgStyle='';
         var bgProp='';
         var cellClassExtention=''
-
-// 継続時間終了時のエンドマーカーを配置するため判定
-        var endMarker=(current_frame == (this.XPS.duration()))?true:false;
     }else{
 //無効フレーム
         var bgStyle='background-color:'+this.sheetblankColor+';';
@@ -2297,15 +2304,27 @@ BODY_ +=' >';
     {BODY_ += (current_frame+1).toString();}else{BODY_+='<br>';};
 //    {BODY_ += ((n+1)+cols*SheetRows).toString();}else{BODY_+='<br>';};
 BODY_ +='</td>';
+
 //参照シートセル
-    for (var r=1;r<= this.referenceLabels.length;r++){
-//仮表示（シート本体と同内容）2013 01 29
-//参照XPSに切替　02 17
+/*
+    for(var ix=0;ix<xUI.referenceXPS.xpsTracks.length;ix++){
+        var currentTrack=xUI.referenceXPS.xpsTracks[ix].option;
+        var currentLabel=xUI.referenceXPS.xpsTracks[ix].id;
+        if(currentLabel.length>2) currentLabel=currentLabel.slice(0,2);
+        if(currentTrack.match(this.refRegex)) {
+            this.referenceLabels.push(currentLabel)
+        }
+*/
+    var refLabelID = 0; //for (var refLabelID=0;refLabelID< this.referenceLabels.length;refLabelID++)
+    for (var r=0;r< this.referenceXPS.xpsTracks.length;r++){
+        if(this.referenceLabels[refLabelID]!= this.referenceXPS.xpsTracks[r].id){continue;}
+//参照ラベル抽出と同アルゴリズムで抽出を行うかまたはキャッシュをとる
 BODY_ +='<td ';
     if (! isBlankLine){}
     if (current_frame<this.referenceXPS.xpsTracks[r].length){
 BODY_ += 'id=\"r_';
-BODY_ +=r.toString()+'_'+ current_frame.toString();
+BODY_ += r.toString()+'_'+ current_frame.toString();
+// BODY_ +=refLabelID.toString()+'_'+ current_frame.toString();
 BODY_ +='" ';
 BODY_ +='class="';
 BODY_ +=sC_border+cellClassExtention + ' ref';
@@ -2314,7 +2333,7 @@ BODY_ +='"';
 BODY_ +='class="';
 BODY_ +=sC_border+'_Blank';
 BODY_ +='"';
-};
+    };
 BODY_ +='>';
         if (current_frame>=this.referenceXPS.xpsTracks[r].length){
     BODY_+="<br>";
@@ -2329,7 +2348,7 @@ BODY_ +='>';
     };
         };
 BODY_ +='</td>';
-
+        refLabelID ++;
     };
 /*
     ダイアログタイムラインとその他のタイムラインの混在を許容することになるので
@@ -2438,8 +2457,12 @@ BODY_ +='</tr>';
     };
 
 BODY_ +='</tbody></table>';
-BODY_ +='';
-BODY_ +='';
+BODY_ +='\n';
+if(endMarker){
+    $("#endMarker").css
+BODY_ +='<span id=endMarker class=endMarker> : sheetEnd : ';
+BODY_ +='<br></span>';
+}
 BODY_ +='';
     this.Select=restoreValue;
     return BODY_;

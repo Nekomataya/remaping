@@ -254,6 +254,17 @@ th.framenotelabel {
 	border-width:0px 1px 3px 1px;
 /*	font-size:9pt;*/
 }
+/*
+	タイムシート記述終了マーカー
+*/
+.endMarker {
+	position:relative;
+	width:240px;
+	height:16px;
+	text-align:center;
+	border-style:solid;
+	border-width:2px 0px 2px 0px;
+}
 /*		テーブルデータ基本
 */
 /*	font-size:9pt;*/

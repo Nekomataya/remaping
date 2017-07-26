@@ -1259,8 +1259,9 @@ buildActionSheet =function(){
 	var bkPos=xUI.Select.join("_");//現在のカーソルを記録
 
 	for (var lix=1;lix<XPS.xpsTracks.length-1;lix++){
-		if(XPS.xpsTracks[lix].option=="timing"){
-			xUI.selectCell((lix+1)+"_0");
+		if(xUI.XPS.xpsTracks[lix].option=="timing"){
+//			xUI.selectCell((lix+1)+"_0");
+			xUI.selectCell(String(lix)+"_0");
 			clearTL();
 		}		　
 	}
