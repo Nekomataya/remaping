@@ -1,8 +1,9 @@
 ﻿/*	remaping.css											*/
 /*	りまぴん のためのスタイルシート							*/
 /*	このスタイルシートを変更してデザインを調整できます。	*/
+/*  プリント環境改善のために実寸系に置きかえ				*/
 /*	Nekomataya/kiyo 2016									*/
-/*															*/
+/*									*/
 
 /*========== タイムシート全体 ============*/
 /*		基本デザイン
@@ -279,7 +280,7 @@ td {
 	margin:0;
 	white-space: nowrap;
 	overflow:hidden;
-	font-size:10px;
+	font-size:2.9mm;
 }
 /*	font-size:11pt;*/
 

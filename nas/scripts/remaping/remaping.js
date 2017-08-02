@@ -1842,11 +1842,11 @@ xUI.pageView =function(pageNumber)
 if(this.viewMode=="Compact"){
 var Pages=1;//コンパクトモードでは固定
 var SheetRows=Math.ceil(this.XPS.duration()/this.XPS.framerate)*Math.ceil(this.XPS.framerate);
-var endMarker=true;// 継続時間終了時のエンドマーカー配置判定(必ず描画)
+var hasEndMarker=true;// 継続時間終了時のエンドマーカー配置判定(必ず描画)
 }else{
 var Pages=Math.ceil((this.XPS.duration()/this.XPS.framerate)/this.SheetLength);//総尺をページ秒数で割って切り上げ
 var SheetRows=Math.ceil(this.SheetLength/this.PageCols)*Math.ceil(this.XPS.framerate);
-var endMarker=false;// 継続時間終了時のエンドマーカー配置判定(初期値)
+var hasEndMarker=false;// 継続時間終了時のエンドマーカー配置判定(初期値)
 }
 /*
 (2010/11/06)
@@ -1996,7 +1996,7 @@ var tableBodyWidth=tableColumnWidth * this.PageCols +
 
 var PageCols=this.PageCols;
 var SheetLength=this.SheetLength
-if(pageNumber==(Pages-1)) endMarker=true;
+if(pageNumber==(Pages-1)) hasEndMarker=true;
 }
 
 /*
@@ -2458,11 +2458,10 @@ BODY_ +='</tr>';
 
 BODY_ +='</tbody></table>';
 BODY_ +='\n';
-if(endMarker){
-    $("#endMarker").css
-BODY_ +='<span id=endMarker class=endMarker> : sheetEnd : ';
-BODY_ +='<br></span>';
-}
+ if(hasEndMarker){    
+BODY_ +='<div id=endMarker class=endMarker><hl>';
+BODY_ +='<br></div>';
+ }
 BODY_ +='';
     this.Select=restoreValue;
     return BODY_;
@@ -5034,20 +5033,18 @@ xUI.resetSheet=function(editXps,referenceXps){
 //セルグラフィック初期化( = 画面クリア)
 //    this.Cgl.init();
 //タイムシートテーブルボディ幅の再計算
-    var tableBodyWidth=(
-        this.sheetLooks.TimeGuideWidth +
-        this.sheetLooks.ActionWidth * this.referenceLabels.length +
+    var tableRefereneceWidth =  this.sheetLooks.ActionWidth * this.referenceLabels.length;
+    var tableEditWidth = (
         this.sheetLooks.DialogWidth * this.dialogCount + 
-        this.sheetLooks.SheetCellWith * this.timingCount +
+        this.sheetLooks.SheetCellWidth * this.timingCount +
         this.sheetLooks.StillCellWidth * this.stillCount +
         this.sheetLooks.CameraCellWidth * this.cameraCount +
         this.sheetLooks.SfxCellWidth * this.sfxCount +
         this.sheetLooks.CommentWidth
     );//タイムシートの基礎トラック専有幅を算出
-    if(this.viewMode != "Compact"){
-        tableBodyWidth =
-            tableBodyWidth * this.PageCols +　(this.sheetLooks.ColumnSeparatorWidth * (this.PageCols-1) )
-    };//マルチカラムの場合、マージン付きでカラム数複製する
+    var tableColumnWidth=this.sheetLooks.TimeGuideWidth + tableRefereneceWidth + tableEditWidth;
+//if(this.viewMode != "Compact"){    };//マルチカラムの場合、マージン付きでカラム数複製する
+    var tableBodyWidth = tableColumnWidth * this.PageCols +　(this.sheetLooks.ColumnSeparatorWidth * (this.PageCols-1) );
 //  UI上メモとトランジション表示をシート表示と切り分けること 関連処理注意
     sync("memo");
 //  シートボディの表示
@@ -5071,7 +5068,7 @@ xUI.resetSheet=function(editXps,referenceXps){
             SheetBody+= this.pageView(Page);
         };
     }
-//シートボディを締める
+//　シートボディを締める
     document.getElementById("sheet_body").innerHTML=SheetBody+"<div class=\"screenSpace\"></div>";
 // グラフィックパーツを配置(setTimeoutで無名関数として非同期実行)
     window.setTimeout(function(){
@@ -5091,6 +5088,22 @@ xUI.resetSheet=function(editXps,referenceXps){
     sync("info_");
 /* ヘッダ高さの初期調整*/
     this.adjustSpacer();
+
+//エンドマーカー位置調整　endMarker
+    //配置を最終フレームのエレメント位置から取得(スペーサー調整)
+    //参照エレメントは　'#0_'+String(this.XPS.xpsTracks.duration-1)
+    //emdMarkerの親エレメントは #sheet_body
+    var markerWidth  = String(tableEditWidth);
+    var endOffset    =  $('#0_'+String(xUI.XPS.xpsTracks.duration-1)).offset();
+    var parentOffset = (appHost.platform=="AIR")?
+        {'top':0,'left':0} : $('#sheet_body').offset();
+    var markerTop    = (endOffset.top-parentOffset.top)+18 ;//シートセル1ラインの高さを設定する必要あり
+    var markerLeft   = endOffset.left-parentOffset.left; 
+   $(".endMarker").css({'top':markerTop,'left':markerLeft,'width':markerWidth });
+console.log(endOffset.top);
+console.log(parentOffset.top);
+console.log(markerTop);
+
 //画像部品の表示前のカーソル位置描画
     this.selectCell(restorePoint);
     this.selection(restoreSelection);
@@ -5383,7 +5396,7 @@ if(startupXPS.length > 0){
 /**
     シートのカラーデータを構築
 */
-    console.log(SheetLooks);
+console.log(SheetLooks);
     xUI.setSheetLook(SheetLooks);//タイムシートルック初期化
     xUI.resetSheet();
     nas_Rmp_Init();

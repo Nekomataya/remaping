@@ -270,12 +270,15 @@ th.framenotelabel {
 	タイムシート記述終了マーカー
 */
 .endMarker {
-	position:relative;
+	display:inline-block;
+	position:absolute;
 	width:240px;
-	height:16px;
+	height:8px;
 	text-align:center;
 	border-style:solid;
 	border-width:2px 0px 2px 0px;
+	z-index:999;
+
 }
 /*		テーブルデータ基本
 */
