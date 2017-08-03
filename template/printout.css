@@ -3,7 +3,7 @@
 /*	このスタイルシートを変更してデザインを調整できます。	*/
 /*  プリント環境改善のために実寸系に置きかえ				*/
 /*	Nekomataya/kiyo 2016									*/
-/*									*/
+/*	想定用紙サイズは JIS/ISO A3								*/
 
 /*========== タイムシート全体 ============*/
 /*		基本デザイン
@@ -11,8 +11,8 @@
 	ユーザ選択は基本的に禁止
 */
 body {
-	margin:0px 100px 4px 0px;
-	padding:0px 16px 0px 0px ;
+	margin:0 10mm 0 10mm;
+	padding:0 5mm 0 0 ;
 	overflow:scroll;
 	background-color:white;
 	user-select:none;
@@ -87,25 +87,25 @@ iframe.UIhidden {
 	border-color:#bbbbbb;
 */
 table {
-	margin:0px 0px 0px 0px;
-	padding:0px 0px 0px 16px;
-	border-width:2px 1px 0px 0px;
-	border-style:solid;
+	margin:0 0 0 0;
+	padding:0 0 0 0;
+	border-width:0;
+	border-style:none;
 	table-layout:fixed;
 	max-height:100%;
 }
 table.UItable{
-	margin:0px 0px 0px 0px;
-	padding:0px 0px 0px 0px;
-	border-width:2px 1px 0px 0px;
+	margin:0 0 0 0;
+	padding:0 0 0 0;
+	border-width:2px 1px 0 0;
 	border-style:solid;
 	table-layout:fixed;
 }
 
 table.info	{
-	width:97%;
-	height:10px;
-	border-width:0px;
+	width:260mm;
+	height:36mm;
+	border-width:0;
 	table-layout:fixed;
 }
 table.sheet	{
@@ -119,32 +119,35 @@ table.toolbox {
 /*
 		テーブル要素
 	border-color:#bbbbbb;
+	基準高さはth全体で設定
 */
 th {
 	text-align:center;
 	border-style:solid;
-	border-width:4px 1px 1px 0px;
+	border-width:4px 1px 1px 0;
 }
-
 /*
 	シートヘッダビュー設定
 */
 td#edchg {width:6em;}
-th.opusLabel{width:4em;}
-th.titleLabel{width:18em;}
-th.scenecutLabel{width:8em;}
-th.subtitleLabel{width:8em;}
-th.timeLabel{width:12em;}
-th.nameLabel{width:8em;}
-th.pageLabel{width:8em;}
+th.opusLabel{text-align:left;border-width:0 0 4px 0;width:20mm;}
+th.titleLabel{text-align:left;border-width:0 0 4px 0;width:80mm;}
+th.scenecutLabel{text-align:left;border-width:0 0 4px 0;width:40mm;}
+th.subtitleLabel{text-align:left;border-width:0 0 4px 0;width:80mm;}
+th.timeLabel{text-align:left;border-width:0 0 4px 0;width:50mm;}
+th.nameLabel{text-align:left;border-width:0 0 4px 0;width:35mm;}
+th.pageLabel{text-align:left;border-width:0 0 4px 0;width:35mm;}
 
 /*
 	シート本体のビュー設定
 	時間スケール
 */
+.tlheade {
+	height:1px;
+}
 th.tcSpan {
-	border-width:1px 1px 0px 1px;
-	width:3em;
+	border-width:1px 1px 0 1px;
+	width:8mm;
 }
 /*
 	
@@ -153,7 +156,7 @@ th.timelabel{
 	color:gray;
 	text-align:center;
 	border-style:solid;
-	border-width:0px 1px 3px 1px;
+	border-width:0 1px 3px 1px;
 	}
 
 /*		リファレンス
@@ -161,25 +164,25 @@ th.timelabel{
 
 */
 th.referenceSpan {
-	border-width:4px 1px 1px 0px;
-	width:2em;
+	border-width:4px 1px 1px 0;
+	width:4.5mm;
 }
 th.layerlabelR {
 	text-align:center;
 	border-style:solid;
-	border-width:3px 1px 3px 0px;
+	border-width:3px 1px 3px 0;
 	font-size:9pt;
 }
 /*		ダイアログ
 */
 th.dialogSpan {
-	border-width:1px 1px 0px 0px;
-	width:3em;
+	border-width:1px 1px 0 0;
+	width:10mm;
 }
 th.dialoglabel {
 	text-align:center;
 	border-style:solid;
-	border-width:0px 1px 3px 0px;
+	border-width:0 1px 3px 0;
 /*	font-size:9pt;*/
 }
 
@@ -187,57 +190,57 @@ th.dialoglabel {
 dialog/still/timing/sfx/camera
 */
 th.editSpan {
-	border-width:1px 0px 0px 0px;
-	width:3em;
+	border-width:1px 0 0 0;
+	width:6mm;
 }
 th.layerlabel {
 	text-align:center;
 	border-style:solid;
-	border-width:3px 1px 3px 0px;
+	border-width:3px 1px 3px 0;
 /*	font-size:9pt;*/
 }
 
 //still
 th.stillSpan {
-	border-width:1px 0px 0px 0px;
+	border-width:1px 0 0 0;
 }
 th.stilllabel {
 	text-align:center;
 	border-style:solid;
-	border-width:1px 1px 3px 0px;
+	border-width:1px 1px 3px 0;
 /*	font-size:9pt;*/
 }
 //timing
 th.timingSpan {
-	border-width:1px 0px 0px 0px;
-	width:3em;
+	border-width:1px 0 0 0;
+	width:6mm;
 }
 /*	font-size:9pt;*/
 th.timinglabel {
 	text-align:center;
 	border-style:solid;
-	border-width:1px 1px 3px 0px;
+	border-width:1px 1px 3px 0;
 }
 //sfx
 th.sfxSpan {
-	border-width:1px 0px 0px 0px;
-	width:3em;
+	border-width:1px 0 0 0;
+	width:6mm;
 }
 th.sfxlabel {
 	text-align:center;
 	border-style:solid;
-	border-width:1px 1px 3px 0px;
+	border-width:1px 1px 3px 0;
 /*	font-size:9pt;*/
 }
 //camera
 th.cameraSpan {
-	border-width:1px 0px 0px 0px;
-	width:4em;
+	border-width:1px 0 0 0;
+	width:8mm;
 }
 th.cameralabel {
 	text-align:center;
 	border-style:solid;
-	border-width:1px 1px 3px 0px;
+	border-width:1px 1px 3px 0;
 /*	font-size:9pt;*/
 }
 
@@ -246,26 +249,57 @@ th.cameralabel {
 	このエレメントは幅指定無し
 */
 th.framenoteSpan {
-	border-width:1px 1px 0px 0px;
+	border-width:1px 1px 0 0;
 }
 /*	font-size:9pt;*/
 th.framenotelabel {
 	text-align:center;
 	border-style:solid;
-	border-width:0px 1px 3px 1px;
+	border-width:0 1px 3px 1px;
 /*	font-size:9pt;*/
 }
 /*
-	タイムシート記述終了マーカー
+	ページ印刷用トレーラー
 */
-.endMarker {
-	position:relative;
-	width:240px;
-	height:16px;
-	text-align:center;
-	border-style:solid;
-	border-width:2px 0px 2px 0px;
+.printPage {
+	page-break-before:always;
+	page-break-inside:avoid;
 }
+/*
+	タイムシート記述終了マーカー
+
+.endMarker {
+	page-break-before:avoid;
+	page-break-before:avoid;
+	display:inline-block;
+	position:none;
+	width:100mm;
+	height:4mm;
+	margin:1mm 0 0 0;
+	text-align:center;
+	border-top-style:double;	
+	border-width:1px 0 0 0;
+	z-index:4;
+} 
+.endMarker-print {
+	page-break-before:avoid;
+	page-break-after:avoid;
+	display:inline-block;
+}*/
+.endMarker {
+	page-break-before:avoid;
+	page-break-before:avoid;
+	display:inline-block;
+	position:relative;
+	width:100mm;
+	height:4mm;
+	margin:1mm 0 0 0;
+	text-align:center;
+	border-top-style:double;	
+	border-width:4px 0 0 0;
+	z-index:9;
+}
+/**/
 /*		テーブルデータ基本
 */
 /*	font-size:9pt;*/
@@ -275,12 +309,13 @@ td {
 	text-align:center;
 	vertical-align:middle;
 	border-style:solid;
-	border-width:0px 1px 1px 0px;
+	border-width:0 1px 1px 0;
 	padding:0;
 	margin:0;
 	white-space: nowrap;
 	overflow:hidden;
-	font-size:2.9mm;
+	font-size:8pt;
+	height:16px
 }
 /*	font-size:11pt;*/
 
@@ -370,7 +405,7 @@ button.iconButton:disabled {
 	background-color:#b0b0b0;
 }
 
-/*	icon offsert positioning 27x27*/
+/*	icon offset positioning 27x27*/
 
 .iconButton-blank { background-position: 27px 27px; }
 
@@ -667,7 +702,7 @@ button.iconButton:disabled {
 
 
 /*一文字用ボタン*/
-button.oneChr {width:1.5em;margin:0px;padding:0px;}
+button.oneChr {width:1.5em;margin:0;padding:0;}
 /*		UI　AEキー　コンバートスイッチ
 */
 input.aekConvert {
@@ -746,17 +781,17 @@ button.spinCtl {
 button.spinCtl-top {
 	left:-22px;top:-5px;
    /* 角丸 */
-    -moz-border-radius: 4px 4px 0px 0px;
-    -webkit-border-radius: 4px 4px 0px 0px;
-    border-radius: 4px 4px 0px 0px;
+    -moz-border-radius: 4px 4px 0 0;
+    -webkit-border-radius: 4px 4px 0 0;
+    border-radius: 4px 4px 0 0;
 }
 button.spinCtl-bottom {
 	left:-22px;top:6px;
 	margin: 0;
    /* 角丸 */
-    -moz-border-radius: 0px 0px 4px 4px ;
-    -webkit-border-radius: 0px 0px 4px 4px;
-    border-radius: 0px 0px 4px 4px;
+    -moz-border-radius: 0 0 4px 4px ;
+    -webkit-border-radius: 0 0 4px 4px;
+    border-radius: 0 0 4px 4px;
 
 }
 
@@ -764,7 +799,7 @@ button.spinCtl-bottom {
  * .timeControplButton
  */
 .timeControl {
-	margin: 2px 62px 2px 0px;
+	margin: 2px 62px 2px 0;
 }
 button.subControl {
 	margin: 0;
@@ -832,19 +867,31 @@ button.subControl {
  }
  
  /*========== ページヘッダーテーブル ============*/
-.pageHeader {
-	display:inline;
+table.pageHeader {
 	width:100%;
+	height:18mm;
+	margin:0;
+	border-style:solid;
+	border-width:1px 1px 1px 1px;
+	border-color:gray;
 }
-/*====スクロールスペーサーとしてブロックを確保する
- */
+td.pgHeader {
+	height:10mm;
+	margin:0;
+	border-width:0;
+	border-style:none;
+}
 /*========== シートヘッダーテーブル ============
 	スクロールスペーサーを兼用をやめて分離
- */
-.sheetHeader {
+*/
+table.sheetHeader {
 	width:100%;
+	height:18mm;
+	margin:0;
+	border-style:solid;
+	border-width:1px 1px 1px 1px;
+	border-color:gray;
 }
-
 /*	ツールボックスの部品*/
 input.toolTip	{
 /*	font-size:8pt;
@@ -880,15 +927,15 @@ div.optionPanelFloat{
 	border-style:solid;
 	vertical-align:bottom;
 /*	font-size:4pt;*/
-		border-width:0px 1px 3px 1px;
+		border-width:0 1px 3px 1px;
 }
 /*		通常データ*/
 .ntSep,.ntSep_Blank {
-		border-width:0px 1px 3px 0px;
+		border-width:0 1px 3px 0;
 }
 /*		ダイアログ*/
-.,._Blank {
-		border-width:0px 1px 3px 0px;
+.dtSep,.dtSep_Blank {
+		border-width:0 1px 3px 0;
 }
 
 /*サブセパレータライン*/
@@ -899,15 +946,15 @@ div.optionPanelFloat{
 	border-style:solid;
 	vertical-align:bottom;
 /*	font-size:6pt;*/
-		border-width:0px 1px 2px 1px;
+		border-width:0 1px 2px 1px;
 }
 /*		通常データ*/
 .nsSep,.nsSep_Blank {
-		border-width:0px 1px 2px 0px;
+		border-width:0 1px 2px 0;
 }
 /*		ダイアログ*/
 .dsSep,.dsSep_Blank {
-		border-width:0px 1px 0px 0px;
+		border-width:0 1px 0 0;
 }
 
 /*通常ライン*/
@@ -918,7 +965,7 @@ div.optionPanelFloat{
 	border-style:solid;
 	vertical-align:bottom;
 /*font-size:12pt;*/
-	border-width:0px 1px 1px 1px;
+	border-width:0 1px 1px 1px;
 	height:5px;
 }
 /*		参照データ*/
@@ -926,30 +973,30 @@ div.optionPanelFloat{
 		color:gray;
 }
 .rnSep,.rnSep_Blank {
-			border-width:0px 1px 1px 0px;
+			border-width:0 1px 1px 0;
 			color:gray;
 }
 th.rnArea{
 		color:gray;
-		border-width:2px 1px 0px 0px;
+		border-width:2px 1px 0 0;
 		width:144px;
 }
 /*		通常データ*/
 .nnSep,.nnSep_Blank {
-			border-width:0px 1px 1px 0px;
+			border-width:0 1px 1px 0;
 }
 
 
 
 th.editArea {
-		border-width:2px 1px 0px 0px;
+		border-width:2px 1px 0 0;
 }
 /*		ダイアログ*/
 .dnSep,.dnSep_Blank {
-		border-width:0px 1px 0px 0px;
+		border-width:0 1px 0 0;
 }
 .dialoglabel {
-		border-width:0px 1px 0px 0px;
+		border-width:0 1px 0 0;
 		width:36px;
 }
 /*	カラムセパレータ	*/
@@ -961,15 +1008,15 @@ td.colSep {
 /*エンドセパレータ（未使用）*/
 /*		左端*/
 .leSep,.leSep_Blank {
-		border-width:0px 1px 4px 1px;
+		border-width:0 1px 4px 1px;
 }
 /*		通常データ*/
 .neSep,.neSep_Blank {
-		border-width:0px 1px 4px 0px;
+		border-width:0 1px 4px 0;
 }
 /*		ダイアログ*/
 .deSep,.deSep_Blank {
-		border-width:0px 1px 4px 0px;
+		border-width:0 1px 4px 0;
 }
 /*	時間表示	*/
 .timeguide {
@@ -1004,9 +1051,7 @@ td.colSep {
 	width:100%;
 	height:4.5cm;
 }
-.pageBreak {
-		page-break-before:always;
-}
+
 /*form view*/
 
 input	{text-align:center;}
@@ -1024,8 +1069,8 @@ select	{text-align:center;}
 	*/
 
 /*タイムシートの文字飾り (例)*/
-.v_bar	{color:blue;border-style:solid;border-color:blue;border-width:0px 1px 0px 0px;padding:0;margin:0;}
-/*.v_bar	{ height:40px;font-size:9pt;color:blue;border-style:solid;border-color:blue;border-width:0px 1px 0px 0px;padding:0;margin:0;}
+.v_bar	{color:blue;border-style:solid;border-color:blue;border-width:0 1px 0 0;padding:0;margin:0;}
+/*.v_bar	{ height:40px;font-size:9pt;color:blue;border-style:solid;border-color:blue;border-width:0 1px 0 0;padding:0;margin:0;}
 /* .v_wave	{ height:12pt;padding:0;margin:0;}  background-image:url(./images/ui/waveline16px.png);*/
 .v_wave	{ height:11px;padding:0;margin:0;}
 line  {margin:0;padding:0;}
@@ -1046,8 +1091,8 @@ td#scene_cut {
 div.application_status {
 	z-index:88;
 	border-style:solid;
-	border-width:0px 0px 1px 0px;
-	padding:0px 0px 0px 16px 
+	border-width:0 0 1px 0;
+	padding:0 0 0 16px 
 }
 /*	オプションパネル
 */

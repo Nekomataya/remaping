@@ -153,6 +153,12 @@ th.pageLabel{width:8em;}
 	シート本体のビュー設定
 	時間スケール
 */
+tr.tlheade {
+	height:1px;
+}
+th.tlheade {
+	height:1px;
+}
 th.tcSpan {
 	border-width:1px 1px 0px 1px;
 	width:3em;
@@ -267,19 +273,32 @@ th.framenotelabel {
 /*	font-size:9pt;*/
 }
 /*
+	ページ印刷用トレーラー
+*/
+div.printPage {
+	page-break-inside:avoid;
+}
+/*
 	タイムシート記述終了マーカー
 */
 .endMarker {
+	page-break-before:avoid;
+	page-break-after:avoid;
 	display:inline-block;
-	position:absolute;
+	position:relative;
 	width:240px;
 	height:8px;
 	text-align:center;
-	border-style:solid;
-	border-width:2px 0px 2px 0px;
-	z-index:999;
-
+	border-top-style:double;
+	border-width:6px 0 0 0;
+	z-index:9;
 }
+.endMarker-print {
+	page-break-before:avoid;
+	page-break-after:avoid;
+	display:none;
+}
+
 /*		テーブルデータ基本
 */
 /*
@@ -297,6 +316,7 @@ td {
 	white-space: nowrap;
 	overflow:hidden;
 	font-size:10px;
+	height:16px
 }
 /*	font-size:11pt;*/
 
@@ -386,7 +406,7 @@ button.iconButton:disabled {
 	background-color:#b0b0b0;
 }
 
-/*	icon offsert positioning 27x27*/
+/*	icon offset positioning 27x27*/
 
 .iconButton-blank { background-position: 27px 27px; }
 
@@ -875,15 +895,15 @@ button.subControl {
  }
  
  /*========== ページヘッダーテーブル ============*/
-.pageHeader {
+table.pageHeader {
 	display:none;
 }
 /*====スクロールスペーサーとしてブロックを確保する
  */
 /*========== シートヘッダーテーブル ============
 	スクロールスペーサーを兼用をやめて分離
- */
-.sheetHeader {
+*/
+table.sheetHeader {
 	display:none;
 }
 
@@ -930,7 +950,7 @@ div.optionPanelFloat{
 		border-width:0px 1px 3px 0px;
 }
 /*		ダイアログ*/
-.,._Blank {
+.dtSep,.dtSep_Blank {
 		border-width:0px 1px 3px 0px;
 }
 
@@ -1076,9 +1096,7 @@ td.colSep {
 .printSpace {
 	display:none;
 }
-.pageBreak {
-	display:none;
-}
+
 /*form view*/
 
 input	{text-align:center;}

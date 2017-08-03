@@ -1753,13 +1753,14 @@ var Pages=(this.viewMode=="Compact")? 1:Math.ceil(this.XPS.duration()/this.PageL
 var    _BODY ='';
 //----印字用ページヘッダ・第一ページのみシートヘッダ---//
 if(pageNumber>1){
-    _BODY+='<div class="pageBreak"> </div>';
+//    _BODY+='<div class="pageBreak"> </div>';
     _BODY+='<br><table class=pageHeader>';
 }else{
     _BODY+='<table class=sheetHeader>';
 };
 //　ページヘッダとシートヘッダの共通表示
-    _BODY+='<tr><th class=opusLabel>No.</th><th class=titleLabel>TITLE</th><th class=scenecutLabel>S-C</th><th class=timeLabel>TIME</th><th class=nameLabel>name</th><th class=pageLabel>page</th></tr>';
+//    _BODY+='<tr><th class=opusLabel>No.</th><th class=titleLabel>TITLE</th><th class=scenecutLabel>S-C</th><th class=timeLabel>TIME</th><th class=nameLabel>name</th><th class=pageLabel>page</th></tr>';
+
     _BODY+='<tr>';
     _BODY+='<td class=pgHeader id="opus'+pageNumber+'">'+this.XPS.opus+'</td>';
     _BODY+='<td class=pgHeader id="title'+pageNumber+'">'+this.XPS.title+this.XPS.subtitle+'</td>';
@@ -1774,6 +1775,8 @@ if(pageNumber==Pages){
     _BODY+='<td class=pgHeader >'+pageNumber+' / '+Pages+'</td>';
 };
     _BODY+='</tr>';
+
+    _BODY+='<tr><th class=opusLabel>No.</th><th class=titleLabel>TITLE</th><th class=scenecutLabel>S-C</th><th class=timeLabel>TIME</th><th class=nameLabel>name</th><th class=pageLabel>page</th></tr>';
 //ページヘッダを閉じる
     _BODY+='</table>';
 
@@ -2027,11 +2030,11 @@ BODY_ +='<tbody>';
     第一行目
     UI上は、イベント受信を担当するのは最も上に表示されるエレメント
 */
-BODY_ +='<tr class=tlheade style="height:2px;" >';
+BODY_ +='<tr class=tlheade>';
 //*==============================ページカラムループ処理
     for (cols=0;cols < PageCols;cols ++){
 /*********** timeguide ********************/
-BODY_ +='<th class=tcSpan';
+BODY_ +='<th class="tcSpan tlhaed"';
 BODY_ +=' ></th>';
 
 if((this.viewMode!="Compact")&&(pageNumber<=-2)){break;
@@ -2040,7 +2043,7 @@ if((this.viewMode!="Compact")&&(pageNumber<=-2)){break;
 /*********** Action Ref *************/
 //=====================参照エリア
         for (r=0;r<this.referenceLabels.length;r++){
-BODY_ +='<th class="referenceSpan" ';
+BODY_ +='<th class="referenceSpan tlhaed" ';
 BODY_ +='> </th>';
         };
 
@@ -2054,7 +2057,7 @@ BODY_ +='> </th>';
 //=====================編集セル本体の固定部分のみをタイムライン種別に合わせて配置(ラベル部分)
 if(true){
         for (var r=0;r<(xUI.dialogSpan);r++){
-    BODY_ +='<th class=dialogSpan  id="TL'+(r+1)+'" ></th>';
+    BODY_ +='<th class="dialogSpan tlhaed"  id="TL'+(r+1)+'" ></th>';
         }
 }else{
         for (var r=0;r<this.XPS.xpsTracks.length;r++){
@@ -2062,7 +2065,7 @@ if(true){
  switch (this.XPS.xpsTracks[r].option)
  {
 case "dialog":
-    BODY_ +='<th class=dialogSpan ';
+    BODY_ +='<th class="dialogSpan tlhaed" ';
     BODY_ +=' id="TL'+ r +'"';
     BODY_ +=' >';
     BODY_ +='</th>';
@@ -2085,12 +2088,12 @@ default:
             //末尾レコードはコメント固定なので判定せず（レコード長から1減算）　
  switch (this.XPS.xpsTracks[r].option)
  {
-case "dialog":BODY_ +='<th class=dialogSpan ';break;
-case "still":BODY_ +='<th class=stillSpan ';break;
-case "sfx":BODY_ +='<th class=sfxSpan ';break;
-case "camera":BODY_ +='<th class=cameraSpan ';break;
+case "dialog":BODY_ +='<th class="dialogSpan tlhaed" ';break;
+case "still":BODY_ +='<th class="stillSpan tlhaed" ';break;
+case "sfx":BODY_ +='<th class="sfxSpan tlhaed" ';break;
+case "camera":BODY_ +='<th class="cameraSpan tlhaed" ';break;
 case "timing":
-default:BODY_ +='<th class=timingSpan ';
+default:BODY_ +='<th class="timingSpan tlhaed" ';
  }
 
 BODY_ +=' id="TL'+(r+1)+'"';
@@ -2098,10 +2101,10 @@ BODY_ +=' > ';
 BODY_ +='</th>';
         };
 /*********** FrameNote Area *************/
-BODY_ +='<th class=framenoteSpan';
+BODY_ +='<th class="framenoteSpan tlhaed"';
 BODY_ +=' ></th>';
 //カラムセパレータの空セル挿入
-if (cols < PageCols-1) BODY_ +=('<td class=colSep ></td>');
+if (cols < PageCols-1) BODY_ +=('<td class="colSep tlhaed" ></td>');
     };
 
     }
@@ -2458,10 +2461,12 @@ BODY_ +='</tr>';
 
 BODY_ +='</tbody></table>';
 BODY_ +='\n';
- if(hasEndMarker){    
-BODY_ +='<div id=endMarker class=endMarker><hl>';
+if(hasEndMarker){    
+BODY_ +='<div id=endMarker class=endMarker>:: end ::';
 BODY_ +='<br></div>';
- }
+//BODY_ +='<div id=endMarker-print class=endMarker-print>::print-end::';
+//BODY_ +='<br></div>';
+ };// */
 BODY_ +='';
     this.Select=restoreValue;
     return BODY_;
@@ -5055,17 +5060,21 @@ xUI.resetSheet=function(editXps,referenceXps){
         document.getElementById("UIheaderScrollV").innerHTML=this.pageView(-2);
         document.getElementById("UIheader").style.display="inline";
 //コンパクトUI時は1ページ限定なのでボディ出力を１回だけ行う
-        var SheetBody= this.headerView(1);
-        SheetBody+= '<br>';//UI調整用に１行（ステータス行の分）
-        SheetBody+= this.pageView(1);
+        var SheetBody = '<div id=printPg1 class=printPage>';
+        SheetBody += this.headerView(1);
+        SheetBody += '<br>';//UI調整用に１行（ステータス行の分）
+        SheetBody += this.pageView(1);
+        SheetBody += '</div>';
     }else{
 //ノーマルモード　コンパクトUI用のラベルヘッダーを隠す
         document.getElementById("UIheader").style.display="none";
         var SheetBody='';
         for (Page=1 ;Page <=Math.ceil(XPS.duration()/this.PageLength);Page++){
-            SheetBody+= this.headerView(Page);
-            SheetBody+= ' <span class=pgNm>( p '+nas.Zf(Page,3)+' )</span><br>';
-            SheetBody+= this.pageView(Page);
+            SheetBody += '<div id=printPg'+String(Page) +' class=printPage>';
+            SheetBody += this.headerView(Page);
+            SheetBody += ' <span class=pgNm>( p '+nas.Zf(Page,3)+' )</span><br>';
+            SheetBody += this.pageView(Page);
+            SheetBody += '</div>';
         };
     }
 //　シートボディを締める
@@ -5093,18 +5102,24 @@ xUI.resetSheet=function(editXps,referenceXps){
     //配置を最終フレームのエレメント位置から取得(スペーサー調整)
     //参照エレメントは　'#0_'+String(this.XPS.xpsTracks.duration-1)
     //emdMarkerの親エレメントは #sheet_body
-    var markerWidth  = String(tableEditWidth);
-    var endOffset    =  $('#0_'+String(xUI.XPS.xpsTracks.duration-1)).offset();
-    var parentOffset = (appHost.platform=="AIR")?
-        {'top':0,'left':0} : $('#sheet_body').offset();
-    var markerTop    = (endOffset.top-parentOffset.top)+18 ;//シートセル1ラインの高さを設定する必要あり
-    var markerLeft   = endOffset.left-parentOffset.left; 
-   $(".endMarker").css({'top':markerTop,'left':markerLeft,'width':markerWidth });
-console.log(endOffset.top);
-console.log(parentOffset.top);
+    var markerWidth = String(tableEditWidth);
+    var endCell     = document.getElementById('0_'+String(xUI.XPS.xpsTracks.duration-1));
+    var parentSheet = document.getElementById('endMarker').parentNode;
+    console.log(parentSheet);
+    var endCellRect = endCell.getBoundingClientRect();
+    
+    var parentRect  = parentSheet.getBoundingClientRect();
+//    window.pageXOffset
+//    window.pageYOffset
+    var markerTop    = (endCellRect.bottom-parentRect.bottom+24) ;//シートセルの下端で計算endCellRect.bottom + window.pageYOffset;//
+    var markerLeft   = endCellRect.left-parentRect.left; 
+   $("#endMarker").css({'top':markerTop,'left':markerLeft,'width':markerWidth });
+//   $("#endMarker-print").css({'top':markerTop*1.065,'left':markerLeft });
+console.log(endCellRect.top);
+console.log(parentRect.top);
 console.log(markerTop);
 
-//画像部品の表示前のカーソル位置描画
+//画像部品の表示前のカーソル位置描画,'width':markerWidth
     this.selectCell(restorePoint);
     this.selection(restoreSelection);
 //セクション編集状態であれば解除
