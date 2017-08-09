@@ -226,6 +226,47 @@ XpsJob.prototype.toString=function(){
     return [this.name,this.id].join(':');
 }
 */
+/*
+    JobStatus
+    Jobの状況（＝カットの作業状態）
+    content:作業状態を示すキーワード　　Startup/Active/Hold/Fixed/Aborted
+初期値は"Startup"
+    assign:アクティブまたは中断状態でない作業が持つ次作業者の指名UIDまたは文字列（特にチェックはない）
+初期値は長さ0の文字列
+    message:次の作業に対する申し送りテキスト
+初期値は長さ0の文字列
+
+初期化引数はステータス識別子　または 配列[content,assign,message]いずれか
+
+*/
+function JobStatus (statusArg){
+    this.content = "Startup" ;
+    this.assign  = "";
+    this.message = "";
+    if (statusArg instanceof Array){
+        var prpArray = statusArg;
+        if(prpArray.length){
+          this.content =prpArray[0];
+          this.assign  =(prpArray.length > 1)? (prpArray[1]):"";
+          this.message =(prpArray.length > 2)? (prpArray.splice(2).join(':')):"";
+        }
+    }else{
+        var prpArray = statusArg.split(':');
+        if(prpArray.length){
+          this.content =prpArray[0];
+          this.assign  =(prpArray.length > 1)? decodeURIComponent(prpArray[1]):"";
+          this.message =(prpArray.length > 2)? decodeURIComponent(prpArray.splice(2).join(':')):"";
+        }
+    }
+}
+JobStatus.prototype.toString=function(opt){
+    if(opt){
+     return [this.content,encodeURIComponent(this.assign),encodeURIComponent(this.message)].join(':');
+    }else{
+     return this.content;   
+    }
+}
+
 /**
  * タイムライントラックの標準値を取得するメソッド
  *  タイムラインラベルが指定するグループがあらかじめ存在する場合は、そのグループオブジェクトが保持する値
@@ -1062,7 +1103,8 @@ if(dbg)    console.log(trackSpec);
     this.line  = new XpsLine("(本線):0");
     this.stage = new XpsStage("layout:0");
     this.job   = new XpsStage('init:0');
-    this.currentStatus = 'Startup';
+//    this.currentStatus = 'Startup';//old
+    this.currentStatus = new JobStatus('Startup');//new
     /**
      * オブジェクトでないほうが良いかも　＞　line/stage/job のオブジェクトに変更予定
      * ファイルパスでなく参照オブジェクトに変更予定　オブジェクト側に参照可能なパスがあるものとする
@@ -1946,6 +1988,7 @@ Xps.prototype.parseXps = function (datastream) {
      * 時間プロパティ欠落時のために初期値設定
      * @type {*[]}
      */
+     var readMessage=false;
 //		SrcData.time="6+0";
     SrcData.trin = [0, "trin"];
     SrcData.trout = [0, "trout"];
@@ -1960,6 +2003,18 @@ Xps.prototype.parseXps = function (datastream) {
                 SrcData[line] = SrcData[line].slice(0, -1);
         }
         //なぜだかナゾなぜに一文字多いのか?
+        /**
+         * 申し送り取得フラグが立っていれば　コメントと他の有効記述以外をメッセージに加算
+         * 終了サインまたは他の有効記述で取得終了
+         */
+        if(readMessage){
+            if(SrcData[line].match(/^#\[|^\[.*|^\#\#([A-Z].*)=(.*)$/)){
+                readMessage=false;
+            }else{
+                if(! (SrcData[line].match(/^\#.*/))) SrcData.currentStatus.message+="\n"+SrcData[line];
+            }
+            continue;
+        }
         /**
          *  シートプロパティにマッチ
          */
@@ -2025,6 +2080,23 @@ Xps.prototype.parseXps = function (datastream) {
                 　case   "Job":;
                 　   SrcData[props[nAme]] = (vAlue)?
                 　       new XpsStage(vAlue):new XpsStage("0:"+nas.Pm.jobNames[0]);
+                　  break;
+                　  /**
+                　   *   ステータス関連
+                　   *    指名情報及び申し送りはステータスのサブプロパティとして扱う
+                　   *    ステータスがない場合は無視する
+                　   */
+                　case   "CurrentStatus":;
+                　   SrcData.currentStatus = new JobStatus(vAlue);
+                　  break;
+                　case   "JobAssign":;
+                　   if(SrcData.currentStatus) SrcData.currentStatus.assign = vAlue;
+                　  break;
+                　case   "Message":;
+                　               //messageは複数行にわたるので読み出しルーチンが必要
+                　   if(SrcData.currentStatus) SrcData.currentStatus.message = vAlue;
+                                //申し送りメッセージ取得フラグを立てて次のループに入る
+                     readMessage=true;continue;
                 　  break;
                 default:
                     /**
@@ -2356,7 +2428,11 @@ Xps.prototype.toString = function () {
     result += '\n##Line='+this.line.toString();
     result += '\n##Stage='+this.stage.toString();
     result += '\n##Job='+this.job.toString();
-    result += '\n##CurrentStatus='+this.currentStatus;
+    result += '\n##CurrentStatus='+this.currentStatus.toString();
+if((this.currentStatus.assign)&&(this.currentStatus.assign.length))
+    result += '\n##JobAssign='+this.currentStatus.assign;
+if((this.currentStatus.message)&&(this.currentStatus.message.length))
+    result += '\n##Message='+this.currentStatus.message;
 //result+='\n##FOCUS='	+11//
 //result+='\n##SPIN='	+S3//
 //result+='\n##BLANK_SWITCH='	+File//
@@ -2450,7 +2526,7 @@ Xps.prototype.toString = function () {
  * @returns {boolean}
  */
 Xps.prototype.isSame = function (targetXps) {
-    var rejectRegEx = new RegExp("errorCode|errorMsg|mapfile|create_time|create_user|update_time|update_user|layers|xpsTracks|memo|line|stage|job|currentStatus");
+    var rejectRegEx = new RegExp("errorCode|errorMsg|mapfile|create_time|create_user|update_time|update_user|layers|xpsTracks|memo|line|stage|job|currentStatus|JobAssign|Message");
     /**
      * プロパティリスト
      */
@@ -2578,7 +2654,7 @@ Xps.getIdentifier=function(myXps){
             encodeURIComponent(myXps.line.toString(true)),
             encodeURIComponent(myXps.stage.toString(true)),
             encodeURIComponent(myXps.job.toString(true)),
-            encodeURIComponent(myXps.currentStatus)
+            myXps.currentStatus.toString(true)
     ].join("//");
 //識別子を作成してネットワークリポジトリに送信する　正常に追加・更新ができた場合はローカルリストの更新を行う（コールバックで）
     return myIdentifier;
@@ -2596,7 +2672,7 @@ Xps.getIdentifier=function(myXps){
                 4   :job match
                 5   :status match
 
-                
+ステータス情報のうちassign/messageの比較は行わない　ステータス自体の比較もほぼ利用されないので省略を検討
 */
 Xps.compareIdentifier =function (target,destination){
     var tgtInfo  = Xps.parseIdentifier(target);
@@ -2620,14 +2696,14 @@ Xps.compareIdentifier =function (target,destination){
             result = 3;}else{return result;}
         if (((tgtInfo.job)&&(destInfo.job))&&(tgtInfo.job.id  == destInfo.job.id )){
             result = 4;}else{return result;}
-        if ((tgtInfo.currentStatus)&&(destInfo.currentStatus)&&(tgtInfo.currentStatus == destInfo.currentStatus)) result = 5;
+        if ((tgtInfo.currentStatus)&&(destInfo.currentStatus)&&(tgtInfo.currentStatus.content == destInfo.currentStatus.content)) result = 5;
         return result;
 }
 /*  TEST
 var A =[
     "うなぎ",0,"ニョロ",
     "","12","2+0",
-    "0:(本線)","1:原画","2:演出チェック","Startup"
+    "0:(本線)","1:原画","2:演出チェック","Startup:kiyo@nekomataya.info:TEST"
     ];
 var B =[
     "うなぎ",0,"ニョロ",
@@ -2661,6 +2737,10 @@ console.log(Xps.compareIdentifier(Xps.stringifyIdf(A),Xps.stringifyIdf(B)))
             .id
             .name
     status
+        JobStatus
+            .content
+            .assign
+            .message
 */
 /**
     プロダクト識別子をパースして返す
@@ -2747,7 +2827,7 @@ Xps.stringifyIdf = function(myData){
             encodeURIComponent(myData[6]),
             encodeURIComponent(myData[7]),
             encodeURIComponent(myData[8]),
-            encodeURIComponent(myData[9])
+            myData[9]
     ].join("//");
     return myIdentifier;
 }
@@ -2791,7 +2871,8 @@ Xps.parseIdentifier = function(myIdentifier){
         result.line     = new XpsLine(decodeURIComponent(dataArray[2]));
         result.stage    = new XpsStage(decodeURIComponent(dataArray[3]));
         result.job      = new XpsStage(decodeURIComponent(dataArray[4]));
-        result.currentStatus   = dataArray[5];//この情報はデコード不用
+        result.currentStatus   = new JobStatus(dataArray[5]);
+        //ステータスはデコード不用(オブジェクト自体がデコードする)
     }
     /*ここでは初期化しない　undefined で戻す
     {

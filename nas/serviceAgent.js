@@ -415,7 +415,7 @@ if(typeof this.dataInfo.line == 'undefined'){
         encodeURIComponent(this.dataInfo.line.toString(true)),
         encodeURIComponent(this.dataInfo.stage.toString(true)),
         encodeURIComponent(this.dataInfo.job.toString(true)),
-        this.dataInfo.currentStatus
+        this.dataInfo.currentStatus.toString(true)
     ]];
 }
     this.issues[0].identifier=myIdentifier;
@@ -471,7 +471,7 @@ listEntry.prototype.push=function(myIdentifier){
             encodeURIComponent(dataInfo.line.toString(true)),
             encodeURIComponent(dataInfo.stage.toString(true)),
             encodeURIComponent(dataInfo.job.toString(true)),
-            dataInfo.currentStatus
+            dataInfo.currentStatus.toString(true)
         ];
     }else{
         var issueArray = [];
@@ -502,9 +502,10 @@ A
     と、思ったけどやはり設定機能を作る
     新規の状況更新はすべてリポジトリ本体からの再読出で行う
     リポジトリ本体からの読み出しは冗長にすぎる
+    戻り値をオブジェクトに変更　0809
 */
 listEntry.prototype.getStatus=function(){
-    return this.issues[this.issues.length-1][3];
+    return new JobStatus(this.issues[this.issues.length-1][3]);
 }
 /**
     エントリのステータスを設定する
@@ -524,31 +525,41 @@ Fixed   > Active/Aborted(要権限)
      　Jobが進まないときは更新
      　Jobが進む際に追加　ただし追加時は　listEntry.push(Idf)で追加なので注意
     まだステータスの副次情報は実装しないので配列のまま保存しないように注意
+  ステータスを複合オブジェクト JObStatusとして実装0809
+
+
     issues.identifier/.time の設定が抜けている　2017.0429 早急に要修正！！！！！
     timeは基本的に変更が無いがidentifierは,
     statusの変更に従って必ず変わる
+    setStatusの引数がJobStatus  であれば変換は行わない
 */
 listEntry.prototype.setStatus=function(myStatus){
     var currentIssue  = this.issues[this.issues.length-1];
-    var currentStatus = currentIssue[3].split(":");
-    var newStatus = String(myStatus).split(":");
-    if (currentStatus[0]=="Hold"){
-        switch (newStatus[0]){
+//    var currentStatus = currentIssue[3].split(":");
+    var currentStatus = new JobStatus(currentIssue[3]);//オブジェクト化
+    if(myStatus instanceof JobStatus){
+     var newStatus = myStatus;
+    }else{
+     var newStatus = new JobStatus(myStatus);//オブジェクト化
+    }
+    if (currentStatus.content=="Hold"){
+        switch (newStatus.content){
             case "Active":
-                currentIssue[3] = newStatus.join(":");
-                currentIssue.identifier=currentIssue.identifier.replace(/\/\/Hold.*$/,"//"+encodeURIComponent(currentIssue[3]));
+                currentIssue[3] = newStatus.toString(true);
+                currentIssue.identifier=currentIssue.identifier.replace(/\/\/Hold.*$/,"//"+currentIssue[3]);
             break;
             case "Hold":
             case "Fixed":
             case "Aborted":
             default:
-            return currentIssue[3];
+            return new JobStatus(currentIssue[3]);
         }
-    } else if(currentStatus[0]=="Startup"){
-        switch (newStatus[0]){
+    } else if(currentStatus.content=="Startup"){
+        switch (newStatus.content){
             case "Active":
-                this.push(currentIssue.slice(0,3).concat(newStatus.join(":")).join("//"));
-                this.issues[this.issues.length-1].identifier=currentIssue.identifier.replace(/\/\/Startup.*$/,"//"+encodeURIComponent(newStatus.join(":")));
+                this.push(currentIssue.slice(0,3).concat(newStatus.toString(true)).join("//"));
+                this.issues[this.issues.length-1].identifier=currentIssue.identifier.replace(/\/\/Startup.*$/,"//"+newStatus.toString(true));
+                //encodeURIComponent(newStatus.join(":")));
 
                 this.issues[this.issues.length-1].time=currentIssue.time;
             break;
@@ -556,44 +567,44 @@ listEntry.prototype.setStatus=function(myStatus){
             case "Fixed":
             case "Aborted":
             default:
-            return currentIssue[3];
+            return new JobStatus(currentIssue[3]);
         }
-    } else if(currentStatus[0]=="Active"){
-        switch (newStatus[0]){
+    } else if(currentStatus.content=="Active"){
+        switch (newStatus.content){
             case "Hold":
             case "Fixed":
-                currentIssue[3] = newStatus.join(":");
-                currentIssue.identifier=currentIssue.identifier.replace(/\/\/Active.*$/,"//"+encodeURIComponent(currentIssue[3]));
+                currentIssue[3] = newStatus.toString(true);
+                currentIssue.identifier=currentIssue.identifier.replace(/\/\/Active.*$/,"//"+currentIssue[3]);
             break;
             case "Active":
             case "Aborted":
             default:
-            return currentIssue[3];
+            return new JobStatus(currentIssue[3]);
         }
-    } else if(currentStatus[0]=="Aborted"){
-        switch (newStatus[0]){
+    } else if(currentStatus.content=="Aborted"){
+        switch (newStatus.content){
             case "Hold":
             case "Fixed":
             case "Active":
             case "Aborted":
             default:
-            return currentIssue[3];
+            return currentStatus;
         }
-    } else if(currentStatus[0]=="Fixed"){
-        switch (newStatus[0]){
+    } else if(currentStatus.content=="Fixed"){
+        switch (newStatus.content){
             case "Active":
-                currentIssue[3] = newStatus.join(":");
-                currentIssue.identifier=currentIssue.identifier.replace(/\/\/Fixed.*$/,"//"+encodeURIComponent(currentIssue[3]));
+                currentIssue[3] = newStatus.toString(true);
+                currentIssue.identifier=currentIssue.identifier.replace(/\/\/Fixed.*$/,"//"+currentIssue[3]);
             break;
             case "Hold":
             case "Fixed":
             case "Aborted":
             default:
-            return currentIssue[3];
+            return new JobStatus(currentIssue[3]);
         }
     }
 if(dbg) console.log(currentIssue[3]);
-    return currentIssue[3];
+    return new JobStatus(currentIssue[3]);
 }
 
 /**
@@ -1298,7 +1309,7 @@ localRepository.activateEntry=function(callback,callback2){
         //':'が無い場合は、メールアドレスを使用
         if ((newXps)&&(xUI.currentUser.sameAs(newXps.update_user))){
              //同内容でステータスを変更したエントリを作成 新規に保存して成功したら先のエントリを消す
-            newXps.currentStatus = 'Active';
+            newXps.currentStatus = new JobStatus('Active');
             localStorage.setItem(this.keyPrefix+Xps.getIdentifier(newXps),newXps.toString());
             var result = (localStorage.getItem(this.keyPrefix+Xps.getIdentifier(newXps)) == newXps.toString())?true:false;
             if(result){
@@ -1308,7 +1319,7 @@ localRepository.activateEntry=function(callback,callback2){
                   myVersion.updated_at=new Date().toString();
                   myVersion.description=currentEntry.toString(0);
                   myVersion.version_token=this.keyPrefix+myVersion.description;
-                xUI.XPS.currentStatus='Active';//ドキュメントステータスを更新
+                xUI.XPS.currentStatus=new JobStatus('Active');//ドキュメントステータスを更新
 			    xUI.setStored("current");//UI上の保存ステータスをセット
 			    sync();//保存ステータスを同期
                 selectSCi();//カレントデータを再セレクトして情報更新
@@ -1341,7 +1352,7 @@ localRepository.deactivateEntry=function(callback,callback2){
         //ユーザ判定は不用
         if (newXps){
              //同内容でステータスを変更したエントリを作成 新規に保存して成功したら先のエントリを消す
-            newXps.currentStatus = 'Hold';//（ジョブID等）status以外の変更はない
+            newXps.currentStatus = new JobStatus('Hold');//（ジョブID等）status以外の変更はない
             localStorage.setItem(this.keyPrefix+Xps.getIdentifier(newXps),newXps.toString());
             var result = (localStorage.getItem(this.keyPrefix+Xps.getIdentifier(newXps)) == newXps.toString())?true:false;
             if(result){
@@ -1353,7 +1364,7 @@ if(dbg) console.log('deactivated');
                   myVersion.description=currentEntry.toString(0);
                   myVersion.version_token=this.keyPrefix+myVersion.description;
                 documentDepot.rebuildList();
-                xUI.XPS.currentStatus='Hold';//ドキュメントステータスを更新
+                xUI.XPS.currentStatus=new JobStatus('Hold');//ドキュメントステータスを更新
 			    xUI.setStored("current");//UI上の保存ステータスをセット
 			    sync();//保存ステータスを同期
                 selectSCi();//カレントデータを再セレクトして情報更新
@@ -1405,7 +1416,7 @@ if(dbg) console.log('読み出し失敗')
         if (newXps){
             newXps.job.increment(myJob);
             newXps.update_user = xUI.currentUser;
-            newXps.currentStatus = 'Active';
+            newXps.currentStatus = new JobStatus('Active');
              //引数でステータスを変更したエントリを作成 新規に保存 JobIDは必ず繰り上る
             localStorage.setItem(this.keyPrefix+Xps.getIdentifier(newXps),newXps.toString());
             var resultData = localStorage.getItem(this.keyPrefix+Xps.getIdentifier(newXps));
@@ -1419,7 +1430,7 @@ if(dbg) console.log('読み出し失敗')
                 });
                 xUI.setReferenceXPS();
                 xUI.XPS.job.increment(myJob);
-                xUI.XPS.currentStatus='Active';//ドキュメントステータスを更新
+                xUI.XPS.currentStatus=new JobStatus('Active');//ドキュメントステータスを更新
                 xUI.XPS.update_user=xUI.currentUser;//ユーザ更新
                 xUI.setStored("current");//UI上の保存ステータスをセット
 			    sync();//保存ステータスを同期
@@ -1457,7 +1468,9 @@ console.log ('noentry in repository :' +  decodeURIComponent(currentEntry))
         if (newXps){
              //同内容でステータスを変更したエントリを作成 新規に保存して成功したら先のエントリを消す
 //            newXps.currentStatus = ['Fixed',assignData].join(":");
-            newXps.currentStatus = 'Fixed';//いったん元に戻す　assignData は宙に保留（ここで消失）
+            newXps.currentStatus = new JobStatus('Fixed');
+            newXps.currentStatus.assign = assignData;
+            //いったん元に戻す　assignData は宙に保留（ここで消失）
             localStorage.setItem(this.keyPrefix+Xps.getIdentifier(newXps),newXps.toString());
 
             var result = (localStorage.getItem(this.keyPrefix+Xps.getIdentifier(newXps))==newXps.toString())? true:false;
@@ -1516,7 +1529,7 @@ if(dbg) console.log('読み出し失敗')
             newXps.stage.increment(stageName);
             newXps.job.reset(jobName);
             newXps.update_user = xUI.currentUser;
-            newXps.currentStatus = 'Startup';
+            newXps.currentStatus = new JobStatus('Startup');
 if(dbg) console.log(newXps.toString());//
              //引数でステータスを変更したエントリを作成 新規に保存 stageIDは必ず繰り上る jobは0リセット
             localStorage.setItem(this.keyPrefix+Xps.getIdentifier(newXps),newXps.toString());
@@ -1536,7 +1549,7 @@ if(dbg) console.log(newXps.currentStatus);
                 });
                 xUI.XPS.stage.increment(stageName);
                 xUI.XPS.job.reset(jobName);
-                xUI.XPS.currentStatus='Startup';//ドキュメントステータスを更新
+                xUI.XPS.currentStatus=new JobStatus('Startup');//ドキュメントステータスを更新
                 xUI.XPS.update_user=xUI.currentUser;//ユーザ更新
                 xUI.setStored("current");//UI上の保存ステータスをセット
 			    sync();//保存ステータスを同期
@@ -1595,7 +1608,7 @@ localRepository.getEntry(localRepository.entryList[0]);
     
 */
 localRepository.destroyJob=function(callback,callback2){
-    if(xUI.XPS.currentStatus != 'Active'){return false}
+    if(xUI.XPS.currentStatus.content != 'Active'){return false}
 //   カレントの作業に対応するストレージ上のキーを消去
 //   成功すれば
     var currentEntry = this.entry(Xps.getIdentifier(xUI.XPS));
@@ -2639,7 +2652,7 @@ if (myEntry instanceof listEntry){
     var line_id        = myXps.line.toString(true);
     var stage_id       = myXps.stage.toString(true);
     var job_id         = myXps.job.toString(true);
-    var status         = myXps.currentStatus;
+    var status         = myXps.currentStatus.toString(true);
 /*
     var line_id        = lastIssue[0];
     var stage_id       = lastIssue[1];
@@ -2656,7 +2669,7 @@ if (myEntry instanceof listEntry){
     var line_id        = myXps.line.toString(true);
     var stage_id       = myXps.stage.toString(true);
     var job_id         = myXps.job.toString(true);
-    var status         = myXps.currentStatus;
+    var status         = myXps.currentStatus.toString(true);
 /*
     var line_id        = lastIssue[0];
     var stage_id       = lastIssue[1];
@@ -2696,7 +2709,7 @@ if(myMethod=='POST'){
 		     		episode_token   : episode_token,
 	                name            : decodeURIComponent(cut_name),
 	                description     : Xps.getIdentifier(myXps,true),
-			 		status          : myXps.currentStatus,
+			 		status          : myXps.currentStatus.toString(true),
 			 		job_id          : decodeURIComponent(myXps.job.toString(true)),
 			 		stage_id        : decodeURIComponent(myXps.stage.toString(true)),
 			 		line_id         : decodeURIComponent(myXps.line.toString(true)),
@@ -2922,13 +2935,13 @@ Activate可能な場合は新しいコンテンツとdescriptionを送信　
                 if(
                     (result.permissions.write)&&
                     (result.permissions.read)&&
-                    ((currentDataInfo.currentStatus=="Fixed")||(currentDataInfo.currentStatus=="Hold"))&&
+                    ((currentDataInfo.currentStatus.content == "Fixed")|| (currentDataInfo.currentStatus.content == "Hold"))&&
                     (xUI.currentUser.sameAs(currentServerXps.update_user))
                 ){
 //同内容でステータスを変更したエントリを作成 新規に保存して成功したら先のエントリを消す
                     var newXps = Object.create(xUI.XPS);//現在のデータの複製をとる
 console.log('activate : '+decodeURIComponent(Xps.getIdentifier(newXps)));
-                        newXps.currentStatus = 'Active';
+                        newXps.currentStatus = new JobStatus('Active');
                         newXps.update_time   = new Date().toNASString();
                     var data = {
                         token: currentCut.token,
@@ -3042,7 +3055,7 @@ NetworkRepository.prototype.deactivateEntry=function(callback,callback2){
         //ユーザ判定は不用
         if (newXps){
              //同内容でステータスを変更したエントリを作成 新規に上書き保存（先行データは上書きされる）
-            newXps.currentStatus = 'Hold';//（ジョブID等）status以外の変更はない
+            newXps.currentStatus = new JobStatus('Hold');//（ジョブID等）status以外の変更はない
     //ここでサーバに現在のエントリへのステータス変更要求を送信する 成功時と失敗時の処理を渡し、かつcallback を再度中継
     //カットの name,description のみを送信してステータスを変更
         var data = {
@@ -3054,7 +3067,7 @@ NetworkRepository.prototype.deactivateEntry=function(callback,callback2){
 			 		line_id     : newXps.line.toString(true),
 			 		stage_id    : newXps.stage.toString(true),
 			 		job_id      : newXps.job.toString(true),
-			 		status      : newXps.currentStatus
+			 		status      : newXps.currentStatus.toString(true)
                 }
         };
 if(dbg) console.log(data);
@@ -3118,7 +3131,7 @@ if(dbg) console.log ('noentry in repository :' +  decodeURIComponent(currentEntr
     if (newXps){
         newXps.job.increment(myJob);
         newXps.update_user = xUI.currentUser;
-        newXps.currentStatus = 'Active';
+        newXps.currentStatus = new JobStatus('Active');
 if(dbg) console.log(newXps.toString());//
     //引数でステータスを変更したエントリを作成 新規に保存 JobIDは必ず繰り上げる
     //ここでサーバに現在のエントリへのステータス変更要求を送信する 
@@ -3202,7 +3215,7 @@ if(true){
         //ユーザ判定は不用 JobID変わらず
     if (newXps){
              //同内容でステータスを変更したエントリを作成 新規に保存して成功したら先のエントリを消す
-            newXps.currentStatus = 'Fixed';//（ジョブID等）status以外の変更はない
+            newXps.currentStatus = new JobStatus('Fixed');//（ジョブID等）status以外の変更はない
 //            newXps.currentStatus = ['Fixed',assignData].join(":"); アサインデータはまだUIのみでペンディング
     //ここでサーバに現在のエントリへのステータス変更要求を送信する 成功時と失敗時の処理を渡し、かつcallback を再度中継
     //カットの name,description のみを送信してステータスを変更
@@ -3215,7 +3228,7 @@ if(true){
  			 		line_id     : newXps.line.toString(),
 			 		stage_id    : newXps.stage.toString(),
 			 		job_id      : newXps.job.toString(),
-			 		status      : newXps.currentStatus
+			 		status      : newXps.currentStatus.toString(true)
                }
         };
 if(dbg) console.log(data);
@@ -3302,7 +3315,7 @@ if(true){
         newXps.stage.increment(stageName);
         newXps.job.reset(jobName);
         newXps.update_user = xUI.currentUser;
-        newXps.currentStatus = 'Startup';
+        newXps.currentStatus = new JobStatus('Startup');
 if(dbg) console.log(newXps.toString());//
              //引数でステータスを変更したエントリを作成 新規に保存 stageIDは必ず繰り上る jobは0リセット
     //ここでサーバに現在のエントリへのステータス変更要求を送信する 成功時と失敗時の処理を渡し、かつcallback を再度中継
@@ -3332,7 +3345,7 @@ console.log(result);
 //                documentDepot.rebuildList();
                 xUI.XPS.stage.increment(stageName);
                 xUI.XPS.job.reset(jobName);
-                xUI.XPS.currentStatus='Startup ';//ドキュメントステータスを更新
+                xUI.XPS.currentStatus= new JobStatus('Startup');//ドキュメントステータスを更新
                 xUI.XPS.update_user=xUI.currentUser;//ユーザ更新
                 xUI.setStored("current");//UI上の保存ステータスをセット
 			    sync();//保存ステータスを同期
@@ -3376,7 +3389,7 @@ NetworkRepository.prototype.abortEntry=function(myIdentifier){
     
 */
 NetworkRepository.prototype.destroyJob=function(callback,callback2){
-    if(xUI.XPS.currentStatus != 'Active'){return false}
+    if(xUI.XPS.currentStatus.content != 'Active'){return false}
  //    カレントのtokenを添えてdestroyコマンドを発行する
     var currentEntry = this.entry(Xps.getIdentifier(xUI.XPS));
     if(! currentEntry){
@@ -3605,7 +3618,7 @@ serviceAgent.switchRepository=function(myRepositoryID,callback){
         return this.currentRepository;
     }else{
 //切り替え前に現在のデータの状態を確認して必要ならば編集状態を解除　その後自身を再度呼び出し
-    if((xUI.uiMode=='production')&&(xUI.XPS.currentStatus=='Active')){
+    if((xUI.uiMode=='production')&&(xUI.XPS.currentStatus.content=='Active')){
 console.log("deactivate current document");
             if(xUI.edchg) xUI.put(document.getElementById('iNputbOx').value);
                 serviceAgent.currentRepository.deactivateEntry(function(){
@@ -3738,7 +3751,7 @@ if((! isReference)&&(Xps.compareIdentifier(myEntry.issues[cx].identifier,Xps.get
 //その後読み込み
 //読込の前にカーソル位置を　1_0　にリセット
 //参照読み込みに際しては、編集状態を維持
-    if((! isReference ) && ( xUI.uiMode=='production' )&&( xUI.XPS.currentStatus=='Active' )){
+    if((! isReference ) && ( xUI.uiMode=='production' )&&( xUI.XPS.currentStatus.content=='Active' )){
 console.log("need deactivate");
             if(xUI.edchg) xUI.put(document.getElementById('iNputbOx').value);
             serviceAgent.currentRepository.deactivateEntry(function(){
@@ -3871,7 +3884,7 @@ console.log('activateEntry :'+decodeURIComponent(currentEntry.toString()));
 console.log(currentEntry);
 console.log(currentEntry.getStatus());
 //    switch (currentEntry.getStatus()){}
-    switch (xUI.XPS.currentStatus){
+    switch (xUI.XPS.currentStatus.content){
         case 'Active':
 /**     例外処理 ロストセッションの回復
     編集中に保存せずに作業セッションを失った場合 この状態となる
@@ -4219,7 +4232,7 @@ serviceAgent.abortEntry=function(myIdentifier){
 */
 serviceAgent.closeEntry=function(){
     //  ドキュメントがアクティブで変更フラグが立っている場合　holdしてカレントリポジトリにプッシュ
-     if((xUI.currentStatus=="Active")&&(! xUI.isStored())){
+     if((xUI.currentStatus.content=="Active")&&(! xUI.isStored())){
     //  成功したらカレントドキュメントをクリアしてロック
          serviceAgent.currentRepository.deactivateEntry(function(){
             serviceAgent.closeEntry();
@@ -4241,7 +4254,7 @@ serviceAgent.closeEntry=function(){
      
 */
 serviceAgent.destroyJob=function(callback,callback2){
-    if(xUI.XPS.currentStatus!="Active"){alert("this entry is not active.");return false;}
+    if(xUI.XPS.currentStatus.content !="Active"){alert("this entry is not active.");return false;}
 //ドキュメントがアクティブでない場合は操作不能
     var currentEntry = serviceAgent.currentRepository.entry(Xps.getIdentifier(xUI.XPS));
     var currentOpus  = serviceAgent.currentRepository.opus(currentEntry.toString(0));

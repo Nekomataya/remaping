@@ -497,7 +497,7 @@ xUI.setDocumentStatus = function(myCommand){
     switch (myCommand){
         case 'activate':
         //activate / 再開する
-            if((this.XPS.currentStatus.match(/^Fixed|^Hold/i))&&
+            if((this.XPS.currentStatus.content.match(/^Fixed|^Hold/i))&&
             //activate
 //            (this.XPS.update_user.split(':').reverse()[0] == document.getElementById('current_user_id').value)){}
             (this.XPS.update_user.email == document.getElementById('current_user_id').value)){
@@ -505,7 +505,7 @@ xUI.setDocumentStatus = function(myCommand){
                 serviceAgent.activateEntry(function(){
                     //成功時はドキュメントのステータスを更新してアプリモードをproductionへ変更
                     xUI.XPS.job=newJob;
-                    xUI.XPS.currentStatus='Active';
+                    xUI.XPS.currentStatus= new JobStatus('Active');
                     xUI.viewOnly=false;
                     xUI.setUImode('production');
                 },function(result){if(dbg) console.log('fail checkin:');if(dbg) console.log(result);});
@@ -513,10 +513,10 @@ xUI.setDocumentStatus = function(myCommand){
         break;
         case 'deavtivate':
             //deactivate / 保留
-            if(this.XPS.currentStatus.match(/^Active/i)){
+            if(this.XPS.currentStatus.content.match(/^Active/i)){
                 serviceAgent.currentRepository.deactivateEntry(function(){
                     //成功時はドキュメントのステータスを更新してアプリモードをproductへ変更
-                    xUI.XPS.currentStatus='Hold';
+                    xUI.XPS.currentStatus=new JobStatus('Hold');
                     xUI.viewOnly=true;
                     xUI.setUImode('browsing');
                 },function(result){if(dbg) console.log('fail checkin:');if(dbg) console.log(result);});
@@ -524,7 +524,7 @@ xUI.setDocumentStatus = function(myCommand){
         break;
         case 'checkin':
             //check-in / 開く
-            if(this.XPS.currentStatus.match(/^Startup|^Fixed/i)){
+            if(this.XPS.currentStatus.content.match(/^Startup|^Fixed/i)){
             //現テータスがStartup/Fixedの場合新しいジョブの名称が必要　ジョブ名は第二引数で置く　ジョブIDは繰り上がる 
 //                     　var newJobName = (arguments[1])? arguments[1]:xUI.XPS.update_user.split(':')[0];
                      　var newJobName = (arguments[1])? arguments[1]:xUI.XPS.update_user.handle;
@@ -532,7 +532,7 @@ xUI.setDocumentStatus = function(myCommand){
                 serviceAgent.currentRepository.checkinEntry(newJob,function(){
                     //成功時はドキュメントのステータスを更新してアプリモードをproductへ変更
                     xUI.XPS.job=newJob;
-                    xUI.XPS.currentStatus='Active';
+                    xUI.XPS.currentStatus=new JobStatus('Active');
                     xUI.viewOnly=false;
                     xUI.setUImode('production');
                 },function(result){if(dbg) console.log('fail checkin:');if(dbg) console.log(result);});
@@ -540,10 +540,10 @@ xUI.setDocumentStatus = function(myCommand){
         break;
         case 'checkout':
             //check-out / 閉じる
-            if(this.XPS.currentStatus.match(/^Active/i)){
+            if(this.XPS.currentStatus.content.match(/^Active/i)){
                 serviceAgent.currentRepository.checkoutEntry(false,function(){
                     //成功時はドキュメントのステータスを更新してアプリモードをproductへ変更
-                    xUI.XPS.currentStatus='Fixed';
+                    xUI.XPS.currentStatus=new JobStatus('Fixed');
                     xUI.viewOnly=true;
                     xUI.setUImode('browsing');
                 },function(result){if(dbg) console.log('fail checkout:');if(dbg) console.log(result);});
@@ -551,10 +551,10 @@ xUI.setDocumentStatus = function(myCommand){
         break;
         case 'reseipt':
             //receipt / 検収
-            if(this.XPS.currentStatus.match(/^Fixed/i)){
+            if(this.XPS.currentStatus.content.match(/^Fixed/i)){
                 serviceAgent.currentRepository.checkoutEntry(Xps.getIdentifier(this.XPS),function(){
                     //成功時はドキュメントのステータスを更新してアプリモードをproductへ変更
-                    xUI.XPS.currentStatus='Hold';
+                    xUI.XPS.currentStatus=new JobStatus('Hold');
                     xUI.viewOnly=true;
                     xUI.setUImode('browsing');
                     sync('productStatus');
@@ -576,13 +576,13 @@ xUI.setDocumentStatus = function(myCommand){
 */
 xUI.setUImode = function (myMode){
     if(typeof myMode == 'undefined') myMode='current';
-            document.getElementById('pmcui-checkin').innerHTML=((xUI.XPS.currentStatus =='Hold')||(xUI.XPS.currentStatus =='Active'))?nas.localize(nas.uiMsg.pMinUse):nas.localize(nas.uiMsg.pMcheckin);//'作業中':'作業開始'//
+            document.getElementById('pmcui-checkin').innerHTML=((xUI.XPS.currentStatus.content =='Hold')||(xUI.XPS.currentStatus.content =='Active'))?nas.localize(nas.uiMsg.pMinUse):nas.localize(nas.uiMsg.pMcheckin);//'作業中':'作業開始'//
     switch (myMode){
         case 'current':;//NOP return
             return xUI.uiMode;
             break;
         case 'production':;
-            if(xUI.XPS.currentStatus != 'Active'){return this.setUImode('browsing');}
+            if(xUI.XPS.currentStatus.content != 'Active'){return this.setUImode('browsing');}
             　xUI.viewOnly = false;//メニュー切替
     $('#ddp-man').hide();
 	$('#pmaui').hide();
@@ -626,15 +626,15 @@ xUI.setUImode = function (myMode){
 	$('span.subControl_TC').each(function(){$(this).hide()})
     $("li#auiMenu").each(function(){$(this).hide()});
     document.getElementById('cutList').multiple = false;
-            document.getElementById('pmcui-checkin').disabled    = ((xUI.sessionRetrace==0)&&((xUI.XPS.currentStatus=='Startup')||(xUI.XPS.currentStatus=='Fixed')))? false:true;                
+            document.getElementById('pmcui-checkin').disabled    = ((xUI.sessionRetrace==0)&&((xUI.XPS.currentStatus.content =='Startup')||(xUI.XPS.currentStatus.content =='Fixed')))? false:true;                
             document.getElementById('pmcui-update').disabled     =true;
             document.getElementById('pmcui-checkout').disabled   = true;
             if (xUI.currentUser.sameAs(xUI.XPS.update_user)) {
             //ドキュメントオーナー
-            document.getElementById('pmcui-activate').disabled   = ((xUI.sessionRetrace==0)&&((xUI.XPS.currentStatus=='Hold')||(xUI.XPS.currentStatus=='Fixed')||(xUI.XPS.currentStatus=='Active')))? false:true;
+            document.getElementById('pmcui-activate').disabled   = ((xUI.sessionRetrace==0)&&((xUI.XPS.currentStatus.content =='Hold')||(xUI.XPS.currentStatus.content =='Fixed')||(xUI.XPS.currentStatus.content =='Active')))? false:true;
             }else{
             //オーナー外
-            document.getElementById('pmcui-activate').disabled   = (xUI.XPS.currentStatus=='Fixed')?false:true;
+            document.getElementById('pmcui-activate').disabled   = (xUI.XPS.currentStatus.content =='Fixed')?false:true;
             }
             document.getElementById('pmcui-deactivate').disabled = true;
 
@@ -654,7 +654,7 @@ xUI.setUImode = function (myMode){
             this.pMenu('pMactivate'     ,(document.getElementById('pmcui-activate').disabled)?'disable':'enable');
             this.pMenu('pMdeactivate'   ,(document.getElementById('pmcui-deactivate').disabled)?'disable':'enable');
 
-            this.pMenu('pMdiscard'      ,(xUI.XPS.currentStatus=='Active')?'enable':'disable');
+            this.pMenu('pMdiscard'      ,(xUI.XPS.currentStatus.content =='Active')?'enable':'disable');
 
             this.pMenu('pMreceipt'      ,(document.getElementById('pmaui-receipt').disabled)?'disable':'enable');
             this.pMenu('pMcheckoutF'    ,(document.getElementById('pmaui-checkout').disabled)?'disable':'enable');
@@ -5618,7 +5618,7 @@ console.log('new Entry init');
                         xUI.XPS.line     = new XpsLine(nas.pm.pmTemplate[0].line);
                         xUI.XPS.stage    = new XpsStage(nas.pm.pmTemplate[0].stages[0]);
                         xUI.XPS.job      = new XpsStage(nas.pm.jobNames.getTemplate(nas.pm.pmTemplate[0].stages[0],"init")[0]);
-                        xUI.XPS.currentStatus   = "Startup";     
+                        xUI.XPS.currentStatus   = new JobStatus("Startup");     
                         xUI.XPS.create_user=xUI.currentUser;
                         xUI.XPS.update_user=xUI.currentUser;
 
@@ -5640,7 +5640,7 @@ serviceAgent.activateEntry()
                         xUI.setRetrace();
                         xUI.setUImode('browsing');
 		                if (startupWait) xUI.sWitchPanel('Prog');//ウェイト表示消去
-                        switch(xUI.XPS.currentStatus){
+                        switch(xUI.XPS.currentStatus.content){
                             case "Active":
                         // チェックイン直後の処理の際はactivate処理が余分なのでケースわけが必要
                         // jobIDがフラグになる　スタートアップ直後の自動チェックインの場合のみ処理をスキップしてモード変更
@@ -5689,7 +5689,7 @@ if(dbg) console.log('old style new document');
         xUI.XPS.line     = new XpsLine(nas.pm.pmTemplate[0].line);
         xUI.XPS.stage    = new XpsStage(nas.pm.pmTemplate[0].stages[0]);
         xUI.XPS.job      = new XpsStage(nas.pm.jobNames.getTemplate(nas.pm.pmTemplate[0].stages[0],"init")[0]);
-        xUI.XPS.currentStatus   = "Startup";     
+        xUI.XPS.currentStatus   = new JobStatus("Startup");     
         xUI.XPS.create_user=xUI.currentUser;
         xUI.XPS.update_user=xUI.currentUser;
     　                       //var msg='新規カットです。カット番号を入力してください';
@@ -6331,7 +6331,7 @@ case	"productStatus":;
 	document.getElementById('pmcui_stage').innerHTML = xUI.XPS.stage.toString(true);
 	document.getElementById('pmcui_job').innerHTML   = xUI.XPS.job.toString(true);
 //	document.getElementById('pmcui_status').innerHTML= decodeURIComponent(xUI.XPS.currentStatus);
-	document.getElementById('pmcui_status').innerHTML= xUI.XPS.currentStatus.split(':')[0];
+	document.getElementById('pmcui_status').innerHTML= xUI.XPS.currentStatus.toString();
 	document.getElementById('pmcui_documentWriteable').innerHTML= (xUI.viewOnly)?'[編集不可]':'';
 	document.getElementById('pmcui_documentWriteable').innerHTML += String(xUI.sessionRetrace);
 	switch (xUI.uiMode){
