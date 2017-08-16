@@ -2,17 +2,22 @@
 /*	りまぴん のためのスタイルシート							*/
 /*	このスタイルシートを変更してデザインを調整できます。	*/
 /*  プリント環境改善のために実寸系に置きかえ				*/
-/*	Nekomataya/kiyo 2016									*/
+/*	Nekomataya/kiyo 2017									*/
 /*	想定用紙サイズは JIS/ISO A3								*/
 
 /*========== タイムシート全体 ============*/
+ * {
+  margin: 0; padding: 0;
+ }
 /*		基本デザイン
 	情報量が多くて密度が低いのでフォントは小さめに
 	ユーザ選択は基本的に禁止
 */
-body {
-	margin:0 10mm 0 10mm;
-	padding:0 5mm 0 0 ;
+@page { size: A3 }           /* A3タテ */
+  body {
+    width: 1122px; /* needed for Chrome */
+	margin:0 38px 0 38px;
+	padding:0 19px 0 0 ;
 	overflow:scroll;
 	background-color:white;
 	user-select:none;
@@ -20,7 +25,8 @@ body {
 	-khtml-user-select:none;
 	-webkit-user-select:none;
 	vertical-align:middle;
-	font-size:8pt;
+	font-size:9pt;
+	font-family: '游ゴシック体', 'Yu Gothic', 'YuGothic','ヒラギノ角ゴシック', 'Hiragino Sans', 'ヒラギノ角ゴ ProN W3', 'Hiragino Kaku Gothic ProN', 'メイリオ', 'Meiryo', 'ＭＳ Ｐゴシック', 'MS PGothic', 'sans-serif';
 }
 /*========== リンク ============*/
 a:link		{color:#000066}
@@ -35,6 +41,7 @@ a:focus		{color:#880000;background-color:snow}
 #fixedHeader {
 	display:none;
 }
+/* スクロール領域*/
 #UIheaderScrollV {
 	display:none;
 }
@@ -44,8 +51,9 @@ a:focus		{color:#880000;background-color:snow}
 #UIheaderFix {
 	display:none;
 }
-
-
+#qdr4 {
+	position:relative;
+}
 
 /* アプリケーションヘッダーライン
 	印刷時は非表示
@@ -56,11 +64,12 @@ div.server-info {
 div #toolbarHeader{
 	display:none;
 }
-
-
 /*		デバッグ
 	AIR専用エレメントは取リわけ
 */
+.debug {
+	display:none;
+}
 #debug {
 	display:none;
 }
@@ -82,9 +91,7 @@ iframe.UIhidden {
 	visibility:none;
 }
 /*
-	table
-	border-color:#eeeeee;
-	border-color:#bbbbbb;
+	タイムシートテーブルルック基礎
 */
 table {
 	margin:0 0 0 0;
@@ -101,10 +108,9 @@ table.UItable{
 	border-style:solid;
 	table-layout:fixed;
 }
-
 table.info	{
-	width:260mm;
-	height:36mm;
+	width:1058px;
+	height:136px;
 	border-width:0;
 	table-layout:fixed;
 }
@@ -118,7 +124,6 @@ table.toolbox {
 }
 /*
 		テーブル要素
-	border-color:#bbbbbb;
 	基準高さはth全体で設定
 */
 th {
@@ -128,181 +133,172 @@ th {
 }
 /*
 	シートヘッダビュー設定
+	合計280mm=1058px
 */
-td#edchg {width:6em;}
-th.opusLabel{text-align:left;border-width:0 0 4px 0;width:20mm;}
-th.titleLabel{text-align:left;border-width:0 0 4px 0;width:80mm;}
-th.scenecutLabel{text-align:left;border-width:0 0 4px 0;width:40mm;}
-th.subtitleLabel{text-align:left;border-width:0 0 4px 0;width:80mm;}
-th.timeLabel{text-align:left;border-width:0 0 4px 0;width:50mm;}
-th.nameLabel{text-align:left;border-width:0 0 4px 0;width:35mm;}
-th.pageLabel{text-align:left;border-width:0 0 4px 0;width:35mm;}
+td#edchg {display:none}
+th.opusLabel{text-align:left;border-width:0 0 4px 0;width:106px;}
+th.titleLabel{text-align:left;border-width:0 0 4px 0;width:348px;}
+th.scenecutLabel{text-align:left;border-width:0 0 4px 0;width:151px;}
+th.subtitleLabel{text-align:left;border-width:0 0 4px 0;width:302px;}
+th.timeLabel{text-align:left;border-width:0 0 4px 0;width:189px;}
+th.nameLabel{text-align:left;border-width:0 0 4px 0;width:132px;}
+th.pageLabel{text-align:left;border-width:0 0 4px 0;width:132px;}
 
 /*
 	シート本体のビュー設定
-	時間スケール
+	時間スケール(トラック左端)
 */
 .tlheade {
 	height:1px;
 }
 th.tcSpan {
 	border-width:1px 1px 0 1px;
-	width:8mm;
+	width:30px;
 }
-/*
-	
-*/
 th.timelabel{
 	color:gray;
 	text-align:center;
 	border-style:solid;
 	border-width:0 1px 3px 1px;
 	}
-
-/*		リファレンス
-	color:gray;
-
-*/
+/*
+	参照欄(アクション・参考欄)
+ */
 th.referenceSpan {
 	border-width:4px 1px 1px 0;
-	width:4.5mm;
+	width:17px;
 }
 th.layerlabelR {
 	text-align:center;
 	border-style:solid;
 	border-width:3px 1px 3px 0;
-	font-size:9pt;
 }
-/*		ダイアログ
+/*
+	ダイアログトラック
 */
 th.dialogSpan {
 	border-width:1px 1px 0 0;
-	width:10mm;
+	width:38px;
 }
 th.dialoglabel {
 	text-align:center;
 	border-style:solid;
 	border-width:0 1px 3px 0;
-/*	font-size:9pt;*/
 }
 
-/*		編集エリア
-dialog/still/timing/sfx/camera
+/*
+		一般編集領域
+	dialog/still/timing/sfx/camera
 */
 th.editSpan {
 	border-width:1px 0 0 0;
-	width:6mm;
+	width:32px;
 }
 th.layerlabel {
 	text-align:center;
 	border-style:solid;
 	border-width:3px 1px 3px 0;
-/*	font-size:9pt;*/
 }
 
-//still
+/* still */
 th.stillSpan {
 	border-width:1px 0 0 0;
+	width:12px;
 }
 th.stilllabel {
 	text-align:center;
 	border-style:solid;
 	border-width:1px 1px 3px 0;
-/*	font-size:9pt;*/
 }
-//timing
+/* timing/replacement */
 th.timingSpan {
 	border-width:1px 0 0 0;
-	width:6mm;
+	width:32px;
 }
-/*	font-size:9pt;*/
 th.timinglabel {
 	text-align:center;
 	border-style:solid;
 	border-width:1px 1px 3px 0;
 }
-//sfx
+/* sfx/effect */
 th.sfxSpan {
 	border-width:1px 0 0 0;
-	width:6mm;
+	width:32px;
 }
 th.sfxlabel {
 	text-align:center;
 	border-style:solid;
 	border-width:1px 1px 3px 0;
-/*	font-size:9pt;*/
 }
-//camera
+/* camera/geometry */
 th.cameraSpan {
 	border-width:1px 0 0 0;
-	width:8mm;
+	width:34px;
 }
 th.cameralabel {
 	text-align:center;
 	border-style:solid;
 	border-width:1px 1px 3px 0;
-/*	font-size:9pt;*/
 }
-
-/*		フレーム注釈
+/*
+		フレームコメント
 	全体幅のクッションエリアとしても機能させるので
 	このエレメントは幅指定無し
 */
 th.framenoteSpan {
 	border-width:1px 1px 0 0;
 }
-/*	font-size:9pt;*/
 th.framenotelabel {
 	text-align:center;
 	border-style:solid;
 	border-width:0 1px 3px 1px;
-/*	font-size:9pt;*/
 }
+
 /*
 	ページ印刷用トレーラー
 */
 .printPage {
-	page-break-before:always;
 	page-break-inside:avoid;
+	page-break-after:always;
+}
+/*
+	シート冒頭メモ欄
+*/
+.top_comment {
+	font-size:10pt;
 }
 /*
 	タイムシート記述終了マーカー
+	印字用記述マーカーと画面用は共用
 
-.endMarker {
-	page-break-before:avoid;
-	page-break-before:avoid;
-	display:inline-block;
-	position:none;
-	width:100mm;
-	height:4mm;
-	margin:1mm 0 0 0;
-	text-align:center;
-	border-top-style:double;	
-	border-width:1px 0 0 0;
-	z-index:4;
-} 
 .endMarker-print {
-	page-break-before:avoid;
-	page-break-after:avoid;
-	display:inline-block;
-}*/
-.endMarker {
-	page-break-before:avoid;
-	page-break-before:avoid;
 	display:inline-block;
 	position:relative;
-	width:100mm;
-	height:4mm;
-	margin:1mm 0 0 0;
+	width:378px;
+	height:15px;
+	margin:0;
 	text-align:center;
 	border-top-style:double;	
 	border-width:4px 0 0 0;
-	z-index:9;
+	z-index:3;
 }
-/**/
-/*		テーブルデータ基本
 */
-/*	font-size:9pt;*/
+.endMarker {
+	display:inline-block;
+	position:relative;
+	width:378px;
+	height:15px;
+	margin:0;
+	text-align:center;
+	border-top-style:double;	
+	border-width:4px 0 0 0;
+	z-index:3;
+}
+/*
+		テーブルデータ(td)基本
+		一番多いシートセルの送りとルックを設定
+		送りピッチは基本的に 340mm/72frames = 17.847px(/96dpi)
+*/
 td {
 	border-color:#bbbbbb;
 	position:relative;
@@ -314,10 +310,9 @@ td {
 	margin:0;
 	white-space: nowrap;
 	overflow:hidden;
-	font-size:8pt;
-	height:16px
+	font-size:11px;
+	height:17.847px;
 }
-/*	font-size:11pt;*/
 
 td.menu {
 	text-align:left;
@@ -325,20 +320,18 @@ td.menu {
 	vertical-align:bottom
 }
 
-/*	font-size:11pt;*/
 td.toolbar {
 	text-align:left;
 	border-style:none;
 	vertical-align:top
 }
 
-/*	font-size:11pt;*/
 td.toolbarR {
 	text-align:right;
 	border-style:none;
 	vertical-align:top
 }
-/*	font-size:11pt;*/
+
 td.logo	{
 	text-align:right;
 	border-style:none;
@@ -352,9 +345,8 @@ td.header {
 	border-style:none;
 	vertical-align:middle;
 	font-weight:bold;
-/*	font-size:9pt;*/
 }
-/*	font-size:9pt;*/
+
 td.footer {
 	background-color:#000000;
 	color:#f8f8f8;
@@ -369,7 +361,6 @@ td.layerOption {
 	border-style:none;
 	vertical-align:middle;
 	font-weight:bold;
-/*	font-size:8pt;*/
 	width:100px;
 }
 /*		UI　TCインジケータ
@@ -702,12 +693,15 @@ button.iconButton:disabled {
 
 
 /*一文字用ボタン*/
-button.oneChr {width:1.5em;margin:0;padding:0;}
+button.oneChr {display:none;}
+
+/*サインイン／アウトボタン*/
+button.sign {display:none;}
+
 /*		UI　AEキー　コンバートスイッチ
 */
 input.aekConvert {
-	width:72px;
-	text-align:center;
+	display:none;
 }
 /*		UI　入力エリア
 */
@@ -719,6 +713,29 @@ input.iNputbOx {
 	height:12px(1px overlap)
 	width:20px;
 */
+span.subControl_TC {
+	display:none;
+	position:relative;
+	height:24px;
+	width:64px;
+	left:64px;
+}
+span.subControl_XTC {
+	position:relative;
+	height:24px;
+	width:64px;
+	left:64px;
+}
+span.subControl_SPIN {
+	position:relative;
+	height:24px;
+	width:24px;
+	left:24px;
+}
+input.tcInput {
+	width:96px;
+}
+
 button.subControl {
 	width:21px;
 	height:12px;
@@ -739,23 +756,25 @@ button.subControl:disabled {
 .subControl-incrS { background-position: -2px 0; }
 .subControl-incr6 { background-position: -26px 0; }
 .subControl-incr { background-position: -50px 0; }
-.subControl-incrT { background-position: -54px 0; }
+.subControl-decrT { background-position: -74px 0; }
 
 .subControl-decrS { background-position: -2px -12px; }
 .subControl-decr6 { background-position: -26px -12px; }
 .subControl-decr { background-position: -50px -12px; }
-.subControl-decrT { background-position: -54px -12px; }
+.subControl-incrT { background-position: -74px -12px; }
 
 .subControl-leftStop { background-position: -2px -24px; }
 .subControl-left { background-position: -26px -24px; }
-.subControl-right { background-position: -50px -24px; }
+.subControl-right { background-position: -70px -24px; }
 .subControl-rightStop { background-position: -54px -24px; }
 
 .subControl-playT { background-position: -2px -36px; }
 .subControl-circle { background-position: -26px -36px; }
 .subControl-stop { background-position: -50px -36px; }
-.subControl-pause { background-position: -54px -36px; }
+.subControl-pause { background-position: -74px -36px; }
 
+.subControl-lock { background-position: -2px -48px; }
+.subControl-unlock { background-position: -26px -48px; }
 
 input.spinCtl {
 	width:48px;
@@ -865,37 +884,52 @@ button.subControl {
     -webkit-border-radius: 0 0 3px 0;
     border-radius: 0 0 3px 0;
  }
- 
- /*========== ページヘッダーテーブル ============*/
-table.pageHeader {
-	width:100%;
-	height:18mm;
+/*========== ページヘッダーエリア包括 ============
+	値取得の簡略化のためこの要素のheightは、
+	この配下の二つのテーブルの合算を設定しておくこと
+ */
+.headerArea {
+	width:1058px;
+	height:318px;
+ }
+/*========== ページヘッダーテーブル ============
+ 	第一ページのみシートヘッダとなる
+ */
+table.pageHeader , .sheetHeader {
+	width:1058px;
+	height:68px;
 	margin:0;
 	border-style:solid;
 	border-width:1px 1px 1px 1px;
 	border-color:gray;
 }
 td.pgHeader {
-	height:10mm;
+	height:38px;
 	margin:0;
 	border-width:0;
 	border-style:none;
+	font-size:16pt;
 }
-/*========== シートヘッダーテーブル ============
-	スクロールスペーサーを兼用をやめて分離
+/*========== シートヘッダーマージン ============
+	メモ領域をとるマージン
+	２ページめ以降はダミー
 */
-table.sheetHeader {
-	width:100%;
-	height:18mm;
+table.sheetHeaderMargin {
+	width:1058px;
+	height:250px;
 	margin:0;
-	border-style:solid;
-	border-width:1px 1px 1px 1px;
-	border-color:gray;
+	border-style:none;
+	border-width:0;
+}
+td.memoSpace {
+	border-style:none;
+	border-width:0;
+	text-align:left;
+	height:250px;
+	vertical-align:top;
 }
 /*	ツールボックスの部品*/
 input.toolTip	{
-/*	font-size:8pt;
-	height:15pt;*/
 	width:100%;
 }
 /*		UI.表示プロパティ
@@ -926,8 +960,7 @@ div.optionPanelFloat{
 	text-align:right;
 	border-style:solid;
 	vertical-align:bottom;
-/*	font-size:4pt;*/
-		border-width:0 1px 3px 1px;
+	border-width:0 1px 3px 1px;
 }
 /*		通常データ*/
 .ntSep,.ntSep_Blank {
@@ -945,7 +978,6 @@ div.optionPanelFloat{
 	text-align:right;
 	border-style:solid;
 	vertical-align:bottom;
-/*	font-size:6pt;*/
 		border-width:0 1px 2px 1px;
 }
 /*		通常データ*/
@@ -964,7 +996,6 @@ div.optionPanelFloat{
 	text-align:right;
 	border-style:solid;
 	vertical-align:bottom;
-/*font-size:12pt;*/
 	border-width:0 1px 1px 1px;
 	height:5px;
 }
@@ -999,10 +1030,14 @@ th.editArea {
 		border-width:0 1px 0 0;
 		width:36px;
 }
+.soundbody{
+        font-weight:9;
+}
 /*	カラムセパレータ	*/
 td.colSep {
 	border-style:none;
-	height:2px;
+	height:1px;
+	width:11px;
 }
 /*	border-width:1px 1px 1px 1px; */
 /*エンドセパレータ（未使用）*/
@@ -1049,7 +1084,7 @@ td.colSep {
 .
 .printSpace {
 	width:100%;
-	height:4.5cm;
+	height:170px;
 }
 
 /*form view*/
@@ -1070,18 +1105,14 @@ select	{text-align:center;}
 
 /*タイムシートの文字飾り (例)*/
 .v_bar	{color:blue;border-style:solid;border-color:blue;border-width:0 1px 0 0;padding:0;margin:0;}
-/*.v_bar	{ height:40px;font-size:9pt;color:blue;border-style:solid;border-color:blue;border-width:0 1px 0 0;padding:0;margin:0;}
-/* .v_wave	{ height:12pt;padding:0;margin:0;}  background-image:url(./images/ui/waveline16px.png);*/
-.v_wave	{ height:11px;padding:0;margin:0;}
+.v_wave	{height:11px;padding:0;margin:0;}
 line  {margin:0;padding:0;}
 /* */
 td#title {
 	font-weight:900;
-/*	font-size:11px;*/
 }
 td#scene_cut {
 	font-weight:900;
-/*	font-size:11px;*/
 }
 
 /*
@@ -1126,14 +1157,6 @@ div.application_status {
 #optionPanelTbx a.close img{
     border:none;
 }
-/*
-#optionPanelTbx dl{
-    width:100%;
-    height:100%;
-    background:url("../images/toolbox.gif");
-    margin:0;
-}
-*/
 #optionPanelTbx dl dt{
     height:25px;
     line-height:25px;
@@ -1147,7 +1170,6 @@ div.application_status {
     line-height:1.5;
     text-indent:1em;
 }
-
 #optionPanelVer {
     display:none;
     width:480px;
@@ -1201,7 +1223,7 @@ transform-origin: 0 0;transform:scale(1,1);
 */
  .custom-combobox {
     position: relative;
-    display: inline-block;
+    display: none;
   }
   .custom-combobox-toggle {
     position: absolute;
@@ -1226,3 +1248,12 @@ transform-origin: 0 0;transform:scale(1,1);
 		brend-mode: multiply;
 		opacity:0.4;
 	}
+/**
+	データトレーラー
+	startupXPS
+	referenceXPS
+	必ず非表示
+*/
+ #startupXPS,#referenceXPS {
+ 	display:none;
+ }

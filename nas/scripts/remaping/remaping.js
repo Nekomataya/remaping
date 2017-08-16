@@ -126,7 +126,6 @@ function new_xUI(){
         
 */
 xUI.init    =function(editXps,referenceXps){
-
     this.XPS=editXps;                           //XPSを参照するオブジェクト必須引数
     this.sessionRetrace = -1;                   //管理上の作業セッション状態
     this.referenceXPS=new Xps(5,144);           //参照用Xps初期値
@@ -1184,21 +1183,29 @@ xUI.adjustSpacer=function(){
     引数なしはスケール[1,1]にリセットする
 戻値:
     なし
+ターゲットエレメントは以下
 "UIheaderFix"
 "UIheaderScrollH"
 "UIheaderScrollV"
+"sheet_body"
+ドキュメント内に存在しないエレメントは無視（印字用）
+スケーリングするターゲットを別に指定する場合は　idまたはid の配列で
 */
-xUI.adjustScale=function(myScale){
+xUI.adjustScale=function(myScale,scaleTargetID){
     if(typeof myScale == "undefined"){myScale=[1,1]}
     else if(! (myScale instanceof Array)){myScale=[1,(myScale)?myScale:1]};
-    var myId=["UIheaderFix","UIheaderScrollH","UIheaderScrollV","sheet_body"];
+    var myId=(scaleTargetID)?scaleTargetID:
+    ["UIheaderFix","UIheaderScrollH","UIheaderScrollV","sheet_body"];
+    if(! (myId instanceof Array )) myID=[myID];
     for (var ix=0;ix<myId.length;ix++){
+        scaleTarget=document.getElementById(myId[ix]);
+        if(! scaleTarget) continue;
         if(appHost.platform.match(/CSX|CEP|AIR/)){
-          document.getElementById(myId[ix]).style.WebkitTransformOrigin="0px 0px";
-          document.getElementById(myId[ix]).style.WebkitTransform='scale('+myScale.join(",")+')';
+          scaleTarget.style.WebkitTransformOrigin="0px 0px";
+          scaleTarget.style.WebkitTransform='scale('+myScale.join(",")+')';
         }else{
-          document.getElementById(myId[ix]).style.transformOrigin="0px 0px";
-          document.getElementById(myId[ix]).style.transform='scale('+myScale.join(",")+')';
+          scaleTarget.style.transformOrigin="0px 0px";
+          scaleTarget.style.transform='scale('+myScale.join(",")+')';
         }
     }
 }
@@ -1272,12 +1279,15 @@ xUI.setReferenceXPS=function(myXps){
         xUI.drawSheetCell(HTMLTableCellElement)
     テーブルセルを引数で与えてグラフィック置換及びテキスト置換を行う
     trTdから分離して機能調整
+    判定されたグラフィック状態はクラスとしてセルに追加される
+    描画は遅延処理
 */
 xUI.drawSheetCell = function (myElement){
 if(typeof myElement =="undefined"){return false;}
 var target=myElement;
+var targetJQ=$("#"+target.id);
     var formPostfix='';
-        
+
 if(this.showGraphic){
     var tgtID=target.id.split("_").reverse();
     var myXps=(tgtID.length==2)? this.XPS:this.referenceXPS;
@@ -1287,6 +1297,10 @@ if(this.showGraphic){
     var drawForm = false;
     var sectionDraw = false;
     var mySection = myXps.xpsTracks[tgtID[1]].getSectionByFrame(tgtID[0]);
+
+//シートセルに　graph_*クラスがあれば削除
+    var myClasses=targetJQ.attr('class').split(' ');
+    for (var cix=0;cix<myClasses.length;cix++){if(myClasses[cix].indexOf('graph_')==0) targetJQ.removeClass(myClasses[cix]);}
 //セクションキャッシュが信頼できる限りはセクションパースが保留されるように調整済み
 /**
     判定時にトラック種別を考慮する
@@ -1388,12 +1402,15 @@ if(this.showGraphic){
 //    if(dbg) console.log(target.id+":"+currentTrackOption+":"+myXps.xpsTracks[tgtID[1]][tgtID[0]]+":"+myStr);
 //    target.innerHTML=myStr;
 target.innerHTML=myStr;
-if(this.showGraphic){
-    if(sectionDraw){
+if(this.showGraphic){    
+    if((sectionDraw)&&(drawForm)){
+        
 //        if(console) if(dbg) console.log([tgtID[1],mySection.startOffset()].join("_")+":"+formStr+":"+drawForm+":"+mySection.duration);
-        setTimeout(function(){xUI.Cgl.sectionDraw([tgtID[1],mySection.startOffset()].join("_"),drawForm,mySection.duration);},0);
+//        setTimeout(function(){xUI.Cgl.sectionDraw([tgtID[1],mySection.startOffset()].join("_"),drawForm,mySection.duration);},0);
+        xUI.Cgl.sectionDraw([tgtID[1],mySection.startOffset()].join("_"),drawForm,mySection.duration);
     }else{
-        setTimeout(function(){xUI.Cgl.draw(target.id,drawForm+formPostfix)},0);
+        if(drawForm) targetJQ.addClass('graph_'+drawForm+formPostfix);
+//        setTimeout(function(){xUI.Cgl.draw(target.id,drawForm+formPostfix)},0);
     }
 }
     return myStr;
@@ -1780,7 +1797,7 @@ if(pageNumber==Pages){
 //ページヘッダを閉じる
     _BODY+='</table>';
 
-    _BODY+='<table  class=sheetHeader style="border-style:none;border-width:0px;" ><tr><td style="border-style:none;border-width:0px;text-align:left;">';
+    _BODY+='<table  class=sheetHeaderMargin ><tr><td class=memoSpace>';
 //第一ページのみシート全体のコメントを書き込む（印刷用）　表示用には別のエレメントを使用
 if(pageNumber==1){
 //シート書き出し部分からコメントを外す 印刷時は必要なので注意 2010/08/21
@@ -2021,6 +2038,7 @@ BODY_ +='style="width:'+tableBodyWidth+this.sheetLooks.CellWidthUnit+'"';
 BODY_ +='id="qdr'+(-1*pageNumber)+'" ';
     }else{
 BODY_ +='id="qdr4" ';
+//BODY_ +='id="qdr4_'+String(pageNumber)+'" ';
     }
 BODY_ +=' >';
 BODY_ +='<tbody>';
@@ -2462,8 +2480,9 @@ BODY_ +='</tr>';
 BODY_ +='</tbody></table>';
 BODY_ +='\n';
 if(hasEndMarker){    
-BODY_ +='<div id=endMarker class=endMarker>:: end ::';
-BODY_ +='<br></div>';
+BODY_ +='<div id=endMarker class=endMarker>';
+BODY_ += JSON.stringify([xUI.XPS.xpsTracks.length, xUI.XPS.xpsTracks.duration]);
+BODY_ +='</div>';
 //BODY_ +='<div id=endMarker-print class=endMarker-print>::print-end::';
 //BODY_ +='<br></div>';
  };// */
@@ -2471,6 +2490,45 @@ BODY_ +='';
     this.Select=restoreValue;
     return BODY_;
 };
+/* エンドマーカー位置調整メソッド　endMarker
+    上記で配置したendMarkerの位置を実際の終了フレームの真下に再配置するメソッド
+    '#0_'+String(this.XPS.xpsTracks.duration-1);
+    '#'+String(this.XPS.xpsTracks.length-1)+'_'+String(this.XPS.xpsTracks.duration-1);
+    自動化のため参照エレメントの情報をendMakerのinnerHTML内に埋め込む
+    [this.XPS.xpsTracks.length-1,this.XPS.xpsTracks.duration-1]
+    この形式によって位置計算にjQueryを利用しないでマーカーの再配置を行う
+    以下のメソッドは　単独の関数としても利用可能
+ */
+xUI.replaceEndMarker = function(endPoint,markerOffset){
+    if (typeof endPoint == 'undefined'){
+   try{
+    var endPoint = JSON.parse(document.getElementById('endMarker').innerHTML);
+   }catch(er){return;}
+    }
+    if (typeof markerOffset == 'undefined'){
+        markerOffset = 0;
+    }
+
+    if(!(endPoint instanceof Array)) {endPoint=[1,endPoint]};
+    if(endPoint.length>2) markerOffset = endPoint[2];
+    var endCellLeft  = document.getElementById('0_'+String(endPoint[1]-1));
+    var endCellRight = document.getElementById(String(endPoint[0]-1)+'_'+String(endPoint[1]-1));
+    var parentSheet  = document.getElementById('endMarker').parentNode;
+    var endCellLeftRect  = endCellLeft.getBoundingClientRect();
+    var endCellRightRect = endCellRight.getBoundingClientRect();
+    var parentRect   = parentSheet.getBoundingClientRect();
+    var markerRect   = document.getElementById('endMarker').getBoundingClientRect();
+    var markerWidth  = String(endCellRightRect.right-endCellLeftRect.left)+'px';
+    var markerTop    = String(endCellLeftRect.bottom - markerRect.top + markerOffset)+ 'px' ;
+//    var markerTop    = String(endCellLeftRect.bottom - parentRect.bottom + (markerRect.height * 2.3))+ 'px' ;
+    var markerLeft   = String(endCellLeftRect.left-parentRect.left)+'px'; 
+   $("#endMarker").css({'top':markerTop,'left':markerLeft,'width':markerWidth });//ここでjQery使ってる
+//   document.getElementById("endMarker").style.left  = markerLeft;
+//   document.getElementById("endMarker").style.top   = markerTop;
+//   document.getElementById("endMarker").style.width = markerWidth;
+         //必要があればここで、endMarkerのテキストを書換
+   document.getElementById("endMarker").innerHTML = ':: end ::';
+}
 //
 //本体シートの表示を折り畳む（トグル）
 xUI.packColumn=function(ID)
@@ -3295,7 +3353,7 @@ xUI.syncSheetCell=function(startAddress,endAddress,isReference){
     var targetXps=(isReference)? this.referenceXPS:this.XPS;
     if((! startAddress)||(! endAddress)){
         startAddress=[0,0];
-        endAddress  =[targetXps.xpsTracks.length,targetXps.xpsTracks[0].length];
+        endAddress  =[targetXps.xpsTracks.length-1,targetXps.xpsTracks.duration-1];
     }
     var TrackStartAddress =startAddress[0];
     var TrackEndAddress   =  endAddress[0];
@@ -3311,7 +3369,7 @@ if((r>=0)&&(r<targetXps.xpsTracks.length)&&(f>=0)&&(f<targetXps.xpsTracks.durati
             var sheetCell=(isReference)? document.getElementById(["r",r,f].join("_")):document.getElementById([r,f].join("_"));
             if(sheetCell instanceof HTMLTableCellElement){
                 if(document.getElementById(sheetCell.id)){xUI.Cgl.remove(sheetCell.id);}
-this.drawSheetCell(sheetCell);//関数内でシートセルを書き換える
+                this.drawSheetCell(sheetCell);//関数内でシートセルを書き換える（同期処理）
 //                var td=(targetXps.xpsTracks[r][f]=='')? "<br>" : this.trTd(targetXps.xpsTracks[r][f]) ;
 //        シートテーブルは必要があれば書き換え
 //                if (sheetCell.innerHTML!= td){ if(dbg) console.log(sheetCell.innerHTML);sheetCell.innerHTML=td;}
@@ -3337,6 +3395,7 @@ this.drawSheetCell(sheetCell);//関数内でシートセルを書き換える
 }
         };
     };
+    setTimeout(function(){xUI.Cgl.refresh([startAddress,endAddress],isReference)},0);//非同期処理
 }
 //syncSheetCell シートセルの表示を編集内容に同期させる　
 /**
@@ -4746,23 +4805,56 @@ xUI.Cgl.init=function(){
         delete this.body[prp];
     }
 }
+/*
+    範囲を指定してグラフィック部品を再描画するラッパ関数
+    レンジの書式はXpxの戻すレンジに準ずる
+    [[開始トラック,開始フレーム],[終了トラック,終了フレーム]]
+    リファレンスフラグが無い場合は編集対象のXPSを処理する
+*/
+xUI.Cgl.refresh=function(myRange,isReference){
+    if (typeof myRange == "undefined") {
+        myRange = [[0, 0], [xUI.XPS.xpsTracks.length - 1, xUI.XPS.xpsTracks[0].length - 1]]
+    }//指定がなければ全体を更新 印刷時は明確に範囲を指定する必要あり？
+    var StartAddress = myRange[0];
+    var EndAddress   = myRange[1];
+    var idPrefix     =(isReference)?"r_":"";
+    /**
+     * ループして更新
+     */
+    for (var t = StartAddress[0]; t <= EndAddress[0]; t++) {
+        for (var f = StartAddress[1]; f <= EndAddress[1]; f++){
+            this.draw(idPrefix+[t,f].join('_'));
+        }
+    }
 
-
+    
+}
 /**
 	セル画像部品描画コマンド
 位置計算をブラウザに任せるため　絶対座標でなく相対座標で各テーブルセル自体にCANVASをアタッチする
 
 基本部品はすべてキャッシュを行い　image Objectを作成する。
 
+印字の際に描画の動作独立性を高める必要があるので、セルに埋め込んだ画像クラスを判定してその描画を行う仕様に変更
+具体的には、myFormに優先してターゲットセルの"graph_"で開始されるクラス名からFormを取得するように変更
+　170815
 */
 xUI.Cgl.draw=function addGraphElement(myId,myForm) {
+	    var objTarget  = document.getElementById(myId);//ターゲットシートセルを取得
+	    if(! objTarget){return false;};//シートセルが存在しない場合は操作失敗
+        var jqTarget = $('#'+myId);
+
+    var classes=jqTarget.attr('class').split(' ');
+    for (var cix=0;cix<classes.length;cix++){if (classes[cix].indexOf('graph_')==0){myForm=classes[cix].replace(/^graph_/,'');break;}}
+    if(typeof myForm == 'undefined') {return false};//指定無しでかつ取得に失敗した場合はリターン(印刷時に有効)
+    /*区間描画時に形成されたIDの場合はパーセンテージを分解して描画*/
+    if(myForm.match(/(.*)_(\d+)\-(\d+)$/)){ myForm=RegExp.$1; arguments[2]=(RegExp.$2/100); arguments[3]=(RegExp.$3/100);}
+    
 		if(! this.body[myId]){	this.body[myId] = document.getElementById("cgl"+myId)	;}
 		if( this.body[myId] ){
 			$("#cgl"+myId).remove();delete this.body[myId];
 		//二重描画防止の為すでにエレメントがあればクリアして描画
 		}
-	    var objTarget  = document.getElementById(myId);//ターゲットシートセルを取得
-	    if(! objTarget){return false;};//シートセルが存在しない場合は操作失敗
 /**
     以下の場合分けは、ノーマル時の処理とAIR環境のバグ回避コード
     先の処理のほうがオーバヘッドが小さいので推奨だが、AIRで正常に処理されない
@@ -4770,7 +4862,7 @@ xUI.Cgl.draw=function addGraphElement(myId,myForm) {
 - element.top/.left で指定した座標が反映されないことがある　element.style.top/.left は正常
  動作異状の検出ルーチンはまだ組んでいない。ビルド毎にAIRに当該のバグがあるか否か確認が必要
  2016.11.12
-*/	    
+*/
 if(appHost.platform != "AIR"){
         var objParent = objTarget;
         var myTop     = "0px";
@@ -4969,10 +5061,13 @@ return element;
 xUI.Cgl.sectionDraw = function(myId,myForm,myDuration){
     var Idx=myId.split("_").reverse();
     for (var offset = 0;offset< myDuration;offset ++){
+//編集エリアとリファレンスエリアで分岐
         if(Idx.length==2){
-          this.draw(       [Idx[1],parseInt(Idx[0])+offset].join("_"),myForm,offset / myDuration, (offset+1) / myDuration);
+          //this.draw(       [Idx[1],parseInt(Idx[0])+offset].join("_"),myForm,offset / myDuration, (offset+1) / myDuration);
+          $('#'+[Idx[1],parseInt(Idx[0])+offset].join('_')).addClass('graph_'+myForm+'_'+String(parseInt(100 * offset / myDuration))+'-'+String(parseInt(100 *((offset+1) / myDuration))));
         }else{
-          this.draw([Idx[2],Idx[1],parseInt(Idx[0])+offset].join("_"),myForm,offset / myDuration, (offset+1) / myDuration);
+          //this.draw([Idx[2],Idx[1],parseInt(Idx[0])+offset].join("_"),myForm,offset / myDuration, (offset+1) / myDuration);
+          $('#'+[Idx[2],Idx[1],parseInt(Idx[0])+offset].join('_')).addClass('graph_'+myForm+'_'+String(parseInt(100 * offset / myDuration))+'-'+String(parseInt(100 *((offset+1) / myDuration))));
         }
     }
 }
@@ -5098,32 +5193,18 @@ xUI.resetSheet=function(editXps,referenceXps){
 /* ヘッダ高さの初期調整*/
     this.adjustSpacer();
 
-//エンドマーカー位置調整　endMarker
-    //配置を最終フレームのエレメント位置から取得(スペーサー調整)
-    //参照エレメントは　'#0_'+String(this.XPS.xpsTracks.duration-1)
-    //emdMarkerの親エレメントは #sheet_body
-    var markerWidth = String(tableEditWidth);
-    var endCell     = document.getElementById('0_'+String(xUI.XPS.xpsTracks.duration-1));
-    var parentSheet = document.getElementById('endMarker').parentNode;
-    console.log(parentSheet);
-    var endCellRect = endCell.getBoundingClientRect();
-    
-    var parentRect  = parentSheet.getBoundingClientRect();
-//    window.pageXOffset
-//    window.pageYOffset
-    var markerTop    = (endCellRect.bottom-parentRect.bottom+24) ;//シートセルの下端で計算endCellRect.bottom + window.pageYOffset;//
-    var markerLeft   = endCellRect.left-parentRect.left; 
-   $("#endMarker").css({'top':markerTop,'left':markerLeft,'width':markerWidth });
-//   $("#endMarker-print").css({'top':markerTop*1.065,'left':markerLeft });
-console.log(endCellRect.top);
-console.log(parentRect.top);
-console.log(markerTop);
-
 //画像部品の表示前のカーソル位置描画,'width':markerWidth
     this.selectCell(restorePoint);
     this.selection(restoreSelection);
 //セクション編集状態であれば解除
     if(this.edmode>0){this.mdChg('normal');}
+
+/* エンドマーカー位置調整　endMarker
+//印字用endマーカーは　印刷cssを参照して誤差を反映させること　フレームのピッチを計算すること
+印刷画面は印刷画面出力時に再度同メソッドで調整　トラック間の
+xUI.replaceEndMarker([トラック数,フレーム数],上下オフセットpx);
+ */
+    xUI.replaceEndMarker([xUI.XPS.xpsTracks.length,xUI.XPS.xpsTracks.duration],4);
     return ;
 };
 
@@ -5460,7 +5541,66 @@ if((NameCheck)||(myName=="")){   var msg=welcomeMsg+"\n"+localize(nas.uiMsg.dmAs
 document.getElementById("iNputbOx").focus();
 
 };
+/**
+    印字用HTMLスタートアップ　（スタートアップのサブセット)
 
+
+
+
+ */
+function nas_Prt_Startup(callback){
+/**
+       グローバルの XPSを実際のXpsオブジェクトとして再初期化する
+*/
+    XPS=new Xps(MaxLayers,MaxFrames);
+
+/*============*     初期化時のデータ取得    *============*/
+/*
+ *  レンダリング時にドキュメント内にスタートアップデータが埋め込まれている
+ */
+//    ドキュメント内スタートアップデータを読み出し
+
+if(document.getElementById( "startupXPS" )){
+        startupXPS=document.getElementById("startupXPS").innerHTML;
+}
+//    同ドキュメント内にスタートアップ用参照データがあれば読み出し
+
+if(document.getElementById( "referenceXPS" ) && document.getElementById( "referenceXPS" ).innerHTML.length){
+        referenceXPS=document.getElementById("referenceXPS").innerHTML;
+}
+//    UI生成
+    xUI=new_xUI();
+
+//    *** xUI オブジェクトは実際のコール前に必ずXPSを与えての再初期化が必要　要注意
+
+if(startupXPS.length > 0){ XPS.readIN(startupXPS) }
+//リファレンスシートデータがあればオブジェクト化して引数を作成
+        var referenceX=new Xps(5,144);
+    if((referenceXPS)&&(referenceXPS.length)){
+        referenceX.readIN(referenceXPS);
+    }
+    xUI.init(XPS,referenceX);//初回実行時にxUIにデータを与えて初期化
+    
+//    xUI.replaceEndMarker(undefined,4);//編集HTML用のみ
+    var pgRect     = document.getElementById("printPg1").getBoundingClientRect();
+    var headerRect = document.getElementById("pg1Header").getBoundingClientRect();
+    var tableRect  = document.getElementsByClassName("sheet")[0].getBoundingClientRect();
+    var baseWidth  = headerRect.width;
+    var baseHeight = 1580;//
+    var xScale = baseWidth/tableRect.width;
+    var yScale = (baseHeight-headerRect.height)/tableRect.height;
+    console.log(pgRect);
+    console.log(headerRect);
+    console.log(tableRect);
+    console.log([xScale,yScale]);
+    $(".sheet").css({"transform":"scale("+[xScale,yScale].join()+")","transform-origin":"0 0"});
+    $(".printPage").css({"height":baseHeight,"width":baseWidth});
+    xUI.replaceEndMarker(undefined,4);//編集HTML用のみ
+
+    //スケーリング終了後のアイテム座標でマーカーを配置
+    if(callback instanceof Function) callback();
+};
+//
 /*
 タイムシートのUIをリセットする手続き
 タイムシートの変更があった場合はxUI.init(XPS)を先にコールしてxUIのアップデートを行うこと
@@ -6834,40 +6974,89 @@ function writeXPS(obj)
 
 /**
 	XPSデータを印刷および閲覧用htmlに変換
-	このファイルは、アプリケーションでの再読込不能
+引数：動作モード
+true時はhtmlをそのまま文字列でリザルトするがfalseの際は別ウィンドウを開いて書き出す
+"body-only"　で<body>タグ内のHTML本体のみを返す
 */
 function printHTML(mode){
-//モードあり true時はボディをそのままリザルトするがfalseの際は別ウィンドウを開いて書き出す
-if(mode){mode=true}
+/*
+    画像パーツの転送を行うかまたは、自分自身でレンダリングできるようにする必要あり
+    エンドマーカーの配置も必要 0814
+ */
 
+if(! mode){mode=false;}
 var myBody="";
+
+//body-only時省略分
+    if(mode!='body-only'){
 myBody+='<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" xml:lang="ja" lang="ja">';
 myBody+='<head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"><title>';
 myBody+=XPS.scene.toString()+XPS.cut.toString();
 // myBody+='</title><link REL=stylesheet TYPE="text/css" HREF="http://www.nekomataya.info/test/remaping/template/printout.css">';
-//myBody+='</title><link REL=stylesheet TYPE="text/css" HREF="'+location+'template/printout.css">';//for TEST
+myBody+='</title><link REL=stylesheet TYPE="text/css" HREF="'+location+'template/printout.css">';//for TEST
+/*
 if(String(location).indexOf('https')!=0){
 myBody+='</title><link REL=stylesheet TYPE="text/css" HREF="http://www.nekomataya.info/test/remaping.js/template/printout.css">';//for TEST onWeb
 }else{
 myBody+='</title><link REL=stylesheet TYPE="text/css" HREF="https://nekomataya.sakura.ne.jp/test/remaping.js/template/printout.css">';//for TEST on https
 }
+*/
+/* ライブラリロード */
+
+myBody+='<script src=./lib/jquery.js></script>';
+myBody+='<script src=./lib/jquery-ui.js></script>';
+myBody+='<script src=./lib/ecl/ecl.js></script>';
+myBody+='<script src=./config.js></script>';
+myBody+='<script src=./nas/lib/nas_common.js></script>';
+myBody+='<script src=./nas/lib/nas_common_HTML.js></script>';
+myBody+='<script src=./nas/newValueConstractors.js></script>';
+myBody+='<script src=./nas/pmio.js></script>';
+myBody+='<script src=./nas/configPM.js></script>';
+myBody+='<script src=./nas/lib/mapio.js></script>';
+myBody+='<script src=./nas/lib/xpsio.js></script>';
+myBody+='<script src=./nas/scripts/remaping/airUI.js></script>';
+myBody+='<script src=./nas/scripts/remaping/remaping.js></script>';
+
+
+myBody += '<script>replaceEndMarker=function (){var endPoint = JSON.parse(document.getElementById("endMarker").innerHTML);    if(!(endPoint instanceof Array)) {endPoint=[1,endPoint]};    var endCellLeft  = document.getElementById("0_"+String(endPoint[1]-1));    var endCellRight = document.getElementById(String(endPoint[0]-1)+"_"+String(endPoint[1]-1));    var parentSheet  = document.getElementById("endMarker").parentNode;    var endCellLeftRect  = endCellLeft.getBoundingClientRect();    var endCellRightRect = endCellRight.getBoundingClientRect();    var parentRect   = parentSheet.getBoundingClientRect();    var markerRect   = document.getElementById("endMarker").getBoundingClientRect();    console.log (markerRect);    var markerWidth  = String(endCellRightRect.right-endCellLeftRect.left)+"px";var markerTop    = String(endCellLeftRect.bottom - parentRect.bottom + (markerRect.height))+ "px" ;    var markerLeft   = String(endCellLeftRect.left-parentRect.left)+"px";document.getElementById("endMarker").style.left  = markerLeft;   document.getElementById("endMarker").style.top   = markerTop;   document.getElementById("endMarker").style.width = markerWidth; document.getElementById("endMarker").innerHTML = ":: end ::";};resizePage2Paper=function(){var areaHeight = 1250;xUI.adjustScale([1,1]); var pgRect=document.getElementById("printPg1").getBoundingClientRect(); xUI.adjustScale([1,areaHeight/pgRect.height]);};</script>';
 //myBody+='</title><link REL=stylesheet TYPE="text/css" HREF="./template/printout.css">';
-myBody+='<style type="text/css"> * { margin: 0; padding: 0;} #fixed {position: fixed;} #sheet_view {  margin:0; }</style></head><body><div id="sheet_body">';
+myBody+='<style type="text/css"> * { margin: 0; padding: 0;} #fixed {position: fixed;} #sheet_view {  margin:0; }</style></head>';//
+
+myBody+='<body ';//"
+//myBody+= 'onload="var nRS = setTimeout(\'nas_Prt_Startup(function(){xUI.syncSheetCell();xUI.syncSheetCell(undefined,undefined,true);xUI.Cgl.refresh();})\',10);" ';//
+myBody+= 'onload="var nRS = setTimeout(\'nas_Prt_Startup(function(){xUI.syncSheetCell();xUI.syncSheetCell(undefined,undefined,true);xUI.Cgl.refresh();window.print();window.close();})\',10);" ';//
+myBody+='" >';//
+    };//ここまでbody-only時は省力
+
+myBody+='<textarea id="startupXPS" >';
+myBody+= xUI.XPS.toString();
+myBody+='</textarea>';
+myBody+='<textarea id="referenceXPS">';
+myBody+= xUI.referenceXPS.toString();
+myBody+='</textarea>';
+myBody+='<div id="sheet_body">';//
 
 	for (Page=1 ;Page <=Math.ceil(XPS.duration()/xUI.PageLength);Page++)
 	{
+	    myBody+= '<div class=printPage id=printPg'+String(Page)+'>';
+	    myBody+= '<div class=headerArea id=pg'+String(Page)+'Header>';
 		myBody+= xUI.headerView(Page);
-		myBody+= ' <span class=pgNm>( p '+nas.Zf(Page,3)+' )</span><br>';
+		myBody+= '<span class=pgNm>( p '+nas.Zf(Page,3)+' )</span><br></div>';
+	// myBody+= '<div class="tableArea"  id=pg'+String(Page)+'Table>';
 		myBody+= xUI.pageView(Page);
+	//myBody+= '</div></div>'
+	    myBody+= '</div>'
 	};
 //myBody+='<div class="screenSpace"></div>';
 
 
 
-myBody+='</div></body></html>';
+myBody+='</div>';
+
+if(mode != 'body-only') myBody+='</body></html>';
 
 if(mode){return myBody;}else{
-_w=window.open ("","xpsFile","width=480,height=360,scrollbars=yes,menubar=yes");
+_w=window.open ("","xpsFile","width=1120,height=1600,scrollbars=yes,menubar=yes");
 
 	_w.document.open("text/html");
 	_w.document.write(myBody);
@@ -6886,9 +7075,13 @@ _w=window.open ("","xpsFile","width=480,height=360,scrollbars=yes,menubar=yes");
 	ただし、AIR環境ではフルパスのローカルFSパスが戻る。
 	同じI.FをAIR環境でも使用するために、ケース分岐する。
 
+    印刷環境ではファイルの入出力自体をサポートしないのでイベントリスナの設定をスキップする
+    id="myCurrentFile"のエレメントの有無で判定
 */
 window.addEventListener('DOMContentLoaded', function() {
 // ファイルが指定されたタイミングで、その内容を表示
+  if(document.getElementById("myCurrentFile")){
+    console.log('addEventListener');
   document.getElementById("myCurrentFile").addEventListener('change', function(e) {
     if(appHost.platform == "AIR"){
     // File APIを利用できるかをチェック
@@ -6922,7 +7115,6 @@ break;
       var input = document.getElementById('myCurrentFile').files[0];
 	var myEncode=(input.name.match(/\.(ard|csv|tsh)$/))?"Shift-JIS":"UTF-8";
 if(window.FileReader){
-//if(false){}
       // ファイルリーダーオブジェクト初期化(Chrome/Firefoxのみ)
       var reader = new FileReader();
       // ファイルの読み込みに成功したら、その内容をxUI.data_wellに反映（2）
@@ -6957,8 +7149,8 @@ var msg = "no FileReader! :\n　このブラウザはFileReaderオブジェク�
     }
    }
   }, true);//myCrrentFile.addEvent
+  }
 });//window.addEvent
-
 
 /*
 	テンプレートを利用したeps出力

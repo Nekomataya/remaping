@@ -1,8 +1,9 @@
 ﻿/*	remaping.css											*/
 /*	りまぴん のためのスタイルシート							*/
 /*	このスタイルシートを変更してデザインを調整できます。	*/
-/*	Nekomataya/kiyo 2016									*/
-/*															*/
+/*  プリント環境改善のために実寸系に置きかえ				*/
+/*	Nekomataya/kiyo 2017								*/
+/*	想定用紙サイズは JIS/ISO A3								*/
 
 /*========== タイムシート全体 ============*/
  * {
@@ -13,8 +14,9 @@
 	ユーザ選択は基本的に禁止
 */
 body {
-	margin:0px 100px 4px 0px;
-	padding:0px 16px 0px 0px ;
+	width:1122px;
+	margin:0 100px 4px 0;
+	padding:0 16px 0 0 ;
 	overflow:scroll;
 	background-color:#dedede;
 	user-select:none;
@@ -22,7 +24,8 @@ body {
 	-khtml-user-select:none;
 	-webkit-user-select:none;
 	vertical-align:middle;
-	font-size:8pt;
+	font-size:9pt;
+	font-family: '游ゴシック体', 'Yu Gothic', 'YuGothic','ヒラギノ角ゴシック', 'Hiragino Sans', 'ヒラギノ角ゴ ProN W3', 'Hiragino Kaku Gothic ProN', 'メイリオ', 'Meiryo', 'ＭＳ Ｐゴシック', 'MS PGothic', 'sans-serif';
 }
 /*========== リンク ============*/
 a:link		{color:#000066}
@@ -98,25 +101,25 @@ iframe.UIhidden {
 	border-color:#bbbbbb;
 */
 table {
-	margin:0px 0px 0px 0px;
-	padding:0px 0px 0px 16px;
-	border-width:2px 1px 0px 0px;
+	margin:0 0 0 0;
+	padding:0 0 0 16px;
+	border-width:2px 1px 0 0;
 	border-style:solid;
 	table-layout:fixed;
 	max-height:100%;
 }
 table.UItable{
-	margin:0px 0px 0px 0px;
-	padding:0px 0px 0px 0px;
-	border-width:2px 1px 0px 0px;
+	margin:0 0 0 0;
+	padding:0 0 0 0;
+	border-width:2px 1px 0 0;
 	border-style:solid;
 	table-layout:fixed;
 }
 
 table.info	{
-	width:97%;
+	width:1058px;
 	height:10px;
-	border-width:0px;
+	border-width:0;
 	table-layout:fixed;
 }
 table.sheet	{
@@ -129,12 +132,12 @@ table.toolbox {
 }
 /*
 		テーブル要素
-	border-color:#bbbbbb;
+	基準高さはth全体で設定
 */
 th {
 	text-align:center;
 	border-style:solid;
-	border-width:4px 1px 1px 0px;
+	border-width:4px 1px 1px 0;
 }
 
 /*
@@ -151,7 +154,7 @@ th.pageLabel{width:8em;}
 
 /*
 	シート本体のビュー設定
-	時間スケール
+	時間スケール(トラック左端)
 */
 tr.tlheade {
 	height:1px;
@@ -160,7 +163,7 @@ th.tlheade {
 	height:1px;
 }
 th.tcSpan {
-	border-width:1px 1px 0px 1px;
+	border-width:1px 1px 0 1px;
 	width:3em;
 }
 /*
@@ -170,107 +173,102 @@ th.timelabel{
 	color:gray;
 	text-align:center;
 	border-style:solid;
-	border-width:0px 1px 3px 1px;
+	border-width:0 1px 3px 1px;
 	}
-
-/*		リファレンス
-
-*/
+/*
+	参照欄(アクション・参考欄)
+ */
 th.referenceSpan {
-	border-width:4px 1px 1px 0px;
+	border-width:4px 1px 1px 0;
 	width:2em;
 }
 th.layerlabelR {
 	text-align:center;
 	border-style:solid;
 	color:gray;
-	border-width:3px 1px 3px 0px;
+	border-width:3px 1px 3px 0;
 	font-size:9pt;
+	height:16px;
 }
-/*		ダイアログ
+/*
+	ダイアログトラック
 */
 th.dialogSpan {
-	border-width:1px 1px 0px 0px;
+	border-width:1px 1px 0 0;
 	width:3em;
 }
 th.dialoglabel {
 	text-align:center;
 	border-style:solid;
-	border-width:0px 1px 3px 0px;
-/*	font-size:9pt;*/
+	border-width:0 1px 3px 0;
 }
 
-/*		編集エリア
-dialog/still/timing/sfx/camera
+/*
+		一般編集領域
+	dialog/still/timing/sfx/camera
 */
 th.editSpan {
-	border-width:1px 0px 0px 0px;
+	border-width:1px 0 0 0;
 	width:3em;
 }
 th.layerlabel {
 	text-align:center;
 	border-style:solid;
-	border-width:3px 1px 3px 0px;
-/*	font-size:9pt;*/
+	border-width:3px 1px 3px 0;
+	height:16px;
 }
 
-//still
+/* still */
 th.stillSpan {
-	border-width:1px 0px 0px 0px;
+	border-width:1px 0 0 0;
 }
 th.stilllabel {
 	text-align:center;
 	border-style:solid;
-	border-width:3px 1px 3px 0px;
-/*	font-size:9pt;*/
+	border-width:3px 1px 3px 0;
 }
-//timing
+/* timing/replacement */
 th.timingSpan {
-	border-width:1px 0px 0px 0px;
+	border-width:1px 0 0 0;
 	width:3em;
 }
-/*	font-size:9pt;*/
 th.timinglabel {
 	text-align:center;
 	border-style:solid;
-	border-width:3px 1px 3px 0px;
+	border-width:3px 1px 3px 0;
 }
-//sfx
+/* sfx/effect */
 th.sfxSpan {
-	border-width:1px 0px 0px 0px;
+	border-width:1px 0 0 0;
 	width:3em;
 }
 th.sfxlabel {
 	text-align:center;
 	border-style:solid;
-	border-width:3px 1px 3px 0px;
-/*	font-size:9pt;*/
+	border-width:3px 1px 3px 0;
 }
-//camera
+/* camera/geometry */
 th.cameraSpan {
-	border-width:1px 0px 0px 0px;
+	border-width:1px 0 0 0;
 	width:4em;
 }
 th.cameralabel {
 	text-align:center;
 	border-style:solid;
-	border-width:3px 1px 3px 0px;
-/*	font-size:9pt;*/
+	border-width:3px 1px 3px 0;
 }
-
-/*		フレーム注釈
+/*
+		フレームコメント
 	全体幅のクッションエリアとしても機能させるので
 	このエレメントは幅指定無し
 */
 th.framenoteSpan {
-	border-width:1px 1px 0px 0px;
+	border-width:1px 1px 0 0;
 }
-/*	font-size:9pt;*/
 th.framenotelabel {
 	text-align:center;
 	border-style:solid;
-	border-width:0px 1px 3px 1px;
-/*	font-size:9pt;*/
+	border-width:0 1px 3px 1px;
 }
 /*
 	ページ印刷用トレーラー
@@ -279,46 +277,52 @@ div.printPage {
 	page-break-inside:avoid;
 }
 /*
+	シート冒頭メモ欄
+*/
+.top_comment {
+	font-size:8pt;
+}
+/*
 	タイムシート記述終了マーカー
 */
 .endMarker {
-	page-break-before:avoid;
-	page-break-after:avoid;
 	display:inline-block;
 	position:relative;
 	width:240px;
+	margin:0;
 	height:8px;
 	text-align:center;
 	border-top-style:double;
-	border-width:6px 0 0 0;
-	z-index:9;
+	border-width:4px 0 0 0;
+	z-index:3;
 }
 .endMarker-print {
-	page-break-before:avoid;
-	page-break-after:avoid;
-	display:none;
+	display:inline-block;
+	position:relative;
+	width:240px;
+	margin:0;
+	height:8px;
+	text-align:center;
+	border-top-style:double;
+	border-width:4px 0 0 0;
+	z-index:3;
 }
 
 /*		テーブルデータ基本
-*/
-/*
-	font-size:9pt;
-	border-color:#bbbbbb;
 */
 td {
 	position:relative;
 	text-align:center;
 	vertical-align:middle;
 	border-style:solid;
-	border-width:0px 1px 1px 0px;
+	border-width:0 1px 1px 0;
 	padding:0;
 	margin:0;
 	white-space: nowrap;
 	overflow:hidden;
-	font-size:8pt;
-	height:16px
+	font-size:11px;
+	height:17.847px;
 }
-/*	font-size:11pt;*/
 
 td.menu {
 	text-align:left;
@@ -326,20 +330,18 @@ td.menu {
 	vertical-align:bottom
 }
 
-/*	font-size:11pt;*/
 td.toolbar {
 	text-align:left;
 	border-style:none;
 	vertical-align:top
 }
 
-/*	font-size:11pt;*/
 td.toolbarR {
 	text-align:right;
 	border-style:none;
 	vertical-align:top
 }
-/*	font-size:11pt;*/
+
 td.logo	{
 	text-align:right;
 	border-style:none;
@@ -353,9 +355,8 @@ td.header {
 	border-style:none;
 	vertical-align:middle;
 	font-weight:bold;
-/*	font-size:9pt;*/
 }
-/*	font-size:9pt;*/
+
 td.footer {
 	background-color:#000000;
 	color:#f8f8f8;
@@ -370,7 +371,6 @@ td.layerOption {
 	border-style:none;
 	vertical-align:middle;
 	font-weight:bold;
-/*	font-size:8pt;*/
 	width:100px;
 }
 /*		UI　TCインジケータ
@@ -529,8 +529,8 @@ button.iconButton:disabled {
 
 .iconButton-movie { background-position: -216px -162px; }
 .iconButton-ps { background-position: -243px -162px; }
+.iconButton-printer { background-position: -270px -162px; }
 /*
-.iconButton- { background-position: -270px -162px; }
 .iconButton- { background-position: -297px -162px; }
 .iconButton- { background-position: -324px -162px; }
 .iconButton- { background-position: -351px -162px; }
@@ -702,7 +702,7 @@ button.iconButton:disabled {
 
 
 /*一文字用ボタン*/
-button.oneChr {width:1.5em;margin:0px;padding:0px;}
+button.oneChr {width:1.5em;margin:0;padding:0;}
 
 /*サインイン／アウトボタン*/
 button.sign {width:10em;}
@@ -809,17 +809,17 @@ button.spinCtl {
 button.spinCtl-top {
 	left:-22px;top:-5px;
    /* 角丸 */
-    -moz-border-radius: 4px 4px 0px 0px;
-    -webkit-border-radius: 4px 4px 0px 0px;
-    border-radius: 4px 4px 0px 0px;
+    -moz-border-radius: 4px 4px 0 0;
+    -webkit-border-radius: 4px 4px 0 0;
+    border-radius: 4px 4px 0 0;
 }
 button.spinCtl-bottom {
 	left:-22px;top:6px;
 	margin: 0;
    /* 角丸 */
-    -moz-border-radius: 0px 0px 4px 4px ;
-    -webkit-border-radius: 0px 0px 4px 4px;
-    border-radius: 0px 0px 4px 4px;
+    -moz-border-radius: 0 0 4px 4px ;
+    -webkit-border-radius: 0 0 4px 4px;
+    border-radius: 0 0 4px 4px;
 
 }
 
@@ -827,7 +827,7 @@ button.spinCtl-bottom {
  * .timeControplButton
  */
 .timeControl {
-	margin: 2px 62px 2px 0px;
+	margin: 2px 62px 2px 0;
 }
 button.subControl {
 	margin: 0;
@@ -893,24 +893,35 @@ button.subControl {
     -webkit-border-radius: 0 0 3px 0;
     border-radius: 0 0 3px 0;
  }
- 
+ /*========== ページヘッダーエリア包括 ============
+	値取得の簡略化のためこの要素のheightは、
+	この配下の二つのテーブルの合算を設定しておくこと
+ */
+.headerArea {
+	width:1058px;
+	height:318px;
+ }
  /*========== ページヘッダーテーブル ============*/
-table.pageHeader {
+table.pageHeader,.sheetHeader {
 	display:none;
 }
-/*====スクロールスペーサーとしてブロックを確保する
- */
-/*========== シートヘッダーテーブル ============
-	スクロールスペーサーを兼用をやめて分離
-*/
-table.sheetHeader {
+td.pgHeader {
 	display:none;
+}
+/*========== シートヘッダーマージン ============
+	メモ領域をとるマージン
+	２ページめ以降はダミー
+*/
+table.sheetHeaderMargin {
+	display:none;
+}
+td.memoSpace {
+	border-style:none;
 }
 
 /*	ツールボックスの部品*/
 input.toolTip	{
-/*	font-size:8pt;
-	height:15pt;*/
+	height:15pt;
 	width:100%;
 }
 /*		UI.表示プロパティ
@@ -918,7 +929,7 @@ input.toolTip	{
 */
 div.optionPanel{
 	display:none;
-	margin:0px 0px 0px 16px 
+	margin:0 0 0 16px 
 }
 div.optionPanelModal{
 	display:none;
@@ -942,16 +953,16 @@ div.optionPanelFloat{
 	text-align:right;
 	border-style:solid;
 	vertical-align:bottom;
-/*	font-size:4pt;*/
-		border-width:0px 1px 3px 1px;
+	height:16px;
+	border-width:0 1px 3px 1px;
 }
 /*		通常データ*/
 .ntSep,.ntSep_Blank {
-		border-width:0px 1px 3px 0px;
+		border-width:0 1px 3px 0;
 }
 /*		ダイアログ*/
 .dtSep,.dtSep_Blank {
-		border-width:0px 1px 3px 0px;
+		border-width:0 1px 3px 0;
 }
 
 /*サブセパレータライン*/
@@ -961,16 +972,16 @@ div.optionPanelFloat{
 	text-align:right;
 	border-style:solid;
 	vertical-align:bottom;
-/*	font-size:6pt;*/
-		border-width:0px 1px 2px 1px;
+	height:16px;
+	border-width:0 1px 2px 1px;
 }
 /*		通常データ*/
 .nsSep,.nsSep_Blank {
-		border-width:0px 1px 2px 0px;
+		border-width:0 1px 2px 0;
 }
 /*		ダイアログ*/
 .dsSep,.dsSep_Blank {
-		border-width:0px 1px 0px 0px;
+		border-width:0 1px 0 0;
 }
 
 /*通常ライン*/
@@ -980,39 +991,40 @@ div.optionPanelFloat{
 	text-align:right;
 	border-style:solid;
 	vertical-align:bottom;
-/*font-size:12pt;*/
-	border-width:0px 1px 1px 1px;
-	height:5px;
+	height:16px;
+	border-width:0 1px 1px 1px;
 }
 /*		参照データ*/
 .ref {
 		color:gray;
 }
 .rnSep,.rnSep_Blank {
-		border-width:0px 1px 1px 0px;
+		border-width:0 1px 1px 0;
 		color:gray;
 }
 th.rnArea{
 		color:gray;
-		border-width:2px 1px 0px 0px;
+		border-width:2px 1px 0 0;
 		width:144px;
+		height:16px;
 }
 /*		通常データ*/
 .nnSep,.nnSep_Blank {
-			border-width:0px 1px 1px 0px;
+			border-width:0 1px 1px 0;
 }
 
 
 
 th.editArea , th.camArea{
-		border-width:2px 1px 0px 0px;
+		border-width:2px 1px 0 0;
+		height:16px;
 }
 /*		ダイアログ*/
 .dnSep,.dnSep_Blank {
-		border-width:0px 1px 0px 0px;
+		border-width:0 1px 0 0;
 }
 .dialoglabel {
-		border-width:0px 1px 0px 0px;
+		border-width:0 1px 0 0;
 		width:36px;
 }
 
@@ -1030,20 +1042,21 @@ th.editArea , th.camArea{
 td.colSep {
 	border-style:none;
 	height:2px;
+	width:6px;
 }
 /*	border-width:1px 1px 1px 1px; */
 /*エンドセパレータ（未使用）*/
 /*		左端*/
 .leSep,.leSep_Blank {
-		border-width:0px 1px 4px 1px;
+		border-width:0 1px 4px 1px;
 }
 /*		通常データ*/
 .neSep,.neSep_Blank {
-		border-width:0px 1px 4px 0px;
+		border-width:0 1px 4px 0;
 }
 /*		ダイアログ*/
 .deSep,.deSep_Blank {
-		border-width:0px 1px 4px 0px;
+		border-width:0 1px 4px 0;
 }
 /*	時間表示	*/
 .timeguide {
@@ -1054,8 +1067,7 @@ td.colSep {
 .IptBox {
 	background-color:#ffffff;
 	height:10pt;
-/*	font-size:9pt;*/
-	border-width:0px;
+	border-width:0;
 	border-style:none;
 	text-align:center;
 	margin:0;
@@ -1063,18 +1075,12 @@ td.colSep {
 }
 /*	ページノンブル	*/
 .pgNm {
-/*	font-size:9pt;*/
+	font-size:9pt;
 }
-/*
-	background-color:#efffef;
-	background-color:#efffef;
-
-*/
 
 .infoTable {
 	width:100%;
 	text-align:center;
-/*	font-size:5pt;*/
 }
 .sheet-header {
 	z-index:auto;
@@ -1086,7 +1092,7 @@ td.colSep {
 }
 .footerTool {
 	width:100%;
-	top:0px;
+	top:0;
 	margin:0;
 }
 
@@ -1094,7 +1100,7 @@ td.colSep {
 	width:97%;height:10px;
 }
 .printSpace {
-	display:none;
+	display:inline;
 }
 
 /*form view*/
@@ -1117,36 +1123,28 @@ select	{text-align:center;}
  }
 
 /*タイムシートの文字飾り (例)*/
-.v_bar	{color:blue;border-style:solid;border-color:blue;border-width:0px 1px 0px 0px;padding:0;margin:0;}
-/*.v_bar	{ height:40px;font-size:9pt;color:blue;border-style:solid;border-color:blue;border-width:0px 1px 0px 0px;padding:0;margin:0;}
-/* .v_wave	{ height:12pt;padding:0;margin:0;}  background-image:url(./images/ui/waveline16px.png);*/
+.v_bar	{color:blue;border-style:solid;border-color:blue;border-width:0 1px 0 0;padding:0;margin:0;}
 .v_wave	{ height:11px;padding:0;margin:0;}
 line  {margin:0;padding:0;}
 /* */
 td#title {
 	font-weight:900;
-/*	font-size:11px;*/
 }
 td#scene_cut {
 	font-weight:900;
-/*	font-size:11px;*/
 }
 
-/*
-その他のエレメントid は、ソースを直接読むか、取扱説明書をご覧ください。
-*/
+
 div.application_status {
 	z-index:88;
 	border-style:solid;
 	border-color:snow;
-	border-width:0px 0px 1px 0px;
-	padding:0px 0px 0px 16px 
+	border-width:0 0 1px 0;
+	padding:0 0 0 16px 
 }
-/*	オプションパネル
+/*
+	オプションパネル
 */
-
-
-
 #optionPanelLogin{
     display:none;
 }
@@ -1177,14 +1175,6 @@ div.application_status {
 #optionPanelTbx a.close img{
     border:none;
 }
-/*
-#optionPanelTbx dl{
-    width:100%;
-    height:100%;
-    background:url("../images/toolbox.gif");
-    margin:0;
-}
-*/
 #optionPanelTbx dl dt{
     height:25px;
     line-height:25px;
@@ -1328,7 +1318,7 @@ input.ddpInput	{
   position: relative;
   float: left;
   margin: 0;
-  padding: 0px;
+  padding: 0;
   width: 72px;
   height: 16px;
   border: solid 1px #ccc;
@@ -1432,6 +1422,15 @@ transform-origin: 0 0;transform:scale(1,1);
 		opacity:0.4;
 	}
 /**
+	データトレーラー
+	startupXPS
+	referenceXPS
+*/
+ #startupXPS, #referenceXPS {
+ 	width:75%;
+ 	height:128px;
+ }
+ /**
 	.pmcui
 */
 .pmcui	{

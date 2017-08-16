@@ -287,6 +287,11 @@ serviceAgent.pushEntry(xUI.XPS,function(){xUI.setStored("current");sync();
 	onclick='if(xUI.data_well.value=XPS.toString("html")){callEchoHTML()};return false;'
 	title="表示用HTMLをダウンロード"
 >Export as html</A></li>
+<li id=dMcgi><span id=pMprintHTML class='pM pM-alt'>Print html</span><A	id=pMprintHTML
+	href='javascript:void(0)'
+	onclick='printHTML();return false;'
+	title="印刷"
+>Print HTML</A></li>
 <li id=dMcgi><span id=pMexportEPS-d class='pM pM-alt'>Export as eps</span><A	id=pMexportEPS
 	href='javascript:void(0)'
 	onclick='var prevChack=document.getElementById("exportCheck").checked;document.getElementById("exportCheck").checked=true;if(exportEps()){document.getElementById("exportCheck").checked=prevChack;};return false;'
@@ -926,6 +931,11 @@ serviceAgent.pushEntry(xUI.XPS,function(){xUI.setStored("current");sync();
     class='iconButton iconButton-pen_1'
 	onClick='xUI.viewOnly=(xUI.viewOnly)?false:true;sync("productStatus");'
 	title='書き込み禁止/許可　'
+> </button><button
+	id=ibMprt
+    class='iconButton iconButton-printer'
+	onClick='printHTML();'
+	title='印刷（テスト）'
 > </button>
 </span>
 
@@ -3180,7 +3190,7 @@ duration :
 </div>
 </div>
 <!--	ラベル付き音響編集パネル	-->
-<!-- メモ編集エリア　-->
+<!-- メモ編集エリア　画面表示のみ　印刷時はシートヘッダ上に別表示-->
 <div id=memoArea>
    <div id=memo_header >
    <a href="javascript:void(0);"
@@ -3260,8 +3270,8 @@ index.html ,v 1.6 2017/06/23  support@u-at.net <br />
 <br>
       </div><hr>
 <!-- <form> -->
-    <textarea id="startupXPS" style='width:75%;'></textarea>
-    <textarea id="referenceXPS" style='width:75%;'></textarea>
+    <textarea id="startupXPS"  ></textarea>
+    <textarea id="referenceXPS"></textarea>
   </div>
   <div id="scrollSpaceFt" class=\"screenSpace\"><br></div>
   <!-- backend_variables -->
