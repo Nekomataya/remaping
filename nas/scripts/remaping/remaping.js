@@ -1776,24 +1776,23 @@ if(pageNumber>1){
     _BODY+='<table class=sheetHeader>';
 };
 //　ページヘッダとシートヘッダの共通表示
-//    _BODY+='<tr><th class=opusLabel>No.</th><th class=titleLabel>TITLE</th><th class=scenecutLabel>S-C</th><th class=timeLabel>TIME</th><th class=nameLabel>name</th><th class=pageLabel>page</th></tr>';
 
     _BODY+='<tr>';
-    _BODY+='<td class=pgHeader id="opus'+pageNumber+'">'+this.XPS.opus+'</td>';
-    _BODY+='<td class=pgHeader id="title'+pageNumber+'">'+this.XPS.title+this.XPS.subtitle+'</td>';
-    _BODY+='<td class=pgHeader id="scene_cut'+pageNumber+'">'+this.XPS.scene+this.XPS.cut+'</td>';
-    _BODY+='<td class=pgHeader id="time'+pageNumber+'">'+nas.Frm2FCT(this.XPS.time(),3)+'</td>';
-    _BODY+='<td class=pgHeader id="update_user'+pageNumber+'">'+(this.XPS.update_user.toString()).split(":")[0]+'</td>';
+    _BODY+='<td class="pgHeader opusHeader" id="opus'+pageNumber+'">'+this.XPS.opus+'</td>';
+    _BODY+='<td class="pgHeader titleHeader" id="title'+pageNumber+'">'+this.XPS.title+this.XPS.subtitle+'</td>';
+    _BODY+='<td class="pgHeader scenecutHeader" id="scene_cut'+pageNumber+'">'+this.XPS.scene+this.XPS.cut+'</td>';
+    _BODY+='<td class="pgHeader timeHeader" id="time'+pageNumber+'">'+nas.Frm2FCT(this.XPS.time(),3)+'</td>';
+    _BODY+='<td class="pgHeader nameHeader" id="update_user'+pageNumber+'">'+(this.XPS.update_user.toString()).split(":")[0]+'</td>';
 //    _BODY+='<td class=pgHeader id="update_user'+pageNumber+'">'+this.XPS.update_user.handle+'</td>';
 //シート番号終了表示
 if(pageNumber==Pages){
-    _BODY+='<td class=pgHeader >'+'end / '+Pages+'</td>';
+    _BODY+='<td class="pgHeader pageHeader" >'+'end / '+Pages+'</td>';
 }else{
-    _BODY+='<td class=pgHeader >'+pageNumber+' / '+Pages+'</td>';
+    _BODY+='<td class="pgHeader opusHeader">'+pageNumber+' / '+Pages+'</td>';
 };
     _BODY+='</tr>';
 
-    _BODY+='<tr><th class=opusLabel>No.</th><th class=titleLabel>TITLE</th><th class=scenecutLabel>S-C</th><th class=timeLabel>TIME</th><th class=nameLabel>name</th><th class=pageLabel>page</th></tr>';
+    _BODY+='<tr><th class="headerLabel opusHeader">No.</th><th class="headerLabel titleHeader">TITLE</th><th class="headerLabel scenecutHeader">S-C</th><th class="headerLabel timeHeader">TIME</th><th class="headerLabel nameHeader">name</th><th class="headerLabel pageHeader">page</th></tr>';
 //ページヘッダを閉じる
     _BODY+='</table>';
 
@@ -2048,11 +2047,11 @@ BODY_ +='<tbody>';
     第一行目
     UI上は、イベント受信を担当するのは最も上に表示されるエレメント
 */
-BODY_ +='<tr class=tlheade>';
+BODY_ +='<tr class=tlhead>';
 //*==============================ページカラムループ処理
     for (cols=0;cols < PageCols;cols ++){
 /*********** timeguide ********************/
-BODY_ +='<th class="tcSpan tlhaed"';
+BODY_ +='<th class="tcSpan tlhead"';
 BODY_ +=' ></th>';
 
 if((this.viewMode!="Compact")&&(pageNumber<=-2)){break;
@@ -2061,7 +2060,7 @@ if((this.viewMode!="Compact")&&(pageNumber<=-2)){break;
 /*********** Action Ref *************/
 //=====================参照エリア
         for (r=0;r<this.referenceLabels.length;r++){
-BODY_ +='<th class="referenceSpan tlhaed" ';
+BODY_ +='<th class="referenceSpan tlhead" ';
 BODY_ +='> </th>';
         };
 
@@ -2075,7 +2074,7 @@ BODY_ +='> </th>';
 //=====================編集セル本体の固定部分のみをタイムライン種別に合わせて配置(ラベル部分)
 if(true){
         for (var r=0;r<(xUI.dialogSpan);r++){
-    BODY_ +='<th class="dialogSpan tlhaed"  id="TL'+(r+1)+'" ></th>';
+    BODY_ +='<th class="dialogSpan tlhead"  id="TL'+(r+1)+'" ></th>';
         }
 }else{
         for (var r=0;r<this.XPS.xpsTracks.length;r++){
@@ -2083,7 +2082,7 @@ if(true){
  switch (this.XPS.xpsTracks[r].option)
  {
 case "dialog":
-    BODY_ +='<th class="dialogSpan tlhaed" ';
+    BODY_ +='<th class="dialogSpan tlhead" ';
     BODY_ +=' id="TL'+ r +'"';
     BODY_ +=' >';
     BODY_ +='</th>';
@@ -2106,12 +2105,12 @@ default:
             //末尾レコードはコメント固定なので判定せず（レコード長から1減算）　
  switch (this.XPS.xpsTracks[r].option)
  {
-case "dialog":BODY_ +='<th class="dialogSpan tlhaed" ';break;
-case "still":BODY_ +='<th class="stillSpan tlhaed" ';break;
-case "sfx":BODY_ +='<th class="sfxSpan tlhaed" ';break;
-case "camera":BODY_ +='<th class="cameraSpan tlhaed" ';break;
+case "dialog":BODY_ +='<th class="dialogSpan tlhead" ';break;
+case "still":BODY_ +='<th class="stillSpan tlhead" ';break;
+case "sfx":BODY_ +='<th class="sfxSpan tlhead" ';break;
+case "camera":BODY_ +='<th class="cameraSpan tlhead" ';break;
 case "timing":
-default:BODY_ +='<th class="timingSpan tlhaed" ';
+default:BODY_ +='<th class="timingSpan tlhead" ';
  }
 
 BODY_ +=' id="TL'+(r+1)+'"';
@@ -2119,10 +2118,10 @@ BODY_ +=' > ';
 BODY_ +='</th>';
         };
 /*********** FrameNote Area *************/
-BODY_ +='<th class="framenoteSpan tlhaed"';
+BODY_ +='<th class="framenoteSpan tlhead"';
 BODY_ +=' ></th>';
 //カラムセパレータの空セル挿入
-if (cols < PageCols-1) BODY_ +=('<td class="colSep tlhaed" ></td>');
+if (cols < PageCols-1) BODY_ +=('<td class="colSep tlhead" ></td>');
     };
 
     }
@@ -2136,7 +2135,7 @@ BODY_ +='</tr>';//改段
 BODY_ +='<tr>';
     for (cols=0;cols < PageCols;cols ++){
 /*********** timeguide ********************/
-BODY_ +='<th rowspan=2 class=timelabel ';
+BODY_ +='<th rowspan=2 class=tclabel ';
 //BODY_ +='style=" width:'+this.sheetLooks.TimeGuideWidth+CellWidthUnit+'"';
 BODY_ +=' ><span class=timeguide> TIME </span></th>';
 /*********** Action Ref *************/
@@ -2161,7 +2160,7 @@ BODY_ +='>Animation</th>';
 
 /*********** Edit Area 2 (camera+sfx) *************/
 if(xUI.cameraSpan>0){
-BODY_ +='<th colspan='+xUI.cameraSpan+' id=camArea class=camArea" ';
+BODY_ +='<th colspan='+xUI.cameraSpan+' id=camArea class="camArea" ';
 //
 BODY_ +='>camera</th>';
 }
@@ -7023,8 +7022,8 @@ myBody += '<script>replaceEndMarker=function (){var endPoint = JSON.parse(docume
 myBody+='<style type="text/css"> * { margin: 0; padding: 0;} #fixed {position: fixed;} #sheet_view {  margin:0; }</style></head>';//
 
 myBody+='<body ';//"
-//myBody+= 'onload="var nRS = setTimeout(\'nas_Prt_Startup(function(){xUI.syncSheetCell();xUI.syncSheetCell(undefined,undefined,true);xUI.Cgl.refresh();})\',10);" ';//
-myBody+= 'onload="var nRS = setTimeout(\'nas_Prt_Startup(function(){xUI.syncSheetCell();xUI.syncSheetCell(undefined,undefined,true);xUI.Cgl.refresh();window.print();window.close();})\',10);" ';//
+myBody+= 'onload="var nRS = setTimeout(\'nas_Prt_Startup(function(){xUI.syncSheetCell();xUI.syncSheetCell(undefined,undefined,true);xUI.Cgl.refresh();})\',10);" ';//
+//myBody+= 'onload="var nRS = setTimeout(\'nas_Prt_Startup(function(){xUI.syncSheetCell();xUI.syncSheetCell(undefined,undefined,true);xUI.Cgl.refresh();window.print();window.close();})\',10);" ';//
 myBody+='" >';//
     };//ここまでbody-only時は省力
 

@@ -25,6 +25,7 @@ body {
 	-webkit-user-select:none;
 	vertical-align:middle;
 	font-size:9pt;
+	line-height:1.5;
 	font-family: '游ゴシック体', 'Yu Gothic', 'YuGothic','ヒラギノ角ゴシック', 'Hiragino Sans', 'ヒラギノ角ゴ ProN W3', 'Hiragino Kaku Gothic ProN', 'メイリオ', 'Meiryo', 'ＭＳ Ｐゴシック', 'MS PGothic', 'sans-serif';
 }
 /*========== リンク ============*/
@@ -124,7 +125,7 @@ table.info	{
 }
 table.sheet	{
 		z-index: 1;
-transform: matrix(1, 0, 0, 1, 0, 0);}
+transform: {matrix(1, 0, 0, 1, 0, 0)};
 }
 table.toolbox {	
 	margin:0 0 0 0;
@@ -138,6 +139,7 @@ th {
 	text-align:center;
 	border-style:solid;
 	border-width:4px 1px 1px 0;
+	line-height:1;
 }
 
 /*
@@ -155,31 +157,29 @@ th.pageLabel{width:8em;}
 /*
 	シート本体のビュー設定
 	時間スケール(トラック左端)
+	display:none;
 */
-tr.tlheade {
+.tlhead {
 	height:1px;
-}
-th.tlheade {
-	height:1px;
-}
-th.tcSpan {
-	border-width:1px 1px 0 1px;
-	width:3em;
+	border-style:none;
+	border-width:0;
 }
 /*
 	
 */
-th.timelabel{
+th.tcSpan {
+	width:3em;
+}
+th.tclabel{
 	color:gray;
 	text-align:center;
 	border-style:solid;
-	border-width:0 1px 3px 1px;
+	border-width:2px 1px 3px 1px;
 	}
 /*
 	参照欄(アクション・参考欄)
  */
 th.referenceSpan {
-	border-width:4px 1px 1px 0;
 	width:2em;
 }
 th.layerlabelR {
@@ -187,20 +187,22 @@ th.layerlabelR {
 	border-style:solid;
 	color:gray;
 	border-width:3px 1px 3px 0;
-	font-size:9pt;
+	font-size:10px;
 	height:16px;
 }
 /*
 	ダイアログトラック
 */
 th.dialogSpan {
-	border-width:1px 1px 0 0;
 	width:3em;
 }
 th.dialoglabel {
 	text-align:center;
 	border-style:solid;
-	border-width:0 1px 3px 0;
+	color:gray;
+	border-width:2px 1px 3px 0;
+	font-size:10px;
+	height:16px;
 }
 
 /*
@@ -208,51 +210,53 @@ th.dialoglabel {
 	dialog/still/timing/sfx/camera
 */
 th.editSpan {
-	border-width:1px 0 0 0;
 	width:3em;
 }
 th.layerlabel {
 	text-align:center;
 	border-style:solid;
+	color:gray;
 	border-width:3px 1px 3px 0;
+	font-size:10px;
 	height:16px;
 }
 
 /* still */
 th.stillSpan {
-	border-width:1px 0 0 0;
+	width:1em;
 }
 th.stilllabel {
+	color:gray;
 	text-align:center;
 	border-style:solid;
 	border-width:3px 1px 3px 0;
 }
 /* timing/replacement */
 th.timingSpan {
-	border-width:1px 0 0 0;
 	width:3em;
 }
 th.timinglabel {
+	color:gray;
 	text-align:center;
 	border-style:solid;
 	border-width:3px 1px 3px 0;
 }
 /* sfx/effect */
 th.sfxSpan {
-	border-width:1px 0 0 0;
 	width:3em;
 }
 th.sfxlabel {
+	color:gray;
 	text-align:center;
 	border-style:solid;
 	border-width:3px 1px 3px 0;
 }
 /* camera/geometry */
 th.cameraSpan {
-	border-width:1px 0 0 0;
 	width:4em;
 }
 th.cameralabel {
+	color:gray;
 	text-align:center;
 	border-style:solid;
 	border-width:3px 1px 3px 0;
@@ -263,12 +267,13 @@ th.cameralabel {
 	このエレメントは幅指定無し
 */
 th.framenoteSpan {
-	border-width:1px 1px 0 0;
+	min-width:96px;
 }
 th.framenotelabel {
+	color:gray;
 	text-align:center;
 	border-style:solid;
-	border-width:0 1px 3px 1px;
+	border-width:2px 1px 3px 1px;
 }
 /*
 	ページ印刷用トレーラー
@@ -284,8 +289,7 @@ div.printPage {
 }
 /*
 	タイムシート記述終了マーカー
-*/
-.endMarker {
+.endMarker-print {
 	display:inline-block;
 	position:relative;
 	width:240px;
@@ -296,7 +300,8 @@ div.printPage {
 	border-width:4px 0 0 0;
 	z-index:3;
 }
-.endMarker-print {
+*/
+.endMarker {
 	display:inline-block;
 	position:relative;
 	width:240px;
@@ -320,9 +325,11 @@ td {
 	margin:0;
 	white-space: nowrap;
 	overflow:hidden;
-	font-size:11px;
-	height:17.847px;
+	font-size:10px;
+	line-height:1;
+	height:16px;
 }
+/*	height:17.847px; */
 
 td.menu {
 	text-align:left;
@@ -1006,6 +1013,8 @@ th.rnArea{
 		color:gray;
 		border-width:2px 1px 0 0;
 		width:144px;
+		padding:0;
+		font-size:10px;
 		height:16px;
 }
 /*		通常データ*/
@@ -1015,8 +1024,11 @@ th.rnArea{
 
 
 
-th.editArea , th.camArea{
+th.editArea ,th.camArea{
+		color:gray;
 		border-width:2px 1px 0 0;
+		padding:0;
+		font-size:10px;
 		height:16px;
 }
 /*		ダイアログ*/

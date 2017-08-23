@@ -26,6 +26,7 @@
 	-webkit-user-select:none;
 	vertical-align:middle;
 	font-size:9pt;
+	line-height:1.5;
 	font-family: '游ゴシック体', 'Yu Gothic', 'YuGothic','ヒラギノ角ゴシック', 'Hiragino Sans', 'ヒラギノ角ゴ ProN W3', 'Hiragino Kaku Gothic ProN', 'メイリオ', 'Meiryo', 'ＭＳ Ｐゴシック', 'MS PGothic', 'sans-serif';
 }
 /*========== リンク ============*/
@@ -116,7 +117,7 @@ table.info	{
 }
 table.sheet	{
 		z-index: 1;
-transform: matrix(1, 0, 0, 1, 0, 0);}
+transform: {matrix(1, 0, 0, 1, 0, 0)};
 }
 table.toolbox {	
 	margin:0 0 0 0;
@@ -130,45 +131,52 @@ th {
 	text-align:center;
 	border-style:solid;
 	border-width:4px 1px 1px 0;
+	line-height:1;
 }
 /*
 	シートヘッダビュー設定
 	合計280mm=1058px
 */
 td#edchg {display:none}
-th.opusLabel{text-align:left;border-width:0 0 4px 0;width:106px;}
-th.titleLabel{text-align:left;border-width:0 0 4px 0;width:348px;}
-th.scenecutLabel{text-align:left;border-width:0 0 4px 0;width:151px;}
-th.subtitleLabel{text-align:left;border-width:0 0 4px 0;width:302px;}
-th.timeLabel{text-align:left;border-width:0 0 4px 0;width:189px;}
-th.nameLabel{text-align:left;border-width:0 0 4px 0;width:132px;}
-th.pageLabel{text-align:left;border-width:0 0 4px 0;width:132px;}
+th.headerLabel{color:gray;border-color:#bbbbbb;text-align:left;border-width:0 0 4px 0;}
+.opusHeader  { width:106px;}
+.titleHeader { width:348px;}
+.scenecutHeader { width:151px;}
+.subtitleHeader { width:302px;}
+.timeHeader { width:189px;}
+.nameHeader { width:132px;}
+.pageHeader { width:132px;}
 
 /*
 	シート本体のビュー設定
 	時間スケール(トラック左端)
+	display:none;
 */
-.tlheade {
+.tlhead {
 	height:1px;
+	border-style:none;
+	border-width:0;
 }
+/*
+
+*/
 th.tcSpan {
-	border-width:1px 1px 0 1px;
-	width:30px;
+	width:3em;
 }
-th.timelabel{
+th.tclabel{
 	color:gray;
 	text-align:center;
 	border-style:solid;
-	border-width:0 1px 3px 1px;
+	border-width:2px 1px 3px 1px;
 	}
 /*
 	参照欄(アクション・参考欄)
  */
 th.referenceSpan {
-	border-width:4px 1px 1px 0;
 	width:17px;
 }
 th.layerlabelR {
+	color:gray;
 	text-align:center;
 	border-style:solid;
 	border-width:3px 1px 3px 0;
@@ -177,13 +185,13 @@ th.layerlabelR {
 	ダイアログトラック
 */
 th.dialogSpan {
-	border-width:1px 1px 0 0;
 	width:38px;
 }
 th.dialoglabel {
+	color:gray;
 	text-align:center;
 	border-style:solid;
-	border-width:0 1px 3px 0;
+	border-width:2px 1px 3px 0;
 }
 
 /*
@@ -191,54 +199,56 @@ th.dialoglabel {
 	dialog/still/timing/sfx/camera
 */
 th.editSpan {
-	border-width:1px 0 0 0;
-	width:32px;
+	width:36px;
 }
 th.layerlabel {
+	color:gray;
 	text-align:center;
 	border-style:solid;
 	border-width:3px 1px 3px 0;
+	font-size:10px;
+	height:16px;
 }
 
 /* still */
 th.stillSpan {
-	border-width:1px 0 0 0;
 	width:12px;
 }
 th.stilllabel {
+	color:gray;
 	text-align:center;
 	border-style:solid;
-	border-width:1px 1px 3px 0;
+	border-width:3px 1px 3px 0;
 }
 /* timing/replacement */
 th.timingSpan {
-	border-width:1px 0 0 0;
-	width:32px;
+	width:36px;
 }
 th.timinglabel {
+	color:gray;
 	text-align:center;
 	border-style:solid;
-	border-width:1px 1px 3px 0;
+	border-width:3px 1px 3px 0;
 }
 /* sfx/effect */
 th.sfxSpan {
-	border-width:1px 0 0 0;
-	width:32px;
+	width:36px;
 }
 th.sfxlabel {
+	color:gray;
 	text-align:center;
 	border-style:solid;
-	border-width:1px 1px 3px 0;
+	border-width:3px 1px 3px 0;
 }
 /* camera/geometry */
 th.cameraSpan {
-	border-width:1px 0 0 0;
-	width:34px;
+	width:36px;
 }
 th.cameralabel {
+	color:gray;
 	text-align:center;
 	border-style:solid;
-	border-width:1px 1px 3px 0;
+	border-width:3px 1px 3px 0;
 }
 /*
 		フレームコメント
@@ -246,18 +256,19 @@ th.cameralabel {
 	このエレメントは幅指定無し
 */
 th.framenoteSpan {
-	border-width:1px 1px 0 0;
+	width:96px;
 }
 th.framenotelabel {
+	color:gray;
 	text-align:center;
 	border-style:solid;
-	border-width:0 1px 3px 1px;
+	border-width:2px 1px 3px 1px;
 }
 
 /*
 	ページ印刷用トレーラー
 */
-.printPage {
+div.printPage {
 	page-break-inside:avoid;
 	page-break-after:always;
 }
@@ -310,8 +321,9 @@ td {
 	margin:0;
 	white-space: nowrap;
 	overflow:hidden;
-	font-size:11px;
-	height:17.847px;
+	font-size:10px;
+	line-height:1;
+	height:16px;
 }
 
 td.menu {
@@ -434,9 +446,8 @@ button.iconButton:disabled {
 .iconButton-imp { background-position: -324px -27px; }
 .iconButton-push { background-position: -351px -27px; }
 .iconButton-pull { background-position: -378px -27px; }
-/*
-.iconButton- { background-position: -405px -27px; }
-*/
+.iconButton-close { background-position: -405px -27px; }
+
 .iconButton-document { background-position: 0 -54px; }
 .iconButton-timesheet { background-position: -27px -54px; }
 .iconButton-layerName { background-position: -54px -54px; }
@@ -451,10 +462,9 @@ button.iconButton:disabled {
 .iconButton-dialogEdit { background-position: -297px -54px; }
 .iconButton-simplify { background-position: -324px -54px; }
 .iconButton-eraser { background-position: -351px -54px; }
-/*
-.iconButton- { background-position: -378px -54px; }
-.iconButton- { background-position: -405px -54px; }
-*/
+.iconButton-zoom { background-position: -378px -54px; }
+.iconButton-search { background-position: -405px -54px; }
+
 .iconButton-section { background-position: 0 -81px; }
 .iconButton-reformat { background-position: -27px -81px; }
 .iconButton-clearFS { background-position: -54px -81px; }
@@ -514,14 +524,15 @@ button.iconButton:disabled {
 .iconButton-timelineAnimation { background-position: -27px -162px; }
 .iconButton-frameAnimation { background-position: -54px -162px; }
 .iconButton-switchShortcut { background-position: -81px -162px; }
+.iconButton-multipage { background-position: -108px -162px; }
+.iconButton-singlepage { background-position: -135px -162px; }
+.iconButton-plus { background-position: -162px -162px; }
+/*.iconButton- { background-position: -189px -162px; } */
+
+.iconButton-movie { background-position: -216px -162px; }
+.iconButton-ps { background-position: -243px -162px; }
+.iconButton-printer { background-position: -270px -162px; }
 /*
-.iconButton- { background-position: -108px -162px; }
-.iconButton- { background-position: -135px -162px; }
-.iconButton- { background-position: -162px -162px; }
-.iconButton- { background-position: -189px -162px; }
-.iconButton- { background-position: -216px -162px; }
-.iconButton- { background-position: -243px -162px; }
-.iconButton- { background-position: -270px -162px; }
 .iconButton- { background-position: -297px -162px; }
 .iconButton- { background-position: -324px -162px; }
 .iconButton- { background-position: -351px -162px; }
@@ -901,7 +912,7 @@ table.pageHeader , .sheetHeader {
 	margin:0;
 	border-style:solid;
 	border-width:1px 1px 1px 1px;
-	border-color:gray;
+	border-color:#bbbbbb;
 }
 td.pgHeader {
 	height:38px;
@@ -927,6 +938,7 @@ td.memoSpace {
 	text-align:left;
 	height:250px;
 	vertical-align:top;
+	line-height:1.5;
 }
 /*	ツールボックスの部品*/
 input.toolTip	{
@@ -1011,6 +1023,9 @@ th.rnArea{
 		color:gray;
 		border-width:2px 1px 0 0;
 		width:144px;
+		padding:0;
+		font-size:10px;
+		height:16px;
 }
 /*		通常データ*/
 .nnSep,.nnSep_Blank {
@@ -1019,8 +1034,12 @@ th.rnArea{
 
 
 
-th.editArea {
+th.editArea ,th.camArea{
+		color:gray;
 		border-width:2px 1px 0 0;
+		padding:0;
+		font-size:10px;
+		height:16px;
 }
 /*		ダイアログ*/
 .dnSep,.dnSep_Blank {
