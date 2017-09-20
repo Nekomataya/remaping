@@ -5265,8 +5265,9 @@ function nas_Rmp_Startup(){
 //バージョンナンバーセット
     sync("about_");
 //クッキー指定があれば読み込む
+// alert("loading Cookie!");
     if(useCookie[0]){ldCk()};
-
+console.log(myName);
 //シートロゴをアップデート
     document.getElementById("headerLogo").innerHTML=
     "<a href='"+ headerLogo_url +
@@ -5511,8 +5512,13 @@ console.log(SheetLooks);
 
 //================================================================================================================================ シートカラーcss設定2
 */
-
 //startupXPSがない場合でフラグがあればシートに書き込むユーザ名を問い合わせる
+/*
+    この時点のユーザ問い合わせ手順に問題あり
+    問い合わせが必要か否かの条件を調整　かつ　問い合わせ時に記録からユーザの情報を取得して選択肢として提示するUIが必要
+
+*/
+//alert(myName):console.log(myName);
 if(false){    myPref.chgMyName(); document.getElementById("nas_modalInput").focus();}
 if((NameCheck)||(myName=="")){   var msg=welcomeMsg+"\n"+localize(nas.uiMsg.dmAskUserinfo)+
         "\n\n ハンドル:メールアドレス / handle:uid@example.com ";
@@ -7710,8 +7716,10 @@ if (!navigator.cookieEnabled){return false;}
 //	[2] UserName
 	if(useCookie.UserName){
 	if(rEmaping[2]) {
-						myName  = unescape(rEmaping[2]);
+					myName  = unescape(rEmaping[2]);
 //						if(xUI.currentUser) xUI.currentUser = new  nas.UserInfo(myName);
+	}else{
+	                myName = null;
 	}
 	}
 

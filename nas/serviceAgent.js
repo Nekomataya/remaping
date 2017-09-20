@@ -1574,7 +1574,8 @@ if(dbg) console.log('編集権利取得失敗');
 localRepository.abortEntry=function(myIdentifier){
     var currentEntry = this.entry(myIdentifier);
     if(! currentEntry) return false;
-    switch (currentEntry.getStatus()){
+    var currentStatus=currentEntry.getStatus();
+    switch (currentStatus.content){
         case 'Startup':
         case 'Hold':
         case 'Fixed':
@@ -3370,7 +3371,8 @@ if(dbg) console.log('ステータス変更不可 :'+ Xps.getIdentifier(newXps));
 NetworkRepository.prototype.abortEntry=function(myIdentifier){
     var currentEntry = this.entry(myIdentifier);
     if(! currentEntry) return false;
-    switch (currentEntry.getStatus()){
+    var currentStatus=currentEntry.getStatus();
+    switch (currentStatus.content){
         case 'Startup':
         case 'Hold':
         case 'Fixed':
@@ -3883,7 +3885,6 @@ console.log ('noentry in this repository :' +  decodeURIComponent(currentEntry))
 console.log('activateEntry :'+decodeURIComponent(currentEntry.toString()));
 console.log(currentEntry);
 console.log(currentEntry.getStatus());
-//    switch (currentEntry.getStatus()){}
     switch (xUI.XPS.currentStatus.content){
         case 'Active':
 /**     例外処理 ロストセッションの回復
@@ -3938,7 +3939,8 @@ if(dbg) console.log ('noentry in repository :' +  decodeURIComponent(currentEntr
         return false;
     }
 console.log(currentEntry);
-    switch (currentEntry.getStatus()){
+    var currentStatus=currentEntry.getStatus();
+    switch (currentStatus.content){
         case 'Aborted': case 'Startup': case 'Hold': case 'Fixed':
             //NOP
 //            if(dbg) console.log('fail deactivate so :'+ currentEntry.getStatus());
@@ -3973,7 +3975,8 @@ console.log(currentEntry)
         //当該リポジトリにエントリが無い
          return false;
       }
-    switch (currentEntry.getStatus()){
+    var currentStatus=currentEntry.getStatus();
+    switch (currentStatus.content){
         case 'Aborted': case 'Active': case 'Hold':
             alert(localize(nas.uiMsg.dmAlertCheckinFail)+"\n>"+currentEntry.getStatus(myJob,callback,callback2));
             //NOP return
@@ -4036,7 +4039,8 @@ console.log ('noentry in repository :' +  decodeURIComponent(currentEntry))
         alert(localize(nas.uiMsg.dmAlertNoEntry)+'\n>'+decodeURIComponent(currentEntry));//対応エントリが無い
         return false;
     }
-    switch (currentEntry.getStatus()){
+    var currentStatus=currentEntry.getStatus();
+    switch (currentStatus.content){
         case 'Startup': case 'Hold': case 'Fixed':
             //NOP
 //            if(dbg) console.log('fail checkout so :'+ currentEntry.getStatus());
@@ -4178,7 +4182,8 @@ serviceAgent.receiptEntry=function(){
     var currentEntry = this.currentRepository.entry(Xps.getIdentifier(xUI.XPS));
 //    var currentEntry = (typeof myIdentifier == 'undefined')?this.currentRepository.entry(Xps.getIdentifier(xUI.XPS)):this.currentRepository.entry(myIdentifier);
     if(! currentEntry) return false;
-    switch (currentEntry.getStatus()){
+    var currentStatus=currentEntry.getStatus();
+    switch (currentStatus.content){
         case 'Startup': case 'Active': case 'Hold':
             return false;
         break;
@@ -4217,7 +4222,8 @@ serviceAgent.receiptEntry=function(){
 serviceAgent.abortEntry=function(myIdentifier){
     var currentEntry = (typeof myIdentifier == 'undefined')? this.currentRepository.entry(Xps.getIdentifier(xUI.XPS)):this.currentRepository.entry(myIdentifier);
     if(! currentEntry) return false;
-    switch (currentEntry.getStatus()){
+    var currentStatus=currentEntry.getStatus();
+    switch (currentStatus.content){
         case 'Startup': case 'Hold': case 'Fixed': case 'Active':
             //管理モード下でのみ処理 このメソッドのコール自体が管理モード下でのみ可能にする
             //リポジトリに対して

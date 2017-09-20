@@ -341,7 +341,7 @@ var currentUser = new nas.UnserInfo("user@example.co.jp")
 一致比較は、メールアドレスで行う　null,空白は いずれの場合も一致なしに
  */
 nas.UserInfo = function UserInfo(nameDescription){
-    if (typeof nameDescription == 'undefined'){nameDescription = 'handle:uid@example.com'}
+    if ((typeof nameDescription == 'undefined')||(! nameDescription)){nameDescription = 'handle:uid@example.com'}
     if (nameDescription instanceof nas.UserInfo){
             this.handle = nameDescription.handle;
             this.email  = nameDescription.email;

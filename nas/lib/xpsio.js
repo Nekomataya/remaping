@@ -260,7 +260,11 @@ function JobStatus (statusArg){
     }
 }
 JobStatus.prototype.toString=function(opt){
-    if(opt){
+    if(
+        (opt)&&
+        ((this.content=="Fixed")||(this.content=="Startup"))&&
+        ((this.assign!="")&&(this.message!=""))
+      ){
      return [this.content,encodeURIComponent(this.assign),encodeURIComponent(this.message)].join(':');
     }else{
      return this.content;   
