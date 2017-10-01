@@ -1901,7 +1901,7 @@ console.log(result);
  */
 NetworkRepository.prototype.getSCi=function (callback,callback2,epToken,pgNo,ppg) {
     var myEpisode = this.opus(epToken);
-console.log('getSCi :');console.log(myEpisode);
+console.log('getSCi :');console.log(decodeURIComponent(myEpisode));
     if((! myEpisode)||(! myEpisode.cuts)) return false;
     if(typeof pgNo == 'undefined') pgNo = '1';
     if(typeof ppg  == 'undefined')  ppg = myEpisode.cuts[0].length;
@@ -2140,7 +2140,7 @@ if(dbg) console.log("push entry : "+ myVersionString);
     entryListの更新は行わない
 */
 NetworkRepository.prototype.getList=function (force,callback){
-    console.log('localRepository getList');
+    console.log('networkRepository getList');
     alert('getList');return false;
     if(callback instanceof Function){callback();}else{documentDepot.documentsUpdate(this.entryList);}
         return;

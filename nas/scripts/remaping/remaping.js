@@ -6997,8 +6997,13 @@ var myBody="";
 myBody+='<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" xml:lang="ja" lang="ja">';
 myBody+='<head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"><title>';
 myBody+=XPS.scene.toString()+XPS.cut.toString();
-// myBody+='</title><link REL=stylesheet TYPE="text/css" HREF="http://www.nekomataya.info/test/remaping/template/printout.css">';
-myBody+='</title><link REL=stylesheet TYPE="text/css" HREF="'+location+'template/printout.css">';//for TEST
+// myBody+='</title><link REL=stylesheet TYPE="text/css" HREF="http://www.nekomataya.info/test/remaping.js/template/printout.css">';
+if(xUI.onSite){
+    myBody+='</title><link REL=stylesheet TYPE="text/css" HREF="'+location+'/remaping/template/printout.css">';//for TEST onSite
+}else{
+    myBody+='</title><link REL=stylesheet TYPE="text/css" HREF="'+location+'template/printout.css">';//for TEST offSite
+}
+
 /*
 if(String(location).indexOf('https')!=0){
 myBody+='</title><link REL=stylesheet TYPE="text/css" HREF="http://www.nekomataya.info/test/remaping.js/template/printout.css">';//for TEST onWeb

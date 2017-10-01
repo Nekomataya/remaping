@@ -150,7 +150,15 @@ function backToDocumentList(myTarget){
 	 	window.location= xUI.onSite+backLocation;
 	 	return false;
 	
-	
+/*
+	ロケーション移動の仕様を変更
+	オンサイトの際の基本動作が　同ページで遷移でなく「別のタブまたはウインドウで開く」に変更になるので、
+「戻る」動作は、同じブラウザ内のロケーションが開いていたらそのウインドウにフォーカス変更
+	または「戻る」コマンド自体を廃止する必要がある。　無限にリストページを開くのは無駄動作
+「ドキュメントを閉じる」動作が必要
+	明示的に閉じる機能はすでにあるので、メニュー調整
+
+*/
 	if(xUI.onSite){
 		var backLocation =　(serviceAgent.currentStatus == 'online-single')?
 			'/cuts?episode_token='+$('#backend_variables').attr('data-episode_token'):
