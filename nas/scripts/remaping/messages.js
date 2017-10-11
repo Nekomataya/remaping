@@ -436,7 +436,9 @@ nas.LangPack.ja=[
 ["prefLbAscroll","innerHTML","自動スクロール"],
 ["prefLbTABspin","innerHTML","TABで確定"],
 ["prefLbNoSync","innerHTML","入力同期停止"],
-["prefLbUtilBar","innerHTML","開始時にツールバーを表示"]
+["prefLbUtilBar","innerHTML","開始時にツールバーを表示"],
+["inputWarning","innerHTML","現在、入力操作は無効です。<br>ドキュメントの編集を行う場合は、作業にチェックインしてください。"],
+["forgetWarning","innerHTML","今後このダイアログを表示しない"]
 ];
 
 
@@ -871,7 +873,9 @@ nas.LangPack.en=[
 ["prefLbAscroll","innerHTML","auto scroll"],
 ["prefLbTABspin","innerHTML","spin with TAB"],
 ["prefLbNoSync","innerHTML"," stop synchronization"],
-["prefLbUtilBar","innerHTML","show 2nd toolbar at startup"]
+["prefLbUtilBar","innerHTML","show 2nd toolbar at startup"],
+["inputWarning","innerHTML","The input operation is currently invalid.<br>To change the document please check in and start your job."],
+["forgetWarning","innerHTML","Thereafter, do not display this message."]
 ];
 /*
 ,

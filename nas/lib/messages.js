@@ -111,6 +111,8 @@ nas.uiMsg.peg                   = {en: "peg", ja: "タップ"};
 nas.uiMsg.Preference            = {en: "Preference", ja: "各種設定"};
 nas.uiMsg.previewControl        = {en: "preview Control", ja: "プレビューコントロール"};
 nas.uiMsg.processing            = {en: "proscessing…", ja: "処理中…"};
+nas.uiMsg.inputWarning          = {en: "Input operation is invalid", ja: "入力操作は無効です"};
+
 nas.uiMsg.Registration          = {en: "Registration", ja: "新規登録"};
 nas.uiMsg.removeAnimationFrame  = {en: "remove animation frame", ja: "アニメフレームを削除"};
 nas.uiMsg.resetSmartObj         = {en: "reset smartObj", ja: "スマートオブジェクトをリセット"};
@@ -440,6 +442,16 @@ nas.uiMsg.dmRenameLabel = {
 	en:"Please specify a new label.",
 	ja:"新しいラベルを指定してください。"
 };
+nas.uiMsg.dmReadOnly = {
+en:"You can not edit this document at the moment.\nTo change the document please check in and start your job.",
+ja:"現在ドキュメントは編集できません。\nドキュメントを変更するためにはチェックインしてジョブを開始してください。"
+};
+nas.uiMsg.dmRemoveThisMessage = {
+en:"Thereafter, do not display this message.",
+ja:"以後、このメッセージを表示しない。"
+};
+
+
 /*
 
  nas.uiMsg.	={en:"	,ja:"};

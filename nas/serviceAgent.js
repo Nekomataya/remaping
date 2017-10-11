@@ -3252,7 +3252,7 @@ if(dbg) console.log(data);
 
                 xUI.setUImode('browsing');
                 xUI.sWitchPanel();//パネルクリア
-                if(serviceAgent.currentStatus=="online-single"){backToDocumentList('cut');}
+//                if(serviceAgent.currentStatus=="online-single"){backToDocumentList('cut');} ;//コレだ！　ダメだ！！
                 if(callback instanceof Function){ setTimeout (callback,10);}
 		    },
 		    error :function(result) {
@@ -4030,7 +4030,7 @@ serviceAgent.checkoutEntry=function(callback,callback2){
     var currentEntry = this.currentRepository.entry(Xps.getIdentifier(xUI.XPS));
 //    var currentCut   = this.currentRepository.cut(currentEntry.toString());
     var currentCut   = (currentEntry.issues[0].cutID) ?this.currentRepository.cut(currentEntry.issues[0].cutID):this.currentRepository.cut(currentEntry.toString());
-console.log('networkRepository checkoutEntry');
+console.log('checkoutEntry'+decodeURIComponent(currentEntry));
 console.log(currentEntry.toString(true));
 console.log(currentEntry.getStatus());
     if(! currentEntry) {

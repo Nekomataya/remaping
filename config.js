@@ -238,14 +238,18 @@ var myFileName= "$TITLE#$OPUS[$SUBTITLE]_s-c$CUT($TC)";
 */
 
 var myName=　""	;//---作業ユーザ名	*cookie[2]　ユーザ名はヌルストリングで初期化に変更 
+var myNames=　[myName]	;//---作業ユーザリスト	*cookie[2]　ユーザ名はヌルストリングで初期化に変更 
 
 var NameCheck=false	;
-
+/*
 	// NameCheckを有効にすると起動時に名前を入力するプロンプトがでます。
 	// 名前はクッキーで保存可能
     // データ形式は (ハンドル):(メールアドレス)
     // 例　ねこまたや:nekomataya@nekomataya.info
+myNameプロパティをmyNames配列に変更、
+この設定ファイルのパラメーターはデバッグ後に変更
 
+*/
 //////////////////////////////////////////////
 //---キー変換オプション	*cookie[3]
 var BlankMethod	="file";

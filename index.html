@@ -120,7 +120,7 @@
 <ul id=pMenu>
 <li><span id=pMdocument>Document</span>
 <ul>
-<!-- 一般ドキュメントメニュー インポート／エクスポートは別に-->
+<!-- 一般ドキュメントメニュー インポート／エクスポートは別に
 <li id=pMom><span id=pMmenuRoot-d class='pM pM-alt'>タイトル</span><a id=pMmenuRoot
 	href='javascript:void(0);'
 	onclick='return backToDocumentList("products");'
@@ -137,6 +137,7 @@
 	title="カット一覧へ"
 >カット</a></li>
 <hr>
+-->
 <li id=pMbrowseMenu><span id=pMbrowse-d class='pM pM-alt'>書類選択</span><A	id=pMbrowse
 	href = 'javascript:void(0)'
 	onclick = 'xUI.sWitchPanel("File");return false;//myScenePref.open();document.getElementById("scnNewSheet").checked=true;return false;'
@@ -723,14 +724,14 @@ serviceAgent.pushEntry(xUI.XPS,function(){xUI.setStored("current");sync();
 <!--	ツールバー/toolbarHeader	-->
 <div id=toolbarHeader>
 <!--	ツールバーボタン/toolIcons	-->
- <span id="siteMenu">
+<!-- <span id="siteMenu">
 	<button
 	id=ibMmenuBack
 		class='iconButton iconButton-eject'
 		onclick='return backToDocumentList("cut");'
 		title="カット一覧へ戻る"
 	>	</button>
- </span><span id="severMenu" >
+ </span>--><span id="severMenu" >
 <button
 	id=ibMbrowse
 		class='iconButton iconButton-openX'
@@ -1669,8 +1670,9 @@ onclick='nas.incrFCTonHTMLInput(document.getElementById("editTC"),"-(1)")'
 <br>
 <br>
 <br>
-		<center><b>しばらくお待ちください</b></center><br>
+		<center><b>処理中です…</b></center><br>
 		<center><img src=images/ui/wait.gif width=42 height=42></center><br>
+		<center><b>processing......</b></center><br>
 <br>
 <br>
 <br>
@@ -2593,6 +2595,25 @@ XPS File Ver. :nasTIME-SHEET 0.5<br />
 	</div>
 </div>
 <!--	バージョン情報	-->
+<!--    編集警告    -->
+<div class=optionPanelModal id=optionPanelRol>
+<p id=inputWarning>
+現在、入力操作は無効です。<br>
+ドキュメントの編集を行う場合は、作業にチェックインしてください。
+</p>
+<hr>
+<a
+    id=forgetWarning
+	href="javascript:void(0);"
+	onClick='document.getElementById("forgetInputWarning").checked=(document.getElementById("forgetInputWarning").checked)?false:true;'
+>今後このダイアログを表示しない/Thereafter, do not display this message.</a>
+<input type='checkbox' id=forgetInputWarning><br>
+<button
+	style="width:36%"
+	onClick='xUI.sWitchPanel("Rol");'
+>OK</button>
+</div>
+<!--    編集警告    -->
 <!--	デバッグパネル	-->
 <div class=optionPanel id=optionPanelDbg>
 <span>
@@ -3274,9 +3295,8 @@ index.html ,v 1.6 2017/06/23  support@u-at.net <br />
     <textarea id="referenceXPS"></textarea>
   </div>
   <div id="scrollSpaceFt" class=\"screenSpace\"><br></div>
-  <!-- backend_variables -->
-  <!-- backend_variables -->
-  <!--
+-->
+  <!-- 
 	サーバーオンサイトの状況を真似る場合
 	この位置に　backend_variables　を置いて
 	プロパティに以下のいずれかの１行を加える

@@ -1255,6 +1255,25 @@ div.application_status {
     padding:6px;
     border-style:double;
 }
+
+#optionPanelRol {
+    display:none;
+    width:720px;
+    height:340px;
+    background-color:#efefef;
+    padding:6px;
+    border-style:double;
+	text-align:center;
+}
+#optionPanelProg {
+    display:none;
+    width:240px;
+    height:128px;
+    background-color:#efefef;
+    padding:6px;
+    border-style:double;
+}
+
 #optionPanelPref {
     display:none;
     width:480px;

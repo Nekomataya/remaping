@@ -171,7 +171,13 @@ xUI.init    =function(editXps,referenceXps){
 
     this.onSite   = false;           // Railsサーバ上での動作時サーバのurlが値となる
     this.currentUser = new  nas.UserInfo(myName); // 実行ユーザをmyNameから作成
-    
+    this.recentUsers =[];//最近のユーザ情報をカラで初期化
+
+/*
+    recentUsers 配列の要素は、UserInfo オブジェクト
+    myNamesは、アカウント文字列を要素とする配列
+    UserInfoオブジェクトを拡張してそれらをシームレスにやり取り可能にする
+*/
     this.spinValue   = SpinValue;       // スピン量
     this.spinSelect  = SpinSelect;      // 選択範囲でスピン指定
     this.sLoop       = SLoop;           // スピンループ
@@ -1746,12 +1752,14 @@ if(!hilightColor) hilightColor='#808080';
     $("#fixedHeader").css("background-color",hilightColor);
     setTimeout(function(){
         $("#fixedHeader").css("background-color",originalColor);
+        if(! document.getElementById("forgetInputWarning").checked) document.getElementById("iNputbOx").blur();
 /*        setTimeout(function(){
             $("#fixedHeader").css("background-color",hilightColor);
             setTimeout(function(){
                 $("#fixedHeader").css("background-color",originalColor);
             },75);
-        },120);*/        
+        },120);*/
+        if(! document.getElementById("forgetInputWarning").checked) {xUI.sWitchPanel("Rol");}
     },150);
     return false;
 };
@@ -3063,7 +3071,8 @@ xUI.putReference    =function(datastream,direction){
 */
 xUI.put = function(datastream,direction,toReference){
   if(! toReference) toReference = false;
-  if((xUI.viewOnly)&&(! toReference)) return xUI.headerFlash('#ff8080');
+  if((xUI.viewOnly)&&(! toReference)) return xUI.headerFlash('#ff8080');//入力規制時の処理
+
   var targetXps= (toReference)? xUI.referenceXPS:xUI.XPS;
   
   if(typeof datastream == "undefined") datastream="";
@@ -4607,25 +4616,26 @@ onscrollの設定位置を一考
 引数	JQobject	備考
 
 //排他表示
-login	#optionPanelLogin	//ログインUI（　排他）
-memo	#optionPanelMemo	//メモ編集（　排他）
-Data	#optionPanelData	//Import/Export（　排他）
-AEKey	#optionPanelAEK	//キー変換（　排他）
-Scn	#optionPanelScn	//シーン設定(モーダル)
-Pref	#optionPanelPref	//環境設定（モーダル）
-Ver	#optionPanelVer	//about(モーダル)
-File	#optionPanelFile	//ファイルブラウザ（モーダル）
+login   #optionPanelLogin   //ログインUI（　排他）
+memo    #optionPanelMemo    //メモ編集（　排他）
+Data    #optionPanelData    //Import/Export（　排他）
+AEKey   #optionPanelAEK     //キー変換（　排他）
+Scn     #optionPanelScn     //シーン設定(モーダル)
+Pref    #optionPanelPref    //環境設定（モーダル）
+Ver     #optionPanelVer     //about(モーダル)
+File    #optionPanelFile    //ファイルブラウザ（モーダル）
 
-Snd  #optionPnaleSnd    //音響パネル(共)
+Rol     #optionPanelFile    //入力ロック警告（モーダル）
+Snd     #optionPnaleSnd     //音響パネル(共)
 
-Dbg	#optionPanelDbg	//デバッグコンソール（　排他）
-Prog	#optionPanelProg	//プログレスバー（使ってないけど…排他モーダルにする）
+Dbg     #optionPanelDbg	//デバッグコンソール（排他）
+Prog	#optionPanelProg	//プログレス表示（排他モーダル）
 //フローティングツール
-Tbx	#optionPanelTbx	//ソフトウェアキーボード
+Tbx     #optionPanelTbx	//ソフトウェアキーボード
 //常時パネル（ユーザ指定）
-menu	#pMenu	//ドロップダウンメニュー(共)
-ToolBr	div#toolbarHeader	//ツールバー(共)
-SheetHdr	div#sheetHeaderTable	//シートヘッダー(共)
+menu    #pMenu	//ドロップダウンメニュー(共)
+ToolBr      div#toolbarHeader	//ツールバー(共)
+SheetHdr    div#sheetHeaderTable	//シートヘッダー(共)
 memoArea		//ヘッダメモ欄複合オブジェクト
 Utl	#optionPanelUtl	//ユーティリティーコマンドバー(共)排他から除外
 */
@@ -4639,7 +4649,8 @@ var myPanels=["#optionPanelMemo",
 	"#optionPanelScn",
 	"#optionPanelPref",
 	"#optionPanelVer",
-	"#optionPanelSnd"
+	"#optionPanelSnd",
+	"#optionPanelRol"
 ];
 /*
 オールクリアは可能だが、ウインドウがフロートに移行するので使用範囲は限定される。
@@ -4674,10 +4685,12 @@ case	"Ver":	;//バージョンパネル
 case	"Pref":	;//環境設定
 case	"Scn":	;//ドキュメント設定
 case	"Prog":	;//プログレスパネル
+case	"Rol":	;//書き込み警告パネル
 //case	"Snd":	;//音声編集パネル(スクロール追従)
 	var myStatus=(myTarget.is(':visible'))? true:false;
 		this.sWitchPanel("clear");
-		if(myStatus){myTarget.dialog("close")}else{myTarget.dialog("open")};
+		if(myStatus){myTarget.dialog("close")}else{myTarget.dialog("open");myTarget.focus();};
+		
 	break;
 //割り込みパネル
 case	"Login":;//ログインパネル
@@ -5706,6 +5719,7 @@ console.log('application server-onsite');
         }else{
             serviceAgent.switchService(0);//デフォルトサーバのIDを置く
         }
+
         xUI.onSite = serviceAgent.currentServer.url.split('/').slice(0,3).join('/');
 　       serviceAgent.currentStatus='online';
 //  ドキュメント表示更新
@@ -5720,6 +5734,7 @@ console.log('application server-onsite');
         );
 
         myName = xUI.currentUser.toString();//旧変数互換 まとめて処理する関数が必要
+        myNames = xUI.recentUsers;//この変数には文字列可して格納する
 
     　   if($("#backend_variables").attr("data-episode_token").length > 0){
 console.log('bind single document');
@@ -5941,12 +5956,22 @@ $("#optionPanelFile").dialog({
 	width	:720,
 	title	:localize(nas.uiMsg.document)
 });
+})();
+
+(function initPanelsII(){
 //:nas.uiMsg.processing
 $("#optionPanelProg").dialog({
 	autoOpen:false,
 	modal	:true,
-	width	:720,
+	width	:240,
 	title	:localize(nas.uiMsg.processing)
+});
+//:nas.uiMsg.inputWarning
+$("#optionPanelRol").dialog({
+	autoOpen:false,
+	modal	:true,
+	width	:480,
+	title	:localize(nas.uiMsg.inputWarning)
 });
 //:nas.uiMsg.Sounds
 /* ダイアログをスクロール追従型にする場合はJQuiry UIで初期化
@@ -6999,7 +7024,7 @@ myBody+='<head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8
 myBody+=XPS.scene.toString()+XPS.cut.toString();
 // myBody+='</title><link REL=stylesheet TYPE="text/css" HREF="http://www.nekomataya.info/test/remaping.js/template/printout.css">';
 if(xUI.onSite){
-    myBody+='</title><link REL=stylesheet TYPE="text/css" HREF="'+location+'/remaping/template/printout.css">';//for TEST onSite
+    myBody+='</title><link REL=stylesheet TYPE="text/css" HREF="/remaping/template/printout.css">';//for TEST onSite
 }else{
     myBody+='</title><link REL=stylesheet TYPE="text/css" HREF="'+location+'template/printout.css">';//for TEST offSite
 }
@@ -7581,9 +7606,9 @@ myCookie[0]=winSizes;
 myCookie[1]=[myTitle,mySubTitle,myOpus,myFrameRate,Sheet,SheetLayers];
 
 //	[2] UserName
-	if(! useCookie.UserName)	myName	=false;
+	if(! useCookie.UserName)	{myName	=false;myNames=[];};
 
-myCookie[2]=myName;
+myCookie[2]=[myName,myNames];
 
 //	[3] KeyOptions
 	BlankMethod	=(useCookie.KeyOptions)?xUI.blmtd:null;
@@ -7721,10 +7746,12 @@ if (!navigator.cookieEnabled){return false;}
 //	[2] UserName
 	if(useCookie.UserName){
 	if(rEmaping[2]) {
-					myName  = unescape(rEmaping[2]);
+					myName  = unescape(rEmaping[2][0]);
+					myNames = rEmaping[2][1];
 //						if(xUI.currentUser) xUI.currentUser = new  nas.UserInfo(myName);
 	}else{
-	                myName = null;
+	                myName = "";
+	                myNames = [""];
 	}
 	}
 
@@ -8551,6 +8578,17 @@ this.chgMyName=function(newName)
 	if(! newName){
 		var msg = localize(nas.uiMsg.dmAskUserinfo)+
 		        "\n\n ハンドル:メールアドレス / handle:uid@example.com ";
+//ユーザ変更UIを拡充
+/*
+    ブラウザにユーザを複数記録する。
+    記録形式は　handle:uid　に変更する
+    UI上は、ユーザID(マスタープロパティ)とハンドル（補助プロパティ）を別に提示
+    ユーザIDリストで表示する　 ユーザIDは、サインイン用のIDとして使用する
+
+ユーザID
+*/
+
+		        
 		nas.showModalDialog("prompt",msg,localize(nas.uiMsg.userInfo),myName,function(){
 		    if(this.status==0){
 if(dbg) console.log(this.value)
