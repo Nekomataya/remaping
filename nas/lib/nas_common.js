@@ -326,7 +326,7 @@ xUI = false;
  */
 /**
     ユーザ情報オブジェクト nas.UserInfo
-    表示名と識別用メールアドレスを持つ
+    表示名(ニックネーム／ハンドル)と識別用メールアドレス(id)を持つ
 var currentUser = new nas.UnserInfo("handle:user@example.co.jp")
 var currentUser = new nas.UnserInfo("handle")
 var currentUser = new nas.UnserInfo("user@example.co.jp")
@@ -338,15 +338,19 @@ var currentUser = new nas.UnserInfo("user@example.co.jp")
 初期化引数に':'が含まれない場合は、メールアドレスか否かを判定して
 メールアドレスなら uid部をハンドルとして使用
 それ以外の場合は、全体をハンドルにしてメールアドレスをnullで初期化する
-一致比較は、メールアドレスで行う　null,空白は いずれの場合も一致なしに
+一致比較は、メールアドレスで行う　null,空白は いずれの場合も一致なし
+空白で初期化したデフォルトの値はシステムでで利用しないように注意する
  */
 nas.UserInfo = function UserInfo(nameDescription){
-    if ((typeof nameDescription == 'undefined')||(! nameDescription)){nameDescription = 'handle:uid@example.com'}
-    if (nameDescription instanceof nas.UserInfo){
-            this.handle = nameDescription.handle;
-            this.email  = nameDescription.email;
+    if ((typeof nameDescription == 'undefined')||(! nameDescription)){nameDescription = ':'}
+    if(String(nameDescription).match(/^\s*$|^:$/)){
+        this.handle = null;
+        this.email  = null;        
+    }else if (nameDescription instanceof nas.UserInfo){
+        this.handle = nameDescription.handle;
+        this.email  = nameDescription.email;
     } else if (nameDescription.indexOf(':') < 0){
-//セパレータがない
+//セパレータなし
         if(nameDescription.indexOf('@') < 1){
             this.handle = nameDescription;//メールアドレスでないと思われるので引数全体をハンドルにする
             this.email  = null;
@@ -355,6 +359,7 @@ nas.UserInfo = function UserInfo(nameDescription){
             this.email  = nameDescription;
         }
     } else {
+//セパレータあり
          var infoArray  = nameDescription.split(':');
         this.handle     = infoArray[0];
         this.email      = infoArray[1];
@@ -372,10 +377,81 @@ nas.UserInfo.prototype.toString = function(opt){
             return [this.handle,this.email].join(':')
     }
 }
+/*
+    ユーザ情報の同値判定
+    e-mailがある場合はハンドルが異なっていても同じアカウントとする
+    e-mailのない場合はハンドルのみで同値判断をする
+*/
 nas.UserInfo.prototype.sameAs = function(myName){
     if(!(myName instanceof nas.UserInfo)){ myName = new nas.UserInfo(myName)};
-    return ((this.email)&&(this.email==myName.email))? true:false;
+    if(! this.handle) return false;
+    return (
+        (((this.email)&&(myName.email))&&(this.email==myName.email))||
+        (((!(this.email))&&(!(myName.email)))&&(this.handle==myName.handle))
+    )? true:false;
 }
+/*test
+    A=new nas.UserInfo("123:");
+    B=new nas.UserInfo("123:123@99123.com");
+    A.sameAs(B);
+*/
+/**
+    nas.UserInfoCollection　配列ベースUserInfoCollection
+    要素は、nas.UserInfoオブジェクト
+    引数にオブジェクトまたは文字列の配列を与えて初期化可能
+    直接操作する場合は必ずオブジェクトで与えること
+    不正メンバーはコレクション対象外
+*/
+nas.UserInfoCollection = function (users){
+    if(users instanceof Array){
+        for (var j = 0;j<users.length;j++){
+            if (!(users[j] instanceof nas.UserInfo)){
+                users[j]= new nas.UserInfo(String(users[j]));
+            }
+            if(users[j].handle) this.push(users[j]);
+        }
+    }
+    /*
+         コレクションメンバーを文字列の配列で返す
+    */
+    this.convertStringArray = function(){
+        var resultArray =[];
+        for (var i = 0;i<this.length;i++){ resultArray.push(this[i].toString());}
+        return resultArray;
+    }
+    /*
+        コレクションメンバーを検索してインデックスを返す
+        発見できなかった場合は -1
+    */
+    this.userIndexOf = function(searchUser){
+        if (this.length == 0) return -1;
+        for (var i = 0;i<this.length;i++){ if(this[i].sameAs(searchUser)) return i;}
+        return -1;
+    }
+    /*
+        コレクションにメンバーを追加する。既存のメンバーは追加されない。戻り値はメンバーのインデックス
+        不正メンバーは追加されない。その場合の戻り値は -1
+    */
+    this.add = function(newUser){
+        if (!(newUser instanceof nas.UserInfo)){ newUser = new nas.UserInfo(newUser);}
+        if (! newUser.handle) return -1;
+        var iX = this.userIndexOf(newUser);
+        if ( iX < 0 ) {this.push(newUser);return (this.length-1);}else{return iX;}
+    }
+}
+nas.UserInfoCollection.prototype = Array.prototype;
+/*test
+A = new nas.UserInfo("A123:123@23456");
+B = new nas.UserInfo("B123@4567");
+C = new nas.UserInfo("C123");
+D = new nas.UserInfo("D123:123@23456");
+E=new nas.UserInfoCollection([A,B,C,"kiyo@nekomataya.info"]);
+E.add(D);
+console.log(E.add(D));
+console.log(E.add(new nas.UserInfo()));
+
+console.log(E);
+*/
 
 //UnitValuで利用可能な単位 px/pixels を与えるとその時点での基底解像度で処理してpointに換算、pxとしての保存は行わない
 nas.UNITRegex=new RegExp('^(in|inches|mm|millimeters|cm|centimeters|pt|picas|points|mp|millipoints)$','i');
@@ -1827,9 +1903,22 @@ nas.cak = function (StartSize, EndSize, TargetSize) {
  * @param f
  * @returns {string}
  * @constructor
+数値を指定桁数の０で埋めて桁合わせして戻す
+数値以外の文字が胡内されていたばあい、文字列は捨てられる
+指定桁数がない場合は引数をそのまま戻す
+指定桁数が引数の桁よりも少ない場合は何も操作されない
+数値が小数部を含む場合は、整数部を指定桁数に揃える
+数字以外の文字が前置されていた場合はNaNを戻す
+今回の修正で以下の変更が行われるため要注意　2017.10.18
+引数 旧戻値　新戻値
+"0123",0 "0123" "123"
+"0123A",0 "0123A" "123"
  */
 nas.Zf = function (N, f) {
     var prefix = "";
+    
+    N = parseFloat(N);
+    if(isNaN(N)) return N;
     if (N < 0) {
         N = Math.abs(N);
         prefix = "-"
@@ -1840,7 +1929,10 @@ nas.Zf = function (N, f) {
         return String(N);
     }
 };
+/*test
+console.log(nas.Zf("123",4));//0123
 
+*/
 /**
  * 前後文字列つきゼロ埋め(動画番号正規化)
  *
@@ -3412,13 +3504,17 @@ nas.decodeUnit = function (myValue, resultUnit) {
 
 
 /**
- * nas.labelNormalization(myString,mySep)
+ * nas.labelNormalization(myString,mySep,)
  * 引数：ラベル文字列 ,新規セパレータ
  * 戻値:正規化されたラベル文字列
  * ラベル文字列を正規化する
- * セパレータを払ってプレフィックス,12桁あわせ整数,ポストフィックスを指定のセパレータで結合したもの
+ * セパレータを払って プレフィックス,12桁あわせ整数,ポストフィックス を指定セパレータで結合したものを返す
  * セパレータが指定されない場合は"-(ハイフンマイナス)"
- *
+ * 主にAE上でのファイル/レイヤー/アイテムの並べ替え関数で使用
+ * 文字列の数字に先行する部分をラベル(=prefix)
+ * 最初に現れる数値連続部分を整数値
+ * 残りを後置情報とする。
+ * この関数はラベル、後置文字列の意味は問わない　
  * @param myString
  * @param mySep
  * @returns {*}
@@ -3430,7 +3526,18 @@ nas.labelNormalization = function (myString, mySep) {
     if (typeof mySep == "undefined") {
         mySep = "-"
     }
-    if (String(myString).match(/([^\s\._\-0-9]*)[\s\._\-]?([0-9]+)[\s\._\-]?([^0-9].*)/)) {
+    /*
+    var myCell=(myString instanceof nas.CellDescription )? myString :new nas.CellDescription(myString);
+    return [myCell.prefix,nas.Zf(nas.parseNumber(myCell.body),12),myCell.postfix].join(mySep);
+    */
+    myString=nas.normalizeStr(myString);
+    if (String(myString).match(/([^\s\._\-0-9]*)[\s\._\-]?([0-9]+[\s\._\-]?)([^0-9]?.*)/)) {
+        return [RegExp.$1, nas.Zf(parseInt(RegExp.$2,10), 12), RegExp.$3].join(mySep);
+    } else {
+        return myString.toString();
+    }
+
+    if (String(myString).match(/([^\s\._\-0-9]*)[\s\._\-]?([0-9]+)[\s\._\-]?([^0-9]?.*)/)) {
         var myPrefix = RegExp.$1;
         var myBodyNum = parseInt(RegExp.$2);
         var myPostfix = RegExp.$3;
@@ -3440,11 +3547,13 @@ nas.labelNormalization = function (myString, mySep) {
     }
 };
 
-
-//nas.labelNormalization("a 012a下")
-//nas.labelNormalization("01223 Ax")
-//nas.labelNormalization("B-01223雨森Ax")
-
+/*test
+console.log(nas.labelNormalization("a 012a下"));
+console.log(nas.labelNormalization("01223 Ax",""));
+console.log(nas.labelNormalization("A01223","_"));
+console.log(nas.labelNormalization("B-01223雨森Ax","."));
+console.log(nas.labelNormalization("たぬき3"));
+*/
 //比較補助関数
 /** nas.normalizeStr(myString)
  * 
@@ -3468,18 +3577,20 @@ if(str.normalize){return str.normalize("NFKC");}
 }
 
 
-//nas.normalizeStr("安全ｶｸﾆﾝＢＡＮＤ（12３５）");
-
+/*test
+console.log (nas.normalizeStr("安全ｶｸﾆﾝＢＡＮＤ（12３④５）"));
+*/
 
 /**
  * 文字列中に最初に現れる数値部分を整数化して返す関数
  * 正規化フィルタを通し
  * 最初の数値の前の数字以外の文字を払い１０進で整数化して返す
  * 数値部分が含まれない場合は NaN が戻る
- *
- * 先行する数字以外をラベル
- * 数字の連続部分を数字部
- * それ以降を後置部と定義する
+ * この関数は　
+ *   先行する数字以外をラベル
+ *   数字の連続部分を数字部
+ *   それ以降を後置部
+ * と定義する
  * ＞小数点以下は後置部となる
  */
 nas.parseNumber=function(str){
@@ -3507,3 +3618,408 @@ nas.compareCutIdf("0012","title_opus_s-c012");
 nas.compareCutIdf("C００１２","s-c012");
 nas.compareCutIdf("S#1-32","s01-c0３２");
 */
+
+/**
+ *  タイムシートのセル記述を比較して同じセルの記述か否かを返す関数
+ *
+ *  空白はいずれのセル記述ともマッチしない
+ *　カラセル記号、省略記号、等の機能記述記号はいずれのセル記述ともマッチしない
+ *　原画記述の特定のセルを表さない中間値補間記号はいずれのセルともマッチしない
+ *　記述はノーマライズして比較される
+ *　同一トラック内の記述比較のみ正しい判定を行う(xMapエレメントの比較ではない )
+ * 引数は、記述文字列または記述オブジェクト
+ * 実際の判定はセル記述オブジェクトのメソッドを利用するので、
+ * 比較するどちらかの要素がセル記述オブジェクトであることが明確なケースでは
+ * この関数を使う必要は無い obj.compae(desc) を利用するように推奨
+ */
+nas.compareCellIdf=function(tgt,dst){
+    if((! tgt) || (! dst)) return false;
+    if(tgt instanceof nas.CellDescription){
+        var target=tgt;
+    }else{
+        var target=new nas.CellDescription(tgt);
+    }
+    return(target.compare(dst));
+}
+
+/*TEST
+console.log(nas.compareCellIdf(""," "));
+console.log(nas.compareCellIdf("12","(12)"));
+console.log(nas.compareCellIdf("１２","12-1"));
+console.log(nas.compareCellIdf("X","X"));
+console.log(nas.compareCellIdf("|","X"));
+*/
+/**
+nas.CellDescription([cellPrefix,cellBody,cellPostfix,cellModifier])
+nas.CellDescription(cellDescription,cellPrefix)
+コンストラクタ基本形式
+狭義のセル（動画セル）を記述するオブジェクト
+セル記述を与えて初期化するか、または必要な情報を配列で与えて初期化する。
+
+myDescription      主記述・シートに記述する基本的なテキスト
+    プレフィックス、ポストフィックス、モデファイヤを含んでいても良い
+    特殊記述は内容で判別
+
+    ブランク記述 カラセルを表す予約語
+        配列BlankSignsに登録された文字列が単独で記述されたもの
+    中間値補間記述　補間（動画）記号用予約語
+        配列InterpolationSignsに登録された文字列が単独で記述されたもの
+    省略記述 記述されたセルが直前のセルの値を継承する事を示す予約語
+        配列EllipsisSignsに登録された文字列で始まる記述、空文字列及び空白文字
+
+    一般記述　上記の特殊記述以外の記述        
+        記述が値を持つ場合は、システム上関連付けられた値を示す。
+        値を持たない場合は省略記述と同様に直前のセルの値を継承する
+        
+myPrefix    プレフィックス部
+    通常？はトラックラベル
+    主記述に指定のある場合はそちらを優先する
+myPostfix
+    以下の文字列によるオーバレイまたはアンダーレイの指定を一種のみ
+    +,修正,修,上,下,カブセ,u|under,o|over,overlay
+    文字を重ねるかまたは直後に重ね数を付加して使用する
+    例　"+","++","+3"
+    主記述に指定のある場合はそちらを優先する
+    ブランク記述の場合は意味を持たないが、記述規則上ポストフィックスが記述されることは無い
+    ポストフィックスが与えられた場合、特殊記述でなく一般記述となる
+myModifier
+    丸囲い、三角囲い、四角囲い等の記述修飾を与える  
+    "none","circle","trangle","brackets","red"
+    主記述に指定のある場合はそちらを優先する
+    特殊記述にはモデファイヤが付かない
+type
+    記述のタイプを示すプロパティ
+    "nullstring","space","blank","interpolation","ellipsis"or"cell"
+    それぞれ
+    "ヌルストリング","空白","カラセル","中間値補間指定子","省略子"or"通常エントリ"
+    を示す。
+    マップの状況により同じ記述が必ずしも同じタイプとはならない
+    
+*/
+nas.CellDescription=function(cellDescription,cellPrefix){
+    this.prefix   = "";
+    this.body     = "";
+    this.postfix  = "";
+    this.modifier = "none";
+    this.content  ;//undefinedで初期化　ここに値があればtoStringで返す　キャッシュ扱い
+    this.type     = "inherit";
+  if(cellDescription instanceof Array){
+    this.prefix   = cellDescription[0];
+    this.body     = cellDescription[1];
+    this.postfix  = cellDescription[2];
+    this.modifier = cellDescription[3];
+    this.type     = nas.cellDescription.type(this.body);
+  }else{
+    this.parseContent(cellDescription,cellPrefix);
+  }
+  
+}
+/* TEST
+console.log(new nas.CellDescription())     ;//
+console.log(new nas.CellDescription(["A","12","修","triangle"]))     ;//triangle|修 |A|12
+console.log(new nas.CellDescription("(1)"))     ;//circle|""|""|1
+console.log(new nas.CellDescription("2"))     ;//none|""|""|2
+console.log(new nas.CellDescription("<A12>修"))     ;//triangle|修 |A|12
+console.log(new nas.CellDescription("A-(12)+","B"))     ;//circle  |+  |B|A-12
+console.log(new nas.CellDescription("A[12]修"))     ;//brackets|修 |A|12
+console.log(new nas.CellDescription("B001"))        ;// none   |"" |B|1
+console.log(new nas.CellDescription("B-01"))        ;// none   |"" |B|1
+console.log(new nas.CellDescription("C-(1)++3"))    ;//circle  |++3|C|1
+console.log(new nas.CellDescription("C-①","A"))     ;//circle  |"" |A|C1
+console.log(new nas.CellDescription("<あ>修","A")) ;//triangle|修 |A|あ
+console.log(new nas.CellDescription("(1イ)修","A")) ;//circle|修 |A|1イ
+console.log(new nas.CellDescription("B-ex修","b")) ;//none|修 |b|ex
+console.log(new nas.CellDescription("C8-修q","b")) ;//none|"" |C|8-修q
+*/
+/**
+    nas.CellDescription.prototype.setType()
+    セル記述のタイプをセットするメソッド
+    引数がなければ現在のタイプを返す
+"normal"        一般記述
+"inherit"       空文字列、空白、省略記号　等の先行の値を継承する記述
+"blank"         カラ記述
+"interpolation" 中間値補間記号
+*/
+nas.CellDescription.prototype.setType=function(myType){
+    if((typeof myType == "undefined")&&(! (this.type))){
+        nas.CellDescription.type(this);
+    }else{
+        this.type = myType;
+    }
+    return this.type;
+}
+/*test
+
+*/
+/**
+    nas.CellDescription.toString(type)
+    引数:　type 文字列化タイプ　"origin","normal","complete"
+    "origin" ユーザ記述のままを返す　  content
+        contentに値がない場合は"normal"の値をcontentに設定して返す デフォルト
+    "normal" 正規化済の文字列で返す　  [body,postfix].join("")
+    "complete" 完全な修飾子付きで返す　[prefix,body,postfix].join("-")
+*/
+nas.CellDescription.prototype.toString=function(type){
+    if(typeof type == "undefined") type= 'origin';
+    if((type=='origin')&&(typeof this.content != undefined)){return this.content;}
+    var myResult = "";
+    var brackets=([["",""],["(",")"],["<",">"],["[","]"]])[["none","circle","triangle","brackets"].indexOf(this.modifier)];
+    switch(type){
+    case "complete":
+        myResult = [
+          this.prefix,
+          [brackets[0],this.body,brackets[1]].join(""),
+          this.postfix
+        ].join("-");
+    break;
+    default:
+        myResult = [brackets[0],this.body,brackets[1],this.postfix].join("");
+        if(type == "origin") this.content = myResult;
+    }
+    return myResult;
+}
+/* test
+var A=new nas.CellDescription(["A","12","修","triangle"]);
+console.log(A.toString("complete"));
+console.log(A.toString("normal"));
+console.log(A.toString("origin"));
+*/
+/**
+nas.CellDescription.prototype.parseContent(シート記述,ラベル)
+記述パーサ
+セル記述を与えて記述オブジェクトを再定義する
+
+シート記述:[前置部[セパレータ]]主記述[[セパレータ]後置部]
+ラベル:トラックラベルを与える
+
+トラックラベルはプレフィックスのデフォルト値として扱う
+トラックラベルが指定されない場合は、かつ記述にラベルが含まれない場合無ラベルのセルを初期化する
+
+値を持たないセルの扱い
+セル記述が値を持つか否かはxMapとのリンクと記述条件によるので、ここでは解決を行わない。
+解決は必要時に都度行われる
+
+セパレータは /[_\-\s]?/
+前置部は。セルの所属するグループラベルとして機能する
+シート記述に前置部を置かない場合はセパレータも省略するものとする。
+前置部に値のない場合セパレータは認識されず主記述の一部となる。
+前置部がない場合はセパレータが必須
+前置部分のない記述（これが通常）は、トラックラベルがプレフィックスとなる
+
+主記述と前置部を強調修飾することが可能
+強調修飾は
+    (.+)　丸囲い
+    <.+>　三角囲い
+    [.+]　四角囲い
+の三種
+いずれも前置部と主記述
+または主記述のみを囲うことで表現できる　両者は同じ要素として扱う
+
+主記述は基本的に動画番号または原画番号である
+一般に正の整数値であるが、文字列も原画番号として許容される
+主記述の数値部分は、最初に現れる連続した数字部が整数として正規化される。
+文字列を用いる場合は、セパレータ以外の文字列を推奨
+幾つかの文字は機能文字として予約されているので使用時に注意が必要となる。
+
+
+　後置部分は、同じセル記述に対するオーバレイ/アンダーレイを表す。
+　予約語とその重なりで同一セル関連のオーバーレイを示す
+　現在の予約語は以下
+　   +           :  オーバーレイ(簡略表記)
+　   o/overlay   :  オーバーレイ
+　   u/underlay  :  アンダーレイ
+　   修/修正     :  修正オーバーレイ
+　   カ/カブセ   :  日本語でオーバーレイの慣用表現
+     上          :  漢字オーバーレイ
+     下          :　漢字アンダーレイ
+
+  後置部分の異なる同一名のセルは別々のセルではあるが強力な関連性を持つ
+　ただしこの関連性は、同一ステージ内に限定される
+　ステージが異なる場合の同名記述は基本的に弱い関連性しか持たない点に注意
+　主記述とポストフィックス間のセパレータはあってもなくても良い
+
+　例
+　A-1
+　A-1-修正
+　
+　この2つは異なるセルだが、A-1修は、A-1に関連付けられたオーバレイとして働く
+　修正レベルによっては前バージョンの絵が残らない場合もある。
+　
+　修正オーバーレイは、必要に従って何層でも重ねることが可能であるその際は後置文字を重ねるか、またはオーバーレイの層数を数値でおく
+  例
+  +,++,+++,+4 等
+　
+
+パーサは与えられた記述をパースしてセル記述オブジェクトを返す
+オブジェクトは以下のプロパティを持つ
+
+.content    与えられた文字列をそのまま
+.prefix     前置部文字列 セパレータは含まない または前置オブジェクト
+.body       正規化された記述部本体文字列 または オブジェクト
+.postfix    後置部文字列 セパレータは含まない またはオブジェクト
+.modifier   記述修飾子　"none","circle","triangle","brackets"
+.type       記述タイプ　"normal","inherit","blank","interpolation"
+
+パーサに値が与えられなかった場合、既存のプロパティからdescription-contentの更新を行う
+丸数字は失われ標準表記の(丸括弧)に置換される　
+*/
+nas.CellDescription.prototype.parseContent=function(description,prefixStr){
+    if (typeof description == "undefined"){
+        console.log("rebuild content")
+        if (this.body.length>0){
+          this.content=this.toString(true);
+          return;
+        }else{
+          description="";
+        }
+    }
+    if (typeof prefixStr   == "undefined") prefixStr = "";
+    this.content=description;
+    //丸数字を一つだけ（）で囲む（正規化前に行う）
+    description=String(description).replace(/[①-⑳㉑㉒-㉛㉜-㉟㊱-㊿]/,"($&)");
+    //正規化  丸数字は通常の数字に展開されて失われる
+    description=nas.normalizeStr(description);
+    //モデファイヤを判別して削除
+    /*モデファイヤは一括して削除の方向で処理*/
+    if(description.match(/([^(]*)\(([^\(]+)\)(.*)/)) {
+        this.modifier = "circle";
+        description   = description.replace(/\(([^(]+)\)/g,"$1");
+	}else if(description.match(/([^<]*)\<([^<]+)\>(.*)/)){
+        this.modifier = "triangle";
+        description   = description.replace(/<([^<]+)>/g,"$1");
+
+	}else if(description.match(/([^\[]*)\[([^[]+)\](.*)/)){
+        this.modifier = "brackets";
+        description   = description.replace(/\[([^\[]+)\]/g,"$1");
+    }else{
+        this.modifier = "none";
+    }
+    //ポストフィックスを判定して消去 標準表記は"+"
+    if(description.match(/([\-_\s]?((\+|修正?|カブセ|o|overlay|u|under|上|下)+(\d*)))$/)) {
+        this.postfix = RegExp.$2;//暫定的に全部（あとで置きかえ）
+        description   = description.slice(0,-RegExp.$1.length);
+	} else {
+        this.postfix = "";
+	}
+    //前置部分を分離
+    if(description.match(new RegExp("^(("+prefixStr+"|[A-Z]?)[\-_\s]?)?(.+)$","i"))){
+        this.prefix  = ((RegExp.$2).length)? RegExp.$2:prefixStr;
+        this.body    = nas.normalizeStr(RegExp.$3);
+    }else{
+        this.prefix  = prefixStr;
+        this.body    = nas.normalizeStr(description);
+    };
+        if(this.body.match(/([^\d]*)(\d+)(.*)/)){
+            this.body=RegExp.$1+parseInt(RegExp.$2,10)+RegExp.$3;
+        }
+    this.type = nas.CellDescription.type(this.body);
+}
+/*test
+A= new nas.CellDescription("");
+A.parseContent("A-(12)-修");
+comnsole.log(A)
+*/
+/** 　nas.CellDescription.prototype.compare(description,lbl)
+オブジェクトメソッド
+与えられた記述または記述オブジェクトと自身を対比して同じ記述か否かを判定
+ 引数:
+    description　記述オブジェクト  または　記述文字列 ラベルを付加しても良い
+ 戻値:
+    一致状況で返す　バイナリ
+    00000
+    11111
+    　    0:no match
+    　1. +1:body match　記述内容が基本的に一致（空白でない）
+    　2. +2:body+postfix match　ポストフィックス一致（ポストフィックス空白は一致）
+    　3. +4:prefix+body+postfix match　プレフィックス一致（プレフィックス空白は一致）
+      4. +8:and modifier match
+    　基本的にモデファイヤが異なっても同じ記述となるので、4.はあまり意味が無いが一応
+
+以下の条件に当てはまる場合はマッチが発生しない。（先に判定して抜ける）
+    記述が　空文字列、空白、ブランク記号、中間値補間記号　または　省略記号
+    等価条件　.type != "normal"
+*/
+nas.CellDescription.prototype.compare=function(desc,lbl){
+    if ( this.type != "normal") return 0;
+    if (!(desc instanceof nas.CellDescription)){ desc = nas.CellDescription.parse(desc,lbl);}
+    if ( desc.type != "normal") return 0;
+    var myResult　=　0;
+    if ( this.body     == desc.body)     { myResult ++ ;}else{return myResult;}
+    if ( this.postfix  == desc.postfix)  { myResult += 2;}
+    if ( this.prefix   == desc.prefix)   { myResult += 4;}
+    if ( this.modifier == desc.modifier) { myResult += 8;}
+    return myResult;
+}
+/*  test
+A= new nas.CellDescription("");
+A.parseContent("12");
+console.log(A.compare("(12)"))
+console.log(A)
+*/
+/**
+    nas.CellDescription.type(desc,lbl,targetMap)
+    セル記述のタイプを判定するクラスメソッド
+    記述または、記述オブジェクトを渡す
+    xMAPに該当するグループがあればそのエントリからタイプを得る
+    なければ引数を判定してタイプの推測値を返す
+"normal"        一般記述
+"inherit"       空文字列、空白、省略記号　等の先行の値を継承する記述
+"blank"         カラ記述
+"interpolation" 中間値補間記号
+*/
+nas.CellDescription.type=function(desc,lbl,targetMap){
+     if(typeof interpRegex == "undefined")
+        interpRegex = new RegExp("^["+InterpolationSigns.join("")+"]$");
+ 	 if(typeof blankRegex == "undefined")
+ 		blankRegex = new RegExp("^["+BlankSigns.join("")+"]$");
+ 	 if(typeof ellipsisRegex == "undefined")
+ 		ellipsisRegex = new RegExp("^["+EllipsisSigns.join("")+"]$");
+
+    if(desc instanceof nas.CellDescription){
+        var label       = desc.prefix;
+        var description = desc.body;
+    }else{
+        var label       = lbl;
+        var description = desc;
+    }
+    var type = "normal";
+if(targetMap){
+      // xMapが指定された場合の処理はここに
+/*
+    記述内容からの判定とxMap参照の差異は
+    "normal"判定された記述のうちｘMapエントリの存在しないものが"inherit"になる点
+    フォーマット上は、ｘMapエントリとして予約語を登録可能なので他種の記述が"normal"になる場合もあり　これは　タイプとして判断すべき内容か？
+    xMapに問い合わせを行い　結果でtypeを設定する
+*/    
+}else{
+ 	if (
+ 	     (description.match(/^\s*$/)) ||
+ 	     (description.match(ellipsisRegex))
+ 	){
+ 	   type="inherit";//空白,ヌルストリングまたは明示された継承記述
+ 	} else if (description.match(interpRegex)){
+ 	   type="interpolation";//中間値補間記号
+
+ 	} else if (description.match(blankRegex)) {
+ 	   type="blank";//カラセル
+ 	}
+}
+//記述オブジェクトだった場合　オブジェクトのプロパティを更新する
+    if(desc instanceof nas.CellDescription){ desc.type = type; }
+ 	return type;
+}
+/** nas.CellDescription.parse(description,label)
+記述をパースしてセル記述オブジェクトを返すクラスメソッド
+オブジェクトのラッパ関数
+引数:
+    description     セル記述
+    label           トラックラベル(省略可)
+
+        または配列
+    [trackID,frameID]　トラックIDとフレームIDの配列 ?
+    これは良くない　クラスメソッドが別のオブジェクトに縛られることになるので却下
+    逆にxUIのオブジェクトなら可
+*/
+nas.CellDescription.parse=function(desc,lbl){
+    return new nas.CellDescription(desc,lbl);
+}

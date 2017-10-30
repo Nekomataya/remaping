@@ -1148,33 +1148,107 @@ interpSign=function(){
   }
 }
 /*addCircle(キーワード)
-引数:keyword
+引数:keyword	"none","circle","triangle" or "brackets"
+
+フォーカスのあるシートセルのまたは選択範囲内の記述が操作ターゲット
+ターゲットとなるセルの記述にキーワードで指定された修飾を施す。または削除する。
+ターゲットセルにすでに指定の装飾がある場合は、その装飾を削除するトグル動作。
+ターゲットは、空白、カラセル、補間サイン、省略の線引以外の記述
+処理対象範囲はつねにトラック全体(=内容変更のある場合は変更範囲をput)
+
 選択範囲のない場合
-フォーカスのあるシートセルが、空白、カラセル、補間サイン、空白の線引であった場合は　NOP
-正確には、有効記述のみを処理するべき
-有効記述だった場合は、丸囲み＝（丸括弧）角括弧の付加 または 削除
+捜査対象はフォーカスのあるセルの記述のみ
+同トラックの全ての同じ記述に指定の装飾を加える
+記述が処理対象外の場合はNOP
 
-選択範囲がある場合　範囲が一列ならばそのまま動作対象に
-複数列の場合はフォーカスのある一列に変更して
-その区間の全てのシートセルを処理
-動作は現在のところトグル
-<矢括弧>(=△囲み)は、中間値補間サインとして予約されているので中間値チェックにかかるため先に判定して抜ける
+選択範囲がある場合
+範囲が一列ならばそのまま複数列の場合はフォーカスのある一列に変更する
+その区間内の全てのセルをスキャンして操作対象列を作る。
+同一の記述は１対象としてカウント
 
-この処理を行った場合、同トラックの同じ番号のセル全てに同じ処理を行うように変更した方が良いので一考
+将来的に、トラックのプロパティとしてmodifierリストが保持されなくてはならない。
+その際にはmodifierプロパティに働きかける関数になり、この内容はそちらへ移植される。
+xUI.XPS.xpsTracks[tid].
+
+<矢括弧>(=△囲み)は、中間値補間サインとして予約されているので中間値チェックにかかるため先に判定して抜ける。
+戻り値は、変更後のストリーム？  入力したセル数？　最終アドレス？
 */
 addCircle=function(kwd){
 	if(! kwd) kwd="circle";
-	var interpRegex=new RegExp("["+InterpolationSigns.join("")+"]");
+     if(typeof interpRegex == "undefined")
+        interpRegex = new RegExp("^["+InterpolationSigns.join("")+"]$");
+ 	 if(typeof blankRegex == "undefined")
+ 		blankRegex = new RegExp("^["+BlankSigns.join("")+"]$");
+ 	 if(typeof ellipsisRegex == "undefined")
+ 		ellipsisRegex = new RegExp("^["+EllipsisSigns.join("")+"]$");
+
 //コレは基礎オブジェクトに移行 …というか、総合判定メソッドが必要（ケースで判断が変わる）
 //後で置き換え
-	var newValue=new Array();
-	var myRange=xUI.actionRange();
-	var currentColumn=xUI.Select[0];//現在のカラム
+//ターゲット記述を収集
+	var targetDescriptions = [];
+   targetDescriptions.cellIndexOf = function (description /*, fromIndex */) {
+    "use strict";
+
+    if (this == null) {
+      throw new TypeError();
+    }
+
+    var t = Object(this);
+    var len = t.length >>> 0;
+
+    if (len === 0) {
+      return -1;
+    }
+
+    var n = 0;
+
+    if (arguments.length > 0) {
+      n = Number(arguments[1]);//第ニ引数-検索開始インデックス
+
+      if (n != n) { // shortcut for verifying if it's NaN
+        n = 0;// NaNならば０開始
+      } else if (n != 0 && n != Infinity && n != -Infinity) {//ゼロ　無限大　マイナス無限大以外　すなわち実数範囲　の場合負数を全て-1 それ以外を整数化
+         n = (n > 0 || -1) * Math.floor(Math.abs(n));
+      }
+    }
+//要素数をオーバーしたら検索失敗
+    if (n >= len) {
+      return -1;
+    }
+//範囲を設定
+    var k = (n >= 0)? n : Math.max(len - Math.abs(n), 0);
+//順次検索　compare　メソッドの戻値が１以上でヒット
+    for (; k < len; k++) {
+      if (k in t && (t[k].compare(description) > 0)) {
+        return k;
+      }
+    }
+    return -1;
+  }
+//ターゲットセルの記述内容を取得
+//	var targetDescription = new nas.CellDescription(xUI.getRange([xUI.Select,xUI.Select]));
+
+	var myRange		  = xUI.actionRange();
+	var currentColumn = xUI.Select[0];//現在のカラム
+
 	xUI.selectCell([currentColumn,myRange[0][1]]);
 	xUI.selection([currentColumn,myRange[1][1]]);
-//	if(xUI.Selection.join(",")!="0,0") xUI.selection([currentColumn,myRange[1][1]]);
+//ターゲット収集　最低数は０
 	for(var f=myRange[0][1];f<=myRange[1][1];f++){
-		var myValue = XPS.xpsTracks[currentColumn][f];
+		var myDesc = new nas.CellDescription(XPS.xpsTracks[currentColumn][f]);
+
+//この判定はxMAP完成後に有効記述であるか否かを判定する評価関数に置きかえ予定
+
+		if(myDesc.type != "normal"){
+			continue;//cellIndexOf でもヒットはしないが、高速化のため先抜け排除
+		}else{
+			if ( targetDescriptions.cellIndexOf(myDesc)<0 ) targetDescriptions.push(myDesc);
+		}
+	}
+//収集後に処理対象数が０の場合は機能終了
+　if(targetDescriptions.length == 0) return;
+/*
+	if(false){
 		if((myValue.match(/^\<(.*)\>$/))||(
 			(myValue!="")&&
 			(!(myValue.match(interpRegex)))&&
@@ -1184,8 +1258,8 @@ addCircle=function(kwd){
 			newValue.push(RegExp.$1);
 		  } else {
 		  	switch(kwd){
-		  	case "angles":		newValue.push("<"+myValue+">");break;
-		  	case "blackets":		newValue.push("["+myValue+"]");break;
+		  	case "triangle":		newValue.push("<"+myValue+">");break;
+		  	case "brackets":		newValue.push("["+myValue+"]");break;
 		  	case "circle":
 			default:			newValue.push("("+myValue+")");
 			}
@@ -1194,56 +1268,47 @@ addCircle=function(kwd){
 			newValue.push(myValue);
 		}
 	}
-	if(newValue.length){
-		
-		xUI.put(newValue.join(","));
-		xUI.selectCell([currentColumn,myRange[0][1]]);
-	}
-	if(newValue.length==1)xUI.spin("fwd");
-}
-/*addAngles()
-引数なし
-選択範囲のない場合
-フォーカスのあるシートセルが、空白、カラセル、補間サインであった場合は　NOP
-有効記述だった場合は、囲み＝<矢括弧>付加 または 削除
-
-選択範囲がある場合　範囲が一列ならばそのまま動作対象に
-複数列の場合はフォーカスのある一列に変更して
-その区間の全てのシートセルを処理
-*/
-addAngles=function(){
-	var interpRegex=new RegExp("["+InterpolationSigns.join("")+"]");
-//コレは基礎オブジェクトに移行 …というか、総合判定メソッドが必要（ケースで判断が変わる）
-//後で置き換え
-	var newValue=new Array();
-	var myRange=xUI.actionRange();
-	var currentColumn=xUI.Select[0];//現在のカラム
-	xUI.selectCell([currentColumn,myRange[0][1]]);
-	xUI.selection([currentColumn,myRange[1][1]]);
-//	if(xUI.Selection.join(",")!="0,0") xUI.selection([currentColumn,myRange[1][1]]);
-	for(var f=myRange[0][1];f<=myRange[1][1];f++){
-		var myValue = XPS.xpsTracks[currentColumn][f];
-		if((myValue.match(/^\<(.*)\>$/))||(
-			(myValue!="")&&
-			(!(myValue.match(interpRegex)))&&
-			(!(myValue.match(/[|｜￤;:X✗×]/)))
-		)){
-		  if(myValue.match(/^\<(.*)\>$/)){
-			newValue.push(RegExp.$1);
-		  }else{
-			newValue.push("<"+myValue+">");
-		  }
+	*/
+//トラック全体をサーチして新規データをビルド
+	var changeStart  = -1;
+	var changeEnd    = -1;
+	var newValue     = [];
+	var currentTrack=xUI.XPS.xpsTracks[currentColumn];
+	for(var f = 0;f<currentTrack.length;f++){
+		var currentCell=new nas.CellDescription(currentTrack[f]);
+		if (currentCell.type!="normal"){
+		//チェック対象外 無条件で新規配列にプッシュ
+			newValue.push(currentCell);
+			continue;
 		}else{
-			newValue.push(myValue);
+			for(var t=0;t<targetDescriptions.length;t++){
+				dest = (targetDescriptions[t].modifier == kwd)?"none":kwd;
+				if(currentCell.compare(targetDescriptions[t]) > 1){
+					//記述が同じ(ヒット)処理して最終処理フレームをプッシュ
+					currentCell.modifier = dest;
+					currentCell.content = currentCell.toString("normal");
+					if( changeStart < 0) {
+						changeStart = f;
+					}
+						changeEnd   = f;
+					break;
+				}
+			}
+			newValue.push(currentCell)
 		}
 	}
-	if(newValue.length){
-		
-		xUI.put(newValue.join(","));
+	if(changeStart<0) return ;//一点も処理しなかった
+
+		xUI.selectCell([currentColumn,changeStart]);
+		xUI.selection();
+	var result = 	xUI.put(newValue.slice(changeStart,changeEnd+1).join(","));
 		xUI.selectCell([currentColumn,myRange[0][1]]);
-	}
-	if(newValue.length==1)xUI.spin("fwd");
+		xUI.selection([currentColumn,myRange[1][1]]);
+return result;
 }
+/* test
+
+*/
 
 /**
  * 原画アクションシート作成

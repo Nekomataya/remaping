@@ -715,7 +715,13 @@ serviceAgent.pushEntry(xUI.XPS,function(){xUI.setStored("current");sync();
 <option value='-1'>+no server selected+
 	</select>
 
-	userID (or mail-address) : <input id='current_user_id' type=text size=32 value=''>
+	userID (or mail-address) : <input id='current_user_id' type='text' autocomplete='on' list='recentUsers' size=32 value='' onchange ='this.value=(new nas.UserInfo(this.value)).email;'>
+	<datalist id='recentUsers'>
+	    <option value='123'></option>
+	    <option value='456'></option>
+	    <option value='789'></option>
+	    <option value='012'></option>
+	</datalist>
 	password : <input id='current_user_password' type=password size=32 value='********'>
 	<button class='sign' id='login_button' onclick='serviceAgent.authorize();'>SIGNIN / signout</button><hr>
 </div>
@@ -1467,13 +1473,13 @@ class=optionPanel id=optionPanelProductManagement
     id=ibMaddAangles
     class='iconButton  iconButton-addAngles'
 	title="矢囲い"
-	onclick="addCircle('angles');"
+	onclick="addCircle('triangle');"
 >
 </button><button
     id=ibMaddBlackets
     class='iconButton  iconButton-addBrackets'
 	title="角括弧"
-	onclick="addCircle('blackets')"
+	onclick="addCircle('brackets')"
 >
 </button><button
     id=ibMincrementNum
@@ -2373,7 +2379,10 @@ onclick='documentDepot.updateDocumentSelector(new RegExp("3[0-9][0-9][^0-9]*$"))
 
 <table class=UItable>
 	<tr>
-		<th class=menu colspan=3> name. / <span id=myName onClick="myPref.chgMyName()"></span></th>
+		<th class=menu colspan=3> name. / <input id='myName' type='text' autocomplete='on' list='recentUsers' size=32 value='' title='ユーザ名を入力' onChange='myPref.chgMyName(this.value)'>
+            		
+<!-- <span id=myName onClick="myPref.chgMyName()"></span> -->
+		</th>
 	</tr>
 	<tr>
 		<td colspan=2 style="text-align:center"><input type=button
@@ -3295,7 +3304,6 @@ index.html ,v 1.6 2017/06/23  support@u-at.net <br />
     <textarea id="referenceXPS"></textarea>
   </div>
   <div id="scrollSpaceFt" class=\"screenSpace\"><br></div>
--->
   <!-- 
 	サーバーオンサイトの状況を真似る場合
 	この位置に　backend_variables　を置いて

@@ -166,17 +166,14 @@ xUI.init    =function(editXps,referenceXps){
     this.viewOnly    = true;            // 編集禁止フラグ
     this.hideSource  = false;           // グラフィック置き換え時にシートテキストを隠す
     this.showGraphic = true;            // 置き換えグラフィックを非表示　＝　テキスト表示
-
 //if(appHost.platform=="AIR") this.showGraphic    = false;
-
     this.onSite   = false;           // Railsサーバ上での動作時サーバのurlが値となる
     this.currentUser = new  nas.UserInfo(myName); // 実行ユーザをmyNameから作成
-    this.recentUsers =[];//最近のユーザ情報をカラで初期化
-
+    this.recentUsers = new nas.UserInfoCollection(myNames);//最近のユーザ情報
+    sync("recentUsers");
 /*
     recentUsers 配列の要素は、UserInfo オブジェクト
     myNamesは、アカウント文字列を要素とする配列
-    UserInfoオブジェクトを拡張してそれらをシームレスにやり取り可能にする
 */
     this.spinValue   = SpinValue;       // スピン量
     this.spinSelect  = SpinSelect;      // 選択範囲でスピン指定
@@ -1289,24 +1286,26 @@ xUI.setReferenceXPS=function(myXps){
     描画は遅延処理
 */
 xUI.drawSheetCell = function (myElement){
-if(typeof myElement =="undefined"){return false;}
-var target=myElement;
-var targetJQ=$("#"+target.id);
+    if(typeof myElement =="undefined"){return false;}
+    var target=myElement;
+    var targetJQ=$("#"+target.id);
     var formPostfix='';
 
-if(this.showGraphic){
-    var tgtID=target.id.split("_").reverse();
-    var myXps=(tgtID.length==2)? this.XPS:this.referenceXPS;
+    if(this.showGraphic){
+        var tgtID=target.id.split("_").reverse();
+        var myXps=(tgtID.length==2)? this.XPS:this.referenceXPS;
         formPostfix += (tgtID.length==2)? '':'-ref';
-      if (myXps.xpsTracks[tgtID[1]].option.match(/^(efect|sfx|composite)$/)) formPostfix +='-sfx';
-    var myStr = myXps.xpsTracks[tgtID[1]][tgtID[0]];
-    var drawForm = false;
-    var sectionDraw = false;
-    var mySection = myXps.xpsTracks[tgtID[1]].getSectionByFrame(tgtID[0]);
+        if (myXps.xpsTracks[tgtID[1]].option.match(/^(efect|sfx|composite)$/)) formPostfix +='-sfx';
+        var myStr = myXps.xpsTracks[tgtID[1]][tgtID[0]];
+        var drawForm = false;
+        var sectionDraw = false;
+        var mySection = myXps.xpsTracks[tgtID[1]].getSectionByFrame(tgtID[0]);
 
 //シートセルに　graph_*クラスがあれば削除
-    var myClasses=targetJQ.attr('class').split(' ');
-    for (var cix=0;cix<myClasses.length;cix++){if(myClasses[cix].indexOf('graph_')==0) targetJQ.removeClass(myClasses[cix]);}
+        var myClasses=targetJQ.attr('class').split(' ');
+        for (var cix=0;cix<myClasses.length;cix++){
+            if(myClasses[cix].indexOf('graph_')==0) targetJQ.removeClass(myClasses[cix]);
+        }
 //セクションキャッシュが信頼できる限りはセクションパースが保留されるように調整済み
 /**
     判定時にトラック種別を考慮する
@@ -1316,16 +1315,12 @@ if(this.showGraphic){
     エフェクト
     それぞれに置き換え対象シンボルが異なるので注意
 */
-    var currentTrackOption  = myXps.xpsTracks[tgtID[1]].option;
-//    var currentSectionID    = 
-//    xUI.Cgl.remove(target.id);//古いグラフパーツがあれば削除↓
-// グラフパーツの削除はセルエントリの消去時に行わないと画面が乱れるので注意
-    switch(currentTrackOption){
-        case "sound":;
-        case "dialog":;
+        var currentTrackOption  = myXps.xpsTracks[tgtID[1]].option;
+        switch(currentTrackOption){
+          case "sound":;
+          case "dialog":;
             if (myStr.match(/<([^>]+)>/)){
                 myStr=xUI.trTd(target.id.split('_'));
-                //myStr=xUI.trTd(myStr);
             }
             if (myStr.match(/[-_─━~＿￣〜]{2,}?/)){
               myStr=(this.showGraphic)?"<br>":"<hr>";
@@ -1345,8 +1340,8 @@ if(this.showGraphic){
 	ListStr=ListStr.replace(/\。/g,"");//句点空白(null)
 */
           break;
-        case "timing":;
-        case "replacement":;
+          case "timing":;
+          case "replacement":;
             if (myStr.match(/[\|｜]/)){
                 myStr=(this.showGraphic)?"<br>":"｜";                
                 drawForm = "line";
@@ -1365,9 +1360,9 @@ if(this.showGraphic){
                 drawForm = "triangle";
             }
           break;
-        case "camera":;
-        case "camerawork":;
-        case "geometry":;
+          case "camera":;
+          case "camerawork":;
+          case "geometry":;
             if (myStr.match(/^[\|｜]$/)){
                 myStr=(this.showGraphic)?"<br>":"｜";                
                 drawForm = "line";
@@ -1382,28 +1377,26 @@ if(this.showGraphic){
                 drawForm = "section-close";
            }
           break;
-        case "effect":;
-        case "sfx":;
-        var drawForms ={"▲":"fi","▼":"fo","]><[":"transition"};//この配分は仮ルーチン　良くない
+          case "effect":;
+          case "sfx":;
+            var drawForms ={"▲":"fi","▼":"fo","]><[":"transition"};//この配分は仮ルーチン　良くない
 //        myXps.xpsTracks[tgtID[1]].sections[] tgtID[0]
             if (myStr.match(/^[\|｜↑↓\*＊]$/)){
                 if(this.hideSource) myStr="<br>";                
             } else if (myStr.match(/^▼$/)){
                 if(this.hideSource) myStr="<br>";                
-           }
-            else if (myStr.match(/^▲$/)){
+            } else if (myStr.match(/^▲$/)){
                 if(this.hideSource) myStr="<br>";                
-           }
-            else if (myStr.match(/^\]([^\]]+)\[$/)){
+            } else if (myStr.match(/^\]([^\]]+)\[$/)){
                 if(this.hideSource) myStr="<br>";
-           }
+            }
 //        if(((mySection.startOffset()+mySection.duration-1) == tgtID[0])&&(mySection.subSections)){}
-        if((mySection.startOffset()+mySection.duration-1) == tgtID[0]){
-            var formStr = myXps.xpsTracks[tgtID[1]][mySection.startOffset()];
-            drawForm = drawForms[formStr];
-            sectionDraw = true;
-        }
-      break;
+            if((mySection.startOffset()+mySection.duration-1) == tgtID[0]){
+                var formStr = myXps.xpsTracks[tgtID[1]][mySection.startOffset()];
+                drawForm = drawForms[formStr];
+                sectionDraw = true;
+            }
+          break;
     }
 //    if(dbg) console.log(target.id+":"+currentTrackOption+":"+myXps.xpsTracks[tgtID[1]][tgtID[0]]+":"+myStr);
 //    target.innerHTML=myStr;
@@ -2073,7 +2066,7 @@ BODY_ +='> </th>';
         };
 
 /*********** Dialog Area*************/
-//予約タイムラインの為一回分別に出力
+//予約タイムラインの為一回分 別に出力
 //BODY_ +='<th class=dialogSpan ';
 //BODY_ +='> </th>';
 /************左見出し固定時の処理*****************/
@@ -2486,7 +2479,8 @@ BODY_ +='</tr>';
 
 BODY_ +='</tbody></table>';
 BODY_ +='\n';
-if(hasEndMarker){    
+/*タイムシート記述終了マーカーを配置*/
+if((hasEndMarker)&&(pageNumber==0)){    
 BODY_ +='<div id=endMarker class=endMarker>';
 BODY_ += JSON.stringify([xUI.XPS.xpsTracks.length, xUI.XPS.xpsTracks.duration]);
 BODY_ +='</div>';
@@ -3350,6 +3344,7 @@ if(dbg){    dbgPut(    "UNDO stack add:\n"+UNDO.join("\n")); }
   }
 // 処理終了アドレスを配列で返す(使わなくなったような気がする)
 return [[TrackStartAddress,FrameStartAddress],lastAddress];
+//処理終了時に記述修飾の同期を行う場合は、リターンの前に処理を行う
 };
 /*xUI.syncSheetCell(startAddress,endAddress,isReference)
     指定されたレンジのシートセルの内容を更新
@@ -5278,9 +5273,7 @@ function nas_Rmp_Startup(){
 //バージョンナンバーセット
     sync("about_");
 //クッキー指定があれば読み込む
-// alert("loading Cookie!");
     if(useCookie[0]){ldCk()};
-console.log(myName);
 //シートロゴをアップデート
     document.getElementById("headerLogo").innerHTML=
     "<a href='"+ headerLogo_url +
@@ -5529,28 +5522,33 @@ console.log(SheetLooks);
 /*
     この時点のユーザ問い合わせ手順に問題あり
     問い合わせが必要か否かの条件を調整　かつ　問い合わせ時に記録からユーザの情報を取得して選択肢として提示するUIが必要
-
+    ユーザ設定フラグを判定してUIを提示する
+    html5のオートコンプリートを利用するのでinput初期値はカラに
+    UIを提示しない場合は、デフォルトの値またはクッキーで記録した最後のユーザが設定される
 */
-//alert(myName):console.log(myName);
-if(false){    myPref.chgMyName(); document.getElementById("nas_modalInput").focus();}
-if((NameCheck)||(myName=="")){   var msg=welcomeMsg+"\n"+localize(nas.uiMsg.dmAskUserinfo)+
-        "\n\n ハンドル:メールアドレス / handle:uid@example.com ";
+//  alert(xUI.currentUser);console.log(xUI.recentUsers);
+if((NameCheck)||(myName=="")){
         var newName=null;
-        ;//
-        nas.showModalDialog("prompt",msg,localize(nas.uiMsg.userInfo),myName,function(){
+        var msg=welcomeMsg+"\n"+localize(nas.uiMsg.dmAskUserinfo)+
+        "\n\n ハンドル:メールアドレス / handle:uid@example.com ";
+        msg=[msg];
+        msg.push("<hr><input id='confirmUID' type='text' autocomplete='on' list='recentUsers' size=48 value=''>");//初期値カラ
+        console.log(myName)
+        nas.showModalDialog("confirm",msg,localize(nas.uiMsg.userInfo),'',function(){
             if(this.status==0){
-                myName = this.value;
-                xUI.currentUser = new nas.UserInfo(this.value);
+                var newName = new nas.UserInfo(document.getElementById('confirmUID').value);
+                if(newName.handle){
+                    xUI.currentUser = new nas.UserInfo(newName);
+                }
                 xUI.XPS.update_user = xUI.currentUser;
+                xUI.recentUsers.add(xUI.currentUser);
+                sync("recentUsers");
                 sync("update_user");
                 sync("current_user");
             }
         });
-
     document.getElementById("nas_modalInput").focus();
-
     };
-
 //    クッキーで設定されたspinValueがあれば反映
     if(xUI.spinValue){document.getElementById("spin_V").value=xUI.spinValue} ;
 //ツールバー表示指定があれば表示 プロパティ廃止
@@ -5734,7 +5732,7 @@ console.log('application server-onsite');
         );
 
         myName = xUI.currentUser.toString();//旧変数互換 まとめて処理する関数が必要
-        myNames = xUI.recentUsers;//この変数には文字列可して格納する
+//        myNames = xUI.recentUsers.covertStringArray();//要素を文字列可した配列
 
     　   if($("#backend_variables").attr("data-episode_token").length > 0){
 console.log('bind single document');
@@ -6394,6 +6392,16 @@ referenceLabel  ;//リファレンスエリアのラベル
 function sync(prop){
 if (typeof prop == 'undefined') prop = 'NOP_';
 	switch (prop){
+case    "recentUsers":
+//ダイアログ類から参照される最近のユーザリスト
+    var rcuList = "";
+    for (var i=0;i<xUI.recentUsers.length;i++){
+        rcuList += '<option value="';
+        rcuList += xUI.recentUsers[i].toString();
+        rcuList += xUI.currentUser.sameAs(xUI.recentUsers[i])?'" selected=true >':'">';
+    }
+    document.getElementById('recentUsers').innerHTML = rcuList;
+    break;
 case    "editLabel":
 //XPS編集エリアのラベル更新
 /*
@@ -7596,37 +7604,42 @@ var myCookie = new Array();
 myCookie[0]=winSizes;
 
 //	[1] XPSAttrib
-	myTitle		=(useCookie.XPSAttrib)?XPS.title:null;
-	mySubTitle	=(useCookie.XPSAttrib)?XPS.subtitle:null;
-	myOpus		=(useCookie.XPSAttrib)?XPS.opus:null;
-	myFrameRate	=(useCookie.XPSAttrib)?XPS.framerate:null;
-	Sheet		=(useCookie.XPSAttrib)?nas.Frm2FCT(XPS.xpsTracks[0].length,3):null;//
-	SheetLayers	=(useCookie.XPSAttrib)?XPS.xpsTracks.length-2:null;
+	myTitle		= (useCookie.XPSAttrib)?XPS.title:null;
+	mySubTitle	= (useCookie.XPSAttrib)?XPS.subtitle:null;
+	myOpus		= (useCookie.XPSAttrib)?XPS.opus:null;
+	myFrameRate	= (useCookie.XPSAttrib)?XPS.framerate:null;
+	Sheet		= (useCookie.XPSAttrib)?nas.Frm2FCT(XPS.xpsTracks[0].length,3):null;//
+	SheetLayers	= (useCookie.XPSAttrib)?XPS.xpsTracks.length-2:null;
 
 myCookie[1]=[myTitle,mySubTitle,myOpus,myFrameRate,Sheet,SheetLayers];
 
 //	[2] UserName
-	if(! useCookie.UserName)	{myName	=false;myNames=[];};
-
+	if(useCookie.UserName)	{
+	    myName  = xUI.currentUser.toString();
+	    myNames = xUI.recentUsers.convertStringArray();
+	}else{
+	    myName	= false;
+	    myNames = [];
+	}
 myCookie[2]=[myName,myNames];
 
 //	[3] KeyOptions
-	BlankMethod	=(useCookie.KeyOptions)?xUI.blmtd:null;
-	BlankPosition	=(useCookie.KeyOptions)?xUI.blpos:null;
-	AEVersion	=(useCookie.KeyOptions)?xUI.aeVersion:null;
-	KEYMethod	=(useCookie.KeyOptions)?xUI.keyMethod:null;
-	TimeShift	=(useCookie.KeyOptions)?xUI.timeShift:null;
-	FootageFramerate=(useCookie.KeyOptions)?xUI.fpsF:null;
-	defaultSIZE	=(useCookie.KeyOptions)?[xUI.dfX,xUI.dfY,xUI.dfA].toString():"auto";
+	BlankMethod	     = (useCookie.KeyOptions)?xUI.blmtd:null;
+	BlankPosition    = (useCookie.KeyOptions)?xUI.blpos:null;
+	AEVersion	     = (useCookie.KeyOptions)?xUI.aeVersion:null;
+	KEYMethod	     = (useCookie.KeyOptions)?xUI.keyMethod:null;
+	TimeShift	     = (useCookie.KeyOptions)?xUI.timeShift:null;
+	FootageFramerate = (useCookie.KeyOptions)?xUI.fpsF:null;
+	defaultSIZE	     = (useCookie.KeyOptions)?[xUI.dfX,xUI.dfY,xUI.dfA].toString():"auto";
 
 myCookie[3]=[BlankMethod,BlankPosition,AEVersion,KEYMethod,TimeShift,FootageFramerate,defaultSIZE];
 
 //	[4] SheetOptions
-	SpinValue 	=(useCookie.SheetOptions)?xUI.spinValue:null;
-	SpinSelect	=(useCookie.SheetOptions)?xUI.spinSelect:null;
-	SheetLength	=(useCookie.SheetOptions)?xUI.SheetLength:null;
-	SheetPageCols	=(useCookie.SheetOptions)?xUI.PageCols:null;
-	FootMark	=(useCookie.SheetOptions)?xUI.footMark:null;
+	SpinValue 	  = (useCookie.SheetOptions)?xUI.spinValue:null;
+	SpinSelect	  = (useCookie.SheetOptions)?xUI.spinSelect:null;
+	SheetLength	  = (useCookie.SheetOptions)?xUI.SheetLength:null;
+	SheetPageCols = (useCookie.SheetOptions)?xUI.PageCols:null;
+	FootMark	  = (useCookie.SheetOptions)?xUI.footMark:null;
 	
 myCookie[4]=[SpinValue,SpinSelect,SheetLength,SheetPageCols,FootMark];
 
@@ -7745,14 +7758,16 @@ if (!navigator.cookieEnabled){return false;}
 
 //	[2] UserName
 	if(useCookie.UserName){
-	if(rEmaping[2]) {
-					myName  = unescape(rEmaping[2][0]);
-					myNames = rEmaping[2][1];
-//						if(xUI.currentUser) xUI.currentUser = new  nas.UserInfo(myName);
-	}else{
-	                myName = "";
-	                myNames = [""];
-	}
+	    if(rEmaping[2]) {
+		    myName  = unescape(rEmaping[2][0]);
+		    myNames = [];
+		    for(var ix=0;ix<rEmaping[2][1].length;ix++){
+			myNames.push(unescape(rEmaping[2][1][ix]));
+			}
+	    }else{
+	        myName = "";
+	        myNames = [myName];
+	    }
 	}
 
 //	[3] KeyOptions
@@ -8571,13 +8586,14 @@ function Pref(){
 //リスト検索 指配列内の定された要素のサブ要素をあたってヒットしたら要素番号を返す。
 this.Lists.aserch=function(name,ael){if(this[name]){for (var n=0;n<this[name].length;n++){if(this[name][n]==ael)return n}};return -1;}
 
-	this.userName="";
+	this.userName=xUI.currentUser.toString();
 //ユーザ名変更　プリファレンスパネルは大幅に変更があるのでこのメッセージの翻訳は保留　:nas.uiMsg.
-this.chgMyName=function(newName)
-{
+this.chgMyName=function(newName){
 	if(! newName){
 		var msg = localize(nas.uiMsg.dmAskUserinfo)+
 		        "\n\n ハンドル:メールアドレス / handle:uid@example.com ";
+		    msg=[msg];
+		    msg.push("<hr><input id='new_user_account' type='text' autocomplete='on' list='recentUsers' size=48 value=''>");
 //ユーザ変更UIを拡充
 /*
     ブラウザにユーザを複数記録する。
@@ -8587,26 +8603,18 @@ this.chgMyName=function(newName)
 
 ユーザID
 */
-
-		        
-		nas.showModalDialog("prompt",msg,localize(nas.uiMsg.userInfo),myName,function(){
+		nas.showModalDialog("confirm",msg,localize(nas.uiMsg.userInfo),xUI.currentUser,function(){
 		    if(this.status==0){
-if(dbg) console.log(this.value)
-		        newName = this.value;
-		        myName = newName;
-		        xUI.currentUser = new nas.UserInfo(this.value);//objectc
-		        XPS.update_user = xUI.currentUser;//object参照
-		        sync("update_user");
-		        sync("current_user");
+//このダイアログは直接xUIのプロパティを変更しない　一時オブジェクトを作成してPrefの表示のみを変更する
+		        var newName = new nas.UserInfo(document.getElementById('new_user_account').value);
+		        myPref.chgMyName(newName.toString());
 		    }
 		});
-		if(newName==null){newName=xUI.currentUser.toString()}
-	}
+	}else{
 	this.userName=newName;
-		document.getElementById("myName").innerHTML=
-'<a href="javascript:return false" title="名前を変更する。">'+
-this.userName+'</a>';
-		if(! this.changed){this.changed=true;};
+	document.getElementById("myName").value=this.userName;
+	if((!(xUI.currentUser.sameAs(this.userName)))&&(! this.changed)){this.changed=true;};
+    }
 }
 
 //ブランク関連変更
@@ -8774,15 +8782,15 @@ with(document){
 this.putProp=function ()
 {
 //名前変更
-	var newName=this.userName;
-	if(newName != myName)
-	{
-		myName=newName;
-        xUI.currentUser = new nas.UserInfo(myName)
-		XPS.update_user = xUI.currentUser;
+	var newUser=new nas.UserInfo(this.userName);
+	if(!(xUI.currentUser.sameAs(newUser))){
+		xUI.currentUser = newUser;//objectc
+        xUI.recentUsers.add(newUser);//recentUsersにアイテム追加(トライ)
+		XPS.update_user = xUI.currentUser;//object参照
+		sync("recentUsers");
 		sync("update_user");
-	}
-
+		sync("current_user");
+	};
 //カラセル関連
 	var blankNames=["prefBlmtd","prefBlpos","prefAeVersion"];//,"prefKeyMethod"
 	var iNames    =["blmtd"    ,"blpos"    ,    "aeVersion"];//,    "keyMethod"
