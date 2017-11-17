@@ -1321,7 +1321,7 @@ xUI.drawSheetCell = function (myElement){
           case "dialog":;
             if (myStr.match(/<([^>]+)>/)){
                 myStr=xUI.trTd(target.id.split('_'));
-            }
+            };//trTdにセルIDを渡す
             if (myStr.match(/[-_─━~＿￣〜]{2,}?/)){
               myStr=(this.showGraphic)?"<br>":"<hr>";
               if((mySection.startOffset()+mySection.duration-1) == tgtID[0]){
@@ -1437,11 +1437,35 @@ if(typeof myID =="undefined"){return false;}
             xUI.referenceXPS.xpsTracks[myID[1]][myID[2]]:
             xUI.XPS.xpsTracks[myID[0]][myID[1]];
     }
-    target=String(target).replace( />/ig, "&gt;").replace(/</ig,"&lt;");//<>
+if(false){
+    var result=String(target).replace( />/ig, "&gt;").replace(/</ig,"&lt;");//<>
+}else{
+/** HTML表示用に実体参照に置換
+*/
+  var str = String(target);//明示的に文字列化
+  var result = "";
+  for(var i = 0 ; i < str.length ; i++) {
+    c = str.charAt(i);
+    if((' ' <= c && c <= '~') || (c == '\r') || (c == '\n')) {
+      if(c == '&') {
+        cstr = "&amp;";
+      } else if(c == '<') {
+        cstr = "&lt;";
+      } else if(c == '>') {
+        cstr = "&gt;";
+      } else {
+        cstr = c.toString();
+      }
+    } else {
+      cstr = "&#" + c.charCodeAt().toString() + ";";
+    }
+      result += cstr;
+  }
+}
 //    if(this.Select[0]>0 && this.Select[0]<(this.SheetWidth-1)) target=target.toString().replace(/[\|｜]/ig,'|<br>');
 //    if(target.match(/^[:：]$/)) return ':<br>';//波線
 //    if(target.match(/[-_─━~]{2,}?/)) return "<hr>";//
-return target;
+return result;
 
 };
 //
