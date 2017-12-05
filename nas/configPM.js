@@ -3,7 +3,11 @@
  * nas.system で利用する各管理情報の基礎データテーブル
  * この内容はDB側で保持してアプリケーションに送る これはスタンドアロン動作用のデフォルトのデータ群となる
  * DBとの通信が正常に初期化された後、DBから 受信したデータで上書きが行なわれる
- * 又はDBとの通信が確立できなかった場合に読み込まれるように調整される 
+ * 又はDBとの通信が確立できなかった場合に読み込まれるように調整される
+ 
+ これらのデータは、リポジトリ内部に設定として分散して配置され、必要に従って編集、更新が可能なように調整される
+ 
+ 設定書式は、パーサを共通化するために統一されるのが望ましい　2017 12 02
  */
 
 /**
@@ -15,6 +19,7 @@
  *  ステージ側から見るとそのステージの開始に最低限必要なアセット
  *  呼び出しステージ配列が空のアセットはストアにストックされるのみで、次のステージを開始しない
  *  assetName  は重複不可のindex
+アセットは、システムごとに定義してユーザによる編集（追加・削除・内容の変更）が可能
 
  クラスのコレクションはテンプレートとして機能
                         assetName           name            hasXPS      code    shortName   description     endNode     linkStages
@@ -50,6 +55,11 @@ nas.Pm.assets.addAsset("ALL"             ,["（全アセット）"    ,true  ,"_
  *nas.Pm.stages には、その作品で定義されたステージのリファレンスが格納される。
  *管理DBと連結される場合は、このオブジェクトとDB上のステージ定義テーブルが対照・連結される
  *ここでは、独立駆動のためのテーブルを定義している
+ 
+ステージを定義する際にステージにグループ・スタッフロール・個人ユーザを連結することができる
+明示的な連結のないステージは　＊（全ユーザ）に連結される。
+連結テーブルは別に設ける
+リンクのキーはステージID(stageName)
                         stageName             name                          code    shortName   description output
  */
 nas.Pm.stages.addStage("undefined"         ,["未定義"                    ,"(undef)" ,"(undefined)" ,"未定義ステージ 制作預りとして扱う。基本的にアセットストアへの編入を指す" ,"SCInfo"]);
@@ -96,7 +106,9 @@ nas.Pm.stages.addStage("Htrace"            ,["ペイント"                   ,"
 nas.Pm.stages.addStage("HproofPaint"       ,["セル検査"                   ,"H-pp"    ,"セル検" ,"セル時代の作業を記録するためのエントリ" ,"cell"]);
 nas.Pm.stages.addStage("HretouchCell"      ,["エアブラシ特効"             ,"H-fx"    ,"エアブラシ" ,"セル時代の作業を記録するためのエントリ" ,"cell"]);
 nas.Pm.stages.addStage("composite"         ,["コンポジット"               ,"COMP"    ,"撮影" ,"コンポジット工程をプロダクションに入れるべきか否かは結構悩む 制作工程上終端なので出力は無し 終了シンボルを作るか？" ,"ALL"]);
-nas.Pm.stages.addStage("preCompositCheck"   ,["撮出し検査"                 ,"PCC" ,"撮出し" ,"撮影前全検査(古い工程を記述するためのエントリ)" ,"ALL"]);
+nas.Pm.stages.addStage("preCompositCheck"   ,["撮出し検査"                 ,"PCCk" ,"撮出し" ,"撮影前全検査(古い工程を記述するためのエントリ)" ,"ALL"]);
+nas.Pm.stages.addStage("generalDirectorCheck"   ,["監督チェック"                 ,"GDCk" ,"監督チェック" ,"監督による作業検査" ,"ALL"]);
+nas.Pm.stages.addStage("directorCheck"   ,["演出チェック"                 ,"DcCk" ,"演出チェック" ,"担当演出による作業検査" ,"ALL"]);
 
 /**
  * ライン分類
@@ -124,7 +136,7 @@ nas.Pm.lines.addLine("colorDesign"    ,["色彩設計"        ,"色設計"  ,"co
 nas.Pm.lines.addLine("colorCoordiante",["色指定"          ,"指定"    ,"colorDesign"    ,"SCInfo" ,"__cc","色指定"]);
 nas.Pm.lines.addLine("composite"      ,["コンポジット"    ,"撮影"    ,"ALL"            ,"ALL"    ,"comp","撮影"]);
 nas.Pm.lines.addLine("ALL"            ,["(全素材)"        ,"全"      ,"ALL"            ,"ALL"    ,"_all","カット情報を持って一時的に集積されるライン"]);
-nas.Pm.lines.addLine("null"           ,["(未設定)"        ,"(未)"    ,"null"           ,"null"   ,"null","初期化前のオブジェクトに設定するダミーライン"]);
+nas.Pm.lines.addLine("null"           ,["(未設定)"        ,"(未)"    ,"NULL"           ,"NULL"   ,"null","初期化前のオブジェクトに設定するダミーライン"]);
 /*========================================================================*/
 
 /**
@@ -137,9 +149,14 @@ nas.Pm.lines.addLine("null"           ,["(未設定)"        ,"(未)"    ,"null"
  *   親オブジェクト    (nas.Pmは参照用マスターDB　他はリポジトリを置く 対応する　lines,stages,jobNames　を配下に持っているオブジェクト)
  *   ライン    (ライン識別名で)
  *   ラインごとのステージ標準並び (出現順に配列で名称を列記)
- */
-nas.Pm.pmTemplate.push(new nas.Pm.LineTemplate(nas.Pm,"本線",["レイアウト","原画","動画","色指定","トレス","色トレス","ペイント","セル特効","撮出し検査","撮影"]));
-nas.Pm.pmTemplate.push(new nas.Pm.LineTemplate(nas.Pm,"背景美術",["美術原図","背景","美術監督チェック","演出検査"]));
+ *
+nas.Pm.pmTemplate.members.push(new nas.Pm.LineTemplate(nas.Pm,"本線",["レイアウト","原画","動画","色指定","トレス","色トレス","ペイント","セル特効","撮出し検査","撮影"]));
+nas.Pm.pmTemplate.members.push(new nas.Pm.LineTemplate(nas.Pm,"背景美術",["原図整理","背景","美術検査"]));
+*/
+nas.Pm.pmTemplate.addTemplates([
+    ["本線",["レイアウト","原画","動画","色指定","トレス","色トレス","ペイント","セル特効","撮出し検査","撮影"]],
+    ["背景美術",["原図整理","背景","美術検査"]]
+    ])
 
 /**
  *  ジョブは、ステージごとに定義される
@@ -193,7 +210,7 @@ nas.Pm.pmTemplate.push(new nas.Pm.LineTemplate(nas.Pm,"背景美術",["美術原
 
     以下は、初期値
  
-nas.Pm.jobNames.addName([
+nas.Pm.jobNames.addNames([
 	["作業開始","*","init"],
 	["初期化","*","init"],
 	["作打済","*","init"],
@@ -215,7 +232,7 @@ nas.Pm.jobNames.addName([
 ]);
 
 下は英訳分だけどどうも日本式の役職の英語訳はワカラン　というか　ムチャじゃね？
-nas.Pm.jobNames.addName([
+nas.Pm.jobNames.addNames([
 	["startup","*","init"],
 	["init","*","init"],
 	["standby","*","init"],
@@ -268,7 +285,7 @@ ProductionLine/ProductionStage/ProductionJob
 各オブジェクトを初期化するのは実際にエントリを作成するタイミングで
 
 */
-nas.Pm.jobNames.addName([
+nas.Pm.jobNames.addNames([
     ["作業開始","*","init"],
     ["初期化","*","init"],
     ["作打済","*","init"],
@@ -309,7 +326,7 @@ nas.Pm.titles.addTitle("kachi"        ,["0001" ,"かちかちやま" ,"か"     
 nas.Pm.titles.addTitle("Momotaro"     ,["0002" ,"ももたろう"   ,"も"     ,"_MT" ,"24FPS" ,"19:21:00" ,"10in-HDTV" ,"HDTV-720p"]);
 
 /*
- * メディアDB
+　* メディアDB
 
  *mediaName ,[ID(リレーションID) ,animationField, baseResolution ,mediaType ,tcType ,pegForm ,pixelAspect ,description]
 mediaName               名称　識別名
@@ -333,3 +350,6 @@ nas.Pm.medias.addMedia("HDTV-1080p"         ,["" ,"HDTV2K" ,"1080dpi" ,"movie" ,
 nas.Pm.medias.addMedia("HDTV-2160p"         ,["" ,"HDTV4K" ,"2160dpi" ,"movie" ,"SMPTE" ,"invisible" ,"1" ,"4KHDTV"]);
 
 
+/**
+    productionStaff
+*/

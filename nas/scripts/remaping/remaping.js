@@ -5550,11 +5550,12 @@ console.log(SheetLooks);
     html5のオートコンプリートを利用するのでinput初期値はカラに
     UIを提示しない場合は、デフォルトの値またはクッキーで記録した最後のユーザが設定される
 */
-//  alert(xUI.currentUser);console.log(xUI.recentUsers);
+  alert(xUI.currentUser);console.log(xUI.recentUsers);
 if((NameCheck)||(myName=="")){
         var newName=null;
         var msg=welcomeMsg+"\n"+localize(nas.uiMsg.dmAskUserinfo)+
-        "\n\n ハンドル:メールアドレス / handle:uid@example.com ";
+        "\n\n ハンドル:メールアドレス / handle:email@example.com \n";
+        if(xUI.currentUser) msg += "\n current user / " + xUI.currentUser.toString(true);
         msg=[msg];
         msg.push("<hr><input id='confirmUID' type='text' autocomplete='on' list='recentUsers' size=48 value=''>");//初期値カラ
         console.log(myName)

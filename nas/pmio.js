@@ -20,7 +20,14 @@
  *  カット管理を行う場合は ALLアセットを、他の個別素材の場合は個別アセットを引数にして初期化のこと
 
 nas.Pm配下のDB通信オブジェクトは、アクセスポイントとして
-nas.pm プジェクトを置いてその配下に参照を配置する
+nas.pm オブジェクトを置いてその配下に参照を配置する
+配置されたオブジェクト群は基本的な情報テンプレートとして働く
+
+Object nas.Pm がアプリケーションとしてのテンプレートキャリア
+初期状態ではnas.pmを実アクセスポイントとして参照を置く
+nas.pm  は、リポジトリ切り替え毎に各リポジトリの.pmdに参照先が切り替えられる
+
+ 　
     nas.pm.lines
     nas.pm.stages
     nas.pm.jobNames
@@ -28,48 +35,143 @@ nas.pm プジェクトを置いてその配下に参照を配置する
     nas.pm.medias
     等々 その際にparent  経由で相互の参照を行うので初期化時のパラメータ注意    
     nas オブジェクト内では以下の相互関係を持つ
+
     nas.Pm.~    マスターとなるクラスデータ
     nas.Repository.pmd.~    サーバごとのカスタマイズデータ
     nas.pm.~    実アクセスポイント
     配下の各オブジェクトのparentは、それぞれの親をポイントして初期化
+
+    
  */
 
 nas.Pm = {};
 nas.pm = nas.Pm;
 /**
  * @method
- * オブジェクトメソッド
+ * クラスメソッド
  * @desc
- * コレクション内にkeywordに一致するプロパティを持っているメンバーがあればそれを返す 汎用
+ * ターゲットコレクション内にkeywordに一致するプロパティを持っているメンバーがあればコレクションメンバーのキー値を返す
+ * keyword がメンバーキーだった場合はそのまま返す
+ * 検索に失敗したらfalse
+ * オブジェクト本体が必要な場合は、Object.members[key]またはこの検索関数を間接的にコールする_getMemberメソッドを使用
+ * タイトル/エピソード/メディア/アセット/ライン/ステージ　共用
  * @param {string} keyword
  * @return {property}
  * memberProp 
- * 検索に失敗したらfalse
+ * キーワードは、各コレクションの共通プロパティで、検索対象となるもの
+    id          DBアクセス用のキー値（予約）
+    projectName 作品としてのタイトル　タイトルに所属する情報の場合に有効だが、検索キーとしてはタイトルコレクション以外では無効
+    name        コレクションメンバーの一般名称
+    shortName   コレクションメンバーの省略表記
+    fullName    コレクションメンバーの正式表記
+    code        コレクションメンバーの短縮アイテムコード
  *
  */
-nas.Pm._getTemplate = function(keyword){
-    if(this.members[keyword]) return this.members[keyword];
-    for (var prp in this.members){
-        if( (this.members[prp].id          ==keyword)||
-            (this.members[prp].name        ==keyword)||
-            (this.members[prp].projectName ==keyword)||
-            (this.members[prp].shortName   ==keyword)||
-            (this.members[prp].fullName    ==keyword)||
-            (this.members[prp].code        ==keyword) ) return this.members[prp];
+nas.Pm.searchProp = function(keyword,target){
+    if(target.members[keyword]) return keyword;
+    for (var prp in target.members){
+        if( (target.members[prp].id          ==keyword)||
+            (target.members[prp].name        ==keyword)||
+            (target.members[prp].projectName ==keyword)||
+            (target.members[prp].episodeName ==keyword)||
+            (target.members[prp].shortName   ==keyword)||
+            (target.members[prp].fullName    ==keyword)||
+            (target.members[prp].code        ==keyword) ) return prp;
     }
     return false;
 }
+/**
+    クラスメソッド　nas.Pm.searchPropを使ってキーを検索して対応するメンバーを返すオブジェクトメソッド
+    検索に失敗したケースではnullを戻す 
+*/
+nas.Pm._getMember = function(keyword){
+    if(this.members[keyword]) return this.members[keyword];
+    var prp = nas.Pm.searchProp(keyword,this);
+    if(prp){return this.members[prp]}else{return null}
+}
 
+/**
+    コレクションメンバーをテキストとしてダンプ出力するメソッド　汎用
+    対象コレクション
+ nas.Pm.WorkTitleCollection //nas.pm.titles.toString(true);
+ nas.Pm.MediaCollection     //nas.pm.medias.toString(true);
+ nas.Pm.AssetCollection     //nas.pm.assets.toString(true);
+ nas.Pm.StageCollection     //nas.pm.stages.toString(true);
+ nas.Pm.LineCollection      //nas.pm.lines.toString(true);
+ nsa.Pm.//nas.pm.jobNames.toString(true);　これは別わけ　コレクションの構造が異なる
+ nas.pm.//nas.pm.pmTemplate.toString(true);
+    
+    引数なし    メンバーあたり1要素のカンマ区切りテキスト
+    
+    "dump"      プレーンテキスト設定ファイル用のダンプストリーム
+                コレクションの　add  メソッドで処理可能なテキストデータの配列を
+                改行区切りで出力する
+                
+    "JSON"      JSONによるダンプ（可能な場合のみ　いらんかも　現在使ってない）
+*/
+/**
+    各コレクションメンバーは、toString　メソッドで自身のテキスト値を返す
+    引数の形式により内容を変化させる。
+    引数なし　代表値　例えばステージならばステージ名
+    "dump"  プレーンテキスト設定ファイル用のダンプストリームを1レコード
+    "JSON"  JSONによるダンプ（可能な場合) ほぼないので、やめておくか？
+*/
+nas.Pm._toString = function(form){
+    switch (form){
+    case "JSON":
+        try {
+            var result = JSON.stringify(this.members);//JSON.stringify不能なオブジェクトがあるので注意
+        }catch(er){var result = false;}
+        return result;
+        break;
+    case "dump":
+        var result="";
+        //コレクションのキャリアが配列ベースの場合
+        if(this.members instanceof Array){
+                result += '';
+            for (var ix =0 ; ix<this.members.length;ix++){
+                if (ix > 0) result +=",\n";
+                result += this.members[ix].toString('dump');
+            }
+            result += '\n';
+       }else{
+            for (var prp in this.members){
+                result += '"'+prp+'",';
+                result += this.members[prp].toString('dump');
+                result += '\n';
+            }
+        }
+        return result;
+        break;
+    default:
+        var result = new Array;
+        //コレクションのキャリアが配列ベースの場合
+        if(this.members instanceof Array){
+            for (var ix =0 ; ix<this.members.length;ix++){
+                result.push(this.members[ix].toString());
+            }
+       }else{
+            for (var prp in this.members){
+                result.push(this.members[prp].toString());
+            }
+        }
+        return result.toString();
+    }
+}
+//test 上記共用メソッドの関与するコレクションの出力確認
+// nas.pm.titles.toString(true)
+// nas.pm.medelias
 /** ProductionManagementNode
  * 制作管理オブジェクト
  * @constractor
  * 制作管理オブジェクトは、それぞれの管理単位（PmUnit=カット袋）についての制作管理部分を抽出したオブジェクトである。
  * BANK等の管理移管時データ独立性を持たせるために分離される
  * ラインごとに各PmUnitのプロパティとして登録され、ラインの開始条件及び終了条件の判定を含む
- * 
+ *  カット袋よりも上位となるエピソード・タイトルについては、このオブジェクトでなくnas.Pm.PmUnitをコレクションメンバーとする上層ノードオブジェクトを作る
+ ＞＞管理がノードベースでありアセット単位にならないため
  */
 nas.Pm.PmNode = function PmNode(targetAsset,myName){
-    this.target     = targetAsset;//管理単位のゴールを設定
+    this.target     = targetAsset;//管理単位ごとのゴールを設定
     this.name       = myName;
     this.jobID      ;
     this.jobs       = [];//空コレクションで初期化
@@ -82,14 +184,15 @@ nas.Pm.PmNode = function PmNode(targetAsset,myName){
 Pmuコンストラクタ
 
 PMU = new PmUnit(scObjects);
-
+カット袋に相当するワークキャリア（ワークトレーラー）
     SCiCオブジェクトを配列で与えて初期化する。
 複数オブジェクトを持つ場合は 兼用カットとして処理する
 クラスメソッドを使って後から編集可能
 カット番号等のムービー内での識別情報が複数入っている
 また、集合全体の進捗情報が格納されている
 作品情報・管理フラグ・カットコレクション・進捗情報・素材DBを持つ
-素材DBは、
+素材DBはPMUと関連付けられたxMapが保持する。
+管理情報をこのユニットが受け持つ
 */
 
 nas.Pm.PmUnit=function(mySCs){
@@ -104,13 +207,22 @@ nas.Pm.PmUnit=function(mySCs){
     this.inherit        =   mySCs;
     this.pmNode         =   new nas.PmNode();
 }
+/*
+制作管理単位の内容ダンプメソッド
+引数：　form 文字列可形式
+指定がない場合は　Sciオブジェクトのリストを"//（ダブルスラッシュ）"で区切って戻す
 
-nas.Pm.PmUnit.prototype.toString=function(){
-    return this.body.reverse().join("//");
+*/
+nas.Pm.PmUnit.prototype.toString=function(form){
+    if(! form){
+        return this.body.reverse().join("//");
+    }else{
+        return "yet coding";
+    }
 //toString()メソッドは、出力用に調整する
 //
 }
-//制作管理用 WorkTitelオブジェクト
+//制作管理用 WorkTitelオブジェクト　サーバ上のProductに対応する
 /*
 nas.Pm.newWorkTitle(タイトル識別子)
 オブジェクトメソッドで初期化する
@@ -118,6 +230,9 @@ nas.Pm.newWorkTitle(タイトル識別子)
 実運用上はDBとリンクして動作するように調整
 
 クラスメソッドとしての初期化機能は保留
+タイトル情報及びタイトルの制作母体となる組織(Organization)へのペアレントリンクを保持する
+親オブジェクト内のタイトルコレクションのメンバー
+タイトル内にOpusコレクションを持たせる
 */
 nas.Pm.WorkTitle = function(){
     this.id;   //DB接続用index
@@ -130,25 +245,48 @@ nas.Pm.WorkTitle = function(){
     this.inputMedia; //Object nas.AnimationField スタンダードフレーム
     this.outputMedia; //Object nas.AnimationField 編集スペック
     this.pmTemplate;    //作品内の標準工程テンプレート
+    this.staffTemplate; //作品のスタッフ一覧　スタッフコレクションオブジェクト
+    this.opuses = new nas.Pm.OpusCollection(this);    //Object nas.Pm.OpusCollection タイトル配下の話数コレクション
+    
 }
-nas.Pm.WorkTitle.prototype.toString = function(tragetProp){
-    if(typeof tragetProp == "undefined") tragetProp="projectName";
-    return this[tragetProp];
+/* タイトル文字列化
+引数
+    なし      メインタイトルフルネームで返す
+    "dump"  
+*/
+nas.Pm.WorkTitle.prototype.toString = function(form){
+    if(form == 'dump'){
+        return JSON.stringify([
+            this.id,
+            this.fullName,
+            this.shortName,
+            this.code,
+            this.framerate.toString(true),
+            nas.Frm2FCT(this.length,2),
+            this.inputMedia,
+            this.outputMedia
+        ]);
+    }
+    return this.projectName;
 }
 nas.Pm.WorkTitle.prototype.valueOf=function(){return this.id;}
 /**
        ワークタイトルコレクションオブジェクト
+       一般に組織の配下に入るが、システム配下のリセント情報としても利用される
 */
 nas.Pm.WorkTitleCollection = function(myParent){
     this.parent  = myParent;
     this.members = {};
 }
-nas.Pm.WorkTitleCollection.prototype.entry = nas.Pm._getTemplate;
+nas.Pm.WorkTitleCollection.prototype.entry = nas.Pm._getMember;
 
-nas.Pm.WorkTitleCollection.prototype.toString = function(keyword){
+nas.Pm.WorkTitleCollection.prototype.toString = nas.Pm._toString;
+/*
+function(keyword){
     if(keyword){  return this.entry(keyword)};
     return JSON.stringify(this.members);
 }
+*/
 //タイトル登録メソッド
 nas.Pm.WorkTitleCollection.prototype.addTitle = function(titleName,propList){
     this.members[titleName]             = new nas.Pm.WorkTitle();
@@ -163,8 +301,79 @@ nas.Pm.WorkTitleCollection.prototype.addTitle = function(titleName,propList){
     this.members[titleName].outputMedia = propList[7];
 }
 
-
+//テンプレート用コレクション
+/*
+    UI上で参照されるコレクション
+    使用したタイトルを記録してテンプレートとして利用
+    recentTitles
+    プロダクションオブジェクトの配下のコレクションは別に設定される
+*/
 nas.Pm.titles = new nas.Pm.WorkTitleCollection(nas.Pm);
+
+//制作管理用 Opusオブジェクト　サーバ上のEpisodeに対応する
+/*
+ *nas.Pm.newOpus(タイトル識別子)
+ * // nas.Pm.newOpus(識別ID)
+ *nas.Pm.newOpus(管理話数名,タイトル)
+ *オブジェクトメソッドで初期化する
+ *戻り値は管理単位情報オブジェクト
+ *実運用上はDBとリンクして動作するように調整
+ *
+ *クラスメソッドとしての初期化機能は保留
+ 制作話数(Opus/Episode)が所属するタイトル(Title/Product)へのリンクを持つ
+ 
+*/
+nas.Pm.Opus = function Opus(myID,myOpus,mySubtitle,myTitle){
+    this.id         = myID          ;//DB接続用index
+    this.name       = myOpus        ;//表示名 話数／制作番号等
+    this.subTitle   = mySubtitle    ;//サブタイトル文字列
+    this.workTitle  = myTitle       ;//Object nas.Pm.WorkTitle=parentTitleNode
+    this.valueOf    = function(){return this.id};
+    this.pmunits ;//カット袋コレクション
+}
+/**
+toStringメソッド　引数がなければ識別子用の文字列を返す
+引数を与えると設定ファイル形式のJSONを返す
+*/
+nas.Pm.Opus.prototype.toString   = function(form){
+    if(form == 'dump'){
+        return JSON.stringify([
+            this.episodeName
+        ])
+    }
+    return this.name+(this.subTitle)?"["+this.subTitle+"]":"";
+};
+
+nas.Pm.newOpus = function(){
+    
+}
+/**
+    各話（エピソード）コレクションオブジェクト　OpusCorrection
+    一般にタイトルの配下に入るが、システム配下でキャッシュとしても利用
+*/
+nas.Pm.OpusCollection = function(myParent){
+    this.parent  = myParent;//parentTitle
+    this.members = {};
+}
+nas.Pm.OpusCollection.prototype.entry = nas.Pm._getMember;
+
+nas.Pm.OpusCollection.prototype.toString = function(keyword){
+    if(keyword){  return this.entry(keyword)};
+    return JSON.stringify(this.members);
+}
+
+//タイトル登録メソッド
+//例　addOpus("001",["0s12376","ep001",""])
+nas.Pm.OpusCollection.prototype.addOpus = function(episodeName,propList){
+    this.members[titleName].episodeName = episodeName;
+    this.members[titleName].id          = propList[0];
+    this.members[titleName].name    = propList[1];
+    this.members[titleName].subTitle   = propList[2];
+    this.members[titleName].pmunits   = new nas.PMUCollection();
+}
+
+
+
 //メディアDB
 /*
 メディアDBは、入出力のメディアスペックを記述するための複合オブジェクト
@@ -172,8 +381,8 @@ MAP内部ではワークタイトルに付属する情報として処理
 */
 nas.Pm.ProductionMedia = function(mediaName,animationField,frameRate){
     this.id             ;
-    this.animationField = new nas.AnimationField();
-    this.mediaName      = this.animationField.name;
+    this.animationField = new nas.AnimationField();//
+    this.mediaName      = this.animationField.name;//
     this.baseResolution = new nas.UnitResolution();//
     this.type           ;//mediaType drawing/video
     this.baseWidth      = this.animationField.baseWidth;
@@ -185,51 +394,48 @@ nas.Pm.ProductionMedia = function(mediaName,animationField,frameRate){
     this.pixelAspect    ;//float
     this.description    ;
 }
+
+nas.Pm.ProductionMedia.prototype.toString = function(form){
+    if(form == 'dump'){
+        return JSON.stringify([
+        this.id,
+        this.animationField,
+        this.baseResolution,
+        this.mediaType,
+        this.tcType,
+        this.pegForm,
+        this.pixelAspect,
+        this.description
+        ]);
+    }
+    return this.mediaName;
+}
 //
 nas.Pm.MediaCollection= function(myParent){
     this.parent  = myParent;
     this.members = {};
 }
-nas.Pm.MediaCollection.prototype.entry = nas.Pm._getTemplate
+nas.Pm.MediaCollection.prototype.entry = nas.Pm._getMember;
 
-nas.Pm.MediaCollection.prototype.toString = function(){
-    return JSON.stringify(this.members);
-}
+nas.Pm.MediaCollection.prototype.toString = nas.Pm._toString;
 
 nas.Pm.MediaCollection.prototype.addMedia = function(mediaName,propList){
+    
     this.members[mediaName]                 = new nas.Pm.ProductionMedia();
     this.members[mediaName].mediaName       = mediaName;
     this.members[mediaName].id              = propList[0];
-    this.members[mediaName].animationField = propList[1];
-    this.members[mediaName].baseResolution = propList[2];
+    this.members[mediaName].animationField  = propList[1];//現在は文字列のまま
+    // 本日は仕様変更が主眼なのでこのまま保留　12/04
+    this.members[mediaName].baseResolution  = propList[2];
     this.members[mediaName].mediaType       = propList[3];
-    this.members[mediaName].tcType          = new nas.Framerate(propList[4]);
-    this.members[mediaName].pegForm         = nas.FCT2Frm(propList[5]);
+    this.members[mediaName].tcType          = propList[4];//nas.Framerate Objectする場合は nas.newFramerate(this.tcType)
+    this.members[mediaName].pegForm         = propList[5];
     this.members[mediaName].pixelAspect     = propList[6];
     this.members[mediaName].description     = propList[7];
 }
 
 nas.Pm.medias = new nas.Pm.MediaCollection(nas.Pm);
 
-//制作管理用 Opusオブジェクト
-/*
- *nas.Pm.newOpus(タイトル識別子)
- * // nas.Pm.newOpus(識別ID)
- *nas.Pm.newOpus(管理話数名,タイトル)
- *オブジェクトメソッドで初期化する
- *戻り値は管理単位情報オブジェクト
- *実運用上はDBとリンクして動作するように調整
- *
- *クラスメソッドとしての初期化機能は保留
-*/
-nas.Pm.Opus = function Opus(myID,myOpus,mySubtitle,myTitle){
-    this.id         = myID          ;//DB接続用index
-    this.name       = myOpus        ;//表示名 話数／制作番号等
-    this.subTitle   = mySubtitle    ;//サブタイトル文字列
-    this.workTitle  = myTitle       ;//Object nas.WorkTitle
-    this.toString   = function(){return this.name} 
-    this.valueOf    = function(){return this.id} 
-}
 /*制作管理用 Assetオブジェクト
  *アセットベースの管理を行う
  *このシステム上のアセットは、通常XPSを介して時間／空間的に配置された再利用可能データ群を指す
@@ -256,7 +462,12 @@ nas.Pm.Asset = function(){
     this.callStage      ;
 }
 
-nas.Pm.Asset.prototype.toString = function(){return this.name}
+nas.Pm.Asset.prototype.toString = function(form){
+    if (form == 'dump') {
+        return JSON.stringify([this.name,this.hasXPS,this.code,this.shortName,this.description,this.endNode,this.callStage]);
+    }
+    return nas.Pm.searchProp(this.name,nas.pm.assets);
+}
 /**
     アセットコレクション
 */
@@ -264,11 +475,9 @@ nas.Pm.AssetCollection = function(myParent){
     this.parent  = myParent;
     this.members = {};
 }
-nas.Pm.AssetCollection.prototype.entry = nas.Pm._getTemplate;
+nas.Pm.AssetCollection.prototype.entry = nas.Pm._getMember;
 
-nas.Pm.AssetCollection.prototype.toString = function(){
-    return JSON.stringify(this.members);
-};
+nas.Pm.AssetCollection.prototype.toString = nas.Pm._toString;
 
 //アセット登録メソッド
 nas.Pm.AssetCollection.prototype.addAsset = function(assetName,propList){
@@ -313,21 +522,53 @@ stageNames[stage]=[line1,line2];
 jobNames[job]=[stage1,stage2]
 line null,ALL,trunk,backgroundArt,
  */
-//ラインデータコレクション配列
+//ラインテンプレートコレクション配列
 nas.Pm.PmTemplateCollection   = function(myParent){
-        this.parent = myParent;
+        this.parent  = myParent;
+        this.members = [];
 };
-nas.Pm.PmTemplateCollection.prototype = Array.prototype;
+nas.Pm.PmTemplateCollection.prototype.addTemplates = function(templates){
+        if(! templates[0] instanceof Array){templates = [templates];}
+    for (var eid = 0;eid<templates.length ; eid ++){
+        //引数: トレーラーオブジェクトの参照,ライン識別名,ステージコレクションの内容配列
+        this.members[eid] = new nas.Pm.LineTemplate(this,templates[eid][0],templates[eid][1]);
+    }
+};
+nas.Pm.PmTemplateCollection.prototype.toString = nas.Pm._toString;
+
+// nas.Pm.PmTemplateCollection.prototype = Array.prototype;
 
 /**
-    ラインテンプレート　ステージデータコレクション
+    ラインテンプレート　ステージデータコレクションを持つ
+引数
+lineName    ライン識別名称
 
 */
 nas.Pm.LineTemplate = function(myParent,lineName,myStages){
     if (!(myStages instanceof Array)) myStages = [myStages];
-    this.parent = myParent
-    this.line   = this.parent.lines.getLine(lineName);
-    this.stages = myStages;
+    this.parent = myParent;//親参照は不要？
+//    this.lineName   = lineName;
+    this.line   = this.parent.parent.lines.getLine(lineName);
+//    this.stages = myStages;
+    this.stages = new nas.Pm.StageCollection(this);
+    for (var ix=0;ix< myStages.length;ix++){
+//        this.stages.addStage(myStages[ix],this.line);
+        var stageKey= nas.Pm.searchProp(myStages[ix],this.parent.parent.stages)
+        this.stages.addStage(stageKey,this.parent.parent.stages.members[stageKey]);
+    }
+};
+/*
+toString(true)　でテキスト設定形式で書き出す
+
+*/
+nas.Pm.LineTemplate.prototype.toString = function(form){
+    if(form == 'dump'){
+      return JSON.stringify([
+        this.line.toString(),
+        this.stages.toString().split(',')
+      ]);
+    }
+    return this.line.toString();
 };
 
 nas.Pm.pmTemplate = new nas.Pm.PmTemplateCollection(nas.Pm);
@@ -398,23 +639,33 @@ nas.Pm.ProductionJob.prototype.toString = function(){
     JOB名称ストア
     クラス内でDBとして働くコレクション
     このオブジェクト（配列）がDBと通信を行う
+    引数:   jobName,targetStage,jobType
+            ジョブ名,所属ステージ名,ジョブタイプ
+    配列要素は引数の配列である必要あり。
+    実際のジョブは定義されるものではなく、名称をその場で決めて開始することが可能
+    これらの設定は、
  */
-nas.Pm.JobTemplate = function(myName,myStage,type){
-    this.name   = myName ;
-    this.stage  = myStage;
-    this.type   = type   ;
+nas.Pm.JobTemplate = function(jobName,targetStage,jobType){
+    this.name   = jobName    ;
+    this.stage  = targetStage;
+    this.type   = jobType    ;
 };
-nas.Pm.JobTemplate.prototype.toString = function(myParent){
-    return this.name;
+nas.Pm.JobTemplate.prototype.toString = function(form){
+    if(form == 'dump'){
+        return JSON.stringify([this.name,this.stage,this.type]);
+    }
+        return this.name;
 };
 nas.Pm.JobTemplateCollection = function(myParent){
     this.parent  = myParent ;
     this.members = [];
 }
 /**
-    セットアップ
+    ジョブテンプレートコレクション
+    一括登録メソッド
+    
 */
-nas.Pm.JobTemplateCollection.prototype.addName = function(names){
+nas.Pm.JobTemplateCollection.prototype.addNames = function(names){
     if(! names[0] instanceof Array){names = [names];}
     for (var eid = 0;eid<names.length ; eid ++){
         this.members[eid] = new nas.Pm.JobTemplate(names[eid][0],names[eid][1],names[eid][2]);
@@ -444,7 +695,28 @@ nas.Pm.JobTemplateCollection.prototype.getTemplate = function(stage,type){
     }
     return result;
 }
-
+nas.Pm.JobTemplateCollection.prototype.toString = nas.Pm._toString;
+/*
+function(form){
+    if(form == 'JSON'){
+        return JSON.stringify(this.members);//JSON.stringify不能なオブジェクトがあるので注意
+    }else if(form == 'dump'){
+        var result="[";
+        for (var ix =0 ; ix<this.members.length;ix++){
+            result += this.members[ix].toString('dump');
+            result += ((ix+1)<this.members.length)? ",\n":"]\n";
+        }
+        return result;
+    }else{
+        var result="[";
+        for (var ix =0 ; ix<this.members.length;ix++){
+            result += this.members[ix].toString(true);
+            result += ((ix+1)<this.members.length)? ",\n":"]\n";
+        }
+        return result;
+    }
+}
+*/
 nas.Pm.jobNames = new nas.Pm.JobTemplateCollection(nas.Pm);
 
 
@@ -457,18 +729,21 @@ nas.Pm.jobNames = new nas.Pm.JobTemplateCollection(nas.Pm);
  * shortName String 画面表示用略称 ８文字程度までを推奨 指定のない場合はnameを転用
  * description String ステージの説明 ユーザのために必用
  * output Asset ステージの出力アセット
+ * staffs Object スタッフリスト（リスト）
+ * ステージは必ずステージコレクションを介してラインに所属するので、親ラインの参照はコレクション側のline属性で保持する。
+ * ステージ内では、コレクションを parent プロパティで示す　従って親のラインス参照するパスは this.parent.line
 */
-nas.Pm.ProductionStage=function(myLine){
-    this.line=myLine;
-    this.name;
+nas.Pm.ProductionStage=function(myName,myParent){
+    this.parent=myParent;
+    this.name=myName;
     this.code;
     this.shortName;
     this.description;
     this.output;
 }
-nas.Pm.ProductionStage.prototype.getPath=function(){return [this.name,this.line.getPath()].join(".")}
+nas.Pm.ProductionStage.prototype.getPath=function(){return [this.name,this.parent.line.getPath()].join(".")}
 nas.Pm.newStage=function(myStage,myLine){
-    var newStage= nas.Pm.stages.getStage(myStage);
+    var newStage= nas.Pm.stages.getStage(myStage);//参照をとっているが、これは複製？
     if(newStage){
         newStage.line=myLine;
         return newStage;
@@ -479,32 +754,51 @@ nas.Pm.newStage=function(myStage,myLine){
         return newSatge;
   　}
 }
-nas.Pm.ProductionStage.prototype.toString=function(){return this.name};
+nas.Pm.ProductionStage.prototype.toString=function(form){
+    if(form == 'dump'){
+        return JSON.stringify([
+            this.name,
+            this.code,
+            this.shortName,
+            this.description,
+            this.output
+        ]);
+    }
+    return this.name;
+};
 /*    ステージコレクション
  *
  *クラス内でDBとして働くオブジェクト
  *このオブジェクトがDBと通信する
+ ステージにテンプレートとしてスタッフコレクションを持たせる拡張を行う
 */
 nas.Pm.StageCollection = function(myParent){
     this.parent  = myParent;
     this.members = {};
 }
 
-nas.Pm.StageCollection.prototype.toString = function(){
-    return JSON.stringify(this.members);
-};
-//ステージコレクション追加メソッド
+nas.Pm.StageCollection.prototype.toString = nas.Pm._toString;
 
-nas.Pm.StageCollection.prototype.addStage=function(stageName,propList){
-    this.members[stageName]=new nas.Pm.ProductionStage();
-    this.members[stageName].name=propList[0];
-    this.members[stageName].code=propList[1];
-    this.members[stageName].shortName=propList[2];
-    this.members[stageName].description=propList[3];
-    this.members[stageName].output=propList[4];
+//ステージコレクション追加メソッド
+/*
+引数：
+stageName
+myStage ステージオブジェクト　または　プロパティリスト配列
+*/
+nas.Pm.StageCollection.prototype.addStage=function(stageName,myStage){
+    if(myStage instanceof nas.Pm.ProductionStage){
+        this.members[stageName]= myStage;
+    }else if(myStage instanceof Array){
+    this.members[stageName] = new nas.Pm.ProductionStage(myStage[0],null);
+//    this.members[stageName].name=myStage[0];
+    this.members[stageName].code        = myStage[1];
+    this.members[stageName].shortName   = myStage[2];
+    this.members[stageName].description = myStage[3];
+    this.members[stageName].output      = myStage[4];
+    }
 }
 
-nas.Pm.StageCollection.prototype.getStage = nas.Pm._getTemplate;
+nas.Pm.StageCollection.prototype.getStage = nas.Pm._getMember;
 /**
     次のステージの候補を抽出する関数
 引数:
@@ -554,7 +848,19 @@ nas.Pm.ProductionLine=function(){
 
 nas.Pm.ProductionLine.prototype.getPath = function(){return this.name;}
 
-nas.Pm.ProductionLine.prototype.toString = function(){return this.name};
+nas.Pm.ProductionLine.prototype.toString = function(form){
+    if(form == 'dump'){
+        return JSON.stringify([
+            this.name,
+            this.shortName,
+            (this.outputAsset)?this.outputAsset.toString():this.outputAsset,
+            (this.initAsset)?this.initAsset.toString():this.initAsset,
+            this.code,
+            this.description
+        ])
+    }
+    return this.name
+};
 /*    ラインストア
 
 クラス内でDBとして働くコレクションオブジェクト
@@ -565,15 +871,14 @@ nas.Pm.LineCollection = function(myParent){
     this.members = {};
 }
 
-nas.Pm.LineCollection.prototype.toString = function(){
-    return JSON.stringify(this.members);
-}
+nas.Pm.LineCollection.prototype.toString = nas.Pm._toString;
+//function(){    return JSON.stringify(this.members);}
 
 /**
 ラインテンプレートの中から指定された名前と一致するオブジェクトを戻す
 lineNameと一致していればそのまま、一致するものがない場合はname/shortName/codeを検索してその順で最初に一致したものを戻す
 */
-nas.Pm.LineCollection.prototype.getLine = nas.Pm._getTemplate;
+nas.Pm.LineCollection.prototype.getLine = nas.Pm._getMember;
 
 /*
     ライン編集メソッド
@@ -938,3 +1243,119 @@ nas.separateTitleString = function(myName){
 // 1+12 (trin:0+00)(trout:0+00)
 // test
 // var A=new SC("c012","s")
+/** nas.Pm.Orgnization
+    システム内で参照される組織の
+*/
+/** nas.Pm.Staff
+作業許可/拒否の判定基準となるスタッフオブジェクト
+スタッフを収集したスタッフコレクションを管理ノード毎に保持することができる
+コレクションのメンバー数が０の場合、コレクションは上位ディレクトリの内容を返す
+.alias   String  //スタッフユーザの表示名称　ユーザ指定可能　デフォルトは""　データがある場合は、優先的にユーザハンドルと置換する
+.type   String  //スタッフエントリのタイプ識別名
+.user   Object nas.UserInfo or null//
+.duty   Object        //
+.section  Object      //
+.access 　bool  //アクセス権
+*/
+nas.Pm.Staff = function(type,user,duty,section,access){
+    this.type    = (type)? type:"";         //String  タイプ識別名　section/duty/user
+    this.user    = (user)? user:null;       //Object nas.UserInfo or null
+    this.duty    = (duty)? duty:null;       //StringID of duty
+    this.section = (section)? section:null; //StringID of section
+    this.access  = (typeof access == "undefined")? true:(access); //bool  アクセス権
+    this.alias    = "";  //String  表示名称　ユーザ指定可能　デフォルトは""
+}
+/*
+     文字列化して返す
+     fullオプションで設定テキストを戻す
+     設定文字列はtypeにより異なる
+     sction
+     \t部門名
+     duty
+     \t\t役職名
+     user
+     \t\t\tハンドル:e-メール
+    第一フィールドに何らかのデータのあるレコードは拒否エントリになる
+*/
+nas.Pm.Staff.prototype.toString = function(full){
+    if (full){
+        var result=(this.access)?"\t":"FALSE\t";
+        switch(this.type){
+case "section":
+        result += this.section;
+break;
+case "duty":
+        result += "\t";
+        result += this.duty;
+break;
+case "user":
+        if(this.alias.length){this.user.handle=this.alias}
+        result += "\t";
+        result += this.duty;
+        result += "\t";
+        result += this.user.toString(true);
+break;
+        }
+        return result;
+    }else{
+    if(! this.type){
+        if(this.user){
+            this.type = "user";
+        }else{
+            if(this.duty){
+                this.type = "duty";
+            }else if(this.section){
+                this.type = "section"; 
+            }
+        }
+    }
+    switch(this.type){
+        case "duty"   :
+            return "["+String(this.duty)+"]";
+        break;
+        case "section":
+            return "*"+String(this.section)+"*"  ;
+        break;
+        case "user"   :
+            if(this.alias.length){this.user.handle=this.alias}
+            return String(this.user.handle);
+        break;
+        default:
+            return false;
+    }
+
+    }
+}
+//test　初期化引数　type,user,duty,section,access
+/*
+ var A = new nas.Pm.Staff("section","","","演出");
+ var B = new nas.Pm.Staff("duty","","監督","演出");
+ var C = new nas.Pm.Staff("duty","","演出","演出");
+ var D = new nas.Pm.Staff("user",new nas.UserInfo("kiyo:kiyo@nekomataya.info"),"作画監督","作画部");
+ D.alias="ねこまたや";
+console.log(A);
+console.log(B);
+console.log(C);
+console.log(D);
+*/
+/*
+    スタッフ初期化文字列をパースするクラスメソッド
+    形式は
+    組織,役職,ユーザID,不許可フラグ
+*/
+nas.parseStaff = function(staffString){
+    var myStaff = new nas.Pm.Staff(staffString)
+    return myStaff;
+}
+/** nas.Pm.StaffCollection
+配列ベース　スタッフコレクションオブジェクト
+エントリーノード毎に保持されるスタッフを集積したオブジェクト
+問い合わせに対して権利の解決を行う
+ペアレント属性には、自身が所属するノードが格納される
+ノードのペアレント属性に親子関係にあるノードがあるので、継承及び参照の解決は当該の情報パスをたどる。
+.parent ノード　親ノードのstaff
+.body   トレーラー配列？
+.add() 戻り値　ID
+.remove()
+*/
+nas.Pm.StaffCollection
