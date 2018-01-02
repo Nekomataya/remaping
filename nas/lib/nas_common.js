@@ -335,11 +335,12 @@ var currentUser = new nas.UnserInfo("user@example.co.jp")
     displayName:uid@domain
 例 ねこまたや:user@example.com
 
-初期化引数に':'が含まれない場合は、メールアドレスか否かを判定して
+初期化引数に':'が含まれない場合は、引数がメールアドレスか否かを判定して
 メールアドレスなら uid部をハンドルとして使用
 それ以外の場合は、全体をハンドルにしてメールアドレスをnullで初期化する
-一致比較は、メールアドレスで行う　null,空白は いずれの場合も一致なし
-空白で初期化したデフォルトの値はシステムでで利用しないように注意する
+メールアドレス整合性のチェックは特になし
+一致比較は、メールアドレス側で行う　null,空白は いずれの場合も一致なし
+空白で初期化したデフォルトの値はシステムで利用しないように注意する
  */
 nas.UserInfo = function UserInfo(nameDescription){
     if ((typeof nameDescription == 'undefined')||(! nameDescription)){nameDescription = ':'}
@@ -446,6 +447,7 @@ B = new nas.UserInfo("B123@4567");
 C = new nas.UserInfo("C123");
 D = new nas.UserInfo("D123:123@23456");
 E=new nas.UserInfoCollection([A,B,C,"kiyo@nekomataya.info"]);
+
 E.add(D);
 console.log(E.add(D));
 console.log(E.add(new nas.UserInfo()));

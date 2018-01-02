@@ -20,32 +20,90 @@
  *  カット管理を行う場合は ALLアセットを、他の個別素材の場合は個別アセットを引数にして初期化のこと
 
 nas.Pm配下のDB通信オブジェクトは、アクセスポイントとして
-nas.pm オブジェクトを置いてその配下に参照を配置する
+nas.pmdb オブジェクトを置いてその配下に参照を配置する
 配置されたオブジェクト群は基本的な情報テンプレートとして働く
 
 Object nas.Pm がアプリケーションとしてのテンプレートキャリア
-初期状態ではnas.pmを実アクセスポイントとして参照を置く
-nas.pm  は、リポジトリ切り替え毎に各リポジトリの.pmdに参照先が切り替えられる
+初期状態ではnas.pmdbを実アクセスポイントとして参照を置く
+nas.pmdb  は、リポジトリ切り替え毎に各リポジトリの.pmdbに参照先が切り替えられる？
 
- 　
-    nas.pm.lines
-    nas.pm.stages
-    nas.pm.jobNames
-    nas.pm.titles
-    nas.pm.medias
+    nas.pmdb.users
+    nas.pmdb.staff
+
+    nas.pmdb.lines
+    nas.pmdb.stages
+    nas.pmdb.jobNames
+    nas.pmdb.workTitles
+        .workTitles[titleIndex].episodes
+            .episodes[episodeIndex].works ?
+    nas.pmdb.medias
     等々 その際にparent  経由で相互の参照を行うので初期化時のパラメータ注意    
     nas オブジェクト内では以下の相互関係を持つ
 
     nas.Pm.~    マスターとなるクラスデータ
     nas.Repository.pmd.~    サーバごとのカスタマイズデータ
-    nas.pm.~    実アクセスポイント
+    nas.pmdb.~    実アクセスポイント
     配下の各オブジェクトのparentは、それぞれの親をポイントして初期化
 
-    
+    Pmモジュールに設定パーサを実装
+    設定パーサは設定ストリームを入力として、リジョン毎に分離
+    各リジョンを適切のパーサに振り分けて、自身のコレクションDBを再初期化する
+    各パーサは、追加処理を行うが、設定パーサ側でデータのクリアを行い、再初期化動作とする
+    nas.Pm.parseConfig(ストリーム)
+    nas.pmdb.users
+    nas.pmdb.staff
+
+    nas.pmdb.assets
+    nas.pmdb.medias
+
+    nas.pmdb.lines
+    nas.pmdb.stages
+    nas.pmdb.jobNames
+
+
+// workTitles はPmクラスのみに存在するキャッシュオブジェクトなので要注意
+    nas.Pm.workTitles
+
+Object PmDomain
+    nas.Pm.WorkTitle.pmd
+    　・
+    　・
+
+pmdbオブジェクトは親オブジェクトへの参照 pmdb.parent を持つ
+このプロパティは、pmdbが持つ情報の親ノードへの参照
+親ノードは以下のオブジェクトに対応する
+
+organization   = Repository.pmdb                 //pmdb.parent = Repository      ; Repository.parent='.';
+product(title) = products/product.pmdb           //product.pmdb.parent = product ; product.parent = Repository;
+episode(opus)  = product/episodes/episode.pmdb   //episode.pmdb.parent = episode ; episode.parent = product;
+cut(work)      = episode/cuts/cut.pmdb           //cut.pmdb.parent = cut         ; cut.parent = episode
+各ノードはツリー内を相互にアクセスするための .parentプロパティをもつ
+pmdbはノードに対する.parent参照を持つ
+pmdb からツリー上位のpmdbにアクセスするためには　this.parent.parent.pmdbをアクセスする必要がある　OK？
  */
 
 nas.Pm = {};
-nas.pm = nas.Pm;
+nas.Pm.users= new nas.UserInfoCollection();
+nas.pmdb = nas.Pm;
+/*
+    PmDomain オブジェクトは、制作管理上の基礎データを保持するキャリアオブジェクト
+    制作管理ディレクトリノード毎に保持される。
+    基礎データを必要とするプログラムに基礎データをサービスする
+    基本データが未登録の場合は親オブジェクトの同データを参照してサービスを行う
+    
+*/
+nas.Pm.PmDomain=new function(myParent){
+    this.parent=myParent;
+    this.users;     //
+    this.staff;     //
+    this.lines;     //
+    this.stages;    //
+    this.jobNames;  //
+    
+    this.medias;
+
+}
+
 /**
  * @method
  * クラスメソッド
@@ -93,13 +151,13 @@ nas.Pm._getMember = function(keyword){
 /**
     コレクションメンバーをテキストとしてダンプ出力するメソッド　汎用
     対象コレクション
- nas.Pm.WorkTitleCollection //nas.pm.titles.toString(true);
- nas.Pm.MediaCollection     //nas.pm.medias.toString(true);
- nas.Pm.AssetCollection     //nas.pm.assets.toString(true);
- nas.Pm.StageCollection     //nas.pm.stages.toString(true);
- nas.Pm.LineCollection      //nas.pm.lines.toString(true);
- nsa.Pm.//nas.pm.jobNames.toString(true);　これは別わけ　コレクションの構造が異なる
- nas.pm.//nas.pm.pmTemplate.toString(true);
+ nas.Pm.WorkTitleCollection //nas.pmdb.workTitles.toString(true);
+ nas.Pm.MediaCollection     //nas.pmdb.medias.toString(true);
+ nas.Pm.AssetCollection     //nas.pmdb.assets.toString(true);
+ nas.Pm.StageCollection     //nas.pmdb.stages.toString(true);
+ nas.Pm.LineCollection      //nas.pmdb.lines.toString(true);
+ nsa.Pm.//nas.pmdb.jobNames.toString(true);　これは別わけ　コレクションの構造が異なる
+ nas.pmdb.//nas.pmdb.pmTemplate.toString(true);
     
     引数なし    メンバーあたり1要素のカンマ区切りテキスト
     
@@ -128,7 +186,6 @@ nas.Pm._toString = function(form){
         var result="";
         //コレクションのキャリアが配列ベースの場合
         if(this.members instanceof Array){
-                result += '';
             for (var ix =0 ; ix<this.members.length;ix++){
                 if (ix > 0) result +=",\n";
                 result += this.members[ix].toString('dump');
@@ -159,8 +216,8 @@ nas.Pm._toString = function(form){
     }
 }
 //test 上記共用メソッドの関与するコレクションの出力確認
-// nas.pm.titles.toString(true)
-// nas.pm.medelias
+// nas.pmdb.workTitles.toString(true)
+// nas.pmdb.medelias
 /** ProductionManagementNode
  * 制作管理オブジェクト
  * @constractor
@@ -235,19 +292,25 @@ nas.Pm.newWorkTitle(タイトル識別子)
 タイトル内にOpusコレクションを持たせる
 */
 nas.Pm.WorkTitle = function(){
-    this.id;   //DB接続用index
-    this.projectName; //タイトル
-    this.fullName;  //完全な文字列
+    this.id;   //DB接続用index - UATサーバの場合はtoken　tokenはidへの参照
+    this.projectName; //タイトル - UATサーバの場合はname name はprojectNameへの参照
+    this.fullName;  //完全なタイトル文字列（なるべく公式に）
     this.shortName;  //表示用短縮名
     this.code;   //ファイル名使用の略号2~3文字アルファベット限定
     this.framerate;  //Object nas.Framerate フレームレート
     this.length;  //String 納品定尺フレーム数 または nasTC
     this.inputMedia; //Object nas.AnimationField スタンダードフレーム
     this.outputMedia; //Object nas.AnimationField 編集スペック
+
     this.pmTemplate;    //作品内の標準工程テンプレート
-    this.staffTemplate; //作品のスタッフ一覧　スタッフコレクションオブジェクト
+    this.staff; //作品のスタッフ一覧　スタッフコレクションオブジェクト
     this.opuses = new nas.Pm.OpusCollection(this);    //Object nas.Pm.OpusCollection タイトル配下の話数コレクション
-    
+//UATサーバのためのプロパティ
+    this.token = this.id;
+    this.name = this.projectName;
+    this.updated_at;
+    this.created_at;  
+    this.description;//タイトル識別子として使用？
 }
 /* タイトル文字列化
 引数
@@ -308,7 +371,7 @@ nas.Pm.WorkTitleCollection.prototype.addTitle = function(titleName,propList){
     recentTitles
     プロダクションオブジェクトの配下のコレクションは別に設定される
 */
-nas.Pm.titles = new nas.Pm.WorkTitleCollection(nas.Pm);
+nas.Pm.workTitles = new nas.Pm.WorkTitleCollection(nas.Pm);
 
 //制作管理用 Opusオブジェクト　サーバ上のEpisodeに対応する
 /*
@@ -466,7 +529,7 @@ nas.Pm.Asset.prototype.toString = function(form){
     if (form == 'dump') {
         return JSON.stringify([this.name,this.hasXPS,this.code,this.shortName,this.description,this.endNode,this.callStage]);
     }
-    return nas.Pm.searchProp(this.name,nas.pm.assets);
+    return nas.Pm.searchProp(this.name,nas.pmdb.assets);
 }
 /**
     アセットコレクション
@@ -1248,37 +1311,277 @@ nas.separateTitleString = function(myName){
 */
 /** nas.Pm.Staff
 作業許可/拒否の判定基準となるスタッフオブジェクト
-スタッフを収集したスタッフコレクションを管理ノード毎に保持することができる
-コレクションのメンバー数が０の場合、コレクションは上位ディレクトリの内容を返す
-.alias   String  //スタッフユーザの表示名称　ユーザ指定可能　デフォルトは""　データがある場合は、優先的にユーザハンドルと置換する
-.type   String  //スタッフエントリのタイプ識別名
-.user   Object nas.UserInfo or null//
-.duty   Object        //
-.section  Object      //
+.type   String  //自動設定スタッフエントリのタイプ識別名
+.user   Object nas.UserInfo or null or * //
+.duty   Object dutyName or null or * //
+.section  Object sectionName or null or * //
 .access 　bool  //アクセス権
+.alias   String  //スタッフユーザの表示名称　ユーザ指定可能　デフォルトは""　データがある場合は、優先的にユーザハンドルと置換される
+
+""(ヌルストリング)　nullエントリとして扱う
+nullエントリは、自身を含む全てのエントリとマッチしない
+
+特殊なエントリとして"*"(スターエントリ)を扱う
+アクセス権を判定する場合、設定可能な全てのユーザとマッチする特殊なエントリ
+*同士は判定対象外（マッチがおきない）
+ 
+    以下のエントリは全ての部門、役職及びユーザのアクセスを禁止する （一般に指定されない）
+false,"*","*","*"
+
+    以下のエントリは演出部のユーザ全てのアクセスを許す
+true,"*","*","演出"
+    以下のエントリ役職が演出である演出部所属のユーザのアクセスを許す
+true,"*","演出","演出"
+    以下のエントリは役職が演出である全てのユーザのアクセスを許す、このエントリは上記のエントリの内容を包括する
+true,"*","演出","*"
+    以下のエントリは役職が演出でいずれの部門にも属さないユーザのアクセスを許す
+true,"*","演出",""
+
+    以下のエントリは演出部の全て役職のアクセスを許す
+true,"*","*","演出"
 */
-nas.Pm.Staff = function(type,user,duty,section,access){
-    this.type    = (type)? type:"";         //String  タイプ識別名　section/duty/user
-    this.user    = (user)? user:null;       //Object nas.UserInfo or null
+nas.Pm.Staff = function(user,duty,section,access,alias){
+    this.type ;                             //String  タイプ識別名　section/duty/user
+//    if(!(user instanceof nas.UserInfo)) user =new nas.UserInfo(user);
+    this.user    = (user)? user:null;//Object nas.UserInfo or * or null
     this.duty    = (duty)? duty:null;       //StringID of duty
     this.section = (section)? section:null; //StringID of section
     this.access  = (typeof access == "undefined")? true:(access); //bool  アクセス権
-    this.alias    = "";  //String  表示名称　ユーザ指定可能　デフォルトは""
+    this.alias   = (alias)? alias:"";  //String  表示名称　ユーザ指定可能　デフォルトは""
+    this.typeSet();
 }
 /*
-     文字列化して返す
-     fullオプションで設定テキストを戻す
-     設定文字列はtypeにより異なる
-     sction
-     \t部門名
-     duty
-     \t\t役職名
-     user
-     \t\t\tハンドル:e-メール
-    第一フィールドに何らかのデータのあるレコードは拒否エントリになる
+  テキスト形式の指定を受けてスタッフオブジェクトを最初期化するオブジェクトメソッド
+  palin形式の文字列は、単一レコードでは初期化に必要な情報に欠けるので扱わない
+  dump形式のみを判定　それ以外はfullフォーマットとして扱う
+
 */
-nas.Pm.Staff.prototype.toString = function(full){
-    if (full){
+nas.Pm.Staff.prototype.parseStaff = function(staffString){
+    if (staffString.match(/^\[([^\[]+)\]$/)) {;//]dump形式
+        var myProps=JSON.parse(staffString);
+        if (myProps.length!=5) return false;
+        this.access  = myProps[0];
+        this.alias   = myProps[1];
+        this.user    = (myProps[2])? new nas.UserInfo(myProps[2]):null;
+        this.duty    = myProps[3];
+        this.section = myProps[4];
+    } else {
+        staffString= staffString.replace(/\s+/g,'\t');//空白をタブに置換
+        var myProps = staffString.split('\t');//配列化
+        if ((myProps.length<2)||(myProps.length>6)) return false;//フィールド数0,1,6~は不正データ
+        this.access=myProps[0];//第一フィールドは、固定でアクセス可否
+        //第二フィールド〜ラストまでループでチェック
+        for (var ix=1;ix<myProps.length;ix++){
+            if(myProps[ix].match(/^\*([^\*]+)\*$/)){
+                this.section=RegExp.$1;
+            }else if(myProps[ix].match(/^\[([^\[])\]$/)){
+                this.duty=RegExp.$1;
+            }else if(myProps[ix].match(/^[^:]+:[^:]+/)){
+                this.user=new nas.UserInfo(myProps[ix]);
+            }else{
+                this.alias = myProps[ix]
+            }
+        }
+        this.typeSet();
+    }
+    return this;
+}
+/*TEST
+
+*/
+/*
+    データの内容を確認してtypeプロパティをセットする。
+    同時に必要なエントリにスタープロパティを補う
+    初期化以後プロパティの変更の際にコールする必要がある
+*/
+nas.Pm.Staff.prototype.typeSet = function(){
+    if((this.user)&&(this.user!="*")){
+        this.type = "user";
+    }else{
+        if((this.duty)&&(this.duty!="*")){
+            this.type = "duty";
+        }else if((this.section)&&(this.section!="*")){
+            this.type = "section"; 
+        }else{
+            this.type = null;
+        }
+    }
+    return this.type;
+}
+/*　　.samaAs
+    同値判定用メソッド
+    アクセス可否判定を含めてエントリが完全に一致した場合のみtrueを返す
+    ユーザ情報はメールアドレスのみでなくハンドルまで一致した場合にtrue
+*/
+nas.Pm.Staff.prototype.sameAs = function(target){
+    if(!(target instanceof nas.Pm.Staff)) return null; 
+    var result = 0;
+    //user プロパティに値がある　双方がUserInfoオブジェクトだった場合のみ文字列化して比較　それ以外は直接比較
+    if(this.user){
+      if ((this.user instanceof nas.UserInfo)&&(target.user instanceof nas.UserInfo)){
+            if(this.user.toString()==target.user.toString()) result += 4;
+      }else{
+            if(this.user==target.user) result +=4;
+      }
+    }else{
+    //値がない＞相手先に値がない場合のみマッチ　（nullが"",0,false等とマッチする）
+        if(! target.user) result += 4;
+    }
+    if (this.duty){
+        if(String(this.duty)==String(target.duty)) result += 2;//文字列比較
+    }else{
+        if(! target.duty) result += 2;        
+    }
+    if (this.section){
+        if(String(this.section)==String(target.section)) result += 1;//文字列比較
+    }else{
+        if(! target.section) result += 1;        
+    }
+    if ((this.access)==(target.access)) result += 8 ;//比較先にアクセス権がなければ負数へ
+    return (result==15);
+}
+/*TEST
+ var A = new nas.Pm.Staff("*","*","作画");
+ var B = new nas.Pm.Staff("","作画監督","作画");
+ var C = new nas.Pm.Staff("","演出","");
+ var D = new nas.Pm.Staff(new nas.UserInfo("kiyo:kiyo@nekomataya.info"),"作画監督","作画");
+ D.alias="ねこまたや";
+
+A.sameAs(A);
+A.sameAs(B);
+A.sameAs(C);
+A.sameAs(D);
+A.sameAs();
+A.sameAs("kjsadhjakshdjkh");
+
+B.parseStaff(A.toString("dump"))
+*/
+
+/*
+    .compareWith(target)
+    比較用に与えられたオブジェクトとの比較係数を返す
+特殊エントリ "*"
+    比較先が"*"エントリの場合、"*","",nullを除く全てのエントリに対してマッチが発生する
+    比較元が"*"の場合は、 比較先"*"を含めてなにものにもマッチしない
+
+    片方向判定を行うので、thisとtargetを入れ替えた場合の戻り値は一致しない
+
+特殊エントリ　"" == null
+    比較元が及び比較先が""またはnullの場合""同士、null同士を含めてマッチが発生しない
+「比較先」のアクセス可否情報を見てfalseの場合　得られた係数を正負反転させて戻す。
+（自身の可否情報は見ない　必要があれば戻り値に対して自身のアクセス可否情報を乗せる）
+
+var A=[true   *      *     演出]
+var B=[false  *      監督  演出]
+var C=[true   タヌキ 監督  演出]
+    として
+    A.cpmpareWith(A)    result 1
+    A.cpmpareWith(B)    result -1
+    A.cpmpareWith(C)    result 1
+    B.cpmpareWith(A)    result 3
+    B.cpmpareWith(B)    result -3
+    B.cpmpareWith(C)    result 3
+    C.compareWith(A)　　result 7
+    C.compareWith(B)　　result -7
+    C.compareWith(C)　　result 7
+    
+用途: 自身に対する相手の比較係数を得て自身のアクセスの可否を判定するのが主
+副用途として、エントリコレクション中の完全一致するエントリを検出して重複エントリの排除を行う?
+--完全一致の判定が出来ない？
+*/
+nas.Pm.Staff.prototype.compareWith = function(target){
+    if(!(target instanceof nas.Pm.Staff)) return false; 
+    var result = 0;
+//  一致条件 
+//  相手先が nullと*以外の場合で自身が*　>マッチ
+//  自身の値が存在して（null以外） ＞相手を判定　相手先が
+//   ＞相手先問わずアンマッチ
+//  自身と相手先の判別
+    if (
+        (this.user!="*")&&
+        (((this.user)&&(target.user=="*"))||
+        ((this.user instanceof nas.UserInfo)&&(this.user.sameAs(target.user))))
+    )        result += 4;
+    if (
+        (this.duty!="*")&&
+        (((this.duty)&&(target.duty=="*"))||
+        (this.duty == target.duty))
+    )       result += 2;
+    if (
+        (this.section!="*")&&
+        ((this.section)&&(target.section=="*"))||
+        ((this.section)&&(this.section == target.section))
+    )       result += 1;
+//比較先にアクセス権がなければ負数へ(自身のアクセス権は問わない)
+    if (! target.access) result *= -1 ;
+    return result;
+}
+/*TEST　(user,duty,section,access,alias)
+var A=new nas.Pm.Staff("*","*","演出");
+var B=new nas.Pm.Staff("*","監督","演出",false);
+var C=new nas.Pm.Staff(new nas.UserInfo("タヌキ:tanuki@animal.example.com"),"監督","演出",true);
+//    として
+    console.log(A.compareWith(A))    ;//result 1
+    console.log(A.compareWith(B))    ;//result -1
+    console.log(A.compareWith(C))    ;//result 1
+    console.log(B.compareWith(A))    ;//result 3
+    console.log(B.compareWith(B))    ;//result -3
+    console.log(B.compareWith(C))    ;//result 3
+    console.log(C.compareWith(A))　　;//result 7
+    console.log(C.compareWith(B))　　;//result -7
+    console.log(C.compareWith(C))　　;//result 7
+*/
+/*
+     文字列化して返す
+     typeオプション
+plainフォーマット
+        'plain'
+        
+この書式は、スタッフコレクションから呼び出された時のみに意味を持つので注意
+     sction
+部門                  \t部門名
+     duty
+役職                  \t\t役職名
+     user
+ユーザ                \t\t\tハンドル:e-メール
+
+スタッフコレクションの'plain'オプションに対応する機能
+
+
+fullフォーマット     
+        'full'
+
+アクセス可否  UID [役職] *部門* 別名
+
+    スペース区切りで、第一フィールドはアクセス可否
+    最終フィールドは別名
+    UIDは通常文字列
+    役職はブラケットで囲む
+    部門はスターで囲む
+    それぞれのエントリが無い場合はフィールドごと省略するのでフィールド数は可変
+   
+dumpフォ−マット
+        'dump'テキスト記録用文字列で返す
+
+    [アクセス可否,"別名","UID","役職","部門"]
+配列型文字列　フィールド数固定
+        
+    エントリーの全情報をカンマ区切りで出力する。
+    コレクションのエントリ追加メソッドの引数形式
+
+        
+     上記以外の返り値の文字列はtypeにより異なる
+     section（部門）エントリーはセクション名の前後に'*'を付けて返す
+        ex:*演出* *作画*
+    duty（役職）エントリーは役職名の前後をブラケットで囲んで返す
+        ex:[監督][作画監督]
+    部門エントリがあればそれを添付する
+    
+    ユーザエントリーは、ユーザの表示名を返す　オブジェクトに設定されたALIASまたはユーザ情報オブジェクトのハンドル
+    
+*/
+nas.Pm.Staff.prototype.toString = function(type){
+    if(type == 'plain'){
         var result=(this.access)?"\t":"FALSE\t";
         switch(this.type){
 case "section":
@@ -1291,71 +1594,284 @@ break;
 case "user":
         if(this.alias.length){this.user.handle=this.alias}
         result += "\t";
-        result += this.duty;
         result += "\t";
         result += this.user.toString(true);
 break;
         }
         return result;
-    }else{
-    if(! this.type){
+    }else if (type=='dump'){
+        var result=(this.access)?[true]:[false];
+        result.push(this.alias);
+        result.push((this.user)?this.user.toString():'');
+        result.push(this.duty);
+        result.push(this.section);
+        return JSON.stringify(result);
+    }else if(type=='full'){
+        var result='';
+        result +=(this.access)? "":"-";
         if(this.user){
-            this.type = "user";
-        }else{
-            if(this.duty){
-                this.type = "duty";
-            }else if(this.section){
-                this.type = "section"; 
-            }
+            result +="\t";
+            result += (this.user instanceof nas.UserInfo)? this.user.toString():String(this.user);
         }
-    }
-    switch(this.type){
+        if(this.duty){
+            result +="\t";
+            result += "["+String(this.duty)+"]";
+        }
+        if (this.section){
+            result +="\t";
+            result += "*"+String(this.section)+"*"  ;
+        }
+        if (this.alias){
+            result +="\t";
+            result += String(this.alias)  ;
+        }
+      return result;
+    }else{
+        var result='';
+      switch(this.type){
         case "duty"   :
-            return "["+String(this.duty)+"]";
+            result += "["+String(this.duty)+"]";
         break;
         case "section":
-            return "*"+String(this.section)+"*"  ;
+            result += "*"+String(this.section)+"*"  ;
         break;
         case "user"   :
-            if(this.alias.length){this.user.handle=this.alias}
-            return String(this.user.handle);
+            if(this.alias.length){
+                result += String(this.alias);
+            }else{
+                result += String(this.user.handle);
+            }
         break;
         default:
             return false;
-    }
-
+      }
+      return result;
     }
 }
-//test　初期化引数　type,user,duty,section,access
+//test　初期化引数　user,duty,section,access,alias
 /*
- var A = new nas.Pm.Staff("section","","","演出");
- var B = new nas.Pm.Staff("duty","","監督","演出");
- var C = new nas.Pm.Staff("duty","","演出","演出");
- var D = new nas.Pm.Staff("user",new nas.UserInfo("kiyo:kiyo@nekomataya.info"),"作画監督","作画部");
+ var A = new nas.Pm.Staff("*","*","作画");
+ var B = new nas.Pm.Staff("","作画監督","作画");
+ var C = new nas.Pm.Staff("","演出","");
+ var D = new nas.Pm.Staff(new nas.UserInfo("kiyo:kiyo@nekomataya.info"),"作画監督","作画");
  D.alias="ねこまたや";
-console.log(A);
-console.log(B);
-console.log(C);
-console.log(D);
+F= new nas.Pm.StaffCollection(nas.pm);
+F.addStaff([A,B,C,D]);
+
+console.log(F)
+//A.sameAs(B);
+D.sameAs(C);
 */
-/*
-    スタッフ初期化文字列をパースするクラスメソッド
-    形式は
-    組織,役職,ユーザID,不許可フラグ
-*/
-nas.parseStaff = function(staffString){
-    var myStaff = new nas.Pm.Staff(staffString)
-    return myStaff;
-}
 /** nas.Pm.StaffCollection
-配列ベース　スタッフコレクションオブジェクト
-エントリーノード毎に保持されるスタッフを集積したオブジェクト
+スタッフコレクションオブジェクト
+スタッフを収集したスタッフコレクションをエントリノード毎に保持する
 問い合わせに対して権利の解決を行う
 ペアレント属性には、自身が所属するノードが格納される
 ノードのペアレント属性に親子関係にあるノードがあるので、継承及び参照の解決は当該の情報パスをたどる。
-.parent ノード　親ノードのstaff
-.body   トレーラー配列？
-.add() 戻り値　ID
-.remove()
+コレクションのメンバー数が０の場合、コレクションは上位ディレクトリの内容を返す
+.parent     Object      所属するノード　親ノードのstaffをアクセスするパスは this.parent.parent.staffs
+.members    Array       オブジェクトトレーラー配列
+.add()      Function    メンバー追加メソッド　戻り値 追加成功時 Object staff 失敗時 false
+.addStaff() Function    設定ファイルのストリームからメンバーを追加？
+.toString() Function    
+.remove()   エントリを削除
+
+
 */
-nas.Pm.StaffCollection
+nas.Pm.StaffCollection = function(myParent){
+    this.parent = myParent;
+    this.members = [];
+}
+/*
+toStringは、二種の出力フォーマットを持つ
+ full/引数なし または dump
+フルフォーマットは可読テキストとして出力
+    第一フィールドに何らかのデータのあるレコードは拒否エントリになる
+    第４フィールドはalias　個々にデータがある場合、そのエントリの表示名称として優先して使用される
+        例　\t演出\t監督\t\tbigBoss
+        例　\t作画\t原画\tcitten:cat@animals.example.com\tキティちゃん
+    各フィールドの値として、h-tabは使用できない
+ダンプフォーマットは、機械読み取り用のフォーマットでaddStaffメソッドの引数形式
+    
+*/
+nas.Pm.StaffCollection.prototype.toString = function(form){
+    var result="";
+    switch (form){
+    case "full":
+        break;
+    case "dump":
+            for (var ix =0 ; ix<this.members.length;ix++){
+                if (ix > 0) result +=",\n";
+                result += this.members[ix].toString('dump');
+            }
+            result += '\n';
+        return result;
+        break;
+    default:
+        var result = new Array;
+            for (var ix =0 ; ix<this.members.length;ix++){
+                result.push(this.members[ix].toString());
+            }
+        return result.toString();
+    }
+}
+/*
+  コレクションをソートする
+  ソート基準は
+  部門　役職　ユーザ
+  メンバーをタイプ別にわける
+  タイプごとに部門でソートする
+    部門エントリを抽出して　辞書ソート
+    部門１エントリ毎に役職エントリを抽出して辞書ソート
+    役職１エントリ毎にユーザエントリを抽出して
+    役職エントリ  部門ソート　辞書ソート
+    ユーザエントリ　部門ソート　役職ソート　辞書ソート
+
+*/
+nas.Pm.StaffCollection.prototype.sort = function(){
+    
+};
+/*
+    コレクション内の指定条件にマッチするエントリを新たなコレクションで返すメソッド
+    引数　staffString
+    フルフォーマット文字列
+    "*演出*"    部門・演出　のエントリをタイプ問わず
+    "*演出* [演出助手]","user"　部門・演出 && 役職・演出助手　のユーザエントリ
+    " [作画監督]","section" 役職・作画監督　を含む部門エントリ
+    '馬:hose@animal.example.com','duty' ユーザ・馬が所属する役職エントリ
+エントリの問い合わせがあった場合、コレクションメンバーを検索してアクセスの可否を返す。
+コレクションのエントリ数が０の場合のみ、親オブジェクトの持つスタッフコレクションに問い合わせを行いその結果を返す。
+*/
+nas.Pm.StaffCollection.prototype.getMenmber = function(staffString,type){
+    var result=new nas.Pm.staffCollection(this.parent);
+    var sect='';    var dut ='';    var usr ='';
+}
+/*    .parseStaff
+    スタッフ初期化文字列をパースしてスタッフコレクションを更新するオブエジェクトメソッド
+    引数はレコード改行区切りテキストストリーム
+    受け入れ形式は3つ　形式をしているするか、またはストリームの第一レコードで判定
+    いずれも行頭 '#'はコメント行　空行は無視 
+
+    dump 引数配列形式
+##_staff_template_type-dump
+[アクセス可否,"別名","UID","役職","部門"]
+
+    full スペース分離　不定フィールドテキスト
+##_staff_template_type-full
+アクセス	handle:UID	[役職]	*部門*	別名
+
+    plain    タブ区切りフィールド
+##_staff_template_type-plain
+アクセス可否\t部門\t役職\tユーザ\t別名
+            
+*/
+nas.Pm.StaffCollection.prototype.parseStaff = function(dataStream,form){
+    var myStream = String(dataStream).split("\n");
+    var myMembers =[];
+    var myForm   = form;
+    // 形式が指定されない場合は第一レコードで判定 第一レコード以外で形式指定しているデータは不正データとする
+    if(! form ){
+        if(myStream[0].indexOf('##_staff_template_type-full')==0)  form='full' ;
+        else if(myStream[0].indexOf('##_staff_template_type-dump')==0)  form='dump' ;
+        else if(myStream[0].indexOf('##_staff_template_type-plain')==0) form='plain';
+        else {console.log('bad data-type');return false;}
+    }
+    if ((form == 'dump')||(form == 'full')){
+      for (var rix=0;rix<myStream.length;rix++){
+      if(myStream[rix].indexOf('#')==0) continue;
+        var currentStaff=new nas.Pm.Staff();
+        currentStaff.parseStaff(myStream[rix]);
+        if (currentStaff) myMembers.push(currentStaff);
+      }
+    } else if (form == 'plain'){
+      var currentSection;var currentDuty;
+      for (var rix=0;rix.myStream.length;rix++) {
+        if(myStream[rix].indexOf('#')==0) continue;
+        var currentRecord=myStream[rix].split('\t');
+        //plainフォーマットはタブ区切り　タブ１つは部門　２つで役職　３つでユーザ　ユーザ指定のレコードには別名の指定も可
+        if(currentRecord[0]) {currenAccess   = (currentRecord[0].match(/\+|true/i))?true:false;}else{currenRecord.access=true;}
+        if(currentRecord[1]) {
+            currentSection = currentRecord[1];
+            myMembers.push(new nas.Pm.Staff(null,null,currentSection,currentAccess,""));
+        }
+        if(currentRecord[2]) {
+            currentDuty    = currentRecord[2];
+            myMembers.push(new nas.Pm.Staff(null,currentDuty,currentSection,currentAccess,""));
+        }
+        if(currentRecord[3]) {
+            var currentUser    = new nas.UserInfo(currentRecord[3]);
+            var currentAlias   = (currentRecord[4])? currentRecord[4]:"";
+            myMembers.push(new nas.Pm.Staff(currentUser,currentDuty,currentSection,currentAccess,currentAlias));
+        }
+      }        
+    }
+    return this.addStaff(myMembers);
+}
+/*
+      ターゲットになるユーザまたはスタッフとコレクションの内容を比較して、
+      一致したエントリIDを返すメソッド
+      ヒットしなかった場合は　-1
+*/
+nas.Pm.StaffCollection.prototype.indexOf = function(target){
+    for (var ix =0 ;ix <this.members.length;ix ++){
+        if(this.members[ix].sameAs(target)) return ix;
+    }
+    return -1;
+}
+/*  スタッフの追加メソッド
+    引数は　nas.Pm.Staff　オブジェクト
+    引数形式は、Staffオブジェクトまたはオブジェクトの配列
+    可読テキストの再ロードはparseStaffメソッドを利用
+    parseStaffメソッドは、可読テキストをdump形式にコンバートしてこのメソッドを内部で呼び出す
+    同内容のエントリがあった場合は追加されない。
+    
+    追加時に既存のsection/dutyエントリに存在しないプロパティを持ったuserエントリがあった場合は、
+  　当該のエントリを新規に作成して追加する？　ユーザの設定を変更することになるのでコレは行わない　
+    戻り値は、追加に成功したエントリ数（エントリ配列か？）
+    
+*/
+nas.Pm.StaffCollection.prototype.addStaff = function(members){
+    var result=0;
+    if(!( members instanceof Array)) members = [members];
+    for(var ix =0 ; ix<members.length;ix++){
+      if(!(members[ix] instanceof nas.Pm.Staff)){
+/*
+        member[0]// access
+        member[1]// alias
+        member[2]// user
+        member[3]// duty
+        member[4]// section
+*/
+        var member=new nas.Pm.Staff();
+        member.parseStaff(members[ix]);//文字列としてパースする　不正データの場合は初期化できないのでスキップ
+      }else{
+        var member = members[ix]
+      }
+console.log(member)
+      var checkHint = this.indexOf(member);
+console.log("checkHint :")      
+console.log(checkHint)      
+//一致エントリがないので追加
+      if (checkHint < 0){
+        this.members.push(member);
+        result ++;
+console.log('push member :'+member.toString('dump'));
+        continue;
+      }
+    }
+    return result;
+}
+
+nas.Pm.staff=new nas.Pm.StaffCollection(nas.Pm);
+/*TEST
+新設が必要な設定群
+ユーザDB
+    U-AT の場合はサーバから取得   Repository.pmd.users? この管理はサーバに任せて、スタッフだけもらうべき
+    ローカルストレージ等の
+スタッフDB
+    部門、役職、ユーザを合成したスタッフDB
+        Repository.pmd.staff ~ タイトル、エピソード、カット（ライン、ステージ）までのツリー状の構造の各所でそれぞれのデータを参照可能にするための構造
+        
+        
+
+*/

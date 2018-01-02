@@ -134,12 +134,9 @@ function ARD2XPS(ARDStream) {
             }
         }
     }
-
-    if (xUI.errorCode == 0) {
-        myXps.xpsTracks.noteText = "converted from AERemap data";
-        return myXps.toString();
-    }
-    return "";
+console.log(xUI.errorCode)
+    myXps.xpsTracks.noteText = "converted from AERemap data";
+    return myXps.toString();
 }
 
 /**

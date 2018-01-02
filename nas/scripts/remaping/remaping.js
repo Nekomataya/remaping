@@ -1985,7 +1985,7 @@ var tableColumnWidth=(
     DialogWidth*(xUI.dialogCount-xUI.dialogSpan)+
 */
 //alert(    DialogWidth*(xUI.dialogCount-xUI.dialogSpan) );
-var tableBodyWidth=tableColumnWidth;
+    var tableBodyWidth=tableColumnWidth;
 /*
 コンパクトモードで１段固定(第一象限スクロールデータ)
     (
@@ -1999,8 +1999,8 @@ var tableBodyWidth=tableColumnWidth;
     コメント欄幅
     )
 */
-var PageCols=1;
-var SheetLength=Math.ceil(this.XPS.duration()/this.XPS.framerate);
+    var PageCols=1;
+    var SheetLength=Math.ceil(this.XPS.duration()/this.XPS.framerate);
 }else{
 //シートワープロモード
 /*    第二象限固定ヘッダは、タイムガイド幅
@@ -2008,9 +2008,9 @@ var SheetLength=Math.ceil(this.XPS.duration()/this.XPS.framerate);
     第三象限ヘッダーはシート枚数分繰り返し
 UI設定に基づいて段組
 */
-var tableFixWidth=this.sheetLooks.TimeGuideWidth;
+    var tableFixWidth=this.sheetLooks.TimeGuideWidth;
 
-var tableColumnWidth=(
+    var tableColumnWidth=(
     this.sheetLooks.TimeGuideWidth +
     this.sheetLooks.ActionWidth*this.referenceLabels.length +
     this.sheetLooks.DialogWidth*xUI.dialogCount +
@@ -2023,8 +2023,8 @@ var tableColumnWidth=(
     以前はテーブル内のタイムラン種別をここで判定していたが
     xUIのプロパティに変換してこちらでは計算のみを行う仕様に変更済み 2015/04.25
 */
-var tableBodyWidth=tableColumnWidth * this.PageCols +
-    (this.sheetLooks.ColumnSeparatorWidth*(this.PageCols-1));//
+    var tableBodyWidth=tableColumnWidth * this.PageCols +
+        (this.sheetLooks.ColumnSeparatorWidth*(this.PageCols-1));//
 /*
     (
     参照レイヤ数*参照セル幅+
@@ -2038,9 +2038,10 @@ var tableBodyWidth=tableColumnWidth * this.PageCols +
     )×ページカラム数＋カラムセパレータ幅×(ページカラム数?1)
 */
 
-var PageCols=this.PageCols;
-var SheetLength=this.SheetLength
-if(pageNumber==(Pages-1)) hasEndMarker=true;
+    var PageCols=this.PageCols;
+    var SheetLength=this.SheetLength
+
+    if(pageNumber==(Pages-1)){hasEndMarker=true;};
 }
 
 /*
@@ -2504,7 +2505,7 @@ BODY_ +='</tr>';
 BODY_ +='</tbody></table>';
 BODY_ +='\n';
 /*タイムシート記述終了マーカーを配置*/
-if((hasEndMarker)&&(pageNumber==0)){    
+if((hasEndMarker)&&(pageNumber==currentPageNumber)){    
 BODY_ +='<div id=endMarker class=endMarker>';
 BODY_ += JSON.stringify([xUI.XPS.xpsTracks.length, xUI.XPS.xpsTracks.duration]);
 BODY_ +='</div>';
@@ -2525,9 +2526,11 @@ BODY_ +='';
     以下のメソッドは　単独の関数としても利用可能
  */
 xUI.replaceEndMarker = function(endPoint,markerOffset){
+    if(! document.getElementById('endMarker')) return;
     if (typeof endPoint == 'undefined'){
    try{
-    var endPoint = JSON.parse(document.getElementById('endMarker').innerHTML);
+//    var endPoint = JSON.parse(document.getElementById('endMarker').innerHTML);
+    var endPoint = [xUI.XPS.xpsTracks.length, xUI.XPS.xpsTracks.duration];
    }catch(er){return;}
     }
     if (typeof markerOffset == 'undefined'){
@@ -3471,6 +3474,7 @@ xUI.keyDown    =function(e){
 	key = e.keyCode;//キーコードを取得
 	this.eddt = document.getElementById("iNputbOx").value;
 	var interpKey=110;
+//      console.log(key+':down:');
 	switch(key) {
 case	25	:if(! Safari) break;
 case	9	:	//tab
@@ -3920,6 +3924,7 @@ return false;
 */
 xUI.keyPress = function(e){
 	key = e.keyCode;//キーコードを取得
+//      console.log(key+':press:');
 	if(xUI.edmode>0){
 if(xUI.edmode==1){
 //ブロック移動モード
@@ -3994,13 +3999,13 @@ if(xUI.eXMode){
 		}
 	}
 }
-
 //		通常判定
 	switch(key) {
 case	27	: 			;//esc
 	return false;
 case	25	:if(! Safari) break;
-case	0	: 			;//キーコード0を返すコントロールキー群
+case	0	:if(Firefox){return true;};//キーコード0を返すコントロールキー群
+//  fierfox　が keypress で全てキーコード0:を返す状態になっている　2017.12
 case	9	:			;//またはTAB および ctr-I
 //	return false;
 
@@ -4041,6 +4046,7 @@ default :;
 //キーアップもキャプチャする。UI制御に必要 今のところは使ってない?
 xUI.keyUp = function (e){
 	key = e.keyCode;//キーコードを取得
+//      console.log(key+':up:');
 	if(this.eXMode>=2){
 		document.getElementById("iNputbOx").select();
 		return false;
@@ -5146,6 +5152,7 @@ xUI.resetSheet=function(editXps,referenceXps){
         // 書換え範囲にXPS全体を追加
         reWriteXPS = true;
     }
+
 /*
         引数に参照シートが渡されていたら、優先して解決
         指定のない場合は現在の参照シートを保持して使用
@@ -5205,6 +5212,7 @@ xUI.resetSheet=function(editXps,referenceXps){
     }
 //　シートボディを締める
     document.getElementById("sheet_body").innerHTML=SheetBody+"<div class=\"screenSpace\"></div>";
+
 // グラフィックパーツを配置(setTimeoutで無名関数として非同期実行)
     window.setTimeout(function(){
 //        if (reWriteXPS) 
@@ -5310,7 +5318,7 @@ function nas_Rmp_Startup(){
 */
     XPS=new Xps(MaxLayers,MaxFrames);
 /*
-    XPSオブジェクトのreadINメソッドをオーバーライド
+    XPSオブジェクトのreadINメソッドをオーバーライドするため
     元のreadINメソッドから切り離した、データ判定ルーチン部分
     内部でparseXpsメソッドを呼んでリザルトを返す
 */
@@ -5550,7 +5558,7 @@ console.log(SheetLooks);
     html5のオートコンプリートを利用するのでinput初期値はカラに
     UIを提示しない場合は、デフォルトの値またはクッキーで記録した最後のユーザが設定される
 */
-  alert(xUI.currentUser);console.log(xUI.recentUsers);
+//  alert(xUI.currentUser); console.log(xUI.recentUsers);
 if((NameCheck)||(myName=="")){
         var newName=null;
         var msg=welcomeMsg+"\n"+localize(nas.uiMsg.dmAskUserinfo)+
@@ -6425,7 +6433,7 @@ case    "recentUsers":
         rcuList += xUI.recentUsers[i].toString();
         rcuList += xUI.currentUser.sameAs(xUI.recentUsers[i])?'" selected=true >':'">';
     }
-    document.getElementById('recentUsers').innerHTML = rcuList;
+    if(document.getElementById('recentUsers')) document.getElementById('recentUsers').innerHTML = rcuList;
     break;
 case    "editLabel":
 //XPS編集エリアのラベル更新
@@ -7691,7 +7699,7 @@ if(useCookie.UIView){
 		ToolView.push(($('#'+UIViewIdList[ix]).css('display')=='none')? 0:1);				
 	};
 	ToolView=ToolView.join("");
-	alert(ToolView);
+//	alert(ToolView);//　beforunloadで呼び出すのでその際のアラート、コンソールは読めない
 };//記録チェックがない場合は元のデータを変更しない
 myCookie[7]=ToolView;
 if(dbg) console.log(ToolView);
@@ -7706,7 +7714,7 @@ function writeCk(myCookie){
 		return false;
 	}
 if(typeof myCookie == "undefined") myCookie=buildCk();
-alert(myCookie);
+//console.log(myCookie);
 var myCookieExpiers="";
 
 if(useCookie.expiers) {

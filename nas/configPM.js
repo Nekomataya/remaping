@@ -93,7 +93,7 @@ nas.Pm.stages.addStage("chaeckBgArt"       ,["美術検査"                   ,"
 nas.Pm.stages.addStage("BgArtAD"           ,["美術A/D"                    ,"BG-D"    ,"背景スキャン" ,"" ,"backgroundArt"]);
 nas.Pm.stages.addStage("AD"                ,["動画"                       ,"AD"      ,"動" ,"動画上がり animationDrawing" ,"AnimationDrawing"]);
 nas.Pm.stages.addStage("ADAD"              ,["動画A/D"                    ,"AD/D"    ,"動画A/D" ,"animation to Data 動画をデータ化したもの" ,"AnimationDrawing"]);
-nas.Pm.stages.addStage("proofAD"           ,["動画検査"                   ,"AD+"     ,"動検" ,"上がりは動画" ,"AnimationDrawing"]);
+nas.Pm.stages.addStage("proofAD"           ,["動画検査"                   ,"AD+"     ,"動検" ,"上がりは動画 動画検査をステージ扱いする場合に使用" ,"AnimationDrawing"]);
 nas.Pm.stages.addStage("ADscan"            ,["スキャン"                   ,"AD-D"    ,"スキャン" ,"彩色データ作成のためのデジタイズ処理・半製品ペイントデータ" ,"cell"]);
 nas.Pm.stages.addStage("ADcleanUp"         ,["動画クリンアップ"           ,"ADCL"    ,"Adcleanup" ,"デジタイズされた動画をクリンアップする作業(これをトレースと呼ぶソフトもある)" ,"cell"]);
 nas.Pm.stages.addStage("paint"             ,["彩色"                       ,"PT"      ,"PAINT" ,"ソフトウェア作業によるセル彩色" ,"cell"]);
@@ -321,9 +321,9 @@ nas.Pm.jobNames.addNames([
     テンプレートにないアイテムも使用可能
         
  */
-nas.Pm.titles.addTitle("TVshowSample" ,["0000" ,"名称未設定"   ,"未定"   ,"_UN" ,"24FPS" ,"21:00:00" ,"10in-HDTV" ,"HDTV-720p"]);
-nas.Pm.titles.addTitle("kachi"        ,["0001" ,"かちかちやま" ,"か"     ,"_KT" ,"24FPS" ,"20:12:00" ,"10in-HDTV" ,"HDTV-720p"]);
-nas.Pm.titles.addTitle("Momotaro"     ,["0002" ,"ももたろう"   ,"も"     ,"_MT" ,"24FPS" ,"19:21:00" ,"10in-HDTV" ,"HDTV-720p"]);
+nas.Pm.workTitles.addTitle("TVshowSample" ,["0000" ,"名称未設定"   ,"未定"   ,"_UN" ,"24FPS" ,"21:00:00" ,"10in-HDTV" ,"HDTV-720p"]);
+nas.Pm.workTitles.addTitle("kachi"        ,["0001" ,"かちかちやま" ,"か"     ,"_KT" ,"24FPS" ,"20:12:00" ,"10in-HDTV" ,"HDTV-720p"]);
+nas.Pm.workTitles.addTitle("Momotaro"     ,["0002" ,"ももたろう"   ,"も"     ,"_MT" ,"24FPS" ,"19:21:00" ,"10in-HDTV" ,"HDTV-720p"]);
 
 /*
 　* メディアDB
@@ -352,4 +352,75 @@ nas.Pm.medias.addMedia("HDTV-2160p"         ,["" ,"HDTV4K" ,"2160dpi" ,"movie" ,
 
 /**
     productionStaff
+##team_users
+#
+#   組織に属する全ユーザのリスト
+#   リストにないユーザは、作業に参加できない
+#   書式:
+#   handle:e-mail[:{option}]
+#   例:
+#   ねこまたや:kiyo@nekomataya.info
+#
+#   同形式のリストはローカルファイルシステム上はない
+#   グループ（スタッフ）リストに
+#      
+#
 */
+nas.Pm.users.add(new nas.UserInfo("ねずみ:mouse@animals.example.com"));
+nas.Pm.users.add(new nas.UserInfo("うし:cow@animals.example.com"));
+nas.Pm.users.add(new nas.UserInfo("とら:tiger@animals.example.com"));
+nas.Pm.users.add(new nas.UserInfo("うさぎ:rabbit@animals.example.com"));
+nas.Pm.users.add(new nas.UserInfo("たつ:dragon@legend.example.com"));
+nas.Pm.users.add(new nas.UserInfo("へび:snake@animals.example.com"));
+nas.Pm.users.add(new nas.UserInfo("うま:horse@animals.example.com"));
+nas.Pm.users.add(new nas.UserInfo("ひつじ:sheep@animals.example.com"));
+nas.Pm.users.add(new nas.UserInfo("さる:monkey@animals.example.com"));
+nas.Pm.users.add(new nas.UserInfo("とり:bird@animals.example.com"));
+nas.Pm.users.add(new nas.UserInfo("いぬ:dog@animals.example.com"));
+nas.Pm.users.add(new nas.UserInfo("いのしし:boar@animals.example.com"));
+nas.Pm.users.add(new nas.UserInfo("アイナメ:ainame@fish.example.com"));
+nas.Pm.users.add(new nas.UserInfo("イワシ:iwashi@fish.example.com"));
+nas.Pm.users.add(new nas.UserInfo("ウナギ:unagi@fish.example.com"));
+nas.Pm.users.add(new nas.UserInfo("エソ:eso@fish.example.com"));
+nas.Pm.users.add(new nas.UserInfo("オコゼ:okoze@fish.example.com"));
+nas.Pm.users.add(new nas.UserInfo("カサゴ:kasago@fish.example.com"));
+nas.Pm.users.add(new nas.UserInfo("キス:kisu@fish.example.com"));
+nas.Pm.users.add(new nas.UserInfo("クロダイ:kurodai@fish.example.com"));
+nas.Pm.users.add(new nas.UserInfo("ケショウフグ:kesyoufugu@fish.example.com"));
+nas.Pm.users.add(new nas.UserInfo("コノシロ:konoshiro@fish.example.com"));
+nas.Pm.users.add(new nas.UserInfo("サバ:saba@fish.example.com"));
+nas.Pm.users.add(new nas.UserInfo("シラウオ:shirauo@fish.example.com"));
+nas.Pm.users.add(new nas.UserInfo("スズキ:suzuki@fish.example.com"));
+nas.Pm.users.add(new nas.UserInfo("ソメワケベラ:somewake@fish.example.com"));
+nas.Pm.users.add(new nas.UserInfo("セトダイ:setodai@fish.example.com"));
+nas.Pm.users.add(new nas.UserInfo("タナゴ:tanago@fish.example.com"));
+nas.Pm.users.add(new nas.UserInfo("チヌ:chinu@fish.example.com"));
+nas.Pm.users.add(new nas.UserInfo("ツボダイ:tsubodai@fish.example.com"));
+nas.Pm.users.add(new nas.UserInfo("テッポウウオ:teppouuo@fish.example.com"));
+nas.Pm.users.add(new nas.UserInfo("トラフグ:torafugu@fish.example.com"));
+nas.Pm.users.add(new nas.UserInfo("ナマズ:namazu@fish.example.com"));
+nas.Pm.users.add(new nas.UserInfo("ニシキゴイ:nishikigoi@fish.example.com"));
+nas.Pm.users.add(new nas.UserInfo("ヌタウナギ:nutaunagi@fish.example.com"));
+nas.Pm.users.add(new nas.UserInfo("ネコザメ:nekozame@fish.example.com"));
+nas.Pm.users.add(new nas.UserInfo("ハゼ:haze@fish.example.com"));
+nas.Pm.users.add(new nas.UserInfo("ヒラメ:hirame@fish.example.com"));
+nas.Pm.users.add(new nas.UserInfo("フグ:fugu@fish.example.com"));
+nas.Pm.users.add(new nas.UserInfo("ノドグロ:nodoguro@fish.example.com"));
+nas.Pm.users.add(new nas.UserInfo("ヘラ:hera@fish.example.com"));
+nas.Pm.users.add(new nas.UserInfo("ホッケ:hokke@fish.example.com"));
+nas.Pm.users.add(new nas.UserInfo("マグロ:maguro@fish.example.com"));
+nas.Pm.users.add(new nas.UserInfo("ミゾレフグ:mizorefugu@fish.example.com"));
+nas.Pm.users.add(new nas.UserInfo("ムツゴロウ:mutsugoro@fish.example.com"));
+nas.Pm.users.add(new nas.UserInfo("メゴチ:megochi@fish.example.com"));
+nas.Pm.users.add(new nas.UserInfo("モンガラカワハギ:monngarakawahagi@fish.example.com"));
+nas.Pm.users.add(new nas.UserInfo("ヤツメウナギ:yatsumeunagi@fish.exapmle.com"));
+nas.Pm.users.add(new nas.UserInfo("ユメカサゴ:yumekasago@fish.example.com"));
+nas.Pm.users.add(new nas.UserInfo("ヨシキリザメ:yoshikirizame@fish.example.com"));
+nas.Pm.users.add(new nas.UserInfo("ライギョ:raigyo@fish.example.com"));
+nas.Pm.users.add(new nas.UserInfo("リュウグウノツカイ:ryuuguunotsukai@fish.example.com"));
+nas.Pm.users.add(new nas.UserInfo("ルリハタ:rurihata@fish.example.com"));
+nas.Pm.users.add(new nas.UserInfo("レモンスズメダイ:remonnsuzumedai@fish.example.com"));
+nas.Pm.users.add(new nas.UserInfo("ロウソクギンポ:rousokuginnpo@fish.example.com"));
+nas.Pm.users.add(new nas.UserInfo("ワカサギ:wakasagi@fish.example.com"));
+
+nas.Pm.staff.parseStaff("	*制作管理*\n	*制作管理*	[プロデューサ]\n	*制作管理*	[統括デスク]\n	*制作管理*	[デスク]\n	*制作管理*	[制作進行]\n	*演出*\n	*演出*	[監督]\n	*演出*	[演出]\n	*演出*	[演出助手]\n	*文芸*\n	*文芸*	[脚本]\n	*文芸*	[設定]\n	*文芸*	[デザイナー]\n	*文芸*	[キャラ設定]\n	*文芸*	[美術設定]\n	*文芸*	[小物設定]\n	*文芸*	[色設計]\n	*作画*\n	*作画*	[総作画監督]\n	*作画*	[作画監督]\n	*作画*	[メカ作画監督]\n	*作画*	[原画]\n	*作画*	[第一原画]\n	*作画*	[第二原画]\n	*作画*	[動画監督]\n	*作画*	[動画検査]\n	*作画*	[動画]\n	*美術*\n	*作画*	[美術監督]\n	*作画*	[美術監督補佐]\n	*作画*	[原図整理]\n	*作画*	[背景]\n	*仕上*\n	*仕上*	[色指定]\n	*仕上*	[トレース]\n	*仕上*	[ペイント]\n	*仕上*	[特殊効果]\n	*撮影*\n	*撮影*	[撮影監督]\n	*撮影*	[撮影監督補佐]\n	*撮影*	[撮影]\n	*無所属*\n	*無所属*	[無所属]\n	*オブザーバ*\n	*オブザーバ*	[オブザーバ]\n	*オブザーバ*	[時代考証]",'full');

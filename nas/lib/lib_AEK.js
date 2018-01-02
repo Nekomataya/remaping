@@ -39,6 +39,398 @@
 
 
 /**
+ * AEの動作を模倣するために設定する偽オブジェクトの定義
+ * 定義に使用する関数
+ * クラスプロトタイプの複製 この関数で
+ * 引き継ぎたいプロトタイププロパティを取得
+ * @param subClass
+ * @param superClass
+ */
+// function inherit(subClass, superClass) {
+//     for (var prop in superClass.prototype) {
+//         subClass.prototype[prop] = superClass.prototype[prop];
+//     }
+// }
+
+
+/**
+ * 合成キャリアオブジェクト設定
+ * キャリアオブジェクト単体は使用しないが、
+ * 座標系オブジェクトの基礎オブジェクトになる。
+ * 座標系の基本メソッドはここから取得する。
+ * 合成バッファのたぐいは、コレ!
+ * @constructor
+ */
+function Carrier() {
+//this.prototype.contructor=Array;
+    this.width = 0;
+    this.height = 0;
+    this.pixelAspect = 1;
+    this.frameRate = 1;
+    this.duration = 0;
+}
+
+/**
+ * プロトタイプメソッド
+ * new Carrier();
+ * Carrier.prototype.constructor = Array;
+ *
+ * @param rate
+ * @returns {*}
+ */
+Carrier.prototype.setFrameRate =
+    function (rate) {
+        if (!rate) {
+            rate = this.frameRate;
+        } else {
+            this.frameRate = rate;
+        }
+        this.frameDuration = 1 / rate;
+        return rate;
+    };
+/**
+ *
+ * @param duration
+ * @returns {*}
+ */
+Carrier.prototype.setFrameDuration =
+    function (duration) {
+        if (!duration) {
+            duration = this.frameDuration;
+        } else {
+            this.frameDuration = duration;
+        }
+        this.frameRate = 1 / duration;
+        return duration;
+    };
+/**
+ *
+ * @param w
+ * @param h
+ * @param a
+ */
+Carrier.prototype.setGeometry =
+    function (w, h, a) {
+        if (w) {
+            this.width = w;
+        }
+        if (h) {
+            this.height = h;
+        }
+        if (a) {
+            this.pixelAspect = a;
+        }
+        return [w, h, a];
+    };
+
+
+/**
+ * キーフレーム設定
+ * キーフレームの次元を与えて初期化する。
+ * 一つのキーフレームは、以下のプロパティを持つ
+ * 時間,        //積算フレーム数で
+ * [値],        //タイムラインのプロパティにしたがって多次元
+ * [[値の制御変数1],[2]],//値と同次元で、二つ一組
+ * [[タイミングの制御変数1],[2]],//二次元、二つ一組
+ * キーアトリビュート,//AE用キー補完フラグ
+ *
+ * @param f
+ * @param v
+ * @param vCp
+ * @param tCp
+ * @param kAtrib
+ * @constructor
+ */
+function KeyFrame(f, v, vCp, tCp, kAtrib) {
+    if (!f) {
+        f = 0
+    }
+    this.frame = f;
+    if (!v) {
+        v = null
+    }
+    this.value = v;
+    if (!vCp) {
+        vCp = [1 / 3, 2 / 3]
+    }
+    this.valueCp = vCp;
+    if (!tCp) {
+        tCp = [[1 / 3, 2 / 3], [1 / 3, 2 / 3]]
+    }
+    this.timingCp = tCp;//AE互換なら1次元で
+    if (!kAtrib) {
+        kAtrib = ["stop", "linear", "time_fix"]
+    }
+    this.keyAtrib = kAtrib;
+    /*
+     キーアトリビュートは、現在はAE互換を標榜しておく。後で再考
+     [タイミング補完,値補完,値の時間補完(ロービング)]
+     */
+
+}
+//	new KeyFrame();
+
+/**
+ * タイムライン設定
+ * @param atrib
+ * @constructor
+ */
+function TimeLine(atrib) {
+    this.name = atrib
+}
+//	new TimeLine();
+TimeLine.prototype = [];
+TimeLine.prototype.constructor = TimeLine;
+
+/**
+ * タイムラインはAEの場合だとタイムラインデータのトレーラと言う観点でPropertyに相当するオブジェクト
+ * ひとつのタイムラインはそれぞれの属性とともにアニメーション可能なプロパティを保持する。
+ * ただし、そこには画像は存在しない　画像の配下のプロパティとしてではなく画像の上位に位置するネットワークの
+ * ボードとしてとらえるべきであることだよ
+ */
+
+
+/**
+ * TimeLine.setKeyFrame(myKeyFrame)
+ * 引数    キーフレームオブジェクト
+ * 戻値    登録したキーのインデックス
+ *
+ * タイムラインのメソッド
+ * キーフレームをタイムラインに登録する。
+ * すでに登録されているキーフレームのうち、同じframe値を持つものがあれば上書きする
+ * それ以外は新規登録する。このままだと順不同になるので後で書き換え要
+ * プリミティブな登録方式としてはTimeLine.push(KeyFrame)を使用しても良い
+ * ただし重複の検査ができないので新規に一括で登録する際のみ推奨
+ * この辺はもっと洗練しないと危ないね　２００９
+ *
+ * @param myKeyFrame
+ * @returns {number}
+ */
+TimeLine.prototype.setKeyFrame = function (myKeyFrame) {
+    for (var id = 0; id < this.length; id++) {
+        nas.otome.writeConsole(myKeyFrame.frame + "<>" + this[id].frame);
+        if (myKeyFrame.frame == this[id].frame) {
+            this[id] = myKeyFrame;
+            return id;
+        }
+    }
+    this.push(KeyFrame);
+    return this.length - 1
+};
+//valueAtTime()
+/**
+ * AE互換?かもしれない?ここでは互換なし! t はフレーム数で与えること
+ * @param t
+ * @returns {*}
+ * @private
+ */
+function valueAtTime_(t) {
+    if (t <= this[0].frame) {
+        return this[0].value
+    }
+    if (t >= this[this.length - 1].frame) {
+        return this[this.length - 1].value
+    }
+    for (id = 1; id < this.length; id++) {
+        if (t == this[id].frame) {
+            return this[id].value
+        }
+        /**
+         * 所属キーフレームが判明したので計算して返す
+         */
+        if (t < this[id].frame) {
+
+            if (this[id].keyAtrib[0] == "stop") {
+                //キー補完が停止の時は、補完計算なし。前方キーの値で返す。
+                return this[id - 1].value;
+            } else {
+                var Vstart = this[id - 1].value;
+                var Vcp1 = this[id - 1].valueCp[0];
+                var Vcp2 = this[id - 1].valueCp[1];
+                var Vend = this[id].value;
+
+                var Tstart = this[id - 1].frame;
+                var Tcp1 = this[id - 1].timingCp[0];
+                var Tcp2 = this[id - 1].timingCp[1];
+                var Tend = this[id].frame;
+
+                /**
+                 * 値が描くアークの全長を求める
+                 */
+                var HallArk = nas.bezierL(Vstart, Vcp1, Vcp2, Vend);
+                /**
+                 * 指定時間からタイミング係数を求める
+                 * @type {number}
+                 */
+                var Now = (t - Tstart) / (Tend - Tstart);
+                /**
+                 * 時間から 2次元(時間・比率)助変数を求める。
+                 */
+                var Tvt = nas.bezierA(Tcp1[0], Tcp1[1], Now);
+                /**
+                 * 求めた助変数でタイミング係数を出す
+                 */
+                var Tvv = nas.bezierA(0, Tcp2[0], Tcp2[1], 1, Tvt);
+                /**
+                 * 係数から値を求める。
+                 */
+                Tt = Tvv;//仮助変数(初期値)
+                Tmax = 1;
+                Tmin = 0;
+                var preLength = 0;//始点からのアーク長
+                var postLength = 0;//終点までのアーク長
+                var TtT = 0;//テストで得られる比率
+
+                do {
+                    preLength = nas.bezierL(Vstart, Vcp1, Vcp2, Vend, 0, Tt);
+                    postLength = nas.bezierL(Vstart, Vcp1, Vcp2, Vend, Tt, 1);
+                    TtT = preLength / (preLength + postLength);
+                    if (Tvv < preLength / (preLength + postLength)) {
+                        Tmin = Tt;//下限値を現在値に
+                        Tt = (Tmax + Tt) / 2;//新テスト値を設定
+                    } else {
+                        Tmax = Tt;//上限値を現在値に
+                        Tt = (Tmin + Tt) / 2;//新テスト値を設定
+                    }
+                } while (TtT / Tvv > 0.9999999 && TtT / Tvv < 1.0000001);//精度確認
+                //その得られた助変数を使って値を返す。値の次元数でループ
+                var Result = new Array(Vstart.length);
+                for (i = 0; i < Vstart.length; i++) {
+                    Result[i] = nas.bezier(Vstart[i], Vcp1[i], Vcp2[i], Vend[i], Tt)
+                }
+                return Result;
+            }
+        }
+    }
+
+}
+
+/**
+ * レイヤ設定
+ * レイヤのメンバはタイムライン
+ * デフォルトで以下のタイムラインがある。
+ * タイムリマップ**
+ * アンカーポイント
+ * 位置
+ * 回転
+ * 不透明度
+ * カラセル**
+ * ワイプ
+ * エクスプレッション
+ * **印は、りまぴんのみ
+ *
+ * @constructor
+ */
+function FakeLayer() {
+
+    this.width = 640;
+    this.height = 480;
+    this.pixelAspect = 1;
+    this.frameRate = 24;
+    this.duration = 0;
+    this.activeFrame = 0;
+
+    this.inPoint = 0;
+    this.outPoint = this.duration;
+    /**
+     * タイムラインプロパティなので後から初期化?りまぴんでは特に初期化しない。
+     */
+    this.init = function () {
+
+        this.timeRemap = new TimeLine("timeRemap");
+        this.timeRemap.push(new KeyFrame(0, "blank"));
+        this.anchorPoint = new TimeLine("anchorPoint");
+        this.anchorPoint.push(new KeyFrame(0, [this.width / 2, this.height / 2, 0]));
+        this.position = new TimeLine("position");
+        this.positiont.push(new KeyFrame(0, [thisComp.width / 2, thisComp.heigth / 2, 0]));
+        this.rotation = new TimeLine("rotation");
+        this.rotation.push(new KeyFrame(0, [0, 0, 0]));
+        this.opacity = new TimeLine("opacity");
+        this.opacity.push(new KayFrame(0, 100));
+    }
+}
+//	new FakeLayer();
+FakeLayer.prototype = new Carrier();
+FakeLayer.prototype.constructor = FakeLayer;
+//inherit(FakeLayer,Carrier);//Carrierのメソッドを取得
+
+/**
+ *
+ * @param ip
+ * @param op
+ */
+FakeLayer.prototype.setClip = function (ip, op) {
+    if (ip && ip >= 0 && ip <= duration) this.inPoint = ip;
+    if (op && op >= 0 && op <= duration) this.outPoint = op;
+    return [ip, op];
+};
+/*
+ FakeLayer.prototype.=function(){
+ };
+ FakeLayer.prototype.=function(){
+ };
+ FakeLayer.prototype.=function(){
+ };
+ */
+
+/**
+ * コンポジション設定
+ * コンポジションコンストラクタ
+ * @constructor
+ */
+// function FakeComposition() {
+//     this.width = 640;
+//     this.height = 480;
+//     this.pixelAspect = 1;
+//     this.frameRate = 24;
+//     this.duration = 0;
+// }
+
+/**
+ *
+ * @param w
+ * @param h
+ * @param a
+ * @param l
+ * @param f
+ * @constructor
+ */
+function FakeComposition(w, h, a, l, f) {
+    this.layers = [];
+    if (!w)    w = 640;
+    if (!h)    h = 480;
+    if (!a)    a = 1;
+    if (!l)    l = 6;
+    if (!f)    f = 24;
+    this.width = w;//幅(バッファ幅・px)
+    this.height = h;//高さ(バッファ高さ・px)
+    this.pixelAspect = a;//ピクセル縦横比
+    this.duration = l;//長さ(継続時間・秒)
+    this.framerate = f;//フレームレート(fps)
+}
+
+//	ダミー初期化
+//	new FakeComposition();
+FakeComposition.prototype = new Carrier();
+FakeComposition.prototype.constructor = FakeComposition;
+
+//		inherit(FakeComposition,Carrier);//Carrierのメソッドを取得
+//		inherit(FakeComposition,Array);//配列としてのメソッドを取得
+
+/**
+ * メソッド設定
+ * @returns {number}
+ * @private
+ */
+function frame_duration_() {
+    return 1 / this.framerate;
+}
+
+FakeComposition.prototype.frameDuration = frame_duration_;
+FakeComposition.prototype.frame_duration = frame_duration_;
+
+
+/**
  * ssUnit(UpS)
  * サブユニット長を自動設定して戻す
  * 引数 UpS は、Units Per Second・秒あたりのフレーム数 または キーワード

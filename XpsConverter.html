@@ -1,0 +1,275 @@
+﻿<html>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>xps data convert</title>
+<!-- スタイルシート　アプリ本体準拠-->
+<link href="template/jquery-ui.css" type="text/css" rel="stylesheet">
+<link href="template/remaping.css" type="text/css" rel=stylesheet media="screen,tv">
+<link href="template/printout.css" type="text/css" rel=stylesheet media="print">
+
+<script src=./lib/jquery.js></script>
+<!--
+
+<script src=./lib/jquery-ui.js></script>
+<script src=./lib/ecl/ecl.js></script>
+-->
+<script src=./config.js></script>
+<script src=./nas/lib/nas_common.js></script>
+
+<!-- システム汎用ライブラリ remaping.jsよりも前方でロードする必要あり
+
+        <script src=./nas/newValueConstractors.js></script>
+        <script src=./nas/pmio.js></script>
+        <script src=./nas/configPM.js></script>
+<script src=./nas/lib/mapio.js></script>
+<script src=./nas/lib/xpsio.js></script>
+<script src=./nas/scripts/remaping/airUI.js></script>
+<script src=./nas/scripts/remaping/remaping.js></script>
+
+
+　-->
+        <script src=./nas/newValueConstractors.js></script>
+        <script src=./nas/pmio.js></script>
+        <script src=./nas/configPM.js></script>
+<script src=./nas/lib/mapio.js></script>
+<script src=./nas/lib/xpsio.js></script>
+
+<script src=./nas/scripts/remaping/utils.js></script>
+
+<!-- new test code -->
+
+
+
+
+<!--     汎用ライブラリのためソース分離 一括マージ可能      -->
+<script src=./nas/lib/lib_AEK.js></script>
+<script src=./nas/lib/lib_TVP.js></script>
+<script src=./nas/lib/lib_stylosCSV.js></script>
+<script src=./nas/lib/lib_TSH.js></script>
+<script src=./nas/lib/lib_ARD.js></script>
+<script src=./nas/lib/lib_ARDJ.js></script>
+<script src=./nas/lib/lib_TSX.js></script>
+
+
+<!-- ライブラリインストール -->
+<script>
+/*
+	File API を使用したデータの読み込み（ブラウザでローカルファイルを読む）
+	File API　は、Chrome Firefoxではローカルファイルの読み出し可能だが、
+	IE,Safari等他の環境では、情報取得のみ可能
+	File.nameは、ブラウザではパスを含まないファイル名（＋拡張子）のみ。
+	ただし、AIR環境ではフルパスのローカルFSパスが戻る。
+	同じI.FをAIR環境でも使用するために、ケース分岐する。
+
+    印刷環境ではファイルの入出力自体をサポートしないのでイベントリスナの設定をスキップする
+    id="myCurrentFile"のエレメントの有無で判定
+*/
+window.addEventListener('DOMContentLoaded', function() {
+// ファイルが指定されたタイミングで、その内容を表示
+  if(document.getElementById("myCurrentFile")){
+    console.log('addEventListener');
+  document.getElementById("myCurrentFile").addEventListener('change', function(e) {
+    if(appHost.platform == "AIR"){
+    // File APIを利用できるかをチェック
+    if (window.File) {
+      // 指定されたファイルを取得
+      var input = document.getElementById('myCurrentFile').files[0];
+	fileBox.currentFile=new air.File(input.name);
+	xUI.data_well.value =fileBox.readContent();
+ }
+    }else{
+    // File APIを利用できるかをチェック
+    if (window.File) {
+      // 指定されたファイルを取得
+      var input = document.getElementById('myCurrentFile').files[0];
+	var myEncode=(input.name.match(/\.(ard|csv|tsh)$/))?"Shift-JIS":"UTF-8";
+if(window.FileReader){
+      // ファイルリーダーオブジェクト初期化(Chrome/Firefoxのみ)
+      var reader = new FileReader();
+      // ファイルの読み込みに成功したら、その内容をxUI.data_wellに反映（2）
+      reader.addEventListener('load', function(e) {
+        var output = reader.result;//
+        xUI.data_well.value = output;
+      }, true);
+      // ファイルの内容をテキストとして取得（3）
+      reader.readAsText(input, myEncode);
+}else{
+//FileReaderが無いブラウザ(Safari等)では、お詫びしてオシマイ
+var msg = "no FileReader! :\n　このブラウザはFileReaderオブジェクトをサポートしていません。\n残念ですが、この環境ではローカルファイルは読みだし出来ません。\nThis browser does not support the FileReader object. \n Unfortunately, you can't read local files now.";
+	alert(msg);
+}
+    }
+   }
+  }, true);//myCrrentFile.addEvent
+  }
+});//window.addEvent
+
+ /*
+    XPSオブジェクトのreadINメソッドをオーバーライドするため
+    元のreadINメソッドから切り離した、データ判定ルーチン部分
+    内部でparseXpsメソッドを呼んでリザルトを返す
+*/
+
+
+convertXps=function(datastream){
+    if(! String(datastream).length ){
+        return false;
+    }else{
+//データが存在したら、種別判定して、コンバート可能なデータはコンバータに送ってXPS互換ストリームに変換する
+//Xpxデータが与えられた場合は素通し
+//この分岐処理は、互換性維持のための分岐
+        switch (true) {
+        case    (/^nasTIME-SHEET\ 0\.[1-5]/).test(datastream):
+//    判定ルーチン内で先にXPSをチェックしておく（先抜け）
+        break;
+        case    (/^UTF\-8\,\ TVPaint\,\ \"CSV 1\.[01]\"/).test(datastream):
+            datastream =TVP2XPS(datastream);
+            //TVPaint csv
+        break;
+        case    (/^\"Frame\",/).test(datastream):
+            datastream =StylosCSV2XPS(datastream);//ボタン動作を自動判定にする 2015/09/12 引数は使用せず
+        break;
+        case    (/^\{[^\}]*\}/).test(datastream):;
+            try{datastream =ARDJ2XPS(datastream);console.log(datastream);}catch(err){console.log(err);return false;};
+        break;
+        case    (/^#TimeSheetGrid\x20SheetData/).test(datastream):
+            try{datastream = ARD2XPS(datastream);console.log(datastream);}catch(err){console.log(err);return false;};
+        break;
+        case    (/^\x22([^\x09]*\x09){25}[^\x09]*/).test(datastream):
+            try{datastream =TSH2XPS(datastream);}catch(err){return false}
+        break;
+        case    (/^Adobe\ After\ Effects\x20([456]\.[05])\ Keyframe\ Data/).test(datastream):
+            try{datastream=AEK2XDS(datastream)}catch(err){alert(err);return false}
+            //AEKey のみトラック情報がないので　ダミーXpsを先に作成してそのトラックにデータをputする
+            var myXps=new Xps();
+            myXps.put(datastream);
+            datastream=myXps.toString();
+        break;
+        default :
+/*
+    元の判定ルーチンと同じくデータ内容での判別がほぼ不可能なので、
+    拡張オプションがあってかつ他の判定をすべてすり抜けたデータを暫定的にTSXデータとみなす
+ */
+            if(TSXEx){
+                try{datastream=TSX2XPS(datastream)}catch(err){alert(err);return false;}
+            }
+      }
+        if(! datastream){return false}
+    }
+    var newXps=new Xps();
+    newXps.parseXps(datastream);
+        return newXps;
+}
+xUI={};
+
+</script>
+</head>
+<body
+onLoad="xUI.data_well= document.getElementById('data_well');"
+>
+
+/**
+    データコンバータ
+    XPSオブジェクトのコンバータ機能を抜き出して作成
+
+include nas_common.js
+include 
+include 
+include 
+*/
+<!--	シート取り込み	-->
+<div class=optionPanel- id=optionPanelData->
+<strong id=dataPnl>データ入出力</strong> <span id=dataPnlcaption>(このウェルにデータをコピーペーストします)</span>
+<hr>
+<div><form name=cgiSample id=cgiSample> Sample data :
+<select name=sampleSelect id=sampleSelect　>
+
+ <option value=1>XPS
+ <option value=2>XPS-修飾メモ付き
+ <option value=3>AEキー
+ <option value=4>AERemap
+ <option value=7>cellRemap
+ <option value=5>T-Sheet
+ <option value=6>Stylos-csv
+ <option value=8>TVP-csv1.0
+ <option value=9>TVP-csv1.1
+</select>
+<button
+    id=sampleLoaderSelect
+    onClick='getSample(1*(document.cgiSample.sampleSelect.value));return false;'
+>サンプル読み込み</button>
+<!-- <a href="javascript:void(0);" onClick="getSample(1)" id=sample1 title="xps">XPS-1</a> |
+ <a href="javascript:void(0);" onClick="getSample(2)" id=sample2 title="xps(修飾メモ付き)">XPS-2</a> |
+ <a href="javascript:void(0);" onClick="getSample(3)" id=sample3 title="AE-Key">AE-Key</a> |
+ <a href="javascript:void(0);" onClick="getSample(4)" id=sample4 title="AE-Remap">AERemap</a> |
+ <a href="javascript:void(0);" onClick="getSample(7)" id=sample7 title="cell-Remap">cellRemap</a> |
+ <a href="javascript:void(0);" onClick="getSample(5)" id=sample5 title="T-Sheet">TSheet</a> |
+ <a href="javascript:void(0);" onClick="getSample(6)" id=sample6 title="RETAS-Stylos-csv">Stylos-csv</a>
+-->
+</form>
+</div>
+<hr>
+<div align=right></div>
+<span style="text-align:center">
+
+<div id=localFileLoader><form id="dataLoader" name="dataLoader" method="post" action="javascript:void(0);" enctype="multipart/form-data">
+<input type=file id=myCurrentFile name=XPSBody size=100 >
+</form></div>
+
+<form name=exportXps action="void(0);">
+<input type=button
+    id=dataLoaderSelectAll value="全選択" style="width:10%"
+	onClick="xUI.data_well.select()"
+><input	type=reset
+    id=dataLoaderReset value="リセット" style="width:10%"
+><input type=button
+	id=dataLoaderClear value="消去" style="width:10%"
+	onClick="xUI.data_well.value=''"
+><br />
+
+<textarea name=XPSBody id=data_well style="width:80%;height:128px"
+></textarea>
+
+<br>
+</form>
+<!--	シート取り込み	-->
+<div align=center>
+<button onClick="var myXps=convertXps(document.getElementById('data_well').value);document.getElementById('xpsResult').innerHTML = myXps.toString();"
+>
+⇓　CONVERT ⇓
+</button><br>
+<textarea id="xpsResult" style="width:80%;height:256px"></textarea>
+</div>
+<div>
+<pre>
+convertXps(sourceText)
+引数: sourceText  XPSにコンバートするソーステキスト
+各フォーマットごとに以下のライブラリを必要とする
+
+AEキーフレームテキスト  ./nas/lib/lib_AEK.js
+AERemap    ./nas/lib/lib_ARD.js
+cellRemap./nas/lib/lib_ARDJ.js
+T-Sheet./nas/lib/lib_TSH.js
+Stylos(ClipStudio)-csv ./nas/lib/lib_stylosCSV.js
+TVP-csv1.0/1.1 ./nas/lib/lib_TVP.js
+------
+戻りオブジェクトを使用して現状のプロパティを表示
+ユーザの編集を促してからDBに登録するのが良い
+必要な編集プロパティは
+タイトル myXps.title
+エピソード myXps.opus , myXps.subtitle
+カット番号　myXps.scene , myXps.cut (UATの場合は　scene='';cut=カット番号;として扱って可)
+</pre>
+
+
+
+
+
+<script src=./nas/lib/lib_TSX.js></script>
+戻り値：コンバートされたXps オブジェクト
+
+</div>
+</span>
+</div>
+
+</body>
+</html>

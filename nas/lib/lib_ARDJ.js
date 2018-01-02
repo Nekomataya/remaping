@@ -77,11 +77,8 @@ function ARDJ2XPS(myARDJ) {
             }
         }
     }
-    if (xUI.errorCode == 0) {
-        myXps.xpsTracks.noteText = "converted from ARDJ data";
-        return myXps.toString();
-    }
-    return false;
+    myXps.xpsTracks.noteText = "converted from ARDJ data";
+    return myXps.toString();
 }
 
 /**

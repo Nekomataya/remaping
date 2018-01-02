@@ -1,6 +1,6 @@
 ﻿/**
     サービスエージェント
-    一旦このモジュールを通すことで異なる種別のリポジトリ操作を統一する
+    一旦このモジュールを通すことで異なる種別のリポジトリの操作を統一する
     サービスエージェントは、ログイン管理を行う
     
 test data:
@@ -67,7 +67,22 @@ Object ServiceAgent
 プロダクト毎にアクセス可能な（リポジトリ共有＝スタッフ）グループにユーザを登録することができる
 
 登録されたユーザはそのリポジトリにスタッフとしてアクセスしてデータを編集又は閲覧することが可能
+Repository.pmd.users    当該リポジトリ内の基礎ユーザDB
+Repository.pmd.staff    同基礎スタッフDB（ここにユーザを含む必要はないツリー下位のDBが優先）
+Repository.pmd.lines    同ラインテンプレート（テンプレート　ツリー下位のDB優先）
+Repository.pmd.stages　 同ステージテンプレート（同上）
+Repository.pmd.jobNames 同ジョブテンプレート　(同上)
+Repository.pmd.workTitles   作品別の
+Repository.pmd.medias   同メディアテンプレート
+Repository.pmd.
+Repository.pmd.
 
+Repository.users    アクセスの可能性がある全ユーザのリスト
+Repository.productsData.staff    アクセス可否情報　リポジトリに対するユーザとその所属・役職のDB
+    　Repository.productsData[px].staff    アクセス可否情報　リポジトリに対するユーザとその所属・役職のDB
+    　   Repository.productsData[px].episodes[ex].staff    アクセス可否情報　リポジトリに対するユーザとその所属・役職のDB
+    　       Repository.productsData[px].episodes[ex].cuts[cx].staff    アクセス可否情報　リポジトリに対するユーザとその所属・役職のDBる
+        　
 エントリごとにスタッフに対して以下の権利を設定することができる
 
 true    (アクセス可)
@@ -90,6 +105,7 @@ opusは制作話数であり、個々のドキュメント（pmunit）を含む
                 
 リポジトリ   *
 プロダクト   *
+各話         *
 カット       *
 ライン       *
 ステージ     * 
@@ -424,9 +440,9 @@ listEntry=function(myIdentifier){
 if(typeof this.dataInfo.line == 'undefined'){
 //識別子にバージョン情報が含まれない場合は初期バーションで補填（nullとかのほうが良いかも）
     this.issues  = [[
-        new XpsLine(nas.pm.pmTemplate[0].line).toString(true),
-        new XpsStage(nas.pm.pmTemplate[0].stages[0]).toString(true),
-        new XpsStage(nas.pm.jobNames.getTemplate(nas.pm.pmTemplate[0].stages[0],"init")[0]).toString(true),
+        new XpsLine(nas.pmdb.pmTemplate[0].line).toString(true),
+        new XpsStage(nas.pmdb.pmTemplate[0].stages[0]).toString(true),
+        new XpsStage(nas.pmdb.jobNames.getTemplate(nas.pmdb.pmTemplate[0].stages[0],"init")[0]).toString(true),
         "Startup"
     ]];
 }else{
@@ -1523,7 +1539,7 @@ console.log('終了更新失敗');
 */
 localRepository.receiptEntry=function(stageName,jobName,callback,callback2){
     if( typeof stageName == 'undefined') return false;
-    var myStage = nas.pm.stages.getStage(stageName) ;//ステージDBと照合　エントリが無い場合はエントリ登録
+    var myStage = nas.pmdb.stages.getStage(stageName) ;//ステージDBと照合　エントリが無い場合はエントリ登録
     /*  2016-12 の実装では省略して　エラー終了*/
     if(! myStage) return false;
     var currentEntry = this.entry(Xps.getIdentifier(xUI.XPS));
@@ -1681,10 +1697,10 @@ NetworkRepository=function(repositoryName,myServer,repositoryURI){
 //    this.episode_token      = $('#server-info').attr('episode_token');
 //    this.cut_token          = $('#server-info').attr('cut_token');
 // ?idの代替なので要らないか？ 
+    this.pmd={};//制作管理データキャリア　機能クラスオブジェクト化？
     this.currentIssue;
-    this.productsData=[];
+    this.productsData=[];//workTitleCollectionで置換？タイトルキャリアでノードルートになる
     this.entryList = new listEntryCollection();
-
 }
 /**
 各層のエントリを識別子で取得
@@ -1984,13 +2000,13 @@ APIの情報は、識別子と一致しているはずだが　照合の上異�
                 var myCutToken = myCut.token;
                 var myCutLine  = (myCut.line_id)?
                     myCut.line_id:
-                    (new XpsLine(nas.pm.pmTemplate[0].line.toString())).toString(true);
+                    (new XpsLine(nas.pmdb.pmTemplate[0].line.toString())).toString(true);
                 var myCutStage = (myCut.stage_id)?
                     myCut.stage_id:
-                    (new XpsStage(nas.pm.pmTemplate[0].stages[0].toString())).toString(true);
+                    (new XpsStage(nas.pmdb.pmTemplate[0].stages[0].toString())).toString(true);
                 var myCutJob   = (myCut.job_id)?
                     myCut.job_id:
-                    (new XpsStage(nas.pm.jobNames.members[0].toString())).toString(true);
+                    (new XpsStage(nas.pmdb.jobNames.members[0].toString())).toString(true);
                 var myCutStatus= (myCut.status)?
                     myCut.status:'Startup';
 //管理情報が不足の場合は初期値で補う description情報が未登録の場合は、APIの情報からビルドする？
@@ -2108,13 +2124,13 @@ APIの情報は、識別子と一致しているはずだが　照合の上異�
                 var myCutToken = currentEpisode.cuts[0][cid].token;
                 var myCutLine  = (currentEpisode.cuts[0][cid].line_id)?
                     currentEpisode.cuts[0][cid].line_id:
-                    (new XpsLine(nas.pm.pmTemplate[0].line.toString())).toString(true);
+                    (new XpsLine(nas.pmdb.pmTemplate[0].line.toString())).toString(true);
                 var myCutStage = (currentEpisode.cuts[0][cid].stage_id)?
                     currentEpisode.cuts[0][cid].stage_id:
-                    (new XpsStage(nas.pm.pmTemplate[0].stages[0].toString())).toString(true);
+                    (new XpsStage(nas.pmdb.pmTemplate[0].stages[0].toString())).toString(true);
                 var myCutJob   = (currentEpisode.cuts[0][cid].job_id)?
                     currentEpisode.cuts[0][cid].job_id:
-                    (new XpsStage(nas.pm.jobNames.members[0].toString())).toString(true);
+                    (new XpsStage(nas.pmdb.jobNames.members[0].toString())).toString(true);
                 var myCutStatus= (currentEpisode.cuts[0][cid].status)?
                     currentEpisode.cuts[0][cid].status:'Startup';
 
@@ -2244,13 +2260,13 @@ APIの情報は、識別子と一致しているはずだが　照合の上異�
                 var myCutToken = currentEpisode.cuts[0][cid].token;
                 var myCutLine  = (currentEpisode.cuts[0][cid].line_id)?
                     currentEpisode.cuts[0][cid].line_id:
-                    (new XpsLine(nas.pm.pmTemplate[0].line.toString())).toString(true);
+                    (new XpsLine(nas.pmdb.pmTemplate[0].line.toString())).toString(true);
                 var myCutStage = (currentEpisode.cuts[0][cid].stage_id)?
                     currentEpisode.cuts[0][cid].stage_id:
-                    (new XpsStage(nas.pm.pmTemplate[0].stages[0].toString())).toString(true);
+                    (new XpsStage(nas.pmdb.pmTemplate[0].stages[0].toString())).toString(true);
                 var myCutJob   = (currentEpisode.cuts[0][cid].job_id)?
                     currentEpisode.cuts[0][cid].job_id:
-                    (new XpsStage(nas.pm.jobNames.members[0].toString())).toString(true);
+                    (new XpsStage(nas.pmdb.jobNames.members[0].toString())).toString(true);
                 var myCutStatus= (currentEpisode.cuts[0][cid].status)?
                     currentEpisode.cuts[0][cid].status:'Startup';
 //管理情報が不足の場合は初期値で補う description情報が未登録の場合は、APIの情報からビルドする？
@@ -3319,7 +3335,7 @@ if(dbg) console.log('終了更新失敗');
 NetworkRepository.prototype.receiptEntry=function(stageName,jobName,callback,callback2){
     if( typeof stageName == 'undefined') return false;
     if( typeof stageName == 'undefined') return false;
-    var myStage = nas.pm.stages.getStage(stageName) ;//ステージDBと照合　エントリが無い場合はエントリ登録
+    var myStage = nas.pmdb.stages.getStage(stageName) ;//ステージDBと照合　エントリが無い場合はエントリ登録
     /*  2106-12 の実装では省略して　エラー終了*/
     if(! myStage) return false;
     var currentEntry = this.entry(Xps.getIdentifier(xUI.XPS));
@@ -4021,7 +4037,7 @@ if(dbg) console.log('fail checkin so :'+ currentEntry.getStatus(myJob,callback,c
             //'新規作業を開始します。\n新しい作業名を入力してください。\nリストにない場合は、作業名を入力してください。';
             var msg2    = '<br> <input id=newJobName class=mdInputText type=text list=newJobList></input><datalist id=newJobList>';
 //            if(dbg) console.log(xUI.XPS.stage.name +","+ ((xUI.XPS.job.id == 0) ? 'primary':'*'));
-            var newJobList = nas.pm.jobNames.getTemplate(xUI.XPS.stage.name,((xUI.XPS.job.id == 0) ? 'primary':'*'));//ここは後ほどリポジトリ個別のデータと差替
+            var newJobList = nas.pmdb.jobNames.getTemplate(xUI.XPS.stage.name,((xUI.XPS.job.id == 0) ? 'primary':'*'));//ここは後ほどリポジトリ個別のデータと差替
             for(var idx = 0 ; idx < newJobList.length;idx ++){
                 msg2   += '<option value="';
                 msg2   += newJobList[idx];
@@ -4219,8 +4235,8 @@ serviceAgent.receiptEntry=function(){
         break;
         case 'Fixed':
             //Fixedのみを処理
-            var newStageList = nas.pm.stages.getTemplate(xUI.XPS.stage.name);
-            var newJobList   = nas.pm.jobNames.getTemplate(xUI.XPS.stage.name);
+            var newStageList = nas.pmdb.stages.getTemplate(xUI.XPS.stage.name);
+            var newJobList   = nas.pmdb.jobNames.getTemplate(xUI.XPS.stage.name);
             var title = localize(nas.uiMsg.pMreseiptStage);//'作業検収 / 工程移行';
             var msg   = localize(nas.uiMsg.dmPMnewStage);//'現在の工程を閉じて次の工程を開きます。\n新しい工程名を入力してください。\nリストにない場合は、工程名を入力してください。';
             var msg2  = '<br><span>'+localize(nas.uiMsg.pMcurrentStage)+' : %currentStage% <br>'+localize(nas.uiMsg.pMnewStage)+' : '+ nas.incrStr(xUI.XPS.stage.id)
@@ -4333,7 +4349,7 @@ serviceAgent.updateNewJobName=function(stageName,type){
         targetList.removeChild(targetList.childNodes[i]);
     }
     if(!type) type='init';
-    var newJobList = nas.pm.jobNames.getTemplate(stageName,type);
+    var newJobList = nas.pmdb.jobNames.getTemplate(stageName,type);
     for(var idx = 0 ; idx < newJobList.length;idx ++){
         var option = document.createElement('option');
         option.id = idx;
