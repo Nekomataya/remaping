@@ -117,8 +117,9 @@ convertXps=function(datastream,optionString){
     }else{
 // オプションで識別子ファイル名を受け取る
 // 識別子の仕様はXpsIdentifier
-    if(! optionString){optionString = '';}
+    if(! optionString){optionString = 'TEST#01[subtitle]//s-c123';}
 
+    var optionTrailer=Xps.parseIdentifier(optionString);
 //データが存在したら、種別判定して、コンバート可能なデータはコンバータに送ってXPS互換ストリームに変換する
 //Xpxデータが与えられた場合は素通し
 //この分岐処理は、互換性維持のための分岐
@@ -160,12 +161,12 @@ convertXps=function(datastream,optionString){
       }
         if(! datastream){return false}
     }
-    var newXps=new Xps();
-    newXps.parseXps(datastream);
+    xUI.convertTarget=new Xps();
+    xUI.convertTarget.parseXps(datastream);
 
 //ここでセリフトラックのチェックを行って、シナリオ形式のエントリを検知したら展開を行う
-    for(var tix=0;tix<newXps.xpsTracks.length;tix++){
-        var targetTrack=newXps.xpsTracks[tix]
+    for(var tix=0;tix<xUI.convertTarget.xpsTracks.length;tix++){
+        var targetTrack=xUI.convertTarget.xpsTracks[tix]
         if(targetTrack.option=='dialog'){
             var convertQueue=[];//トラックごとにキューを置く
             var currentEnd =false;//探索中の終了フレーム
@@ -203,7 +204,7 @@ convertXps=function(datastream,optionString){
                 var dialogDuration = convertQueue[qix][2]-convertQueue[qix][1]; 
                 var startAddress =[tix,(convertQueue[qix][1] - dialogOffset)];
                 var dialogStream =(convertQueue[qix][0].getStream(dialogDuration)).join(',');
-                newXps.put(startAddress,dialogStream);
+                xUI.convertTarget.put(startAddress,dialogStream);
             }
         }
     }
@@ -212,17 +213,31 @@ convertXps=function(datastream,optionString){
   ユーザの確認と編集を促す
   Cancelされた場合は処理を中断する
 */
-    document.getElementById('optionPanelSCI_title').value    = newXps.title;
-    document.getElementById('optionPanelSCI_opus').value     = newXps.opus;
-    document.getElementById('optionPanelSCI_subtitle').value = newXps.subtitle;
-    document.getElementById('optionPanelSCI_01_sc').value    = ([newXps.scene,newXps.cut]).join(' ');
-    document.getElementById('optionPanelSCI_01_time').value  = newXps.getTC(newXps.time());
+    document.getElementById('optionPanelSCI_title').value    = optionTrailer.title;
+    document.getElementById('optionPanelSCI_opus').value     = optionTrailer.opus;
+    document.getElementById('optionPanelSCI_subtitle').value = optionTrailer.subtitle;
+    document.getElementById('optionPanelSCI_01_sc').value    = optionTrailer.cut;
+    document.getElementById('optionPanelSCI_01_time').value  = xUI.convertTarget.getTC(xUI.convertTarget.time());
 
         var myDialog = $("#optionPanelSCI");
 		myDialog.dialog("open");myDialog.focus();
 
 //document.getElementById('xpsResult').innerHTML = myXps.toString();
-//        return newXps;
+//        return xUI.convertTarget;
+}
+
+updateTarget= function(){
+    xUI.convertTarget.title    = document.getElementById('optionPanelSCI_title').value
+    xUI.convertTarget.opus     = document.getElementById('optionPanelSCI_opus').value;
+    xUI.convertTarget.subtitle = document.getElementById('optionPanelSCI_subtitle').value;
+    xUI.convertTarget.scene    = '';
+    xUI.convertTarget.cut      = document.getElementById('optionPanelSCI_01_sc').value;
+//  時間変更はあとで調整  
+//    xUI.convertTarget. =    document.getElementById('optionPanelSCI_01_time').value;
+//    xUI.convertTarget.I
+
+    document.getElementById("xpsResult").innerHTML = xUI.convertTarget.toString();
+    $("#optionPanelSCI").dialog("close");
 }
 /**
     nas.timeIncrement(target,step,type)
@@ -285,6 +300,7 @@ initConverter=function(){
 // ダミーのUIオブジェクトを作成してプロパティを下げる
     xUI={};
     xUI.data_well= document.getElementById('data_well');
+    xUI.convertTarget;
 }
 </script>
 </head>
@@ -462,7 +478,7 @@ TIME:(
 
 <br>
 <hr>
-<button onclick='console.log()' style='width:256px'> カット登録 </button>
+<button onclick='updateTarget();' style='width:256px'> カット登録 </button>
 <!--
 S:<input type=text style="width:64px" value='###'>-C:<input type=text style="width:64px" value='###'>
 TIME:(<input type=text style="width:64px" value='##+##'>)
