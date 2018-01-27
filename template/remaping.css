@@ -1474,6 +1474,19 @@ transform-origin: 0 0;transform:scale(1,1);
 span.pmcui_ {
 		font-style:strong;
 	}
+/* document status overlay*/
+div.documentStatusOverlay {
+	position :absolute;
+	width : 100% ;
+	top: 96px;
+	text-align: center;
+	z-index: 5;
+	color:red;
+	font-size:64px;
+	mix-blend-mode: multiply;
+	opacity:0.25;
+	pointer-events: none;
+}
 /* button */
 .jobControl {
 	width :96px;

@@ -1510,6 +1510,8 @@ console.log ('noentry in repository :' +  decodeURIComponent(currentEntry))
 
             var result = (localStorage.getItem(this.keyPrefix+Xps.getIdentifier(newXps))==newXps.toString())? true:false;
             if(result){
+                console.log(result);
+                console.log(currentCut)
                 localStorage.removeItem(this.keyPrefix+currentEntry.toString(0));
                 xUI.XPS.currentStatus=newXps.currentStatus;//ドキュメントステータスを更新
                 currentEntry.setStatus(newXps.currentStatus);

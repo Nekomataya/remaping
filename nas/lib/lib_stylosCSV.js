@@ -48,6 +48,9 @@
  * spcFolder    :省略可　読み込むフォルダをIDまたはフォルダ名で指定　複数指定の場合は配列で与える　省略時はいちばん上のフォルダ
  * dialogFolder    :省略可　台詞として読み込むフォルダをIDまたはフォルダ名で指定　複数指定の場合は配列で与える　省略時は自動判定
  *
+ * 音声トラックを認識した場合　セルラベルで内容を初期化する機能を追加する　RETASとの整合性をチェックすること
+ * 1枚画像でセルラベルがトラックラベルと一致した場合に置き換え用途のダミーと置き換える機能が必要
+ * 
  * @param CSVStream
  * @param spcFolder
  * @param dialogFolder
@@ -85,13 +88,20 @@ function StylosCSV2XPS(CSVStream, spcFolder, dialogFolder) {
      * 各ラインを更にテキストの配列に分解 空行のみのエントリを廃棄
      * フィールド数が異なるレコードが含まれていた場合は、不正データとみなす
      * @type {Number}
+     ここで簡易的にパースしているが、本式のcsvパーサがほしい
+     ただし、スタイロス||クリップスタジオペイントのcsvは
+     フィールド中に改行が含まれない
+     各フィールドは必ずダブルクォーテーションで囲まれた　"エントリ文字列"型
+     の　簡易形式なのでこのままでも可
+     
      */
     var fieldCount = CSVRecords[0].split(",").length;
     for (var idx = 0; idx < CSVRecords.length; idx++) {
         if (CSVRecords[idx].length == 0) {
             continue;
         }
-        myStylosCSV.SrcData.push(CSVRecords[idx].split(","));
+//        myStylosCSV.SrcData.push(CSVRecords[idx].split(","));//ここでsplitしているだけなので["]が両端に残る
+        myStylosCSV.SrcData.push(JSON.parse("["+CSVRecords[idx]+"]"));//レコードごとにJSON.parseで配列化する。
         if (myStylosCSV.SrcData[myStylosCSV.SrcData.length - 1].length != fieldCount) {
             return false;
         }
@@ -100,14 +110,19 @@ function StylosCSV2XPS(CSVStream, spcFolder, dialogFolder) {
      * 第一第二レコードをチェックしてフォルダ情報テーブルを作る
      * @type {Array}
      */
-    myStylosCSV.folders = [];
-    myStylosCSV.folders.push([]);
+/*
+    基本的には第一レコードにステージが指定されるものとみなすが、
+    第一レコードが全て空文字列（ステージ指定なし）の場合に限り全体が動画ステージであるものとして扱う
+    2018.01.14
+*/
+    myStylosCSV.folders = [];//ドキュメントレベルのフォルダ情報を格納する配列　各々ステージ扱い
+    myStylosCSV.folders.push([]);//空配列で初期化　名前はなし
     myStylosCSV.folders[0].name = "";
     var currentStageIdx = 0;//ここの一時インデックスは、上位フォルダからの仮インデックス
     for (var fid = myStylosCSV.SrcData[0].length - 1; fid > 0; fid--) {
         myStylosCSV.folders[currentStageIdx].push(fid);
-        if (eval(myStylosCSV.SrcData[0][fid]) != "") {
-            myStylosCSV.folders[currentStageIdx].name = eval(myStylosCSV.SrcData[0][fid]);
+        if (myStylosCSV.SrcData[0][fid] != "") {
+            myStylosCSV.folders[currentStageIdx].name = myStylosCSV.SrcData[0][fid];
             myStylosCSV.folders[currentStageIdx].reverse();
             if (fid > 1) {
                 currentStageIdx++;//最後の一回分はエントリ追加不要
@@ -116,7 +131,13 @@ function StylosCSV2XPS(CSVStream, spcFolder, dialogFolder) {
             }
         }
     }
+    if(currentStageIdx == 0){
+// ドキュメントルートにステージが得られなかったので動画ステージとして全体を反転して空のタイアログを挿入する
+                myStylosCSV.folders[currentStageIdx].reverse();        
+    }
     myStylosCSV.folders.reverse();
+
+console.log(myStylosCSV)
     /**
      * ！！タイムシートの左端から（タイムライン下から/ ドキュメント下から）順のテーブルにするために反転！！
      * @type {number}
@@ -248,7 +269,7 @@ function StylosCSV2XPS(CSVStream, spcFolder, dialogFolder) {
     myStylosCSV.layerLabel = [];//ラベル配列
     for (var idx = 0; idx < myStylosCSV.convertTable.length; idx++) {
         if ((myStylosCSV.dialogCount) && (idx == 0)) continue;
-        myStylosCSV.layerLabel.push(eval(myStylosCSV.SrcData[1][myStylosCSV.convertTable[idx]]));//ダイアログラベル取得
+        myStylosCSV.layerLabel.push(myStylosCSV.SrcData[1][myStylosCSV.convertTable[idx]]);//ダイアログラベル取得
     }
     /**
      * XPS互換ストリームに変換
@@ -310,7 +331,7 @@ function StylosCSV2XPS(CSVStream, spcFolder, dialogFolder) {
             if (false) {
                 //タイムラインデータを転記
                 for (var tlid = 0; tlid < this.convertTable.length; tlid++) {
-                    resultStream += eval(this.SrcData[frm + 2][this.convertTable[tlid]]);
+                    resultStream += this.SrcData[frm + 2][this.convertTable[tlid]];
                     resultStream += "\t";
                 }
             } else {
@@ -318,9 +339,9 @@ function StylosCSV2XPS(CSVStream, spcFolder, dialogFolder) {
                 for (var tlid = 0; tlid < this.convertTable.length; tlid++) {
 
                     if (frm == 0) {
-                        var currentValue = eval(this.SrcData[frm + 2][this.convertTable[tlid]]);
+                        var currentValue = this.SrcData[frm + 2][this.convertTable[tlid]];
                     } else {
-                        var currentValue = (this.SrcData[frm + 2][this.convertTable[tlid]] == this.SrcData[frm + 1][this.convertTable[tlid]]) ? "" : eval(this.SrcData[frm + 2][this.convertTable[tlid]]);
+                        var currentValue = (this.SrcData[frm + 2][this.convertTable[tlid]] == this.SrcData[frm + 1][this.convertTable[tlid]]) ? "" : this.SrcData[frm + 2][this.convertTable[tlid]];
                     }
                     resultStream += (currentValue === 0) ? "X\t" : currentValue + "\t";
                 }

@@ -300,6 +300,7 @@ try {
 /**
  * xUIオブジェクトはHTMLライブラリにおけるUI管理オブジェクトなのでHTML環境外ではfalseで初期化して判定する
  * HTML環境下であっても依存機能が初期化完了前にアクセスすることを抑制するためにfalseであらかじめ初期化するのを標準メソッドとする
+ * すなわちnasライブラリ稼働時は、つねにxUIオブジェクトが存在するものとする
  * @type {boolean}
  */
 xUI = false;
@@ -2128,9 +2129,9 @@ nas.Frm2FCT = function (frames, type, ostF, fpsC) {
 };
 
 /**
- * nas.FCT2Frm(Fct,fpsC)
- * 引数 :タイムカウンタ文字列[,カウンタフレームレート]
- * 戻値 :フレーム数
+ * nas.FCT2Frm(Fct,fpsC,check)
+ * 引数 :タイムカウンタ文字列[,カウンタフレームレート][,タイプ判定オプション]
+ * 戻値 :フレーム数　または　TCタイプ判別オブジェクト プロパティを下げたNumberオブジェクトで
  *
  * カウンタ文字から0スタートのフレーム値を返す
  * カウンタ文字列と認識できなかった場合は'元の文字列'を返す[仕様変更]
@@ -2139,12 +2140,12 @@ nas.Frm2FCT = function (frames, type, ostF, fpsC) {
  * タイムカウンタ文字列はFrm2FCT()の文字列を全て認識して解決する
  * 負数対応
  * フレームレートの指定が可能なように拡張(2010/11/06)
- * 指定がない場合 nas.RATE を参照する
+ * 指定がない場合 nas.FRATE を参照する
+
  * カウンタ文字列にページ指定がある場合は nas.SheetLength を参照する
  * この変数の一時指定はできないので、システムプロパティを直接書き直す必要がある
  *
  * SMPTEドロップを拡張(2010.11.05)
- * TC文字列判定 キーは
  * 最終セパレータが";"であるか否か
  * 文字列末尾のオリジネーション指定はあってもよいが無効（全て0オリジン）
  * フレームレートは30DF 60DFでは強制指定が行われたものとする。
@@ -2152,7 +2153,13 @@ nas.Frm2FCT = function (frames, type, ostF, fpsC) {
  * それ以上の場合は60DFのフレーム数を返す
  * 本来60DFはSMPTEの規格外なので扱いに注意すること
  * 
-    近来　23.8 (ドロップ互換24fps)が広範に利用されているのでそろそろ考慮化必要？
+    近来　23.8 (ドロップ互換24fps)が広範に利用されているのでそろそろ考慮必要？
+ TCタイプを判定する関数が必要だが、このメソッドを拡張するのが良さそう
+ 
+ * TC文字列判定機能増設 キーは第三引数に何かあれば　判定オブジェクトを返す
+ 判定オブジェクトは　Number にして計算可能　プロパティが付加される
+    Number.type     TCタイプ
+    Number.offset   オリジネーション
  
  * @param Fct
  * @param fpsC
@@ -2165,6 +2172,10 @@ nas.FCT2Frm = function (Fct, fpsC) {
     }
     fct = Fct.toString();
     var negative_flag = 1;
+var myFrames;//
+var ostF;
+var PostFix;
+var TCtype;
     /**
      * 負数表示がある場合ネガティブモードに遷移
      */
@@ -2180,33 +2191,27 @@ nas.FCT2Frm = function (Fct, fpsC) {
     /**
      * 文字列の最期の文字を評価してオリジネーションを取得
      */
-    if (fct.charAt(fct.length - 1) == '_') {
-        ostF = 1;
-        PostFix = '_';
-    } else {
-        ostF = 0;
-        PostFix = '.';
-    }
+    ostF = (fct.charAt(fct.length - 1) == '_')? 1 : 0 ;
+    PostFix = ['.','_'][ostF];
     /**
      * 文字列の最期の文字がポストフィックスなら切り捨て
      */
-//	alert(fct.charAt(fct.length - 1)+" : "+PostFix);
-    if (fct.charAt(fct.length - 1) == PostFix) {
-        fct = fct.slice(0, -1);
-    }
+    if (fct.charAt(fct.length - 1) == PostFix) {fct = fct.slice(0, -1)};
     /**
      * 初期判定で SMPTE-DFを分離
+     * TCtype 6 or 7
      */
     if (fct.match(/^([0-9]+:){0,2}[0-9]+;[0-9]+$/)) {
-        /**
-         * SMPTE hh:mm:ss;ff
-         * @type {string}
-         */
+    /**
+    * SMPTE hh:mm:ss;ff
+    * ポストフィックス判定を一旦破棄して　ostF = 0; にセットする　
+    * @type {string}
+    */
         fct = fct.replace(/;/g, ":");//セミコロンを置換
         fpsC = (fpsC < 45) ? 29.97 : 59.94;//SMPTEドロップが指定されたので強制的にフレームレート調整
         ostF = 0;
         PostFix = "";
-
+        TCtype = (fpsC < 45)?　6 : 7;
         /**
          * 一時係数設定
          * @type {number}
@@ -2268,8 +2273,7 @@ nas.FCT2Frm = function (Fct, fpsC) {
         FR += f;//フレームを加算
         FR -= (((m % 10) > 0) && (s == 0) && (f >= dropF)) ? dropF : 0;//例外ドロップフレームを減算
 //ここで存在しないはずの ドロップされたフレームは減算対象外にして後ろに送る
-
-        return FR * negative_flag;
+        myFrames = FR * negative_flag;
     } else {
         /**
          * 標準処理(ドロップ含む)
@@ -2289,6 +2293,7 @@ nas.FCT2Frm = function (Fct, fpsC) {
          */
         if (fct.match(/^[0-9]+$/)) {
             k = fct;
+            TCtype = 1;
         } else {
             /**
              * type 2    0:00:00 少数フレームレートの際にドロップ発生  TC
@@ -2310,6 +2315,7 @@ nas.FCT2Frm = function (Fct, fpsC) {
                     case 1:
                         k = tmpTC[tmpTC.length - 1];
                 }
+                TCtype = 2;
             } else {
                 /**
                  * type 3    000 + 00   trad-JA
@@ -2317,6 +2323,7 @@ nas.FCT2Frm = function (Fct, fpsC) {
                 if (fct.match(/^[0-9]+\+[0-9]+$/)) {
                     s = fct.substring(0, fct.search(/\+/));
                     k = fct.substr(fct.search(/\+/) + 1);
+                    TCtype = 3;
                 } else {
                     /**
                      * type 4    p 0 / 0 + 00 page-SK
@@ -2325,6 +2332,7 @@ nas.FCT2Frm = function (Fct, fpsC) {
                         p = fct.slice(1, fct.search(/\x2F/));
                         s = fct.substring(fct.search(/\x2F/) + 1, fct.search(/\+/));
                         k = fct.substr(fct.search(/\+/) + 1);
+                        TCtype = 4;
                     } else {
                         /**
                          * type 5    p 0 / + 000 page-K
@@ -2332,11 +2340,13 @@ nas.FCT2Frm = function (Fct, fpsC) {
                         if (fct.match(/^p[0-9]+\/\+[0-9]+$/)) {
                             p = fct.slice(1, fct.search(/\x2F/));
                             k = fct.substr(fct.search(/\+/) + 1);
+                            TCtype = 5;
                         } else {
                             /**
                              * ダメダメ
                              */
-                            return fct;
+                            TCtype = false;
+                            return false;
                         }
                     }
                 }
@@ -2367,13 +2377,28 @@ nas.FCT2Frm = function (Fct, fpsC) {
         if (((fpsC % 1) != 0) && (Math.floor(Frames / fpsC) != (Seconds))) {
             return null
         }
-//{alert ("drop :"+Frames+" >> "+(Frames)/fpsC+":"+Seconds)};
         /**
          * この判定のため電卓の計算式に使用するときのトラップが発生するので注意(2010/11/06)
          */
-        return Frames * negative_flag;
+            myFrames = Frames * negative_flag;
     }
+        if(arguments[2]){
+            var myResult = new Number(myFrames);
+            myResult.type=TCtype;
+            myResult.origin=ostF;
+            return myResult
+        }else{
+            return myFrames;
+        }
 };
+/*  TEST
+console.log(nas.FCT2Frm("timecode",24,true));
+console.log(nas.FCT2Frm("000 .",24,true));
+console.log(nas.FCT2Frm("1+12 _",12,true));
+console.log(nas.FCT2Frm("01:01:01;01.",24,true));
+console.log(nas.FCT2Frm("p12/3+0",24,true));
+
+*/
 /**
  * お道具箱汎用データ操作関数群
  * お道具箱汎用データ操作関数群オワリ
@@ -2730,7 +2755,9 @@ if (typeof (radiansToDegrees) == "undefined") var radiansToDegrees = nas.radians
 /**
  * 以前のコードを洗ってエイリアスが不要なら削除のこと AEエクスプレッション準互換ベクター/数学関数
  */
-
+/**
+    他にfakeAE のオブエクトを利用する
+*/
 
 /**
  * corveto 関連の関数

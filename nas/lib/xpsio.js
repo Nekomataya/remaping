@@ -1433,6 +1433,11 @@ Xps.prototype.getMap = function (MAP) {
  * カット番号以外の情報はデフォルトの文字列と比較して一致した場合セパレータごと省略
  * オプションで全ての要素を省略なしに結合したものを返す
  *
+ 出力仕様を　クラスメソッド互換に変更
+ 　オブジェクトメソッドを利用する場合はURIEncodeを使用しないプレーン文字列でやり取りが行われるものとする
+ 旧:     TITLE_OPUS_SCENE_CUT
+ 新:     TITLE#OPUS[subtitle]_sSCENE-cCUT(time)
+ 　　
  * @param opt
  * @returns {string}
  */

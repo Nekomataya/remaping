@@ -123,7 +123,9 @@ function new_xUI(){
     -1  所属セッションなし(初期値)
     0   最新セッション
     1~  数値分だけ遡ったセッション
-        
+
+モードを増設
+初期状態またはドキュメントクローズ状態の
 */
 xUI.init    =function(editXps,referenceXps){
     this.XPS=editXps;                           //XPSを参照するオブジェクト必須引数
@@ -159,11 +161,18 @@ xUI.init    =function(editXps,referenceXps){
     以下UI動作制御変数
     viewMode    ページ単位表示か又は全体を1ページ1カラムで表示させるかのフラグ
     uiMode      編集/管理/閲覧モードのフラグ
+        browsing
+            サーバ上のデータを開いて内容をブラウズしている状態
+            書込／変更は禁止
+        production
+            作業中　他ユーザはproductionに移行できない
+        management
+            管理中　カットのプロパティが変更できるが、内容は編集できない
     viewOnly    編集禁止（データのreadonlyではなくUI上の編集ブロック）
 */
     this.viewMode    = ViewMode;        // 表示モード Compact/WordProp
-    this.uiMode      = 'browsing';      // ui基本動作モード production/management/browsing
-    this.viewOnly    = true;            // 編集禁止フラグ
+    this.uiMode      ='floating';      // ui基本動作モード production/management/browsing/floating
+    this.viewOnly    = false;            // 編集禁止フラグ
     this.hideSource  = false;           // グラフィック置き換え時にシートテキストを隠す
     this.showGraphic = true;            // 置き換えグラフィックを非表示　＝　テキスト表示
 //if(appHost.platform=="AIR") this.showGraphic    = false;
@@ -489,10 +498,18 @@ for(var idx=0;idx<mySeps.length;idx++){
 /**
     xUI.setDocumentStatus(myCommnad)
     ドキュメントのステータスを変更する
-    引数：キーワード　activate/deactivate/checkin/checkput/abort/reseipt
+    引数：キーワード　activate/deactivate/checkin/checkout/abort/reseipt //push/pull
     ステータス変更成功時は、モードにあわせてアプリケーションのモードを設定
     引数がカラの場合は、現在のステータスを返す
     非同期のサービスレスポンス待ちなのでコールバック渡し
+    activate        from Fixed/Hold     to Active
+    deactivate      from Active         to Hold
+    checkin         from Startup/Fixed  to Active
+    checkout        from Active         to Fixed
+    abort           from Fixed          to Aborted
+    reseipt         from Fixed          to Startup
+    push            from float          to Startup/Fixed
+    pull            from 
 */
 xUI.setDocumentStatus = function(myCommand){
     if (typeof myCommand == 'undefined') return this.XPS.currentStatus;
@@ -575,6 +592,7 @@ xUI.setDocumentStatus = function(myCommand){
     production  作業モード
     management  管理モード
     browsing    閲覧モード
+    floating    フリー入力モード
 */
 xUI.setUImode = function (myMode){
     if(typeof myMode == 'undefined') myMode='current';
@@ -588,6 +606,7 @@ xUI.setUImode = function (myMode){
             　xUI.viewOnly = false;//メニュー切替
     $('#ddp-man').hide();
 	$('#pmaui').hide();
+	$('#pmfui').hide();
 	$('span.subControl_TC').each(function(){$(this).hide()})
     $("li#auiMenu").each(function(){$(this).hide()});
     document.getElementById('cutList').multiple = false;
@@ -603,11 +622,34 @@ xUI.setUImode = function (myMode){
             $('#pmcui').css('background-color','#bbbbdd');
             $('#pmcui').css('color','#666688');
             break;
+        case 'floating':;
+         //floating で必要なメニュー
+         /*
+         新規登録　カレントドキュメントを現在のリポジトリに登録する
+         
+         */
+            　xUI.viewOnly = false;//メニュー切替
+    $('#ddp-man').hide();
+	$('#pmaui').hide();
+	$('#pmfui').show();
+	$('span.subControl_TC').each(function(){$(this).show()})
+    $("li#auiMenu").each(function(){$(this).show()});
+    document.getElementById('cutList').multiple = true;
+            document.getElementById('pmcui-checkin').disabled    =true;//すべてのボタンを無効
+            document.getElementById('pmcui-update').disabled     =true;
+            document.getElementById('pmcui-checkout').disabled   =true;
+            document.getElementById('pmcui-activate').disabled   =true;
+            document.getElementById('pmcui-deactivate').disabled =true;
+            //インジケータカラー変更
+            $('#pmcui').css('background-color','#ddbbbb');
+            $('#pmcui').css('color','#886666');
+            break;
         case 'management':;
             //メニュー切替
             　xUI.viewOnly =  true;
     $('#ddp-man').show();
 	$('#pmaui').show();
+	$('#pmfui').hide();
 	$('span.subControl_TC').each(function(){$(this).show()})
     $("li#auiMenu").each(function(){$(this).show()});
     document.getElementById('cutList').multiple = true;
@@ -625,6 +667,7 @@ xUI.setUImode = function (myMode){
             　xUI.viewOnly = true;
     $('#ddp-man').hide();
 	$('#pmaui').hide();
+	$('#pmfui').hide();
 	$('span.subControl_TC').each(function(){$(this).hide()})
     $("li#auiMenu").each(function(){$(this).hide()});
     document.getElementById('cutList').multiple = false;
@@ -2732,9 +2775,6 @@ xUI.dialogSpin=function(param)
 
     return false;
 };
-//
-//xUI.dialogSpin=dialogSpin_;
-//
 
 /*xUI.getCurrent()
 引数:なし
@@ -5388,6 +5428,7 @@ XPS.readIN=function(datastream){
         xUI.sessionRetrace > 0     読み込んだ後に-1にリセット
     import判定がtrueの場合、現データの以下のプロパティを保護する
  カット尺は、ユーザに問い合わせる必要があるかも…　いや無い！
+ 
  カット尺を保護する場合は、リファレンスに読み込んで部分コピーを行うべき
 //      "mapfile"  ,マップデータは現在どちらでも意味は無いが読み込み側優先
 //      "time"     ,関数なので入れ替え不用
@@ -5416,6 +5457,60 @@ XPS.readIN=function(datastream){
         var isImport=((xUI.sessionRetrace==0)&&(xUI.uiMode=='production'))? true:false;
         var newXps = new Xps();
         newXps.parseXps(convertXps(datastream));
+/*
+読み込まれたデータ内にシナリオ形式のダイアログ記述が存在する可能性があるので、これを探して展開する
+現在は処理をハードコーディングしてあるが、この展開処理はトラックを引数にして処理メソッドに渡す形に変更する予定
+*/
+//ここでセリフトラックのチェックを行って、シナリオ形式のエントリを検知したら展開を行う
+    for(var tix=0;tix<newXps.xpsTracks.length;tix++){
+        var targetTrack=newXps.xpsTracks[tix]
+        if(targetTrack.option=='dialog'){
+            var convertQueue=[];//トラックごとにキューを置く
+            var currentEnd =false;//探索中の終了フレーム
+            
+            for(var fix=0;fix<targetTrack.length;fix++){
+                var entryText=String(targetTrack[fix]);
+//末尾検索中
+                if((convertQueue.length>0)&&(currentEnd)){
+//キューエントリが存在してかつブランクを検知、次のエントリの開始または、トラック末尾に達した場合はキューの値を更新
+//トラック末尾の場合のみ検出ポイントが異なるので注意
+                    if((nas.CellDescription.type(entryText)=='blank')||
+                       ((entryText.length>1)&&(entryText.indexOf('「')>=0))||
+                       (fix==(targetTrack.length-1))){
+                        var endOffset = (fix==(targetTrack.length-1))? 2:1;  
+                        convertQueue[convertQueue.length-1][2]=currentEnd+endOffset;
+                        currentEnd=false;
+                    }else{
+                        currentEnd=fix;
+                    }
+                }
+//開きカッコを持ったテキスト長１以上のエントリがあったらオブジェクトを作成してキューに入れ
+//終了点探索に入る
+                if((entryText.length>1)&&
+                   (entryText.indexOf('「')>=0)){
+                    var dialogValue=new nas.AnimationSound(targetTrack[fix]);
+                    dialogValue.parseContent();//
+                    convertQueue.push([dialogValue,fix,0]);// [値,開始フレーム,終了フレーム(未定義)]
+                    currentEnd = fix;
+                }
+            }
+//キューにあるダイアログを一括して処理
+            for(var qix=0;qix<convertQueue.length;qix++){
+                var dialogOffset = (String(convertQueue[qix][0].name).length)? 2:1;
+                    dialogOffset += convertQueue[qix][0].attributes.length;
+console.log(dialogOffset);
+                var dialogDuration = convertQueue[qix][2]-convertQueue[qix][1]; 
+                var startAddress =[tix,(convertQueue[qix][1] - dialogOffset)];
+console.log(startAddress);
+                var dialogStream =(convertQueue[qix][0].getStream(dialogDuration)).join(',');
+console.log(dialogStream);
+                newXps.put(startAddress,dialogStream);
+            }
+        }
+    }
+
+
+//インポートされた場合は、現行のドキュメントから固定のプロパティを転記する
         if(isImport){
             for (var ix=0;ix<props.length;ix++){newXps[props[ix]]=XPS[props[ix]]}
         }
@@ -6544,6 +6639,13 @@ case	"productStatus":;
 //	document.getElementById('pmcui_status').innerHTML= decodeURIComponent(xUI.XPS.currentStatus);
 	document.getElementById('pmcui_status').innerHTML= xUI.XPS.currentStatus.toString();
 	document.getElementById('pmcui_documentWriteable').innerHTML= (xUI.viewOnly)?'[編集不可]':'';
+    if (xUI.viewOnly){
+	document.getElementById('pmcui_documentWriteable').innerHTML= '[編集不可]';
+    $('#documentWritable').show();
+    }else{
+	document.getElementById('pmcui_documentWriteable').innerHTML= '';
+    $('#documentWritable').hide();
+    }
 	document.getElementById('pmcui_documentWriteable').innerHTML += String(xUI.sessionRetrace);
 	switch (xUI.uiMode){
 		case 'production':
@@ -6558,6 +6660,9 @@ case	"productStatus":;
 	document.getElementById('pmcui').style.backgroundColor = '#bbddbb';
 	document.getElementById('edchg').innerHTML=localize(nas.uiMsg.statusView);
 	break;
+	    default:;// floating and other
+	document.getElementById('pmcui').style.backgroundColor = '#dddddd';
+	document.getElementById('edchg').innerHTML=localize(nas.uiMsg.statusView);
 	}
 break;
 case	"fct":	;
@@ -6791,6 +6896,7 @@ default	:	if(dbg){dbgPut(": "+prop+" :ソレは知らないプロパティなの
 		//winTitle +=(xUI.isStored())?"":" *";
 		if(! xUI.isStored()) winTitle = "*"+winTitle;
 		if(document.title!=winTitle){document.title=winTitle};//違ってるときのみ書き直す
+      if(document.getElementById('pmcui')){
         if(! xUI.isStored()){
             if(document.getElementById('pmcui-update').disabled == true) document.getElementById('pmcui-update').disabled = false;
             xUI.pMenu('pMsave','enable');            
@@ -6798,6 +6904,7 @@ default	:	if(dbg){dbgPut(": "+prop+" :ソレは知らないプロパティなの
             if(document.getElementById('pmcui-update').disabled == false) document.getElementById('pmcui-update').disabled = true;
             xUI.pMenu('pMsave','false');
        }
+      }
 	}else{
 console.log('xUI は初期化前: yet init xUI');
 	}
@@ -6869,11 +6976,12 @@ if(! n){n=xUI.Select[0]; }
 
 //リスト展開プロシージャ
 /**
-引数:	ソース文字列　ListStr /  rcl
+引数:	ソース文字列　ListStr /   再帰呼出しフラグ　rcl
 戻値:	putメソッドの引数ストリーム
 	マクロ記法の文字列をputメソッドに引き渡し可能なストリームへ展開する
 	リスト展開エンジンは汎用性を持たせたいので、無理やりグローバルに置いてある。
 	要注意
+	戻り値の形式は　"1,,2,,3,,4,,5"等のスピン展開後のカンマ区切りテキストストリーム
 */
 	var expd_repFlag	=false	;
 	var expd_skipValue	=0	;//グローバルで宣言
@@ -6889,9 +6997,7 @@ function nas_expdList(ListStr,rcl){
 	}
 //(スキップ量はスピン-１)この値はグローバルの値を参照
 	var SepChar="\.";
-
-
-//	台詞レイヤの場合のみ、カギ括弧の中をすべてセパレートする
+//	台詞トラックの場合、カギ括弧の中をすべてセパレートして戻す
 //　ダイアログトラックは固定ではなくなったので判定を変更
 //  コメントトラックを排除する必要あり
 //この判定をxUIに依存すると汎用性がなくなるので、コール側で引数渡しに変更する必要あり？
@@ -6899,6 +7005,19 @@ function nas_expdList(ListStr,rcl){
 		((xUI.Select[0]<(XPS.xpsTracks.length-2))&&
 		(XPS.xpsTracks[xUI.Select[0]].option=="dialog"))
 	){
+        if(ListStr.indexOf('「') >= 0){
+            var mySound = new nas.AnimationSound(ListStr);
+            mySound.parseContent();
+            console.log(mySound)
+            var sectionLength= xUI.spinValue * (mySound.bodyText.length + mySound.comments.length);
+    　      ListStr= mySound.getStream(sectionLength).join(',');
+    　      return ListStr;
+        }
+/*
+    201801変更
+    ダイアログの展開をオブジェクトメソッドに移行
+    引数がシナリオ形式であること　ListStr.indexOf("「")>0
+    スピンの量をみて展開範囲を得る
 if (ListStr.match(/「([^「]*)」?/)) ;
 if (ListStr.match(/「(.+)」?/)) {
 //alert("Hit ："+ListStr.match(/^(.*「)([^」]*)(」?$)/));
@@ -6910,6 +7029,7 @@ if (ListStr.match(/「(.+)」?/)) {
 	ListStr=ListStr.replace(/\。/g,"");//句点空白(null)
 	ListStr=ListStr.replace(/\ー/g,"｜");//音引き縦棒
 	ListStr=ListStr.replace(/〜/g,"⌇");//音引き縦棒
+*/
 	};
 
 //		r導入リピートならば専用展開プロシージャへ渡してしまう

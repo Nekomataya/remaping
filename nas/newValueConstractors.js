@@ -628,7 +628,8 @@ nas.AnimationSound=function(myContent){
 */
 nas.AnimationSound.prototype.parseContent=function(){
     if(this.contentText.length){
-        if(this.contentText.match(/^([^"'「]*)["'「]([^"'」]*)["'」]?$/) ) { ;//"
+//        if(this.contentText.match(/^([^"'「]*)["'「]([^"'」]*)["'」]?\s$/) ) { ;//"
+        if(this.contentText.match(/^([^「]*)「([^」]*)」?\s$/) ) {
             this.name=RegExp.$1;
             this.bodyText=RegExp.$2;
         }else{
@@ -689,10 +690,11 @@ nas.AnimationSound.prototype.toString=function(counts){
     return myResult;
   }
 }
-//    test
-//A=new  nas.AnimationSound("たぬきさん(off)「ぽん！(SE:ポン)ぽこ！<BGM:開始>りん！[光る！]とうりゃぁー！！」");
-//A.parseContent();
-//A
+/*    test
+A=new  nas.AnimationSound("たぬきさん(off)「ぽん！(SE:ポン)ぽこ！<BGM:開始>りん！[光る！]とうりゃぁー！！」");
+A.parseContent();
+A
+*/
 /** 値を配列でもどす
 引数: cellCount
 戻値: セルのデータ並び配列
@@ -706,7 +708,7 @@ nas.AnimationSound.prototype.getStream=function(cellCounts){
     if(cellCounts<0)cellCounts=Math.abs(cellCounts);
   if(cellCounts){
     var myResult=[];
-    myResult.push(this.name);//ラベル
+    if(String(this.name).length) myResult.push(this.name);//ラベルあれば
     for(var aid=0;aid<this.attributes.length;aid++){myResult.push(this.attributes[aid])};//アトリビュート
     myResult.push('----');//開始セパレータ
     var entryCount = this.bodyText.length+this.comments.length;//テキスト文字数とコメント数を加算

@@ -7,13 +7,12 @@
 <link href="template/printout.css" type="text/css" rel=stylesheet media="print">
 
 <script src=./lib/jquery.js></script>
-<!--
-
 <script src=./lib/jquery-ui.js></script>
 <script src=./lib/ecl/ecl.js></script>
--->
+
 <script src=./config.js></script>
 <script src=./nas/lib/nas_common.js></script>
+<script src=./nas/lib/nas_common_HTML.js></script>
 
 <!-- システム汎用ライブラリ remaping.jsよりも前方でロードする必要あり
 
@@ -64,11 +63,12 @@
     id="myCurrentFile"のエレメントの有無で判定
 */
 window.addEventListener('DOMContentLoaded', function() {
-// ファイルが指定されたタイミングで、その内容を表示
+// ファイル（複数）が指定されたタイミングで、その内容を全部表示
   if(document.getElementById("myCurrentFile")){
     console.log('addEventListener');
   document.getElementById("myCurrentFile").addEventListener('change', function(e) {
     if(appHost.platform == "AIR"){
+
     // File APIを利用できるかをチェック
     if (window.File) {
       // 指定されたファイルを取得
@@ -77,6 +77,7 @@ window.addEventListener('DOMContentLoaded', function() {
 	xUI.data_well.value =fileBox.readContent();
  }
     }else{
+        
     // File APIを利用できるかをチェック
     if (window.File) {
       // 指定されたファイルを取得
@@ -110,10 +111,14 @@ var msg = "no FileReader! :\n　このブラウザはFileReaderオブジェク�
 */
 
 
-convertXps=function(datastream){
+convertXps=function(datastream,optionString){
     if(! String(datastream).length ){
         return false;
     }else{
+// オプションで識別子ファイル名を受け取る
+// 識別子の仕様はXpsIdentifier
+    if(! optionString){optionString = '';}
+
 //データが存在したら、種別判定して、コンバート可能なデータはコンバータに送ってXPS互換ストリームに変換する
 //Xpxデータが与えられた場合は素通し
 //この分岐処理は、互換性維持のための分岐
@@ -157,14 +162,134 @@ convertXps=function(datastream){
     }
     var newXps=new Xps();
     newXps.parseXps(datastream);
-        return newXps;
-}
-xUI={};
 
+//ここでセリフトラックのチェックを行って、シナリオ形式のエントリを検知したら展開を行う
+    for(var tix=0;tix<newXps.xpsTracks.length;tix++){
+        var targetTrack=newXps.xpsTracks[tix]
+        if(targetTrack.option=='dialog'){
+            var convertQueue=[];//トラックごとにキューを置く
+            var currentEnd =false;//探索中の終了フレーム
+            
+            for(var fix=0;fix<targetTrack.length;fix++){
+                var entryText=String(targetTrack[fix]);
+//末尾検索中
+                if((convertQueue.length>0)&&(currentEnd)){
+//キューエントリが存在してかつブランクを検知、次のエントリの開始または、トラック末尾に達した場合はキューの値を更新
+//トラック末尾の場合のみ検出ポイントが異なるので注意
+                    if((nas.CellDescription.type(entryText)=='blank')||
+                       ((entryText.length>1)&&(entryText.indexOf('「')>=0))||
+                       (fix==(targetTrack.length-1))){
+                        var endOffset = (fix==(targetTrack.length-1))? 2:1;  
+                        convertQueue[convertQueue.length-1][2]=currentEnd+endOffset;
+                        currentEnd=false;
+                    }else{
+                        currentEnd=fix;
+                    }
+                }
+//開きカッコを持ったテキスト長１以上のエントリがあったらオブジェクトを作成してキューに入れ
+//終了点探索に入る
+                if((entryText.length>1)&&
+                   (entryText.indexOf('「')>=0)){
+                    var dialogValue=new nas.AnimationSound(targetTrack[fix]);
+                    dialogValue.parseContent();//
+                    convertQueue.push([dialogValue,fix,0]);// [値,開始フレーム,終了フレーム(未定義)]
+                    currentEnd = fix;
+                }
+            }
+//キューにあるダイアログを一括して処理
+            for(var qix=0;qix<convertQueue.length;qix++){
+                var dialogOffset = (String(convertQueue[qix][0].name).length)? 2:1;
+                    dialogOffset += convertQueue[qix][0].attributes.length;
+                var dialogDuration = convertQueue[qix][2]-convertQueue[qix][1]; 
+                var startAddress =[tix,(convertQueue[qix][1] - dialogOffset)];
+                var dialogStream =(convertQueue[qix][0].getStream(dialogDuration)).join(',');
+                newXps.put(startAddress,dialogStream);
+            }
+        }
+    }
+/*
+  取得したXpsの概略をダイアログに表示
+  ユーザの確認と編集を促す
+  Cancelされた場合は処理を中断する
+*/
+    document.getElementById('optionPanelSCI_title').value    = newXps.title;
+    document.getElementById('optionPanelSCI_opus').value     = newXps.opus;
+    document.getElementById('optionPanelSCI_subtitle').value = newXps.subtitle;
+    document.getElementById('optionPanelSCI_01_sc').value    = ([newXps.scene,newXps.cut]).join(' ');
+    document.getElementById('optionPanelSCI_01_time').value  = newXps.getTC(newXps.time());
+
+        var myDialog = $("#optionPanelSCI");
+		myDialog.dialog("open");myDialog.focus();
+
+//document.getElementById('xpsResult').innerHTML = myXps.toString();
+//        return newXps;
+}
+/**
+    nas.timeIncrement(target,step,type)
+引数　
+    target  ターゲットエレメント
+    step    インクリメントステップをFCTまたはミリ秒で指定　自動判定
+    type  　書き戻しの際のFCTtype 指定が無い場合は　type3(秒+コマ形式)
+    ターゲットエレメントに　value プロパティが存在すればその値を　なければ　innerHTMLプロパティを取得して
+    その値にstep値の値を加えて書き戻すメソッド
+    ターゲットにonChange メソッドがあれば値変更時にコールする
+    値制限は、ターゲット側で行う
+*/
+nas.timeIncrement=function(target,step,type){
+    if (! target) return false;
+    if (! type)     type = 3;
+    var origValue  = (target instanceof HTMLInputElement)? nas.FCT2Frm(target.value):nas.FCT2Frm(target.innerHTML);//フレームに変換
+    var stepFrames = (typeof step =='number')? nas.ms2fr(step):nas.FCT2Frm(step);
+    var newValue   = origValue + stepFrames;//フレームで加算
+    if ((origValue == 1)||(origValue != newValue)){
+        if (target instanceof HTMLInputElement){
+            target.value     = nas.Frm2FCT(newValue,type);
+        }else{
+            target.innerHTML = nas.Frm2FCT(newValue,type);
+        }
+        if(target.onchange){target.onchange();}
+    }
+    return newValue;
+}
+/**
+nas.clipTC(myValue,max,min)
+TCで与えられた値を上限下限でクリップして返す
+上限値、下限値はフレーム数
+TCタイプは指定がない場合は入力値と同じ
+最大値の指定がない場合は無限大
+最小値の値がない場合はマイナス無限大で
+*/
+nas.clipTC=function(myValue,max,min,TCtype){
+    var f = nas.FCT2Frm(myValue,nas.FRAET,true);
+    if( typeof TCtype == 'undfined') TCtype=f.type;
+    var ostF = f.offset;
+    
+    if (f < min) f= min;
+    if (f > max) f= max;
+    return nas.Frm2FCT(f,TCtype,ostF,nas.FRATE);
+}
+
+/*
+ドキュメント初期化
+
+*/
+initConverter=function(){
+
+//ダイアログパネル初期化
+    $("#optionPanelSCI").dialog({
+	    autoOpen:false,
+	    modal	:true,
+	    width	:480,
+	    title	:"IMPORT"
+    });
+// ダミーのUIオブジェクトを作成してプロパティを下げる
+    xUI={};
+    xUI.data_well= document.getElementById('data_well');
+}
 </script>
 </head>
 <body
-onLoad="xUI.data_well= document.getElementById('data_well');"
+onLoad="initConverter();"
 >
 
 /**
@@ -212,7 +337,7 @@ include
 <span style="text-align:center">
 
 <div id=localFileLoader><form id="dataLoader" name="dataLoader" method="post" action="javascript:void(0);" enctype="multipart/form-data">
-<input type=file id=myCurrentFile name=XPSBody size=100 >
+<input type=file multiple="multiple" id=myCurrentFile name=XPSBody size=100 >
 </form></div>
 
 <form name=exportXps action="void(0);">
@@ -233,8 +358,7 @@ include
 </form>
 <!--	シート取り込み	-->
 <div align=center>
-<button onClick="var myXps=convertXps(document.getElementById('data_well').value);document.getElementById('xpsResult').innerHTML = myXps.toString();"
->
+<button onClick="convertXps(document.getElementById('data_well').value);">
 ⇓　CONVERT ⇓
 </button><br>
 <textarea id="xpsResult" style="width:80%;height:256px"></textarea>
@@ -258,18 +382,98 @@ TVP-csv1.0/1.1 ./nas/lib/lib_TVP.js
 タイトル myXps.title
 エピソード myXps.opus , myXps.subtitle
 カット番号　myXps.scene , myXps.cut (UATの場合は　scene='';cut=カット番号;として扱って可)
+
+セルシスのCSVフォーマットは、トラック情報のみで　タイトル,エピソード、カット番号等の情報が含まれない
+サーバ上でインポートする場合は、必ずそれらの情報を補う必要がある。
+
+
+＊タイムシート編集画面にドラッグした場合は、タイムシートのトラックを置換する　ドラッグのターゲットを定める
+＊カットブラウズ画面にドラグした場合は、同エピソードでカット番号のみユーザに要求する
+＊エピソードブラウザにドラグした場合は、同タイトルでエピソードとカット番号を要求
+＊ダッシュボードやタイトルブラウザにドラグした場合は　タイトル、エピソード、カット番号を要求する
+
+新規のタイトル、エピソード、カットが指定された場合はダイアログを表示。
+既存のタイトルをリストして、新規タイトルの登録を希望するか否かを確認する。
+ユーザのタイプミス等の可能性があるので、新規の登録を無条件で行ってはならない。
+また、新規のエレメントとしてサーバにエントリを行うためには、制作管理権限または　リポジトリのオーナー権限が必要
+
+ダイアログ展開用の汎用的なメソッドを追加する
+XPSオブジェクトに対して実行する
+シナリオ形式のテキストをパースして、XPSのトラック用ストリームとして再配置
+また
+セクションパースを行って逆方変換を行うメソッドも作成のこと
 </pre>
 
 
-
-
-
-<script src=./nas/lib/lib_TSX.js></script>
 戻り値：コンバートされたXps オブジェクト
 
 </div>
+
+
+<!-- optionPanelSCI -->
+<div class=optionPanel id=optionPanelSCI >
+確認内容<br><br>
+
+<p>TITLE:</p>
+    <input id=optionPanelSCI_title type=text style="width:192px">
+<p>#:</p>
+    <input id=optionPanelSCI_opus type=text style="width:48px">
+<br>
+<p>SUBTITLE:</p>
+    [<input id=optionPanelSCI_subtitle type=text style="width:240px">]
+<hr>
+<input id=optionPanelSCI_imptCB_1 type=checkbox title='import' checked>
+S-C:<input id=optionPanelSCI_01_sc type=text style="width:128px" value='###'>
+<!-- 時間編集UI -->
+<span>
+TIME:(
+<input
+    type = text
+    style = "width:72px;height:24px;border-style:none;background-color:rgba(0,0,0,0);"
+    id = 'optionPanelSCI_01_time'
+    value ='00+00 .'
+    onMouseDown = 'nas.sliderVALUE([event,this.id,"288","1","0"]);'
+    onChange = 'this.value = nas.clipTC(this.value,Infinity,1,3);'
+>
+)
+<span style="margin-right:72px;height:48px;"> </span>
+<span style="position:relative">
+         <button
+    class='subControl subControl-incrS subControl-left-top'
+    onclick='nas.timeIncrement(this.parentNode.parentNode.childNodes[1],1000,3);'>
+</button><button
+    class='subControl subControl-decrS subControl-left-bottom'
+    onclick='nas.timeIncrement(this.parentNode.parentNode.childNodes[1],-1000,3);'>
+</button><button
+    class='subControl subControl-incr6 subControl-mid-top'
+    onclick='nas.timeIncrement(this.parentNode.parentNode.childNodes[1],"6",3);'> 
+</button><button
+    class='subControl subControl-decr6 subControl-mid-bottom'
+    onclick='nas.timeIncrement(this.parentNode.parentNode.childNodes[1],"-(6)",3);'>
+</button><button
+    class='subControl subControl-incr subControl-right-top'
+    onclick='nas.timeIncrement(this.parentNode.parentNode.childNodes[1],"1",3);'>
+</button><button
+    class='subControl subControl-decr subControl-right-bottom'
+    onclick='nas.timeIncrement(this.parentNode.parentNode.childNodes[1],"-(1)",3);'>
+</button></span><br>
+<hr></span>
+<!-- 時間編集UI -->
+
+<br>
+<hr>
+<button onclick='console.log()' style='width:256px'> カット登録 </button>
+<!--
+S:<input type=text style="width:64px" value='###'>-C:<input type=text style="width:64px" value='###'>
+TIME:(<input type=text style="width:64px" value='##+##'>)
+<br>
+-->
 </span>
 </div>
+<!-- optionPanelSCI -->
 
+</div>
+<hr>
+Nekomataya/kiyo 2018 
 </body>
 </html>

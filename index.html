@@ -1225,8 +1225,19 @@ class=optionPanel id=optionPanelProductManagement
 </datalist>
 <button class=pmControllButton >開始</button>
 <br> -->
-<hr><hr>
+<!-- ドキュメントコントロール(floating)メニュー
+class=optionPanel id=optionPanelProductManagement
+-->
+    <div id=pmfui>
+<button
+	id=pmfui-new
+    class='pmControl pmControl-new' 
+    title='新規カットを登録'
+	onclick='xUI.sWitchPanel("File");'
+>新規登録</button>
+    </div>
 
+<hr><hr>
 <!--
 
 //  新規カット
@@ -1290,7 +1301,11 @@ class=optionPanel id=optionPanelProductManagement
 <hr>-->
         </div>
 <!-- ドキュメントコントロール(制作管理)メニュー-->
-
+<!-- ドキュメント ステータス　オーバレイ　-->
+<div id=documentWritable class=documentStatusOverlay>
+<span style='border-style:solid;border-color:red;'> Read Only </span> 
+</div>
+<!-- ドキュメント ステータス　オーバレイ　-->
 <!-- シートヘッダテーブル　編集機能あり縮小UIの際は非表示または縮小表示に -->
 <div id=sheetHeaderTable>
 <!-- コンパクトビューの時は　インジケータ　カット番号　時間　を残して非表示-->
@@ -1835,7 +1850,7 @@ onclick='nas.incrFCTonHTMLInput(document.getElementById("editTC"),"-(1)")'
 ><input type=button
     id=dataLoaderClose value="閉じる" style="width:10%"
 	onClick='xUI.sWitchPanel("clear")'
-><br /><textarea nema=XPSBody id=data_well style="width:80%;height:128px"
+><br /><textarea name=XPSBody id=data_well style="width:80%;height:128px"
 ></textarea><br><strong> (Export) </strong>
 <input type=button
     id=exporterXps value="Xps" style="width:10%"
@@ -1900,7 +1915,7 @@ onclick='nas.incrFCTonHTMLInput(document.getElementById("editTC"),"-(1)")'
 	<th width=8em>	MAP-file
 	</th>
 	<td width=24em colspan=2>
-	<input type=text id=scnMapfile style="width:100%" value="---" onChange="myScenePref.rewrite(this.id)"/>
+	<input type=text id=scnMapfile style="width:100%" disabled value="---" onChange="myScenePref.rewrite(this.id)"/>
 	</td>
 </tr>
 <tr>
