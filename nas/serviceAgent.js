@@ -1999,14 +1999,14 @@ APIの情報は、識別子と一致しているはずだが　照合の上異�
 サブタイトルは　episode.discriptionを使用
 兼用カット情報はペンディング
 */
+console.log(myCut)
                 var myCutToken = myCut.token;
                 var myCutLine  = (myCut.line_id)?
                     myCut.line_id:
-//                    (new XpsLine(nas.pmdb.pmTemplate[0].line.toString())).toString(true);
-                    (new XpsLine(nas.pmdb.pmTemplate.line.toString())).toString(true);
+                    (new XpsLine(nas.pmdb.pmTemplate.members[0].line.toString())).toString(true);
                 var myCutStage = (myCut.stage_id)?
                     myCut.stage_id:
-                    (new XpsStage(nas.pmdb.pmTemplate[0].stages[0].toString())).toString(true);
+                    (new XpsStage(nas.pmdb.pmTemplate.members[0].stages.getStage())).toString(true);
                 var myCutJob   = (myCut.job_id)?
                     myCut.job_id:
                     (new XpsStage(nas.pmdb.jobNames.members[0].toString())).toString(true);

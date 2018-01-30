@@ -140,9 +140,13 @@ nas.Pm.searchProp = function(keyword,target){
 }
 /**
     クラスメソッド　nas.Pm.searchPropを使ってキーを検索して対応するメンバーを返すオブジェクトメソッド
-    検索に失敗したケースではnullを戻す 
+    検索に失敗したケースではnullを戻す
+    引数を与えない場合に限り、メンバー内の最初のエントリを戻す
+    デフォルトエントリとして使用
+    デフォルトエントリを必ず最初に登録する必要がある
 */
 nas.Pm._getMember = function(keyword){
+    if(typeof keyword=='undefined'){for (itm in this.members){return itm;break;}}
     if(this.members[keyword]) return this.members[keyword];
     var prp = nas.Pm.searchProp(keyword,this);
     if(prp){return this.members[prp]}else{return null}
@@ -165,7 +169,7 @@ nas.Pm._getMember = function(keyword){
                 コレクションの　add  メソッドで処理可能なテキストデータの配列を
                 改行区切りで出力する
                 
-    "JSON"      JSONによるダンプ（可能な場合のみ　いらんかも　現在使ってない）
+    "JSON"      JSONによるダンプ（可能な場合のみ　いらんかも　現在使ってない 2018.01）
 */
 /**
     各コレクションメンバーは、toString　メソッドで自身のテキスト値を返す
@@ -881,6 +885,17 @@ nas.Pm.StageCollection.prototype.getTemplate = function(stageName){
     }
     return result;
 }
+/**
+    ステージコレクション内からスタートアップ候補（開始デフォルト）のステージを取得するメソッド
+    第一ステージとなるアイテムはステージコレクションに最初に置かれたステージ
+    for( itm in this.menbers) で最初に出てくるステージのこと
+    ↑これはgetStage=_getMember に統合　したので不要
+
+nas.Pm.StageCollection.prototype.getStartup =function(){
+    for(itm in this.members){return itm;break;}
+}
+*/
+
 nas.Pm.stages = new nas.Pm.StageCollection(nas.Pm);
 /*
 定義テーブルからテンプレートを取得するための機能

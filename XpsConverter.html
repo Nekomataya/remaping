@@ -115,6 +115,7 @@ if(window.FileReader){
       // ファイルの読み込みに成功したら、その内容をxUI.data_wellに反映（2）
       reader.addEventListener('load', function(e) {
         var output = reader.result;//
+        
         xUI.data_well.value = output;
       }, true);
       // ファイルの内容をテキストとして取得（3）
