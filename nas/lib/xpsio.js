@@ -1427,21 +1427,34 @@ Xps.prototype.getMap = function (MAP) {
 
 /**
  * カット識別子を返すオブジェクトメソッド
- * Xps.getIdentifier(識別オプション)
+ * Xps.getIdentifier(識別オプション,)
  * カット識別文字列を返す
  * カット識別子は　タイトル、制作番号、シーン、カット番号　の各情報をセパレータ"_"で結合した文字列
  * カット番号以外の情報はデフォルトの文字列と比較して一致した場合セパレータごと省略
- * オプションで全ての要素を省略なしに結合したものを返す
+ * オプションで要素の結合状態を編集して返す
  *
+ セパレータ文字列は[_#\[]
  出力仕様を　クラスメソッド互換に変更
  　オブジェクトメソッドを利用する場合はURIEncodeを使用しないプレーン文字列でやり取りが行われるものとする
  旧:     TITLE_OPUS_SCENE_CUT
  新:     TITLE#OPUS[subtitle]_sSCENE-cCUT(time)
- 　　
+
+ 基本的に’結合文字列をファイル名として使用できる’’ユーザ可読性がある’ことを前提にする
+
+ options:
+ 'full' 全ての要素を含む識別文字列で返す　
+        TITLE#OPUS[subtitle]_sSCENE-cCUT(time)
+ 'cut'
+        #OPUS_sSCENE-cCUT
+ 'simple'
+        TITLE#OPUS_sSCENE-cCUT
+ 'complex'
+        TITLE#OPUS[subtitle]_sSCENE-cCUT
  * @param opt
  * @returns {string}
  */
 Xps.prototype.getIdentifier = function (opt) {
+if(false){
     if (opt) {
         return [this.title, this.opus, this.scene, this.cut].join("_");
     } else {
@@ -1456,6 +1469,25 @@ Xps.prototype.getIdentifier = function (opt) {
         myResult.push(this.cut);
         return myResult.join("_");
     }
+}else{
+    var myResult=""
+    switch (opt){
+    case 'cut':
+        myResult='#'+this.opus+'_s'+this.scene+'-c'+this.cut;
+    break;
+    case 'simple':
+        myResult=this.title+'#'+this.opus+'_s'+this.scene+'-c'+this.cut;
+    break;
+    case 'complex':
+        myResult=this.title+'#'+this.opus+'['+this.subtitle+']_s'+this.scene+'-c'+this.cut;
+    break;
+    case 'full':
+    default    :
+        myResult=this.title+'#'+this.opus+'['+this.subtitle+']_s'+this.scene+'-c'+this.cut+'('+nas.Frm2FCT(this.time(),3)+')';
+    }
+
+    return myResult;
+}   
 };
 /**
  * 継続時間をフレーム数で返す
@@ -2791,7 +2823,7 @@ Xps.parseSCi = function(sciString){
     return result;
 }
 /** test
-    if(dbg) console.log (Xps.parseSCi('s-cC%23%20(16)/'));
+    console.log (Xps.parseSCi('s-cC%23%20(16)/'));
 */
 /**
 カット識別子をパースするメソッド
@@ -2862,9 +2894,12 @@ Xps.stringifyIdf([
      SCi/listEntryオブジェクトとの兼ね合いを要調整　20170104
      
      asign/
+     オブジェクトメソッドの識別子も解釈可能にする
+    '_'をセパレータとして認識するように変更
 */
 Xps.parseIdentifier = function(myIdentifier){
     if(! myIdentifier.split){console.log(myIdentifier)};
+    if(myIdentifier.indexOf('_')>0){myIdentifier=myIdentifier.replace(/_/g,'//');}
     var dataArray = myIdentifier.split('//');
     var result={};
     result.product  = Xps.parseProduct(dataArray[0]);

@@ -50,6 +50,32 @@
 
 
 <!-- ライブラリインストール -->
+<!-- css for new UI-->
+<style type="text/css">  
+<!-- 
+input.timeInputTC {
+    width:72px;
+    height:24px;
+    border-style:none;
+    background-color:rgba(0,0,0,0);
+}
+.SCiInput {
+    height:24px;
+    border-style:none;
+    background-color:rgba(0,0,0,0);
+}
+span.timeInputButtons {
+    position:relative;
+    left:64px;
+    top:4px;
+}
+span.titleInputLB {
+    text-align:right;
+}
+-->  
+</style>  
+
+<!-- css for new UI-->
 <script>
 /*
 	File API を使用したデータの読み込み（ブラウザでローカルファイルを読む）
@@ -108,18 +134,38 @@ var msg = "no FileReader! :\n　このブラウザはFileReaderオブジェク�
     XPSオブジェクトのreadINメソッドをオーバーライドするため
     元のreadINメソッドから切り離した、データ判定ルーチン部分
     内部でparseXpsメソッドを呼んでリザルトを返す
+    以下のオブジェクトでoverwriteProps を与えると固定プロパティの指定が可能
+    {
+        "title":"タイトル文字列",
+        "epispde":"エピソード文字列",
+        "description":" エピソードサブタイトル文字列",
+        "cut":"カット番号文字列",
+        "time":"カット尺文字列　フレーム数またはTC"
+    }
+    いずれのプロパテイも省略可能
+    指定されたプロパティは、その値でダイアログを上書きして編集が固定される
+    全て指定した場合は、ユーザの編集ができなくなるので注意
 */
 
 
-convertXps=function(datastream,optionString){
+convertXps=function(datastream,optionString,overwriteProps){
     if(! String(datastream).length ){
         return false;
     }else{
+// 上書き用のデータ引数があればプロパティを参照変数にセット
+    if(overwriteProps){
+        xUI.overwriteProps=overwriteProps;
+    }else{
+        xUI.overwriteProps=undefined;
+    }
 // オプションで識別子ファイル名を受け取る
-// 識別子の仕様はXpsIdentifier
-    if(! optionString){optionString = 'TEST#01[subtitle]//s-c123';}
-
+// 識別子はXps.parseIdentifierでパースして利用
+    if(! optionString){optionString = 'TITLE#EP[subtitle]//s-c=CUTNo.=';}
+    if(optionString.indexOf('_')>=0){optionString=optionString.replace(/_/g,'//');}
+// オプション文字列が　カット番号セパレータ'//'を含まない場合　文字列冒頭に'//'を補う
+    if(optionString.indexOf('//') < 0 ){optionString='//' + optionString;}
     var optionTrailer=Xps.parseIdentifier(optionString);
+
 //データが存在したら、種別判定して、コンバート可能なデータはコンバータに送ってXPS互換ストリームに変換する
 //Xpxデータが与えられた場合は素通し
 //この分岐処理は、互換性維持のための分岐
@@ -213,17 +259,11 @@ convertXps=function(datastream,optionString){
   ユーザの確認と編集を促す
   Cancelされた場合は処理を中断する
 */
-    document.getElementById('optionPanelSCI_title').value    = optionTrailer.title;
-    document.getElementById('optionPanelSCI_opus').value     = optionTrailer.opus;
-    document.getElementById('optionPanelSCI_subtitle').value = optionTrailer.subtitle;
-    document.getElementById('optionPanelSCI_01_sc').value    = optionTrailer.cut;
-    document.getElementById('optionPanelSCI_01_time').value  = xUI.convertTarget.getTC(xUI.convertTarget.time());
+    resetTarget(optionTrailer);
 
         var myDialog = $("#optionPanelSCI");
-		myDialog.dialog("open");myDialog.focus();
+		myDialog.dialog("open");myDialog.focus();document.getElementById('optionPanelSCI_01_sc').focus()
 
-//document.getElementById('xpsResult').innerHTML = myXps.toString();
-//        return xUI.convertTarget;
 }
 
 updateTarget= function(){
@@ -238,6 +278,66 @@ updateTarget= function(){
 
     document.getElementById("xpsResult").innerHTML = xUI.convertTarget.toString();
     $("#optionPanelSCI").dialog("close");
+}
+
+resetTarget= function(optionTrailer){
+    console.log(optionTrailer);
+    document.getElementById('optionPanelSCI_title').value    = optionTrailer.title;
+    document.getElementById('optionPanelSCI_opus').value     = optionTrailer.opus;
+    document.getElementById('optionPanelSCI_subtitle').value = optionTrailer.subtitle;
+    document.getElementById('optionPanelSCI_01_sc').value    = optionTrailer.cut;
+    document.getElementById('optionPanelSCI_01_time').value  = xUI.convertTarget.getTC(xUI.convertTarget.time());
+    if(xUI.overwriteProps){
+        for(prp in xUI.overwriteProps){
+            switch (prp){
+                case "title":
+    document.getElementById('optionPanelSCI_title').value    = String(xUI.overwriteProps[prp]);
+    document.getElementById('optionPanelSCI_title').disabled = true;
+                break;
+                case "episode":
+    document.getElementById('optionPanelSCI_opus').value    = String(xUI.overwriteProps[prp]);
+    document.getElementById('optionPanelSCI_opus').disabled = true;
+                break;
+                case "description":
+    document.getElementById('optionPanelSCI_subtitle').value    = String(xUI.overwriteProps[prp]);
+    document.getElementById('optionPanelSCI_subtitle').disabled = true;
+                break;
+                case "cut":
+    document.getElementById('optionPanelSCI_01_sc').value    = String(xUI.overwriteProps[prp]);
+    document.getElementById('optionPanelSCI_01_sc').disabled = true;
+                break;
+                case "time":
+    document.getElementById('optionPanelSCI_01_time').value    = String(xUI.overwriteProps[prp]);
+    document.getElementById('optionPanelSCI_01_time').onchange();
+    document.getElementById('optionPanelSCI_01_time').disabled = true;
+                break;
+            }
+        }
+    }
+    document.getElementById('resetTarget').disabled = true;
+}
+/**
+    checkValue(ctrlElement)
+    ダイアログの変更状況をチェックしてUIの状態を更新する
+     パラメータがひとつでも変更された場合はリセットボタンを有効に
+    時間パラメータが変更された場合は、表記をTCに統一する
+*/
+function checkValue(itm){
+    switch(itm.id){
+        case 'optionPanelSCI_title':;
+        break;
+        case 'optionPanelSCI_opus':;
+        break;
+        case 'optionPanelSCI_subtitle':;
+        break;
+        case 'optionPanelSCI_01_sc':;
+        break;
+        case 'optionPanelSCI_01_time':;
+                itm.value = nas.clipTC(itm.value,Infinity,1,3);
+        break;
+    }
+//    document.getElementById('updateTarget').disabled = false;
+    document.getElementById('resetTarget').disabled = false;
 }
 /**
     nas.timeIncrement(target,step,type)
@@ -283,6 +383,31 @@ nas.clipTC=function(myValue,max,min,TCtype){
     if (f > max) f= max;
     return nas.Frm2FCT(f,TCtype,ostF,nas.FRATE);
 }
+/**
+nas.File
+　ファイルハンドルオブジェクト
+　ファイルハンドルはプラットフォーム毎に実装されるファイルオブジェクトのエージェントとして機能する
+　AIR/Adobe 拡張スクリプト/html5 File/Node.js/
+　とか色々必要だけど
+　今回はファイル名から拡張子切り分け（=最後の'.'で文字列をセパレート）のみの実装で済ませる
+　ファイル名本体に空文字列を認めていない
+　.git 等は　ファイル名　".git"   拡張子　なし　となる
+　拡張子なしのドットファイルの扱いに注意
+
+divideExtension(filename)
+引数:文字列　拡張子付きファイル名
+戻値:配列[拡張子,ファイル名本体]
+*/
+divideExtension = function(filename){
+    filename=String(filename);
+        var nameBody=filename;
+        var nameExtension ='';
+    if(filename.match(/^(.+)\.([^\.]*)$/)){
+        nameExtension   =RegExp.$2;
+        nameBody        =RegExp.$1;
+    }
+    return [nameExtension,nameBody];
+}
 
 /*
 ドキュメント初期化
@@ -295,12 +420,17 @@ initConverter=function(){
 	    autoOpen:false,
 	    modal	:true,
 	    width	:480,
+	    position :{
+	        my: "left top",
+            at: "center-240 top+100",
+        },
 	    title	:"IMPORT"
     });
 // ダミーのUIオブジェクトを作成してプロパティを下げる
     xUI={};
     xUI.data_well= document.getElementById('data_well');
     xUI.convertTarget;
+    xUI.overwriteProps;
 }
 </script>
 </head>
@@ -373,8 +503,20 @@ include
 <br>
 </form>
 <!--	シート取り込み	-->
+<script>
+<!--//test
+var overwriteTest={
+    "title"      :"たいとる"
+    ,"episode"    :"えぴそど"
+    ,"description":"さぶたいとる"
+};
+//    ,"cut"　　　　:"かっと"
+//    ,"time"　　　 :"2+21"
+
+-->
+</script>
 <div align=center>
-<button onClick="convertXps(document.getElementById('data_well').value);">
+<button onClick="convertXps(document.getElementById('data_well').value,divideExtension(document.getElementById('myCurrentFile').files[0].name)[1],overwriteTest);">
 ⇓　CONVERT ⇓
 </button><br>
 <textarea id="xpsResult" style="width:80%;height:256px"></textarea>
@@ -426,34 +568,56 @@ XPSオブジェクトに対して実行する
 </div>
 
 
-<!-- optionPanelSCI -->
+<!-- optionPanelSCI 
+     この下側が登録内容の編集ダイアログです
+     ファイル名から以下の情報を取得するようにトライします
+     タイトル
+     エピソード
+     サブタイトル（エピソードの　description）
+     カット番号（名称）
+     
+     分解不能な場合は、拡張子を除くファイル名全体がカット番号として認識されます。
+     
+     サーバでの使用時に、タイトル・エピソード・サブタイトルを固定する場合は、
+     convertXps()
+-->
 <div class=optionPanel id=optionPanelSCI >
 確認内容<br><br>
 
-<p>TITLE:</p>
-    <input id=optionPanelSCI_title type=text style="width:192px">
-<p>#:</p>
-    <input id=optionPanelSCI_opus type=text style="width:48px">
-<br>
-<p>SUBTITLE:</p>
-    [<input id=optionPanelSCI_subtitle type=text style="width:240px">]
+<span class=titleInputLB style='width:200px;'>TITLE:</span>
+    <input class=SCiInput id=optionPanelSCI_title type=text style="width:300px"
+        onChange='checkValue(this)'
+    >
+<span class=opusInputLB >#:</span>
+    <input class=SCiInput id=optionPanelSCI_opus type=text style="width:48px"
+        onChange='checkValue(this)'
+    >
 <hr>
-<input id=optionPanelSCI_imptCB_1 type=checkbox title='import' checked>
-S-C:<input id=optionPanelSCI_01_sc type=text style="width:128px" value='###'>
+<span class=titleInputLB >SUBTITLE:</span>
+    [<input class=SCiInput id=optionPanelSCI_subtitle type=text style="width:320px"
+        onChange='checkValue(this)'
+    >]
+<hr><hr>
+<input class=SCiInputCB id=optionPanelSCI_imptCB_1 type=checkbox title='このカットをインポートします' checked
+    onChange='checkValue(this)'
+>
+<span  class=SCiInputLB >S-C:</span>
+    <input  class=SCiInput id=optionPanelSCI_01_sc type=text style="width:192px" value='###'
+        onChange='checkValue(this)'
+    >
 <!-- 時間編集UI -->
-<span>
+<span class=timeInputUI >
 TIME:(
 <input
     type = text
-    style = "width:72px;height:24px;border-style:none;background-color:rgba(0,0,0,0);"
+    class=timeInputTC
     id = 'optionPanelSCI_01_time'
     value ='00+00 .'
     onMouseDown = 'nas.sliderVALUE([event,this.id,"288","1","0"]);'
-    onChange = 'this.value = nas.clipTC(this.value,Infinity,1,3);'
+    onChange ='checkValue(this)'
 >
 )
-<span style="margin-right:72px;height:48px;"> </span>
-<span style="position:relative">
+<span class=timeInputButtons>
          <button
     class='subControl subControl-incrS subControl-left-top'
     onclick='nas.timeIncrement(this.parentNode.parentNode.childNodes[1],1000,3);'>
@@ -472,13 +636,23 @@ TIME:(
 </button><button
     class='subControl subControl-decr subControl-right-bottom'
     onclick='nas.timeIncrement(this.parentNode.parentNode.childNodes[1],"-(1)",3);'>
-</button></span><br>
-<hr></span>
+</button>
+    </span>
+<br>
+<hr>
+</span>
 <!-- 時間編集UI -->
 
 <br>
 <hr>
-<button onclick='updateTarget();' style='width:256px'> カット登録 </button>
+<button id=updateTarget
+    onclick='updateTarget();' 
+    style='width:256px'
+> カット登録 </button>
+<button id=resetTarget
+ onclick='resetTarget(Xps.parseIdentifier(divideExtension(document.getElementById("myCurrentFile").files[0].name)[1]));'
+ style='width:144px'
+ > リセット </button>
 <!--
 S:<input type=text style="width:64px" value='###'>-C:<input type=text style="width:64px" value='###'>
 TIME:(<input type=text style="width:64px" value='##+##'>)
@@ -487,6 +661,9 @@ TIME:(<input type=text style="width:64px" value='##+##'>)
 </span>
 </div>
 <!-- optionPanelSCI -->
+
+
+
 
 </div>
 <hr>

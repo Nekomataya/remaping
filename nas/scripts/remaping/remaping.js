@@ -6568,7 +6568,7 @@ case    "referenceLabel":
     var refIdf =Xps.getIdentifier(xUI.referenceXPS);
     var refDistance = Xps.compareIdentifier(myIdf,refIdf);
     if(refDistance < 1){
-        var referenceLabel = xUI.referenceXPS.getIdentifier(true);
+        var referenceLabel = "noReferenece";//xUI.referenceXPS.getIdentifier(true);
         var referenceTitle = decodeURIComponent(refIdf);
     }else if(refDistance == 1){
         var referenceLabel = xUI.referenceXPS.line.name;
@@ -6891,7 +6891,7 @@ default	:	if(dbg){dbgPut(": "+prop+" :ソレは知らないプロパティなの
 	}
 //windowTitle及び保存処理系は無条件で変更
 	if(xUI.init){
-		var winTitle=xUI.XPS.getIdentifier();//これは修正予定1/9
+		var winTitle=xUI.XPS.getIdentifier('cut');// ウィンドウタイトル用のデータは
 		if((appHost.platform == "AIR") && (fileBox.currentFile)){winTitle = fileBox.currentFile.name}
 		//winTitle +=(xUI.isStored())?"":" *";
 		if(! xUI.isStored()) winTitle = "*"+winTitle;

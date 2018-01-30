@@ -2905,7 +2905,7 @@ function XpsStore() {
          * indxはシートindex =シートキャリアのレイヤインデックスと一致　1～
          * @type {string}
          */
-        var myIdentifier = this.get(indx).getIdentifier();
+        var myIdentifier = this.get(indx).getIdentifier('cut');
         /**
          * チェックするシートの識別を取得
          * アイテム総当り
@@ -2927,7 +2927,7 @@ function XpsStore() {
                     /**
                      * Xpsがあれば識別情報を比較　一致したら適用
                      */
-                    if (myIdentifier == myXps.getIdentifier()) {
+                    if (myIdentifier == myXps.getIdentifier('cut')) {
                         app.project.item(idx).applyXPS(myXps);
                         nas.otome.writeConsole("updated Comp [" + idx + "] " + app.project.item(idx).name);
                         //	myComps.push(app.project.item(idx));

@@ -195,6 +195,9 @@ isADX=0;//Adobeエクステンション環境
 	標準的にはURI形式で返す
 	各種形式変換メソッドあり
 	初期化の際に与えられた引数が相対パスだった場合は、コンストラクタのカレントで補う
+	
+	　[0-9a-z\-\+]+://
+	
 */
 nas.File = function(myURI)
 {
@@ -266,8 +269,7 @@ if (isNaN(slfocus.value)) {
 }
 //該当するエレメントのオンチェンジを保留してスライダモードに入る
 
-	slfocus.blur();
-//	document.nasExch.elements[slfocus].onchange = '';
+	slfocus.blur();//	document.nasExch.elements[slfocus].onchange = '';
 	document.body.sliderTarget=slfocus
 	document.body.sliderTarget.startX= startX;
 	document.body.sliderTarget.slmax = slmax;

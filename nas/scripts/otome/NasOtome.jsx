@@ -165,8 +165,9 @@ nas[moduleName][myWindowName].bt03=nas.GUI.addButton(w,"シート適用",4,5.6+m
 //プロジェクトからコンポを抽出　プレフィックスでフィルタ
 			for(var idx=1;idx<=app.project.items.length;idx++){
 				if((app.project.item(idx) instanceof CompItem)&&(app.project.item(idx).name.indexOf(nas.itmFootStamps.stage[0])!=-1)){
-					var myRootXPSidf=app.project.item(idx).getRootXps().getIdentifier();
-					if(XPS.getIdentifier()==myRootXPSidf){
+					var myRootXPSidf=Xps.getIdentifier(app.project.item(idx).getRootXps());
+					var myXPSidf	=Xps.getIdentifier(XPS);
+					if(Xps.compareIdentifier(myXPSiff,myRootXPSidf) > 0){
 						nas.otome.writeConsole("apply XPS toStage :"+app.project.item(idx).name);
 						app.project.item(idx).applyXPS(XPS);
 					};
