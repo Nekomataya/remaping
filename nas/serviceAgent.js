@@ -4038,17 +4038,22 @@ if(dbg) console.log('fail checkin so :'+ currentEntry.getStatus(myJob,callback,c
             var title   = localize(nas.uiMsg.pMcheckin);//'作業開始 / チェックイン';
             var msg     = localize(nas.uiMsg.dmPMnewItemSwap,localize(nas.uiMsg.pMjob));
             //'新規作業を開始します。\n新しい作業名を入力してください。\nリストにない場合は、作業名を入力してください。';
-            var msg2    = '<br> <input id=newJobName class=mdInputText type=text list=newJobList></input><datalist id=newJobList>';
-//            if(dbg) console.log(xUI.XPS.stage.name +","+ ((xUI.XPS.job.id == 0) ? 'primary':'*'));
+//            var msg2    = '<br> <input id=newJobName class=mdInputText type=text list=newJobList></input><datalist id=newJobList>';
+            var msg2    = '<br> <input type="text" list="newJobList" id=newJobName class=mdInputText  autocomplete=on ></input><datalist id="newJobList">';
+//console.log(xUI.XPS.stage.name +","+ ((xUI.XPS.job.id == 0) ? 'primary':'*'));
+//console.log(nas.pmdb.jobNames.getTemplate(xUI.XPS.stage.name,((xUI.XPS.job.id == 0) ? 'primary':'*')));
             var newJobList = nas.pmdb.jobNames.getTemplate(xUI.XPS.stage.name,((xUI.XPS.job.id == 0) ? 'primary':'*'));//ここは後ほどリポジトリ個別のデータと差替
+//console.log(newJobList)
             for(var idx = 0 ; idx < newJobList.length;idx ++){
                 msg2   += '<option value="';
                 msg2   += newJobList[idx];
-                msg2   += '"></option>';
+                msg2   += '">'+newJobList[idx]+'</option>';
             };
                 msg2 += '</datalist>';
-//            if(dbg) console.log(newJobList);
-//            if(dbg) console.log(msg2);
+console.log(msg);
+
+console.log(newJobList);
+console.log(msg2);
             nas.showModalDialog('confirm',[msg,msg2],title,false,function(){
                 var newJobName=document.getElementById('newJobName').value;
                 if((this.status == 0)&&(newJobName)){

@@ -5654,6 +5654,7 @@ console.log(SheetLooks);
     UIを提示しない場合は、デフォルトの値またはクッキーで記録した最後のユーザが設定される
 */
 //  alert(xUI.currentUser); console.log(xUI.recentUsers);
+if(! xUI.onSite){
 if((NameCheck)||(myName=="")){
         var newName=null;
         var msg=welcomeMsg+"\n"+localize(nas.uiMsg.dmAskUserinfo)+
@@ -5676,7 +5677,7 @@ if((NameCheck)||(myName=="")){
             }
         });
     document.getElementById("nas_modalInput").focus();
-    };
+    }};
 //    クッキーで設定されたspinValueがあれば反映
     if(xUI.spinValue){document.getElementById("spin_V").value=xUI.spinValue} ;
 //ツールバー表示指定があれば表示 プロパティ廃止
@@ -5901,9 +5902,9 @@ console.log(decodeURIComponent(myIdentifier));
                     if( startupXPS.length==0 ){
 console.log('detect first open no content');//初回起動を検出　コンテント未設定
 console.log('new Entry init');
-                        xUI.XPS.line     = new XpsLine(nas.pm.pmTemplate[0].line);
-                        xUI.XPS.stage    = new XpsStage(nas.pm.pmTemplate[0].stages[0]);
-                        xUI.XPS.job      = new XpsStage(nas.pm.jobNames.getTemplate(nas.pm.pmTemplate[0].stages[0],"init")[0]);
+                        xUI.XPS.line     = new XpsLine(nas.pmdb.pmTemplate.members[0]);
+                        xUI.XPS.stage    = new XpsStage(nas.pmdb.pmTemplate.members[0].stages.getStage());
+                        xUI.XPS.job      = new XpsStage(nas.pmdb.jobNames.getTemplate(nas.pmdb.pmTemplate.members[0].stages.getStage(),"init")[0]);
                         xUI.XPS.currentStatus   = new JobStatus("Startup");     
                         xUI.XPS.create_user=xUI.currentUser;
                         xUI.XPS.update_user=xUI.currentUser;
@@ -5958,6 +5959,7 @@ console.log(serviceAgent.currentRepository);
     　               });
     　           });
     　       }else{
+console.log('has no cut token');
 //ドキュメント新規作成
 /*    旧タイプの処理この状態には入らないはずなので順次削除      */
 if(dbg) console.log('old style new document');

@@ -87,9 +87,31 @@ span.titleInputLB {
 
     印刷環境ではファイルの入出力自体をサポートしないのでイベントリスナの設定をスキップする
     id="myCurrentFile"のエレメントの有無で判定
+    インポートデータトレーラー
+    xUI.importBox
+        .targets:Array  [array of target files]
+        取得したファイルオブジェクトの配列
+        .targetContents:Array [array of content stream for import data]
+        読出可能ならばファイルの内容を読み出して配列で保持
+        .convertedContents:Array [array of coverted Xps]
+        変換後のXpsオブジェクトの配列
+        .overwriteProps:Object {overwrite properties trailer object}
+        オプション・変換時に参照されるプロパティトレーラー
+       
+        .setTarget(Files,callback)
+        .reset()
+        リセットメソッド　プロパティ群を全てクリア
+        .import(dialog,callback1,callback2)
+        targets にファイルをセットしてインポートメソッドを呼び出す
+        ターゲットが処理される際にユーザ確認ダイアログが自動で表示される。
+        読み出しに失敗したファイルは、対応するtargetContents内容がfalseでセットされる
+        読み出し成功したデータは、自動処理でコンバートが行われて　Xpsに変換してcomvertedContentsに格納される
+        終了時に実行する成功関数及び失敗時の処理関数を引数で渡す
+        
 */
 window.addEventListener('DOMContentLoaded', function() {
-// ファイル（複数）が指定されたタイミングで、その内容を全部表示
+// ファイル（複数）が指定されたタイミングで、ファイルリストを更新
+// その内容を全て取得して　インポート用の配列に格納する
   if(document.getElementById("myCurrentFile")){
     console.log('addEventListener');
   document.getElementById("myCurrentFile").addEventListener('change', function(e) {
@@ -132,6 +154,21 @@ var msg = "no FileReader! :\n　このブラウザはFileReaderオブジェク�
 });//window.addEvent
 
  /*
+    convertXps(datastream,optionString.overiteProps)
+引数:
+    datestream
+        コンバート対象のデータ
+        基本的にテキストデータ
+        バイナリデータの場合は1bite/8bit単位の数値配列として扱う（現在未実装）
+    optionString
+        コンバート対象のデータはXpsのプロパティ全てを持たないので、
+        最低限のプロパティ不足を補うための指定文字列
+        URIencodedIdentifier または　TextIdentifierを指定
+        通常はこのデータがファイル名の形式で与えられるのでファイル名をセットする
+    overwriteProps
+        コンバータ側で上書きするプロパティをプロパティトレーラーオブジェクトで与える
+        インポーター側へ移設予定
+           
     XPSオブジェクトのreadINメソッドをオーバーライドするため
     元のreadINメソッドから切り離した、データ判定ルーチン部分
     内部でparseXpsメソッドを呼んでリザルトを返す
@@ -146,6 +183,12 @@ var msg = "no FileReader! :\n　このブラウザはFileReaderオブジェク�
     いずれのプロパテイも省略可能
     指定されたプロパティは、その値でダイアログを上書きして編集が固定される
     全て指定した場合は、ユーザの編集ができなくなるので注意
+    単独ファイルの場合は、固定に問題は無いが
+    複数ファイル処理の場合に問題が発生する
+    
+    固定プロパティ強制のケースでは複数のドキュメントに同一のカット番号をもたせることはできないので
+    カット番号のロックは行われない
+    
 */
 
 
@@ -266,11 +309,24 @@ convertXps=function(datastream,optionString,overwriteProps){
 		myDialog.dialog("open");myDialog.focus();document.getElementById('optionPanelSCI_01_sc').focus()
 
 }
+/**
+    xUI.importBox
+    複数データ対応ドキュメントインポーター
+    ドキュメントをインポートする際には以下の手順で行う
+    xUI.importBox.targets プロパティにFileの配列を設定する
+        xUI.importBox.targets = 
+*/
+    
 
+/**
+    updateTarget()
+    ダイアログの値でターゲットのプロパティを変更
+*/
 updateTarget= function(){
     xUI.convertTarget.title    = document.getElementById('optionPanelSCI_title').value
     xUI.convertTarget.opus     = document.getElementById('optionPanelSCI_opus').value;
     xUI.convertTarget.subtitle = document.getElementById('optionPanelSCI_subtitle').value;
+//以下マルチファイル対応に変更
     xUI.convertTarget.scene    = '';
     xUI.convertTarget.cut      = document.getElementById('optionPanelSCI_01_sc').value;
 //  時間変更はあとで調整  
@@ -280,14 +336,20 @@ updateTarget= function(){
     document.getElementById("xpsResult").innerHTML = xUI.convertTarget.toString();
     $("#optionPanelSCI").dialog("close");
 }
-
+/**
+    resetTarget(optionTrailer)
+    インポート用のダイアログをリセットする
+    引数はリセット用のデータ
+*/
 resetTarget= function(optionTrailer){
     console.log(optionTrailer);
     document.getElementById('optionPanelSCI_title').value    = optionTrailer.title;
     document.getElementById('optionPanelSCI_opus').value     = optionTrailer.opus;
     document.getElementById('optionPanelSCI_subtitle').value = optionTrailer.subtitle;
+//以下マルチファイル対応に変更
     document.getElementById('optionPanelSCI_01_sc').value    = optionTrailer.cut;
     document.getElementById('optionPanelSCI_01_time').value  = xUI.convertTarget.getTC(xUI.convertTarget.time());
+
     if(xUI.overwriteProps){
         for(prp in xUI.overwriteProps){
             switch (prp){
