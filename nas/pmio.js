@@ -28,11 +28,20 @@ Object nas.Pm がアプリケーションとしてのテンプレートキャリ
 nas.pmdb  は、リポジトリ切り替え毎に各リポジトリの.pmdbに参照先が切り替えられる？
 
     nas.pmdb.users
+         関連ユーザ一覧　ユーザ情報コレクション
     nas.pmdb.staff
-
+        スタッフ一覧　スタッフコレクション
     nas.pmdb.lines
+        ライン一覧テーブル   ラインコレクション
     nas.pmdb.stages
+        ステージ一覧テーブル  ステージコレクション
+    nas.pmdb.pmTemplate
+        制作管理テンプレートコレクション
+            ラインテンプレート（ライン定義）
+                ラインテンプレートの内容は自分自身と自分で保持するステージコレクション
     nas.pmdb.jobNames
+        ジョブテンプレートコレクション
+        
     nas.pmdb.workTitles
         .workTitles[titleIndex].episodes
             .episodes[episodeIndex].works ?
@@ -644,7 +653,7 @@ nas.Pm.pmTemplate = new nas.Pm.PmTemplateCollection(nas.Pm);
  *プロパティ
  * name String: ジョブ名
  * // line Object:Line 所属ライン＜＜不要 stage にライン情報が含まれるので不用
- * stage Object:Stage 所属ステージ 
+ * stage Object:Stage 所属ステージ
  * type Number:typeID 0:init/1:primary/2~:check/ 当該Jobのタイプ
  * id Number:Index ステージ内でのユニークID 自己アクセスのための配列インデックスを内部保持
  * jobId生成規則
