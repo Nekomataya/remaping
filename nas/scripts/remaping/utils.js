@@ -1325,7 +1325,7 @@ buildActionSheet =function(){
 
 	for (var lix=1;lix<XPS.xpsTracks.length-1;lix++){
 		if(xUI.XPS.xpsTracks[lix].option=="timing"){
-//			xUI.selectCell((lix+1)+"_0");
+			console.log('clear :'+xUI.XPS.xpsTracks[lix].id)
 			xUI.selectCell(String(lix)+"_0");
 			clearTL();
 		}		　

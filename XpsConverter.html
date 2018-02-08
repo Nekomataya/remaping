@@ -1,11 +1,10 @@
 ﻿<html>
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 <title>xps data convert</title>
+
 <!-- スタイルシート　アプリ本体準拠-->
 <link href="template/jquery-ui.css" type="text/css" rel="stylesheet">
 <link href="template/remaping.css" type="text/css" rel=stylesheet media="screen,tv">
-<!--  印刷対象にしない場合は以下不要　-->
-<link href="template/printout.css" type="text/css" rel=stylesheet media="print">
 
 <!--  外部ライブラリ -->
 <script src=./lib/jquery.js></script>
@@ -17,24 +16,15 @@
 <script src=./nas/lib/nas_common.js></script>
 <script src=./nas/lib/nas_common_HTML.js></script>
 
-<!-- 不使用
-<script src=./nas/scripts/remaping/airUI.js></script>
-<script src=./nas/scripts/remaping/remaping.js></script>
-　-->
         <script src=./nas/newValueConstractors.js></script>
         <script src=./nas/pmio.js></script>
         <script src=./nas/configPM.js></script>
+
 <script src=./nas/lib/mapio.js></script>
 <script src=./nas/lib/xpsio.js></script>
 
-<script src=./nas/scripts/remaping/utils.js></script>
 
-<!-- new test code -->
-
-
-
-
-<!--     汎用ライブラリのためソース分離 一括マージ可能      -->
+<!--     コンバート用ライブラリ    -->
 <script src=./nas/lib/lib_AEK.js></script>
 <script src=./nas/lib/lib_TVP.js></script>
 <script src=./nas/lib/lib_stylosCSV.js></script>
@@ -44,589 +34,8 @@
 <script src=./nas/lib/lib_TSX.js></script>
 
 
-<!-- ライブラリインストール -->
-<!-- css for new UI-->
-<style type="text/css">  
-<!-- 
-input.timeInputTC {
-    width:72px;
-    height:24px;
-    border-style:none;
-    background-color:rgba(0,0,0,0);
-}
-#optionPanelSCI_title {
-    width:250px;
-}
-#optionPanelSCI_opus {
-    width:96px;
-}
-#optionPanelSCI_subtitle {
-    width:320px;
-}
-.SCiInput {
-    height:24px;
-    border-style:none;
-    background-color:rgba(0,0,0,0);
-}
-.SCiInput_Number {
-    width:192px;
-}
+<script src=./XpsConverter.js></script>
 
-span.timeInputButtons {
-    position:relative;
-    left:64px;
-    top:4px;
-}
-span.titleInputLB {
-    text-align:right;
-}
-
-div.sciTemplate {
-     display:none;
-     color:red;
-}
--->  
-</style>  
-
-<!-- css for new UI-->
-<script>
-/*
-	File API を使用したデータの読み込み（ブラウザでローカルファイルを読む）
-	File API　は、Chrome Firefoxではローカルファイルの読み出し可能だが、
-	IE,Safari等他の環境では、情報取得のみ可能
-	File.nameは、ブラウザではパスを含まないファイル名（＋拡張子）のみ。
-	ただし、AIR環境ではフルパスのローカルFSパスが戻る。
-	同じI.FをAIR環境でも使用するために、ケース分岐する。
-
-    印刷環境ではファイルの入出力自体をサポートしないのでイベントリスナの設定をスキップする
-    id="myCurrentFile"のエレメントの有無で判定
-
-    インポートデータトレーラー
-    xUI.importBox
-        .targetContents:Array  [array of convert target Objects]
-            変換元データをまとめたオブジェクトの配列
-            name:ファイル名,
-            content:データソース,
-            xps:一次変換済み Object Xps
-        .convertedContents:Array [array of coverted Xps]
-            変換後のXpsオブジェクトの配列
-        .overwriteProps:Object {overwrite properties trailer object}
-            オプション・変換時に参照されるプロパティトレーラー
-        .maxSize
-            読み出しファイルサイズ制限値（バイト数）
-        .allowExtensions
-            読み出し対象拡張子を正規表現で
-        .callback
-            終了処理関数
-        .reset()
-            リセットメソッド　上記プロパティ群を全て初期化
-
-        .import(files,callback)
-        ファイルオブジェクトの配列を引数にしてインポートメソッドを呼び出す
-        読み出し成功したデータは、自動処理でコンバートが行われて　Xpsに変換後　targetContents[index].xps　として格納される
-        読み出しに失敗したファイルは、対応するtargetContents.xpsの内容がfalseでセットされるので、後ほどでも処理可能
-        
-        importBox.importメソッドで　ユーザ確認ダイアログが表示され、データの一括簡易編集が行われる
-
-        終了時に実行するコールバック関数を第二引数で渡す
-        
-*/
-    xUI={};//remaping互換
-
-    xUI.currentUser= new nas.UserInfo('testuser@test.example.com');//アプリケーションとの互換のためこの変数をセットしてください
-    
-/**
-    xUI.importBox
-    複数データ対応ドキュメントインポーター
-*/
-    xUI.importBox={};//インポート情報トレーラー初期化
-
-xUI.importBox.reset = function(){
-    this.targetContents    =[];
-    this.overwriteProps    ={};
-    this.convertedContents =[];
-    this.maxSize = 1000000;
-    this.allowExtensions=new RegExp("\.(txt|csv|xps|ard|ardj|tsh)$",'i');
-    this.importCount= 0;
-    this.callback = undefined;
-}
-    xUI.importBox.reset();
-/**
-    変換ターゲットとなるFileオブジェクト配列を引数にして以下の関数を呼び出す
-    全カット変換終了時のコールバック関数を与えることが可能
-    
-*/
-xUI.importBox.import = function(targetFiles,callback){
-    if(appHost.platform == "AIR"){
-        return false;
-//***AIR  用の分岐は　単ファイルのままで保留2018 0201
-    // File APIを利用できるかをチェック
-    if (window.File) {
-      // 指定されたファイルを取得
-      var input = targetFiles[0];
-	fileBox.currentFile=new air.File(input.name);
-	xUI.data_well.value =fileBox.readContent();
- }
-    }else{
-    // File APIを利用できるかをチェック
-    if (window.File) {
-      if(window.FileReader){
-        xUI.importBox.reset();//ここで再初期化する
-        xUI.importBox.callback=callback;
-        xUI.data_well.value +='\n\tread datas:'+ new Date().toString();
-//処理に先行して拡張子とファイルサイズでフィルタして作業リストを作成する
-//作業リストの進行度合いをチェックして終了判定をかける
-        var targetQueue=[];
-  for(var ix=0;ix<targetFiles.length;ix++){
-    var check = targetFiles[ix];
-    if(
-        (check.name.match(xUI.importBox.allowExtensions)) &&
-        (check.size <= xUI.importBox.maxSize)
-    ){
-        targetQueue.push(check);
-        this.importCount ++;
-    }else{
-        console.log("skip file "+check.name );
-    }
-  };
-      // 指定されたファイルを取得してインポーターのプロパティで控える
-  for(var ix=0;ix<targetQueue.length;ix++){
-    var input = targetQueue[ix];
-//非同期で実行
-(function(){
-    console.log(input);
-	var myEncode=(input.name.match(/\.(ard|csv|tsh)$/))?"Shift-JIS":"UTF-8";
-      // ファイルリーダーオブジェクト初期化(Chrome/Firefoxのみ)
-      var reader = new FileReader();
-      reader.name=input.name;
-      // ファイルの読み込みに成功したら、その内容をxUI.data_wellに反映
-      reader.addEventListener('load', function(e) {
-        console.log(reader);
-        var output = reader.result;//
-        xUI.data_well.value +='\n'+ input.name;
-        xUI.data_well.value +='\n'+ reader.result;
-
-        var myXps = convertXps(reader.result,divideExtension(reader.name)[1],{});// 指定オプション無しで一旦変換する
-        if(!myXps){alert(reader.name+' is not support format')}
-        console.log (myXps);
-        
-        xUI.importBox.targetContents.push({"name":reader.name,"content":reader.result,"xps":myXps});
-        if ( xUI.importBox.importCount == xUI.importBox.targetContents.length ){
-//            xUI.importBox.resetTarget(xUI.importBox.targetContents,overwriteTest);
-            xUI.importBox.resetTarget(xUI.importBox.targetContents);
-            var myDialog = $("#optionPanelSCI");
-		    myDialog.dialog("open");myDialog.focus();
-		    document.getElementById('optionPanelSCI_01_sc').focus();//第一カット(かならずある)にフォーカス
-        };
-      }, true);
-      // ファイルの内容をテキストとして取得
-      reader.readAsText(input, myEncode);
-})();
-  }
-      }else{
-//FileReaderが無いブラウザ(Safari等)では、お詫びしてオシマイ
-var msg = "no FileReader! :\n　このブラウザはFileReaderオブジェクトをサポートしていません。\n残念ですが、この環境ではローカルファイルは読みだし出来ません。\nThis browser does not support the FileReader object. \n Unfortunately, you can't read local files now.";
-	alert(msg);
-      }
-    }
-   }
-}
-/**
-    xUI.importBox.updateTarget()
-    ダイアログの値でターゲットのプロパティを更新して
-    新規の配列を作成する
-*/
-xUI.importBox.updateTarget= function(){
-    for(var tix=0;tix<xUI.importBox.targetContents.length;tix++){
-        var modefiedXps = xUI.importBox.targetContents[tix].xps;//直に参照
-        //var modefiedXps = new Xps();
-        //modefiedXps.parseXps(xUI.importBox.targetContents[tix].xps.toString());//複製を作る
-        
-        modefiedXps.title    = document.getElementById('optionPanelSCI_title').value
-        modefiedXps.opus     = document.getElementById('optionPanelSCI_opus').value;
-        modefiedXps.subtitle = document.getElementById('optionPanelSCI_subtitle').value;
-        modefiedXps.scene    = '';
-        modefiedXps.cut      = document.getElementById('optionPanelSCI_'+nas.Zf(tix+1,2)+'_sc').value;
-    //  時間変更 短くなった場合は後方からフレームが削除されるので注意
-        modefiedXps.setDuration(nas.FCT2Frm(document.getElementById('optionPanelSCI_'+nas.Zf(tix+1,2)+'_time').value));
-//  
-        xUI.importBox.convertedContents.push(modefiedXps);
-    }
-    $("#optionPanelSCI").dialog("close");
-    if(xUI.importBox.callback instanceof Function){xUI.importBox.callback();};
-}
-/**
-    xUI.importBox.resetTarget(dataTrailer,optionTrailer)
-    インポート用のダイアログを初期化する
-    引数は初期化用データ
-    optionTrailer が与えられない場合は書き直しは行われない
-*/
-xUI.importBox.resetTarget= function(dataTrailer,optionTrailer){
-    if (optionTrailer){
-      document.getElementById('optionPanelSCI_title').value    = optionTrailer.title;
-      document.getElementById('optionPanelSCI_opus').value     = optionTrailer.opus;
-      document.getElementById('optionPanelSCI_subtitle').value = optionTrailer.subtitle;
-    } else {
-      document.getElementById('optionPanelSCI_title').value    = dataTrailer[0].xps.title;
-      document.getElementById('optionPanelSCI_opus').value     = dataTrailer[0].xps.opus;
-      document.getElementById('optionPanelSCI_subtitle').value = dataTrailer[0].xps.subtitle;
-    }
-//以下マルチファイル対応に変更
-    var listHolder=document.getElementById('optionPanelSCIs');
-//子ノードをクリア
-    while( listHolder.firstChild ){
-        listHolder.removeChild( listHolder.firstChild );
-    };
-//新規の子ノードを作成
-    var sciTemplate = document.getElementById('sciTemplate');
-    var sciHTML="";
-    for(var dix=0;dix<dataTrailer.length;dix++){
-        sciHTML += sciTemplate.innerHTML.replace(/%ID%/g,nas.Zf(dix+1,2));
-    }
-    listHolder.innerHTML=sciHTML;
-    
-    for(var dix=0;dix<dataTrailer.length;dix++){
-        var IDnumber=nas.Zf(dix+1,2);
-        document.getElementById('optionPanelSCI_'+IDnumber+'_sc').value    = dataTrailer[dix].xps.cut;
-        document.getElementById('optionPanelSCI_'+IDnumber+'_time').value  = dataTrailer[dix].xps.getTC(dataTrailer[dix].xps.time());
-    }
-    if(optionTrailer){
-        for(prp in optionTrailer){
-            switch (prp){
-                case "title":
-    document.getElementById('optionPanelSCI_title').value    = String(optionTrailer[prp]);
-    document.getElementById('optionPanelSCI_title').disabled = true;
-                break;
-                case "episode":
-    document.getElementById('optionPanelSCI_opus').value    = String(optionTrailer[prp]);
-    document.getElementById('optionPanelSCI_opus').disabled = true;
-                break;
-                case "description":
-    document.getElementById('optionPanelSCI_subtitle').value    = String(optionTrailer[prp]);
-    document.getElementById('optionPanelSCI_subtitle').disabled = true;
-                break;
-                case "cut":
-     if(dataTrailer.length==1){
-        document.getElementById('optionPanelSCI_01_sc').value    = String(optionTrailer[prp]);
-        document.getElementById('optionPanelSCI_01_sc').disabled = true;
-    }
-                break;
-                case "time":
-     if(dataTrailer.length==1){
-        document.getElementById('optionPanelSCI_01_time').value    = String(optionTrailer[prp]);
-        document.getElementById('optionPanelSCI_01_time').onchange();
-        document.getElementById('optionPanelSCI_01_time').disabled = true;
-    }
-                break;
-            }
-        }
-    }
-    document.getElementById('resetTarget').disabled = true;
-}
-/**
-    xUI.importBox.checkValue(ctrlElement)
-    ダイアログの変更状況をチェックしてUIの状態を更新する
-     パラメータがひとつでも変更された場合はリセットボタンを有効に
-    時間パラメータが変更された場合は、表記をTCに統一する
-*/
-xUI.importBox.checkValue = function(itm){
-    var myProp=(String(itm.id).split('_')).reverse()[0];
-    switch(myProp){
-        case 'title':;
-        break;
-        case 'opus':;
-        break;
-        case 'subtitle':;
-        break;
-        case 'sc':;
-        break;
-        case 'time':;
-            itm.value = nas.clipTC(itm.value,Infinity,1,3);
-        break;
-        default:
-    }
-    document.getElementById('resetTarget').disabled = false;
-}
-
-/**
-変換のトリガーにファイル指定のイベントを使用
-ファイル（複数）が指定されたタイミングで、
-インポートコマンドにターゲット配列を渡す
-*/
-window.addEventListener('DOMContentLoaded', function() {
-  if(document.getElementById("myCurrentFile")){
-    console.log('addEventListener');
-    document.getElementById("myCurrentFile").addEventListener('change', function(e) {
-        xUI.importBox.import(this.files,function(){
-            alert('ユーザ処理終了')
-            //for Test
-//        コンバート済みデータが格納されている配列はxUI.importBox.convertedContents
-            for(var dix=0;dix<xUI.importBox.convertedContents.length;dix++){        
-                document.getElementById("xpsResult").innerHTML += '\t'+xUI.importBox.targetContents[dix].name +'\n';
-                document.getElementById("xpsResult").innerHTML += xUI.importBox.convertedContents[dix].toString();
-                document.getElementById("xpsResult").innerHTML += '\n\n';
-            }
-        },)
-    }, true);//myCrrentFile.addEvent
-  }
-});//window.addEvent
-
- /*
-    convertXps(datastream,optionString,overiteProps)
-引数:
-    datestream
-        コンバート対象のデータ
-        基本的にテキストデータ
-        バイナリデータの場合は1bite/8bit単位の数値配列として扱う（現在未実装）
-    optionString
-        コンバート対象のデータはXpsのプロパティ全てを持たないので、
-        最低限のプロパティ不足を補うための指定文字列
-        URIencodedIdentifier または　TextIdentifierを指定
-        通常はこのデータがファイル名の形式で与えられるのでファイル名をセットする
-    overwriteProps
-        コンバータ側で上書きするプロパティをプロパティトレーラーオブジェクトで与える
-        インポーター側へ移設予定
-           
-    複数データ用コンバート関数
-    内部でparseXpsメソッドを呼んでリザルトを返す
-    以下形式のオブジェクトで　overwriteProps を与えると固定プロパティの指定が可能
-    {
-        "title":"タイトル文字列",
-        "epispde":"エピソード文字列",
-        "description":" エピソードサブタイトル文字列",
-        "cut":"カット番号文字列",
-        "time":"カット尺文字列　フレーム数またはTC"
-    }
-    いずれのプロパテイも省略可能
-    指定されたプロパティは、その値でダイアログを上書きして編集が固定される
-    全て指定した場合は、ユーザの編集ができなくなるので注意
-    単独ファイルの場合は、固定に問題は無いが
-    複数ファイル処理の場合に問題が発生する
-    
-    固定プロパティ強制のケースでは複数のドキュメントに同一のカット番号をもたせることはできないので
-    カット番号のロックは行われない
-    不正データ等の入力でコンバートに失敗した場合はfalseを戻す
-戻値:　Object Xps or false
-    
-*/
-
-
-convertXps=function(datastream,optionString,overwriteProps){
-    if(! String(datastream).length ){
-        return false;
-    }else{
-// オプションで識別子文字列を受け取る　（ファイル名を利用）
-// 識別子はXps.parseIdentifierでパースして利用
-    if(! optionString){optionString = 'TITLE#EP[subtitle]//s-c=CUTNo.=';}
-    if(optionString.indexOf('_')>=0){optionString=optionString.replace(/_/g,'//');}
-// オプション文字列がカット番号セパレータ'//'を含まない場合　文字列冒頭に'//'を補う
-    if(optionString.indexOf('//') < 0 ){optionString='//' + optionString;}
-    var optionTrailer=Xps.parseIdentifier(optionString);
-
-// 上書きプロパティ指定がない場合は空オブジェクトで初期化
-    if(! overwriteProps){overwriteProps=undefined;}
-
-//データが存在したら、種別判定して、コンバート可能なデータはコンバータに送ってXPS互換ストリームに変換する
-//Xpxデータが与えられた場合は素通し
-//この分岐処理は、互換性維持のための分岐
-        switch (true) {
-        case    (/^nasTIME-SHEET\ 0\.[1-5]/).test(datastream):
-//    判定ルーチン内で先にXPSをチェックしておく（先抜け）
-        break;
-        case    (/^UTF\-8\,\ TVPaint\,\ \"CSV 1\.[01]\"/).test(datastream):
-            datastream =TVP2XPS(datastream);
-            //TVPaint csv
-        break;
-        case    (/^\"Frame\",/).test(datastream):
-            datastream =StylosCSV2XPS(datastream);//ボタン動作を自動判定にする 2015/09/12 引数は使用せず
-        break;
-        case    (/^\{[^\}]*\}/).test(datastream):;
-            try{datastream =ARDJ2XPS(datastream);console.log(datastream);}catch(err){console.log(err);return false;};
-        break;
-        case    (/^#TimeSheetGrid\x20SheetData/).test(datastream):
-            try{datastream = ARD2XPS(datastream);console.log(datastream);}catch(err){console.log(err);return false;};
-        break;
-        case    (/^\x22([^\x09]*\x09){25}[^\x09]*/).test(datastream):
-            try{datastream =TSH2XPS(datastream);}catch(err){return false}
-        break;
-        case    (/^Adobe\ After\ Effects\x20([456]\.[05])\ Keyframe\ Data/).test(datastream):
-            try{datastream=AEK2XDS(datastream)}catch(err){alert(err);return false}
-            //AEKey のみトラック情報がないので　ダミーXpsを先に作成してそのトラックにデータをputする
-            var myXps=new Xps();
-            myXps.put(datastream);
-            datastream=myXps.toString();
-        break;
-        default :
-/*
-    元の判定ルーチンと同じくデータ内容での判別がほぼ不可能なので、
-    拡張オプションがあってかつ他の判定をすべてすり抜けたデータを暫定的にTSXデータとみなす
- */
-            if(TSXEx){
-                try{datastream=TSX2XPS(datastream)}catch(err){alert(err);return false;}
-            }
-      }
-        if(! datastream){return false}
-    }
-
-  if(datastream){
-    var convertedXps=new Xps();
-    convertedXps.parseXps(datastream);
-//ここでセリフトラックのチェックを行って、シナリオ形式のエントリを検知したら展開を行う
-    for(var tix=0;tix<convertedXps.xpsTracks.length;tix++){
-        var targetTrack=convertedXps.xpsTracks[tix]
-        if(targetTrack.option=='dialog'){
-            var convertQueue=[];//トラックごとにキューを置く
-            var currentEnd =false;//探索中の終了フレーム
-            
-            for(var fix=0;fix<targetTrack.length;fix++){
-                var entryText=String(targetTrack[fix]);
-//末尾検索中
-                if((convertQueue.length>0)&&(currentEnd)){
-//キューエントリが存在してかつブランクを検知、次のエントリの開始または、トラック末尾に達した場合はキューの値を更新
-//トラック末尾の場合のみ検出ポイントが異なるので注意
-                    if((nas.CellDescription.type(entryText)=='blank')||
-                       ((entryText.length>1)&&(entryText.indexOf('「')>=0))||
-                       (fix==(targetTrack.length-1))){
-                        var endOffset = (fix==(targetTrack.length-1))? 2:1;  
-                        convertQueue[convertQueue.length-1][2]=currentEnd+endOffset;
-                        currentEnd=false;
-                    }else{
-                        currentEnd=fix;
-                    }
-                }
-//開きカッコを持ったテキスト長１以上のエントリがあったらオブジェクトを作成してキューに入れ
-//終了点探索に入る
-                if((entryText.length>1)&&
-                   (entryText.indexOf('「')>=0)){
-                    var dialogValue=new nas.AnimationSound(targetTrack[fix]);
-                    dialogValue.parseContent();//
-                    convertQueue.push([dialogValue,fix,0]);// [値,開始フレーム,終了フレーム(未定義)]
-                    currentEnd = fix;
-                }
-            }
-//キューにあるダイアログを一括して処理
-            for(var qix=0;qix<convertQueue.length;qix++){
-                var dialogOffset = (String(convertQueue[qix][0].name).length)? 2:1;
-                    dialogOffset += convertQueue[qix][0].attributes.length;
-                var dialogDuration = convertQueue[qix][2]-convertQueue[qix][1]; 
-                var startAddress =[tix,(convertQueue[qix][1] - dialogOffset)];
-                var dialogStream =(convertQueue[qix][0].getStream(dialogDuration)).join(',');
-                convertedXps.put(startAddress,dialogStream);
-            }
-        }
-    }
-//オプション指定文字列の反映（抽出データを一旦全て反映）
-console.log(optionTrailer);
-    convertedXps.title       = optionTrailer.title;
-    convertedXps.opus        = optionTrailer.opus;
-    convertedXps.subtitle    = optionTrailer.subtitle;
-//    convertedXps.create_user = optionTrailer.create_user;
-//    convertedXps.update_user = optionTrailer.update_user;
-    convertedXps.scene       = optionTrailer.scene;
-    convertedXps.cut         = optionTrailer.cut;
-//リザルトを返す
-    return convertedXps;
-  }else{
-    return false;    
-  }
-}
-    
-
-/**
-    nas.timeIncrement(target,step,type)
-引数　
-    target  ターゲットエレメント
-    step    インクリメントステップをFCTまたはミリ秒で指定　自動判定
-    type  　書き戻しの際のFCTtype 指定が無い場合は　type3(秒+コマ形式)
-    ターゲットエレメントに　value プロパティが存在すればその値を　なければ　innerHTMLプロパティを取得して
-    その値にstep値の値を加えて書き戻すメソッド
-    ターゲットにonChange メソッドがあれば値変更時にコールする
-    値制限は、ターゲット側で行う
-*/
-nas.timeIncrement=function(target,step,type){
-    if ((! target)||(target.disabled)) return false;
-    if (! type)     type = 3;
-    var origValue  = (target instanceof HTMLInputElement)? nas.FCT2Frm(target.value):nas.FCT2Frm(target.innerHTML);//フレームに変換
-    var stepFrames = (typeof step =='number')? nas.ms2fr(step):nas.FCT2Frm(step);
-    var newValue   = origValue + stepFrames;//フレームで加算
-    if ((origValue == 1)||(origValue != newValue)){
-        if (target instanceof HTMLInputElement){
-            target.value     = nas.Frm2FCT(newValue,type);
-        }else{
-            target.innerHTML = nas.Frm2FCT(newValue,type);
-        }
-        if(target.onchange){target.onchange();}
-    }
-    return newValue;
-}
-/**
-nas.clipTC(myValue,max,min)
-TCで与えられた値を上限下限でクリップして返す
-上限値、下限値はフレーム数
-TCタイプは指定がない場合は入力値と同じ
-最大値の指定がない場合は無限大
-最小値の値がない場合はマイナス無限大で
-*/
-nas.clipTC=function(myValue,max,min,TCtype){
-    var f = nas.FCT2Frm(myValue,nas.FRAET,true);
-    if( typeof TCtype == 'undfined') TCtype=f.type;
-    var ostF = f.offset;
-    
-    if (f < min) f= min;
-    if (f > max) f= max;
-    return nas.Frm2FCT(f,TCtype,ostF,nas.FRATE);
-}
-/**
-nas.File
-　ファイルハンドルオブジェクト
-　ファイルハンドルはプラットフォーム毎に実装されるファイルオブジェクトのエージェントとして機能する
-　AIR/Adobe 拡張スクリプト/html5 File/Node.js/
-　とか色々必要だけど
-　今回はファイル名から拡張子切り分け（=最後の'.'で文字列をセパレート）のみの実装で済ませる
-　ファイル名本体に空文字列を認めていない
-　.git 等は　ファイル名　".git"   拡張子　なし　となる
-　拡張子なしのドットファイルの扱いに注意
-    これは保留　今回はHTML5のFileオブジェクトを直接扱う　AIRは保留
-*/
-
-/**
-divideExtension(filename)
-引数:文字列　拡張子付きファイル名
-戻値:配列[拡張子,ファイル名本体]
-*/
-divideExtension = function(filename){
-    filename=String(filename);
-        var nameBody=filename;
-        var nameExtension ='';
-    if(filename.match(/^(.+)\.([^\.]*)$/)){
-        nameExtension   =RegExp.$2;
-        nameBody        =RegExp.$1;
-    }
-    return [nameExtension,nameBody];
-}
-
-/*
-    ダイアログパネル初期化
-    インポートデータの確認ダイアログを初期化
-*/
-initConverter=function(){
-
-//ダイアログパネル初期化
-    $("#optionPanelSCI").dialog({
-	    autoOpen:false,
-	    modal	:true,
-	    width	:480,
-	    position :{
-	        my: "left top",
-            at: "center-240 top+100",
-        },
-	    title	:"IMPORT"
-    });
-// UIオブジェクトのプロパティをアタッチ
-    xUI.data_well= document.getElementById('data_well');
-}
-
-</script>
 </head>
 <body
 onLoad="initConverter();"
@@ -676,9 +85,9 @@ include
 <div align=right></div>
 <span style="text-align:center">
 
-<div id=localFileLoader><form id="dataLoader" name="dataLoader" method="post" action="javascript:void(0);" enctype="multipart/form-data">
+<div id=localFileLoader style='border-style:solid'><br><form id="dataLoader" name="dataLoader" method="post" action="javascript:void(0);" enctype="multipart/form-data"><br>
 <input type=file multiple="multiple" id=myCurrentFile name=XPSBody size=100 >
-</form></div>
+</form><br></div>
 
 <form name=exportXps action="void(0);">
 <input type=button
@@ -709,7 +118,35 @@ var overwriteTest={
 //    ,"cut"　　　　:"かっと"
 //    ,"time"　　　 :"2+21"
 function tes(){
-    xUI.importBox.import(document.getElementById('myCurrentFile').files,function(){alert('callback');});
+    xUI.importBox.import(document.getElementById('myCurrentFile').files,function(){
+        ;
+        alert('callback');
+//        コンバート済みデータが格納されている配列はxUI.importBox.selectedContents
+            for(var dix=0;dix<xUI.importBox.selectedContents.length;dix++){        
+                document.getElementById("xpsResult").innerHTML += '\t'+xUI.importBox.selectedContents[dix].getIdentifier() +'\n';
+                document.getElementById("xpsResult").innerHTML += xUI.importBox.selectedContents[dix].toString();
+                document.getElementById("xpsResult").innerHTML += '\n\n';
+            }
+    });
+}
+/**
+    処理関数
+    xUI.importBox.importに引数として与える処理関数のサンプル
+    以下のプロパティにアクセス可能
+        .targetContents:Array  [array of convert target Objects]
+            変換元データをまとめたオブジェクトの配列
+            name:ファイル名,
+            content:データソース,
+            xps:一次変換済み Object Xps
+        .selectedContents:Array [array of coverted Xps]
+            変換後のXpsオブジェクトの配列
+        .overwriteProps:Object {overwrite properties trailer object}
+            オプション・変換時に参照されるプロパティトレーラー    
+*/
+var userFunction=function(){
+    alert('user function');
+    console.log(xUI.importBox);
+    
 }
 -->
 </script>
@@ -730,7 +167,7 @@ function tes(){
 
         終了時に実行するコールバック関数を第二引数で渡す
 
-変換結果は xUI.importBox.convertedContents に変換済のXpsオブジェクトの配列として格納される。
+変換結果は xUI.importBox.selectedContents に変換済のXpsオブジェクトの配列として格納される。
 
 
 インポート可能なデータは以下のフォーマット
@@ -814,16 +251,16 @@ TVP-csv1.0/1.1 ./nas/lib/lib_TVP.js
 　-->
 <div id=sciTemplate class=sciTemplate >
 <hr>
-<input class=SCiInputCB id=optionPanelSCI_imptCB_%ID% type=checkbox title='このカットをインポートします' checked
-    onChange='xUI.importBox.checkValue(this)'
+<input class=SCiImportCB id=optionPanelSCI_%ID%_imptCB type=checkbox title='このカットをインポートします' checked
+    onChange='xUI.importBox.checkValue(this);'
 >
-<span  class=SCiInputLB >S-C:</span>
+<span  class=SCiImportLB >S-C : </span>
     <input  class='SCiInput SCiInput_Number' id=optionPanelSCI_%ID%_sc type=text value='###'
-        onChange='xUI.importBox.checkValue(this)'
+        onChange='xUI.importBox.checkValue(this);'
     >
 <!-- 時間編集UI -->
 <span class=timeInputUI >
-:(
+(
 <input
     type = text
     class=timeInputTC 

@@ -847,6 +847,51 @@ HTMLTextAreaElement.prototype.insert=function(insertText){
       }
     }
 
+/**
+    nas.timeIncrement(target,step,type)
+引数　
+    target  ターゲットエレメント
+    step    インクリメントステップをFCTまたはミリ秒で指定　自動判定
+    type  　書き戻しの際のFCTtype 指定が無い場合は　type3(秒+コマ形式)
+    ターゲットエレメントに　value プロパティが存在すればその値を　なければ　innerHTMLプロパティを取得して
+    その値にstep値の値を加えて書き戻すメソッド
+    ターゲットにonChange メソッドがあれば値変更時にコールする
+    値制限は、ターゲット側で行う
+*/
+nas.timeIncrement=function(target,step,type){
+    if ((! target)||(target.disabled)) return false;
+    if (! type)     type = 3;
+    var origValue  = (target instanceof HTMLInputElement)? nas.FCT2Frm(target.value):nas.FCT2Frm(target.innerHTML);//フレームに変換
+    var stepFrames = (typeof step =='number')? nas.ms2fr(step):nas.FCT2Frm(step);
+    var newValue   = origValue + stepFrames;//フレームで加算
+    if ((origValue == 1)||(origValue != newValue)){
+        if (target instanceof HTMLInputElement){
+            target.value     = nas.Frm2FCT(newValue,type);
+        }else{
+            target.innerHTML = nas.Frm2FCT(newValue,type);
+        }
+        if(target.onchange){target.onchange();}
+    }
+    return newValue;
+}
+/**
+nas.clipTC(myValue,max,min)
+TCで与えられた値を上限下限でクリップして返す
+上限値、下限値はフレーム数
+TCタイプは指定がない場合は入力値と同じ
+最大値の指定がない場合は無限大
+最小値の値がない場合はマイナス無限大で
+*/
+nas.clipTC=function(myValue,max,min,TCtype){
+    var f = nas.FCT2Frm(myValue,nas.FRAET,true);
+    if( typeof TCtype == 'undfined') TCtype=f.type;
+    var ostF = f.offset;
+    
+    if (f < min) f= min;
+    if (f > max) f= max;
+    return nas.Frm2FCT(f,TCtype,ostF,nas.FRATE);
+}
+
 //お道具箱汎用データ操作関数群オワリ
 } catch(err){alert(err.toString());}
 
