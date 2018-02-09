@@ -553,6 +553,18 @@ Active  > Hold/Fixed:assignment:comment
 Hold　  > Active
 Fixed   > Active/Aborted(要権限)
 
+フロート化・シンクの　>>　サインは状態の遷移ではなくコピーして登録であり。
+逆方は、全てのステータスからの複製が可能
+
+Float   >> Startup:assignment:comment/Fixed:assignment:comment
+Startup > 変わらず
+Actibe  > Hold
+Hold    > 変わらず
+Fixed   > 変わらず
+
+ドキュメントはFloat化する際に必ず複製されて安定化遷移を行う。
+Float状態のデータは決してエントリを持たない
+
     戻り値は現在のステータス
     ステータスオブジェクトが多分必要
     あとswitch文でない方がヨサゲ
@@ -567,6 +579,9 @@ Fixed   > Active/Aborted(要権限)
     timeは基本的に変更が無いがidentifierは,
     statusの変更に従って必ず変わる
     setStatusの引数がJobStatus  であれば変換は行わない
+    
+    引数にFloatステータスが入った場合は不正引数とする
+    サーバ上のエントリのステータスがFloatになることは無い
 */
 listEntry.prototype.setStatus=function(myStatus){
     var currentIssue  = this.issues[this.issues.length-1];
@@ -577,6 +592,7 @@ listEntry.prototype.setStatus=function(myStatus){
     }else{
      var newStatus = new JobStatus(myStatus);//オブジェクト化
     }
+    if (newStatus.content.indexOf("Float")>=0){return false;}
     if (currentStatus.content=="Hold"){
         switch (newStatus.content){
             case "Active":
@@ -4014,10 +4030,9 @@ serviceAgent.checkinEntry=function(myJob,callback,callback2){
 //    this.currentRepository.getList(true);
 console.log(Xps.getIdentifier(xUI.XPS))
     var currentEntry = this.currentRepository.entry(Xps.getIdentifier(xUI.XPS));
-//    var currentCut   = this.currentRepository.cut(currentEntry.toString());
 console.log(currentEntry);
     var currentCut   = this.currentRepository.cut(currentEntry.issues[0].cutID);
-console.log(currentEntry)
+console.log(currentCut)
     if(! currentEntry){
         alert(localize(nas.uiMsg.dmAlertNoEntry));//対応エントリが無い
 //        if(dbg) console.log ('noentry in repository :' +  decodeURIComponent(currentEntry))
@@ -4286,13 +4301,16 @@ serviceAgent.abortEntry=function(myIdentifier){
 }
 /**
     閉じる
-    ドキュメントの扱いが変わったので
-    XPSをカラ（初期状態）にして編集をロックする
-    エントリは、ActiveならHoldに変更
+    ドキュメントの状態に　Floating　を追加
+    開いているエントリが、ActiveならばHoldに変更
+    XPSをカラ（初期状態＝float）する
+    
+    現状のドキュメントをフロート化する際はFloatメソッドを使用
+
 */
 serviceAgent.closeEntry=function(){
     //  ドキュメントがアクティブで変更フラグが立っている場合　holdしてカレントリポジトリにプッシュ
-     if((xUI.currentStatus.content=="Active")&&(! xUI.isStored())){
+     if((xUI.XPS.currentStatus.content=="Active")&&(! xUI.isStored())){
     //  成功したらカレントドキュメントをクリアしてロック
          serviceAgent.currentRepository.deactivateEntry(function(){
             serviceAgent.closeEntry();
@@ -4302,6 +4320,29 @@ serviceAgent.closeEntry=function(){
         );
     }else{
             xUI.resetSheet(new Xps(5,144),new Xps(5,144)) ;        
+    }
+}
+/**
+    フロート化
+    ドキュメントを複製してFloating状態にする
+    開いているエントリが、ActiveならばHoldに変更する
+    XPSはそのままの状態でステータスをフロート化する
+    レポジトリ上のエントリーは
+
+*/
+serviceAgent.floatEntry=function(){
+    //  ドキュメントがアクティブで変更フラグが立っている場合　holdしてカレントリポジトリにプッシュ
+     if((xUI.XPS.currentStatus.content=="Active")&&(! xUI.isStored())){
+    //  成功したらカレントドキュメントをクリアしてロック
+         serviceAgent.currentRepository.deactivateEntry(function(){
+            serviceAgent.floatEntry();
+        },function(){
+            xUI.errorCode=9;
+        }
+        );
+    }else{
+            xUI.XPS.currentStatus.content='Floating';
+            xUI.setUImode('floating');
     }
 }
 /**

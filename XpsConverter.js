@@ -519,6 +519,7 @@ initConverter=function(){
 	    title	:"IMPORT"
     });
 // UIオブジェクトのプロパティをアタッチ
-    xUI.data_well= document.getElementById('data_well');
+//    xUI.data_well= document.getElementById('data_well');
+    xUI.data_well= {"value":""};
 }
 

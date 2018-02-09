@@ -229,8 +229,8 @@ XpsJob.prototype.toString=function(){
 /*
     JobStatus
     Jobの状況（＝カットの作業状態）
-    content:作業状態を示すキーワード　　Startup/Active/Hold/Fixed/Aborted
-初期値は"Startup"
+    content:作業状態を示すキーワード　　Startup/Active/Hold/Fixed/Aborted//Floating
+初期値は"Startup" > 'Floating' 初期値変更
     assign:アクティブまたは中断状態でない作業が持つ次作業者の指名UIDまたは文字列（特にチェックはない）
 初期値は長さ0の文字列
     message:次の作業に対する申し送りテキスト
@@ -240,7 +240,8 @@ XpsJob.prototype.toString=function(){
 
 */
 function JobStatus (statusArg){
-    this.content = "Startup" ;
+    this.content = "Floating";
+//初期値は "Startup"から"Floating"に変更　Startupステータスはリポジトリ登録成功時に割り当てられるステータス
     this.assign  = "";
     this.message = "";
     if (statusArg instanceof Array){
@@ -250,8 +251,8 @@ function JobStatus (statusArg){
           this.assign  =(prpArray.length > 1)? (prpArray[1]):"";
           this.message =(prpArray.length > 2)? (prpArray.splice(2).join(':')):"";
         }
-    }else{
-        var prpArray = statusArg.split(':');
+    }else if(statusArg){
+        var prpArray = String(statusArg).split(':');
         if(prpArray.length){
           this.content =prpArray[0];
           this.assign  =(prpArray.length > 1)? decodeURIComponent(prpArray[1]):"";
@@ -259,6 +260,7 @@ function JobStatus (statusArg){
         }
     }
 }
+
 JobStatus.prototype.toString=function(opt){
     if(
         (opt)&&
@@ -1108,7 +1110,7 @@ if(dbg)    console.log(trackSpec);
     this.stage = new XpsStage("layout:0");
     this.job   = new XpsStage('init:0');
 //    this.currentStatus = 'Startup';//old
-    this.currentStatus = new JobStatus('Startup');//new
+    this.currentStatus = new JobStatus();//new
     /**
      * オブジェクトでないほうが良いかも　＞　line/stage/job のオブジェクトに変更予定
      * ファイルパスでなく参照オブジェクトに変更予定　オブジェクト側に参照可能なパスがあるものとする
@@ -2898,6 +2900,7 @@ Xps.stringifyIdf([
     '_'をセパレータとして認識するように変更
 */
 Xps.parseIdentifier = function(myIdentifier){
+    if(! myIdentifier){console.log(this.caller)}
     if(! myIdentifier.split){console.log(myIdentifier)};
     if(myIdentifier.indexOf('_')>0){myIdentifier=myIdentifier.replace(/_/g,'//');}
     var dataArray = myIdentifier.split('//');

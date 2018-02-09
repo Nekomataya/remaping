@@ -1525,7 +1525,7 @@ span.pmcui_ {
 div.documentStatusOverlay {
 	position :absolute;
 	width : 100% ;
-	top: 96px;
+	top: 300px;
 	text-align: center;
 	z-index: 5;
 	color:red;
