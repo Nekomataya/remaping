@@ -504,9 +504,11 @@ divideExtension = function(filename){
 /*
     ダイアログパネル初期化
     インポートデータの確認ダイアログを初期化
+    
+    
 */
-initConverter=function(){
-
+initConverter=function(overwriteProps){
+if(! overwriteProps) overwriteProps ={};
 //ダイアログパネル初期化
     $("#optionPanelSCI").dialog({
 	    autoOpen:false,
@@ -521,5 +523,6 @@ initConverter=function(){
 // UIオブジェクトのプロパティをアタッチ
 //    xUI.data_well= document.getElementById('data_well');
     xUI.data_well= {"value":""};
+    xUI.importBox.overwritePros=overwriteProps;
 }
 
