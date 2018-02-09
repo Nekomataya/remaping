@@ -54,16 +54,17 @@
     複数データ対応ドキュメントインポーター
 */
     xUI.importBox={};//インポート情報トレーラー初期化
+    xUI.importBox.overwriteProps    ={};
+    xUI.importBox.maxSize  = 1000000;
+    xUI.importBox.maxCount = 10;
+    xUI.importBox.allowExtensions=new RegExp("\.(txt|csv|xps|ard|ardj|tsh)$",'i');
 
 xUI.importBox.reset = function(){
     this.targetContents    =[];
-    this.overwriteProps    ={};
     this.selectedContents  =[];
-    this.maxSize  = 1000000;
-    this.maxCount = 10;
-    this.allowExtensions=new RegExp("\.(txt|csv|xps|ard|ardj|tsh)$",'i');
     this.importCount= 0;
     this.callback = undefined;
+    console.log('reset')
 }
     xUI.importBox.reset();
 /**
@@ -123,14 +124,15 @@ xUI.importBox.import = function(targetFiles,callback){
         xUI.data_well.value +='\n'+ input.name;
         xUI.data_well.value +='\n'+ reader.result;
 
-        var myXps = convertXps(reader.result,divideExtension(reader.name)[1],{});// 指定オプション無しで一旦変換する
+        var myXps = convertXps(reader.result,divideExtension(reader.name)[1],xUI.importBox.overwriteProps);// 指定オプション無しで一旦変換する
         if(!myXps){alert(reader.name+' is not support format')}
         console.log (myXps);
         
         xUI.importBox.targetContents.push({"name":reader.name,"content":reader.result,"xps":myXps,"checked":true});
         if ( xUI.importBox.importCount == xUI.importBox.targetContents.length ){
 //            xUI.importBox.resetTarget(xUI.importBox.targetContents,overwriteTest);
-            xUI.importBox.resetTarget(xUI.importBox.targetContents);
+            xUI.importBox.resetTarget(xUI.importBox.targetContents,xUI.importBox.overwriteProps);
+console.log(xUI.importBox.overwriteProps)
             var myDialog = $("#optionPanelSCI");
 		    myDialog.dialog("open");myDialog.focus();
 		    document.getElementById('optionPanelSCI_01_sc').focus();//第一カット(かならずある)にフォーカス
@@ -263,31 +265,21 @@ xUI.importBox.checkValue = function(itm){
     var myProps=(String(itm.id).split('_')).reverse();
 //    itmNumber = myProps[1]
     switch(myProps[0]){
-        case 'title':;
-        break;
-        case 'opus':;
-        break;
-        case 'subtitle':;
-        break;
-        case 'sc':;
-        break;
         case 'time':;
             itm.value = nas.clipTC(itm.value,Infinity,1,3);
         break;
         case 'imptCB':;
-        /*    var myRest = 0;
-            for (var cbix=0;cbix<xUI.importBox.targetContents.length;cbix++){
-                var IDnumber=nas.Zf(cbix+1,2);
-                if(document.getElementById('optionPanelSCI_'+IDnumber+'_imptCB').checked){myRest++};                
-            } */
                 document.getElementById('optionPanelSCI_'+myProps[1]+'_sc').disabled   = (! itm.checked);
                 document.getElementById('optionPanelSCI_'+myProps[1]+'_time').disabled = (! itm.checked);
         break;
+        case 'title':;
+        case 'opus':;
+        case 'subtitle':;
+        case 'sc':;
         default:
     }
     document.getElementById('resetTarget').disabled = false;
 }
-
 /**
 変換のトリガーにファイル指定のイベントを使用
 ファイル（複数）が指定されたタイミングで、
@@ -364,7 +356,7 @@ convertXps=function(datastream,optionString,overwriteProps){
     var optionTrailer=Xps.parseIdentifier(optionString);
 
 // 上書きプロパティ指定がない場合は空オブジェクトで初期化
-    if(! overwriteProps){overwriteProps=undefined;}
+    if(! overwriteProps){overwriteProps={};}
 
 //データが存在したら、種別判定して、コンバート可能なデータはコンバータに送ってXPS互換ストリームに変換する
 //Xpxデータが与えられた場合は素通し
@@ -460,8 +452,6 @@ console.log(optionTrailer);
     convertedXps.title       = optionTrailer.title;
     convertedXps.opus        = optionTrailer.opus;
     convertedXps.subtitle    = optionTrailer.subtitle;
-//    convertedXps.create_user = optionTrailer.create_user;
-//    convertedXps.update_user = optionTrailer.update_user;
     convertedXps.scene       = optionTrailer.scene;
     convertedXps.cut         = optionTrailer.cut;
 //リザルトを返す
@@ -500,15 +490,12 @@ divideExtension = function(filename){
     }
     return [nameExtension,nameBody];
 }
-
 /*
     ダイアログパネル初期化
     インポートデータの確認ダイアログを初期化
-    
-    
 */
 initConverter=function(overwriteProps){
-if(! overwriteProps) overwriteProps ={};
+    if(! overwriteProps) overwriteProps ={};
 //ダイアログパネル初期化
     $("#optionPanelSCI").dialog({
 	    autoOpen:false,
@@ -521,8 +508,13 @@ if(! overwriteProps) overwriteProps ={};
 	    title	:"IMPORT"
     });
 // UIオブジェクトのプロパティをアタッチ
-//    xUI.data_well= document.getElementById('data_well');
-    xUI.data_well= {"value":""};
-    xUI.importBox.overwritePros=overwriteProps;
+    if(document.getElementById('data_well')){
+        xUI.data_well= document.getElementById('data_well');
+    }else{
+        xUI.data_well= {"value":""};
+    }
+    xUI.importBox.overwriteProps=overwriteProps;
+
+console.log(xUI.importBox.overwriteProps)
 }
 
