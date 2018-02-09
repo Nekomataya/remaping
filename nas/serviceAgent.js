@@ -4144,7 +4144,8 @@ var msg = localize({
                 msg2 += '</datalist><br>';
                 msg2 += '<textarea id=assignNoteText class=mdInputArea >指名及び申し送りは開発中のダミー画面です。\n指名データを選択または入力して先に進めてください。</textarea>'
 
-            nas.showModalDialog('confirm',[msg,msg2],title,false,function(){
+            nas.showModalDialog('confirm',msg,title,false,function(){
+//            nas.showModalDialog('confirm',[msg,msg2],title,false,function(){
 //                var assignUserName=document.getElementById('assignNextUser').value;
 //                var assignNoteText=document.getElementById('assignNoteText').value;
                 var assignUserName=true

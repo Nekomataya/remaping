@@ -758,7 +758,7 @@ serviceAgent.pushEntry(xUI.XPS,function(){xUI.setStored("current");sync();
 	</button><button
 	id=ibMdiscard
 		class='iconButton  iconButton-close'
-		onclick="serviceAgent.destroyJob();"
+		onclick="serviceAgent.closeEntry();"
 		title="編集を破棄してドキュメントを閉じる"
 	>
 	</button>
@@ -2090,6 +2090,116 @@ onclick='nas.incrFCTonHTMLInput(document.getElementById("editTC"),"-(1)")'
 
 </div>
 <!--	タイムシート情報(scene)	-->
+<!--    一括インポートパネル      -->
+<!-- optionPanelSCI 
+     この下側が登録内容の編集ダイアログです
+     ファイル名から以下の情報を取得するようにトライします
+     タイトル
+     エピソード
+     サブタイトル（エピソードの　description）
+     カット番号（名称）
+     
+     分解不能な場合は、拡張子を除くファイル名全体がカット番号として認識されます。
+     
+     サーバでの使用時に、タイトル・エピソード・サブタイトルを固定する場合は、
+     convertXps()
+-->
+<div class=optionPanel id=optionPanelSCI >
+確認内容<br><br>
+
+<span class=titleInputLB >TITLE:</span>
+    <input class=SCiInput id=optionPanelSCI_title type=text
+        onChange='xUI.importBox.checkValue(this)'
+    >
+<span class=opusInputLB >#:</span>
+    <input class=SCiInput id=optionPanelSCI_opus type=text
+        onChange='xUI.importBox.checkValue(this)'
+    >
+<hr>
+<span class=titleInputLB >SUBTITLE:</span>
+    [<input class=SCiInput id=optionPanelSCI_subtitle type=text
+        onChange='xUI.importBox.checkValue(this)'
+    >]
+<hr>
+<div id=optionPanelSCIs></div>
+<!--
+ 以下カット別テンプレート
+
+　-->
+<div id=sciTemplate class=sciTemplate >
+<hr>
+<input class=SCiImportCB id=optionPanelSCI_%ID%_imptCB type=checkbox title='このカットをインポートします' checked
+    onChange='xUI.importBox.checkValue(this);'
+>
+<span  class=SCiImportLB >S-C : </span>
+    <input  class='SCiInput SCiInput_Number' id=optionPanelSCI_%ID%_sc type=text value='###'
+        onChange='xUI.importBox.checkValue(this);'
+    >
+<!-- 時間編集UI -->
+<span class=timeInputUI >
+(
+<input
+    type = text
+    class=timeInputTC 
+    id = 'optionPanelSCI_%ID%_time'
+    value ='00+00 .'
+    onMouseDown = 'nas.sliderVALUE([event,this.id,"288","1","0",nas.FCT2Frm(this.value)]);'
+    onChange ='xUI.importBox.checkValue(this)'
+>
+)
+<span class=timeInputButtons>
+         <button
+    class='subControl subControl-incrS subControl-left-top'
+    onclick='nas.timeIncrement(this.parentNode.parentNode.childNodes[1],1000,3);'>
+</button><button
+    class='subControl subControl-decrS subControl-left-bottom'
+    onclick='nas.timeIncrement(this.parentNode.parentNode.childNodes[1],-1000,3);'>
+</button><button
+    class='subControl subControl-incr6 subControl-mid-top'
+    onclick='nas.timeIncrement(this.parentNode.parentNode.childNodes[1],"6",3);'> 
+</button><button
+    class='subControl subControl-decr6 subControl-mid-bottom'
+    onclick='nas.timeIncrement(this.parentNode.parentNode.childNodes[1],"-(6)",3);'>
+</button><button
+    class='subControl subControl-incr subControl-right-top'
+    onclick='nas.timeIncrement(this.parentNode.parentNode.childNodes[1],"1",3);'>
+</button><button
+    class='subControl subControl-decr subControl-right-bottom'
+    onclick='nas.timeIncrement(this.parentNode.parentNode.childNodes[1],"-(1)",3);'>
+</button>
+    </span>
+<br>
+</span>
+<!-- 時間編集UI -->
+</div>
+<!-- 以上カット別テンプレート -->
+
+<hr>
+<button id=updateTarget
+    onclick='xUI.importBox.updateTarget();' 
+    style='width:400px'
+> カット登録 </button><br>
+<button id=resetTarget
+ onclick ='xUI.importBox.resetTarget(xUI.importBox.targetContents);'
+ style='width:198px'
+ > リセット </button>
+<button id=cancel
+ onclick ='$("#optionPanelSCI").dialog("close");'
+ style='width:198px'
+ > 閉じる </button>
+<!--
+S:<input type=text style="width:64px" value='###'>-C:<input type=text style="width:64px" value='###'>
+TIME:(<input type=text style="width:64px" value='##+##'>)
+<br>
+-->
+</span>
+</div>
+<!-- optionPanelSCI -->
+
+
+
+
+<!--    一括インポートパネル      -->
 <!-- 時間編集UI -->
 <div class=optionPanel id=optionPanelTimeUI>
 <span style="margin-right:60px;"> </span>
@@ -2203,11 +2313,13 @@ onclick='nas.incrFCTonHTMLInput(document.getElementById("editTC"),"-(1)")'
  
 <div id=current_identifier></div>
 <div id='ddp_assignment' style='text-align:left;'>
-
+<!--
 <button
 title = "＊担当者指定があった場合表示される　（指定がないときは、何も表示されない）"
 onclick = 'var trgt = $("#ddp_assingn_notoText");if(trgt.is(":visible")){trgt.hide()}else{trgt.show()};'
->▶To:<span>(担当)</span>様へ(アサインされた担当者が表示される)</button>
+>▶To:<span>(担当)</span>様へ(アサインされた担当者が表示される)</button>　-->
+<!--
+
 <div id='ddp_assingn_notoText' style='text-align:left;display:none;'><hr>
 申し送りが存在すれば　担当名がボタン化　またはひねり矢印が表示される。
 クリックすると作業終了時の申し送りが表示される…トグル表示<br>
@@ -2217,7 +2329,7 @@ HTML（画像を使用可能）か？<br>
 永続的な保存はできない<br>
 メモ程度
 アサインメントによるソートは実装すべきか？<br>
-</div><!-- -->
+</div> -->
 
 </div>
 <hr>

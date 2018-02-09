@@ -6101,6 +6101,18 @@ $("#optionPanelRol").dialog({
 	width	:480,
 	title	:localize(nas.uiMsg.inputWarning)
 });
+//:シーンカット入力ダイアログパネル
+$("#optionPanelSCI").dialog({
+    autoOpen:false,
+    modal	:true,
+    width	:480,
+    position :{
+        my: "left top",
+        at: "center-240 top+100",
+    },
+    title	:"IMPORT"
+});
+
 //:nas.uiMsg.Sounds
 /* ダイアログをスクロール追従型にする場合はJQuiry UIで初期化
 $("#optionPanelSnd").dialog({
