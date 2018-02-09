@@ -174,7 +174,8 @@ xUI.importBox.updateTarget= function(){
         modefiedXps.cut      = document.getElementById('optionPanelSCI_'+nas.Zf(tix+1,2)+'_sc').value;
     //  時間変更 短くなった場合は後方からフレームが削除されるので注意
         modefiedXps.setDuration(nas.FCT2Frm(document.getElementById('optionPanelSCI_'+nas.Zf(tix+1,2)+'_time').value));
-//  
+    //  変更されたXpsのステータスをStartup変更（暫定処理）
+        modefiedXps.currentStatus.content    = 'Startup';
         xUI.importBox.selectedContents.push(modefiedXps);
     }
     $("#optionPanelSCI").dialog("close");
