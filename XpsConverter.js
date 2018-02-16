@@ -93,7 +93,6 @@ xUI.importBox.import = function(targetFiles,callback){
 //処理に先行して拡張子とファイルサイズでフィルタして作業リストを作成する
 //作業リストの進行度合いをチェックして終了判定をかける
         var targetQueue=[];
-//        var myCount=(targetFiles.length > this.maxCount)? this.maxCount:targetFiles.length;
   for(var ix=0;ix<targetFiles.length;ix++){
     var check = targetFiles[ix];
     if(
@@ -157,6 +156,7 @@ var msg = "no FileReader! :\n　このブラウザはFileReaderオブジェク�
     
 */
 xUI.importBox.updateTarget= function(){
+console.log(xUI.importBox);
     for(var tix=0;tix<xUI.importBox.targetContents.length;tix++){
         var doAction = document.getElementById('optionPanelSCI_'+nas.Zf(tix+1,2)+'_imptCB').checked;
         xUI.importBox.targetContents[tix].checked = doAction;
@@ -289,8 +289,12 @@ xUI.importBox.checkValue = function(itm){
 window.addEventListener('DOMContentLoaded', function() {
   if(document.getElementById("myCurrentFile")){
     console.log('addEventListener');
-    document.getElementById("myCurrentFile").addEventListener('change', function(e) {
-        xUI.importBox.import(this.files,function(){
+    document.getElementById("myCurrentFile").addEventListener('change', function(e) { xUI.importBox.import(this.files,processImport)}, true);//myCrrentFile.addEvent
+  }
+});//window.addEvent
+/**
+*/
+var processImport=function(){
             alert('ユーザ処理終了')
             //for Test
 //        コンバート済みデータが格納されている配列はxUI.importBox.selectedContents
@@ -299,11 +303,7 @@ window.addEventListener('DOMContentLoaded', function() {
                 document.getElementById("xpsResult").innerHTML += xUI.importBox.selectedContents[dix].toString();
                 document.getElementById("xpsResult").innerHTML += '\n\n';
             }
-        },)
-    }, true);//myCrrentFile.addEvent
-  }
-});//window.addEvent
-
+}
  /*
     convertXps(datastream,optionString,overiteProps)
 引数:

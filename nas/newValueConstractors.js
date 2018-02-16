@@ -628,10 +628,12 @@ nas.AnimationSound=function(myContent){
 */
 nas.AnimationSound.prototype.parseContent=function(){
     if(this.contentText.length){
-//        if(this.contentText.match(/^([^"'「]*)["'「]([^"'」]*)["'」]?\s$/) ) { ;//"
-        if(this.contentText.match(/^([^「]*)「([^」]*)」?\s$/) ) {
+//        if(this.contentText.match(/^([^"'「]*)["'「]([^"'」]*)["'」]?\s$/) ) {;//"
+//        if(this.contentText.match(/^([^「]*)「([^」]*)」?\s$/) ) {
+if(this.contentText.match(/^([^「]*)「(.*)/)){
+
             this.name=RegExp.$1;
-            this.bodyText=RegExp.$2;
+            this.bodyText=RegExp.$2.replace(/」\s*$/,"");
         }else{
             this.name="";
             this.bodyText=this.contentText;
@@ -642,7 +644,7 @@ nas.AnimationSound.prototype.parseContent=function(){
             this.name=this.name.replace(/\([^)]+\)/g,"");
         }
         //                    本文内からコメントを抽出
-        var myComments=this.bodyText.match(/(<[^<>]+>|\[[^\[\]]+\]|\([^\(\)]+\))/g);
+        var myComments=this.bodyText.match(/(<[^<>]+>|\[[^\[\]]+\]|\([^\(\)]+\))|＜[^＜]+＞|〈[^〈]+〉|（[^（]+）|［[^［]+］/g);
         if(myComments){
             this.comments=[];//newArray　再初期化
             var myString=this.bodyText;//修正テキスト
@@ -653,7 +655,7 @@ nas.AnimationSound.prototype.parseContent=function(){
                 prevIndex += noteOffset;
                 myString=myString.slice(noteOffset+myComments[cix].length);
             }
-            this.bodyText=this.bodyText.replace(/(<[^<>]+>|\[[^\[\]]+\]|\([^\(\)]+\))/g,"");
+            this.bodyText=this.bodyText.replace(/(<[^<>]+>|\[[^\[\]]+\]|\([^\(\)]+\))|＜[^＜]+＞|〈[^〈]+〉|（[^（]+）|［[^［]+］/g,"");
         }
         return this.toString();
     }else{
@@ -693,7 +695,8 @@ nas.AnimationSound.prototype.toString=function(counts){
 /*    test
 A=new  nas.AnimationSound("たぬきさん(off)「ぽん！(SE:ポン)ぽこ！<BGM:開始>りん！[光る！]とうりゃぁー！！」");
 A.parseContent();
-A
+console.log(A)
+
 */
 /** 値を配列でもどす
 引数: cellCount

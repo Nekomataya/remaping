@@ -2996,10 +2996,16 @@ Activate可能な場合は新しいコンテンツとdescriptionを送信　
                 currentCut.versions = result.data.versions;
                 var currentServerXps=new Xps();
                     currentServerXps.parseXps(result.data.cut.content);
+//cut.description　にidentifierがセットされないケースがある（サービス的には正常）
+//cut.descriptionがヌルまたはundefinedの際はXps本体から情報を構築する
+
                 var currentDataInfo=Xps.parseIdentifier(result.data.cut.description);
+//ディスクリプションがcutに付属していないのは　APIの変更によるので　調整　0211
+                if(! currentDataInfo) currentDataInfo = Xps.parseIdentifier(Xps.getIdentifier(currentServerXps));
+//書き込み権限の判定からスタッフの判定になる　
+//                    (result.data.permissions.write)&&
+//                    (result.data.permissions.read)&&
                 if(
-                    (result.data.permissions.write)&&
-                    (result.data.permissions.read)&&
                     ((currentDataInfo.currentStatus.content == "Fixed")|| (currentDataInfo.currentStatus.content == "Hold"))&&
                     (xUI.currentUser.sameAs(currentServerXps.update_user))
                 ){

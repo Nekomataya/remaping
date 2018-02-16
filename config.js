@@ -148,6 +148,7 @@
 // 後からルックを変更する手続は　xUI.setSheetLook(SheetLooks);xUI.footstampPaint();
 // 後方のペイント更新が重要
 SheetLooks = {
+    SheetTextColor  :"#111111",
 	SheetBaseColor	:"#dfefef",
 	SelectedColor	:"#9999ff",
 	RapidModeColor	:"#ffff44",

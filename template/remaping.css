@@ -167,11 +167,13 @@ th.pageLabel{width:8em;}
 /*
 	
 */
+.annotationText {
+	color:gray;
+}
 th.tcSpan {
 	width:3em;
 }
 th.tclabel{
-	color:gray;
 	text-align:center;
 	border-style:solid;
 	border-width:2px 1px 3px 1px;
@@ -185,7 +187,6 @@ th.referenceSpan {
 th.layerlabelR {
 	text-align:center;
 	border-style:solid;
-	color:gray;
 	border-width:3px 1px 3px 0;
 	font-size:10px;
 	height:16px;
@@ -199,7 +200,6 @@ th.dialogSpan {
 th.dialoglabel {
 	text-align:center;
 	border-style:solid;
-	color:gray;
 	border-width:2px 1px 3px 0;
 	font-size:10px;
 	height:16px;
@@ -215,7 +215,6 @@ th.editSpan {
 th.layerlabel {
 	text-align:center;
 	border-style:solid;
-	color:gray;
 	border-width:3px 1px 3px 0;
 	font-size:10px;
 	height:16px;
@@ -226,7 +225,6 @@ th.stillSpan {
 	width:1em;
 }
 th.stilllabel {
-	color:gray;
 	text-align:center;
 	border-style:solid;
 	border-width:3px 1px 3px 0;
@@ -236,7 +234,6 @@ th.timingSpan {
 	width:3em;
 }
 th.timinglabel {
-	color:gray;
 	text-align:center;
 	border-style:solid;
 	border-width:3px 1px 3px 0;
@@ -246,7 +243,6 @@ th.sfxSpan {
 	width:3em;
 }
 th.sfxlabel {
-	color:gray;
 	text-align:center;
 	border-style:solid;
 	border-width:3px 1px 3px 0;
@@ -256,7 +252,6 @@ th.cameraSpan {
 	width:4em;
 }
 th.cameralabel {
-	color:gray;
 	text-align:center;
 	border-style:solid;
 	border-width:3px 1px 3px 0;
@@ -270,7 +265,6 @@ th.framenoteSpan {
 	min-width:96px;
 }
 th.framenotelabel {
-	color:gray;
 	text-align:center;
 	border-style:solid;
 	border-width:2px 1px 3px 1px;
@@ -952,11 +946,12 @@ div.optionPanelFloat{
 	ln,nn,dn	標準セパレータ
 	
  */
-.Sep {background-color:red}
+.Sep {
+	color:gray;
+}
 /*タイムセパレータライン*/
 /*		左端*/
 .ltSep,.ltSep_Blank {
-	color:gray;
 	text-align:right;
 	border-style:solid;
 	vertical-align:bottom;
@@ -975,7 +970,6 @@ div.optionPanelFloat{
 /*サブセパレータライン*/
 /*		左端*/
 .lsSep,.lsSep_Blank {
-	color:gray;
 	text-align:right;
 	border-style:solid;
 	vertical-align:bottom;
@@ -994,7 +988,6 @@ div.optionPanelFloat{
 /*通常ライン*/
 /*		左端*/
 .lnSep,.lnSep_Blank {
-	color:gray;
 	text-align:right;
 	border-style:solid;
 	vertical-align:bottom;
@@ -1003,14 +996,12 @@ div.optionPanelFloat{
 }
 /*		参照データ*/
 .ref {
-		color:gray;
+	color:gray;
 }
 .rnSep,.rnSep_Blank {
 		border-width:0 1px 1px 0;
-		color:gray;
 }
 th.rnArea{
-		color:gray;
 		border-width:2px 1px 0 0;
 		width:144px;
 		padding:0;
@@ -1025,7 +1016,6 @@ th.rnArea{
 
 
 th.editArea ,th.camArea{
-		color:gray;
 		border-width:2px 1px 0 0;
 		padding:0;
 		font-size:10px;
@@ -1211,6 +1201,7 @@ div.application_status {
     background-color:#efefef;
     padding:0;
     border-style:double;
+    z-index:7;
 }
 #dialogEdit {
     border-style:none;
@@ -1382,6 +1373,12 @@ span.titleInputLB {
 div.sciTemplate {
      display:none;
      color:red;
+}
+hr.dialog_border {
+	margin: 0px;
+	border-width: 10px 0 0 0;
+  	border-style: solid; /* 種類 */
+	border-color: red;
 }
 
 /*---------------- ドロップダウンメニュー*/
@@ -1568,4 +1565,9 @@ div.documentStatusOverlay {
 .pmSelector	{
 	width:128px;
 	height:18px;	
+}
+
+.dialogComment {
+	width:36px;
+	height:24px;
 }

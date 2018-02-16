@@ -45,23 +45,37 @@ function new_xUI(){
 //------------------------ 以下インターフェースカラープロパティ
 //カラー・トラック幅等のルック決定要素はundefinedで初期化して　遅延解決に移行する
 
-    xUI.sheetbaseColor   ;        //タイムシート背景色
-    xUI.sheetblankColor;        //編集不可領域の背景色
-    xUI.footstampColor;        //フットスタンプの色
-    xUI.inputModeColor =new Object();            //入力モード色
-    xUI.inputModeColor.NORMAL;    //    ノーマル色
-    xUI.inputModeColor.EXTEND;    //    ラピッド入力基本色
-    xUI.inputModeColor.FLOAT;    //    ブロック移動基本色
-    xUI.inputModeColor.SECTION;    //    範囲編集中の色
+    xUI.sheetbaseColor        ; //タイムシート背景色
+    xUI.sheetblankColor       ; //編集不可領域の背景色
+    xUI.footstampColor        ; //フットスタンプの色
+    xUI.inputModeColor = {}   ; //入力モード色
+    xUI.inputModeColor.NORMAL ; //ノーマル色
+    xUI.inputModeColor.EXTEND ; //ラピッド入力基本色
+    xUI.inputModeColor.FLOAT  ; //ブロック移動基本色
+    xUI.inputModeColor.SECTION; //範囲編集中の色
          
-    xUI.selectedColor;    //選択セルの背景色
-    xUI.selectionColor;        //選択領域の背景色
-    xUI.editingColor;            //セル編集中のインジケータ
-    xUI.selectingColor;        //セル選択中のインジケータ
+    xUI.selectedColor         ; //選択セルの背景色
+    xUI.selectionColor        ; //選択領域の背景色
+    xUI.editingColor          ; //セル編集中のインジケータ
+    xUI.selectingColor        ; //セル選択中のインジケータ
+
+//テキストカラー
+    xUI.sheetTextColor        ;//本文標準色
+    xUI.annnotationColor        ;//本文注釈色
+    xUI.linkColor        ;//リンク色
+    xUI.hoverColor       ;//リンクホーバー色
+    xUI.activeColor      ;//リンクアクティブ色
+//メニュー関連
+    ;//
+    ;//
+    ;//
+    ;//
 //タイムライン・ラベル識別カラ－
     xUI.cameraColor;
     xUI.sfxColor;
     xUI.stillColor;//タイムライン全体に着色
+
+
 
 //中間色自動計算
         xUI.inputModeColor.NORMALspin;
@@ -92,6 +106,9 @@ function new_xUI(){
     xUI.spinAreaColorSelect;
     xUI.sectionBodyColor;
 // ---------------------- ここまでカラー設定
+
+//インポート用データトレーラー
+    xUI.importBox = {};
 
 //そのほか
 //    xUI.keyMethod        = KEYMethod;    //キー変換方式
@@ -329,11 +346,43 @@ xUI._checkProp=function(){
         }
     }
 }
+/**
+    setBackgroundColor(bgColor)
+    背景色を色コードで指定する
+*/
+xUI.setBackgroundColor = function(bgColor){
+SheetLooks = {
+    SheetTextColor  :"#111111",
+	SheetBaseColor	:"#ddeedd",
+	SelectedColor	:"#9999FF",
+	RapidModeColor	:"#ffff44",
+	FloatModeColor	:"#88eeee",
+	SectionModeColor:"#ff44ff",
+	SelectionColor	:"#f8f8dd",
+	FootStampColor	:"#ffffff",
+	EditingColor	:"#eebbbb",
+	SelectingColor	:"#ccccaa",
+	CellWidthUnit	:"px",
+	TimeGuideWidth	    :36,
+	ActionWidth         :20,
+	DialogWidth	        :36,
+	SheetCellWidth	    :42,
+	SheetCellNarrow	    :4,
+	StillCellWidth	    :12,
+	SfxCellWidth	    :46,
+	CameraCellWidth     :52,
+	CommentWidth        :120,
+	ColumnSeparatorWidth:4
+};
+SheetLooks.SheetBaseColor=bgColor;
+xUI.setSheetLook(SheetLooks);xUI.footstampPaint();
 
+}
 /**
     インターフェースルック設定
     カラー・及びシートルックを更新
     分離のみ　暗色のテーマにはまだ対応していないので注意　2017.02.04
+    ラップ関数を作成した方が良いかも
 */
 xUI.setSheetLook = function(sheetLooks){
     this.sheetLooks=sheetLooks;
@@ -347,6 +396,13 @@ xUI.setSheetLook = function(sheetLooks){
 //編集不可領域の背景色 背景色を自動設定　やや暗　これは初期状態で対向色を設定してその間で計算を行うように変更
 
     this.sheetbaseColor     = sheetLooks.SheetBaseColor;                                        //タイムシート背景色
+    var baseColor = nas.colorStr2Ary(this.sheetbaseColor);  //基本色をRBGのまま配列化
+//    輝度出してフラグ立てる
+    this.sheetbaseDark      = (((76*baseColor[0]+150*baseColor[0]+29*baseColor[0])/255) > 0.3)? false:true;//仮のしきい値0.5
+
+    this.sheetTextColor     = sheetLooks.SheetTextColor;//基本テキストカラー
+    this.annotationColor    = nas.colorAry2Str(div(add (nas.colorStr2Ary(this.sheetTextColor),nas.colorStr2Ary(this.sheetbaseColor)),2));
+    
     this.sheetblankColor    = nas.colorAry2Str(mul(nas.colorStr2Ary(this.sheetbaseColor),.95)); //編集不可領域の背景色
     this.sheetborderColor   = nas.colorAry2Str(mul(nas.colorStr2Ary(this.sheetbaseColor),.75)); //罫線基本色
     this.footstampColor     = nas.colorAry2Str(div( add (nas.colorStr2Ary(sheetLooks.FootStampColor),nas.colorStr2Ary(this.sheetbaseColor)),2));                        //フット/差分　スタンプの色 背景色との中間値
@@ -416,11 +472,69 @@ xUI.setSheetLook = function(sheetLooks){
     this.spinAreaColorSelect    = this.inputModeColor.NORMALselection;
     this.sectionBodyColor       = nas.colorAry2Str(div(add(nas.colorStr2Ary(this.inputModeColor.SECTION),mul(nas.colorStr2Ary(this.sheetbaseColor),3)),4));//?使わんかも
 // ---------------------- ここまでカラー設定(再計算)
+if(this.sheetbaseDark){
+    this.sheetTextColor     = nas.colorAry2Str( div(sub([1,1,1],nas.colorStr2Ary(this.sheetTextColor)),2));
+    this.annotationColor    = nas.colorAry2Str( div(sub([1,1,1],nas.colorStr2Ary(this.annotationColor)),2));
+
+    this.sheetblankColor    = nas.colorAry2Str(sub([1,1,1],nas.colorStr2Ary(this.sheetblankColor)));
+    this.sheetborderColor   = nas.colorAry2Str(div(sub([1,1,1],nas.colorStr2Ary(xUI.sheetborderColor)),2));
+//    this.footstampColor     = nas.colorAry2Str(div(nas.colorStr2Ary(this.footstampColor),2));
+    this.footstampColor     = nas.colorAry2Str(div(add (sub([1,1,1],nas.colorStr2Ary(sheetLooks.FootStampColor)),nas.colorStr2Ary(this.sheetbaseColor)),2));
+        this.inputModeColor.NORMAL  = nas.colorAry2Str(sub([1,1,1],nas.colorStr2Ary(this.inputModeColor.NORMAL)));
+        this.inputModeColor.EXTEND  = nas.colorAry2Str(sub([1,1,1],nas.colorStr2Ary(this.inputModeColor.EXTEND)));
+        this.inputModeColor.FLOAT   = nas.colorAry2Str(sub([1,1,1],nas.colorStr2Ary(this.inputModeColor.FLOAT)));
+        this.inputModeColor.SECTION = nas.colorAry2Str(sub([1,1,1],nas.colorStr2Ary(this.inputModeColor.SECTION)));
+        this.inputModeColor.SECTIONtail = nas.colorAry2Str(sub([1,1,1],nas.colorStr2Ary(this.inputModeColor.SECTIONtail)));
+
+    this.selectedColor    = nas.colorAry2Str(sub([1,1,1],nas.colorStr2Ary(this.selectedColor)));
+    this.selectionColor   = nas.colorAry2Str(sub([1,1,1],nas.colorStr2Ary(this.selectionColor)));
+    this.selectionColorTail   = nas.colorAry2Str(sub([1,1,1],nas.colorStr2Ary(this.selectionColorTail)));
+    this.editingColor      = nas.colorAry2Str(sub([1,1,1],nas.colorStr2Ary(this.editingColor)));
+    this.selectingColor     = nas.colorAry2Str(sub([1,1,1],nas.colorStr2Ary(this.selectingColor)));
+//タイムライン・ラベル識別カラ－
+    this.cameraColor    = nas.colorAry2Str(sub([1,1,1],nas.colorStr2Ary(this.cameraColor)));
+    this.sfxColor       = nas.colorAry2Str(sub([1,1,1],nas.colorStr2Ary(this.sfxColor)));
+    this.stillColor     = nas.colorAry2Str(sub([1,1,1],nas.colorStr2Ary(this.stillColor)));
+
+//中間色自動計算
+        this.inputModeColor.NORMALspin　= nas.colorAry2Str(sub([1,1,1],nas.colorStr2Ary(this.inputModeColor.NORMALspin)));
+        this.inputModeColor.EXTENDspin = nas.colorAry2Str(sub([1,1,1],nas.colorStr2Ary(this.inputModeColor.EXTENDspin)));
+        this.inputModeColor.FLOATspin = nas.colorAry2Str(sub([1,1,1],nas.colorStr2Ary(this.inputModeColor.FLOATspin)));
+        this.inputModeColor.SECTIONspin = nas.colorAry2Str(sub([1,1,1],nas.colorStr2Ary(this.inputModeColor.SECTIONspin)));
+//スピン選択状態
+        this.inputModeColor.NORMALspinselected = nas.colorAry2Str(sub([1,1,1],nas.colorStr2Ary(this.inputModeColor.NORMALspinselected)));
+        this.inputModeColor.EXTENDspinselected = nas.colorAry2Str(sub([1,1,1],nas.colorStr2Ary(this.inputModeColor.EXTENDspinselected)));
+        this.inputModeColor.FLOATspinselected = nas.colorAry2Str(sub([1,1,1],nas.colorStr2Ary(this.inputModeColor.FLOATspinselected)));
+        this.inputModeColor.SECTIONspinselected = nas.colorAry2Str(sub([1,1,1],nas.colorStr2Ary(this.inputModeColor.SECTIONspinselected)));
+//選択状態
+        this.inputModeColor.NORMALselection = nas.colorAry2Str(sub([1,1,1],nas.colorStr2Ary(this.inputModeColor.NORMALselection)));
+        this.inputModeColor.EXTENDselection = nas.colorAry2Str(sub([1,1,1],nas.colorStr2Ary(this.inputModeColor.EXTENDselection)));
+        this.inputModeColor.FLOATselection = nas.colorAry2Str(sub([1,1,1],nas.colorStr2Ary(this.inputModeColor.FLOATselection)));
+        this.inputModeColor.SECTIONselection = nas.colorAry2Str(sub([1,1,1],nas.colorStr2Ary(this.inputModeColor.SECTIONselection)));
+//編集中
+        this.inputModeColor.NORMALeddt = nas.colorAry2Str(sub([1,1,1],nas.colorStr2Ary(this.inputModeColor.NORMALeddt)));
+        this.inputModeColor.EXTENDeddt = nas.colorAry2Str(sub([1,1,1],nas.colorStr2Ary(this.inputModeColor.EXTENDeddt)));
+        this.inputModeColor.FLOATeddt = nas.colorAry2Str(sub([1,1,1],nas.colorStr2Ary(this.inputModeColor.FLOATeddt)));
+        this.inputModeColor.SECTIONeddt = nas.colorAry2Str(sub([1,1,1],nas.colorStr2Ary(this.inputModeColor.SECTIONeddt)));
+
+//フロートテキスト色
+    this.floatTextColor = nas.colorAry2Str(sub([1,1,1],nas.colorStr2Ary(this.floatTextColor)));
 
 
+//----------------------------------------------------------------------初期状態設定
+    this.spinAreaColor          = nas.colorAry2Str(sub([1,1,1],nas.colorStr2Ary(this.spinAreaColor)));
+    this.spinAreaColorSelect    = nas.colorAry2Str(sub([1,1,1],nas.colorStr2Ary(this.spinAreaColorSelect)));
+    this.sectionBodyColor       = nas.colorAry2Str(sub([1,1,1],nas.colorStr2Ary(this.sectionBodyColor)));
+}
 //================================================================================================================================ルックの適用
 //タイムシート背景色をsheetbaseColorに設定
     document.body.style.backgroundColor     = this.sheetbaseColor;
+    document.body.style.color               = this.sheetTextColor;
+// サブテキストカラーを設定
+    nas.addCssRule("th.annotationText","color:"+this.annotationColor,"screen");
+    nas.addCssRule('td.Sep','color:'+this.annotationColor,"screen");
+    nas.addCssRule('td.ref','color:'+this.annotationColor,"screen");
+    
 //ヘッダとフッタの背景色をシート背景色で塗りつぶし
     document.getElementById("fixedHeader").style.backgroundColor = this.sheetbaseColor;
 
@@ -451,13 +565,13 @@ var mySections=[
  */
 //トラックの幅を設定
 /*    リスト
-class=timelabel
+class=timelabel annotationText
 class=timeguide? 
 class=dtSep
 class=ntSep
 class=colSep
-class=layerlabelR
-class=layerlabel
+class=layerlabelR annotationText
+class=layerlabel annotationText
  */
 
 for(var idx=0;idx<mySections.length;idx++){
@@ -2204,15 +2318,15 @@ BODY_ +='</tr>';//改段
 BODY_ +='<tr>';
     for (cols=0;cols < PageCols;cols ++){
 /*********** timeguide ********************/
-BODY_ +='<th rowspan=2 class=tclabel ';
+BODY_ +='<th rowspan=2 class="tclabel annotationText" ';
 //BODY_ +='style=" width:'+this.sheetLooks.TimeGuideWidth+CellWidthUnit+'"';
 BODY_ +=' ><span class=timeguide> TIME </span></th>';
 /*********** Action Ref *************/
-BODY_ +='<th colspan="'+this.referenceLabels.length+ '" id="rnArea" class="rnArea" ondblclick=sync("referenceLabel") title=""';
+BODY_ +='<th colspan="'+this.referenceLabels.length+ '" id="rnArea" class="rnArea annotationText" ondblclick=sync("referenceLabel") title=""';
 //　ここは参照シートの識別名に置き換え 
 BODY_ +=' >Reference</th>';
 /*********** Dialog Area*************/
-BODY_ +='<th rowspan=2 class="dialoglabel" ';
+BODY_ +='<th rowspan=2 class="dialoglabel annotationText" ';
 //ダイアログの幅は可変
 if(xUI.dialogSpan>1){
 BODY_ +='colspan ="'+xUI.dialogSpan+'" ';
@@ -2223,18 +2337,18 @@ BODY_ +=' onMouseDown=\'xUI.changeColumn(0 ,'+ (2 * pageNumber+cols) +');\'';
 BODY_ +='>台<BR>詞</th>';
     if(pageNumber>=-1){
 /*********** Edit Area 1 (timing) *************/
-BODY_ +='<th colspan='+xUI.timingSpan+' id=editArea class=editArea ondblclick=sync("editLabel") title=""';
+BODY_ +='<th colspan='+xUI.timingSpan+' id=editArea class="editArea annotationText" ondblclick=sync("editLabel") title=""';
 //ここは編集中のステージ名に置き換え予定
 BODY_ +='>Animation</th>';
 
 /*********** Edit Area 2 (camera+sfx) *************/
 if(xUI.cameraSpan>0){
-BODY_ +='<th colspan='+xUI.cameraSpan+' id=camArea class="camArea" ';
+BODY_ +='<th colspan='+xUI.cameraSpan+' id=camArea class="camArea annotationText" ';
 //
 BODY_ +='>camera</th>';
 }
 /*********** FrameNote Area *************/
-BODY_ +='<th rowspan=2 class=framenotelabel';
+BODY_ +='<th rowspan=2 class="framenotelabel annotationText"';
 /***
 BODY_ +=' onMouseDown=\'xUI.changeColumn("memo" ,'+ (2 * pageNumber+cols) +');\'';
 ***/
@@ -2261,7 +2375,7 @@ BODY_ += pageNumber;
 BODY_ += '_';
 BODY_ += cols.toString();
 
-BODY_ +='" class="layerlabelR"';
+BODY_ +='" class="layerlabelR annotationText"';
 BODY_ +=' >';
 var lbString=(this.referenceLabels[r].length<4)?this.referenceLabels[r]:'<a onclick="return false;" title="'+this.referenceLabels[r]+'">●</a>';
 
@@ -2285,16 +2399,16 @@ BODY_ += pageNumber;
 BODY_ += '_';
 BODY_ += cols.toString();
  switch (this.XPS.xpsTracks[r].option){
-case "still" :BODY_ +='" class="stilllabel" ' ;break;
+case "still" :BODY_ +='" class="stilllabel annotationText" ' ;break;
 case "effect":
-case "sfx"   :BODY_ +='" class="sfxlabel" '   ;break;
+case "sfx"   :BODY_ +='" class="sfxlabel annotationText" '   ;break;
 case "camerawork":
-case "camera":BODY_ +='" class="cameralabel" ';break;
+case "camera":BODY_ +='" class="cameralabel annotationText" ';break;
 case "replacement":
 case "timing":
 case "dialog":
 case "sound":
-default:BODY_ +='" class="layerlabel" ';
+default:BODY_ +='" class="layerlabel annotationText" ';
 }
 
 BODY_ +=' >';
@@ -2382,7 +2496,7 @@ if(restFrm==(Math.ceil(this.XPS.framerate)-1)){
     var tcStyle='<td nowrap ';
 
 BODY_ +=tcStyle ;
-BODY_ +='class="';
+BODY_ +='class="Sep ';
 BODY_ +=tH_border+cellClassExtention;
 BODY_ +='"';
 BODY_ +=' id=tcg_';
@@ -4176,6 +4290,8 @@ return true;
 マウス処理を集中的にコントロールするファンクション
  */
 xUI.Mouse=function(e){
+//    console.log(e.target.id);
+//    if(e.target.id=='dialogEdit'){return false};
     if((this.edmode==3)&&(e.target.id=='sheet_body')&&(e.type=='mouseout')){
         xUI.sectionUpdate();
         this.mdChg(2);
@@ -4686,6 +4802,7 @@ memo    #optionPanelMemo    //メモ編集（　排他）
 Data    #optionPanelData    //Import/Export（　排他）
 AEKey   #optionPanelAEK     //キー変換（　排他）
 Scn     #optionPanelScn     //シーン設定(モーダル)
+SCIs    #optionPanelSCI    //複数対応簡易シーン設定(モーダル)
 Pref    #optionPanelPref    //環境設定（モーダル）
 Ver     #optionPanelVer     //about(モーダル)
 File    #optionPanelFile    //ファイルブラウザ（モーダル）
@@ -4712,6 +4829,7 @@ var myPanels=["#optionPanelMemo",
 	"#optionPanelData",
 	"#optionPanelAEK",
 	"#optionPanelScn",
+	"#optionPanelSCI",
 	"#optionPanelPref",
 	"#optionPanelVer",
 	"#optionPanelSnd",
@@ -4749,6 +4867,7 @@ case	"File":	;//ファイルブラウザ
 case	"Ver":	;//バージョンパネル
 case	"Pref":	;//環境設定
 case	"Scn":	;//ドキュメント設定
+case	"SCI":	;//複数対応簡易ドキュメント設定
 case	"Prog":	;//プログレスパネル
 case	"Rol":	;//書き込み警告パネル
 //case	"Snd":	;//音声編集パネル(スクロール追従)
@@ -4985,7 +5104,7 @@ case "line-cam":	    //vertical-line
 case "line-sfx":	    //vertical-line
     if(typeof xUI.Cgl.formCashe[myForm] == 'undefined'){
 		var lineWidth  =3;
-		ctx.strokeStyle="rgb(0,0,0)";
+		ctx.strokeStyle='rgb('+nas.colorStr2Ary(xUI.sheetTextColor).join(',')+')';
 		ctx.strokeWidth=lineWidth;
 		ctx.moveTo(element.width*0.5, 0);
 		ctx.lineTo(element.width*0.5, element.height);
@@ -5000,7 +5119,7 @@ case "wave-ref-odd":;		//wave-line 偶数フレーム
 case "wave-ref-evn":;		//wave-line 奇数フレーム
     if(typeof xUI.Cgl.formCashe[myForm] == 'undefined'){
 		var waveSpan  =5;		var lineWidth  =3;
-		ctx.strokeStyle="rgb(0,0,0)";
+		ctx.strokeStyle='rgb('+nas.colorStr2Ary(xUI.sheetTextColor).join(',')+')';
 		ctx.strokeWidth=lineWidth;
 		ctx.moveTo(element.width*0.5, 0);
 		if(parseInt(myId.split("_").reverse()[0]) % 2){	
@@ -5014,7 +5133,7 @@ case "wave-ref-evn":;		//wave-line 奇数フレーム
 break;
 case "fi":;		//fade-in
 	var startValue = arguments[2]; var endValue= arguments[3];
-	    ctx.fillStyle="rgba(0,0,0,1)";
+	    ctx.fillStyle="rgba("+nas.colorStr2Ary(xUI.sheetTextColor).join(',')+",1)";
 		ctx.moveTo((1-startValue)*element.width*0.5, 0);
 		ctx.lineTo(element.width-(1-startValue)*element.width*0.5,0);
 		ctx.lineTo(element.width-(1-endValue)*element.width*0.5,element.height);
@@ -5023,7 +5142,7 @@ case "fi":;		//fade-in
 break;
 case "fo":;		//fade-out
 	var startValue = arguments[2]; var endValue= arguments[3];
-	    ctx.fillStyle="rgba(0,0,0,1)";
+	    ctx.fillStyle="rgba("+nas.colorStr2Ary(xUI.sheetTextColor).join(',')+",1)";
 		ctx.moveTo(startValue*element.width*0.5, 0);
 		ctx.lineTo(element.width-startValue*element.width*0.5,0);
 		ctx.lineTo(element.width-endValue*element.width*0.5,element.height);
@@ -5032,7 +5151,7 @@ case "fo":;		//fade-out
 break;
 case "transition":;		//transition
 	var startValue = arguments[2]; var endValue= arguments[3];
-	    ctx.fillStyle="rgba(0,0,0,1)";
+	    ctx.fillStyle="rgba("+nas.colorStr2Ary(xUI.sheetTextColor).join(',')+",1)";
 		ctx.moveTo(startValue*element.width, 0);//
 		ctx.lineTo(element.width-startValue*element.width,0);
 		ctx.lineTo(element.width-endValue*element.width,element.height);
@@ -5043,7 +5162,7 @@ case "circle":;		 //circle
 case "circle-ref":;	 //circle-reference
     if(typeof xUI.Cgl.formCashe[myForm] == 'undefined'){
 		var phi  = .9;		var lineWidth  =3;
-		ctx.strokeStyle="rgb(0,0,0)";
+		ctx.strokeStyle='rgb('+nas.colorStr2Ary(xUI.sheetTextColor).join(',')+')';
 		ctx.strokeWidth=lineWidth;
 		ctx.arc(element.width * 0.5, element.height * 0.5, element.height*phi*0.5, 0, Math.PI*2, true);
 	    ctx.stroke();
@@ -5054,7 +5173,7 @@ case "triangle":;		//triangle
 case "triangle-ref":;	//triangle
     if(typeof xUI.Cgl.formCashe[myForm] == 'undefined'){
 		var lineWidth  =4;
-		ctx.strokeStyle="rgb(0,0,0)";
+		ctx.strokeStyle='rgb('+nas.colorStr2Ary(xUI.sheetTextColor).join(',')+')';
 		ctx.strokeWidth=lineWidth;
 		ctx.moveTo(element.width*0.5, -1);
 		ctx.lineTo(element.width*0.5 + (element.height-2)/Math.sqrt(3), element.height-2);
@@ -5067,7 +5186,7 @@ break;
 case "section-open":;		//section-open
     if(typeof xUI.Cgl.formCashe[myForm] == 'undefined'){
 	var formFill = arguments[2];
-	    ctx.fillStyle="rgba(0,0,0,1)";
+	    ctx.fillStyle="rgba("+nas.colorStr2Ary(xUI.sheetTextColor).join(',')+",1)";
 		ctx.moveTo(element.width * 0.5 - element.height/Math.sqrt(3), 0);
 		ctx.lineTo(element.width * 0.5 + element.height/Math.sqrt(3), 0);
 		ctx.lineTo(element.width * 0.5 , element.height);
@@ -5079,7 +5198,7 @@ break;
 case "section-close":;		//section-close
     if(typeof xUI.Cgl.formCashe[myForm] == 'undefined'){
 	var formFill = arguments[2];
-	    ctx.fillStyle="rgba(0,0,0,1)";
+	    ctx.fillStyle="rgba("+nas.colorStr2Ary(xUI.sheetTextColor).join(',')+",1)";
 		ctx.moveTo(element.width * 0.5, 0);
 		ctx.lineTo(element.width * 0.5 + element.height/Math.sqrt(3), element.height);
 		ctx.lineTo(element.width * 0.5 - element.height/Math.sqrt(3), element.height);
@@ -5091,7 +5210,7 @@ break;
 case "sound-section-open":;		//section-open
     if(typeof xUI.Cgl.formCashe[myForm] == 'undefined'){
 	var lineWidth = 3;
-	    ctx.fillStyle="rgba(0,0,0,1)";
+	    ctx.fillStyle="rgba("+nas.colorStr2Ary(xUI.sheetTextColor).join(',')+",1)";
 		ctx.moveTo(0, element.height-lineWidth);
 		ctx.lineTo(element.width, element.height-lineWidth);
 		ctx.stroke();
@@ -5101,7 +5220,7 @@ break;
 case "sound-section-close":;		//section-close
     if(typeof xUI.Cgl.formCashe[myForm] == 'undefined'){
 	var lineWidth = 3;
-	    ctx.fillStyle="rgba(0,0,0,1)";
+	    ctx.fillStyle="rgba("+nas.colorStr2Ary(xUI.sheetTextColor).join(',')+",1)";
 		ctx.moveTo(0, lineWidth);
 		ctx.lineTo(element.width, lineWidth);
 		ctx.stroke();
@@ -5111,7 +5230,7 @@ break;
 case "area-fill":;	//fill sheet cell
     if(typeof xUI.Cgl.formCashe[myForm] == 'undefined'){
 		ctx.moveTo(0, 0);
-	    ctx.fillStyle="rgba(0,0,0,1)";
+	    ctx.fillStyle="rgba("+nas.colorStr2Ary(xUI.sheetTextColor).join(',')+",1)";
 	    ctx.fillRect(0, 0, targetRect.width, targetRect.height);
 	    xUI.Cgl.formCashe[myForm] = element.toDataURL("image/png");
 	}
@@ -5181,7 +5300,6 @@ xUI.resetSheet=function(editXps,referenceXps){
 //  現在のカーソル配置をバックアップ
     var restorePoint = this.Select.concat();
     var restoreSelection=this.Selection.concat();
-//    var sheetSame=((this.XPS.isSame(editXps))&&(this.referenceXPS.isSame(referenceXps)));
     var reWriteXPS = false;
     var reWriteREF = false;
 /*
@@ -5192,7 +5310,6 @@ xUI.resetSheet=function(editXps,referenceXps){
         // 書換え範囲にXPS全体を追加
         reWriteXPS = true;
     }
-
 /*
         引数に参照シートが渡されていたら、優先して解決
         指定のない場合は現在の参照シートを保持して使用
@@ -5202,7 +5319,6 @@ xUI.resetSheet=function(editXps,referenceXps){
         // 書換え範囲に 参照XPS全体を追加
         reWriteREF=true;
     };
-
 //  バックアップしたカーソル位置が新しいシートで範囲外になる場合は範囲内にまるめる
     if(restorePoint[0] >= xUI.XPS.xpsTracks.length)   restorePoint[0] = xUI.XPS.xpsTracks.length -1;
     if(restorePoint[1] >= xUI.XPS.xpsTracks.duration) restorePoint[1] = xUI.XPS.xpsTracks.duration -1;
@@ -5854,6 +5970,9 @@ console.log('application server-onsite');
 　       document.getElementById('loginstatus_button').disabled  = true;
          document.getElementById('loginuser').innerHTML = xUI.currentUser.handle;
          document.getElementById('serverurl').innerHTML = serviceAgent.currentServer.url;
+//   カラーセット
+        SheetLooks.SheetBaseColor=$("#backend_variables").attr("data-sheet_color");
+        xUI.setSheetLook(SheetLooks);
 //  ユーザ情報取得
         xUI.currentUser = new nas.UserInfo(
             $("#backend_variables").attr("data-user_name") + ":" +
@@ -6114,7 +6233,8 @@ $("#optionPanelSCI").dialog({
 });
 
 //:nas.uiMsg.Sounds
-/* ダイアログをスクロール追従型にする場合はJQuiry UIで初期化
+/* ダイアログをスクリーンに対して固定にする場合はJQuiry UIで初期化する
+こちらで初期化するとスクロール追従となる
 $("#optionPanelSnd").dialog({
 	autoOpen:false,
 	modal	:false, 
@@ -6963,9 +7083,15 @@ function putMyWords(){
 	myResult+="\n</table>";
 	return myResult;
 }
-editMemo=function(e){
+/**
+    テキストエリアに値を挿入する編集メソッド
+    クリックの発生したエレメントの値 をinsertTargetのinsertメソッドに渡しフォーカスを移す
+*/
+editMemo=function(e,insertTarget){
 	var myTarget=e.target;
-	document.getElementById("rEsult").insert(myTarget.value);
+	var myValue=(myTarget.value)?myTarget.value:myTarget.innerHTML;
+	insertTarget.insert(myValue);
+	insertTarget.focus();
 }
 /**
 	AEキー書き出し
@@ -7019,7 +7145,8 @@ function nas_expdList(ListStr,rcl){
 		((xUI.Select[0]<(XPS.xpsTracks.length-2))&&
 		(XPS.xpsTracks[xUI.Select[0]].option=="dialog"))
 	){
-        if(ListStr.indexOf('「') >= 0){
+        if(ListStr.indexOf('「')>=0){
+            console.log(ListStr);
             var mySound = new nas.AnimationSound(ListStr);
             mySound.parseContent();
             console.log(mySound)
@@ -7696,8 +7823,12 @@ var myOffset=document.body.getBoundingClientRect();
         jQuery(document).unbind("mousemove")
     })
 });
-//Panel Snd
+/*
+OptionPanelSnd
+  パネル上で全体のonfocusイベントに対するiNputbOxへのフォーカス遷移を抑制することが必要
+*/
 jQuery(function(){
+//    jQuery("#optionPanelSnd").unbind("mouseover");
     jQuery("a.openSnd").click(function(){
         jQuery("#optionPanelSnd").show();
         return false;
@@ -7731,6 +7862,10 @@ var myOffset=document.body.getBoundingClientRect();
         jQuery(document).unbind("mousemove")
     })
 });
+//パネル上のデータリストを初期化する
+//    document.getElementById("sndCastList")
+//    document.getElementById("soundProplist")
+//    SoundEdit.PanelInit();
 /*
 // IE用コードとのこと　今回はもうIEは動作対象外なので勘弁
 jQuery("#optionPanelTbx dl dt").mousedown(function(e){
@@ -9909,25 +10044,44 @@ SoundEdit ={
 label参照配列　カット／作品内のラベルをストアして入力候補として提示するためのデータ
 タイトルごとの集積データを持つ　タイトルDB内の香盤データとして監理する
 新規に入力されたラベルがあれば、香盤に加える（最終的にはそうする）
+＊香盤への操作は香盤DBに対しての通信として実装する＊
+新規入力ラベルはこのデータに対して最新候補として追加すること
 */
     labels:[
-        "通行人",
-        "男",
-        "女",
-        "子供",
+        "医者",
         "警官",
-        "医者"
+        "子供",
+        "女",
+        "男",
+        "通行人"
     ],
 /*
     ダイアログプロパティは、個人データとして監理する
-    デフォルトでシステムに持たせる
+    デフォルトでシステムDBの値を置く
 */
     props:[
-        '背',
-        'off',
-        'V.O.',
+        'アドリブ',
+        'エコー',
         'N',
+        '背',
+        'V.O.',
+        'off',
         ''
+    ],
+/*
+    台詞間に挿入するコメントデータは、個人データとして管理する
+    デフォルトでシステムDBの値を置く
+*/
+    notes:[
+        '♪',
+        '♬',
+        '☓',
+        '○',
+        '◇',
+        '効果',
+        '音楽',
+        'BGM',
+        'SE'
     ]
 }
 /*
@@ -9941,7 +10095,6 @@ label参照配列　カット／作品内のラベルをストアして入力候
     コントロールを有効化して選択されているセクションの値を反映(getProp)
      :edmode==0
     フォーカスが値セクションの場合はフォーカスのあるセクションを選択
-    
 */
 SoundEdit.init = function(){
     if(xUI.edmode<2){
@@ -9957,6 +10110,34 @@ SoundEdit.init = function(){
             document.getElementById('soundPanelRelease').disabled=false;
     }
 }
+
+SoundEdit.panelInit = function(){
+    var recentCast   =document.getElementById('sndCasts');
+    recentCast.innerHTML='';
+    for(ix=this.labels.length-1;ix>=0;ix--){
+        var myOption = document.createElement('option');
+        myOption.setAttribute('value',this.labels[ix]);
+        recentCast.appendChild(myOption);
+    }
+    var propSelector =document.getElementById('soundPropSelector');
+    propSelector.innerHTML='';
+    for(ix=this.props.length-1;ix>=0;ix--){
+        var myOption = document.createElement('option');
+        myOption.setAttribute('value',this.props[ix]);
+        myOption.innerHTML=this.props[ix];
+        propSelector.appendChild(myOption);
+    }
+    var commentButtonCareer =document.getElementById('commentCareer');
+    commentButtonCareer.innerHTML='';
+    for(ix=this.notes.length-1;ix>=0;ix--){
+        var myOption = document.createElement('button');
+        myOption.setAttribute('value','<'+this.notes[ix]+'>');
+        myOption.className  = 'dialogComment';
+        myOption.innerHTML  = this.notes[ix];
+        commentButtonCareer.appendChild(myOption);
+    }
+}
+
 
 /*  UIロックパラメータ同期
 引数：ロックするパラメータを文字列または数値 引数なしは同期のみ
@@ -9999,6 +10180,27 @@ SoundEdit.setLabel = function(myName){
     document.getElementById('sndBody').value=targetSection.value.toString();
     xUI.sectionUpdate();
 }
+/*　編集対象のダイアログの属性を入れ替える
+引数:属性配列または属性文字列
+文字列の形式は,(コンマ)で区切られたリスト
+引数が未定義または空文字列の場合は、属性を全削除
+*/
+SoundEdit.setProp = function(myProp){
+    console.log(myProp);
+    if(typeof myProp == 'undefined') myProp=[];
+    if(xUI.edmode<2) return;//NOP
+    var targetTrack   = xUI.XPS.xpsTracks[xUI.Select[0]];
+    var targetSection = targetTrack.sections[xUI.floatSectionId]
+    var myProps = (myProp instanceof Array)? myProp:myProp.split(',');
+    targetSection.value.attributes.length = myProps.length;
+    for(var itx=0;itx<myProps.length;itx++){
+        targetSection.value.attributes[itx]=(String(myProps[itx]).match(/^\(.+\)$/))?
+        String(myProps[itx]):targetSection.value.attributes[itx]="("+String(myProps[itx])+")";
+    }
+    document.getElementById('sndBody').value=targetSection.value.toString();
+    console.log(targetSection.value.toString());
+    xUI.sectionUpdate();
+}
 /** 編集対象のパネルの値をセットする
 引数: 
     tc  TC文字列
@@ -10039,7 +10241,7 @@ SoundEdit.setTime = function(tc,target){
         var headOffset = (this.timeLock == 0)?
             nas.FCT2Frm(document.getElementById('soundInPoint').value):
             nas.FCT2Frm(document.getElementById('soundOutPoint').value)-tc;
-        var tailOffset = tc;
+        var tailOffset = tc-1;
     break;
     }
 //  xUI.XPS.xpsTracks[xUI.Select[0]].sections.manipulateSection(xUI.floatSectionId,myFrame,tailOffset);
@@ -10104,19 +10306,46 @@ SoundEdit.getProp = function(){
     document.getElementById('soundInPoint').value  = nas.Frm2FCT(inPoint ,2);
     document.getElementById('soundOutPoint').value = nas.Frm2FCT(outPoint,2);
     document.getElementById('soundDuration').value = nas.Frm2FCT(targetSection.duration,2);
+
+    document.getElementById('soundLabel').value = targetSection.value.name;
+    document.getElementById('soundProps').value = targetSection.value.attributes.join(",");
 }
 /** パネルの内容をシートに同期反映させる　値が同じプロパティはスキップ
-    
+    forceオプションが立っていたら強制的にスピン適用を行う
 */
-SoundEdit.sync = function(){
+SoundEdit.sync = function(force){
     if(xUI.edmode<2) return;//NOP
 //台詞
     var targetTrack   = xUI.XPS.xpsTracks[xUI.Select[0]];
-    var targetSection = targetTrack.sections[xUI.floatSectionId]
-    targetSection.value.contentText = document.getElementById('sndBody').value;
+    var targetSection = targetTrack.sections[xUI.floatSectionId];
+    var newContent    = new nas.AnimationSound(document.getElementById('sndBody').value);newContent.parseContent();
+    var minLength     = newContent.bodyText.length+newContent.comments.length;
+    if ((force)||(minLength > targetSection.duration)){
+        targetSection.duration = xUI.spinValue*minLength;
+        document.getElementById("soundDuration").value=xUI.spinValue*minLength;
+        SoundEdit.floatTC(2);
+    }
+    targetSection.value.contentText = newContent.contentText;
     //テキストエリアの内容が正しいコンテンツ型式であるか保証されないので注意！
     //パーサにチェック機能を設けるか　またはフィルタすること
     targetSection.value.parseContent();
+
+    //変更したデータでリストを更新する。変更が発生していればHTMLを書き直し
+    var labelCount = this.labels.length;
+        this.labels.add(targetSection.value.name);
+
+    var propCount=this.props.length;
+    for(var ix=0;ix<targetSection.value.attributes.length;ix++){
+        this.props.add(targetSection.value.attributes[ix]);
+    }
+
+    var noteCount = this.notes.length;
+    for(var ix=0;ix<targetSection.value.comments.length;ix++){
+        this.notes.add(targetSection.value.comments[ix][1]);
+    }
+    if( (labelCount != this.labels.length)||
+        (propCount != this.props.length)||
+        (noteCount != this.notes.length)){this.panelInit();}
     
     targetTrack.sections.manipulateSection(
         xUI.floatSectionId,
@@ -10125,6 +10354,9 @@ SoundEdit.sync = function(){
     );
     xUI.sectionUpdate();
 }
+/**
+    音響編集パネルを閉じる
+*/
 SoundEdit.close = function(){
 	if($("#optionPanelSnd").is(":visible")){
 	    //閉じる時に編集内容を確定しておく

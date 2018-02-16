@@ -964,7 +964,9 @@ div.optionPanelFloat{
 	ln,nn,dn	標準セパレータ
 	
  */
-.Sep {background-color:red}
+.Sep {
+	color:gray;
+}
 /*タイムセパレータライン*/
 /*		左端*/
 .ltSep,.ltSep_Blank {

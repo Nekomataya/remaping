@@ -4052,3 +4052,26 @@ if(targetMap){
 nas.CellDescription.parse=function(desc,lbl){
     return new nas.CellDescription(desc,lbl);
 }
+
+/** nas.ItemList Object
+拡張した配列
+メソッドとして　add(Item) メソッドを持つ
+要素内を検索して同値の要素が存在すればその要素を配列の先頭に移動
+存在しない場合は配列に追加する
+戻り値は当該のアイテム
+先入れ後出しにするため、リスト登録は配列の逆順登録にする
+検索はindexOfで
+*/
+Array.prototype.add=function(itm){
+    var idx = this.indexOf(itm);
+    if(idx<0){
+        this.push(itm);idx = this.length-1;
+    }
+    return idx;
+}
+/* TEST
+　　var A = ["A","B","C","D","E","F","G","H"];
+    console.log(A.add("A"));
+    console.log(A.add("J"));
+    console.log(A);
+*/

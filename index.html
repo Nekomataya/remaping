@@ -83,7 +83,7 @@
 
 </head>
 <body 
-	onload="startupTooltip();var nRS = setTimeout('nas_Rmp_Startup()',10);nas.LangPack.chgLocale('ja');serviceAgent.init();"
+	onload="startupTooltip();var nRS = setTimeout('nas_Rmp_Startup()',10);nas.LangPack.chgLocale('ja');serviceAgent.init();SoundEdit.panelInit();"
 	onbeforeunload="return nas_Rmp_reStart();"
 	onContextMenu	=" return true"
 	onSelectStart="return false"
@@ -110,9 +110,9 @@
 <!--	簡易UIヘッダ	-->
 
 
-<!-- 固定コントロール fixedHeaderは、UIのマージン等を取得するためのエレメント -->
+<!-- 固定コントロール fixedHeaderは、UIのマージン等を取得するためのエレメント 		onMouseOver=xUI.Mouse(event);
+-->
 	<div id="fixedHeader"
-		onMouseOver=xUI.Mouse(event);
 	>
 
 <!-- dropdown menu for browser ブラウザ用ドロップダウンメニュー　-->
@@ -1318,17 +1318,17 @@ class=optionPanel id=optionPanelProductManagement
 <tr>
      <td id=edchg>
 	編集中
-     </td><th class=opusLabel id="opusL">
+     </td><th class='opusLabel annotationText' id="opusL">
 	No
-     </th><th class=titleLabel id="titleL">
+     </th><th class='titleLabel annotationText' id="titleL">
 	TITLE
-     </th><th class=subtitleLabel id="subtitleL">
+     </th><th class='subtitleLabel annotationText' id="subtitleL">
 	subTITLE
-     </th><th class=scenecutLabel>
+     </th><th class='scenecutLabel  annotationText'>
 	S-C
-     </th><th colspan=3 class=timeLabel>
+     </th><th colspan=3 class='timeLabel annotationText'>
 	TIME
-     </th><th class=nameLabel id="nameL">
+     </th><th class='nameLabel annotationText' id="nameL">
 	name
      </th>
 </tr>
@@ -3192,28 +3192,27 @@ onDblClick='if (! document.getElementById("single").checked) chkValue(this.id)'
 <hr>
 <!--	ラベル付き音響編集
 <div class=optionPanel id=optionPanelSnd>	-->
-<div class=optionPanelFloat id=optionPanelSnd>
+<div class=optionPanelFloat id=optionPanelSnd >
 <!-- <span id=soundPnl class=SoundPanel>音声編集</span>
 <hr>-->
 <dl><dt style="background-color:#888888;"><span id=soundPnl class=SoundPanel>音声編集</span><a href="" class=minimize ><img src=images/ui/minimize.png alt="＿"></a><a href="" class=close ><img src=images/ui/close.png alt="×"></a></dt></dl>
 <div id=formSnd style="margin-left:12px;"><fieldset id='dialogEdit'>
 label:
-<select id='soundLabelSelector'
+<input type='text' autocomplete='on' list='sndCasts' id='soundLabel'
     onChange="SoundEdit.setLabel(this.value);"
 >
-	<option value="たぬき">　たぬき 
-	<option value="キツネ">　キツネ
-	<option value="ねこ"  >　ねこ
-</select>
+    <datalist id='sndCasts'></datalist>
 attributes:
-<input type=text id=soundProps>
-<select id='soundPropSelector'　
-	onChange="document.getElementById('soundProps').value += '('+this.value+')';"
+<input type='text' id='soundProps'
+    onChange="SoundEdit.setProp(this.value)"
 >
-	<option value='off'	 >off
-	<option value='V.O.' >V.O.
-	<option value='背'	 >背
-</select>
+      <select id='soundPropSelector'
+              onChange="document.getElementById('soundProps').value += ','+this.value;SoundEdit.setProp(this.value)"
+      ></select>
+     
+<!--
+
+-->
 <!-- 
 パネルの初期化が必要
 呼び出し時点のフレーム（ヘッド位置）で最寄りの音声トラックへ移動
@@ -3235,14 +3234,13 @@ attributes:
 <hr>
 content:
 <br><textarea name=SndBody id=sndBody style="width:96%;height:96px"
-onchange='SoundEdit.sync();'
+onchange=';SoundEdit.sync();'
 ></textarea>
 <div id=dialogWords>
-<span 
-	onClick="editSnd(event);document.getElementById('sndBody').focus();"
->insert : </span><button class=dialogComment
-	onClick='alert(this.innerHTML);return false;'
->S.E.</button>
+<span>insert : </span>
+    <span id='commentCareer'
+	    onClick='editMemo(event,document.getElementById("sndBody"));'
+    ></span>
 </div>
 IN :
 <button id=soundInpointLock type=button class="iconButton"
@@ -3305,12 +3303,18 @@ duration :
     onClick='return xUI.tcControl("soundDuration",2,-1);'
 	title="duration点調整"
 > </button>
+<!-- input type=color list='collist'>
+<datalist id='collist'>
+    <option value='#ffddff'>
+    <option value='#ffffcc'>
+    <option value='#aaeeff'>
+</datalist -->
 <button
 	id=durationSetSpin
 	class="iconButton"
-    onClick='var currentData=new nas.AnimationSound(document.getElementById("sndBody").value);currentData.parseContent();document.getElementById("soundDuration").value=xUI.spinValue*(currentData.bodyText.length+currentData.comments.length);SoundEdit.floatTC(2);SoundEdit.sync();'
+    onClick='SoundEdit.sync(true);'
 	title="スピン適用"
-> </button></span>
+>🔨</button></span>
 <br>
 </fieldset>
 <!-- 共通ボタン -->
@@ -3400,7 +3404,7 @@ duration :
 </tr><tr>
 <td colspan=2>
 <span id=myWords
-	onClick="editMemo(event);document.getElementById('rEsult').focus();"
+	onClick="editMemo(event,document.getElementById('rEsult'));"
 >word table</span>
 </td>
 </tr></table>
@@ -3449,4 +3453,4 @@ index.html ,v 1.6 2017/06/23  support@u-at.net <br />
     data-server_url='http://u-at.net'
     アドレスはサーバーのルートを使用　2017.04.13
 -->
-</body></html>
+  </body></html>

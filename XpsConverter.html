@@ -35,7 +35,44 @@
 
 
 <script src=./XpsConverter.js></script>
-
+<script>
+ $(function() {
+        var localFileLoader = $("#localFileLoader");
+ 
+        // File API が使用できない場合は諦めます.
+        if(!window.FileReader) {
+          alert("File API がサポートされていません。");
+          return false;
+        }
+ 
+        // イベントをキャンセルするハンドラです.
+        var cancelEvent = function(event) {
+            event.preventDefault();
+            event.stopPropagation();
+            return false;
+        }
+ 
+        // dragenter, dragover イベントのデフォルト処理をキャンセルします.
+        localFileLoader.bind("dragenter", cancelEvent);
+        localFileLoader.bind("dragover", cancelEvent);
+ 
+        // ドロップ時のイベントハンドラを設定します.
+        var handleDroppedFile = function(event) {
+          // ドロップされたファイル配列を取得してファイルセレクタへ送る
+          // 同時にonChangeを打つ
+//          document.getElementById('myCurrentFile').onChange();
+ console.log(document.getElementById('myCurrentFile').files);
+//         xUI.importBox.import(event.originalEvent.dataTransfer.files,processImport);
+          document.getElementById('myCurrentFile').files = event.originalEvent.dataTransfer.files;
+          // デフォルトの処理をキャンセルします.
+          cancelEvent(event);
+          return false;
+        }
+ 
+        // ドロップ時のイベントハンドラを設定します.
+        localFileLoader.bind("drop", handleDroppedFile);
+});
+</script>
 </head>
 <body
 onLoad="initConverter({'title':'hogogohgo'});"
@@ -250,19 +287,19 @@ TVP-csv1.0/1.1 ./nas/lib/lib_TVP.js
     <input class=SCiInput id=optionPanelSCI_opus type=text
         onChange='xUI.importBox.checkValue(this)'
     >
-<hr>
+<hr class=dialog_border>
 <span class=titleInputLB >SUBTITLE:</span>
     [<input class=SCiInput id=optionPanelSCI_subtitle type=text
         onChange='xUI.importBox.checkValue(this)'
     >]
-<hr>
+<hr class=dialog_border>
 <div id=optionPanelSCIs></div>
 <!--
  以下カット別テンプレート
 
 　-->
 <div id=sciTemplate class=sciTemplate >
-<hr>
+<hr class=dialog_border>
 <input class=SCiImportCB id=optionPanelSCI_%ID%_imptCB type=checkbox title='このカットをインポートします' checked
     onChange='xUI.importBox.checkValue(this);'
 >
@@ -310,7 +347,7 @@ TVP-csv1.0/1.1 ./nas/lib/lib_TVP.js
 </div>
 <!-- 以上カット別テンプレート -->
 
-<hr>
+<hr class=dialog_border>
 <button id=updateTarget
     onclick='xUI.importBox.updateTarget();' 
     style='width:400px'

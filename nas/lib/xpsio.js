@@ -2900,8 +2900,7 @@ Xps.stringifyIdf([
     '_'をセパレータとして認識するように変更
 */
 Xps.parseIdentifier = function(myIdentifier){
-    if(! myIdentifier){console.log(this.caller)}
-    if(! myIdentifier.split){console.log(myIdentifier)};
+    if(! myIdentifier) return false;
     if(myIdentifier.indexOf('_')>0){myIdentifier=myIdentifier.replace(/_/g,'//');}
     var dataArray = myIdentifier.split('//');
     var result={};
