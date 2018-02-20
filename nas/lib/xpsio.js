@@ -399,22 +399,13 @@ XpsTrackCollection = function(parent,index,duration){
 	this.jobIndex=index;//固定情報　JobID
 	this.duration=duration;
 	this.noteText="";//property dopesheet note-text
-	//
 	this.length=2;//メンバーをundefinedで初期化する。
-//	
 		this[0]=new XpsTimelineTrack("N","dialog",this,this.duration);
-//	for (var ix=1;ix < this.length-1;ix++){
-//	    var  myLabel=("ABCDEFGHIJKLMNOPQRSTUVWXYZ").charAt((ix-1)%26);
-//		this[ix]=new XpsTimelineTrack(myLabel,"timing",this,this.duration);
-//	}
 		this[1]=new XpsTimelineTrack("","comment",this,this.duration);
-}
-XpsTrackCollection.prototype = Array.prototype;
-XpsTrackCollection.prototype.constractor = XpsTrackCollection;
-
+//以下はオブジェクトメソッド（配列ベースなのでArrayオブジェクトのメソッド書き換えを防ぐためこの表記に統一）
+//オブジェクトメソッド群
 /**
- * XpsTrackCollection にタイムラインを挿入
-
+ * タイムラインを挿入
  * XpsTrackCollection.insertTrack(id,XpsTimelineTrack)
  * Timeline(XpsTimelineTrack object オブジェクト渡し)
  * idの前方に引数のタイムラインを挿入
@@ -423,21 +414,21 @@ XpsTrackCollection.prototype.constractor = XpsTrackCollection;
  * @param myId
  * @param myTimeline
  */
-XpsTrackCollection.prototype.insertTrack = function(myId,myTrack){
-    var insertCount=0;
-    if (!(myTrack instanceof Array)) { myTrack=[myTrack] };
+    this.insertTrack = function(myId,myTrack){
+        var insertCount=0;
+        if (!(myTrack instanceof Array)) { myTrack=[myTrack] };
     //挿入位置を確定
-    if ((!myId ) || (myId < 1) || ( myId >= this.length - 2)) {myId = this.length - 1;}
+        if ((!myId ) || (myId < 1) || ( myId >= this.length - 2)) {myId = this.length - 1;}
     //挿入
-    for(var tc=0;tc<myTrack.length;tc++){
-        if(myTrack[tc] instanceof XpsTimelineTrack) {
-            this.splice(myId+tc, 0, myTrack[tc]);
-            insertCount++;
+        for(var tc=0;tc<myTrack.length;tc++){
+            if(myTrack[tc] instanceof XpsTimelineTrack) {
+                this.splice(myId+tc, 0, myTrack[tc]);
+                insertCount++;
+            }
         }
-    }
-    this.renumber();
-    return insertCount;
-};
+        this.renumber();
+        return insertCount;
+    };
 /**
  * XpsTrackCollection.removeTrack([id])
  * 指定idのタイムラインを削除する
@@ -445,39 +436,40 @@ XpsTrackCollection.prototype.insertTrack = function(myId,myTrack){
  * IDを単独又は配列渡しで
  * @param args
  */
-
-XpsTrackCollection.prototype.removeTrack = function(args){
-    var removeCount=0;
-    if (!(args instanceof Array)) {
-        args = [args]
-    }
-    args.sort().reverse();//ソートして反転　後方から順次削除しないと不整合が起きる
-    for (var idx = 0; idx < args.length; idx++) {
+    this.removeTrack = function(args){
+        var removeCount=0;
+        if (!(args instanceof Array)) {
+            args = [args]
+        }
+        args.sort().reverse();//ソートして反転　後方から順次削除しないと不整合が起きる
+        for (var idx = 0; idx < args.length; idx++) {
         //操作範囲外の値は無視
-        var targetIndex = args[idx];
-        if (isNaN(targetIndex)) {
-            continue;
+            var targetIndex = args[idx];
+            if (isNaN(targetIndex)) {
+                continue;
+            }
+            if ((targetIndex > 0) && (targetIndex < this.length - 1)&&(this.length >3)) {
+                this.splice(targetIndex, 1);
+                removeCount ++;
+            }
         }
-        if ((targetIndex > 0) && (targetIndex < this.length - 1)&&(this.length >3)) {
-            this.splice(targetIndex, 1);
-            removeCount ++;
-        }
-    }
-    if(removeCount){this.renumber();}
-    return removeCount;//削除カウントを返す
-};
+        if(removeCount){this.renumber();}
+        return removeCount;//削除カウントを返す
+    };
 /**
  * トラックコレクションのindexをチェックして揃える
  * タイムライントラックのindexは親配列のindexそのもの
  */
-XpsTrackCollection.prototype.renumber = function(args){
-	for (var idx=0;idx<this.length;idx++){
-		if(this[idx].xParent !== this) { this[idx].xParent=this; }
-		if(this[idx].index != idx)     { this[idx].index  =idx ; }
-	}
+    this.renumber = function(args){
+	    for (var idx=0;idx<this.length;idx++){
+		    if(this[idx].xParent !== this) { this[idx].xParent=this; }
+		    if(this[idx].index != idx)     { this[idx].index  =idx ; }
+	    }
+    }
 }
- 
- 
+
+XpsTrackCollection.prototype = Array.prototype;
+
 /**
  * @constructor XpsTimelineTrackオブジェクトコンストラクタ
  *
@@ -522,48 +514,41 @@ function XpsTimelineTrack(myLabel, myType, myParent, myLength) {
     this.parent = ".";//
     this.sections = new XpsTimelineSectionCollection(this);
     this.sectionTrust = false;//セクションコレクションが最新の場合のみtrueとなるインジケータ変数
-}
-
-XpsTimelineTrack.prototype = Array.prototype;
-XpsTimelineTrack.prototype.constructor = XpsTimelineTrack;
-XpsTimelineTrack.prototype.getDefaultValue = _getMapDefault;//
-
+//以下はオブジェクトメソッド（配列ベースなのでArrayオブジェクトのメソッド書き換えを防ぐためこの表記に統一）
+//オブジェクトメソッド群
 /**
  * 削除メソッドをトラックオブジェクトに実装する	
  * XpsTimelineTrack.remove()
  * 削除の派生機能としてトラックオブジェクト側に　removeメソッドを作る
  * =自分自身の削除命令を親コレクションに対して発行する
  */
-XpsTimelineTrack.prototype.remove=function(){
-    return this.xParent.removeTrack(this.index);
-}
+    this.remove=function(){
+        return this.xParent.removeTrack(this.index);
+    }
 /**
  * 複製メソッド
  * 自分自身を複製して返す。
  * 複製のindex/xParentを含めて複製するので注意
  実質使いドコロが無さそう？
  */
-XpsTimelineTrack.prototype.duplicate=function(){
-//        var newOne=new XpsTimelineTrack(this.id, this.type, this.xParent, this.length);
-//        Object.assign(newOne,this);
+    this.duplicate=function(){
         var newOne = Object.create(this);
         return newOne;
-}
+    }
 /**
     @desc トラックのセルエントリの識別文字列を作成する
     
 */
-XpsTimelineTrack.prototype.getCellIdentifier=function(myStr){
-    if(this.option!="timing"){return null;}
-    this.LabelRegex=new RegExp("^"+this.id.replace(/[\\\-\+\[\]\(\)\.\^\$]/g,"\\$&") + "[\s\-_]?(.*)$")
-    if(myStr.match(LableRegex)){
-        myName  = RegExp.$1;
-        myLabel = this.id;
-    }else{
-        mName = myStr;
+    this.getCellIdentifier=function(myStr){
+        if(this.option!="timing"){return null;}
+        this.LabelRegex=new RegExp("^"+this.id.replace(/[\\\-\+\[\]\(\)\.\^\$]/g,"\\$&") + "[\s\-_]?(.*)$")
+        if(myStr.match(LableRegex)){
+            myName  = RegExp.$1;
+            myLabel = this.id;
+        }else{
+            mName = myStr;
+        }
     }
-}
-
 /**
  * @desc タイムラインの中間処理メソッド
  * タイムラインをパースして有効データで埋まった１次元配列を返す
@@ -574,57 +559,76 @@ XpsTimelineTrack.prototype.getCellIdentifier=function(myStr){
  * @param myLength
  * @returns {*}
  */
-
-XpsTimelineTrack.prototype.parseTm = function (myStart, myLength) {
-    if ((!myStart) || (myStart > this.length) || (myStart < 0)) {
-        myStart = 0
-    }
-    if ((!myLength) || (myLength > (this.length - myStart))) {
-        myLength = (this.length - myStart)
-    }
+    this.parseTm = function (myStart, myLength) {
+        if ((!myStart) || (myStart > this.length) || (myStart < 0)) {
+            myStart = 0
+        }
+        if ((!myLength) || (myLength > (this.length - myStart))) {
+            myLength = (this.length - myStart)
+        }
 
     /**
      * @todo: 将来、データツリー構造が拡張される場合は、機能開始時点でツリーの仮構築必須
      */
-    if (this.option !== "timing") { return false;}
-
+        if (this.option !== "timing") { return false;}
     /**
      * 現在は、timing専用　タイミングタイムライン以外の要求にはfalseを戻す
      * タイミングタイムラインの内部処理に必要な環境を作成
      * @type {String}
      */
-    var myLabel = this.id;
-    var blank_pos = this.blpos;
-    var bflag = (blank_pos == "none") ? false : true;//ブランク処理フラグ
+        var myLabel = this.id;
+        var blank_pos = this.blpos;
+        var bflag = (blank_pos == "none") ? false : true;//ブランク処理フラグ
 
     /**
      * 前処理 シート配列からキー変換前にフルフレーム有効データの配列を作る
      * var bufDataArray = new Array(myStart + myLength);
      * @type {Array}
      */
-    var bufDataArray = new Array(myStart + myLength);
+        var bufDataArray = new Array(myStart + myLength);
     /**
      * 第一フレーム評価・エントリが無効な場合空フレームを設定
      * @type {*}
      */
-    var myData = dataCheck(this[0], myLabel, bflag);
-    if (myData == "interp") myData = false;
-    bufDataArray[0] = (myData) ? myData : bufDataArray[f - 1];//有効データ以外は直前のデータを使用
+        var myData = dataCheck(this[0], myLabel, bflag);
+        if (myData == "interp") myData = false;
+        bufDataArray[0] = (myData) ? myData : bufDataArray[f - 1];//有効データ以外は直前のデータを使用
     /**
      * 2--ラストフレームループ
      */
-    for (var f = 1; f < bufDataArray.length; f++) {
+        for (var f = 1; f < bufDataArray.length; f++) {
         /**
          * 有効データを判定して無効データエントリを直前のコピーで埋める
          * @type {*}
          */
-        var myData = dataCheck(this[f], myLabel, bflag);
-        if (myData == "interp") myData = false;
-        bufDataArray[f] = (myData) ? myData : bufDataArray[f - 1];//有効データ以外は直前のデータを使用
+            var myData = dataCheck(this[f], myLabel, bflag);
+            if (myData == "interp") myData = false;
+            bufDataArray[f] = (myData) ? myData : bufDataArray[f - 1];//有効データ以外は直前のデータを使用
+        }
+        return bufDataArray.slice(myStart, bufDataArray.length);
     }
-    return bufDataArray.slice(myStart, bufDataArray.length);
+/**
+    タイムライントラックを走査してプライマリセクションの切れ目を探してそこまでのカウントを返す
+    内部処理用関数
+*/
+    this.countSectionLength=function(startFrame){
+        if (typeof startFrame == "undefined" ) startFrame = 0;
+        var mySections=this.parseTimelineTrack();
+        var mySectionId = 0;
+        for(var idx=0; idx < mySections.length ; idx ++){
+            var startOffset = mySections[idx].startOffset();
+            if (( startOffset<= startFrame)&&((mySections[idx].duration+startOffset)>startFrame) ){
+                return mySections[idx].duration;
+                break;
+            }
+        }
+        return false;
+    }
+//汎用関数設定
+    this.getDefaultValue = _getMapDefault;//
 }
 
+XpsTimelineTrack.prototype = Array.prototype;
 //test
 //
 /**
@@ -644,25 +648,9 @@ XpsTimelineTrack.prototype.addSection = function (myValue) {
 };
  */
  
-/**
-    タイムライントラックを走査してプライマリセクションの切れ目を探してそこまでのカウントを返す
-    内部処理用関数
+/*test
+    XPS.xpsTracks[5].countSectionLength(1); 
 */
-XpsTimelineTrack.prototype.countSectionLength=function(startFrame){
-    if (typeof startFrame == "undefined" ) startFrame = 0;
-    var mySections=this.parseTimelineTrack();
-    var mySectionId = 0;
-    for(var idx=0; idx < mySections.length ; idx ++){
-        var startOffset = mySections[idx].startOffset();
-        if (( startOffset<= startFrame)&&((mySections[idx].duration+startOffset)>startFrame) ){
-            return mySections[idx].duration;
-            break;
-        }
-    }
-    return false;
-}
-//test
-// XPS.xpsTracks[5].countSectionLength(1); 
 
 /**
  * @constructor XpsTimelineSectionCollection
@@ -673,8 +661,8 @@ XpsTimelineTrack.prototype.countSectionLength=function(startFrame){
  */
 function XpsTimelineSectionCollection(myParent) {
     this.parent = myParent;
-}
-XpsTimelineSectionCollection.prototype = Array.prototype;
+//以下はオブジェクトメソッド（配列ベースなのでArrayオブジェクトのメソッド書き換えを防ぐためこの表記に統一）
+//オブジェクトメソッド群
 /**
  * セクション追加メソッド
  * 
@@ -687,39 +675,38 @@ XpsTimelineSectionCollection.prototype = Array.prototype;
  * @param myValue
  * @returns {XpsTimelineSection}
  */
-XpsTimelineSectionCollection.prototype.addSection = function (myValue) {
-    var newSection = new XpsTimelineSection(this.parent, 0 );//親Collection、継続時間 0
-    if(this.parent.subSections){
+    this.addSection = function (myValue) {
+        var newSection = new XpsTimelineSection(this.parent, 0 );//親Collection、継続時間 0
+        if(this.parent.subSections){
 //親が中間値補間セクションであった場合無条件でサブセクションを登録
-        newSection = new XpsTimelineSection(this.parent, 0 );
-        newSection.mapElement;//エレメントは登録されない
-        newSection.value = new nas.ValueInterpolator(newSection);
-        
-    } else if(myValue instanceof nas.xMapElement){
+            newSection = new XpsTimelineSection(this.parent, 0 );
+            newSection.mapElement;//エレメントは登録されない
+            newSection.value = new nas.ValueInterpolator(newSection);
+        } else if(myValue instanceof nas.xMapElement){
     //引数がxMapエレメントなのでそのまま有値セクション初期化
-        newSection = new XpsTimelineSection(this.parent, 0 );
+            newSection = new XpsTimelineSection(this.parent, 0 );
             newSection.mapElement = myValue;
             newSection.value = this.mapElement.content;
-    } else if(myValue == "interpolation"){
+        } else if(myValue == "interpolation"){
     //プライマリ中間値補間セクション
-        newSection = new XpsTimelineSection(this.parent, 0, true);
-        newSection.subSections=new XpsTimelineSectionCollection(newSection);
+            newSection = new XpsTimelineSection(this.parent, 0, true);
+            newSection.subSections=new XpsTimelineSectionCollection(newSection);
             newSection.mapElement;
             newSection.value=null;//new nas.ValueInterpolator();   
-    } else {
+        } else {
     //中間値補間サブセクション以外の
-        newSection = new XpsTimelineSection(this.parent, 0 );
-        newSection.mapElement;//エレメントは登録されない
-        newSection.value = myValue;
-    }
-    this.push(newSection);
-    return newSection;
-};
+            newSection = new XpsTimelineSection(this.parent, 0 );
+            newSection.mapElement;//エレメントは登録されない
+            newSection.value = myValue;
+        }
+        this.push(newSection);
+        return newSection;
+    };
 
 /* XpsTimelineSectionCollection.getDuration()メソッドは、セクションのdurationを合計するメソッド
  * 
  */
-    XpsTimelineSectionCollection.prototype.getDuration = function () {
+    this.getDuration = function () {
         var myDuration = 0;
         for (var ix = 0; ix < this.length; ix++) {
             myDuration += this[ix].duration;
@@ -754,64 +741,131 @@ XpsTimelineSectionCollection.prototype.addSection = function (myValue) {
 + フォーカス位置のオフセット(0~)
 例：　['1,,,3,,,4,,,7,,,8,,,9,,,0,,',0]
      */
-XpsTimelineSectionCollection.prototype.manipulateSection = function (id,headOffset,tailOffset) {
-//console.log([id,headOffset,tailOffset]);
-    var targetSection = this[id];
-    var myResult=[];//Collectionの編集を行わず、直接トラックのセル値を組み上げる=区間のメソッドは最低限で使う
-    var resultCount=[];
-    var allowInvert = false;//現在ダイアログのみなので反転は不用
-    if(allowInvert){
-        var startOffset = headOffset;
-        var endOffset = tailOffset;
-    }else{
-        var startOffset = (tailOffset < 0)? headOffset + tailOffset  : headOffset;
-        var endOffset = Math.abs(tailOffset);
-    }
+    this.manipulateSection = function (id,headOffset,tailOffset) {
+        var targetSection = this[id];
+        var myResult=[];//Collectionの編集を行わず、直接トラックのセル値を組み上げる=区間のメソッドは最低限で使う
+        var resultCount=[];
+        var allowInvert = false;//現在ダイアログのみなので反転は不用
+        if(allowInvert){
+            var startOffset = headOffset;
+            var endOffset = tailOffset;
+        }else{
+            var startOffset = (tailOffset < 0)? headOffset + tailOffset  : headOffset;
+            var endOffset = Math.abs(tailOffset);
+        }
 //console.log([id,startOffset,endOffset])
 /*==========================*/
 //区間外に新規 (空白)区間挿入
-    if((id==0)&&(startOffset>0)){
-        console.log('add new '+(startOffset)+' blank frames');
-        myResult=new Array(startOffset);
-        resultCount.push(startOffset);
-    }
+        if((id==0)&&(startOffset>0)){
+            console.log('add new '+(startOffset)+' blank frames');
+            myResult=new Array(startOffset);
+            resultCount.push(startOffset);
+        }
         var topMargin = 0;
         var topFlow   = 0;
         var tailFlow  = 0;
 //ターゲット前方区間を処理
-    for (var ix=0;ix<id;ix++){
+        for (var ix=0;ix<id;ix++){
 console.log('前方区間処理 : '+ix)
-        var sectionHead = this[ix].startOffset();
-        var sectionTail = this[ix].startOffset() + this[ix].duration - 1;
-        if((sectionHead > startOffset)&&(sectionTail >= startOffset)){
+            var sectionHead = this[ix].startOffset();
+            var sectionTail = this[ix].startOffset() + this[ix].duration - 1;
+            if((sectionHead > startOffset)&&(sectionTail >= startOffset)){
         //残存範囲外全消去
-            continue;
-        }else if((ix==(id-1))&&(sectionHead < startOffset)){
+                continue;
+            }else if((ix==(id-1))&&(sectionHead < startOffset)){
         //前方隣接ID && ヘッドノードがスタートオフセットよりも小さい 
-//        if( (sectionHead < startOffset)&&(sectionTail >= startOffset)){}
-            var duration =　startOffset-this[ix].startOffset();
-            var newContent = (this[ix].value)? this[ix].value.toString(duration).split(','):new Array(duration);
-        }else if(sectionTail < startOffset){
-            var duration =　this[ix].duration;
-            var newContent = this[ix].toString(true).split(',');            
-        }else{
-            continue;
-        }
+                var duration =　startOffset-this[ix].startOffset();
+                var newContent = (this[ix].value)? this[ix].value.toString(duration).split(','):new Array(duration);
+            }else if(sectionTail < startOffset){
+                var duration =　this[ix].duration;
+                var newContent = this[ix].toString(true).split(',');            
+            }else{
+                continue;
+            }
     //Flowはダイアログのみの処理なので要注意
-        if(tailFlow) newContent.splice(0,tailFlow);//先のセクションのフロー分だけ先頭からカット
-        if(newContent.length > duration){
-            myResult.splice(-(newContent.length-duration-1));//リザルトの末尾カット
-            tailFlow=1;        
-        }else{
-            tailFlow=0;
-        };
+            if(tailFlow) newContent.splice(0,tailFlow);//先のセクションのフロー分だけ先頭からカット
+            if(newContent.length > duration){
+                myResult.splice(-(newContent.length-duration-1));//リザルトの末尾カット
+                tailFlow=1;        
+            }else{
+                tailFlow=0;
+            };
 //console.log(newContent.length);
 //console.log(newContent.join());
 //console.log('old Length : '+myResult.length);
-        myResult = myResult.concat(newContent);
-        resultCount.push(duration);
+            myResult = myResult.concat(newContent);
+            resultCount.push(duration);
 //console.log('new Length : '+myResult.length)
+        }
+//ターゲット区間の処理
+console.log('ターゲット区間処理')
+//console.log('current Length : '+myResult.length)
+            var newContent = (targetSection.value)?
+            targetSection.value.toString(endOffset+1).split(','):new Array(endOffset+1);
+            topMargin = myResult.length;
+            if(tailFlow) newContent.splice(0,tailFlow);
+            if(newContent.length > endOffset+1){
+                topFlow = (newContent.length-endOffset-2);
+                myResult.splice(-1*(topFlow));
+                tailFlow=1;        
+            }else{
+                tailFlow=0;
+            };
+//console.log(newContent.length);
+//console.log(newContent);
+//console.log('old Length : '+myResult.length)
+            myResult=myResult.concat(newContent);
+            resultCount.push(targetSection.duration);
+//console.log('new Length : '+myResult.length)
+//ターゲット後方区間を処理
+//後方区間が存在しないケースを検出の（残フレームを空要素で埋める）必要がある
+        if((this.length-1) == id){
+console.log('後方区間処理 : blanks');//処理区間の情報取得
+            var duration   =  xUI.XPS.xpsTracks.duration-(startOffset+endOffset-1);
+            var newContent = (new Array(duration)).join();
+            myResult       = myResult.concat(newContent);
+        }else{
+        for (var ix=id+1;ix<this.length;ix++){
+console.log('後方区間処理 : '+(ix));//処理区間の情報取得
+            var sectionHead = this[ix].startOffset();
+            var sectionTail = this[ix].startOffset() + this[ix].duration -1;
+            var outPoint = startOffset+endOffset;//編集対象区間のアウト点
+            if((sectionHead < outPoint)&&(sectionTail <= outPoint)){
+                continue;        //全消去
+            }else if((ix==(id+1)) && (sectionTail > outPoint )){
+//              var duration = (this[ix].startOffset()+this[ix].duration+1)-(startOffset+endOffset);
+                var duration = sectionTail-outPoint-1;
+                var newContent = (this[ix].value)? this[ix].value.toString(duration).split(','):new Array(duration);
+            }else if(sectionHead > outPoint){
+                var duration =　this[ix].duration;
+                var newContent = this[ix].toString(true).split(',');
+            }else{
+                continue;
+            }
+            if(tailFlow) newContent.slice(0,tailFlow);
+            if(newContent.length > duration){
+                myResult.splice(-(newContent.length-duration-1));
+                tailFlow=1;        
+            }else{
+                tailFlow=0;
+            };
+//console.log(newContent.length);
+console.log(newContent);
+            myResult=myResult.concat(newContent);
+            resultCount.push(duration);
+//console.log('new Length : '+myResult.length)
+        }
+        }
+//console.log(myResult.length);
+//console.log(myResult);
+        if ((topFlow)&&(topMargin < topFlow)){
+            return [myResult.join(),topFlow-topMargin];
+        }else{
+            return [myResult.join(),0];
+        }
     }
+}
+XpsTimelineSectionCollection.prototype = Array.prototype;
 /*
     ターゲットセクションの値種別が範囲外記述を含む場合
     かつ
@@ -819,73 +873,7 @@ console.log('前方区間処理 : '+ix)
      (* この時点で　myResult.length=0)
      前方範囲外記述分のオフセットが必要になる
 */
-//ターゲット区間の処理
-console.log('ターゲット区間処理')
-//console.log('current Length : '+myResult.length)
-        var newContent = (targetSection.value)?
-            targetSection.value.toString(endOffset+1).split(','):new Array(endOffset+1);
-        topMargin = myResult.length;
-        if(tailFlow) newContent.splice(0,tailFlow);
-        if(newContent.length > endOffset+1){
-            topFlow = (newContent.length-endOffset-2);
-            myResult.splice(-1*(topFlow));
-            tailFlow=1;        
-        }else{
-            tailFlow=0;
-        };
-//console.log(newContent.length);
-//console.log(newContent);
-//console.log('old Length : '+myResult.length)
-        myResult=myResult.concat(newContent);
-        resultCount.push(targetSection.duration);
-//console.log('new Length : '+myResult.length)
-//ターゲット後方区間を処理
-//後方区間が存在しないケースを検出の（残フレームを空要素で埋める）必要がある
-    if((this.length-1) == id){
-console.log('後方区間処理 : blanks');//処理区間の情報取得
-        var duration   =  xUI.XPS.xpsTracks.duration-(startOffset+endOffset-1);
-        var newContent = (new Array(duration)).join();
-        myResult       = myResult.concat(newContent);
-    }else{
-      for (var ix=id+1;ix<this.length;ix++){
-console.log('後方区間処理 : '+(ix));//処理区間の情報取得
-        var sectionHead = this[ix].startOffset();
-        var sectionTail = this[ix].startOffset() + this[ix].duration -1;
-        var outPoint = startOffset+endOffset;//編集対象区間のアウト点
-        if((sectionHead < outPoint)&&(sectionTail <= outPoint)){
-            continue;        //全消去
-        }else if((ix==(id+1)) && (sectionTail > outPoint )){
-//            var duration = (this[ix].startOffset()+this[ix].duration+1)-(startOffset+endOffset);
-            var duration = sectionTail-outPoint-1;
-            var newContent = (this[ix].value)? this[ix].value.toString(duration).split(','):new Array(duration);
-        }else if(sectionHead > outPoint){
-            var duration =　this[ix].duration;
-            var newContent = this[ix].toString(true).split(',');
-        }else{
-            continue;
-        }
-        if(tailFlow) newContent.slice(0,tailFlow);
-        if(newContent.length > duration){
-            myResult.splice(-(newContent.length-duration-1));
-            tailFlow=1;        
-        }else{
-            tailFlow=0;
-        };
-//console.log(newContent.length);
-console.log(newContent);
-        myResult=myResult.concat(newContent);
-        resultCount.push(duration);
-//console.log('new Length : '+myResult.length)
-      }
-    }
-//console.log(myResult.length);
-//console.log(myResult);
-    if ((topFlow)&&(topMargin < topFlow)){
-        return [myResult.join(),topFlow-topMargin];
-    }else{
-        return [myResult.join(),0];
-    }
-}
+
 /**
  * @constructor XpsTimelineSection
  *

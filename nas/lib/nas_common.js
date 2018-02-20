@@ -1402,7 +1402,7 @@ nas.AnimationElementSource=function(targetDescription){
 
     Xps
         .stage  *
-        .mapfile    *
+        .map    *
         .opus
         .title
         .subtitle

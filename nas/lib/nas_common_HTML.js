@@ -221,6 +221,35 @@ function updateBk() {
 	BkValue[n] = document.nasExchg.elements[elName].value }
 };
 
+/**
+nas.File
+　ファイルハンドルオブジェクト
+　ファイルハンドルはプラットフォーム毎に実装されるファイルオブジェクトのエージェントとして機能する
+　AIR/Adobe 拡張スクリプト/html5 File/Node.js/
+　とか色々必要だけど
+　今回はファイル名から拡張子切り分け（=最後の'.'で文字列をセパレート）のみの実装で済ませる
+　ファイル名本体に空文字列を認めていない
+　.git 等は　ファイル名　".git"   拡張子　なし　となる
+　拡張子なしのドットファイルの扱いに注意
+    これは保留　今回はHTML5のFileオブジェクトを直接扱う　AIRは保留
+*/
+
+/**
+divideExtension(filename)
+引数:文字列　拡張子付きファイル名
+戻値:配列[拡張子,ファイル名本体]
+*/
+divideExtension = function(filename){
+    filename=String(filename);
+        var nameBody=filename;
+        var nameExtension ='';
+    if(filename.match(/^(.+)\.([^\.]*)$/)){
+        nameExtension   =RegExp.$2;
+        nameBody        =RegExp.$1;
+    }
+    return [nameExtension,nameBody];
+}
+
 /*
 	ログ関連
 あまりつかってない
@@ -745,7 +774,6 @@ default:
 		if( document.styleSheets[0].insertRule ){
 if(document.styleSheets[0].cssRules){
 //Mozilla
-
 switch(region){
 case	"both":
 	document.styleSheets[0].insertRule( selector + "{" + property + "}", document.styleSheets[0].cssRules.length );

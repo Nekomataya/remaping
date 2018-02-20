@@ -107,8 +107,243 @@ function new_xUI(){
     xUI.sectionBodyColor;
 // ---------------------- ここまでカラー設定
 
-//インポート用データトレーラー
-    xUI.importBox = {};
+/**
+    xUI.importBox
+    複数データ対応ドキュメントインポーター
+*/
+    xUI.importBox={};//インポート情報トレーラー初期化
+    xUI.importBox.overwriteProps    ={};
+    xUI.importBox.maxSize  = 1000000;
+    xUI.importBox.maxCount = 10;
+    xUI.importBox.allowExtensions=new RegExp("\.(txt|csv|xps|ard|ardj|tsh)$",'i');
+
+xUI.importBox.reset = function(){
+    this.targetContents    =[];
+    this.selectedContents  =[];
+    this.importCount= 0;
+    this.callback = undefined;
+    console.log('reset')
+}
+    xUI.importBox.reset();
+/**
+    変換ターゲットとなるFileオブジェクト配列を引数にして以下の関数を呼び出す
+    全カット変換終了時のコールバック関数を与えることが可能
+    
+*/
+xUI.importBox.import = function(targetFiles,callback){
+    if(appHost.platform == "AIR"){
+        return false;
+//***AIR  用の分岐は　単ファイルのままで保留2018 0201
+    // File APIを利用できるかをチェック
+    if (window.File) {
+      // 指定されたファイルを取得
+      var input = targetFiles[0];
+	fileBox.currentFile=new air.File(input.name);
+	xUI.data_well.value =fileBox.readContent();
+ }
+    }else{
+    // File APIを利用できるかをチェック
+    if (window.File) {
+      if(window.FileReader){
+        xUI.importBox.reset();//ここで再初期化する
+        xUI.importBox.callback=callback;
+//        xUI.data_well.value +='\n\tread datas:'+ new Date().toString();
+//処理に先行して拡張子とファイルサイズでフィルタして作業リストを作成する
+//作業リストの進行度合いをチェックして終了判定をかける
+        var targetQueue=[];
+  for(var ix=0;ix<targetFiles.length;ix++){
+    var check = targetFiles[ix];
+    if(
+        (check.name.match(this.allowExtensions)) &&
+        (check.size <= this.maxSize) &&
+        (ix < this.maxCount)
+    ){
+        targetQueue.push(check);
+        this.importCount ++;
+    }else{
+        console.log("skip file "+check.name );
+    }
+  };
+      // 指定されたファイルを取得してインポーターのプロパティとして記録
+  for(var ix=0;ix<targetQueue.length;ix++){
+    var input = targetQueue[ix];
+//非同期で実行
+(function(){
+	var myEncode=(input.name.match(/\.(ard|csv|tsh)$/))?"Shift-JIS":"UTF-8";
+      // ファイルリーダーオブジェクト初期化(Chrome/Firefoxのみ)
+      var reader = new FileReader();
+      reader.name=input.name;
+      // ファイルの読み込みに成功したら、その内容をxUI.data_wellに反映
+      reader.addEventListener('load', function(e) {
+        var output = reader.result;//
+        xUI.data_well.value = reader.result;//最後に読み込んだ内容で上書きされるので注意　20180220
+
+        var myXps = convertXps(reader.result,divideExtension(reader.name)[1],xUI.importBox.overwriteProps);// 指定オプション無しで一旦変換する
+        if(!myXps){
+            alert(reader.name+' is not supported format');
+        }
+        xUI.importBox.targetContents.push({"name":reader.name,"content":reader.result,"xps":myXps,"checked":true});
+        if ( xUI.importBox.importCount == xUI.importBox.targetContents.length ){
+            console.log(xUI.importBox.targetContents)
+            var firstFile=Xps.parseIdentifier(divideExtension(xUI.importBox.targetContents[0].name)[1]);
+            xUI.importBox.overwriteProps={
+                "title":String(firstFile.title),
+                "episode":String(firstFile.opus),
+                "description":String(firstFile.subtitle)
+            }
+    console.log(xUI.importBox.overwriteProps);
+            xUI.importBox.resetTarget(xUI.importBox.targetContents,xUI.importBox.overwriteProps);
+            var myDialog = $("#optionPanelSCI");
+		    myDialog.dialog("open");myDialog.focus();
+		    document.getElementById('optionPanelSCI_01_sc').focus();//第一カット(かならずある)にフォーカス
+        };
+      }, true);
+      // ファイルの内容をテキストとして取得
+      reader.readAsText(input, myEncode);
+})();
+  }
+      }else{
+//FileReaderが無いブラウザ(Safari等)では、お詫びしてオシマイ
+var msg = "no FileReader! :\n　このブラウザはFileReaderオブジェクトをサポートしていません。\n残念ですが、この環境ではローカルファイルは読みだし出来ません。\nThis browser does not support the FileReader object. \n Unfortunately, you can't read local files now.";
+	alert(msg);
+      }
+    }
+   }
+}
+/**
+    xUI.importBox.updateTarget()
+    チェックのあるカットのみダイアログの値でターゲットのプロパティを更新して
+    新規の配列を作成する
+    
+*/
+xUI.importBox.updateTarget= function(){
+console.log(xUI.importBox);
+    for(var tix=0;tix<xUI.importBox.targetContents.length;tix++){
+        var doAction = document.getElementById('optionPanelSCI_'+nas.Zf(tix+1,2)+'_imptCB').checked;
+        xUI.importBox.targetContents[tix].checked = doAction;
+        if(! doAction ) continue;
+
+        var modefiedXps = xUI.importBox.targetContents[tix].xps;//直に参照
+        //var modefiedXps = new Xps();
+        //modefiedXps.parseXps(xUI.importBox.targetContents[tix].xps.toString());//複製を作る
+        
+
+        modefiedXps.title    = document.getElementById('optionPanelSCI_title').value
+        modefiedXps.opus     = document.getElementById('optionPanelSCI_opus').value;
+        modefiedXps.subtitle = document.getElementById('optionPanelSCI_subtitle').value;
+        modefiedXps.scene    = '';
+        modefiedXps.cut      = document.getElementById('optionPanelSCI_'+nas.Zf(tix+1,2)+'_sc').value;
+    //  時間変更 短くなった場合は後方からフレームが削除されるので注意
+        modefiedXps.setDuration(nas.FCT2Frm(document.getElementById('optionPanelSCI_'+nas.Zf(tix+1,2)+'_time').value));
+    //  変更されたXpsのステータスをFloating変更（暫定処理）
+        modefiedXps.currentStatus.content    = 'Floating';
+        xUI.importBox.selectedContents.push(modefiedXps);
+    }
+    $("#optionPanelSCI").dialog("close");
+    if(xUI.importBox.callback instanceof Function){xUI.importBox.callback();};
+}
+/**
+    xUI.importBox.resetTarget(dataTrailer,optionTrailer)
+    インポート用のダイアログを初期化する
+    引数は初期化用データ
+    optionTrailer が与えられない場合は書き直しは行われない
+*/
+xUI.importBox.resetTarget= function(dataTrailer,optionTrailer){
+    if (optionTrailer){
+      document.getElementById('optionPanelSCI_title').value    = optionTrailer.title;
+      document.getElementById('optionPanelSCI_opus').value     = optionTrailer.episode;
+      document.getElementById('optionPanelSCI_subtitle').value = optionTrailer.description;
+    } else {
+      document.getElementById('optionPanelSCI_title').value    = dataTrailer[0].xps.title;
+      document.getElementById('optionPanelSCI_opus').value     = dataTrailer[0].xps.opus;
+      document.getElementById('optionPanelSCI_subtitle').value = dataTrailer[0].xps.subtitle;
+    }
+//以下マルチファイル対応に変更
+    var listHolder=document.getElementById('optionPanelSCIs');
+//子ノードをクリア
+    while( listHolder.firstChild ){
+        listHolder.removeChild( listHolder.firstChild );
+    };
+//新規の子ノードを作成
+    var sciTemplate = document.getElementById('sciTemplate');
+    var sciHTML="";
+    for(var dix=0;dix<dataTrailer.length;dix++){
+        sciHTML += sciTemplate.innerHTML.replace(/%ID%/g,nas.Zf(dix+1,2));
+    }
+    listHolder.innerHTML=sciHTML;
+    if(dataTrailer.length > 1){
+        $('.SCiImportCB').css('display','inline');
+    }else{
+        $('.SCiImportCB').css('display','none');
+    }
+    
+    for(var dix=0;dix<dataTrailer.length;dix++){
+        var IDnumber=nas.Zf(dix+1,2);
+        console.log(dix);
+        console.log(dataTrailer[dix]);
+        document.getElementById('optionPanelSCI_'+IDnumber+'_imptCB').checked    = dataTrailer[dix].checked;
+        document.getElementById('optionPanelSCI_'+IDnumber+'_sc').value    = dataTrailer[dix].xps.cut;
+        document.getElementById('optionPanelSCI_'+IDnumber+'_time').value  = dataTrailer[dix].xps.getTC(dataTrailer[dix].xps.time());
+    }
+    if(optionTrailer){
+        for(prp in optionTrailer){
+            switch (prp){
+                case "title":
+    document.getElementById('optionPanelSCI_title').value    = String(optionTrailer[prp]);
+    document.getElementById('optionPanelSCI_title').disabled = true;
+                break;
+                case "episode":
+    document.getElementById('optionPanelSCI_opus').value    = String(optionTrailer[prp]);
+    document.getElementById('optionPanelSCI_opus').disabled = true;
+                break;
+                case "description":
+    document.getElementById('optionPanelSCI_subtitle').value    = String(optionTrailer[prp]);
+    document.getElementById('optionPanelSCI_subtitle').disabled = true;
+                break;
+                case "cut":
+     if(dataTrailer.length==1){
+        document.getElementById('optionPanelSCI_01_sc').value    = String(optionTrailer[prp]);
+        document.getElementById('optionPanelSCI_01_sc').disabled = true;
+    }
+                break;
+                case "time":
+     if(dataTrailer.length==1){
+        document.getElementById('optionPanelSCI_01_time').value    = String(optionTrailer[prp]);
+        document.getElementById('optionPanelSCI_01_time').onchange();
+        document.getElementById('optionPanelSCI_01_time').disabled = true;
+    }
+                break;
+            }
+        }
+    }
+    document.getElementById('resetSCiTarget').disabled = true;
+}
+/**
+    xUI.importBox.checkValue(ctrlElement)
+    ダイアログの変更状況をチェックしてUIの状態を更新する
+     パラメータがひとつでも変更された場合はリセットボタンを有効に
+    時間パラメータが変更された場合は、表記をTCに統一する
+*/
+xUI.importBox.checkValue = function(itm){
+    var myProps=(String(itm.id).split('_')).reverse();
+//    itmNumber = myProps[1]
+    switch(myProps[0]){
+        case 'time':;
+            itm.value = nas.clipTC(itm.value,Infinity,1,3);
+        break;
+        case 'imptCB':;
+                document.getElementById('optionPanelSCI_'+myProps[1]+'_sc').disabled   = (! itm.checked);
+                document.getElementById('optionPanelSCI_'+myProps[1]+'_time').disabled = (! itm.checked);
+        break;
+        case 'title':;
+        case 'opus':;
+        case 'subtitle':;
+        case 'sc':;
+        default:
+    }
+    document.getElementById('resetSCiTarget').disabled = false;
+}
+
 
 //そのほか
 //    xUI.keyMethod        = KEYMethod;    //キー変換方式
@@ -612,7 +847,7 @@ for(var idx=0;idx<mySeps.length;idx++){
 /**
     xUI.setDocumentStatus(myCommnad)
     ドキュメントのステータスを変更する
-    引数：キーワード　activate/deactivate/checkin/checkout/abort/reseipt //push/pull
+    引数：キーワード　activate/deactivate/checkin/checkout/abort/reseipt //sink/float
     ステータス変更成功時は、モードにあわせてアプリケーションのモードを設定
     引数がカラの場合は、現在のステータスを返す
     非同期のサービスレスポンス待ちなのでコールバック渡し
@@ -622,12 +857,34 @@ for(var idx=0;idx<mySeps.length;idx++){
     checkout        from Active         to Fixed
     abort           from Fixed          to Aborted
     reseipt         from Fixed          to Startup
-    push            from float          to Startup/Fixed
-    pull            from 
+    flaot                                copy to Floating
+      if(unactive)  from Startup/Fixed/Hold     No Change
+      if(active)    from Active                 to Hold
+    sink            from Floating       copy to Startup/Fixed
 */
 xUI.setDocumentStatus = function(myCommand){
     if (typeof myCommand == 'undefined') return this.XPS.currentStatus;
     switch (myCommand){
+        case 'float':
+        // float /現在のドキュメントを複製して自由編集状態にする　元ドキュメントはActive状態を解除する
+            if(this.XPS.currentStatus.content.match(/^Active/i)){
+                serviceAgent.currentRepository.deactivateEntry(function(){
+                    xUI.setDocumentStatus('float');
+                },function(result){console.log(result);});
+            }else{
+//                xUI.XPS.job=new Job;
+                xUI.XPS.currentStatus= new JobStatus('Floating');
+                xUI.setUImode('floating');
+            }
+        break;
+        case 'sink':
+        //sink /現在のドキュメントをリポジトリにプッシュする 成功時はドキュメントのステータスを更新
+        //処理パスをこのルーチンにしないで別に仕立てる
+/*
+    カレントデータの判定等が複雑なので別の関数を作って使用する方針で
+*/
+            console.log('NOP');
+        break;
         case 'activate':
         //activate / 再開する
             if((this.XPS.currentStatus.content.match(/^Fixed|^Hold/i))&&
@@ -803,8 +1060,8 @@ xUI.setUImode = function (myMode){
             $('#pmcui').css('color','#668866');
             break;
         default:;
-            var nextMode = ['production','management','browsing'].indexOf(xUI.uiMode);
-            return this.setUImode(['browsing','production','management'][nextMode]);
+            var nextMode = ['production','floating','management','browsing'].indexOf(xUI.uiMode);
+            return this.setUImode(['browsing','production','floating','management'][nextMode]);
     }
 //プルダウンメニューの表示をステータスに合わせる
             this.pMenu('pMcheckin'      ,(document.getElementById('pmcui-checkin').disabled)?'disable':'enable');
@@ -3250,6 +3507,8 @@ xUI.put = function(datastream,direction,toReference){
 
   var targetXps= (toReference)? xUI.referenceXPS:xUI.XPS;
   
+  var selectBackup = [this.Select.concat(),this.Selection.concat()];//カーソル配置をバックアップ
+  
   if(typeof datastream == "undefined") datastream="";
   if(typeof direction  == "undefined") direction=[0,0];
   if(! toReference){
@@ -3257,7 +3516,6 @@ xUI.put = function(datastream,direction,toReference){
     switch (this.inputFlag){
     case "redo":        this.undoPt++             ;   //REDO処理時
     case "undo":                                  ;   //UNDO処理時
-        var selectBackup = [this.Select.concat(),this.Selection.concat()];//カーソル配置をバックアップ
         var undoTarget   = this.undoStack[this.undoPt];    //処理データ取得
 // undo内容をオブジェクトメソッドでputするためにホットポイントを作成する
 // ホットポイント設定
@@ -3402,14 +3660,11 @@ xpsTimelineTrackオブジェクトのプロパティ
         xUI.resetSheet(targetXps);
     }
 }else if(this.inputFlag != "move"){
-//moveを増設したのでひとまずスキップ
-//alert(this.inputFlag);
 /*
     move時は、データ処理が煩雑なのでこのメソッド内では処理しない
     2015.09.19
 */
 //通常のデータストリームを配列に変換
-//        try {var srcData=datastream.toString().split("\n");}catch(err){alert(err +":\n"+datastream)}
         var srcData=String(datastream).split("\n");
         for (var n=0;n<srcData.length;n++){
             srcData[n]=srcData[n].split(",");
@@ -3476,14 +3731,7 @@ if(undoTarget.length>=4){
 //第４要素がある場合のみredo用のデータを設定して、カーソル復帰処理を行う
     var currentAddress =undoTarget[3][0].slice();
     var currentRange   =undoTarget[3][1].slice();
-//console.log("currentAddress:currentRabge");console.log(currentAddress+':'+currentRange);
-
-//    this.undoStack[this.undoPt][3]=selectBackup;
     if(this.undoStack[this.undoPt][0].join()!=selectBackup[0].join()) this.undoStack[this.undoPt][3]=selectBackup;
-
-//console.log([this.undoStack[this.undoPt][0],this.undoStack[this.undoPt][1]].join());
-//console.log(selectBackup.join());
-
     this.selection (add(this.Select,currentRange));
     this.selectCell(currentAddress);
 }else{
@@ -3505,8 +3753,12 @@ if(dbg){
 }
       if(xUI.footMark){ this.selection(putResult[0][1]) };
       this.selection();
-      this.selectCell(putResult[0][1].join("_"));//操作なしに最終アドレスへ
-    } 
+      if (selectBackup[1][1]>0){
+        this.selectCell(([selectBackup[0][0],selectBackup[0][1]+selectBackup[1][1]]).join("_"));
+      }else{
+        this.selectCell(putResult[0][1].join("_"));//操作なしに最終アドレスへ
+      }
+    }
   }
 case "move":
 default:    ;//カット・コピー・ペースト操作の際はカーソル移動無し
@@ -5473,15 +5725,68 @@ function nas_Rmp_Startup(){
        グローバルの XPSを実際のXpsオブジェクトとして再初期化する
 */
     XPS=new Xps(MaxLayers,MaxFrames);
-/*
-    XPSオブジェクトのreadINメソッドをオーバーライドするため
-    元のreadINメソッドから切り離した、データ判定ルーチン部分
+ /*
+    convertXps(datastream,optionString,overiteProps,streamOption)
+引数:
+    datestream
+        コンバート対象のデータ
+        基本的にテキストデータ
+        バイナリデータの場合は1bite/8bit単位の数値配列として扱う（現在未実装）
+    optionString
+        コンバート対象のデータがXPSのプロパティ全てを持たない場合があるので
+        最低限のプロパティ不足を補うための指定文字列
+        URIencodedIdentifier または　TextIdentifierを指定
+        通常はこのデータがファイル名の形式で与えられるのでファイル名をセットする
+        空白がセットされた場合は、カット番号その他が空白となる
+    overwriteProps
+        コンバータ側で上書きするプロパティをプロパティトレーラーオブジェクトで与える
+        インポーター側へ移設予定
+    streamOption
+        ストリームスイッチフラグがあればストリームで返す（旧コンバータ互換のため）
+
+    複数データ用コンバート関数
     内部でparseXpsメソッドを呼んでリザルトを返す
+    以下形式のオブジェクトで　overwriteProps を与えると固定プロパティの指定が可能
+    {
+        "title":"タイトル文字列",
+        "epispde":"エピソード文字列",
+        "description":" エピソードサブタイトル文字列",
+        "cut":"カット番号文字列",
+        "time":"カット尺文字列　フレーム数またはTC"
+    }
+    いずれのプロパテイも省略可能
+    指定されたプロパティは、その値でダイアログを上書きして編集が固定される
+    全て指定した場合は、ユーザの編集ができなくなるので注意
+    単独ファイルの場合は、固定に問題は無いが
+    複数ファイル処理の場合に問題が発生する
+    
+    固定プロパティ強制のケースでは複数のドキュメントに同一のカット番号をもたせることはできないので
+    カット番号のロックは行われない
+    不正データ等の入力でコンバートに失敗した場合はfalseを戻す
+    旧来の戻り値と同じ形式が必要な場合は　convertXps(datastream,"",{},true) と指定する事
+戻値:　Object Xps or XpsStream or false
+    
 */
-convertXps=function(datastream){
+convertXps=function(datastream,optionString,overwriteProps,streamOption){
     if(! String(datastream).length ){
         return false;
     }else{
+// streamOption
+    if(!streamOption){streamOption=false;}
+// オプションで識別子文字列を受け取る　（ファイル名を利用）
+// 識別子はXps.parseIdentifierでパースして利用
+    if(! optionString){optionString = ''};//'TITLE#EP[subtitle]//s-c=CUTNo.='
+// optionStringが空文字列の場合は置換処理を行わない
+    if(optionString.length){
+        if(optionString.indexOf('_')>=0){optionString=optionString.replace(/_/g,'//');}
+// オプション文字列がカット番号セパレータ'//'を含まない場合　文字列冒頭に'//'を補う
+        if(optionString.indexOf('//') < 0 ){optionString='//' + optionString;}
+        var optionTrailer=Xps.parseIdentifier(optionString);
+    }else{
+        var optionTrailer=false;
+    }
+// 上書きプロパティ指定がない場合は空オブジェクトで初期化
+    if(! overwriteProps){overwriteProps={};}
 //データが存在したら、種別判定して、コンバート可能なデータはコンバータに送ってXPS互換ストリームに変換する
 //Xpxデータが与えられた場合は素通し
 //この分岐処理は、互換性維持のための分岐
@@ -5497,17 +5802,20 @@ convertXps=function(datastream){
             datastream =StylosCSV2XPS(datastream);//ボタン動作を自動判定にする 2015/09/12 引数は使用せず
         break;
         case    (/^\{[^\}]*\}/).test(datastream):;
-            try{datastream =ARDJ2XPS(datastream);}catch(err){return false};
+            try{datastream =ARDJ2XPS(datastream);console.log(datastream);}catch(err){console.log(err);return false;};
         break;
         case    (/^#TimeSheetGrid\x20SheetData/).test(datastream):
-            try{datastream =ARD2XPS(datastream);}catch(err){return false}
+            try{datastream = ARD2XPS(datastream);console.log(datastream);}catch(err){console.log(err);return false;};
         break;
         case    (/^\x22([^\x09]*\x09){25}[^\x09]*/).test(datastream):
             try{datastream =TSH2XPS(datastream);}catch(err){return false}
         break;
         case    (/^Adobe\ After\ Effects\x20([456]\.[05])\ Keyframe\ Data/).test(datastream):
             try{datastream=AEK2XDS(datastream)}catch(err){alert(err);return false}
-        xUI.put(datastream);return true;
+            //AEKey のみトラック情報がないので　ダミーXpsを先に作成してそのトラックにデータをputする
+            var myXps=new Xps();
+            myXps.put(datastream);
+            datastream=myXps.toString();
         break;
         default :
 /*
@@ -5520,8 +5828,69 @@ convertXps=function(datastream){
       }
         if(! datastream){return false}
     }
-        return datastream;
+
+  if(datastream){
+    var convertedXps=new Xps();
+    convertedXps.parseXps(datastream);
+//ここでセリフトラックのチェックを行って、シナリオ形式のエントリを検知したら展開を行う
+    for(var tix=0;tix<convertedXps.xpsTracks.length;tix++){
+        var targetTrack=convertedXps.xpsTracks[tix]
+        if(targetTrack.option=='dialog'){
+            var convertQueue=[];//トラックごとにキューを置く
+            var currentEnd =false;//探索中の終了フレーム
+            
+            for(var fix=0;fix<targetTrack.length;fix++){
+                var entryText=String(targetTrack[fix]);
+//末尾検索中
+                if((convertQueue.length>0)&&(currentEnd)){
+//キューエントリが存在してかつブランクを検知、次のエントリの開始または、トラック末尾に達した場合はキューの値を更新
+//トラック末尾の場合のみ検出ポイントが異なるので注意
+                    if((nas.CellDescription.type(entryText)=='blank')||
+                       ((entryText.length>1)&&(entryText.indexOf('「')>=0))||
+                       (fix==(targetTrack.length-1))){
+                        var endOffset = (fix==(targetTrack.length-1))? 2:1;  
+                        convertQueue[convertQueue.length-1][2]=currentEnd+endOffset;
+                        currentEnd=false;
+                    }else{
+                        currentEnd=fix;
+                    }
+                }
+//開きカッコを持ったテキスト長１以上のエントリがあったらオブジェクトを作成してキューに入れ
+//終了点探索に入る
+                if((entryText.length>1)&&
+                   (entryText.indexOf('「')>=0)){
+                    var dialogValue=new nas.AnimationSound(targetTrack[fix]);
+                    dialogValue.parseContent();//
+                    convertQueue.push([dialogValue,fix,0]);// [値,開始フレーム,終了フレーム(未定義)]
+                    currentEnd = fix;
+                }
+            }
+//キューにあるダイアログを一括して処理
+            for(var qix=0;qix<convertQueue.length;qix++){
+                var dialogOffset = (String(convertQueue[qix][0].name).length)? 2:1;
+                    dialogOffset += convertQueue[qix][0].attributes.length;
+                var dialogDuration = convertQueue[qix][2]-convertQueue[qix][1]; 
+                var startAddress =[tix,(convertQueue[qix][1] - dialogOffset)];
+                var dialogStream =(convertQueue[qix][0].getStream(dialogDuration)).join(',');
+                convertedXps.put(startAddress,dialogStream);
+            }
+        }
+    }
+//オプション指定文字列の反映（抽出データを一旦全て反映）
+    if(optionTrailer){
+        if ((optionTrailer.title).length)    convertedXps.title     = optionTrailer.title;
+        if ((optionTrailer.opus).length)     convertedXps.opus      = optionTrailer.opus;
+        if ((optionTrailer.subtitle).length) convertedXps.subtitle  = optionTrailer.subtitle;
+        if ((optionTrailer.scene).length)    convertedXps.scene     = optionTrailer.scene;
+        if ((optionTrailer.cut).length)      convertedXps.cut       = optionTrailer.cut;
+    }
+//リザルトを返す
+    return (streamOption)?convertedXps.toString():convertedXps;
+  }else{
+    return false;    
+  }
 }
+
 /**
         クラスメソッドを上書き
         データインポートを自動判定
@@ -5571,8 +5940,9 @@ XPS.readIN=function(datastream){
             "currentStatus"
         ]
         var isImport=((xUI.sessionRetrace==0)&&(xUI.uiMode=='production'))? true:false;
-        var newXps = new Xps();
-        newXps.parseXps(convertXps(datastream));
+//        var newXps = new Xps();
+//        newXps.parseXps(convertXps(datastream));
+        var newXps = convertXps(datastream);
 /*
 読み込まれたデータ内にシナリオ形式のダイアログ記述が存在する可能性があるので、これを探して展開する
 現在は処理をハードコーディングしてあるが、この展開処理はトラックを引数にして処理メソッドに渡す形に変更する予定
@@ -5683,11 +6053,23 @@ if(dbg)    XPS.getMap(MAP);
 
 if(document.getElementById( "startupXPS" )){
         startupXPS=document.getElementById("startupXPS").innerHTML;
+        var dataStart=startupXPS.indexOf("nasTIME-SHEET");
+        if(dataStart<0){
+            startupXPS="";
+        }else if(dataStart>0){
+            startupXPS=startupXPS.slice(dataStart);
+        }
+        if(startupXPS.indexOf("&amp;")>=0){startupXPS=startupXPS.replace(/&amp;/g,"&");}
+        if(startupXPS.indexOf("&lt;")>=0){startupXPS=startupXPS.replace(/&lt;/g,"<");}
+        if(startupXPS.indexOf("&gt;")>=0){startupXPS=startupXPS.replace(/&gt;/g,">");}
 }
 //    同ドキュメント内にスタートアップ用参照データがあれば読み出し
 
 if(document.getElementById( "referenceXPS" ) && document.getElementById( "referenceXPS" ).innerHTML.length){
         referenceXPS=document.getElementById("referenceXPS").innerHTML;
+        if(referenceXPS.indexOf("&amp;")>=0){referenceXPS=referenceXPS.replace(/&amp;/g,"&");}
+        if(referenceXPS.indexOf("&lt;")>=0){referenceXPS=referenceXPS.replace(/&lt;/g,"<");}
+        if(referenceXPS.indexOf("&gt;")>=0){referenceXPS=referenceXPS.replace(/&gt;/g,">");}
 }
 
 
@@ -5971,7 +6353,8 @@ console.log('application server-onsite');
          document.getElementById('loginuser').innerHTML = xUI.currentUser.handle;
          document.getElementById('serverurl').innerHTML = serviceAgent.currentServer.url;
 //   カラーセット
-        SheetLooks.SheetBaseColor=$("#backend_variables").attr("data-sheet_color");
+        var sheetBaseColor=$("#backend_variables").attr("data-sheet_color");
+        if(sheetBaseColor.match(/^#[0-9a-f]+$/i)>0){SheetLooks.SheetBaseColor = sheetBaseColor;}
         xUI.setSheetLook(SheetLooks);
 //  ユーザ情報取得
         xUI.currentUser = new nas.UserInfo(
@@ -6248,7 +6631,35 @@ $("#optionPanelSnd").dialog({
 });
 */
 })();
-
+//インポート用ファイルドラッガ初期化
+ $(function() {
+        var localFileLoader = $("#data_well");
+        // File API が使用できない場合は諦めます.
+        if(!window.FileReader) {
+          alert("File API がサポートされていません。");
+          return false;
+        }
+        // イベントをキャンセルするハンドラです.
+        var cancelEvent = function(event) {
+            event.preventDefault();
+            event.stopPropagation();
+            return false;
+        }
+        // dragenter, dragover イベントのデフォルト処理をキャンセルします.
+        localFileLoader.bind("dragenter", cancelEvent);
+        localFileLoader.bind("dragover", cancelEvent);
+        // ドロップ時のイベントハンドラを設定します.
+        var handleDroppedFile = function(event) {
+          // ドロップされたファイル配列を取得してファイルセレクタへ送る
+          // 同時にonChangeを打つ
+          document.getElementById('myCurrentFile').files = event.originalEvent.dataTransfer.files;
+          // デフォルトの処理をキャンセルします.
+          cancelEvent(event);
+          return false;
+        }
+        // ドロップ時のイベントハンドラを設定します.
+        localFileLoader.bind("drop", handleDroppedFile);
+});
 
 //ヘッドラインの初期化
     initToolbox();
@@ -7419,75 +7830,29 @@ window.addEventListener('DOMContentLoaded', function() {
 // ファイルが指定されたタイミングで、その内容を表示
   if(document.getElementById("myCurrentFile")){
     console.log('addEventListener');
-  document.getElementById("myCurrentFile").addEventListener('change', function(e) {
-    if(appHost.platform == "AIR"){
-    // File APIを利用できるかをチェック
-    if (window.File) {
-      // 指定されたファイルを取得
-      var input = document.getElementById('myCurrentFile').files[0];
-	fileBox.currentFile=new air.File(input.name);
-	xUI.data_well.value =fileBox.readContent();
-         //　フラグを判定してチェックがあれば、そのまま読み込んで入出力パネルを閉じる。
-	if(document.getElementById("loadShortcut").value!="false"){
-		var myAction=document.getElementById("loadShortcut").value;
-switch (myAction){
-case "body":		if(XPS.readIN(xUI.data_well.value)){
-			xUI.resetSheet(XPS);xUI.sWitchPanel("clear");
-		}else{alert("reading-Body : "+localize(xUI.errorMsg[xUI.errorCode]) )};
-break;
-case "ref":	var myStream=convertXps(xUI.data_well.value);
-		if(xUI.referenceXPS.readIN(myStream)){
-//			nas_Rmp_Init();xUI.sWitchPanel("clear");
-			xUI.resetSheet();xUI.sWitchPanel("clear");
-		}else{alert("reading-Ref : "+localize(xUI.errorMsg[xUI.errorCode]) )};
-break;
-}
-		document.getElementById("loadShortcut").value="false";
-	}
- }
-    }else{
-    // File APIを利用できるかをチェック
-    if (window.File) {
-      // 指定されたファイルを取得
-      var input = document.getElementById('myCurrentFile').files[0];
-	var myEncode=(input.name.match(/\.(ard|csv|tsh)$/))?"Shift-JIS":"UTF-8";
-if(window.FileReader){
-      // ファイルリーダーオブジェクト初期化(Chrome/Firefoxのみ)
-      var reader = new FileReader();
-      // ファイルの読み込みに成功したら、その内容をxUI.data_wellに反映（2）
-      reader.addEventListener('load', function(e) {
-        var output = reader.result;//
-        xUI.data_well.value = output;
-      //　フラグを判定してチェックがあれば、そのまま読み込んで入出力パネルを閉じる。
-	if(document.getElementById("loadShortcut").value!="false"){
-	var myAction=document.getElementById("loadShortcut").value;
-switch (myAction){
-case "body":
-		if(XPS.readIN(xUI.data_well.value)){
-			xUI.resetSheet(XPS);xUI.sWitchPanel("clear");
-		}else{alert("reading-Body : "+localize(xUI.errorMsg[xUI.errorCode]) )};
-break;
-case "ref":
-		if(xUI.referenceXPS.readIN(convertXps(xUI.data_well.value))){
-			xUI.resetSheet(XPS);xUI.sWitchPanel("clear");
-		}else{alert("reading-Ref : "+localize(xUI.errorMsg[xUI.errorCode]) )};
-break;
-}
-		document.getElementById("loadShortcut").value="false";
-	}
-      }, true);
-      // ファイルの内容をテキストとして取得（3）
-      reader.readAsText(input, myEncode);
-}else{
-//FileReaderが無いブラウザ(Safari等)では、お詫びしてオシマイ
-var msg = "no FileReader! :\n　このブラウザはFileReaderオブジェクトをサポートしていません。\n残念ですが、この環境ではローカルファイルは読みだし出来ません。\nThis browser does not support the FileReader object. \n Unfortunately, you can't read local files now.";
-	alert(msg);
-}
-    }
-   }
-  }, true);//myCrrentFile.addEvent
+  document.getElementById("myCurrentFile").addEventListener('change', function(e){
+    xUI.importBox.import(this.files,processImport)}, true);//myCrrentFile.addEvent
   }
 });//window.addEvent
+
+/**
+りまぴん用インポート処理関数
+トリガーはファイルトレーラーの変更
+単一ファイルはデータウエルに読み込んで終了
+複数ファイルの場合はファイル名でデータを補ってカレントリポジトリに一括送信
+*/
+var processImport=function(){
+//        コンバート済みデータが格納されている配列はxUI.importBox.selectedContents
+    if(xUI.importBox.selectedContents.length > 1){
+        for(var dix=0;dix<xUI.importBox.selectedContents.length;dix++){
+            console.log(xUI.importBox.selectedContents[dix].getIdentifier());
+            console.log(xUI.importBox.selectedContents[dix].toString());
+        }
+    }else{
+        xUI.resetSheet(xUI.importBox.selectedContents[0]);
+        xUI.sWitchPanel('Data');
+    }
+}
 
 /*
 	テンプレートを利用したeps出力
@@ -9075,6 +9440,9 @@ with(document){
 	getElementById("tabSpin").checked=xUI["tabSpin"];
 
 	getElementById("noSync").checked=xUI["noSync"];
+
+//シートカラー
+    getElementById("prefBGColor").value = xUI.sheetLooks.SheetBaseColor;
 }
 		if(this.changed){this.changed=false;};
 }
@@ -9152,6 +9520,11 @@ if(	xUI.SheetLength !=document.getElementById("prefSheetLength").value ||
 	xUI["tabSpin"]=document.getElementById("tabSpin").checked;
 //	これだけは一時変更(なくしても良いかも)
 	xUI["noSync"]=document.getElementById("noSync").checked;
+
+//背景色
+if( document.getElementById("prefBGColor").value != xUI.sheetLooks.SheetBaseColor){
+    xUI.setBackgroundColor(document.getElementById("prefBGColor").value);
+}
 
 		if(this.changed){this.changed=false;};
 }
@@ -9448,12 +9821,18 @@ this.mkNewLabels=function(lot){
 return myLabels;
 }
 //
+/**
+　201802改修　レイヤブラウザの位置づけ変更
+　AE依存のパラメータを使用しない
+　基本はデータ編集をロックして閲覧のみ
+　引数はトラック数
+*/
 this.mkLayerSheet =function (lot){
 //	レイヤブラウザを作る　終端のフレームコメントを除くすべて
 //	引数はレイヤの数
 var body_='<table cellspacing=0 cellpadding=0 border=0 >';//
 
-//タイトルつける
+//タイトルつける +1はタイトル
 body_+='<tr><th colspan='+(lot+1)+'>詳細指定</th></tr>';//
 //インデックスを配置 0-
 			body_+='<tr><th>ID:</th>';//
@@ -9613,6 +9992,10 @@ this.layerTableUpdate =function(){
 //各種設定表示初期化
 this.getProp =function ()
 {
+    document.getElementById("scnRepository").innerHTML = (XPS.currentStatus.content != 'Floating')?
+        [serviceAgent.currentRepository.url,serviceAgent.currentRepository.name].join("/"):
+        "This data is not stored in any repository.";
+//このデータはいずれのリポジトリにも保存されていません
 // document.getElementById("scnNewSheet").checked=false;//新規フラグダウン
 //ドキュメントパネルから新規ドキュメントフラグを削除　削除に伴う変更まだ
 
@@ -9630,26 +10013,24 @@ this.getProp =function ()
 		document.getElementById("scnLayers").value=this.tracks;
 	}
 
-//変換不要パラメータ
+//変換不要パラメータ "mapfile",
 	var names=[
-"mapfile","title","subtitle","opus","scene","cut","framerate",
+"title","subtitle","opus","scene","cut","framerate",
 "create_time","create_user","update_time","update_user"
 ];
-//
 	var ids=[
-"scnMapfile","scnTitle","scnSubtitle","scnOpus","scnScene","scnCut","scnFramerate",
+"scnTitle","scnSubtitle","scnOpus","scnScene","scnCut","scnFramerate",
 "scnCreate_time","scnCreate_user","scnUpdate_time","scnUpdate_user"
 ];
-//
 	for (var i=0;i<names.length;i++){
-		document.getElementById(ids[i]).value=
-		XPS[names[i]];
+		document.getElementById(ids[i]).value = xUI.XPS[names[i]];
+		document.getElementById(ids[i]).disabled = (xUI.onSite)? true:false;
 	}
 //シートメモ転記
 		document.getElementById('scnMemo').value=xUI.XPS.xpsTracks.noteText;
         
-	var names=["create_time","create_user","update_time"];
-	var ids=["scnCreate_time","scnCreate_user","scnUpdate_time"];
+	var names=["create_time","create_user","update_time","update_user"];
+	var ids=["scnCreate_time","scnCreate_user","scnUpdate_time","scnUpdate_user"];
 	for (var i=0;i<names.length;i++){
 		document.getElementById(ids[i]+"TD").innerHTML=
 		(document.getElementById(ids[i]).value=="")?"<br>":
@@ -9682,7 +10063,7 @@ this.getLayerProp =function (){
 //レイヤ情報テーブルに値をセット
 	var myLabels=document.getElementById("scnLayersLbls").value.split(",");
 
-	if (this.tracks>XPS.xpsTracks.length-1){this.tracks=XPS.tracks.length-1}
+	if (this.tracks>(XPS.xpsTracks.length-1)){this.tracks=XPS.tracks.length-1}
 	for (i=0;i<document.getElementById("scnLayers").value;i++)
 	{
 	    var currentTrack = xUI.XPS.xpsTracks[i];
@@ -9780,7 +10161,7 @@ if (confirm(msg)){
 		this.mkLayerSheet(document.getElementById("scnLayers").value);
 //デフォルトパラメータを設定
 Now =new Date();
-	document.getElementById("scnMapfile").value="";
+	document.getElementById("scnMapfile").innerHTML="no mapfile";
 	document.getElementById("scnTitle").value=myTitle;
 	document.getElementById("scnSubtitle").value=mySubTitle;
 	document.getElementById("scnOpus").value=myOpus;
@@ -9790,19 +10171,20 @@ Now =new Date();
 
 	document.getElementById("scnCreate_time").value=Now.toNASString();
 	document.getElementById("scnCreate_user").value=xUI.currentUser;//myName;
-	document.getElementById("scnUpdate_user").value=xUI.currentUser;//myName;
 	document.getElementById("scnUpdate_time").value="";
+	document.getElementById("scnUpdate_user").value=xUI.currentUser;//myName;
 
 	document.getElementById("scnMemo").value="";
 //	document.getElementById("scn").value=;
 //	document.getElementById("").value=;
 //	document.getElementById("").value=;
-	var names=["scnCreate_time","scnCreate_user","scnUpdate_time"];
+	var names=["scnCreate_time","scnCreate_user","scnUpdate_time","scnUpdate_user"];
 	for (var i=0;i<names.length;i++){
 		name=names[i];
 		document.getElementById(name+"TD").innerHTML=
 		(document.getElementById(name).value=="")?"<br>":
 		xUI.trTd(document.getElementById(name).value);
+		console.log(document.getElementById(name).value);
 	}
 
 
@@ -9840,8 +10222,8 @@ nas.FCT2Frm(document.getElementById("scnTime").value);
 	var oldduration=XPS.duration();
 	var durationUp=(duration>oldduration)? true : false ;
 //	レイヤ数の変更を一時変数に取得
-	var newWidth=this.tracks+1;//新幅
-	var oldWidth=XPS.xpsTracks.length;//もとの長さを控える
+	var newWidth=this.tracks;//新幅
+	var oldWidth=XPS.xpsTracks.length-1;//もとの長さを控える
 	var widthUp =(newWidth>oldWidth)?true:false;//増えたか?
 //	新規作成ならば細かいチェックは不要
 	if(document.getElementById("scnNewSheet").checked){
@@ -9877,12 +10259,12 @@ nas.FCT2Frm(document.getElementById("scnTime").value);
 //	実際のデータ更新
 //シートメモ転記
 		XPS.xpsTracks.noteText = document.getElementById("scnMemo").value;
-//値の変換不要なパラメータをまとめて更新
+//値の変換不要なパラメータをまとめて更新　"mapfile"を削除　ユーザ編集は可能性自体が無い
 	var names=[
-"mapfile","title","subtitle","opus","scene","cut","update_user"
+"title","subtitle","opus","scene","cut"
 	];//
 	var ids=[
-"scnMapfile","scnTitle","scnSubtitle","scnOpus","scnScene","scnCut","scnUpdate_user"
+"scnTitle","scnSubtitle","scnOpus","scnScene","scnCut"
 	];//
 	for (var i=0;i<names.length;i++){
 		XPS[names[i]]=document.getElementById(ids[i]).value;
@@ -9893,11 +10275,11 @@ nas.FCT2Frm(document.getElementById("scnTime").value);
 // /////////
 //レイヤ数を設定
 	this.tracks=parseInt(document.getElementById("scnLayers").value);
-if(dbg){
+if(true){
 dbgPut("元タイムシートは : "+oldWidth+" 列/ "+oldduration+"コマ\n 新タイムシートは : "+newWidth+" 列/ "+duration+"コマ です。\n ");
 }
 //継続時間とレイヤ数で配列を更新
-	xUI.reInitBody(newWidth,duration);
+	xUI.reInitBody((newWidth+1),duration);
 
 //		プロパティの更新
 		xUI.XPS["trin"]=
@@ -9971,24 +10353,24 @@ this.putLayerProp =function ()
 				"timing",
 				xUI.XPS.xpsTracks,
 				xUI.XPS.xpsTracks.duration,
-				i+1
+				i
 			));
-			xUI.XPS["xpsTracks"][i+1]["lot"]= "=AUTO=";
-			xUI.XPS["xpsTracks"][i+1]["sizeX"]= xUI.dfX;
-			xUI.XPS["xpsTracks"][i+1]["sizeY"]= xUI.dfY;
-			xUI.XPS["xpsTracks"][i+1]["aspect"]= xUI.dfA;
-			xUI.XPS["xpsTracks"][i+1]["blmtd"]= xUI.blmtd;
-			xUI.XPS["xpsTracks"][i+1]["blpos"]= xUI.blpos;
+			xUI.XPS["xpsTracks"][i]["lot"]= "=AUTO=";
+			xUI.XPS["xpsTracks"][i]["sizeX"]= xUI.dfX;
+			xUI.XPS["xpsTracks"][i]["sizeY"]= xUI.dfY;
+			xUI.XPS["xpsTracks"][i]["aspect"]= xUI.dfA;
+			xUI.XPS["xpsTracks"][i]["blmtd"]= xUI.blmtd;
+			xUI.XPS["xpsTracks"][i]["blpos"]= xUI.blpos;
 		}else{
-			xUI.XPS["xpsTracks"][i+1]["option"]= document.getElementById("scnLopt_"+i).value;
-			xUI.XPS["xpsTracks"][i+1]["link"]= document.getElementById("scnLlnk_"+i).value;
-			xUI.XPS["xpsTracks"][i+1]["id"]= document.getElementById("scnLlbl_"+i).value;
-			xUI.XPS["xpsTracks"][i+1]["lot"]= document.getElementById("scnLlot_"+i).value;
-			xUI.XPS["xpsTracks"][i+1]["sizeX"]= document.getElementById("scnLszX_"+i).value;
-			xUI.XPS["xpsTracks"][i+1]["sizeY"]= document.getElementById("scnLszY_"+i).value;
-			xUI.XPS["xpsTracks"][i+1]["aspect"]= document.getElementById("scnLszA_"+i).value;
-			xUI.XPS["xpsTracks"][i+1]["blmtd"]= document.getElementById("scnLbmd_"+i).value;
-			xUI.XPS["xpsTracks"][i+1]["blpos"]= document.getElementById("scnLbps_"+i).value;
+			xUI.XPS["xpsTracks"][i]["option"]= document.getElementById("scnLopt_"+i).value;
+			xUI.XPS["xpsTracks"][i]["link"]= document.getElementById("scnLlnk_"+i).value;
+			xUI.XPS["xpsTracks"][i]["id"]= document.getElementById("scnLlbl_"+i).value;
+			xUI.XPS["xpsTracks"][i]["lot"]= document.getElementById("scnLlot_"+i).value;
+			xUI.XPS["xpsTracks"][i]["sizeX"]= document.getElementById("scnLszX_"+i).value;
+			xUI.XPS["xpsTracks"][i]["sizeY"]= document.getElementById("scnLszY_"+i).value;
+			xUI.XPS["xpsTracks"][i]["aspect"]= document.getElementById("scnLszA_"+i).value;
+			xUI.XPS["xpsTracks"][i]["blmtd"]= document.getElementById("scnLbmd_"+i).value;
+			xUI.XPS["xpsTracks"][i]["blpos"]= document.getElementById("scnLbps_"+i).value;
 		}
 	}
 	xUI.XPS.xpsTracks.renumber();
@@ -10081,7 +10463,9 @@ label参照配列　カット／作品内のラベルをストアして入力候
         '効果',
         '音楽',
         'BGM',
-        'SE'
+        'SE',
+        '間',
+        '息'
     ]
 }
 /*
@@ -10336,12 +10720,12 @@ SoundEdit.sync = function(force){
 
     var propCount=this.props.length;
     for(var ix=0;ix<targetSection.value.attributes.length;ix++){
-        this.props.add(targetSection.value.attributes[ix]);
+        this.props.add((targetSection.value.attributes[ix]).replace( /(^\(|\)$|^<|>$|^\[|\]$)/g ,''));
     }
 
     var noteCount = this.notes.length;
     for(var ix=0;ix<targetSection.value.comments.length;ix++){
-        this.notes.add(targetSection.value.comments[ix][1]);
+        this.notes.add(targetSection.value.comments[ix][1].replace( /(^\(|\)$|^<|>$|^\[|\]$)/g ,''));
     }
     if( (labelCount != this.labels.length)||
         (propCount != this.props.length)||

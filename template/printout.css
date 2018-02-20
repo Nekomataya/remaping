@@ -730,6 +730,7 @@ span.subControl_TC {
 	height:24px;
 	width:64px;
 	left:64px;
+	vertical-align:middle;
 }
 span.subControl_XTC {
 	position:relative;

@@ -6,9 +6,10 @@
 
 <link rel="shortcut icon" href="./icons/favicon.ico">
 
-<link href="template/jquery-ui.css" type="text/css" rel="stylesheet">
 <link href="template/remaping.css" type="text/css" rel=stylesheet media="screen,tv">
 <link href="template/printout.css" type="text/css" rel=stylesheet media="print">
+
+<link href="template/jquery-ui.css" type="text/css" rel="stylesheet">
 
 
 <!-- 以下　AIR動作時のライブラリ-->
@@ -1828,25 +1829,29 @@ onclick='nas.incrFCTonHTMLInput(document.getElementById("editTC"),"-(1)")'
 
 -->
 <input type=hidden id=loadShortcut value=false>
-
-<div id=localFileLoader>
+<div style="text-align:center;">
+<span id=localFileLoader>
 <form id="dataLoader" name="dataLoader" method="post" action="javascript:void(0);" enctype="multipart/form-data">
-<input type=file id=myCurrentFile name=XPSBody size=100
- >
+<input type="file" id=myCurrentFile name=XPSBody size=100 >
+<br>
+テキストエリアにファイルをドロップしてください。
+<br>
 </form>
-このエリアにファイルをドロップしてください。
+</span>
 </div>
-
 <form name=exportXps action="void(0);">
 <strong> (Import) </strong><input type=button
     id=dataLoaderImport value="読込＋取込" style="width:10%"
 	onClick="document.getElementById('loadShortcut').value='body';document.getElementById('myCurrentFile').click();"
+	title="ファイルの内容のみを編集エリアに取り込む"
 ><input type=button
     id=dataLoaderRef value="参照取込" style="width:10%"
-	onClick="if(xUI.referenceXPS.parseXps(convertXps(xUI.data_well.value))){xUI.resetSheet();}"
+	onClick='if(xUI.referenceXPS.parseXps(convertXps(xUI.data_well.value,"",{},true))){xUI.resetSheet();}'
+	title="データを参照エリアへ読み込む"
 ><input type=button
     id=dataLoaderGet value="取込" style="width:10%"
-	onClick="if(XPS.readIN(xUI.data_well.value)){xUI.resetSheet(XPS);}"
+	onClick="if(xUI.XPS.readIN(xUI.data_well.value)){xUI.resetSheet();}"
+	title="データを編集エリアへ読み込む"
 ><input type=button
     id=dataLoaderSelectAll value="全選択" style="width:10%"
 	onClick="xUI.data_well.select()"
@@ -1903,14 +1908,14 @@ onclick='nas.incrFCTonHTMLInput(document.getElementById("editTC"),"-(1)")'
 <table id=uiTable>
 <tr>
 <td style="text-align:left" colspan=2>
-<span style="display:none;">  <input	type=checkbox
+<span style="display:inline;">  <input	type=checkbox
 	id="scnNewSheet"
 	onChange=myScenePref.chgNewSheet()
   ><a	href="javascript:void(0);"
 	onClick='myScenePref.chg("scnNewSheet");return false'
- >新規作成 </a> </span>
-<input type=button value="更新/作成" style="width:7em" onClick="myScenePref.putProp();">
-<input type=button value="新規シート" style="width:7em" onClick="myScenePref.newProp();">
+ > 新規作成 </a> </span>
+<input type=button value="更新" style="width:7em" onClick="myScenePref.putProp();">
+<input type=button value="新規登録" style="width:7em" onClick="myScenePref.newProp();">
 <input type=button value="リセット" style="width:7em" onClick="myScenePref.getProp();">
 <input type=button value="閉じる" style="width:7em" onClick="myScenePref.close();">
 </td></tr>
@@ -1920,10 +1925,17 @@ onclick='nas.incrFCTonHTMLInput(document.getElementById("editTC"),"-(1)")'
 	<table>
 
 <tr>
+	<th width=8em>	共有
+	</th>
+	<td width=24em colspan=2 id=scnRepository>
+	</td>
+</tr>
+<tr>
 	<th width=8em>	MAP-file
 	</th>
-	<td width=24em colspan=2>
-	<input type=text id=scnMapfile style="width:100%" disabled value="---" onChange="myScenePref.rewrite(this.id)"/>
+	<td width=24em colspan=2 id=scnMapfile>
+	no xMap data
+<!--<input type=text  style="width:100%" disabled value="---" onChange="myScenePref.rewrite(this.id)"/>-->
 	</td>
 </tr>
 <tr>
@@ -1933,8 +1945,16 @@ onclick='nas.incrFCTonHTMLInput(document.getElementById("editTC"),"-(1)")'
 		id=scnTitle
 		style="width:100%"
 		value="---" 
+		autoComplete= "on"
+		list ="scnTitleList"
 		onChange="myScenePref.rewrite(this.id)"
 	/>
+	<datalist id="scnTitleList">
+	    <option value='ももたろう'>
+	    <option value='きんたろう'>
+	    <option value='はなさか'>
+	    <option value='うらしま'>
+	</datalist>
 </tr><tr>
 	</td>
 	<th>	No.
@@ -1943,8 +1963,12 @@ onclick='nas.incrFCTonHTMLInput(document.getElementById("editTC"),"-(1)")'
 			id=scnOpus
 			style="width:100%"
 			value="---"
+			autoComplete= "on"
+			list ="scnOpusList"
 			onChange="myScenePref.rewrite(this.id)"
 	/>
+	<datalist id="scnOpusList">
+	</datalist>
 	</td>
 </tr><tr>
 	<th>	sub title.
@@ -1978,6 +2002,7 @@ onclick='nas.incrFCTonHTMLInput(document.getElementById("editTC"),"-(1)")'
 	<th>	tracks
 	</th><td colspan=2 nowrap>
 		<input	type=text
+		    disabled=true
 			id=scnLayers
 			style="width:2em"
 			value="---"
@@ -1985,6 +2010,7 @@ onclick='nas.incrFCTonHTMLInput(document.getElementById("editTC"),"-(1)")'
 	title="重ね数の変更を行います"
 		/>
 		<input	type=text
+		    disabled=true
 			id=scnLayersLbls
 			style="width:16em"
 			value="---"
@@ -2053,19 +2079,14 @@ onclick='nas.incrFCTonHTMLInput(document.getElementById("editTC"),"-(1)")'
 		<input	type=hidden id=scnCreate_time value=""/>
 		<input	type=hidden id=scnCreate_user value=""/>
 		<input	type=hidden id=scnUpdate_time value=""/>
-	</th><td id=scnCreate_timeTD >	日付(自動)
-	</td><td id=scnCreate_userTD >	名前(自動)
+		<input	type=hidden id=scnUpdate_user value=""/>
+	</th><td id=scnCreate_timeTD >	日付(編集不可)
+	</td><td id=scnCreate_userTD >	ユーザ(編集不可)
 	</td>
 </tr><tr>
 	<th>	updated
-	</th><td id=scnUpdate_timeTD >	日付(自動)
-	</td><td>
-		<input	type=text
-			id=scnUpdate_user
-			style="width:11em"
-			value="---"
-			onChange="myScenePref.rewrite(this.id)"
-		/>
+	</th><td id=scnUpdate_timeTD >	日付(編集不可)
+	</td><td id=scnUpdate_userTD >  ユーザ(編集不可)
 	</td>
 </tr><tr>
 	<th  colspan=3>	memo:<br />
@@ -2105,8 +2126,8 @@ onclick='nas.incrFCTonHTMLInput(document.getElementById("editTC"),"-(1)")'
      convertXps()
 -->
 <div class=optionPanel id=optionPanelSCI >
-確認内容<br><br>
-
+<span id='dialogSCImsg'>選択したドキュメントを変換領域に読込みました。<br>カット番号を確認してください。<br>
+</span>
 <span class=titleInputLB >TITLE:</span>
     <input class=SCiInput id=optionPanelSCI_title type=text
         onChange='xUI.importBox.checkValue(this)'
@@ -2175,18 +2196,21 @@ onclick='nas.incrFCTonHTMLInput(document.getElementById("editTC"),"-(1)")'
 <!-- 以上カット別テンプレート -->
 
 <hr>
-<button id=updateTarget
+<button id=updateSCiTarget
     onclick='xUI.importBox.updateTarget();' 
     style='width:400px'
-> カット登録 </button><br>
-<button id=resetTarget
+    title='カット番号と時間を編集してタイムシートへ取込む'
+> タイムシートへ </button><br>
+<button id=resetSCiTarget
  onclick ='xUI.importBox.resetTarget(xUI.importBox.targetContents);'
  style='width:198px'
+ title='カット番号と時間をリセット'
  > リセット </button>
-<button id=cancel
+<button id=closeSCiDialog
  onclick ='$("#optionPanelSCI").dialog("close");'
  style='width:198px'
- > 閉じる </button>
+ title='このままダイアログを閉じる'
+ >  Ｏ　Ｋ　</button>
 <!--
 S:<input type=text style="width:64px" value='###'>-C:<input type=text style="width:64px" value='###'>
 TIME:(<input type=text style="width:64px" value='##+##'>)
@@ -2229,11 +2253,11 @@ TIME:(<input type=text style="width:64px" value='##+##'>)
 <div class=optionPanelModal id=optionPanelFile >
 <!-- りまぴん(新) ファイルブラウザインターフェース -->
 <!-- タイトル、カット等の新規作成（登録）UI-->
-<span style="text-align:right;">
+<div style="text-align:right;">
 <input type=text
 	class = ddpInput
     id = titleInput
-    size=32
+    size=40
 	disabled=true
     value='(*--title--*)'
 	onChange="documentDepot.currentSelection=documentDepot.buildIdentifier();"
@@ -2247,27 +2271,41 @@ TIME:(<input type=text style="width:64px" value='##+##'>)
 ><input type=text
 	class = ddpInput
     id = subtitleInput
-    size=32
+    size=42
 	disabled=true
     value='(*--subtitle--*)'
 	onChange="documentDepot.currentSelection=documentDepot.buildIdentifier();"
-><input	type=text
-	class = ddpInput
+><br>
+<!--    issueSelector   -->
+<select
+	id=issueSelector
+	class=issueSelector
+	disabled=true
+	onChange="documentDepot.currentSelection=documentDepot.buildIdentifier(true);"
+	title='過去のバージョン'
+>
+	<option value=-1>#:---line//#:---stage//#:---job//(status)</option>
+</select>
+<!--    issueSelector   -->
+<input	type=text
+	class = "ddpInput sciInput"
 	name=fileTest
 	id=cutInput
-	size=12
+	size=32
 	value='(*--c#--*)'
 	disabled=true
 	onChange="documentDepot.currentSelection=documentDepot.buildIdentifier();"
-><input	type=text
-	class = ddpInput
+>(<input	type=text
+	class = "ddpInput sciInput"
 	name=fileTest
 	id=timeInput
-	size=8
+	size=12
 	value='3 + 0 .'
 	disabled=true
 	onChange="documentDepot.currentSelection=documentDepot.buildIdentifier();"
-><span class='subControl_TC'><button
+>)
+<!--
+<span class='subControl_TC' ><button
     class='subControl subControl-incrS subControl-left-top'
     onClick='xUI.tcControl("timeInput",3,nas.FRATE);return false;'
 >
@@ -2291,24 +2329,9 @@ TIME:(<input type=text style="width:64px" value='##+##'>)
     class='subControl subControl-decr subControl-right-bottom'
     onClick='xUI.tcControl("timeInput",3,-1);return false;'
 >
-</button>
-</span>
+</button></span> -->
+</div>
 
-<br><!-- <input	type=text
-	id=statusSelector
-	size=64
-	disabled=true
-	value='#:--- / #--- / #--- /(status)'
-	onChange="documentDepot.currentSelection=documentDepot.buildIdentifier(true);"
-><br>-->
-<select
-	id=issueSelector
-	disabled=true
-	onChange="documentDepot.currentSelection=documentDepot.buildIdentifier(true);"
-	title='過去のバージョン'
->
-	<option value=-1>#:---line//#:---stage//#:---job//(status)</option>
-</select>
 
  
 <div id=current_identifier></div>
@@ -2360,9 +2383,11 @@ HTML（画像を使用可能）か？<br>
  class='documentPanelButton-management debug'
  title="local repository only"
 >一括登録 </button><button
- onClick='if(serviceAgent.currentRepository===localRepository)localRepository.removeEntry(documentDepot.currentSelection);'
- class='documentPanelButton-management debug'
- title="local repository only"
+ id='ddp-removeentry'
+ onClick='if(serviceAgent.currentRepository===localRepository){localRepository.removeEntry(documentDepot.currentSelection);selectSCi();}'
+ class='documentPanelButton-management'
+ disabled=true
+ title="local repository only ローカルリポジトリからカットを削除します"
 >removeDocument </button><button
  onClick='serviceAgent.addTitle()'
  class='documentPanelButton-management debug'
@@ -2422,7 +2447,7 @@ HTML（画像を使用可能）か？<br>
 	name="opus_numbers"
 	id="opusSelect"
 	class="document-selector document-selector-opus"
-	size=8
+	size=6
 onChange='setProduct();'
 >
 <option selected>（*-- no title --*）
@@ -2432,7 +2457,7 @@ onChange='setProduct();'
 	name="cutList"
 	id="cutList"
 	class="document-selector document-selector-cut"
-	size=8
+	size=6
 	multiple=true
 	onChange="selectSCi();"
 	ondblclick='if(this.selectedIndex>0){document.getElementById("ddp-readout").click();}'
@@ -2701,6 +2726,24 @@ id=prefDfY VALUE="---" onChange="myPref.chgdfSIZE(this.id)">:<input type=text
 			<OPTION VALUE=2>B4(ISO)
 			<OPTION VALUE=3>B4(JIS)
 		</SELECT><br />
+		</td>
+		<td>
+		BGcolor<br>
+		<input id="prefBGColor" type="color" list="bgColorList" autoComplete="on" />
+		<datalist id="bgColorList">
+		    <option value="#ffdffe" title="あかむらさき">
+		    <option value="#fdeefd" title="どどめいろ">
+		    <option value="#efffef" title="わかくさ">
+		    <option value="#ffffef" title="びわ">
+		    <option value="#edd3a1" title="あさぎ">
+		    <option value="#b68d4c" title="きつるばみ">
+		    <option value="#fef4f4" title="さくら">
+		    <option value="#f5b199" title="いっきんぞめ">
+		    <option value="#cfcfd6" title="ぎんねずみ">
+		    <option value="#efefef" title="しろねずみ">
+		    <option value="#f8f8f8" title="しろねり">
+		</datalist>
+<!--		<option value="#"> -->
 		</td>
 	</tr>
 </table>
@@ -3453,4 +3496,4 @@ index.html ,v 1.6 2017/06/23  support@u-at.net <br />
     data-server_url='http://u-at.net'
     アドレスはサーバーのルートを使用　2017.04.13
 -->
-  </body></html>
+</body></html>

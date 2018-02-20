@@ -686,39 +686,35 @@ listEntry.prototype.remove=function(){
 .getByIdf(idf)      ;idf指定でエントリを返す
 .getByToken(token)  ;ネットワークのみ
 */
-function listEntryCollection (){};
-
-listEntryCollection.prototype = Array.prototype;
-listEntryCollection.prototype.constractor = listEntryCollection;
-
+function listEntryCollection (){
 /*
     コレクションにエントリを追加する
     同識別子のエントリが存在する場合は上書き（置換）
     存在しなかった場合は新規に追加する
 */
-listEntryCollection.prototype.put=function (myEntry){
-    for (var ix = 0 ; ix < this.length ; ix ++){
-        if(this[ix].toString().split('//')[0] != myEntry.toString().split('//')[0]) continue;
-        if (Xps.compareIdentifier(this[ix].toString(true),myEntry.toString(true)) >= 1 ) {
-            this[ix]=myEntry;
-            return myEntry;
+    　this.put=function (myEntry){
+        for (var ix = 0 ; ix < this.length ; ix ++){
+            if(this[ix].toString().split('//')[0] != myEntry.toString().split('//')[0]) continue;
+            if (Xps.compareIdentifier(this[ix].toString(true),myEntry.toString(true)) >= 1 ) {
+                this[ix]=myEntry;
+                return myEntry;
+            }
         }
+        return this.push(myEntry);
     }
-    return this.push(myEntry);
-}
 /*
     識別子指定でコレクションからエントリを削除する
     存在しなかった場合はfalse
 */
-listEntryCollection.prototype.remove=function (myIdentifier){
-    for (var ix = 0 ; ix < this.length ; ix ++){
-        if(this[ix].toString().split('//')[0] != myIdentifier.split('//')[0]) continue;
-        if (Xps.compareIdentifier(this[ix].toString(true),myIdentifier) >= 1 ) {
-            return this.splice(ix,1);
+    this.remove=function (myIdentifier){
+        for (var ix = 0 ; ix < this.length ; ix ++){
+            if(String(this[ix]).split('//')[0] != myIdentifier.split('//')[0]) continue;
+            if (Xps.compareIdentifier(this[ix].toString(true),myIdentifier) >= 1 ) {
+                return this.splice(ix,1);
+            }
         }
+        return false;
     }
-    return false;
-}
 /*
     識別子指定でエントリを取得
     第二引数で一致レベルを指定
@@ -732,26 +728,26 @@ listEntryCollection.prototype.remove=function (myIdentifier){
     4   ジョブ
     Repository.entry　の基底メソッド
 */
-listEntryCollection.prototype.getByIdf=function (myIdentifier,opt){
-    if(typeof opt == 'undefined') opt = 1;
-    for (var ix = 0 ; ix < this.length ; ix ++){
+    this.getByIdf=function (myIdentifier,opt){
+        if(typeof opt == 'undefined') opt = 1;
+        for (var ix = 0 ; ix < this.length ; ix ++){
 //　高速化スキップは文字列比較だと取りこぼしが多いので禁止　それよりはcompareIdentifier自体を高速化すること
-//        if (this[ix].toString().split('//')[0] != myIdentifier.split('//')[0]) continue;
-        if (Xps.compareIdentifier(this[ix].toString(true),myIdentifier) >= opt ) return this[ix];
+            if (Xps.compareIdentifier(this[ix].toString(true),myIdentifier) >= opt ) return this[ix];
+        }
+        return null;
     }
-    return null;
-}
 /*
     トークンでエントリを取得
     バージョンの指定は不能
 */
-listEntryCollection.prototype.getByToken=function (myToken){
-    for (var ix = 0 ; ix < this.length ; ix ++){
-        if (this[ix].issues[0].cutID == myToken) return this[ix];
+    this.getByToken=function (myToken){
+        for (var ix = 0 ; ix < this.length ; ix ++){
+            if (this[ix].issues[0].cutID == myToken) return this[ix];
+        }
+        return null;
     }
-    return null;
-}
-
+};
+listEntryCollection.prototype = Array.prototype;
 /**
     ローカルリポジトリ
     主に最近の作業データをキャッシュする役目
@@ -778,6 +774,7 @@ productsData追加
 */
 localRepository={
     name:'localStrageStore',
+    url:'localStorage:',
 //    currentProduct:"",
 //    currentSC:"",
 //    currentLine:"",
@@ -841,7 +838,7 @@ _opus=function(myIdentifier,searchDepth){
     var isTkn = (currentOpus.opus=='undefined')? true:false;
     for ( var idx = 0 ;idx <this.productsData.length;idx ++){
       if(
-        ((currentOpus.title.indexOf(this.productsData[idx].name) < 0) &&
+        ((String(currentOpus.title).indexOf(this.productsData[idx].name) < 0) &&
         (! isTkn ))||
         (! this.productsData[idx].episodes )
       ) continue;
@@ -866,14 +863,14 @@ _cut=function(myIdentifier){
     for ( var idx = 0 ;idx <this.productsData.length;idx ++){
     if(
         (! this.productsData[idx].episodes )||(
-         (target.title.indexOf(this.productsData[idx].name) < 0) &&
+         (String(target.title).indexOf(this.productsData[idx].name) < 0) &&
          (! isTkn )
         )
       ) continue;
       for (var eid = 0 ;eid < this.productsData[idx].episodes[0].length; eid ++){
         if (
             (! this.productsData[idx].episodes[0][eid].cuts )||(
-             (target.opus.indexOf(this.productsData[idx].episodes[0][eid].name) < 0) &&
+             (String(target.opus).indexOf(this.productsData[idx].episodes[0][eid].name) < 0) &&
              (! isTkn ) 
             )
         ) continue;
@@ -1068,7 +1065,8 @@ callBack関数が指定された場合　処理終了直前に実行される　
 */
 localRepository.getList=function(force,callback){
     console.log('localRepository getList');
-    if(callback instanceof Function){callback();}else{documentDepot.documentsUpdate(this.entryList);}
+//    if(callback instanceof Function){callback();}else{documentDepot.documentsUpdate(this.entryList);}
+    if(!(callback instanceof Function)){documentDepot.documentsUpdate(this.entryList);}
         return;
     var keyCount=localStorage.length;//ローカルストレージのキー数を取得
     this.entryList.length=0;//配列初期化
@@ -4260,7 +4258,7 @@ serviceAgent.receiptEntry=function(){
     if(! currentEntry) return false;
     var currentStatus=currentEntry.getStatus();
     switch (currentStatus.content){
-        case 'Startup': case 'Active': case 'Hold':
+        case 'Startup': case 'Active': case 'Hold':case 'Floating':
             return false;
         break;
         case 'Fixed':
@@ -4418,11 +4416,13 @@ serviceAgent.updateNewJobName=function(stageName,type){
 /**
     サーバエージェントを経由してリポジトリにデータを送出する
     保存データが最新のissueでない場合はリジェクト
-    この場合はデータの更新があるかないかは問わない()
+    この場合はデータの更新があるかないかは問わない
+    ステータスがFloatingの場合は、複製をとってStartup状態でプッシュする
 */
 serviceAgent.pushEntry=function(myXps,callback,callback2){
 console.log('serviceAgent.pushEntry');
     if (typeof myXps == 'undefined') myXps = xUI.XPS;
+console.log(xUI.XPS === myXps)
     if((xUI.XPS === myXps)&&(xUI.sessionRetrace > 0)){
         xUI.errorCode=8;//確定済データを更新することはできません
         alert(localize(xUI.errorMsg[xUI.errorCode]));
@@ -4432,7 +4432,14 @@ console.log('serviceAgent.pushEntry');
         if(callback2 instanceof Function){callback2();}
         return false;
     }
-    this.currentRepository.pushEntry(myXps,callback,callback2);
+    var newXps = new Xps();
+    newXps.parseXps(myXps.toString());
+    
+    if(myXps.currentStatus.content.indexOf('Floating')>=0){
+        newXps.currentStatus = new JobStatus('Startup'); 
+    }
+    console.log(newXps);
+    this.currentRepository.pushEntry(newXps,callback,callback2);
 }
 /**
 

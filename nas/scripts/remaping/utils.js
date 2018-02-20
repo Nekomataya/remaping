@@ -1011,7 +1011,9 @@ writeNewSection=function(myOpt){
       case "TU":
       case "TB":
       	//カメラワークトラックには値指定ブラケット付きで
-      	if(startFrm>0){startFrm--}else{myLength--};
+      	if(startFrm > 0){startFrm--}else{myLength--};//開始フレーム０以外は一コマ先行で配置
+      	if((startFrm+1+myLength) >= (xUI.XPS.xpsTracks[xUI.Select[0]].length-1)){
+      		myLength--};//終了フレームが最終の場合は一コマカット
 	myBody.push("[A]");
 	myBody.push("▽");
 	for(var idx=1;idx<myLength;idx++){myBody.push("|");}

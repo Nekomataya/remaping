@@ -495,8 +495,11 @@ if(currentOpus){
         documentDepot.documentsUpdate();
         documentDepot.updateDocumentSelector();
     },false,currentOpus.token);
+}else{
+//該当するプロダクトをコンソールへ
+console.log(documentDepot.currentProduct);
 }
-//else{        documentDepot.updateDocumentSelector();    }
+//{        documentDepot.updateDocumentSelector();    }
 /** パネルテキスト更新
 リストに存在しないプロダクトの場合は、リスト側で'(* new product *)'を選択する
 */ 
@@ -582,9 +585,11 @@ var currentStatus = myEntry.issues[myEntry.issues.length-1][3];
         documentDepot.currentSelection = document.getElementById("cutList").options[document.getElementById("cutList").selectedIndex].value;
     }
     if((xUI.uiMode=='management')&&(!myEntry)){
-        document.getElementById('ddp-addentry').disabled=false;
+        document.getElementById('ddp-addentry').disabled    = false;
+        document.getElementById('ddp-removeentry').disabled = (serviceAgent.currentRepository===localRepository);
     }else{
-        document.getElementById('ddp-addentry').disabled=true;        
+        document.getElementById('ddp-addentry').disabled    = true;
+        document.getElementById('ddp-removeentry').disabled = false;
     }
 }
 

@@ -305,21 +305,24 @@ var processImport=function(){
             }
 }
  /*
-    convertXps(datastream,optionString,overiteProps)
+    convertXps(datastream,optionString,overiteProps,streamOption)
 引数:
     datestream
         コンバート対象のデータ
         基本的にテキストデータ
         バイナリデータの場合は1bite/8bit単位の数値配列として扱う（現在未実装）
     optionString
-        コンバート対象のデータはXpsのプロパティ全てを持たないので、
+        コンバート対象のデータがXPSのプロパティ全てを持たない場合があるので
         最低限のプロパティ不足を補うための指定文字列
         URIencodedIdentifier または　TextIdentifierを指定
         通常はこのデータがファイル名の形式で与えられるのでファイル名をセットする
+        空白がセットされた場合は、カット番号その他が空白となる
     overwriteProps
         コンバータ側で上書きするプロパティをプロパティトレーラーオブジェクトで与える
         インポーター側へ移設予定
-           
+    streamOption
+        ストリームスイッチフラグがあればストリームで返す（旧コンバータ互換のため）
+
     複数データ用コンバート関数
     内部でparseXpsメソッドを呼んでリザルトを返す
     以下形式のオブジェクトで　overwriteProps を与えると固定プロパティの指定が可能
@@ -339,15 +342,18 @@ var processImport=function(){
     固定プロパティ強制のケースでは複数のドキュメントに同一のカット番号をもたせることはできないので
     カット番号のロックは行われない
     不正データ等の入力でコンバートに失敗した場合はfalseを戻す
-戻値:　Object Xps or false
+    旧来の戻り値と同じ形式が必要な場合は　convertXps(datastream,"",{},true) と指定する事
+戻値:　Object Xps or XpsStream or false
     
 */
 
 
-convertXps=function(datastream,optionString,overwriteProps){
+convertXps=function(datastream,optionString,overwriteProps,streamOption){
     if(! String(datastream).length ){
         return false;
     }else{
+// streamOption
+    if(!streamOption){streamOption=false;}
 // オプションで識別子文字列を受け取る　（ファイル名を利用）
 // 識別子はXps.parseIdentifierでパースして利用
     if(! optionString){optionString = 'TITLE#EP[subtitle]//s-c=CUTNo.=';}
@@ -456,7 +462,7 @@ console.log(optionTrailer);
     convertedXps.scene       = optionTrailer.scene;
     convertedXps.cut         = optionTrailer.cut;
 //リザルトを返す
-    return convertedXps;
+    return (streamOption)?convertedXps.toString():convertedXps;
   }else{
     return false;    
   }

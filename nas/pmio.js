@@ -612,8 +612,6 @@ nas.Pm.PmTemplateCollection.prototype.addTemplates = function(templates){
 };
 nas.Pm.PmTemplateCollection.prototype.toString = nas.Pm._toString;
 
-// nas.Pm.PmTemplateCollection.prototype = Array.prototype;
-
 /**
     ラインテンプレート　ステージデータコレクションを持つ
 引数

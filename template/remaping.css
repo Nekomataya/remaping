@@ -1285,8 +1285,11 @@ input.ddpInput	{
 		width:100%;
 		height:42px;
 	}
+.issueSelector {
+		vertical-align:middle;
+	}
 	.document-selector {
-	  height:75%;
+	  height:60%;
 	}
 	.document-selector-opus {
 	  width:60%;
@@ -1296,6 +1299,9 @@ input.ddpInput	{
 	  width:40%;
 	  text-align:left;
 	}
+.sciInput {
+	height:24px;
+}
 
 .productFilter {
 	height:27px;

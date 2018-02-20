@@ -38,37 +38,29 @@
 <script>
  $(function() {
         var localFileLoader = $("#localFileLoader");
- 
         // File API が使用できない場合は諦めます.
         if(!window.FileReader) {
           alert("File API がサポートされていません。");
           return false;
         }
- 
         // イベントをキャンセルするハンドラです.
         var cancelEvent = function(event) {
             event.preventDefault();
             event.stopPropagation();
             return false;
         }
- 
         // dragenter, dragover イベントのデフォルト処理をキャンセルします.
         localFileLoader.bind("dragenter", cancelEvent);
         localFileLoader.bind("dragover", cancelEvent);
- 
         // ドロップ時のイベントハンドラを設定します.
         var handleDroppedFile = function(event) {
           // ドロップされたファイル配列を取得してファイルセレクタへ送る
           // 同時にonChangeを打つ
-//          document.getElementById('myCurrentFile').onChange();
- console.log(document.getElementById('myCurrentFile').files);
-//         xUI.importBox.import(event.originalEvent.dataTransfer.files,processImport);
           document.getElementById('myCurrentFile').files = event.originalEvent.dataTransfer.files;
           // デフォルトの処理をキャンセルします.
           cancelEvent(event);
           return false;
         }
- 
         // ドロップ時のイベントハンドラを設定します.
         localFileLoader.bind("drop", handleDroppedFile);
 });
@@ -138,7 +130,7 @@ include
 ><br />
 
 <textarea name=XPSBody id=data_well style="width:80%;height:128px"
-></textarea>
+><1> </textarea> </textarea>
 
 <br>
 </form>
