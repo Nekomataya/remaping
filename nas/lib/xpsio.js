@@ -237,11 +237,15 @@ XpsJob.prototype.toString=function(){
 初期値は長さ0の文字列
 
 初期化引数はステータス識別子　または 配列[content,assign,message]いずれか
-
+assin/messageが存在する場合は出力が以下の形式の文字列となる
+"content:assign:message"
+アサイン、メッセージ情報は、ステータスがFixed,Satartupの際は、次作業へのアサインメントとなる
+Aborted.Floatingはアサインを持たない
+Active,Hold はサーバからエクスポートされた
 */
 function JobStatus (statusArg){
     this.content = "Floating";
-//初期値は "Startup"から"Floating"に変更　Startupステータスはリポジトリ登録成功時に割り当てられるステータス
+//初期値は "Startup"から"Floating"に変更　Startupステータスはリポジトリ登録成功時に割り当てられるステータスとする
     this.assign  = "";
     this.message = "";
     if (statusArg instanceof Array){
@@ -1116,8 +1120,8 @@ if(dbg)    console.log(trackSpec);
     this.scene = (myScene) ? myScene : "";
     this.cut = (myCut) ? myCut : "";
      */
-    this.opus     = "--";
-    this.title    = "---";
+    this.opus     = "";
+    this.title    = "";
     this.subtitle = "";
     this.scene    = "";
     this.cut      = "";
@@ -1629,9 +1633,9 @@ Xps.prototype.setDuration =function(myDuration){
  * 切り捨て分はなくなる。
  * 新たに出来たレコードは、ヌルストリングデータで埋める。
  * セクションキャッシュはすべて無効
- トラック引数の値は旧メソッドと互換のためレイヤ数を指定する
- トラック数を３(=[dialog,timing,comment])にするためには1を与える
- 
+ トラック引数の値はコメントトラックの値を含めたトラック全数
+ トラック状態を[dialog,timing,comment]にするためには３を与える
+ レイヤー数にあらず 
  * @param newTimelines
  * @param newDuration
  * @returns {boolean}
@@ -1646,7 +1650,7 @@ Xps.prototype.reInitBody = function (newTimelines, newDuration) {
     }
     var widthUp    = (newTimelines > oldWidth)   ? 1 : (newTimelines == oldWidth)   ? 0 : -1 ;
     var durationUp = (newDuration > oldDuration) ? 1 : (newDuration == oldDuration) ? 0 : -1 ;
-//  トラックを先に編集　トラック数が増えた場合は空白ラベルで挿入　減っている場合は削除メソッドを発行
+//  トラック数を先に編集　トラック数が増えた場合は空白ラベルで挿入　減っている場合は削除メソッドを発行
     if(widthUp > 0){
         var newTracks=[];
         var widthUpCount = newTimelines-oldWidth;
@@ -2672,8 +2676,9 @@ Xps.sliceReplacementLabel = function (myStr){
      名前を変更するか又はオブジェクトメソッドに統合
      このメソッドは同名別機能のオブジェクトメソッドが存在するので厳重注意
 */
-Xps.getIdentifier=function(myXps){
+Xps.getIdentifier=function(myXps,opt){
 //この識別子作成は実験コードです　2016.11.14
+    if(typeof opt=='undefined') opt=true;
     var myIdentifier=[
             encodeURIComponent(myXps.title)+
         "#"+encodeURIComponent(myXps.opus)+
@@ -2681,14 +2686,17 @@ Xps.getIdentifier=function(myXps){
             encodeURIComponent(
                 "s" + ((myXps.scene)? myXps.scene : "-" )+
                 "c" + myXps.cut) +
-                "(" + myXps.time() +")",
+                "(" + myXps.time() +")"
+            ];
+
+    if (opt) myIdentifier =myIdentifier.concat([
             encodeURIComponent(myXps.line.toString(true)),
             encodeURIComponent(myXps.stage.toString(true)),
             encodeURIComponent(myXps.job.toString(true)),
             myXps.currentStatus.toString(true)
-    ].join("//");
+    ]);
 //識別子を作成してネットワークリポジトリに送信する　正常に追加・更新ができた場合はローカルリストの更新を行う（コールバックで）
-    return myIdentifier;
+    return myIdentifier.join("//");;
 }
 /*
     仮の比較関数

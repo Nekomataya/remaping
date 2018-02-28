@@ -531,10 +531,10 @@ button.iconButton:disabled {
 .iconButton-movie { background-position: -216px -162px; }
 .iconButton-ps { background-position: -243px -162px; }
 .iconButton-printer { background-position: -270px -162px; }
+.iconButton-floating { background-position: -297px -162px; }
+.iconButton-info { background-position: -324px -162px; }
+.iconButton-DBentry { background-position: -351px -162px; }
 /*
-.iconButton- { background-position: -297px -162px; }
-.iconButton- { background-position: -324px -162px; }
-.iconButton- { background-position: -351px -162px; }
 .iconButton- { background-position: -378px -162px; }
 .iconButton- { background-position: -405px -162px; }
 */
@@ -619,12 +619,12 @@ button.iconButton:disabled {
 .iconButton-goPrev { background-position: -162px -297px; }
 .iconButton-stop { background-position: -189px -297px; }
 .iconButton-eject { background-position: -216px -297px; }
+.iconButton-OPEN { background-position: -243px -297px; }
+.iconButton-READ { background-position: -270px -297px; }
+.iconButton-FIX { background-position: -297px -297px; }
+.iconButton-CLOSE { background-position: -324px -297px; }
+.iconButton-HOLD { background-position: -351px -297px; }
 /*
-.iconButton- { background-position: -243px -297px; }
-.iconButton- { background-position: -270px -297px; }
-.iconButton- { background-position: -297px -297px; }
-.iconButton- { background-position: -324px -297px; }
-.iconButton- { background-position: -351px -297px; }
 .iconButton- { background-position: -378px -297px; }
 .iconButton- { background-position: -405px -297px; }
 */
@@ -1537,7 +1537,10 @@ div.documentStatusOverlay {
 	opacity:0.25;
 	pointer-events: none;
 }
-/* button */
+/* button / input */
+.scnControl {
+	width : 72px;
+}
 .jobControl {
 	width :96px;
 	height:21px;

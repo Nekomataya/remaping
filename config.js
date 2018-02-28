@@ -171,7 +171,6 @@ SheetLooks = {
 	ColumnSeparatorWidth:4
 };
 
-
 //メモ編集時の単語一覧
 
 //使用したい単語を1列分ずつ配列で登録してください。
@@ -191,7 +190,9 @@ var myWords	=[
 ];
 
 
-//---ウインドウサイズ	*cookie[0] Ver1.2以降この情報は意味を持たないので不要
+//---ページ属性	*cookie[0]
+    SheetBaseColor ="#dfefef";
+    PageProintSize ="";
 /*	sheetAllWidth	="*"	;//
 	sheetAllHeight	="*"	;//
 	sheetHeadHeight	=64	;//
@@ -216,9 +217,9 @@ var Sheet="6+0"	;
 			//カット尺初期値初期タイムシートの長さをタイムコードで
 var SoundColumns=1;
 			//セリフ欄の数 初期値を整数で(必要に従って増やせる。最低で1つはルック維持のため予約)
-var SheetLayers=5;
-			//セル重ねの数 初期値を整数で
-var CompositColumns=0;
+var SheetLayers=4;
+			//セル重ねの数 初期値を整数で A~D　ならば　4　
+var CameraworkColumns=0;
 			//カメラワーク欄の数 初期値を整数で
 var SfxColumns=0;
 			//カメラワーク欄の数 初期値を整数で
@@ -226,7 +227,7 @@ var SfxColumns=0;
 
 var myScene=""	;
 			//A.Bパート等  空白でも良い
-var myCut="000"	;
+var myCut=""	;
 			//カット番号
 
 var myFileName= "$TITLE#$OPUS[$SUBTITLE]_s-c$CUT($TC)";
@@ -592,21 +593,21 @@ var	useCookie	=[true];//クッキーを使う場合は"true"にしてくださ�
 //	0		ゼロ > そのセッション限り
 //	日数	数値を与えると、最後に使った日からその日数の間有効
 	useCookie.expiers	=31	;
-//[0]	ウィンドウサイズの記録と復帰
-	useCookie.WinSize	=false	;//バージョン1.2以降では不要なのでfalseに固定します
+//[0]	 シートカラーと印字サイズ
+	useCookie.SheetProp	= true	;
 //[1]	最後に編集したシートの尺数。レイヤ数などを記録するかどうか?
- 	useCookie.XPSAttrib	=true	;
+ 	useCookie.XPSAttrib	= true	;
 //[2]	最後に作業したユーザ名
- 	useCookie.UserName	=true	;
+ 	useCookie.UserName	= true	;
 //[3]	キー変換オプション
- 	useCookie.KeyOptions	=true	;
+ 	useCookie.KeyOptions	= true	;
 //[4]	シートオプション
- 	useCookie.SheetOptions	=true	;
+ 	useCookie.SheetOptions	= true	;
 //[5]	カウンタ種別
- 	useCookie.CounterType	=true	;
+ 	useCookie.CounterType	= true	;
 //[6]	ユーザインターフェース
- 	useCookie.UIOptions	=true	;
+ 	useCookie.UIOptions	= true	;
 //[7]  UI表示状態
-        useCookie.UIView =true;
+        useCookie.UIView = true;
 // この設定ファイルは、Javascriptのソースです。書き換えるときはご注意を
 // エラーが出た時のためにバックアップをお忘れ無く。

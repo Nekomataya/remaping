@@ -887,8 +887,8 @@ nas.Pm.StageCollection.prototype.getTemplate = function(stageName){
     var myStageAsset =this.parent.assets.entry(this.getStage(stageName).output);
     var newStageList=(myStageAsset)? myStageAsset.callStage:[];
     for (var idx = 0 ;idx < newStageList.length ; idx ++){
-        var myStage = this.getStage(newStageList[idx]).name;
-        if(myStage) result.push(myStage);
+        var myStage = this.getStage(newStageList[idx]);//null可能性あり
+        if(myStage) result.push(myStage.name);
     }
     return result;
 }

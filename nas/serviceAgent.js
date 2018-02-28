@@ -1105,13 +1105,27 @@ if(dbg) console.log("add :: "+decodeURIComponent(currentIdentifier));
     キーが同名の場合は自動で上書きされるのでクリアは行わない
     エントリ数の制限を行う
     エントリ数は、キーの総数でなく識別子の第一、第二要素を結合してエントリとして認識する
+
+    Floating ステータスが新設
+    Floating ステータスのドキュメントは書込み不可とする。
+    リポジトリメソッドに渡す前にステータスの解決を行い適切なステータスを持たせること。
+    このメソッドはステータス変更をサポートしない。
 */
 localRepository.pushEntry=function(myXps,callback,callback2){
-    if(myXps.cut==''){
-        var msg=localize({
+    var msg='';
+    if(String(myXps.cut).match(/^\s*$/)){
+        msg += localize({
             en:"you can't save entry without cutNo.",
             ja:"カット番号のないエントリは記録できません。"
         });
+    };
+    if(myXps.currentStatus.content.indexOf('Floating')>=0){
+        msg += '\n'+localize({
+            en:"you can't save entry of Flating status.",
+            ja:"Floatingエントリは記録できません。"
+        });
+    }
+    if(msg.length){
         alert(msg);
         return false;
     };
@@ -1137,25 +1151,26 @@ localRepository.pushEntry=function(myXps,callback,callback2){
             return this.entryList[pid];
         };
     };
-if (dbg) console.log("既存エントリなし :追加処理");
+// console.log(myXps)
+if (true) console.log("既存エントリなし :追加処理");
 //既存エントリが無いので新規エントリを追加
 //設定制限値をオーバーしたら、警告する。　OKならばローカルストレージから最も古いエントリを削除して実行
     try{
         if ( this.entryList.length >= this.maxEntry ){
             var msg=localize({en:"over limit!\n this entry will remove [%1]\n ok?",ja:"制限オーバーです!\nこのカットを登録するとかわりに[%1]が消去されます。\nよろしいですか？"},decodeURIComponent(this.entryList[0].toString()));
             if(confirm(msg)){
-if(dbg) console.log("removed Item !");
+if(true) console.log("removed Item !");
                 for (var iid=0; iid < this.entryList[0].issues.length ; iid++ ){
                     localStorage.removeItem( this.keyPrefix + this.entryList[0].issues[iid].identifier );
                 };
                 this.entryList[0].remove();//アイテムメソッドで削除
                 localStorage.setItem(this.keyPrefix+myIdentifier,myXps.toString());
                 this.entryList.put(new listEntry(myIdentifier));//Collectionメソッドで追加
-if(dbg) console.log(this.entryList.length +":entry/max: "+ this.maxEntry)
+if(true) console.log(this.entryList.length +":entry/max: "+ this.maxEntry)
             }
         }else{
             localStorage.setItem(this.keyPrefix+myIdentifier,myXps.toString());
-            this.entryList.put(new listEntry(myIdentifier)) 
+//            this.entryList.put(new listEntry(myIdentifier)); 
         }
     }catch(err){
 console.log('localRepositoty.pushEntry');
@@ -1605,7 +1620,7 @@ if(dbg) console.log(newXps.currentStatus);
                 xUI.setStored("current");//UI上の保存ステータスをセット
 			    sync();//保存ステータスを同期
                 selectSCi();//カレントデータを再セレクトして情報更新
-                xUI.setUImode('browsing');//モードをbrowsingへ
+//                xUI.setUImode('browsing');//モードをbrowsingへ　　＜＜領収処理の後はモード遷移なし
                 xUI.sWitchPanel();//ドキュメントパネルが表示されていたらパネルクリア
                 sync('historySelector');//履歴セレクタ更新
                 if(callback instanceof Function){ setTimeout(callback,10)};
@@ -4259,6 +4274,7 @@ serviceAgent.receiptEntry=function(){
     var currentStatus=currentEntry.getStatus();
     switch (currentStatus.content){
         case 'Startup': case 'Active': case 'Hold':case 'Floating':
+            console.log("not Fixed :"+currentEntry.toString());
             return false;
         break;
         case 'Fixed':
@@ -4276,7 +4292,7 @@ serviceAgent.receiptEntry=function(){
                 msg2   += '"></option>';
             };
                 msg2   += '</datalist>';
-                msg2   += '<input id=newJobName type=text list=taragetJobList ></input><datalist id=taragetJobList></datalist>';
+                msg2   += '<br><span>'+localize(nas.uiMsg.pMnewStage)+'0:<span><input id=newJobName type=text list=taragetJobList ></input><datalist id=taragetJobList></datalist>';
             nas.showModalDialog('confirm',[msg,msg2],title,false,function(){
                 var newStageName = document.getElementById('newStageName').value;
                 var newJobName = document.getElementById('newJobName').value;
@@ -4306,25 +4322,29 @@ serviceAgent.abortEntry=function(myIdentifier){
 }
 /**
     閉じる
-    ドキュメントの状態に　Floating　を追加
     開いているエントリが、ActiveならばHoldに変更
     XPSをカラ（初期状態＝float）する
+    ドキュメントの状態をFloatingにセット
     
-    現状のドキュメントをフロート化する際はFloatメソッドを使用
+    現状のドキュメントをフロート化する際はfloatEntryメソッドを使用
 
 */
-serviceAgent.closeEntry=function(){
+serviceAgent.closeEntry=function(callback,callback2){
     //  ドキュメントがアクティブで変更フラグが立っている場合　holdしてカレントリポジトリにプッシュ
      if((xUI.XPS.currentStatus.content=="Active")&&(! xUI.isStored())){
     //  成功したらカレントドキュメントをクリアしてロック
          serviceAgent.currentRepository.deactivateEntry(function(){
-            serviceAgent.closeEntry();
+            serviceAgent.closeEntry(callback,callback2);
         },function(){
             xUI.errorCode=9;
+            if(callback2 instanceof Function) callback2();
         }
         );
     }else{
-            xUI.resetSheet(new Xps(5,144),new Xps(5,144)) ;        
+        xUI.resetSheet(new Xps(5,144),new Xps(5,144));
+        xUI.XPS.currentStatus= new JobStatus("Floating");
+        xUI.setUImode('floating');    
+        if(callback instanceof Function) callback();
     }
 }
 /**
@@ -4332,10 +4352,10 @@ serviceAgent.closeEntry=function(){
     ドキュメントを複製してFloating状態にする
     開いているエントリが、ActiveならばHoldに変更する
     XPSはそのままの状態でステータスをフロート化する
-    レポジトリ上のエントリーは
-
+    レポジトリ上のエントリーは変更なし
+    これは単純なエクスポートであり、管理情報はここで切れる
 */
-serviceAgent.floatEntry=function(){
+serviceAgent.floatEntry=function(callback,callback2){
     //  ドキュメントがアクティブで変更フラグが立っている場合　holdしてカレントリポジトリにプッシュ
      if((xUI.XPS.currentStatus.content=="Active")&&(! xUI.isStored())){
     //  成功したらカレントドキュメントをクリアしてロック
@@ -4343,11 +4363,13 @@ serviceAgent.floatEntry=function(){
             serviceAgent.floatEntry();
         },function(){
             xUI.errorCode=9;
+            if(callback2 instanceof Function) callback2();
         }
         );
     }else{
-            xUI.XPS.currentStatus.content='Floating';
-            xUI.setUImode('floating');
+        xUI.XPS.currentStatus.content='Floating';
+        xUI.setUImode('floating');
+        if(callback instanceof Function) callback();
     }
 }
 /**
@@ -4422,7 +4444,6 @@ serviceAgent.updateNewJobName=function(stageName,type){
 serviceAgent.pushEntry=function(myXps,callback,callback2){
 console.log('serviceAgent.pushEntry');
     if (typeof myXps == 'undefined') myXps = xUI.XPS;
-console.log(xUI.XPS === myXps)
     if((xUI.XPS === myXps)&&(xUI.sessionRetrace > 0)){
         xUI.errorCode=8;//確定済データを更新することはできません
         alert(localize(xUI.errorMsg[xUI.errorCode]));
@@ -4436,9 +4457,26 @@ console.log(xUI.XPS === myXps)
     newXps.parseXps(myXps.toString());
     
     if(myXps.currentStatus.content.indexOf('Floating')>=0){
-        newXps.currentStatus = new JobStatus('Startup'); 
+/*プッシュ条件
+タイトルが存在する、エピソードが存在する
+カット番号がある
+ユーザ情報が存在する
+ここでユーザアサインメントを付加することが可能ーーー未実装　201802
+*/
+    
+        var msg=localize({
+        en:"Add the current cut:% 1: to the share.\n Is it OK?",
+        ja:"現在のカット: %1 :を共有に追加します。\nよろしいですか？"
+    },myXps.getIdentifier())
+        // "TEST push Entry :"+myXps.getIdentifier();
+        var go=confirm(msg);
+        if(go){
+            newXps.currentStatus = new JobStatus('Startup');
+        }else{
+            return false;//処理中断
+        }
     }
-    console.log(newXps);
+// console.log(newXps);
     this.currentRepository.pushEntry(newXps,callback,callback2);
 }
 /**
@@ -4475,7 +4513,7 @@ function parseCutText(sourceText){
             break;
         }
     }
-console.log(dataStartLine)
+// console.log(dataStartLine)
     
     if(namePosition==-1){
         namePosition=0;

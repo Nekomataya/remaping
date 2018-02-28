@@ -147,7 +147,7 @@
 
 <li><span id=pMnewdoc-d class='pM pM-alt'>新規書類</span><A id=pMnewdocument
 	href = 'javascript:void(0)'
-	onclick = 'serviceAgent.checkinEntry();return false;'
+	onclick = 'myScenePref.open("new");return false;'
 	title="新規書類"
 >新規書類</A></li><hr>
 <li><span id=pMcheckin-d class='pM pM-alt'>作業開始</span><A id=pMcheckin
@@ -266,7 +266,7 @@ serviceAgent.pushEntry(xUI.XPS,function(){xUI.setStored("current");sync();
 >Import/Export</a></li>
 <li><span id=pMdocInfo-d class='pM pM-alt'></span><A	id=pMdocInfo
 	href='javascript:void(0)'
-	onclick='myScenePref.open();return false;'
+	onclick='myScenePref.open("edit");return false;'
 	title="シート情報"
 >DocumentInfo</A></li>
 <li id=dMair><span id=pMexportHTMLair-d class='pM pM-alt'>Export as html</span><A	id=pMexportHTMLair
@@ -762,6 +762,12 @@ serviceAgent.pushEntry(xUI.XPS,function(){xUI.setStored("current");sync();
 		onclick="serviceAgent.closeEntry();"
 		title="編集を破棄してドキュメントを閉じる"
 	>
+	</button><button
+	id=ibMfloat
+		class='iconButton  iconButton-floating'
+		onclick="serviceAgent.floatEntry();"
+		title="現在のドキュメントを複製してフロート"
+	>
 	</button>
  </span>
 <!--
@@ -791,8 +797,8 @@ serviceAgent.pushEntry(xUI.XPS,function(){xUI.setStored("current");sync();
 -->
 	<button
 	id=ibMdocInfo
-		class='iconButton iconButton-xps'
-		onclick='myScenePref.open();'
+		class='iconButton iconButton-info'
+		onclick='myScenePref.open("edit");'
 		title="XpsProperties"
 	>
 	</button>
@@ -1239,7 +1245,14 @@ class=optionPanel id=optionPanelProductManagement
 	id=pmfui-new
     class='pmControl pmControl-new' 
     title='新規カットを登録'
-	onclick='xUI.sWitchPanel("File");'
+	onclick='serviceAgent.pushEntry(xUI.XPS,function(){
+    var myIdentifier = Xps.getIdentifier(xUI.XPS,false);
+    serviceAgent.currentRepository.getSCi(function(){
+        serviceAgent.currentRepository.getEntry(myIdentifier);
+    },false,myIdentifier);
+},function(){
+    alert("データ登録失敗");
+});'
 >新規登録</button>
     </div>
 
@@ -1908,16 +1921,27 @@ onclick='nas.incrFCTonHTMLInput(document.getElementById("editTC"),"-(1)")'
 <table id=uiTable>
 <tr>
 <td style="text-align:left" colspan=2>
-<span style="display:inline;">  <input	type=checkbox
+<span id=scnNewDocument>  
+<input type=checkbox
+    style="display:inline;"
 	id="scnNewSheet"
 	onChange=myScenePref.chgNewSheet()
-  ><a	href="javascript:void(0);"
-	onClick='myScenePref.chg("scnNewSheet");return false'
- > 新規作成 </a> </span>
-<input type=button value="更新" style="width:7em" onClick="myScenePref.putProp();">
-<input type=button value="新規登録" style="width:7em" onClick="myScenePref.newProp();">
-<input type=button value="リセット" style="width:7em" onClick="myScenePref.getProp();">
-<input type=button value="閉じる" style="width:7em" onClick="myScenePref.close();">
+  ><span id=scnNewSheetLbl> 新規作成 </span></span>
+<input id=scnPushentry type=button value="登録" class="scnControl" 
+	onclick='myScenePref.putProp();serviceAgent.pushEntry(xUI.XPS,function(){
+    var myIdentifier = Xps.getIdentifier(xUI.XPS,false);
+    serviceAgent.currentRepository.getSCi(function(){
+        serviceAgent.currentRepository.getEntry(myIdentifier);
+    },false,myIdentifier);
+},function(){
+    alert("データ登録失敗");
+});'
+    title='現在のタイムシートをリポジトリに登録します'
+>
+<input id=scnUpdate    type=button value="更  新" class="scnControl"    onClick="myScenePref.putProp();">
+<input id=scnNew       type=button value="作  成" class="scnControl" onClick="myScenePref.putProp();">
+<input id=scnRest      type=button value="リセット" class="scnControl" onClick="myScenePref.getProp();">
+<input id=scnClose     type=button value="閉じる" class="scnControl" onClick="myScenePref.close();">
 </td></tr>
 
 <tr>
@@ -1944,10 +1968,10 @@ onclick='nas.incrFCTonHTMLInput(document.getElementById("editTC"),"-(1)")'
 	<input	type=text
 		id=scnTitle
 		style="width:100%"
-		value="---" 
+		value="" 
 		autoComplete= "on"
 		list ="scnTitleList"
-		onChange="myScenePref.rewrite(this.id)"
+		onChange="myScenePref.reWrite(this.id)"
 	/>
 	<datalist id="scnTitleList">
 	    <option value='ももたろう'>
@@ -1957,15 +1981,15 @@ onclick='nas.incrFCTonHTMLInput(document.getElementById("editTC"),"-(1)")'
 	</datalist>
 </tr><tr>
 	</td>
-	<th>	No.
+	<th>	Episode.
 	</th><td colspan=2>
 		<input	type=text
 			id=scnOpus
 			style="width:100%"
-			value="---"
+			value=""
 			autoComplete= "on"
 			list ="scnOpusList"
-			onChange="myScenePref.rewrite(this.id)"
+			onChange="myScenePref.reWrite(this.id)"
 	/>
 	<datalist id="scnOpusList">
 	</datalist>
@@ -1976,8 +2000,8 @@ onclick='nas.incrFCTonHTMLInput(document.getElementById("editTC"),"-(1)")'
 	<input type=text
 		id=scnSubtitle
 		style="width:100%"
-		value="---"
-		onChange="myScenePref.rewrite(this.id)"
+		value=""
+		onChange="myScenePref.reWrite(this.id)"
 	/>
 
 	</td>
@@ -2731,17 +2755,15 @@ id=prefDfY VALUE="---" onChange="myPref.chgdfSIZE(this.id)">:<input type=text
 		BGcolor<br>
 		<input id="prefBGColor" type="color" list="bgColorList" autoComplete="on" />
 		<datalist id="bgColorList">
-		    <option value="#ffdffe" title="あかむらさき">
-		    <option value="#fdeefd" title="どどめいろ">
-		    <option value="#efffef" title="わかくさ">
-		    <option value="#ffffef" title="びわ">
-		    <option value="#edd3a1" title="あさぎ">
-		    <option value="#b68d4c" title="きつるばみ">
-		    <option value="#fef4f4" title="さくら">
-		    <option value="#f5b199" title="いっきんぞめ">
-		    <option value="#cfcfd6" title="ぎんねずみ">
-		    <option value="#efefef" title="しろねずみ">
-		    <option value="#f8f8f8" title="しろねり">
+		    <option value="#fff1ba" title="レモン">レモン
+		    <option value="#f8b500" title="山吹">やまぶき
+		    <option value="#00a3af" title="浅葱">あさぎ
+		    <option value="#bce2e8" title="水色">みずいろ
+		    <option value="#fef4f4" title="さくら">さくらいろ
+		    <option value="#e198b4" title="桃色">ももいろ
+		    <option value="#f2c288" title="びわ">びわ
+		    <option value="#afafb0" title="銀鼠">ぎんねず
+		    <option value="#f8f8f8" title="白練">しろねり
 		</datalist>
 <!--		<option value="#"> -->
 		</td>
@@ -2893,7 +2915,7 @@ debug console
  onClick='console.log(serviceAgent.currentRepository.entryList);return false;'
 > view-repository List </button><button 
  id='dbgPushEntryCR'
- onClick='serviceAgent.currentRepository.pushEntry(xUI.XPS);serviceAgent.currentRepository.getList();documentDepot.rebuildList();return false;'
+ onClick='serviceAgent.pushEntry();serviceAgent.currentRepository.getList();documentDepot.rebuildList();return false;'
 > pushEntry !</button>
 <button 
  id='dbgChangeVO'
