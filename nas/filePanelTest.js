@@ -176,6 +176,8 @@ documentDepot.updateOpusSelector=function(myRegexp,rev){
 ない場合は選択アイテムを空にする
 
 引数は正規表現よりも[開始番号,終了番号（表示個数？）]あたりにしたほうが何かと良いので順次変更
+ドキュメントエントリは、ステータスを認識するように改修
+Aborted ステータスのエントリは、制作管理モードでのみ表示
  */
  documentDepot.updateDocumentSelector=function(myRegexp){
 // ここで正規表現フィルタを引数にする？
@@ -187,11 +189,23 @@ documentDepot.updateOpusSelector=function(myRegexp,rev){
     var myResult   = [];
     myContents += '<option value="==newDocument==">（*-- no document selected--*）</option>';
     for ( var dlid = 0 ; dlid < myDocuments.length ; dlid ++){
+//全ドキュメント走査
         var currentText = decodeURIComponent(myDocuments[dlid].toString(0).split('//')[1]);
-        var currentData = Xps.parseSCi(currentText);
-        var myIdf=Xps.parseCutIF(currentData[0].cut);
-        if(currentData[0].cut.match(myRegexp)){
+        var currentData = myDocuments[dlid];
+//        var currentData = Xps.parseSCi(currentText);
+       var currentStatus = currentData.getStatus();
+       console.log(currentStatus)
+        var myIdf=Xps.parseCutIF(currentData.dataInfo.cut[0].cut);
+        if( (currentData.dataInfo.currentStatus.content.indexOf('Aborted') < 0) &&
+            (currentData.dataInfo.sci[0].cut.match(myRegexp))){
             myContents += '<option';
+
+            myContents += ' class="docStatus docStatus-';
+            myContents += currentStatus;
+if((currentStatus=='Fixed')&&(currentStatus.assign)){
+            myContents += "-2";
+}
+            myContents += '"';
             myContents += ' value="';
             myContents += myDocuments[dlid];
             if(this.currentSelection == myDocuments[dlid]){
@@ -201,7 +215,8 @@ documentDepot.updateOpusSelector=function(myRegexp,rev){
                 this.currentSelection = null;
             };
             myContents += currentText;
-            myContents += '</option>';
+            myContents += ' ['+currentStatus.content;
+            myContents += ']</option>';
             myResult.push(myDocuments[dlid]);
         }
     }
@@ -586,11 +601,15 @@ var currentStatus = myEntry.issues[myEntry.issues.length-1][3];
     }
     if((xUI.uiMode=='management')&&(!myEntry)){
         document.getElementById('ddp-addentry').disabled    = false;
-        document.getElementById('ddp-removeentry').disabled = (serviceAgent.currentRepository===localRepository);
     }else{
         document.getElementById('ddp-addentry').disabled    = true;
-        document.getElementById('ddp-removeentry').disabled = false;
     }
+    if((myEntry)&&(serviceAgent.currentRepository===localRepository)){
+        document.getElementById('ddp-removeentry').disabled = false;
+    }else{
+        document.getElementById('ddp-removeentry').disabled = true;
+    }
+
 }
 
 

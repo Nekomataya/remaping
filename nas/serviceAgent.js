@@ -664,18 +664,16 @@ if(dbg) console.log(currentIssue[3]);
 */
 listEntry.prototype.remove=function(){
     if(! this.parent) return false;
-//var compares=[];
     for (var ix=0;ix<this.parent.entryList.length;ix++){
-//compares.push([this.parent.entryList[ix].issues[0].cutID,this.issues[0].cutID].join());
         if(this.parent.entryList[ix].issues[0].cutID == this.issues[0].cutID){
             this.parent.entryList.splice(ix,1);
             return true;
         };
     }
-//console.log(this);
-//console.log(this.parent.entryList.length);
-//console.log(compares);
-        return false;//これは実行されない…はず されたらヤダ
+//この下実行されない…はず されたらヤダ
+    console.log(this);
+    console.log(this.parent.entryList.length);
+    return false;
 }
 /**
     エントリリストコレクション
@@ -1152,21 +1150,21 @@ localRepository.pushEntry=function(myXps,callback,callback2){
         };
     };
 // console.log(myXps)
-if (true) console.log("既存エントリなし :追加処理");
+console.log("既存エントリなし :追加処理");
 //既存エントリが無いので新規エントリを追加
 //設定制限値をオーバーしたら、警告する。　OKならばローカルストレージから最も古いエントリを削除して実行
     try{
         if ( this.entryList.length >= this.maxEntry ){
             var msg=localize({en:"over limit!\n this entry will remove [%1]\n ok?",ja:"制限オーバーです!\nこのカットを登録するとかわりに[%1]が消去されます。\nよろしいですか？"},decodeURIComponent(this.entryList[0].toString()));
             if(confirm(msg)){
-if(true) console.log("removed Item !");
+console.log("removed Item !");
                 for (var iid=0; iid < this.entryList[0].issues.length ; iid++ ){
                     localStorage.removeItem( this.keyPrefix + this.entryList[0].issues[iid].identifier );
                 };
                 this.entryList[0].remove();//アイテムメソッドで削除
                 localStorage.setItem(this.keyPrefix+myIdentifier,myXps.toString());
                 this.entryList.put(new listEntry(myIdentifier));//Collectionメソッドで追加
-if(true) console.log(this.entryList.length +":entry/max: "+ this.maxEntry)
+console.log(this.entryList.length +":entry/max: "+ this.maxEntry)
             }
         }else{
             localStorage.setItem(this.keyPrefix+myIdentifier,myXps.toString());
@@ -1295,6 +1293,7 @@ if(dbg) console.log(decodeURIComponent(myIssue.identifier));
 localRepository.addTitle=function (myTitle,myDescription,myPm,callback,callback2){
 //現在ローカルリポジトリ側で行う処理は存在しない コールバックの実行のみを行う
 //タイトルDBが実装された場合はDBにエントリを加える
+    console.log(['localRepository.addTitle',myTitle,myDescription,myPm].join(':'));
 　if(callback instanceof Function) callback();
     return true;
 }
@@ -1307,7 +1306,11 @@ localRepository.addTitle=function (myTitle,myDescription,myPm,callback,callback2
     このルーチンを呼び出す時点で、タイトルは存在すること
 */
 localRepository.addOpus=function (myIdentifier,prodIdentifier,callback,callback2){
+    console.log(['localRepository.addOpus',myIdentifier,prodIdentifier].join(':'));
 //現在ローカルリポジトリ側で行う処理は存在しない コールバックの実行のみを行う
+//タイトルDBに加えて、documetntDepotのプロダクト更新が必要
+//タイトルDB側のイベント処理とするか、または追加後にdocumentDepot側でのデータ要求処理に振替
+    
 　if(callback instanceof Function) callback();
     return true;
 }
@@ -1571,17 +1574,19 @@ console.log('終了更新失敗');
 localRepository.receiptEntry=function(stageName,jobName,callback,callback2){
     if( typeof stageName == 'undefined') return false;
     var myStage = nas.pmdb.stages.getStage(stageName) ;//ステージDBと照合　エントリが無い場合はエントリ登録
-    /*  2016-12 の実装では省略して　エラー終了*/
+    /*  2016-12 の実装では省略して　エラー終了
+        2017-07 最小限の処理を実装　ステージの存在を確認して続行
+    */
     if(! myStage) return false;
     var currentEntry = this.entry(Xps.getIdentifier(xUI.XPS));
-    var currentCut   = this.cut(currentEntry.toString());
-//    var currentCut   = this.cut(currentEntry.issues[0].cutID);
     if(! currentEntry){
 if(dbg) console.log ('noentry in repository :' +  decodeURIComponent(currentEntry))
         //当該リポジトリにエントリが無い
          return false;
       }
-            //次のステージを立ち上げるため 読み出したデータでXpsを初期化 
+    var currentCut   = this.cut(currentEntry.toString());//= this.cut(currentEntry.issues[0].cutID);
+    if(! currentCut) return false;
+//次のステージを立ち上げるため 読み出したデータでXpsを初期化 
         var newXps = new Xps();
         var currentContents = localStorage.getItem(this.keyPrefix+currentEntry.toString(0));
         if (currentContents) {
@@ -1637,19 +1642,66 @@ if(dbg) console.log('編集権利取得失敗');
 /**
     作業中断処理
 */
-localRepository.abortEntry=function(myIdentifier){
+localRepository.abortEntry=function(myIdentifier,callback,callback2){
     var currentEntry = this.entry(myIdentifier);
     if(! currentEntry) return false;
     var currentStatus=currentEntry.getStatus();
-    switch (currentStatus.content){
-        case 'Startup':
-        case 'Hold':
-        case 'Fixed':
-        case 'Active':
-            //管理モード下でのみ処理 このメソッドのコール自体が管理モード下でのみ可能にする
-            //リポジトリに対して
-        break;
-    }
+    if(String(currentStatus.content).indexOf('Fixed')<0){return false;}
+    var currentCut   = this.cut(currentEntry.toString());
+    if(! currentCut) return false;
+    
+//中断エントリを作成するために、読み出したデータで新規Xpsを初期化 
+        var newXps = new Xps();
+        var currentContents = localStorage.getItem(this.keyPrefix+currentEntry.toString(0));
+        if (currentContents) {
+            newXps.parseXps(currentContents);
+        } else {
+console.log('abort entry:読み出し失敗')
+            return false;
+        }
+        // ユーザ判定は不用（権利チェックは後ほど実装）
+        if (newXps){
+            newXps.job.increment('Abort');
+            newXps.update_user = xUI.currentUser;
+            newXps.currentStatus = new JobStatus('Aborted');
+console.log('abort entry:');
+console.log(newXps.toString());//
+             //引数でステータスを変更したエントリを作成 新規に保存 stageIDは変わらず、jobIDは繰り上る
+            localStorage.setItem(this.keyPrefix+Xps.getIdentifier(newXps),newXps.toString());
+            var resultData = localStorage.getItem(this.keyPrefix+Xps.getIdentifier(newXps));
+console.log(resultData);
+            var result = ( resultData == newXps.toString()) ? true:false;
+            if(result){
+console.log('aborted');
+console.log(newXps.currentStatus);
+                this.getList();//リストステータスを同期
+//                currentEntry.push(Xps.getIdentifier(newXps));
+                currentEntry.remove(Xps.getIdentifier(newXps));
+                currentCut.versions.push({
+                    updated_at:newXps.update_time,
+                    description:currentEntry.toString(0),
+                    version_token:this.keyPrefix+currentEntry.toString(0)
+                });
+//                xUI.XPS.stage.increment(stageName);
+//                xUI.XPS.job.reset(jobName);
+//                xUI.XPS.currentStatus=new JobStatus('Startup');//ドキュメントステータスを更新
+//                xUI.XPS.update_user=xUI.currentUser;//ユーザ更新
+//                xUI.setStored("current");//UI上の保存ステータスをセット
+			    sync();//保存ステータスを同期
+                selectSCi();//カレントデータを再セレクトして情報更新
+                xUI.setUImode('floating');//モードをfloatingへ　　＜＜領収処理の後はモード遷移なし
+                xUI.sWitchPanel();//ドキュメントパネルが表示されていたらパネルクリア
+                sync('historySelector');//履歴セレクタ更新
+                if(callback instanceof Function){ setTimeout(callback,10)};
+                return result;
+            }else{
+if(dbg) console.log(result);
+            }
+        }
+if(dbg) console.log('編集権利取得失敗');
+        // すべてのトライに失敗
+        if(callback2 instanceof Function){ setTimeout(callback2,10)};
+        return false ;
 }
 
 
@@ -4181,15 +4233,22 @@ var msg = localize({
 /**
      新規カットを追加登録
      現在のリポジトリに存在しないタイトル・エピソードを指定する場合は、必ずXpsオブジェクトを指定すること
-     引数無しで呼び出された場合は、現在のタイトル・エピソードに新規カットを登録するダイアログを開く
-     現在のTitle-Opusに既存のカットは処理できないので排除
-     データ内容の指定は不可・尺のみ指定可能　最小テンプレートでカット番号のある空エントリのみが処理対象
+     マネジメントモード下で引数無しで呼び出された場合に限り、ドキュメントブラウザの入力情報をベースに新規のエントリを作成する。
+     その際は、規定のコールバック関数を利用して、指定のコールバックは使用されない
+     引数なしのケースではデータ内容の指定は不可
+     尺（識別子情報）のみ指定可能　最小テンプレートでカット番号のある空エントリのみが処理対象
+     
+     現在のTitle+Opus(product)の既存カットに対する衝突は排除
+     
      初期状態の、ライン／ステージ／ジョブの指定が可能
+     引数で与えられるXpsのステータスは、"Floating"である必要がある
 */
-serviceAgent.addEntry=function(myXps){
+serviceAgent.addEntry=function(myXps,callback,callback2){
     if(!myXps){
+console.log(documentDepot);
+         if(xUI.uiMode!='management')   return false;         
         var myIdentifier = documentDepot.buildIdentifier();
-if(dbg)console.log(decodeURIComponent(myIdentifier));
+console.log(decodeURIComponent(myIdentifier));
         var entryInfo = Xps.parseIdentifier(myIdentifier);
                 myXps = new Xps(5,entryInfo.time);
                 myXps.title      = entryInfo.title;
@@ -4198,31 +4257,38 @@ if(dbg)console.log(decodeURIComponent(myIdentifier));
                 myXps.cut        = entryInfo.cut;
                 myXps.createUser = xUI.currentUser;
                 myXps.updateUser = xUI.currentUser;
-
+                myXps.currentStatus =  new JobStatus();
+//新規エントリを判定
         if((String(myXps.cut).length==0)||(serviceAgent.currentRepository.entry(myIdentifier))){
             var msg = "";
             if (String(myXps.cut).length==0){
+                console.log(String(myXps.cut));
                 msg += localize(nas.uiMsg.alertCutIllegal);//"カット番号不正"
             }else{
                 msg += localize(nas.uiMsg.alertCutConflict);//"カット番号衝突"
             }
-            alert(msg);
+            alert(msg+': can not addEntry');
             return false;
         }else{
-            serviceAgent.addEntry(myXps);
+//限定条件下なのでコールバックを規定値で行う
+            serviceAgent.addEntry(myXps,function(){
+                serviceAgent.currentRepository.getSCi(false,false,Xps.getIdentifier(myXps));
+            },function(){
+                console.log('error: addEntry')
+            });
         };
         return;
-
     }else{
         var myIdentifier = Xps.getIdentifier(myXps);
 //既存カットと一致(排除)
         if(this.currentRepository.entry(myIdentifier)){
-                alert(localize(nas.uiMsg.alertCutConflict));
-             return false
+            alert(localize(nas.uiMsg.alertCutConflict));
+            return false;
         }
+
+//既存プロダクトあり（プロダクト作成処理不用）
         if(this.currentRepository.entry(myIdentifier,true)){
-//既存プロダクトあり（作成処理不用）
-            serviceAgent.currentRepository.pushEntry(myXps);
+            serviceAgent.pushEntry(myXps,callback,callback2);
         }else{
 //既存のタイトルがあるか？あればエピソードのみ新作
 //なければタイトルを作成後にエピソードを新作して処理続行
@@ -4240,23 +4306,23 @@ if(dbg)console.log(decodeURIComponent(myIdentifier));
             　if((hasTitle)&&(! hasOpus)){
             　   var msg=localize({
             　       en:"",
-            　       ja:"この共有には指定の制作話数 #%1[%2] が登録されていません。\n新規に制作話数 #%1[%2] を登録しますか？\n共有を変更するする場合は一旦キャンセルして手続をやり直してください。"},myXps.opus,myXps.subtitle);
+            　       ja:"この共有には指定の制作話数 #%1[%2] が登録されていません。\n新規に制作話数 #%1[%2] を登録しますか？\n共有を変更する場合は一旦キャンセルして手続をやり直してください。"},myXps.opus,myXps.subtitle);
             　   if(confirm(msg))
             　   serviceAgent.currentRepository.addOpus(myIdentifier,hasProd,function(){
-            　       serviceAgent.currentRepository.pushEntry(myXps);
+            　       serviceAgent.pushEntry(myXps,callback,callback2);
             　   });
             　 }else if((! hasTitle)&&(! hasOpus)){
             　   var msg=localize({
             　       en:"",
-            　       ja:"この共有には指定された作品 %1#%2[%3] が登録されていません。\n新規に %1#%2[%3] を登録しますか？\n共有を変更するする場合は一旦キャンセルして手続をやり直してください。"},myXps.title,myXps.opus,myXps.subtitle);
+            　       ja:"この共有には指定された作品 %1#%2[%3] が登録されていません。\n新規に %1#%2[%3] を登録しますか？\n\n共有を変更する場合は一旦キャンセルして手続をやり直してください。"},myXps.title,myXps.opus,myXps.subtitle);
             　   if(confirm(msg))
             　   serviceAgent.currentRepository.addTitle(myXps.title,"","",function(){
-            　       serviceAgent.currentRepository.addOpus(myIdentifier,function(){
-            　           serviceAgent.currentRepository.pushEntry(myXps);
+            　       serviceAgent.currentRepository.addOpus(myIdentifier,myIdentifier,function(){
+            　           serviceAgent.pushEntry(myXps,callback,callback2);
             　       });
             　   });
             　}else{
-            　   serviceAgent.currentRepository.pushEntry(myXps);
+            　   serviceAgent.pushEntry(myXps,callback,callback2);
             　};
             　          
         };
@@ -4307,18 +4373,28 @@ serviceAgent.receiptEntry=function(){
 }
 /**
     当該エントリの制作を中断する。
-    以降は複製のみ可能
+    以降は複製のみ可能となる
 */
-serviceAgent.abortEntry=function(myIdentifier){
+serviceAgent.abortEntry=function(myIdentifier,callback,callback2){
     var currentEntry = (typeof myIdentifier == 'undefined')? this.currentRepository.entry(Xps.getIdentifier(xUI.XPS)):this.currentRepository.entry(myIdentifier);
+console.log(currentEntry)
     if(! currentEntry) return false;
     var currentStatus=currentEntry.getStatus();
+console.log(currentStatus)
     switch (currentStatus.content){
-        case 'Startup': case 'Hold': case 'Fixed': case 'Active':
+        case 'Startup':
+        case 'Hold':
+        case 'Active':
+        case 'Floating':
             //管理モード下でのみ処理 このメソッドのコール自体が管理モード下でのみ可能にする
             //リポジトリに対して
         break;
+        case 'Fixed':
+        default:
+            console.log('serviceAgent abort entry');
+            return this.currentRepository.abortEntry(myIdentifier,callback,callback2);
     }
+    return currentStatus.content;
 }
 /**
     閉じる
@@ -4442,7 +4518,7 @@ serviceAgent.updateNewJobName=function(stageName,type){
     ステータスがFloatingの場合は、複製をとってStartup状態でプッシュする
 */
 serviceAgent.pushEntry=function(myXps,callback,callback2){
-console.log('serviceAgent.pushEntry');
+//console.log('serviceAgent.pushEntry');
     if (typeof myXps == 'undefined') myXps = xUI.XPS;
     if((xUI.XPS === myXps)&&(xUI.sessionRetrace > 0)){
         xUI.errorCode=8;//確定済データを更新することはできません
@@ -4463,15 +4539,20 @@ console.log('serviceAgent.pushEntry');
 ユーザ情報が存在する
 ここでユーザアサインメントを付加することが可能ーーー未実装　201802
 */
-    
         var msg=localize({
-        en:"Add the current cut:% 1: to the share.\n Is it OK?",
-        ja:"現在のカット: %1 :を共有に追加します。\nよろしいですか？"
-    },myXps.getIdentifier())
+        en:"Add the current cut: %1 :\nto the share : %2 :.\n Is it OK?",
+        ja:"現在のカット: %1 :を\n共有: %2 :に追加します。\nよろしいですか？"
+    },myXps.getIdentifier(),serviceAgent.currentRepository.name)
         // "TEST push Entry :"+myXps.getIdentifier();
         var go=confirm(msg);
         if(go){
-            newXps.currentStatus = new JobStatus('Startup');
+/*  データステータスをチェック
+    カレントタイトルがない場合は新作
+    カレントのopusが無い場合は新作
+    いずれも　コールバック処理渡し
+    データステータスがFloatingなので、Startupへ変更
+*/
+       newXps.currentStatus = new JobStatus('Startup');
         }else{
             return false;//処理中断
         }

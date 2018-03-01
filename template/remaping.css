@@ -534,8 +534,8 @@ button.iconButton:disabled {
 .iconButton-floating { background-position: -297px -162px; }
 .iconButton-info { background-position: -324px -162px; }
 .iconButton-DBentry { background-position: -351px -162px; }
+.iconButton-management { background-position: -378px -162px; }
 /*
-.iconButton- { background-position: -378px -162px; }
 .iconButton- { background-position: -405px -162px; }
 */
 .iconButton-shiftLayerB { background-position: 0 -189px; }
@@ -1525,6 +1525,7 @@ span.pmcui_ {
 		font-style:strong;
 	}
 /* document status overlay*/
+
 div.documentStatusOverlay {
 	position :absolute;
 	width : 100% ;
@@ -1536,6 +1537,43 @@ div.documentStatusOverlay {
 	mix-blend-mode: multiply;
 	opacity:0.25;
 	pointer-events: none;
+}
+/* document selector status*/
+
+.docStatus	{
+	background-color:#dedede;
+	border-style:solid;
+	border-width:0px;
+}
+
+.docStatus-Startup	{
+	color:#aaaaaa;
+	border-width:1px;
+	border-color:#ce3d4c;
+}
+.docStatus-Active	{
+	background-color:#68be8d;
+	color:red;
+}
+.docStatus-Hold	{
+	background-color:#aacf53;
+	color:#ff8888;
+}
+.docStatus-Fixed	{
+	background-color:#f3a68c;
+	color:black;
+}
+.docStatus-Fixed-2	{
+	background-color:#ce3d4c;
+	color:black;
+}
+.docStatus-Aborted	{
+	background-color:snow;
+	color:#aaaaff;
+}
+.docStatus-Floating	{
+	background-color:#333333;
+	color:red;
 }
 /* button / input */
 .scnControl {

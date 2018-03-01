@@ -10352,6 +10352,7 @@ nas.FCT2Frm(document.getElementById("scnTime").value);
 		XPS[names[i]]=document.getElementById(ids[i]).value;
 	}
 
+
 // //////新規作成なら現在のシート内容をフラッシュ ?
 		if (document.getElementById("scnNewSheet").checked){xUI.flush();}
 // /////////

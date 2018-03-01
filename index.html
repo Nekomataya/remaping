@@ -941,7 +941,7 @@ serviceAgent.pushEntry(xUI.XPS,function(){xUI.setStored("current");sync();
 
 <button
 	id=ibMpmn
-    class='iconButton iconButton-notice'
+    class='iconButton iconButton-management'
 	onclick="xUI.setUImode('next');sync('productStatus');"
 	onDblClick='xUI.viewOnly=(xUI.viewOnly)?false:true;sync("productStatus");'
 	title='モード切替'
@@ -1245,7 +1245,7 @@ class=optionPanel id=optionPanelProductManagement
 	id=pmfui-new
     class='pmControl pmControl-new' 
     title='新規カットを登録'
-	onclick='serviceAgent.pushEntry(xUI.XPS,function(){
+	onclick='serviceAgent.addEntry(xUI.XPS,function(){
     var myIdentifier = Xps.getIdentifier(xUI.XPS,false);
     serviceAgent.currentRepository.getSCi(function(){
         serviceAgent.currentRepository.getEntry(myIdentifier);
@@ -1928,7 +1928,7 @@ onclick='nas.incrFCTonHTMLInput(document.getElementById("editTC"),"-(1)")'
 	onChange=myScenePref.chgNewSheet()
   ><span id=scnNewSheetLbl> 新規作成 </span></span>
 <input id=scnPushentry type=button value="登録" class="scnControl" 
-	onclick='myScenePref.putProp();serviceAgent.pushEntry(xUI.XPS,function(){
+	onclick='myScenePref.putProp();serviceAgent.addEntry(xUI.XPS,function(){
     var myIdentifier = Xps.getIdentifier(xUI.XPS,false);
     serviceAgent.currentRepository.getSCi(function(){
         serviceAgent.currentRepository.getEntry(myIdentifier);
@@ -2385,8 +2385,8 @@ HTML（画像を使用可能）か？<br>
 <!-- for management -->
 <div id=ddp-man class='documentPanelTools documentPanelTools-man' >
 
-<div id=localMultiLoader ><form id="multiLoader" name="multiLoader" method="post" action="javascript:void(0);" enctype="multipart/form-data">
-一括登録 :<input type=file id=myCurrentOpus name=XPSBodys multiple=true size=256 >
+<div id=localMultiLoader class='debug'><form id="multiLoader" name="multiLoader" method="post" action="javascript:void(0);" enctype="multipart/form-data">
+一括登録 :<input type=file id=myCurrentOpus name=XPSBodys multiple=true size=256  class='debug'>
 <a href="javascript:" onClick='var tgt=document.getElementById("buildWithCSV");tgt.checked=(tgt.checked)?false:true;return false;'
 >cvsファイルから登録</a> : <input id=buildWithCSV type=checkbox
 >
@@ -2401,10 +2401,12 @@ HTML（画像を使用可能）か？<br>
 <button
  onClick='alert("お待ち下さい");'
  class='documentPanelButton-management debug'
+ disabled=true
  title="local repository only"
 >一括ダウンロード </button><button
  onClick='alert("お待ち下さい");'
  class='documentPanelButton-management debug'
+ disabled=true
  title="local repository only"
 >一括登録 </button><button
  id='ddp-removeentry'
@@ -2412,17 +2414,19 @@ HTML（画像を使用可能）か？<br>
  class='documentPanelButton-management'
  disabled=true
  title="local repository only ローカルリポジトリからカットを削除します"
->removeDocument </button><button
- onClick='serviceAgent.addTitle()'
+>エントリ削除</button><button
+ onClick='serviceAgent.addTitle();selectSCi();'
  class='documentPanelButton-management debug'
+ disabled=true
  title="タイトル登録（デバッグ）"
 >makeTitle</button><button
  onClick='hello();'
+ disabled=true
  class='documentPanelButton-management debug'
  title="エピソード登録（デバッグ）"
 >makeEpisode</button><button
  id=ddp-addentry
- onClick='serviceAgent.addEntry(xUI.XPS);'
+ onClick='serviceAgent.addEntry();'
  class='documentPanelButton-management'
  disabled=true
  title="カットを新規に登録します"
@@ -2909,13 +2913,13 @@ debug console
 ><br/>
 <button 
  id='dbgPushEntryLR'
- onClick='localRepository.pushEntry(xUI.XPS);localRepository.getList();documentDepot.rebuildList();return false;'
+ onClick='localRepository.pushEntry(xUI.XPS,function(){localRepository.getList();documentDepot.rebuildList();});return false;'
 > pushEntry-localStorage </button><button 
  id='dbgViewRepsitoryList'
  onClick='console.log(serviceAgent.currentRepository.entryList);return false;'
 > view-repository List </button><button 
  id='dbgPushEntryCR'
- onClick='serviceAgent.pushEntry();serviceAgent.currentRepository.getList();documentDepot.rebuildList();return false;'
+ onClick='serviceAgent.pushEntry(xUI.XPS,function(){serviceAgent.currentRepository.getList();documentDepot.rebuildList();});return false;'
 > pushEntry !</button>
 <button 
  id='dbgChangeVO'
@@ -3505,7 +3509,7 @@ index.html ,v 1.6 2017/06/23  support@u-at.net <br />
 <br>
       </div><hr>
 <!-- <form> -->
-    <textarea id="startupXPS"  ></textarea>
+    <textarea id="startupXPS"></textarea>
     <textarea id="referenceXPS"></textarea>
   </div>
   <div id="scrollSpaceFt" class=\"screenSpace\"><br></div>
