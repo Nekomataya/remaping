@@ -5229,7 +5229,7 @@ default:	;//	デフォルトアクションはクリアと同値
     bodyコレクションは、描画したテーブルセル内の画像エレメントへの参照が格納される
 */
 xUI.Cgl = new Object();
-
+xUI.Cgl.baseColorArray = (xUI.sheetTextColor)? nas.colorStr2Ary(xUI.sheetTextColor):[0,1,0,1,0,1];
 xUI.Cgl.body={};
 xUI.Cgl.formCashe = {};     // セル画像部品キャッシュ
 
@@ -5284,6 +5284,9 @@ xUI.Cgl.refresh=function(myRange,isReference){
 印字の際に描画の動作独立性を高める必要があるので、セルに埋め込んだ画像クラスを判定してその描画を行う仕様に変更
 具体的には、myFormに優先してターゲットセルの"graph_"で開始されるクラス名からFormを取得するように変更
 　170815
+シートカラーを　ユーザ変更可能にしたので　暗色テーマへの対応が必要
+描画カラーをオブジェクトプロパティ設ける事
+
 */
 xUI.Cgl.draw=function addGraphElement(myId,myForm) {
 	    var objTarget  = document.getElementById(myId);//ターゲットシートセルを取得
@@ -5354,7 +5357,7 @@ case "line-cam":	    //vertical-line
 case "line-sfx":	    //vertical-line
     if(typeof xUI.Cgl.formCashe[myForm] == 'undefined'){
 		var lineWidth  =3;
-		ctx.strokeStyle='rgb('+nas.colorStr2Ary(xUI.sheetTextColor).join(',')+')';
+		ctx.strokeStyle='rgb('+xUI.Cgl.baseColorArray.join(',')+')';
 		ctx.strokeWidth=lineWidth;
 		ctx.moveTo(element.width*0.5, 0);
 		ctx.lineTo(element.width*0.5, element.height);
@@ -5369,7 +5372,7 @@ case "wave-ref-odd":;		//wave-line 偶数フレーム
 case "wave-ref-evn":;		//wave-line 奇数フレーム
     if(typeof xUI.Cgl.formCashe[myForm] == 'undefined'){
 		var waveSpan  =5;		var lineWidth  =3;
-		ctx.strokeStyle='rgb('+nas.colorStr2Ary(xUI.sheetTextColor).join(',')+')';
+		ctx.strokeStyle='rgb('+xUI.Cgl.baseColorArray.join(',')+')';
 		ctx.strokeWidth=lineWidth;
 		ctx.moveTo(element.width*0.5, 0);
 		if(parseInt(myId.split("_").reverse()[0]) % 2){	
@@ -5383,7 +5386,7 @@ case "wave-ref-evn":;		//wave-line 奇数フレーム
 break;
 case "fi":;		//fade-in
 	var startValue = arguments[2]; var endValue= arguments[3];
-	    ctx.fillStyle="rgba("+nas.colorStr2Ary(xUI.sheetTextColor).join(',')+",1)";
+	    ctx.fillStyle="rgba("+xUI.Cgl.baseColorArray.join(',')+",1)";
 		ctx.moveTo((1-startValue)*element.width*0.5, 0);
 		ctx.lineTo(element.width-(1-startValue)*element.width*0.5,0);
 		ctx.lineTo(element.width-(1-endValue)*element.width*0.5,element.height);
@@ -5392,7 +5395,7 @@ case "fi":;		//fade-in
 break;
 case "fo":;		//fade-out
 	var startValue = arguments[2]; var endValue= arguments[3];
-	    ctx.fillStyle="rgba("+nas.colorStr2Ary(xUI.sheetTextColor).join(',')+",1)";
+	    ctx.fillStyle="rgba("+xUI.Cgl.baseColorArray.join(',')+",1)";
 		ctx.moveTo(startValue*element.width*0.5, 0);
 		ctx.lineTo(element.width-startValue*element.width*0.5,0);
 		ctx.lineTo(element.width-endValue*element.width*0.5,element.height);
@@ -5401,7 +5404,7 @@ case "fo":;		//fade-out
 break;
 case "transition":;		//transition
 	var startValue = arguments[2]; var endValue= arguments[3];
-	    ctx.fillStyle="rgba("+nas.colorStr2Ary(xUI.sheetTextColor).join(',')+",1)";
+	    ctx.fillStyle="rgba("+xUI.Cgl.baseColorArray.join(',')+",1)";
 		ctx.moveTo(startValue*element.width, 0);//
 		ctx.lineTo(element.width-startValue*element.width,0);
 		ctx.lineTo(element.width-endValue*element.width,element.height);
@@ -5412,7 +5415,7 @@ case "circle":;		 //circle
 case "circle-ref":;	 //circle-reference
     if(typeof xUI.Cgl.formCashe[myForm] == 'undefined'){
 		var phi  = .9;		var lineWidth  =3;
-		ctx.strokeStyle='rgb('+nas.colorStr2Ary(xUI.sheetTextColor).join(',')+')';
+		ctx.strokeStyle='rgb('+xUI.Cgl.baseColorArray.join(',')+')';
 		ctx.strokeWidth=lineWidth;
 		ctx.arc(element.width * 0.5, element.height * 0.5, element.height*phi*0.5, 0, Math.PI*2, true);
 	    ctx.stroke();
@@ -5423,7 +5426,7 @@ case "triangle":;		//triangle
 case "triangle-ref":;	//triangle
     if(typeof xUI.Cgl.formCashe[myForm] == 'undefined'){
 		var lineWidth  =4;
-		ctx.strokeStyle='rgb('+nas.colorStr2Ary(xUI.sheetTextColor).join(',')+')';
+		ctx.strokeStyle='rgb('+xUI.Cgl.baseColorArray.join(',')+')';
 		ctx.strokeWidth=lineWidth;
 		ctx.moveTo(element.width*0.5, -1);
 		ctx.lineTo(element.width*0.5 + (element.height-2)/Math.sqrt(3), element.height-2);
@@ -5436,7 +5439,7 @@ break;
 case "section-open":;		//section-open
     if(typeof xUI.Cgl.formCashe[myForm] == 'undefined'){
 	var formFill = arguments[2];
-	    ctx.fillStyle="rgba("+nas.colorStr2Ary(xUI.sheetTextColor).join(',')+",1)";
+	    ctx.fillStyle="rgba("+xUI.Cgl.baseColorArray.join(',')+",1)";
 		ctx.moveTo(element.width * 0.5 - element.height/Math.sqrt(3), 0);
 		ctx.lineTo(element.width * 0.5 + element.height/Math.sqrt(3), 0);
 		ctx.lineTo(element.width * 0.5 , element.height);
@@ -5448,7 +5451,7 @@ break;
 case "section-close":;		//section-close
     if(typeof xUI.Cgl.formCashe[myForm] == 'undefined'){
 	var formFill = arguments[2];
-	    ctx.fillStyle="rgba("+nas.colorStr2Ary(xUI.sheetTextColor).join(',')+",1)";
+	    ctx.fillStyle="rgba("+xUI.Cgl.baseColorArray.join(',')+",1)";
 		ctx.moveTo(element.width * 0.5, 0);
 		ctx.lineTo(element.width * 0.5 + element.height/Math.sqrt(3), element.height);
 		ctx.lineTo(element.width * 0.5 - element.height/Math.sqrt(3), element.height);
@@ -5460,7 +5463,7 @@ break;
 case "sound-section-open":;		//section-open
     if(typeof xUI.Cgl.formCashe[myForm] == 'undefined'){
 	var lineWidth = 3;
-	    ctx.fillStyle="rgba("+nas.colorStr2Ary(xUI.sheetTextColor).join(',')+",1)";
+	    ctx.fillStyle="rgba("+xUI.Cgl.baseColorArray.join(',')+",1)";
 		ctx.moveTo(0, element.height-lineWidth);
 		ctx.lineTo(element.width, element.height-lineWidth);
 		ctx.stroke();
@@ -5470,7 +5473,7 @@ break;
 case "sound-section-close":;		//section-close
     if(typeof xUI.Cgl.formCashe[myForm] == 'undefined'){
 	var lineWidth = 3;
-	    ctx.fillStyle="rgba("+nas.colorStr2Ary(xUI.sheetTextColor).join(',')+",1)";
+	    ctx.fillStyle="rgba("+xUI.Cgl.baseColorArray.join(',')+",1)";
 		ctx.moveTo(0, lineWidth);
 		ctx.lineTo(element.width, lineWidth);
 		ctx.stroke();
@@ -5480,7 +5483,7 @@ break;
 case "area-fill":;	//fill sheet cell
     if(typeof xUI.Cgl.formCashe[myForm] == 'undefined'){
 		ctx.moveTo(0, 0);
-	    ctx.fillStyle="rgba("+nas.colorStr2Ary(xUI.sheetTextColor).join(',')+",1)";
+	    ctx.fillStyle="rgba("+xUI.Cgl.baseColorArray.join(',')+",1)";
 	    ctx.fillRect(0, 0, targetRect.width, targetRect.height);
 	    xUI.Cgl.formCashe[myForm] = element.toDataURL("image/png");
 	}
@@ -7739,7 +7742,7 @@ myBody+='<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3
 myBody+='<head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"><title>';
 myBody+=XPS.scene.toString()+XPS.cut.toString();
 // myBody+='</title><link REL=stylesheet TYPE="text/css" HREF="http://www.nekomataya.info/test/remaping.js/template/printout.css">';
-if(xUI.onSite){
+if((xUI.onSite)&&(window.location.href.indexOf(serviceAgent.currentRepository.url)>=0)){
     myBody+='</title><link REL=stylesheet TYPE="text/css" HREF="/remaping/template/printout.css">';//for TEST onSite
 }else{
     myBody+='</title><link REL=stylesheet TYPE="text/css" HREF="'+location+'template/printout.css">';//for TEST offSite
