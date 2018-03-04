@@ -7744,8 +7744,10 @@ myBody+=XPS.scene.toString()+XPS.cut.toString();
 // myBody+='</title><link REL=stylesheet TYPE="text/css" HREF="http://www.nekomataya.info/test/remaping.js/template/printout.css">';
 if((xUI.onSite)&&(window.location.href.indexOf(serviceAgent.currentRepository.url)>=0)){
     myBody+='</title><link REL=stylesheet TYPE="text/css" HREF="/remaping/template/printout.css">';//for TEST onSite
+    var libOffset = '/remaping/'
 }else{
     myBody+='</title><link REL=stylesheet TYPE="text/css" HREF="'+location+'template/printout.css">';//for TEST offSite
+    var libOffset = './'   
 }
 
 /*
@@ -7756,20 +7758,19 @@ myBody+='</title><link REL=stylesheet TYPE="text/css" HREF="https://nekomataya.s
 }
 */
 /* ライブラリロード */
-
-myBody+='<script src=./lib/jquery.js></script>';
-myBody+='<script src=./lib/jquery-ui.js></script>';
-myBody+='<script src=./lib/ecl/ecl.js></script>';
-myBody+='<script src=./config.js></script>';
-myBody+='<script src=./nas/lib/nas_common.js></script>';
-myBody+='<script src=./nas/lib/nas_common_HTML.js></script>';
-myBody+='<script src=./nas/newValueConstractors.js></script>';
-myBody+='<script src=./nas/pmio.js></script>';
-myBody+='<script src=./nas/configPM.js></script>';
-myBody+='<script src=./nas/lib/mapio.js></script>';
-myBody+='<script src=./nas/lib/xpsio.js></script>';
-myBody+='<script src=./nas/scripts/remaping/airUI.js></script>';
-myBody+='<script src=./nas/scripts/remaping/remaping.js></script>';
+myBody+='<script src="'+libOffset+'lib/jquery.js"></script>';
+myBody+='<script src="'+libOffset+'lib/jquery-ui.js"></script>';
+myBody+='<script src="'+libOffset+'lib/ecl/ecl.js"></script>';
+myBody+='<script src="'+libOffset+'config.js"></script>';
+myBody+='<script src="'+libOffset+'nas/lib/nas_common.js"></script>';
+myBody+='<script src="'+libOffset+'nas/lib/nas_common_HTML.js"></script>';
+myBody+='<script src="'+libOffset+'nas/newValueConstractors.js"></script>';
+myBody+='<script src="'+libOffset+'nas/pmio.js"></script>';
+myBody+='<script src="'+libOffset+'nas/configPM.js"></script>';
+myBody+='<script src="'+libOffset+'nas/lib/mapio.js"></script>';
+myBody+='<script src="'+libOffset+'nas/lib/xpsio.js"></script>';
+myBody+='<script src="'+libOffset+'nas/scripts/remaping/airUI.js"></script>';
+myBody+='<script src="'+libOffset+'nas/scripts/remaping/remaping.js"></script>';
 
 
 myBody += '<script>replaceEndMarker=function (){var endPoint = JSON.parse(document.getElementById("endMarker").innerHTML);    if(!(endPoint instanceof Array)) {endPoint=[1,endPoint]};    var endCellLeft  = document.getElementById("0_"+String(endPoint[1]-1));    var endCellRight = document.getElementById(String(endPoint[0]-1)+"_"+String(endPoint[1]-1));    var parentSheet  = document.getElementById("endMarker").parentNode;    var endCellLeftRect  = endCellLeft.getBoundingClientRect();    var endCellRightRect = endCellRight.getBoundingClientRect();    var parentRect   = parentSheet.getBoundingClientRect();    var markerRect   = document.getElementById("endMarker").getBoundingClientRect();    console.log (markerRect);    var markerWidth  = String(endCellRightRect.right-endCellLeftRect.left)+"px";var markerTop    = String(endCellLeftRect.bottom - parentRect.bottom + (markerRect.height))+ "px" ;    var markerLeft   = String(endCellLeftRect.left-parentRect.left)+"px";document.getElementById("endMarker").style.left  = markerLeft;   document.getElementById("endMarker").style.top   = markerTop;   document.getElementById("endMarker").style.width = markerWidth; document.getElementById("endMarker").innerHTML = ":: end ::";};resizePage2Paper=function(){var areaHeight = 1250;xUI.adjustScale([1,1]); var pgRect=document.getElementById("printPg1").getBoundingClientRect(); xUI.adjustScale([1,areaHeight/pgRect.height]);};</script>';
