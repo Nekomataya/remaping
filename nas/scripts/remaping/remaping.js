@@ -223,7 +223,7 @@ xUI.importBox.updateTarget= function(){
         modefiedXps.cut      = document.getElementById('optionPanelSCI_'+nas.Zf(tix+1,2)+'_sc').value;
     //  時間変更 短くなった場合は後方からフレームが削除される
         modefiedXps.setDuration(nas.FCT2Frm(document.getElementById('optionPanelSCI_'+nas.Zf(tix+1,2)+'_time').value));
-    //  変更されたXpsのステータスをFloating変更（暫定処理）
+    //  変更されたXpsのステータスをFloatingに変更（暫定処理）
         modefiedXps.currentStatus.content    = 'Floating';
         xUI.importBox.selectedContents.push(modefiedXps);
     }
@@ -342,19 +342,21 @@ xUI.importBox.checkValue = function(itm){
 /**
       新規に動作モードxUI.uiModeを実装 2016 12
       モードは以下四態
-    production  
-    management  
-    browsing    
-    floating
-        各モード内で作業条件によって read onlyの状態がある
+    production  常に writeable 管理情報をユーザ編集することは無い
+    management  ドキュメントに対してはreadonly 管理情報に対して writeable
+    browsing    常に readonly
+    floating    常に writeable 管理情報を編集可能　ただし作業セッション外になる
+
+        各モード内で作業条件によって readonlyの状態が発生する
         セッション溯及ステータスを実装　2017 01
+
     sessionRetrace
         制作管理上の作業セッションはジョブに　１：１で対応する
         整数値で作業の状態を表す データを読み取った際にセットされる
         その都度のドキュメントの保存状態から計算される値なのでデータ内での保存はされない
-    -1  所属セッションなし(初期値)
-    0   最新セッション
-    1~  数値分だけ遡ったセッション
+    -1  所属セッションなし(初期値)　全てwriteable
+    0   最新セッション 編集対象 wtiteable
+    1~  数値分だけ遡ったセッション 編集対象外 常にreadonly
 
         ステータスがFloationgモードのドキュメントをサーバ(リポジトリ)に記録することはない
         要注意　ドキュメントステータスと動作モードの混同は避けること
@@ -402,7 +404,7 @@ xUI.init    =function(editXps,referenceXps){
     viewOnly    編集禁止（データのreadonlyではなくUI上の編集ブロック）
 */
     this.viewMode    = ViewMode;        // 表示モード Compact/WordProp
-    this.uiMode      ='floating';      // ui基本動作モード production/management/browsing/floating
+    this.uiMode      ='floating';      // ui基本動作モード production/management/browsing/floating 
     this.viewOnly    = false;            // 編集禁止フラグ
     this.hideSource  = false;           // グラフィック置き換え時にシートテキストを隠す
     this.showGraphic = true;            // 置き換えグラフィックを非表示　＝　テキスト表示
@@ -1076,7 +1078,9 @@ xUI.setUImode = function (myMode){
             this.pMenu('pMmerge'        ,(document.getElementById('pmaui-merge').disabled)?'disable':'enable');
 //
     xUI.uiMode=myMode;
+    xUI.setRetrace();
     sync('productStatus');
+    
     return xUI.uiMode;
 }
 
@@ -3531,7 +3535,7 @@ xUI.put = function(datastream,direction,toReference){
   };
 /*
 処理データが、Xpsオブジェクトだった場合は、現在のXPS（編集対象データ全体）を複製してUndoバッファに格納
-その後dataStreamのXpsでXPSを初期化する
+その後引数オブジェクトでXPSを初期化する
 
     datastream の形式
 
@@ -3581,8 +3585,7 @@ if(this.edmode >= 2){
 };
 /*    入力データを判定    */
 if(datastream instanceof Xps){
-/*    Xpsならばシートの入れ替えを行うので
-    現在のシートを複製してundoStackに格納
+/*    Xpsならばシートの入れ替えを行う。現在のシート複製をundoStackに格納
 */
     if(toReference){
 //入力データをXPSに設定   
@@ -5530,7 +5533,7 @@ xUI.Cgl.sectionDraw = function(myId,myForm,myDuration){
 xUI.setRetrace = function(){
     var myIdentifier = Xps.getIdentifier(xUI.XPS);
     var currentEntry = serviceAgent.currentRepository.entry(myIdentifier);
-    if(currentEntry){
+    if((currentEntry)&&(xUI.uiMode!='floating')){
         for (var ix=0;ix<currentEntry.issues.length;ix++){
             if(Xps.compareIdentifier(currentEntry.toString(ix),myIdentifier)>4){
                 xUI.sessionRetrace = ix;
@@ -5943,9 +5946,7 @@ XPS.readIN=function(datastream){
             "currentStatus"
         ]
         var isImport=((xUI.sessionRetrace==0)&&(xUI.uiMode=='production'))? true:false;
-//        var newXps = new Xps();
-//        newXps.parseXps(convertXps(datastream));
-        var newXps = convertXps(datastream);
+        var newXps = convertXps(datastream,"",{},true);
 /*
 読み込まれたデータ内にシナリオ形式のダイアログ記述が存在する可能性があるので、これを探して展開する
 現在は処理をハードコーディングしてあるが、この展開処理はトラックを引数にして処理メソッドに渡す形に変更する予定
@@ -5997,8 +5998,6 @@ console.log(dialogStream);
             }
         }
     }
-
-
 //インポートされた場合は、現行のドキュメントから固定のプロパティを転記する
         if(isImport){
             for (var ix=0;ix<props.length;ix++){newXps[props[ix]]=XPS[props[ix]]}
@@ -6358,6 +6357,10 @@ console.log('application server-onsite');
          document.getElementById('serverurl').innerHTML = serviceAgent.currentServer.url;
 //   カラーセット
         var sheetBaseColor=$("#backend_variables").attr("data-sheet_color");
+        if (sheetBaseColor.match(/^rgba?\(([\d\s\.,]+)\)$/i)){
+            var collorArray=(RegExp.$1).split(',');
+            sheetBaseColor="#"+parseInt(collorArray[0],10).toString(16)+parseInt(collorArray[1],10).toString(16)+parseInt(collorArray[2],10).toString(16);
+        }
         if(sheetBaseColor.match(/^#[0-9a-f]+$/i)){
             SheetLooks.SheetBaseColor = sheetBaseColor;
             xUI.setSheetLook(SheetLooks);
@@ -6378,6 +6381,10 @@ console.log('bind single document');
 　           serviceAgent.currentStatus='online-single';
 document.getElementById('loginstatus_button').innerHTML='>ON-SITE<';
 document.getElementById('loginstatus_button').disabled=true;
+
+//インポート関連をロック　操作をsync('productStatus')に統合（タイミングが同じ）
+// sync("importControllers");
+
 //document.getElementById('loginuser').innerHTML = xUI.currentUser.handle;
 //document.getElementById('serverurl').innerHTML = serviceAgent.currentServer.url;
 　       $('#pMbrowseMenu').hide();
@@ -7067,10 +7074,33 @@ productStatus	;//制作ステータス
 server-info     ;//
 historySelector ;//ヒストリセレクタ
 referenceLabel  ;//リファレンスエリアのラベル
+importControllers    ;//インポートリードアウトコントロール
 */
 function sync(prop){
 if (typeof prop == 'undefined') prop = 'NOP_';
 	switch (prop){
+case    "importControllers":
+//読み出しコントローラ抑制
+    if(
+        (serviceAgent.currentStatus=='online-single')&&
+        (xUI.XPS.currentStatus.content.indexOf('Active')<0)
+    ){
+        document.getElementById('updateSCiTarget').disabled=true;
+        xUI.pMenu('pMimportDatas','desable');//プルダウンメニュー　
+        xUI.pMenu('pMopenFS','disable');        //ファイルオープン
+        xUI.pMenu('pMopenFSps','disable');      //Photoshop用ファイルオープン
+        document.getElementById('ibMimportDatas').disabled=true;  //アイコンボタンインポート（オープン）
+        document.getElementById('dataLoaderGet').disabled=true;   //変換パネルの取り込みボタン
+        document.getElementById('myCurrentFile').disabled=true;   //ファイルインプット
+    }else{
+        document.getElementById('updateSCiTarget').disabled=false;
+        xUI.pMenu('pMimportDatas','enable');//プルダウンメニュー　
+        xUI.pMenu('pMopenFS','enable');        //ファイルオープン
+        xUI.pMenu('pMopenFSps','enable');      //Photoshop用ファイルオープン
+        document.getElementById('ibMimportDatas').disabled=false;  //アイコンボタンインポート（オープン）
+        document.getElementById('dataLoaderGet').disabled=false;   //変換パネルの取り込みボタン
+        document.getElementById('myCurrentFile').disabled=false;   //ファイルインプット
+    }
 case    "recentUsers":
 //ダイアログ類から参照される最近のユーザリスト
     var rcuList = "";
@@ -7215,6 +7245,27 @@ case	"productStatus":;
 	document.getElementById('pmcui').style.backgroundColor = '#dddddd';
 	document.getElementById('edchg').innerHTML=localize(nas.uiMsg.statusView);
 	}
+//読み出しコントローラ抑制
+    if(
+        (serviceAgent.currentStatus=='online-single')&&
+        (xUI.XPS.currentStatus.content.indexOf('Active')<0)
+    ){
+        document.getElementById('updateSCiTarget').disabled=true;
+        xUI.pMenu('pMimportDatas','desable');//プルダウンメニュー　
+        xUI.pMenu('pMopenFS','disable');        //ファイルオープン
+        xUI.pMenu('pMopenFSps','disable');      //Photoshop用ファイルオープン
+        document.getElementById('ibMimportDatas').disabled=true;  //アイコンボタンインポート（オープン）
+        document.getElementById('dataLoaderGet').disabled=true;   //変換パネルの取り込みボタン
+        document.getElementById('myCurrentFile').disabled=true;   //ファイルインプット
+    }else{
+        document.getElementById('updateSCiTarget').disabled=false;
+        xUI.pMenu('pMimportDatas','enable');//プルダウンメニュー　
+        xUI.pMenu('pMopenFS','enable');        //ファイルオープン
+        xUI.pMenu('pMopenFSps','enable');      //Photoshop用ファイルオープン
+        document.getElementById('ibMimportDatas').disabled=false;  //アイコンボタンインポート（オープン）
+        document.getElementById('dataLoaderGet').disabled=false;   //変換パネルの取り込みボタン
+        document.getElementById('myCurrentFile').disabled=false;   //ファイルインプット
+    }
 break;
 case	"fct":	;
 //フレームの移動があったらカウンタを更新
@@ -7845,8 +7896,18 @@ window.addEventListener('DOMContentLoaded', function() {
 /**
 りまぴん用インポート処理関数
 トリガーはファイルトレーラーの変更
-単一ファイルはデータウエルに読み込んで終了
-複数ファイルの場合はファイル名でデータを補ってカレントリポジトリに一括送信
+複数ファイルの場合はファイル名でデータを補ってカレントリポジトリに一括送信（管理モードでのみ実行）
+単一ファイルはデータウエルに読み込む
+    ユーザ選択追加処理として以下のマトリクスで分岐
+
+xUI.uiMode
+floating    load/Floationg
+management  load/Floationg
+browsing    load/Floationg setUImode('floationg')
+production  import/currentStatus
+
+
+    
 */
 var processImport=function(){
 //        コンバート済みデータが格納されている配列はxUI.importBox.selectedContents
@@ -7856,8 +7917,11 @@ var processImport=function(){
             console.log(xUI.importBox.selectedContents[dix].toString());
         }
     }else{
-        xUI.resetSheet(xUI.importBox.selectedContents[0]);
-        xUI.sWitchPanel('Data');
+//        xUI.resetSheet(xUI.importBox.selectedContents[0]);
+//インポート時 undoが必要なケースでは xUI.putに渡す
+      xUI.put(xUI.importBox.selectedContents[0]);
+      //xUI.XPS.readIN(xUI.importBox.selectedContents[0].toString());
+      xUI.sWitchPanel('Data');
     }
 }
 
