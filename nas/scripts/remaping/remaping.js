@@ -237,6 +237,8 @@ xUI.importBox.updateTarget= function(){
     optionTrailer が与えられない場合は書き直しは行われない
 */
 xUI.importBox.resetTarget= function(dataTrailer,optionTrailer){
+    if (! dataTrailer) dataTrailer=this.targetContents;
+    if (! dataTrailer.length) return false;
     if (optionTrailer){
       document.getElementById('optionPanelSCI_title').value    = optionTrailer.title;
       document.getElementById('optionPanelSCI_opus').value     = optionTrailer.episode;
@@ -277,33 +279,37 @@ xUI.importBox.resetTarget= function(dataTrailer,optionTrailer){
             switch (prp){
                 case "title":
     document.getElementById('optionPanelSCI_title').value    = String(optionTrailer[prp]);
-    document.getElementById('optionPanelSCI_title').disabled = true;
                 break;
                 case "episode":
     document.getElementById('optionPanelSCI_opus').value    = String(optionTrailer[prp]);
-    document.getElementById('optionPanelSCI_opus').disabled = true;
                 break;
                 case "description":
     document.getElementById('optionPanelSCI_subtitle').value    = String(optionTrailer[prp]);
-    document.getElementById('optionPanelSCI_subtitle').disabled = true;
                 break;
                 case "cut":
      if(dataTrailer.length==1){
         document.getElementById('optionPanelSCI_01_sc').value    = String(optionTrailer[prp]);
-        document.getElementById('optionPanelSCI_01_sc').disabled = true;
     }
                 break;
                 case "time":
      if(dataTrailer.length==1){
         document.getElementById('optionPanelSCI_01_time').value    = String(optionTrailer[prp]);
         document.getElementById('optionPanelSCI_01_time').onchange();
-        document.getElementById('optionPanelSCI_01_time').disabled = true;
     }
                 break;
             }
         }
     }
-    document.getElementById('resetSCiTarget').disabled = true;
+    if(xUI.uiMode=='production'){
+        var impt = (xUI.uiMode=='production')? true:false;
+        document.getElementById('optionPanelSCI_title').disabled    = impt;
+        document.getElementById('optionPanelSCI_opus').disabled     = impt;
+        document.getElementById('optionPanelSCI_subtitle').disabled = impt;
+        document.getElementById('optionPanelSCI_01_sc').disabled    = impt;
+        document.getElementById('optionPanelSCI_01_time').disabled  = impt;
+    }
+    document.getElementById('resetSCiTarget').disabled = true ;
+    return true;
 }
 /**
     xUI.importBox.checkValue(ctrlElement)
@@ -3476,10 +3482,11 @@ xUI.getRange    =function(Range)
 xUI.putReference    =function(datastream,direction){
     xUI.put(datastream,direction,true);
 }
-/*    xUI.put(dataStream[,direction])
+/*    xUI.put(dataStream[[,direction],toReference])
 引数
-    :dataStream    シートに設定するデータ　単一の文字列　またはXpsオブジェクト または　配列　省略可
-    :direction    データ開始位置ベクトル　配列　省略可　省略時は[0,0]
+    :dataStream     シートに設定するデータ　単一の文字列　またはXpsオブジェクト または　配列　省略可
+    :direction      データ開始位置ベクトル　配列　省略可　省略時は[0,0]
+    :toReference    ターゲットオブジェクト切り替えフラグ
     シートに外部から値を流し込むメソッド
         xUI.put(データストリーム)
         読込み時にも使用
@@ -3585,8 +3592,7 @@ if(this.edmode >= 2){
 };
 /*    入力データを判定    */
 if(datastream instanceof Xps){
-/*    Xpsならばシートの入れ替えを行う。現在のシート複製をundoStackに格納
-*/
+/*    Xpsならばシートの入れ替えを行う。現在のシート複製をundoStackに格納　*/
     if(toReference){
 //入力データをXPSに設定   
         xUI.resetSheet(undefined,datastream);//リファレンス更新
@@ -5550,7 +5556,6 @@ xUI.setRetrace = function(){
  *  初期化手順内でもこの手続を呼び出すように変更
  *  この手続内では基本的にundo処理は行わない
  *　したがって必要に従ってこの手続を呼ぶ前にundoの初期化を行うか、またはundo操作を行う必要がある。
-//    引数として現在のxUI.XPSと異なるeditXpsが与えられた場合のみundoバッファの更新が行われるので要注意？
  */
 xUI.resetSheet=function(editXps,referenceXps){
 //  現在のカーソル配置をバックアップ
@@ -5562,6 +5567,21 @@ xUI.resetSheet=function(editXps,referenceXps){
     引数にeditXPSが与えられなかった場合は、現在のXPSのまま処理を続行（画面のrefreshのみを行う）
  */
     if ((typeof editXps != "undefined") && (editXps instanceof Xps)){
+//編集エリアに対するreadINの条件判定
+//      xUI.uiMode=='production' のケースではSCi情報を保持する
+//      それ以外のケースでは引数側の情報で上書きされる
+        var propertyBackup=Xps.parseIdentifier(Xps.getIdentifier(xUI.XPS));
+        /*
+        if(xUI.uiMode=='production'){
+        var props = [
+            "xMap","line","stage","job","currentStatus","mapfile",
+            "opus","title","subtitle","scene","cut","trin","trout","rate","framerate",
+            "create_time","create_user","update_time","update_user",
+        ];
+//"xpsTracks"　以外のプロパティを全て本体プロパティで置きかえ
+            for(var pix=0;pix<prps.length;pix++){editXps[prps[pix]]=xUI.XPS[prps[pix]]};
+        }
+        */
         this.XPS.readIN(editXps.toString());    //XPSをバッファ更新
         // 書換え範囲にXPS全体を追加
         reWriteXPS = true;
@@ -5921,32 +5941,10 @@ XPS.readIN=function(datastream){
  カット尺は、ユーザに問い合わせる必要があるかも…　いや無い！
  
  カット尺を保護する場合は、リファレンスに読み込んで部分コピーを行うべき
-//      "mapfile"  ,マップデータは現在どちらでも意味は無いが読み込み側優先
-//      "time"     ,関数なので入れ替え不用
-//      "trin"     ,読み込んだデータのものを使用
-//      "trout"    ,同上
-//      "framerate",同上
- */
-        var props=[
-            "title",
-            "subtitle",
-            "opus",
-            "scene",
-            "cut",
-            "create_user",
-            "update_user",
-            "create_time",
-            "update_time",
-            "line",
-            "lineStatus",
-            "stage",
-            "stageStatus",
-            "job",
-            "jobStatus",
-            "currentStatus"
-        ]
+*/
         var isImport=((xUI.sessionRetrace==0)&&(xUI.uiMode=='production'))? true:false;
-        var newXps = convertXps(datastream,"",{},true);
+//        var newXps = convertXps(datastream,"",{},true);//旧メソッド互換ストリーム
+        var newXps = convertXps(datastream);//新メソッド　コンバートとオブジェクト変換を同時に
 /*
 読み込まれたデータ内にシナリオ形式のダイアログ記述が存在する可能性があるので、これを探して展開する
 現在は処理をハードコーディングしてあるが、この展開処理はトラックを引数にして処理メソッドに渡す形に変更する予定
@@ -5998,9 +5996,54 @@ console.log(dialogStream);
             }
         }
     }
-//インポートされた場合は、現行のドキュメントから固定のプロパティを転記する
+//インポートが必要な場合は、新規オブジェクトに現行のドキュメントから固定対象のプロパティを転記する
+//
         if(isImport){
-            for (var ix=0;ix<props.length;ix++){newXps[props[ix]]=XPS[props[ix]]}
+/*
+        var props=[
+            "xMap",         ;//Object xMap      ドキュメント側を使用（xMap実装後はマージが必要マージメソッドを作成）
+            "line",         ;//Object XpsLine   ドキュメント側を使用   
+            "stage",        ;//Object XpsStage  ドキュメント側を使用
+            "job",          ;//Object XpsStage  ドキュメント側を使用
+            "currentStatus",;//Object JobStatus ドキュメント側を使用
+            "mapfile",      ;//String           ドキュメント側を使用
+            "opus",         ;//String           ドキュメント側を使用
+            "title",        ;//String           ドキュメント側を使用
+            "subtitle",     ;//String           ドキュメント側を使用
+            "scene",        ;//String           ドキュメント側を使用
+            "cut",          ;//String           ドキュメント側を使用
+//          "trin",         ;//Array                        インポート側を使用
+//          "trout",        ;//Array                        インポート側を使用
+//          "rate",         ;//Strting                      インポート側を使用
+//          "framerate",    ;//String                       インポート側を使用
+            "create_time",  ;//String           ドキュメント側を使用
+            "create_user",  ;//Object UserInfo  ドキュメント側を使用
+            "update_time",  ;//Stirng           ドキュメント側を使用
+            "update_user",  ;//Object UserInfo  ドキュメント側を使用
+//          "xpsTracks"     ;//Object XpsTrackCollection    インポート側を使用
+        ];
+
+  */
+        var props = [
+            "xMap","line","stage","job","currentStatus",
+            "mapfile","opus","title","subtitle","scene","cut",
+            "create_time","create_user","update_time","update_user"
+        ];
+//             var props=[];
+//            for (var prp in xUI.XPS){if(!(xUI.XPS[prp] instanceof Function)){props.push(prp)}};
+// console.log(props);
+            for (var ix=0;ix<props.length;ix++){newXps[props[ix]]=xUI.XPS[props[ix]]}
+        }else{
+        var props = [
+            "xMap","line","stage","job","currentStatus",
+            "mapfile","opus","title","subtitle","scene","cut",
+            "create_time","create_user","update_time","update_user"
+        ];
+            if((xUI.importBox.importCount==1)&&(xUI.importBox.selectedContents.length)){
+                for (var ix=0;ix<props.length;ix++){
+                    if(xUI.importBox.selectedContents[0][props[ix]]) newXps[props[ix]]=xUI.importBox.selectedContents[0][props[ix]];
+                }
+            };
         }
 //        if(xUI.sessionRetrace > 0) xUI.sessionRetrace= -1;
         return this.parseXps(newXps.toString());
@@ -6014,7 +6057,7 @@ console.log(dialogStream);
         新シートに合わせる
     の二択となるので要注意
     新規作成時にライン〜ステータス情報が欠落するのでそれは判定して補う
-    識別子に含まれる時間情報を同期させる場合は、引数withoutTimeをにfalseを与える
+    識別子に含まれる時間情報を同期させる場合は、引数withoutTimeにfalseを与える
     初期値はtrue(時間同期なし)
 */
 XPS.syncIdentifier =function(myIdentifier,withoutTime){
@@ -6162,7 +6205,7 @@ if((NameCheck)||(myName=="")){
         if(xUI.currentUser) msg += "\n current user / " + xUI.currentUser.toString(true);
         msg=[msg];
         msg.push("<hr><input id='confirmUID' type='text' autocomplete='on' list='recentUsers' size=48 value=''>");//初期値カラ
-        console.log(myName)
+//console.log(myName)
         nas.showModalDialog("confirm",msg,localize(nas.uiMsg.userInfo),'',function(){
             if(this.status==0){
                 var newName = new nas.UserInfo(document.getElementById('confirmUID').value);
@@ -7909,7 +7952,9 @@ production  import/currentStatus
 
     
 */
-var processImport=function(){
+var processImport=function(autoBuffer){
+    if(typeof autoBuffer == 'undefined') autoBuffer = true;
+  if(autoBuffer){
 //        コンバート済みデータが格納されている配列はxUI.importBox.selectedContents
     if(xUI.importBox.selectedContents.length > 1){
         for(var dix=0;dix<xUI.importBox.selectedContents.length;dix++){
@@ -7917,12 +7962,24 @@ var processImport=function(){
             console.log(xUI.importBox.selectedContents[dix].toString());
         }
     }else{
-//        xUI.resetSheet(xUI.importBox.selectedContents[0]);
+        if((xUI.uiMode=='production')&&(xUI.sessionRetrace == 0)){
 //インポート時 undoが必要なケースでは xUI.putに渡す
-      xUI.put(xUI.importBox.selectedContents[0]);
-      //xUI.XPS.readIN(xUI.importBox.selectedContents[0].toString());
-      xUI.sWitchPanel('Data');
+            xUI.put(xUI.importBox.selectedContents[0]);
+        }else{
+//undoリセットが望ましい場合はxUI.resetSheetに渡してリセットする
+            xUI.resetSheet(xUI.importBox.selectedContents[0]);
+        }
     }
+  }else{
+    if(xUI.XPS.readIN(xUI.data_well.value)){
+        xUI.resetSheet();
+    }else{
+        return false;
+    }
+  }
+      if(xUI.uiMode=='browsing') {xUI.setUImode('floating')};
+      xUI.sWitchPanel('Data');
+
 }
 
 /*
