@@ -4305,7 +4305,7 @@ console.log(decodeURIComponent(myIdentifier));
             　}
             　if((hasTitle)&&(! hasOpus)){
             　   var msg=localize({
-            　       en:"",
+            　       en:"The specified episode #%1[%2] is not registered in this sharing.\nwould you like to create a new episode #%1[%2]?\nTo change sharing please cancel once and try the procedure again.",
             　       ja:"この共有には指定の制作話数 #%1[%2] が登録されていません。\n新規に制作話数 #%1[%2] を登録しますか？\n共有を変更する場合は一旦キャンセルして手続をやり直してください。"},myXps.opus,myXps.subtitle);
             　   if(confirm(msg))
             　   serviceAgent.currentRepository.addOpus(myIdentifier,hasProd,function(){
@@ -4313,7 +4313,7 @@ console.log(decodeURIComponent(myIdentifier));
             　   });
             　 }else if((! hasTitle)&&(! hasOpus)){
             　   var msg=localize({
-            　       en:"",
+            　       en:"The specified production %1#%2[%3] is not registered in this sharing.\nwould you like to create a new production %1#%2[%3]?\nTo change sharing please cancel once and try the procedure again.",
             　       ja:"この共有には指定された作品 %1#%2[%3] が登録されていません。\n新規に %1#%2[%3] を登録しますか？\n\n共有を変更する場合は一旦キャンセルして手続をやり直してください。"},myXps.title,myXps.opus,myXps.subtitle);
             　   if(confirm(msg))
             　   serviceAgent.currentRepository.addTitle(myXps.title,"","",function(){

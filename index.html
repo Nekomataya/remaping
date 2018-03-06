@@ -145,7 +145,7 @@
 	title="ドキュメントを選択"
 >書類選択</A></li><hr>
 
-<li><span id=pMnewdoc-d class='pM pM-alt'>新規書類</span><A id=pMnewdocument
+<li><span id=pMnewdoc-d class='pM pM-alt'>新規書類</span><A id=pMnewdoc
 	href = 'javascript:void(0)'
 	onclick = 'myScenePref.open("new");return false;'
 	title="新規書類"
@@ -1940,7 +1940,7 @@ onclick='nas.incrFCTonHTMLInput(document.getElementById("editTC"),"-(1)")'
 >
 <input id=scnUpdate    type=button value="更  新" class="scnControl"    onClick="myScenePref.putProp();">
 <input id=scnNew       type=button value="作  成" class="scnControl" onClick="myScenePref.putProp();">
-<input id=scnRest      type=button value="リセット" class="scnControl" onClick="myScenePref.getProp();">
+<input id=scnReset      type=button value="リセット" class="scnControl" onClick="myScenePref.getProp();">
 <input id=scnClose     type=button value="閉じる" class="scnControl" onClick="myScenePref.close();">
 </td></tr>
 
@@ -1949,7 +1949,7 @@ onclick='nas.incrFCTonHTMLInput(document.getElementById("editTC"),"-(1)")'
 	<table>
 
 <tr>
-	<th width=8em>	共有
+	<th width=8em>repository
 	</th>
 	<td width=24em colspan=2 id=scnRepository>
 	</td>
@@ -2150,13 +2150,37 @@ onclick='nas.incrFCTonHTMLInput(document.getElementById("editTC"),"-(1)")'
      convertXps()
 -->
 <div class=optionPanel id=optionPanelSCI >
-<span id='dialogSCImsg'>選択したドキュメントを変換領域に読込みました。<br>カット番号を確認してください。<br>
+<span id='dialogSCImsg'>
+選択したドキュメントを変換領域に読込みました。
+
+このまま自動変換でタイムシートに読み込む事ができます。
+手動で変換する場合は[OK]ボタンをクリック
+
+The selected document was read into the conversion area.
+
+It can be read into the dope sheet by automatic conversion as it is.
+To convert manually, click button [Directly load]
+<br>
+<!--
+複数の選択ドキュメントを変換領域に読み込みました。
+
+一括でリポジトリに登録することができます。
+不要なカットのチェックは外してください
+[カット登録]ボタンで実行
+
+Multiple selected documents were imported into the conversion area.
+
+You can register to the repository in bulk.
+Please uncheck unnecessary cuts
+Execute with [store SCi] button
+<br>
+-->
 </span>
 <span class=titleInputLB >TITLE:</span>
     <input class=SCiInput id=optionPanelSCI_title type=text
         onChange='xUI.importBox.checkValue(this)'
     >
-<span class=opusInputLB >#:</span>
+<span class=opusInputLB >ep#:</span>
     <input class=SCiInput id=optionPanelSCI_opus type=text
         onChange='xUI.importBox.checkValue(this)'
     >
@@ -2223,18 +2247,27 @@ onclick='nas.incrFCTonHTMLInput(document.getElementById("editTC"),"-(1)")'
 <button id=updateSCiTarget
     onclick='xUI.importBox.updateTarget();' 
     style='width:400px'
-    title='カット番号と時間を編集してタイムシートへ取込む'
-> タイムシートへ </button><br>
+    title='カット番号と時間を編集して登録'
+    title='直接タイムシートへ'
+> タイムシートへ読込
+ カット登録　
+ 
+ </button><br>
 <button id=resetSCiTarget
  onclick ='xUI.importBox.resetTarget(xUI.importBox.targetContents);'
  style='width:198px'
- title='カット番号と時間をリセット'
- > リセット </button>
+ title='元に戻す' 
+ > リセット
+ 
+  </button>
 <button id=closeSCiDialog
  onclick ='$("#optionPanelSCI").dialog("close");'
  style='width:198px'
- title='このままダイアログを閉じる'
- >  Ｏ　Ｋ　</button>
+ title='手動で変換'
+ title='キャンセルしてダイアログを閉じる'
+ >  Ｏ　Ｋ
+    閉じる    
+ 　</button>
 <!--
 S:<input type=text style="width:64px" value='###'>-C:<input type=text style="width:64px" value='###'>
 TIME:(<input type=text style="width:64px" value='##+##'>)
@@ -2787,14 +2820,14 @@ This content is an application by Javascript. <br />
 Please use with Javascript enabled<br>
 <br /><hr />
 <B>Univarsal Animation Timesheet<br>汎用タイムシートエディタ</B><br />
-　試験版<br />
+<br />
 Under examination<br />
 <img src=images/remaping.gif border=0 width=256 height=127 onClick='document.getElementById("optionPanelVer").style.display="none";'/><br />
 <span 
 	style="font-size:x-small;color:red"
 > WEB APPLICATION </span><br />
 <span style="font-size:small" id=versionString>
-index.html 2017/  kiyo <br />
+index.html 2018/  kiyo <br />
 <span id=myVer0></span> <span id=myServer0>[no-server]</span><br />
 
 XPS File Ver. :nasTIME-SHEET 0.5<br />
@@ -3504,7 +3537,7 @@ duration :
 <br><br><br><br><br><br><br><br>ただいま準備中…ちょっぴりお待ちください<br>
 あ、非常に申し訳ありませんがりまぴんはIEでは正常に動作しません。<br>サポート外です。<br>
 <h3> タイムシート編集サービス　テスト中 </h3><img src=images/remaping.gif border=0 /><br /><img src=images/ui/wait.gif width=48 height=48><br>
-index.html ,v 1.6 2017/06/23  support@u-at.net <br />
+index.html ,v 1.7 2018/03/05  support@u-at.net <br />
 <span id=myVer1></span> <span id=myServer1>[no-server]</span>
 <br>
       </div><hr>
@@ -3522,43 +3555,4 @@ index.html ,v 1.6 2017/06/23  support@u-at.net <br />
     data-server_url='http://u-at.net'
     アドレスはサーバーのルートを使用　2017.04.13
 -->
-<!--  <span id="backend_variables"
-        data-organization_token="aXnfM3CUQYxAA7VUjegCxCWY"
-        data-user_access_token="36838470247d4fcaf6a97ec82e67bd4fe6c3ea8940a1bc5284b9fdd61f2ec3ee"
-        data-user_token="dcxSmfWiLyRqQsLELVVkEuri"
-        data-user_name="UAT_information"
-        data-user_email="kiyo1210@nekomataya.info"
-        data-episode_id="37"
-        data-cut_id="1627"
-        data-product_token="dpTKTLiHi4PVrrhRdXDD8eF4"
-        data-episode_token="c9t4GBnu1USkdQCM4FepEe8C"
-        data-cut_token="cNGtRY8PueTvArCVHK871Tg5"
-        data-scale="5+12"
-        data-line_id="0:(本線)"
-        data-stage_id="0:layout"
-        data-job_id="1:レイアウト"
-        data-status="Active"
-        data-sheet_color="rgb(245, 235, 195)"
-    data-server_url='http://remaping.scivone-dev.com'
-  ></span>-->
-  
-<span id="backend_variables"
-        data-organization_token="aXnfM3CUQYxAA7VUjegCxCWY"
-        data-user_access_token="36838470247d4fcaf6a97ec82e67bd4fe6c3ea8940a1bc5284b9fdd61f2ec3ee"
-        data-user_token="dcxSmfWiLyRqQsLELVVkEuri"
-        data-user_name="UAT_information"
-        data-user_email="kiyo1210@nekomataya.info"
-        data-episode_id=""
-        data-cut_id=""
-        data-product_token=""
-        data-episode_token=""
-        data-cut_token=""
-        data-scale=""
-        data-line_id=""
-        data-stage_id=""
-        data-job_id=""
-        data-status=""
-        data-sheet_color=""
-    data-server_url='http://remaping.scivone-dev.com'
-  ></span> 
     </body></html>

@@ -10,9 +10,15 @@ nas.LangPack.ja=[
     ["edchg", "innerHTML", "編集中"],
 
 ["pMdocument","innerHTML","ドキュメント"],
+
+    ["pMnewdoc-d","innerHTML","新規書類"],
+    ["pMnewdoc","innerHTML","新規書類"],
+    ["pMnewdoc","title","新規ドキュメントを作成"],
+
     ["pMbrowse-d","innerHTML","書類選択"],
     ["pMbrowse","innerHTML","書類選択"],
     ["pMbrowse","title","ドキュメントを選択"],
+
     ["pMcheckin-d","innerHTML","作業開始"],
     ["pMcheckin","innerHTML","作業開始"],
     ["pMcheckin","title","作業開始"],
@@ -254,6 +260,8 @@ nas.LangPack.ja=[
     ["spinCkLb","title","選択範囲をスピン指定にする"],
     ["spinCk","title","選択範囲をスピン指定にする"],
     ["iNputbOx","title","シートにデータを入力します。"],
+    ["pmfui-new","innerHTML","登録"],
+    ["pmfui-new","title","現在のタイムシートを共有に登録"],
     ["pmcui-checkin","innerHTML","作業開始"],
     ["pmcui-checkin","title","チェックイン"],
     ["pmcui-update","innerHTML","作業保存"],
@@ -329,6 +337,15 @@ nas.LangPack.ja=[
     ["expoterARDJ","value","ARDJ"],
     ["exporterStylosCSV","value","Stylos-csv"],
     ["exporterDLcheck","innerHTML","ダウンロード"],
+["scnNewSheetLbl","innerHTML","新規作成"],
+["scnPushentry","value","登　録"],
+["scnPushentry","title","現在のタイムシートをリポジトリに登録します"],
+["scnUpdate","value","更　新"],
+["scnNew","value","作　成"],
+["scnReset","value","リセット"],
+["scnClose","value","閉じる"],
+
+
     ["dbgClearMsg","value","cls↑"],
     ["dbgDoAction","value","Do"],
     ["dbgSelectAll","value","selectAll"],
@@ -438,14 +455,28 @@ nas.LangPack.ja=[
 ["prefLbNoSync","innerHTML","入力同期停止"],
 ["prefLbUtilBar","innerHTML","開始時にツールバーを表示"],
 ["inputWarning","innerHTML","現在、入力操作は無効です。<br>ドキュメントの編集を行う場合は、作業にチェックインしてください。"],
+    ["dialogSCImsg","innerHTML","選択したドキュメントを変換領域に読込みました<br><br>このまま自動変換でタイムシートに読み込む事ができます<br>手動で変換する場合は[OK]ボタンをクリック<br>"],
+    ["updateSCiTarget","innerHTML","タイムシートへ読込"],
+    ["updateSCiTarget","title","直接タイムシートへ"],
+    ["resetSCiTarget","innerHTML","リセット"],
+    ["resetSCiTarget","title","元に戻す"],
+    ["closeSCiDialog","innerHTML","ＯＫ"],
+    ["closeSCiDialog","title","手動で変換"],
 ["forgetWarning","innerHTML","今後このダイアログを表示しない"]
 ];
-
+//["updateSCiTarget","innerHTML","カット登録"],
+//["updateSCiTarget","title","カット番号と時間を編集して登録"],
+//["closeSCiTarget","innerHTML","閉じる"],
+//["closeSCiTarget","title","キャンセルしてダイアログを閉じる"],
 
 nas.LangPack.en=[
     ["edchg", "innerHTML", "editting"],
 
 ["pMdocument","innerHTML","Document"],
+    ["pMnewdoc-d","innerHTML","new document"],
+    ["pMnewdoc","innerHTML","new document"],
+    ["pMnewdoc","title","Create a new document"],
+
     ["pMbrowse-d","innerHTML","selector"],
     ["pMbrowse","innerHTML","selector"],
     ["pMbrowse","title","select document"],
@@ -690,6 +721,8 @@ nas.LangPack.en=[
     ["spinCkLb","title","set spin-value selection"],
     ["spinCk","title","set spin-value selection"],
     ["iNputbOx","title","input data"],
+    ["pmfui-new","innerHTML","entry"],
+    ["pmfui-new","title","Register the current dope sheet in the repository."],    
     ["pmcui-checkin","innerHTML","check in"],
     ["pmcui-checkin","title","check in job"],
     ["pmcui-update","innerHTML","save"],
@@ -765,6 +798,14 @@ nas.LangPack.en=[
     ["expoterARDJ","value","ARDJ"],
     ["exporterStylosCSV","value","Stylos-csv"],
     ["exporterDLcheck","innerHTML","download"],
+["scnNewSheetLbl","innerHTML","new document"],
+["scnPushentry","value","register"],
+["scnPushentry","title","Register the current dope sheet in the repository"],
+["scnUpdate","value","update"],
+["scnNew","value","new"],
+["scnReset","value","reset"],
+["scnClose","value","close"],
+
     ["dbgClearMsg","value","cls↑"],
     ["dbgDoAction","value","Do"],
     ["dbgSelectAll","value","selectAll"],
@@ -875,8 +916,20 @@ nas.LangPack.en=[
 ["prefLbNoSync","innerHTML"," stop synchronization"],
 ["prefLbUtilBar","innerHTML","show 2nd toolbar at startup"],
 ["inputWarning","innerHTML","The input operation is currently invalid.<br>To change the document please check in and start your job."],
+    ["dialogSCImsg","innerHTML","The selected document was read into the conversion area.<br><br>It can be read into the dope sheet by automatic conversion as it is.<br>To convert manually, click button [Directly load]<br>"],
+    ["updateSCiTarget","innerHTML","Directly load"],
+    ["updateSCiTarget","title","load into dope sheet."],
+    ["resetSCiTarget","innerHTML","Reset"],
+    ["resetSCiTarget","title","Restore"],
+    ["closeSCiDialog","innerHTML","OK"],
+    ["closeSCiDialog","title","Convert manually"],
 ["forgetWarning","innerHTML","Thereafter, do not display this message."]
 ];
+//["updateSCiTarget","innerHTML","store SCi"],
+//["updateSCiTarget","title","store multi SCi"],
+//["closeSCiTarget","innerHTML","close"],
+//["closeSCiTarget","title","Cancel and close the dialog"],
+
 /*
 ,
 	["tbM00","",""],
@@ -923,7 +976,7 @@ ng title="取り消し[esc]"
 //シートヘッダ部分
 edchg innerHTML "編集中"　selection
 
-stageSelect  このエレメント（オプション）はUI上で書き直し対象なのでパッケージから除外したほうが良い ステージ識別名はユーザ指定
+stageSelect  このエレメント（オプション）はUI上での書き直し対象なのでパッケージから除外したほうが良い ステージ識別名はユーザ指定
 */
     if(typeof nas.uiMsg == 'undefined'){nas.uiMsg ={}};
 

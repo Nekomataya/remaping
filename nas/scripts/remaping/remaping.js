@@ -119,7 +119,7 @@ xUI.importBox.reset = function(){
     this.selectedContents  =[];
     this.importCount= 0;
     this.callback = undefined;
-console.log('importBox reset')
+//console.log('importBox reset')
 }
     xUI.importBox.reset();
 /**
@@ -307,6 +307,9 @@ xUI.importBox.resetTarget= function(dataTrailer,optionTrailer){
         document.getElementById('optionPanelSCI_subtitle').disabled = impt;
         document.getElementById('optionPanelSCI_01_sc').disabled    = impt;
         document.getElementById('optionPanelSCI_01_time').disabled  = impt;
+        $('.timeInputButtons').css('display','none')
+    }else{
+        $('.timeInputButtons').css('display','inline')
     }
     document.getElementById('resetSCiTarget').disabled = true ;
     return true;
@@ -1210,10 +1213,10 @@ if((this.XPS.xpsTracks[this.Select[0]].option=='dialog')){
     if(this.edmode>=2){
         //区間編集モード確定または編集破棄処理
 /*
-console.log(this.floatSourceAddress);
-console.log(this.floatDestAddress);
-console.log(this.floatSectionId);
-console.log(this.floatSection);
+//console.log(this.floatSourceAddress);
+//console.log(this.floatDestAddress);
+//console.log(this.floatSectionId);
+//console.log(this.floatSection);
 */
     this.sectionManipulateOffset = ['tail',0];//区間編集ハンドルオフセット
         if(true){
@@ -1237,7 +1240,7 @@ console.log(this.floatSection);
         //改めてundo付きで処理
         xUI.selectCell([xUI.Select[0],0]);
         xUI.put(currentStream);
-console.log(currentStream);
+//console.log(currentStream);
         */
         this.floatTrack         = null;
         this.floatTrackBackup   = null;
@@ -5986,12 +5989,12 @@ XPS.readIN=function(datastream){
             for(var qix=0;qix<convertQueue.length;qix++){
                 var dialogOffset = (String(convertQueue[qix][0].name).length)? 2:1;
                     dialogOffset += convertQueue[qix][0].attributes.length;
-console.log(dialogOffset);
+//console.log(dialogOffset);
                 var dialogDuration = convertQueue[qix][2]-convertQueue[qix][1]; 
                 var startAddress =[tix,(convertQueue[qix][1] - dialogOffset)];
-console.log(startAddress);
+//console.log(startAddress);
                 var dialogStream =(convertQueue[qix][0].getStream(dialogDuration)).join(',');
-console.log(dialogStream);
+//console.log(dialogStream);
                 newXps.put(startAddress,dialogStream);
             }
         }
@@ -6168,7 +6171,7 @@ if(startupXPS.length > 0){
 /**
     シートのカラーデータを構築
 */
-console.log(SheetLooks);
+//console.log(SheetLooks);
     xUI.setSheetLook(SheetLooks);//タイムシートルック初期化
     xUI.resetSheet();
     nas_Rmp_Init();
@@ -6225,8 +6228,7 @@ if((NameCheck)||(myName=="")){
     if(xUI.spinValue){document.getElementById("spin_V").value=xUI.spinValue} ;
 //ツールバー表示指定があれば表示 プロパティ廃止
 //    if((xUI.utilBar)&&(!$("#optionPanelUtl").is(':visible'))){$("#optionPanelUtl").show();};//xUI.sWitchPanel('Utl');
-
-document.getElementById("iNputbOx").focus();
+    document.getElementById("iNputbOx").focus();
 
 };
 /**
@@ -6306,8 +6308,8 @@ xUI.initの初期化手続は１回のみに変更　コードを組み替えて
 function nas_Rmp_Init(uiMode){
     var startupWait=false;
 /*
-console.log(xUI.XPS.toString())
-console.log(xUI.referenceXPS.toString())
+//console.log(xUI.XPS.toString())
+//console.log(xUI.referenceXPS.toString())
 */
 if(false){
 //プロパティのリフレッシュ
@@ -6384,7 +6386,7 @@ document.getElementById("UIheader").style.display="none";
      エレメントが存在すればon-site
  */
 　   if(document.getElementById('backend_variables')){
-console.log('application server-onsite');
+//console.log('application server-onsite');
         if (serviceAgent.servers.length==1) {
             serviceAgent.switchService(0);
         }else{
@@ -6418,7 +6420,7 @@ console.log('application server-onsite');
 //        myNames = xUI.recentUsers.covertStringArray();//要素を文字列可した配列
 
     　   if($("#backend_variables").attr("data-episode_token").length > 0){
-console.log('bind single document');
+//console.log('bind single document');
 //シングルドキュメント拘束モード
 		    startupWait=true;//ウェイト表示を予約
 　           serviceAgent.currentStatus='online-single';
@@ -6438,7 +6440,7 @@ document.getElementById('loginstatus_button').disabled=true;
 //サーバ上で作成したエントリの最初の1回目はサーバの送出データが空
 //空の状態でかつトークンがある場合が存在するので判定に注意！       　           
              if($("#backend_variables").attr("data-cut_token").length){
-console.log('has cut token');
+//console.log('has cut token');
     　           serviceAgent.currentServer.getRepositories(function(){
                      var RepID = serviceAgent.getRepsitoryIdByToken($("#backend_variables").attr("data-organization_token"));
     　               serviceAgent.switchRepository(RepID,function(){
@@ -6453,13 +6455,13 @@ serviceAgent.currentRepository.getProducts(function(){
                 serviceAgent.currentRepository.getSCi(function(){
                     var myIdentifier=serviceAgent.currentRepository.getIdentifierByToken(myCutToken);
                     if((myIdentifier)&&(Xps.compareIdentifier(Xps.getIdentifier(XPS),myIdentifier) < 5)){
-console.log('syncIdentifier:');
-console.log(decodeURIComponent(myIdentifier));
+//console.log('syncIdentifier:');
+//console.log(decodeURIComponent(myIdentifier));
                         xUI.XPS.syncIdentifier(myIdentifier,false);
                     }
                     if( startupXPS.length==0 ){
-console.log('detect first open no content');//初回起動を検出　コンテント未設定
-console.log('new Entry init');
+//console.log('detect first open no content');//初回起動を検出　コンテント未設定
+//console.log('new Entry init');
                         xUI.XPS.line     = new XpsLine(nas.pmdb.pmTemplate.members[0]);
                         xUI.XPS.stage    = new XpsStage(nas.pmdb.pmTemplate.members[0].stages.getStage());
                         xUI.XPS.job      = new XpsStage(nas.pmdb.jobNames.getTemplate(nas.pmdb.pmTemplate.members[0].stages.getStage(),"init")[0]);
@@ -6467,23 +6469,15 @@ console.log('new Entry init');
                         xUI.XPS.create_user=xUI.currentUser;
                         xUI.XPS.update_user=xUI.currentUser;
 
-console.log(xUI.XPS.title);
+//console.log(xUI.XPS.title);
 //syncIdentifierでカット尺は調整されているはずだが、念のためここで変数を取得して再度調整をおこなう
 //data-scale を廃止した場合は、不用
                         var myCutTime = nas.FCT2Frm($('#backend_variables').attr('data-scale'));
                         if(!(isNaN(myCutTime)) && (myCutTime != xUI.XPS.time())){xUI.XPS.setDuration(myCutTime)}
                     }
 //ここで無条件でproductionへ移行せずに、チェックが組み込まれているactivateEntryメソッドを使用する
-/*
-xUI.sessionRetrace=0;
-sync('info_');
-xUI.setUImode('browsing');
-serviceAgent.activateEntry()
-                        xUI.setUImode('production');
-                        //serviceAgent.activateEntry();*/
-//                        console.log('========================');
                         xUI.setRetrace();
-                        xUI.setUImode('browsing');
+                        xUI.setUImode('browsing');//初期値設定
 		                if (startupWait) xUI.sWitchPanel('Prog');//ウェイト表示消去
                         switch(xUI.XPS.currentStatus.content){
                             case "Active":
@@ -6509,15 +6503,16 @@ serviceAgent.activateEntry()
                         //NOP
                         }
                         sync('info_');
-console.log('初期化終了');
-console.log(serviceAgent.currentRepository);                        
+                        xUI.setUImode(xUI.setUImode());//現モードで再設定
+//console.log('初期化終了');
+//console.log(serviceAgent.currentRepository);                        
                 },false,myEpisodeToken);//getSCi
         },false,myProductToken,myEpisodeToken);//getEpisodes
 },false,myProductToken);//getProduct
     　               });
     　           });
     　       }else{
-console.log('has no cut token');
+//console.log('has no cut token');
 //ドキュメント新規作成
 /*    旧タイプの処理この状態には入らないはずなので順次削除      */
 if(dbg) console.log('old style new document');
@@ -7551,7 +7546,7 @@ default	:	if(dbg){dbgPut(": "+prop+" :ソレは知らないプロパティなの
        }
       }
 	}else{
-console.log('xUI は初期化前: yet init xUI');
+//console.log('xUI は初期化前: yet init xUI');
 	}
 //
 }
@@ -8601,7 +8596,7 @@ if (!navigator.cookieEnabled){return false;}
 	if(useCookie.UIView){
 	if(rEmaping[7]) ToolView	=rEmaping[7];
 	}
-console.log(rEmaping)
+//console.log(rEmaping)
 }
 //	クッキー削除
 function dlCk() {
@@ -9703,7 +9698,7 @@ BはXps（ステージ）の属性編集UI
 function ScenePref(){
 //内容変更フラグ
 	this.changed=false;
-	document.getElementById("scnRest").disabled=(! this.changed);
+	document.getElementById("scnReset").disabled=(! this.changed);
 //
 	this.tracks=0;//ローカルの トラック数バッファ・スタートアップ内で初期化
 //各種プロパティとセレクタの対応を格納する配列
@@ -9749,7 +9744,7 @@ this.chgProp=function (id)
 		case "scnLszA":	this.chgSIZE(name,number);break;
 		}
 	this.changed=true;
-	document.getElementById("scnRest").disabled=(! this.changed);
+	document.getElementById("scnReset").disabled=(! this.changed);
 }
 this.chgopt =function (){return;}
 this.chglbl =function (name,number){
@@ -9774,7 +9769,7 @@ this.chglayers =function (id){
 			this.layerTableNameUpdate();
 		}
 		this.changed=true;
-    	document.getElementById("scnRest").disabled=(! this.changed);
+    	document.getElementById("scnReset").disabled=(! this.changed);
 		return;
 	}
 	if(id=="scnLayers"){
@@ -9807,7 +9802,7 @@ if(! confirm(msg)){
 			this.layerTableNameUpdate();
 		}
 		this.changed=true;
-	    document.getElementById("scnRest").disabled=(! this.changed);
+	    document.getElementById("scnReset").disabled=(! this.changed);
 		return;
 	}
 
@@ -9856,7 +9851,7 @@ this.chgblk =function (name,number)
 		}
 	}
 	this.changed=true;
-	document.getElementById("scnRest").disabled=(! this.changed);
+	document.getElementById("scnReset").disabled=(! this.changed);
 }
 //コンポフレームレート変更
 this.chgFRATE =function (id)
@@ -9876,7 +9871,7 @@ nas.FRATE=document.getElementById("scnFramerate").value;
 nas.RATE=this.Lists["framerate_name"][document.getElementById("scnSetFps").value];
 //内部計算用なので親のレートは変更しない
 	this.changed=true;
-	document.getElementById("scnRest").disabled=(! this.changed);
+	document.getElementById("scnReset").disabled=(! this.changed);
 }
 //省略時サイズ変更
 this.chgSIZE =function (name,number)
@@ -9905,13 +9900,13 @@ with(document){
 		}
 	}
 	this.changed=true;
-	document.getElementById("scnRest").disabled=(! this.changed);
+	document.getElementById("scnReset").disabled=(! this.changed);
 }
 //新規作成のスイッチトグル
 this.chgNewSheet =function (){
 	var dist=(! document.getElementById("scnNewSheet").checked)? true:false;
 	this.changed=true;
-	document.getElementById("scnRest").disabled=(! this.changed);
+	document.getElementById("scnReset").disabled=(! this.changed);
 
 //新規作成から更新に戻した場合は、時間とレイヤ数を
 //親オブジェクトから複写して上書き思ったが、どうせ暫定なのでとりあえずリセット
@@ -9927,14 +9922,14 @@ this.chg =function (id)
 		if (id=="newSheet") this.chgNewSheet();
 
 	this.changed=true;
-	document.getElementById("scnRest").disabled=(! this.changed);
+	document.getElementById("scnReset").disabled=(! this.changed);
 }
 //テキストボックス書き換え
 this.rewrite =function (id)
 {
 if(dbg){dbgPut(id);}
 	this.changed=true;
-	document.getElementById("scnRest").disabled=(! this.changed);
+	document.getElementById("scnReset").disabled=(! this.changed);
 	return false;//フォーム送信抑止
 }
 /*
@@ -10227,7 +10222,7 @@ this.getProp =function ()
 //	if(document.getElementById("scnCellTable").style.display!="none"){	};
 		this.getLayerProp();
 	this.changed=false;
-	document.getElementById("scnRest").disabled=(! this.changed);
+	document.getElementById("scnReset").disabled=(! this.changed);
 }
 this.getLayerProp =function (){
 //レイヤ情報テーブルに値をセット
@@ -10360,7 +10355,7 @@ this.newProp =function (showMsg)
 		document.getElementById(name+"TD").innerHTML=
 		(document.getElementById(name).value=="")?"<br>":
 		xUI.trTd(document.getElementById(name).value);
-console.log([name,document.getElementById(name).value]);
+//console.log([name,document.getElementById(name).value]);
 	}
 //取得したシートのフレームレートをnasのレートに代入する
 	nas.FRATE=document.getElementById("scnFramerate").value;
@@ -10373,7 +10368,7 @@ console.log([name,document.getElementById(name).value]);
 		document.getElementById("scnTrotT").value="00+00.";
 	this.layerTableUpdate();
 	this.changed=true;
-	document.getElementById("scnRest").disabled=(! this.changed);
+	document.getElementById("scnReset").disabled=(! this.changed);
   }else{
 	return;
   }
@@ -10410,7 +10405,7 @@ this.reWrite = function(eid){
     break;
     }
 	this.changed=true;
-	document.getElementById("scnRest").disabled=(! this.changed);
+	document.getElementById("scnReset").disabled=(! this.changed);
 }
 //各種設定表示更新
 this.putProp =function (){
@@ -10537,7 +10532,7 @@ document.getElementById("scnTrot").value
 	this.getProp();
 	this.chgFRATE();
 	this.changed=false;
-	document.getElementById("scnRest").disabled=(! this.changed);
+	document.getElementById("scnReset").disabled=(! this.changed);
 		this.close();
 //	xUI.sWitchPanel("Prog");
 	}else{
@@ -10611,7 +10606,7 @@ this.init =function (opt){
 	this.getProp();
 	this.chgFRATE();
 	this.changed=false;
-	document.getElementById("scnRest").disabled=(! this.changed);
+	document.getElementById("scnReset").disabled=(! this.changed);
     if(opt=='new') this.newProp();
 }
 /** パネルを開く
