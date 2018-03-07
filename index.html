@@ -1431,10 +1431,23 @@ class=optionPanel id=optionPanelProductManagement
 	onclick="simplifyTimeline();"
 >
 </button><button
+    id=ibMfootStamp
+    class='iconButton  iconButton-footStamp'
+    style="color:snow;font-size:16px;"
+	title="差分機能切り替え"
+	onclick='xUI.footstampReset(!(xUI.footMark));'
+>✓
+</button><button
+    id=ibMpaintFS
+    class='iconButton  iconButton-paintFS'
+	title="差分表示"
+	onclick='xUI.footstampPaint();'
+>
+</button><button
     id=ibMclearFS
     class='iconButton  iconButton-clearFS'
 	title="フットスタンプをクリアします"
-	onclick='clearFS();'
+	onclick='xUI.footstampClear();'
 >
 </button><button
     id=ibMrenameTL
@@ -3555,4 +3568,4 @@ index.html ,v 1.7 2018/03/05  support@u-at.net <br />
     data-server_url='http://u-at.net'
     アドレスはサーバーのルートを使用　2017.04.13
 -->
-    </body></html>
+</body></html>

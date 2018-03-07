@@ -53,7 +53,7 @@ function putSample(request , stts ,oth){
  フットスタンプクリア
  */
 clearFS=function(){
-	if(FootMark){xUI.footstampClear()};
+	if(xUI.footMark){xUI.footstampClear()};
 };
 //タイムライン消去
 clearTL=function(flg){

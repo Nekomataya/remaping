@@ -1518,13 +1518,11 @@ xUI.getBackup =function(){
     var myBackup=localStorage.getItem("info.nekomataya.remaping.backupData");
     if(myBackup!==null){
       if(confirm(localize(nas.uiMsg.dmBackupConfirm))){
-        document.getElementById("data_well").value=myBackup;
+        xUI.data_well.value=myBackup;
     var myReference=localStorage.getItem("info.nekomataya.remaping.referenceData");
         if(this.XPS.readIN(xUI.data_well.value)){
             if(myReference){xUI.referenceXPS.parseXps(myReference);}
             xUI.resetSheet(xUI.XPS,xUI.referenceXPS);
-            //if(xUI.footMark){xUI.footstampPaint()};
-            //xUI.footstampPaint();
         }
      }
     }else{
@@ -2140,48 +2138,62 @@ if(nas.colorAry2Str(nas.colorStr2Ary(document.getElementById(this.Select[0]+"_"+
     }
 };
 //spinHi
-
+/*  足跡（差分表示）をリセット
+引数があれば状況をセット
+         有効状態ならば、Paint
+         無効状態ならば、Clear
+         
+*/
+xUI.footstampReset    =function(opt){
+    if(typeof opt != 'undefined'){this.footMark=(opt)?true:false;};
+    if(this.footMark){this.footstampPaint()}else{this.footstampClear()};
+    if(document.getElementById("ibMfootStamp")){
+        document.getElementById("ibMfootStamp").innerHTML=(xUI.footMark)?"✓":"";
+    }
+}
 /*    足跡をクリア
         xUI.footstampClear();
  */
 xUI.footstampClear    =function(){
-
+//    var flipStatus=false
+//    if(! this.footMark){flipStatus=true;this.footMark=true;}
     if (this.footstampColor){
-    var BGr=parseInt("0x"+this.footstampColor.substr(1,2),16);
-    var BGg=parseInt("0x"+this.footstampColor.substr(3,2),16);
-    var BGb=parseInt("0x"+this.footstampColor.substr(5,2),16);
-} else {BGr=0;BGg=0;BGb=0;};
+        var BGr=parseInt("0x"+this.footstampColor.substr(1,2),16);
+        var BGg=parseInt("0x"+this.footstampColor.substr(3,2),16);
+        var BGb=parseInt("0x"+this.footstampColor.substr(5,2),16);
+    } else {BGr=0;BGg=0;BGb=0;};
     var BGColor="rgb("+BGr+", "+BGg+", "+BGb+")";
-    if (! this.footMark) {return;};
+//    if (! this.footMark) {return;};
 //足跡のお掃除
     for (c=0;c<(this.SheetWidth);c++){
-        for(f=0;f<(this.XPS.duration());f++){
-    if (this.getid("Select")!=(c+"_"+f)){
-if (
-document.getElementById(c+"_"+f).style.backgroundColor==BGColor ||
-document.getElementById(c+"_"+f).style.backgroundColor==this.footstampColor){
-document.getElementById(c+"_"+f).style.backgroundColor=this.sheetbaseColor;
-};
+            for(f=0;f<(this.XPS.duration());f++){
+        if (this.getid("Select")!=(c+"_"+f)){
+    if (
+        document.getElementById(c+"_"+f).style.backgroundColor==BGColor ||
+        document.getElementById(c+"_"+f).style.backgroundColor==this.footstampColor
+    ){
+        document.getElementById(c+"_"+f).style.backgroundColor=this.sheetbaseColor;
     };
         };
+            };
     };
+//    if(flipStatus){this.footMark=false;}
 };
-//
-//
 /*    足跡をチェック
         xUI.footstampPaint();
         現在のカーソル位置を控えて全選択して解除
         カーソル位置を戻す
  */
 xUI.footstampPaint    =function(){
-
+    var flipStatus=false
+    if(! this.footMark){flipStatus=true;this.footMark=true;}
     var restoreValue=this.getid("Select");
         this.selectCell("0_0");
         this.selection((this.SheetWidth-1)+"_"+this.XPS.duration());
         this.selection();
         this.selectCell(restoreValue);
+    if(flipStatus){this.footMark=false;}
 };
-//
 /**
     ヘッダ部分の背景色を点滅させる
 引数:点滅色 未指定の際は'#808080'<> 背景色
@@ -4708,7 +4720,8 @@ case    "mousedown"    :
     xUI.sectionManipulateOffset[1] = 0;
         xUI.sectionManipulateOffset[0] = 'head'; 
         }else{
-    xUI.sectionManipulateOffset[1] = Math.floor(this.Selection[1]/2);
+//    xUI.sectionManipulateOffset[1] = Math.floor(this.Selection[1]/2);
+    xUI.sectionManipulateOffset[1] = (hotpoint<xUI.Select[1])? 0:this.Selection[1];
         xUI.sectionManipulateOffset[0] = 'body';
         }
         this.sectionPreview(hotpoint);
@@ -6226,6 +6239,8 @@ if((NameCheck)||(myName=="")){
     }};
 //    クッキーで設定されたspinValueがあれば反映
     if(xUI.spinValue){document.getElementById("spin_V").value=xUI.spinValue} ;
+//  クッキーで設定された差分表示をコントロールに反映
+    xUI.footstampReset();
 //ツールバー表示指定があれば表示 プロパティ廃止
 //    if((xUI.utilBar)&&(!$("#optionPanelUtl").is(':visible'))){$("#optionPanelUtl").show();};//xUI.sWitchPanel('Utl');
     document.getElementById("iNputbOx").focus();
@@ -6432,6 +6447,11 @@ document.getElementById('loginstatus_button').disabled=true;
 
 //document.getElementById('loginuser').innerHTML = xUI.currentUser.handle;
 //document.getElementById('serverurl').innerHTML = serviceAgent.currentServer.url;
+//document.getElementById('ibMdiscard').disabled=true;
+//document.getElementById('ibMfloat').disabled=true;
+　       $('#ibMdiscard').hide();
+　       $('#ibMfloat').hide();
+
 　       $('#pMbrowseMenu').hide();
 　       $('#ibMbrowse').hide();//設定表示
                  document.getElementById('toolbarHeader').style.backgroundColor='#ddbbbb';
@@ -9601,30 +9621,24 @@ this.putProp=function ()
 //viewMode
 	var newMode=(document.getElementById("vMCompact").checked)?"Compact":"WordProp";
 // シート情報
-//ページ長・カラム・フットスタンプ
+//ページ長・カラム
 var cols=(document.getElementById("prefPageCol").checked==true)? 2 : 1;
 if(	xUI.SheetLength !=document.getElementById("prefSheetLength").value ||
 	xUI.PageCols !=  cols ||
 	xUI.viewMode != newMode
-)
-{
-//
+){
 	xUI["viewMode"] = newMode;
-// シート外観の変更が必要なのでフォーカス関連を控えて再初期化する
-//		Bkup=[xUI.Select,xUI.Selection];
+// シート外観の変更が必要なので再初期化する
 	xUI.SheetLength=document.getElementById("prefSheetLength").value;
 		xUI.PageLength	=xUI.SheetLength　*　XPS.framerate;
 	xUI.PageCols= cols;
 //実行
         xUI.resetSheet();
-//		nas_Rmp_Init();
-//フォーカス復帰
-//		xUI.Select =Bkup[0];
-//		xUI.Selection =Bkup[1];
-//			xUI.selectCell();
 }
-	xUI.footMark=document.getElementById("prefFootMark").checked;
-
+//フットスタンプ
+    if(xUI.footMark != document.getElementById("prefFootMark").checked){
+	    xUI.footstampReset(document.getElementById("prefFootMark").checked);
+    }
 //カウンタ
 	xUI["fct0"]=
 	[Math.floor(document.getElementById("FCTo0").value/10),

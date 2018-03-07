@@ -526,7 +526,7 @@ button.iconButton:disabled {
 .iconButton-multipage { background-position: -108px -162px; }
 .iconButton-singlepage { background-position: -135px -162px; }
 .iconButton-plus { background-position: -162px -162px; }
-/*.iconButton- { background-position: -189px -162px; } */
+.iconButton-paintFS { background-position: -189px -162px; }
 
 .iconButton-movie { background-position: -216px -162px; }
 .iconButton-ps { background-position: -243px -162px; }

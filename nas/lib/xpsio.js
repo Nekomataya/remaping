@@ -761,7 +761,7 @@ function XpsTimelineSectionCollection(myParent) {
 /*==========================*/
 //区間外に新規 (空白)区間挿入
         if((id==0)&&(startOffset>0)){
-            console.log('add new '+(startOffset)+' blank frames');
+//console.log('add new '+(startOffset)+' blank frames');
             myResult=new Array(startOffset);
             resultCount.push(startOffset);
         }
@@ -770,7 +770,7 @@ function XpsTimelineSectionCollection(myParent) {
         var tailFlow  = 0;
 //ターゲット前方区間を処理
         for (var ix=0;ix<id;ix++){
-console.log('前方区間処理 : '+ix)
+//console.log('前方区間処理 : '+ix)
             var sectionHead = this[ix].startOffset();
             var sectionTail = this[ix].startOffset() + this[ix].duration - 1;
             if((sectionHead > startOffset)&&(sectionTail >= startOffset)){
@@ -802,7 +802,7 @@ console.log('前方区間処理 : '+ix)
 //console.log('new Length : '+myResult.length)
         }
 //ターゲット区間の処理
-console.log('ターゲット区間処理')
+//console.log('ターゲット区間処理')
 //console.log('current Length : '+myResult.length)
             var newContent = (targetSection.value)?
             targetSection.value.toString(endOffset+1).split(','):new Array(endOffset+1);
@@ -824,13 +824,13 @@ console.log('ターゲット区間処理')
 //ターゲット後方区間を処理
 //後方区間が存在しないケースを検出の（残フレームを空要素で埋める）必要がある
         if((this.length-1) == id){
-console.log('後方区間処理 : blanks');//処理区間の情報取得
+//console.log('後方区間処理 : blanks');//処理区間の情報取得
             var duration   =  xUI.XPS.xpsTracks.duration-(startOffset+endOffset-1);
             var newContent = (new Array(duration)).join();
             myResult       = myResult.concat(newContent);
         }else{
         for (var ix=id+1;ix<this.length;ix++){
-console.log('後方区間処理 : '+(ix));//処理区間の情報取得
+//console.log('後方区間処理 : '+(ix));//処理区間の情報取得
             var sectionHead = this[ix].startOffset();
             var sectionTail = this[ix].startOffset() + this[ix].duration -1;
             var outPoint = startOffset+endOffset;//編集対象区間のアウト点
@@ -854,7 +854,7 @@ console.log('後方区間処理 : '+(ix));//処理区間の情報取得
                 tailFlow=0;
             };
 //console.log(newContent.length);
-console.log(newContent);
+//console.log(newContent);
             myResult=myResult.concat(newContent);
             resultCount.push(duration);
 //console.log('new Length : '+myResult.length)
@@ -1071,7 +1071,7 @@ function Xps(Layers, Length) {
         };
     //引数が配置オブジェクトでなければ、デフォルトの配置オブジェクトを置いてブレイク
     }
-if(dbg)    console.log(trackSpec);
+//if(dbg) console.log(trackSpec);
     if (!Length) Length = (!nas) ? 24 : Math.round(nas.FRATE);//現状のレートで1秒を初期化
 
     /**
@@ -1148,7 +1148,7 @@ if(dbg)    console.log(trackSpec);
      */
 //    this.xpsTracks = this.newTracks(Layers, Length);
     this.xpsTracks = this.newTracks(trackSpec, Length);
-if(dbg) console.log(this.xpsTracks);
+//if(dbg) console.log(this.xpsTracks);
     //コレクションの初期化で同時にシートメモが空文字列で初期化される
 }
 
@@ -1266,7 +1266,7 @@ if(true){
 */
     //トラックのインデックス更新正規化
     myTimelineTracks.renumber();
-if(dbg) console.log(myTimelineTracks);
+//if(dbg) console.log(myTimelineTracks);
     return myTimelineTracks;
 };
 
@@ -1659,7 +1659,7 @@ Xps.prototype.reInitBody = function (newTimelines, newDuration) {
             newTracks.push(new XpsTimelineTrack('','timing',this.xpsTracks,this.duration()));
         }
         this.xpsTracks.insertTrack(0,newTracks);
-        if(dbg) console.log(this.xpsTracks);
+//if(dbg) console.log(this.xpsTracks);
     }else if(widthUp < 0){
         for (var tid = (this.xpsTracks.length-2);tid >= (newTimelines-1);tid --){
             this.xpsTracks[tid].remove();
@@ -2214,7 +2214,7 @@ Xps.prototype.parseXps = function (datastream) {
         SrcData.duration : (SrcData.frameCount - 1);//大きいほうで
 
 //	///////////////////////
-//	if(dbg) dbgPut("count/duration:"+SrcData.layerCount+":"+SheetDuration);
+//if(dbg) dbgPut("count/duration:"+SrcData.layerCount+":"+SheetDuration);
 
     this.init(SrcData.trackCount-2, SheetDuration);//再初期化
 
@@ -2669,7 +2669,7 @@ Xps.sliceReplacementLabel = function (myStr){
     for(var idx=0;idx<testStrings.length;idx++){
         myResult += testStrings[idx]+" : "+Xps.sliceReplacementLabel(testStrings[idx])+"\n";
     }
-    if(dbg) console.log(myResult);
+//if(dbg) console.log(myResult);
 */
 /**
      Xpsオブジェクトから識別子を作成するクラスメソッド
@@ -2749,7 +2749,7 @@ var B =[
     "","12","2+0",
     "0:(本線)","1:原画","2:演出チェック","Startup"
     ];
-console.log(Xps.compareIdentifier(Xps.stringifyIdf(A),Xps.stringifyIdf(B)))
+//console.log(Xps.compareIdentifier(Xps.stringifyIdf(A),Xps.stringifyIdf(B)))
 */
 /**
     識別子をパースする関数
@@ -2796,7 +2796,7 @@ Xps.parseProduct = function(productString){
     };
 }
 /** test
-    if(dbg) console.log (Xps.parseProduct('%E3%82%BF%E3%82%A4%E3%83%88%E3%83%AB%E6%9C%AA%E5%AE%9A#%E7%AC%AC%20%20%E8%A9%B1'));
+//if(dbg) console.log (Xps.parseProduct('%E3%82%BF%E3%82%A4%E3%83%88%E3%83%AB%E6%9C%AA%E5%AE%9A#%E7%AC%AC%20%20%E8%A9%B1'));
 */
 /**
     sci識別子をパースして返す
@@ -2846,7 +2846,7 @@ Xps.parseCutIF = function(myIdentifier){
     return result;
 }
 //test
-//    if(dbg) console.log(Xps.parseCutIF("s-c123"));
+//if(dbg) console.log(Xps.parseCutIF("s-c123"));
 //
 /**
     配列指定で識別子をビルドするテスト用関数
@@ -2923,11 +2923,11 @@ Xps.parseIdentifier = function(myIdentifier){
         result.job      = new XpsStage(nas.pm.jobNames.getTemplate(nas.pm.pmTemplate[0].stages[0],"init")[0]);
         result.currentStatus   = "Startup";        
     }*/
-//    if(dbg) console.log(result);
+//if(dbg) console.log(result);
     return result;
 }
 /** test 
-    if(dbg) console.log(Xps.parseIdentifier('%E3%81%8B%E3%81%A1%E3%81%8B%E3%81%A1%E5%B1%B1Max#%E3%81%8A%E3%81%9F%E3%82%81%E3%81%97//s-c10(72)//0%3A(%E6%9C%AC%E7%B7%9A)//0%3Alayout//0%3Ainit//Startup'));
+//if(dbg) console.log(Xps.parseIdentifier('%E3%81%8B%E3%81%A1%E3%81%8B%E3%81%A1%E5%B1%B1Max#%E3%81%8A%E3%81%9F%E3%82%81%E3%81%97//s-c10(72)//0%3A(%E6%9C%AC%E7%B7%9A)//0%3Alayout//0%3Ainit//Startup'));
 */
 /** =====================================機能分割 20130221
  * レイヤストリームを正規化する

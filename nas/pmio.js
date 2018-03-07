@@ -1680,7 +1680,7 @@ break;
 F= new nas.Pm.StaffCollection(nas.pm);
 F.addStaff([A,B,C,D]);
 
-console.log(F)
+//console.log(F)
 //A.sameAs(B);
 D.sameAs(C);
 */
@@ -1869,15 +1869,15 @@ nas.Pm.StaffCollection.prototype.addStaff = function(members){
       }else{
         var member = members[ix]
       }
-console.log(member)
+//console.log(member)
       var checkHint = this.indexOf(member);
-console.log("checkHint :")      
-console.log(checkHint)      
+//console.log("checkHint :")      
+//console.log(checkHint)      
 //一致エントリがないので追加
       if (checkHint < 0){
         this.members.push(member);
         result ++;
-console.log('push member :'+member.toString('dump'));
+//console.log('push member :'+member.toString('dump'));
         continue;
       }
     }
