@@ -81,7 +81,7 @@ documentDepot = {
     または　参照するエントリリストの複製を持って差分のみの更新を行う？　複製が大変？
 */
 documentDepot.documentsUpdate=function(){
-console.log('=+=============+++===== documtntsUpdate ')
+console.log('=+=============+++===== documentsUpdate ')
 /*  既存データをクリアしない
 引数で受け取ったデータ群は、新規のデータ構造を組んで従来のデータと照合しながら更新を行う
     既存エントリ＞新規データで置き換え
@@ -143,7 +143,9 @@ documentDepot.updateOpusSelector=function(myRegexp,rev){
 //    var myProducts = documentDepot.getProducts();
     var myProducts = documentDepot.products;
     var myResult   = [];
-    myContents += '<option value="==newTitle==">（*-- no title selected --*）</option>';
+    myContents += (myProducts.length)?
+    '<option value="==newTitle==" selected>（*-- no title selected --*）</option>':
+    '<option value="==newTitle==" selected>（*-- no titles --*）</option>';
     for( var opid = 0 ; opid < myProducts.length ; opid ++){
         var currentText = decodeURIComponent(myProducts[opid]);
         var show = (currentText.match(myRegexp))? true:false;
@@ -187,15 +189,18 @@ Aborted ステータスのエントリは、制作管理モードでのみ表示
 //  正規表現フィルタで抽出してHTMLを組む
     var myContents = "";
     var myResult   = [];
-    myContents += '<option value="==newDocument==">（*-- no document selected--*）</option>';
+    myContents +=(myDocuments.length)? 
+    '<option value="==newDocument==" selected>（*-- no document selected--*）</option>':
+    '<option value="==newDocument==" selected>（*-- no documents --*）</option>';
     for ( var dlid = 0 ; dlid < myDocuments.length ; dlid ++){
 //全ドキュメント走査
         var currentText = decodeURIComponent(myDocuments[dlid].toString(0).split('//')[1]);
         var currentData = myDocuments[dlid];
+//console.log(currentData.cut)
 //        var currentData = Xps.parseSCi(currentText);
        var currentStatus = currentData.getStatus();
-       console.log(currentStatus)
-        var myIdf=Xps.parseCutIF(currentData.dataInfo.cut[0].cut);
+//console.log(currentData);console.log(currentStatus)
+//        var myIdf=Xps.parseCutIF(currentData.dataInfo.sci[0].cut);
         if( (currentData.dataInfo.currentStatus.content.indexOf('Aborted') < 0) &&
             (currentData.dataInfo.sci[0].cut.match(myRegexp))){
             myContents += '<option';
@@ -233,9 +238,11 @@ if((currentStatus=='Fixed')&&(currentStatus.assign)){
  */
 documentDepot.getEntriesByOpusid=function(myIdentifier){
     if(! myIdentifier) myIdentifier=documentDepot.currentProduct;
+    myIdentifier+="//";
 // タイトルIDで抽出
     var myDocuments = [];
     for ( var dcid = 0 ; dcid < documentDepot.documents.length ; dcid ++){
+//console.log(documentDepot.documents[dcid].toString());console.log(myIdentifier);
         if((documentDepot.currentProduct)&&(Xps.compareIdentifier(documentDepot.documents[dcid].toString(),myIdentifier) > -1)){
             myDocuments.push(documentDepot.documents[dcid]);
         }
@@ -324,8 +331,8 @@ documentDepot.rebuildList=function(force,callback){
 //    serviceAgent.currentRepository.getProducts(force,callback);
 //    serviceAgent.currentRepository.getList(force,callback);
 //  テスト中はこれで良いが、その後はあまり良くない
-console.log(this);
-// console.log(callback);
+//console.log(this);
+//console.log(callback);
 //    documentDepot.documentsUpdate();
     
 }
@@ -476,6 +483,17 @@ function selectBrowser(){
     サブタイトルが存在する場合は、[]角括弧,「」カギ括弧,""引用符で区切って記入する
 */
 function setProduct(productName){
+console.log('setProduct####')
+console.log(productName);
+
+//ドキュメント（カット）ブラウザの表示をリセット（クリア）
+    document.getElementById('cutList').innerHTML = "<option selected>（*-- no document --*）";
+    documentDepot.updateDocumentSelector();
+//    selectSCi();
+//ブラウザの選択を解除
+    documentDepot.currentSelection=null;
+    document.getElementById( "cutList" ).disabled=true;
+    
     if(typeof productName == "undefined"){
     //プロダクト名が引数で与えられない場合はセレクタの値をとる
     //選択されたアイテムがない場合は、デフォルト値を使用してフリー要素を選択する
@@ -483,10 +501,18 @@ function setProduct(productName){
             productName = ( document.getElementById("opusSelect").selectedIndex == 0 )?
             "#[]":
             document.getElementById("opusSelect").options[document.getElementById("opusSelect").selectedIndex].text;
-console.log(productName);
         }else{
             document.getElementById("opusSelect").selectedIndex = 0;
             productName = "#[]";
+        }
+    }else{
+console.log("changeSelector")
+    //プロダクト名が与えられた場合は、セレクタの選択を更新する
+          //  document.getElementById('opusSelect').value=productName;
+        for(var pix=0;pix<documentDepot.products.length;pix++){
+            if(Xps.compareIdentifier(documentDepot.products[pix],productName)>=0){
+                document.getElementById('opusSelect').value=documentDepot.products[pix];break;
+            }
         }
     }
     productName=String(productName);//明示的にストリング変換する
@@ -494,13 +520,38 @@ console.log(productName);
         var subTitle    = productInfo.subtitle;
         var opus        = productInfo.opus;
         var title       = productInfo.title;
-console.log(productInfo);
+/** パネルテキスト更新
+リストに存在しないプロダクトの場合は、リスト側で'(* new product *)'を選択する
+*/ 
+    document.getElementById("titleInput").value    = (title.length)? title:"(*--title--*)";
+    document.getElementById("opusInput").value     = (opus.length)? opus:"(*--opus--*)";
+    document.getElementById("subtitleInput").value = (subTitle.length)? subTitle:"(*--subtitle--*)";
+//    selectSCi();    
 
-//ブラウザの選択を解除
-    documentDepot.currentSelection=null;
-    document.getElementById( "cutList" ).disabled=true;
 // タイトルからカットのリストを構築して右ペインのリストを更新
     documentDepot.currentProduct=document.getElementById("opusSelect").options[document.getElementById("opusSelect").selectedIndex].value;
+
+    serviceAgent.currentRepository.getEpisodes(function(){
+//        documentDepot.documentsUpdate();
+//        documentDepot.updateOpusSelector();
+// 選択したプロダクトが存在すればカットを取得
+console.log(decodeURIComponent(documentDepot.currentProduct));
+        var currentOpus = serviceAgent.currentRepository.opus(documentDepot.currentProduct);
+        if(currentOpus){
+// console.log(currentOpus.token);
+            serviceAgent.currentRepository.getSCi(function(){
+// 更新したリストからリスト表示を更新
+            documentDepot.documentsUpdate();
+            documentDepot.updateDocumentSelector();
+            },false,currentOpus.token)
+        }else{
+           console.log("no opus exists ###");console.log(currentOpus);
+        }
+    },false,
+    documentDepot.buildIdentifier(),
+    documentDepot.buildIdentifier()
+    );
+/*
 // 選択したプロダクトが存在すればカットを取得
     var currentOpus = serviceAgent.currentRepository.opus(documentDepot.currentProduct);
 if(currentOpus){
@@ -510,17 +561,18 @@ if(currentOpus){
         documentDepot.documentsUpdate();
         documentDepot.updateDocumentSelector();
     },false,currentOpus.token);
+  
 }else{
 //該当するプロダクトをコンソールへ
 console.log(documentDepot.currentProduct);
-}
+}  */
 //{        documentDepot.updateDocumentSelector();    }
 /** パネルテキスト更新
 リストに存在しないプロダクトの場合は、リスト側で'(* new product *)'を選択する
 */ 
-    document.getElementById("titleInput").value    = (title.length)? title:"(*--title--*)";
-    document.getElementById("opusInput").value     = (opus.length)? opus:"(*--opus--*)";
-    document.getElementById("subtitleInput").value = (subTitle.length)? subTitle:"(*--subtitle--*)";
+//    document.getElementById("titleInput").value    = (title.length)? title:"(*--title--*)";
+//    document.getElementById("opusInput").value     = (opus.length)? opus:"(*--opus--*)";
+//    document.getElementById("subtitleInput").value = (subTitle.length)? subTitle:"(*--subtitle--*)";
     selectSCi();    
 }
 //setProduct("源氏物語＃二十三帖「初音」");
@@ -539,7 +591,6 @@ function selectSCi(sciName){
             var myEntry = serviceAgent.currentRepository.entry(document.getElementById("cutList").options[document.getElementById("cutList").selectedIndex].value);
             if(myEntry){
             var myContents="";
-//          for (var ix=myEntry.issues.length-1;ix>=0;ix--){}
             for (var ix=0;ix<myEntry.issues.length;ix++){
                 myContents += '<option value="'+myEntry.issues[ix].join('//')+'"';
                 myContents += (ix==(myEntry.issues.length-1))? ' selected >':' >';

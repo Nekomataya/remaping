@@ -396,7 +396,7 @@ xUI.init    =function(editXps,referenceXps){
         "dialog",
         "sound"
  */
-    this.referenceLabels=new Array();   //表示させる数（後で初期化）
+    this.referenceLabels=new Array();   //表示させるトラックのID配列（後ほど初期化）
     this.referenceView=["timing","cell","replacement"];      
     this.refRegex=new RegExp(xUI.referenceView.join("|"));
 /** 
@@ -564,10 +564,8 @@ xUI._checkProp=function(){
     this.refRegex=new RegExp(xUI.referenceView.join("|"));//更新
     for(var ix=0;ix<xUI.referenceXPS.xpsTracks.length;ix++){
         var currentTrack=xUI.referenceXPS.xpsTracks[ix].option;
-        var currentLabel=xUI.referenceXPS.xpsTracks[ix].id;
-        if(currentLabel.length>2) currentLabel=currentLabel.slice(0,2);
         if(currentTrack.match(this.refRegex)) {
-            this.referenceLabels.push(currentLabel)
+            this.referenceLabels.push(ix);//array of index
         }
     }
 }
@@ -1329,7 +1327,7 @@ xUI.sectionPreview=function(destination){
 /*
 引数：　action
     セクション操作の結果を実際の画面に反映させるメソッド
-    Xps.manipulateSection()に対応するxUI側の処理
+    Xps.xpsTracks.menber.manipulateSection()に対応するxUI側の処理
     データ配置の際にトラック全体を書き直すので、カーソル位置を復帰させるためにundoStackに第４要素を積む
     xUI.putメソッドを経由せずにこのルーチン内で完結させる.
 */
@@ -2362,7 +2360,7 @@ var hasEndMarker=false;// 継続時間終了時のエンドマーカー配置判
     リファレンスエリアのシート内容表示の際トラック抽出のバグがあったのを修正
 (2017/07/21)
  ページ内に最終フレームが含まれるか否かを判定してカット記述終了マーカーを配置する拡張
-
+(2018/03/10)
 */
 //ページ番号が現存のページ外だった場合丸める
     if (pageNumber >=Pages){
@@ -2647,7 +2645,6 @@ BODY_ +='<tr>';//改段
 
 //=====================参照エリア
         for (r=0;r<this.referenceLabels.length;r++){
-
 BODY_ +='<th id="rL';
 BODY_ += r.toString();
 BODY_ += '_';
@@ -2657,10 +2654,13 @@ BODY_ += cols.toString();
 
 BODY_ +='" class="layerlabelR annotationText"';
 BODY_ +=' >';
-var lbString=(this.referenceLabels[r].length<4)?this.referenceLabels[r]:'<a onclick="return false;" title="'+this.referenceLabels[r]+'">●</a>';
 
+var currentRefLabel=this.referenceXPS.xpsTracks[this.referenceLabels[r]].id;
+var lbString=(currentRefLabel.length<3)?
+    currentRefLabel:
+    '<a onclick="return false;" title="'+currentRefLabel+'">'+currentRefLabel.slice(0,2)+'</a>';
 
- if (this.referenceLabels[r].match(/^\s*$/)){
+ if (currentRefLabel.match(/^\s*$/)){
     BODY_ +='<span style="color:'+this.sheetborderColor+'";>'+nas.Zf(r,2)+'</span>';
  }else{
     BODY_ +=lbString;
@@ -2672,6 +2672,7 @@ var lbString=(this.referenceLabels[r].length<4)?this.referenceLabels[r]:'<a oncl
 
         for (var r=(xUI.dialogSpan);r<(this.XPS.xpsTracks.length-1);r++){
     if(this.XPS.xpsTracks[r].option=="comment"){break;}
+    var currentLabel=this.XPS.xpsTracks[r].id;
 BODY_ +='<th id="L';
 BODY_ += r.toString();
 BODY_ += '_';
@@ -2693,16 +2694,19 @@ default:BODY_ +='" class="layerlabel annotationText" ';
 
 BODY_ +=' >';
 if(this.XPS.xpsTracks[r].option=="still"){
- if (this.XPS.xpsTracks[r].id.match(/^\s*$/)){
+ if (currentLabel.match(/^\s*$/)){
     BODY_ +='<span style="color:'+xUI.sheetborderColor+'";>'+nas.Zf(r,2)+'</span>';
  }else{
-    BODY_ +='<a onclick="return false" title="'+this.XPS.xpsTracks[r].id+'">▼</a>';
+    BODY_ +='<a onclick="return false" title="'+currentLabel+'">▼</a>';
  };
 }else{
  if (this.XPS.xpsTracks[r].id.match(/^\s*$/)){
     BODY_ +='<span style="color:'+xUI.sheetborderColor+'";>'+nas.Zf(r,2)+'</span>';
  }else{
-    BODY_ +=this.XPS.xpsTracks[r].id;
+    
+    BODY_ +=(currentLabel.length<5)?
+        currentLabel:
+        '<a onclick="return false" title="'+currentLabel+'">'+currentLabel.slice(0,4)+'</a>';
  };
 }
 BODY_ +='</th>';
@@ -2789,18 +2793,10 @@ BODY_ +=' >';
 BODY_ +='</td>';
 
 //参照シートセル
-/*
-    for(var ix=0;ix<xUI.referenceXPS.xpsTracks.length;ix++){
-        var currentTrack=xUI.referenceXPS.xpsTracks[ix].option;
-        var currentLabel=xUI.referenceXPS.xpsTracks[ix].id;
-        if(currentLabel.length>2) currentLabel=currentLabel.slice(0,2);
-        if(currentTrack.match(this.refRegex)) {
-            this.referenceLabels.push(currentLabel)
-        }
-*/
     var refLabelID = 0; //for (var refLabelID=0;refLabelID< this.referenceLabels.length;refLabelID++)
     for (var r=0;r< this.referenceXPS.xpsTracks.length;r++){
-        if(this.referenceLabels[refLabelID]!= this.referenceXPS.xpsTracks[r].id){continue;}
+        if(this.referenceLabels[refLabelID] != r){continue;}
+
 //参照ラベル抽出と同アルゴリズムで抽出を行うかまたはキャッシュをとる
 BODY_ +='<td ';
     if (! isBlankLine){}
@@ -3954,7 +3950,12 @@ case	13	:		//Enter 標準/次スピン・シフト/前スピン・コントロ�
 		  if(expd_repFlag){
 		    this.spin("down");expd_repFlag=false;   //<マクロ展開中>[ENTER]:スピンダウン
 		  }else{
-			this.spin("fwd");                       //[ENTER]:スピンフォワード
+            if((xUI.Selection[0]==0)&&(xUI.Selection[1]>0)){
+                this.selectCell([xUI.Select[0],xUI.Select[1]+xUI.Selection[1]+1]);
+                //選択範囲有りのカラ[ENTER] 自動的にカラ移動
+            }else{
+			    this.spin("fwd");                       //[ENTER]:スピンフォワード
+			}
 		  }
 	    };
 //処理終了時にコントロール（メタ）キーの同時押しがない場合は選択範囲を解除
@@ -6407,7 +6408,6 @@ document.getElementById("UIheader").style.display="none";
         }else{
             serviceAgent.switchService(0);//デフォルトサーバのIDを置く
         }
-
         xUI.onSite = serviceAgent.currentServer.url.split('/').slice(0,3).join('/');
 　       serviceAgent.currentStatus='online';
 //  ドキュメント表示更新
@@ -6592,6 +6592,9 @@ if(dbg) console.log('Application Offsite');
         }else{
             serviceAgent.authorized();
         };
+//localRepositoryの設定を行う
+    serviceAgent.currentRepository.getProducts();
+    serviceAgent.switchRepository();
 //        sync('server-info')
 　   }
 //シートボディを締める
@@ -7494,6 +7497,9 @@ case	"memo":
 	if(document.getElementById("memo_prt")){document.getElementById("memo_prt").innerHTML=memoText;}
 	break;
 case	"lbl":	;
+//NOP 
+    break;
+/*
 //UIモード増加に伴って切り分けが発生　コンパクトモード時はラベル書き換えを分岐
   if(xUI.viewMode=="Compact"){
 //隠れる分のヘッダと固定ヘッダをを書き換え
@@ -7520,6 +7526,7 @@ if(XPS.xpsTracks[r].id.match(/^\s*$/)){
 	}}}
   }
 	break;
+*/
 case	"info_":	;//セット変更
     setTimeout(function(){sync('historySelector')},10);
 	var syncset=
@@ -10149,7 +10156,7 @@ this.getProp =function ()
         [serviceAgent.currentRepository.url,serviceAgent.currentRepository.name].join("/"):
         "This data is not stored in any repository.";
 //このデータはいずれのリポジトリにも保存されていません
-// document.getElementById("scnNewSheet").checked=false;//新規フラグダウン
+        document.getElementById("scnNewSheet").checked=false;//新規フラグダウン
     if (XPS.currentStatus.content == 'Floating'){
         document.getElementById("scnPushentry").disabled=false;
     }else{
@@ -10176,7 +10183,7 @@ this.getProp =function ()
 		this.tracks =  (XPS.xpsTracks.length-1);//バックアップとる
 		document.getElementById("scnLayers").value=	this.tracks;
 //ラベルウェルを書き換え
-		document.getElementById("scnLayersLbls").value=this.mkNewLabels(this.tracks-xUI.dialogSpan).join();
+		document.getElementById("scnLayersLbls").value = this.mkNewLabels(this.tracks-xUI.dialogSpan).join();
 //レイヤ数変わってテーブル変更なのでテーブル出力
 		document.getElementById("scnLayerBrouser").innerHTML=
 		this.mkLayerSheet(document.getElementById("scnLayers").value);
@@ -11016,11 +11023,13 @@ SoundEdit.open=function(){
     //this.targetSection = this.targetTrack.sections[xUI.floatSectionId];
     if ((! xUI.viewOnly)&&(targetTrack.option=='dialog')&&(xUI.edmode<2)){
         var currentFrame=(xUI.Select[1]==0)? 1:xUI.Select[1];
+        var myDuration=((xUI.Selection[0]==0)&&(xUI.Selection[1]>0))?parseInt(xUI.Selection[1],10):1;
 //フロートセクションがないのでモード遷移をトライ
 //モード遷移に失敗したら新規のセリフ(有値セクション)を作成してそれを選択する
         if(! xUI.mdChg('section')){
+            xUI.selection();
             xUI.selectCell([xUI.Select[0],currentFrame-1]);
-            xUI.put('----,,----');//
+            xUI.put('----,'+(new Array(myDuration+1).join(','))+',----')
             xUI.selectCell([xUI.Select[0],currentFrame]);
             xUI.mdChg('section');
         };

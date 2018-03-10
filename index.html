@@ -668,8 +668,8 @@ serviceAgent.pushEntry(xUI.XPS,function(){xUI.setStored("current");sync();
 </ul>
 </div>
 <!-- dropdown menu for browser ブラウザ用ドロップダウンメニュー　-->
-<div>
-<div    class=server-info
+<div id=account_box>
+    <div class=server-info
         id = server-info
         client_id='b115aead773388942473e77c1e014f4d7d38e4d4829ae4fd1fa0e48e1347b4cd'
         client_secret='54c0f02c38175436df16a058cc0c0e037038c82d3cc9ce4c212e3e4afe0449dd'
@@ -677,12 +677,12 @@ serviceAgent.pushEntry(xUI.XPS,function(){xUI.setStored("current");sync();
         current_server=''
         oauth_token=''
         last_authrized=''
->
+    >
 
  <span id="serverurl"></span> :
  <span id=loginuser ></span> : <button id='loginstatus_button' onclick='xUI.sWitchPanel("Login");return false' title="ユーザ切り替え"> =OFFLINE= </button> 
-</div>
-<div style="float:clear;">
+    </div>
+    <div style="float:clear;">
 		<form	name=saveXps
 			id=saveXps
 			method=POST
@@ -709,9 +709,9 @@ serviceAgent.pushEntry(xUI.XPS,function(){xUI.setStored("current");sync();
 				id=XPSBody
 				name=XPSBody
 			>
- </form>
- </div>
-
+        </form>
+    </div>
+</div>
 <!--	ログインパネル	-->
 <div class=loginPanel id=optionPanelLogin style="text-align:right;">
 <hr>	<select id=serverSelector
@@ -722,17 +722,12 @@ serviceAgent.pushEntry(xUI.XPS,function(){xUI.setStored("current");sync();
 	</select>
 
 	userID (or mail-address) : <input id='current_user_id' type='text' autocomplete='on' list='recentUsers' size=32 value='' onchange ='this.value=(new nas.UserInfo(this.value)).email;'>
-	<datalist id='recentUsers'>
-	    <option value='123'></option>
-	    <option value='456'></option>
-	    <option value='789'></option>
-	    <option value='012'></option>
-	</datalist>
-	password : <input id='current_user_password' type=password size=32 value='********'>
+	<datalist id='recentUsers'></datalist>
+	password : <input id='current_user_password' type=password size=32 value='password'>
 	<button class='sign' id='login_button' onclick='serviceAgent.authorize();'>SIGNIN / signout</button><hr>
 </div>
 <!--	ログインパネル	-->
-</div>
+
 <!--	ツールバー/toolbarHeader	-->
 <div id=toolbarHeader>
 <!--	ツールバーボタン/toolIcons	-->

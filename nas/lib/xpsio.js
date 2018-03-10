@@ -2716,8 +2716,6 @@ Xps.getIdentifier=function(myXps,opt){
 Xps.compareIdentifier =function (target,destination){
     var tgtInfo  = Xps.parseIdentifier(target);
     var destInfo = Xps.parseIdentifier(destination);
-//console.log(tgtInfo);
-//console.log(destInfo);
     //title
         if(tgtInfo.title != destInfo.title) { return -2;}
     //title+opus
@@ -2749,6 +2747,7 @@ var B =[
     "","12","2+0",
     "0:(本線)","1:原画","2:演出チェック","Startup"
     ];
+Xps.compareIdentifier("35%E5%B0%8F%E9%9A%8A_PC#RBE//04d",'35%E5%B0%8F%E9%9A%8A_PC#RBE[ベルセルク・エンチャント演出]')
 //console.log(Xps.compareIdentifier(Xps.stringifyIdf(A),Xps.stringifyIdf(B)))
 */
 /**
@@ -2893,11 +2892,12 @@ Xps.stringifyIdf([
      
      asign/
      オブジェクトメソッドの識別子も解釈可能にする
-    '_'をセパレータとして認識するように変更
+    
+    　'//'を認識できなかったケースに限り'_'をセパレータとして認識するように変更
 */
 Xps.parseIdentifier = function(myIdentifier){
     if(! myIdentifier) return false;
-    if(myIdentifier.indexOf('_')>0){myIdentifier=myIdentifier.replace(/_/g,'//');}
+    if(myIdentifier.indexOf( '//' )<0 ){ myIdentifier=myIdentifier.replace(/_/g,'//'); }
     var dataArray = myIdentifier.split('//');
     var result={};
     result.product  = Xps.parseProduct(dataArray[0]);
