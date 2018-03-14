@@ -6442,6 +6442,9 @@ document.getElementById("UIheader").style.display="none";
 document.getElementById('loginstatus_button').innerHTML='>ON-SITE<';
 document.getElementById('loginstatus_button').disabled=true;
 
+//新規作成メニューをブロック
+    xUI.pMenu('pMnewdoc','disabled');
+    xUI.pMenu('pMnewEntry','disabled');
 //インポート関連をロック　操作をsync('productStatus')に統合（タイミングが同じ）
 // sync("importControllers");
 
@@ -7622,9 +7625,14 @@ function putMyWords(){
 */
 editMemo=function(e,insertTarget){
 	var myTarget=e.target;
-	var myValue=(myTarget.value)?myTarget.value:myTarget.innerHTML;
-	insertTarget.insert(myValue);
-	insertTarget.focus();
+	if(
+	(myTarget instanceof HTMLInputElement)||
+	(myTarget instanceof HTMLButtonElement)
+    ){
+	    var myValue=(myTarget.value)?myTarget.value:myTarget.innerHTML;
+	    insertTarget.insert(myValue);
+	    insertTarget.focus();
+	}
 }
 /**
 	AEキー書き出し

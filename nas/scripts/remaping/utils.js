@@ -579,7 +579,6 @@ default	:	myName=nas.Zf(insertPoint[0],2).toString();//挿入点のID　二桁�
 	この一連の処理は書き直しが必要？
 	
 */
-
 	var newXPS= new Xps();
 	newXPS.readIN(XPS.toString());
 	var currentDuration=newXPS.duration();

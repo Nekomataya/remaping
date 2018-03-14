@@ -824,10 +824,16 @@ function XpsTimelineSectionCollection(myParent) {
 //ターゲット後方区間を処理
 //後方区間が存在しないケースを検出の（残フレームを空要素で埋める）必要がある
         if((this.length-1) == id){
-//console.log('後方区間処理 : blanks');//処理区間の情報取得
+console.log('後方区間処理 : blanks');//処理区間の情報取得
             var duration   =  xUI.XPS.xpsTracks.duration-(startOffset+endOffset-1);
-            var newContent = (new Array(duration)).join();
-            myResult       = myResult.concat(newContent);
+/*
+後方区間長さが負になるケースをトラップして　単純に処理をスキップ
+
+*/
+            if (duration > 0){
+                var newContent = (new Array(duration)).join();
+                myResult       = myResult.concat(newContent);
+            }
         }else{
         for (var ix=id+1;ix<this.length;ix++){
 //console.log('後方区間処理 : '+(ix));//処理区間の情報取得
@@ -1550,7 +1556,7 @@ Xps.prototype.insertTL = function (myId, myTimelines) {
     if ((myTimelines.id) || (typeof myTimelines.length == "undefined")){
         myTimelines = [myTimelines];
     }
-    if ((!myId ) || (myId < 1) || ( myId >= this.xpsTracks.length - 2)) {
+    if ((!myId ) || (myId < 1) || ( myId > this.xpsTracks.length - 2)) {
         myId = this.xpsTracks.length - 1
     }
     for (var idx = 0; idx < myTimelines.length; idx++) {
