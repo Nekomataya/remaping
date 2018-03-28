@@ -708,6 +708,18 @@ button.oneChr {width:1.5em;margin:0;padding:0;}
 /*サインイン／アウトボタン*/
 button.sign {width:10em;}
 
+/*カラーセレクトボタン*/
+button.colorSelect {
+	width:16px;
+	height:16px;
+	border-width:1px;
+	vertical-align:middle;
+   /* 角丸 */
+    -moz-border-radius: 3px;
+    -webkit-border-radius: 3px;
+    border-radius: 3px;
+}
+
 /*		UI　AEキー　コンバートスイッチ
 */
 input.aekConvert {

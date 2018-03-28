@@ -72,7 +72,7 @@ xUI.importBox.reset = function(){
     全カット変換終了時のコールバック関数を与えることが可能
     
 */
-xUI.importBox.import = function(targetFiles,callback){
+xUI.importBox.read = function(targetFiles,callback){
     if(appHost.platform == "AIR"){
         return false;
 //***AIR  用の分岐は　単ファイルのままで保留2018 0201
@@ -289,7 +289,7 @@ xUI.importBox.checkValue = function(itm){
 window.addEventListener('DOMContentLoaded', function() {
   if(document.getElementById("myCurrentFile")){
     console.log('addEventListener');
-    document.getElementById("myCurrentFile").addEventListener('change', function(e) { xUI.importBox.import(this.files,processImport)}, true);//myCrrentFile.addEvent
+    document.getElementById("myCurrentFile").addEventListener('change', function(e) { xUI.importBox.read(this.files,processImport)}, true);//myCrrentFile.addEvent
   }
 });//window.addEvent
 /**

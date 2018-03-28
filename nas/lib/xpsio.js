@@ -826,10 +826,7 @@ function XpsTimelineSectionCollection(myParent) {
         if((this.length-1) == id){
 console.log('後方区間処理 : blanks');//処理区間の情報取得
             var duration   =  xUI.XPS.xpsTracks.duration-(startOffset+endOffset-1);
-/*
-後方区間長さが負になるケースをトラップして　単純に処理をスキップ
-
-*/
+/*後方区間長さが負になるケースをトラップして　単純に処理をスキップ*/
             if (duration > 0){
                 var newContent = (new Array(duration)).join();
                 myResult       = myResult.concat(newContent);

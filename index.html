@@ -13,7 +13,8 @@
 
 
 <!-- 以下　AIR動作時のライブラリ-->
-<!-- 
+
+<!--
 <script src="./lib/AIR/servicemonitor.swf" type="application/x-shockwave-flash"></script>
 <script src="./lib/AIR/aircore.swf" type="application/x-shockwave-flash"></script>
 <script src="./lib/AIR/applicationupdater_ui.swf" type="application/x-shockwave-flash"></script>
@@ -22,12 +23,9 @@
 
 <script type="text/javascript" src="./lib/AIR/AIRAliases.js"></script>
 		<script type="text/javascript" src="./lib/AIR/AIRLocalizer.js"></script>
-		<script type="text/javascript" src="./lib/AIR/AIRMenuBuilder.js"></script>
- -->
-
+		<script type="text/javascript" src="./lib/AIR/AIRMenuBuilder.js"></script> -->
 <!-- 以下　AIR動作時のデバッグライブラリ -->
 <!--
-
  		<script type="text/javascript" src="./lib/AIR/AIRIntrospector.js"></script>
 		<script type="text/javascript" src="./lib/AIR/AIRSourceViewer.js"></script>
  -->
@@ -523,6 +521,8 @@ serviceAgent.pushEntry(xUI.XPS,function(){xUI.setStored("current");sync();
 	onclick='if(confirm("アプリケーションを再読み込みします\nデータは破棄されます\nよろしいですか？")){document.location.reload()};return false;'
 	title="reload application"
 >reload</A> </li>
+
+<!--
 <li><hr><span id=pMpreviousVer-d class='pM pM-alt'></span><A	id=pMpreviousVer14
 	HREF='http://www.nekomataya.info/tools/remaping/'
 	target = '_blank'
@@ -538,7 +538,7 @@ serviceAgent.pushEntry(xUI.XPS,function(){xUI.setStored("current");sync();
 	target = '_blank'
 	title="next version 1.7"
 >テストバージョン</A> </li>
-<!--
+
 <li>
 <hr><span id=pMstb-d class='pM pM-alt'></span><A	id=pMstb
 	HREF='../sbdConvert/index.html'
@@ -1982,10 +1982,6 @@ onclick='nas.incrFCTonHTMLInput(document.getElementById("editTC"),"-(1)")'
 		onChange="myScenePref.reWrite(this.id)"
 	/>
 	<datalist id="scnTitleList">
-	    <option value='ももたろう'>
-	    <option value='きんたろう'>
-	    <option value='はなさか'>
-	    <option value='うらしま'>
 	</datalist>
 </tr><tr>
 	</td>
@@ -2798,18 +2794,12 @@ id=prefDfY VALUE="---" onChange="myPref.chgdfSIZE(this.id)">:<input type=text
 		</td>
 		<td>
 		BGcolor<br>
-		<input id="prefBGColor" type="color" list="bgColorList" autoComplete="on" />
-		<datalist id="bgColorList">
-		    <option value="#fff1ba" title="レモン">レモン
-		    <option value="#f8b500" title="山吹">やまぶき
-		    <option value="#00a3af" title="浅葱">あさぎ
-		    <option value="#bce2e8" title="水色">みずいろ
-		    <option value="#fef4f4" title="さくら">さくらいろ
-		    <option value="#e198b4" title="桃色">ももいろ
-		    <option value="#f2c288" title="びわ">びわ
-		    <option value="#afafb0" title="銀鼠">ぎんねず
-		    <option value="#f8f8f8" title="白練">しろねり
-		</datalist>
+		<input id=prefBGColor type=text list=bgColorList autoComplete="on" onChange="myPref.chgColor(this.id)" />
+		<input id=prefColorpick type=color onChange="myPref.chgColor(this.id)" /><br>
+		 <span id=bgColorList>
+		<button class=colorSelect id="bgColorList00" onClick="myPref.chgColor(this.id)" value="=CUSTOM=" title="current Color"> </button>
+		<button class=colorSelect id="bgColorList01" onClick="myPref.chgColor(this.id)" value="#ffffee" title="y" style="background-color:#ffffee"> </button>
+		</span>
 <!--		<option value="#"> -->
 		</td>
 	</tr>
@@ -3563,4 +3553,4 @@ index.html ,v 1.7 2018/03/05  support@u-at.net <br />
     data-server_url='http://u-at.net'
     アドレスはサーバーのルートを使用　2017.04.13
 -->
-</body></html>
+  </body></html>

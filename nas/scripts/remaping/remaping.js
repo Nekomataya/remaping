@@ -126,21 +126,24 @@ xUI.importBox.reset = function(){
     変換ターゲットとなるFileオブジェクト配列を引数にして以下の関数を呼び出す
     全カット変換終了時のコールバック関数を与えることが可能
 */
-xUI.importBox.import = function(targetFiles,callback){
+        console.log("platform : "+appHost.platform);
+xUI.importBox.read = function (targetFiles,callback){
+        console.log("platform : "+appHost.platform);
     if(appHost.platform == "AIR"){
-        return false;
 //***AIR  用の分岐は　単ファイルのままで保留2018 0201
     // File APIを利用できるかをチェック
-    if (window.File) {
+        if (window.File) {
       // 指定されたファイルを取得
-      var input = targetFiles[0];
-	fileBox.currentFile=new air.File(input.name);
-	xUI.data_well.value =fileBox.readContent();
- }
+            var input = targetFiles[0];
+	        fileBox.currentFile=new air.File(input.name);
+	        xUI.data_well.value =fileBox.readContent();
+        }else{
+            return false;
+        }
     }else{
     // File APIを利用できるかをチェック
-    if (window.File) {
-      if(window.FileReader){
+  if (window.File) {
+    if(window.FileReader){
         xUI.importBox.reset();//ここで再初期化する
         xUI.importBox.callback=callback;
 //処理に先行して拡張子とファイルサイズでフィルタして作業リストを作成する
@@ -148,13 +151,8 @@ xUI.importBox.import = function(targetFiles,callback){
         var targetQueue=[];
   for(var ix=0;ix<targetFiles.length;ix++){
     var check = targetFiles[ix];
-    if(
-        (check.name.match(this.allowExtensions)) &&
-        (check.size <= this.maxSize) &&
-        (ix < this.maxCount)
-    ){
-        targetQueue.push(check);
-        this.importCount ++;
+    if((check.name.match(this.allowExtensions)) && (check.size <= this.maxSize) && (ix < this.maxCount)){
+        targetQueue.push(check); this.importCount ++;
     }else{
         console.log("skip file "+check.name );
     }
@@ -201,10 +199,10 @@ xUI.importBox.import = function(targetFiles,callback){
 //FileReaderが無いブラウザ(Safari等)では、お詫びしてオシマイ
 var msg = "no FileReader! :\n　このブラウザはFileReaderオブジェクトをサポートしていません。\n残念ですが、この環境ではローカルファイルは読みだし出来ません。\nThis browser does not support the FileReader object. \n Unfortunately, you can't read local files now.";
 	alert(msg);
-      }
-    }
-  }
-}
+      };//if(window.FileReader)
+    };//if(window.File)
+  };//if(appHost.platform == "AIR")
+};//
 /**
     xUI.importBox.updateTarget()
     チェックのあるカットのみダイアログの値でターゲットのプロパティを更新して
@@ -339,8 +337,8 @@ xUI.importBox.checkValue = function(itm){
     document.getElementById('resetSCiTarget').disabled = false;
 }
 //そのほか
-//    xUI.keyMethod        = KEYMethod;    //キー変換方式
-//    xUI.aeVersion        = AEVersion;    //キーにつけるバージョン番号
+    xUI.keyMethod        = KEYMethod;    //キー変換方式
+    xUI.aeVersion        = AEVersion;    //キーにつけるバージョン番号
 /**     xUIオブジェクト初期化メソッド
  *      編集対象となるXpsオブジェクトを与えて初期化する。
  *      初期化時点の参照変数はconfig.js内で設定された値及び
@@ -2673,12 +2671,9 @@ var lbString=(currentRefLabel.length<3)?
         for (var r=(xUI.dialogSpan);r<(this.XPS.xpsTracks.length-1);r++){
     if(this.XPS.xpsTracks[r].option=="comment"){break;}
     var currentLabel=this.XPS.xpsTracks[r].id;
-BODY_ +='<th id="L';
-BODY_ += r.toString();
-BODY_ += '_';
-BODY_ += pageNumber;
-BODY_ += '_';
-BODY_ += cols.toString();
+    var currentElementId= 'L' + String(r) + '_' + pageNumber + '_' + String(cols);
+
+BODY_ +='<th id="' + currentElementId ;
  switch (this.XPS.xpsTracks[r].option){
 case "still" :BODY_ +='" class="stilllabel annotationText" ' ;break;
 case "effect":
@@ -2695,18 +2690,18 @@ default:BODY_ +='" class="layerlabel annotationText" ';
 BODY_ +=' >';
 if(this.XPS.xpsTracks[r].option=="still"){
  if (currentLabel.match(/^\s*$/)){
-    BODY_ +='<span style="color:'+xUI.sheetborderColor+'";>'+nas.Zf(r,2)+'</span>';
+    BODY_ +='<span id ="'+currentElementId+'" style="color:'+xUI.sheetborderColor+'";>'+nas.Zf(r,2)+'</span>';
  }else{
-    BODY_ +='<a onclick="return false" title="'+currentLabel+'">▼</a>';
+    BODY_ +='<span id ="'+currentElementId+'" title="'+currentLabel+'">▼</span>';
  };
 }else{
  if (this.XPS.xpsTracks[r].id.match(/^\s*$/)){
-    BODY_ +='<span style="color:'+xUI.sheetborderColor+'";>'+nas.Zf(r,2)+'</span>';
+    BODY_ +='<span id ="'+currentElementId+'" style="color:'+xUI.sheetborderColor+'";>'+nas.Zf(r,2)+'</span>';
  }else{
     
     BODY_ +=(currentLabel.length<5)?
         currentLabel:
-        '<a onclick="return false" title="'+currentLabel+'">'+currentLabel.slice(0,4)+'</a>';
+        '<span id ="'+currentElementId+'" title="'+currentLabel+'">'+currentLabel.slice(0,4)+'</span>';
  };
 }
 BODY_ +='</th>';
@@ -6713,7 +6708,7 @@ $("#optionPanelSnd").dialog({
         var localFileLoader = $("#data_well");
         // File API が使用できない場合は諦めます.
         if(!window.FileReader) {
-          alert("File API がサポートされていません。");
+          alert("File API がサポートされていません。:"+new Date());
           return false;
         }
         // イベントをキャンセルするハンドラです.
@@ -7548,7 +7543,9 @@ case	"scene_":	;//セット変更
 case	"about_":	;//セット変更
 	for(var N=0;N<2;N++){
 		if(document.getElementById("myVer"+N)){document.getElementById("myVer"+N).innerHTML= windowTitle};
-		if(document.getElementById("myServer"+N)){document.getElementById("myServer"+N).innerHTML="[no server]"};
+		if(document.getElementById("myServer"+N)){
+		    document.getElementById("myServer"+N).innerHTML=(xUI.onSite)? xUI.onSite:"[no server]";
+		};
 	};
 	break;
 case	"data_":	;
@@ -7962,7 +7959,7 @@ window.addEventListener('DOMContentLoaded', function() {
   if(document.getElementById("myCurrentFile")){
     console.log('addEventListener');
   document.getElementById("myCurrentFile").addEventListener('change', function(e){
-    xUI.importBox.import(this.files,processImport)}, true);//myCrrentFile.addEvent
+    xUI.importBox.read(this.files,processImport)}, true);//myCrrentFile.addEvent
   }
 });//window.addEvent
 
@@ -9405,6 +9402,17 @@ function Pref(){
 "VGA","DV","D1","D1sq",
 "D4","D16","std-200dpi","std-144dpi",
 "HD720","HDTV","HDV"];
+    this.Lists["bgColorList"]=
+["=CUSTOM=,=CUSTOM=,=CUSTOM=",
+"#fff1ba,レモン,れもん",
+"#f8b500,山吹,やまぶき",
+"#88a3af,浅葱,あさぎ",
+"#bce2e8,水色,みずいろ",
+"#fef4f4,さくら,さくらいろ",
+"#e198b4,桃色,ももいろ",
+"#f2c288,びわ,びわ",
+"#afafb0,銀鼠,ぎんねず",
+"#f8f8f8,白練,しろねり"];
 //リスト検索 指配列内の定された要素のサブ要素をあたってヒットしたら要素番号を返す。
 this.Lists.aserch=function(name,ael){if(this[name]){for (var n=0;n<this[name].length;n++){if(this[name][n]==ael)return n}};return -1;}
 
@@ -9438,7 +9446,21 @@ this.chgMyName=function(newName){
 	if((!(xUI.currentUser.sameAs(this.userName)))&&(! this.changed)){this.changed=true;};
     }
 }
-
+//背景カラー変更　引数はエレメントid
+/*  
+    "prefBGColor",　"prefColorpick" または 候補ボタンID "bgColorList##" が引数として与えられる　
+*/
+this.chgColor = function(id){
+	if (! id) id="prefBGColor";
+    var targetColor = document.getElementById(id).value;
+//    if(targetColor == "=CUSTOM="){targetColor=document.getElementById("prefBGColor").value;}
+    document.getElementById("prefBGColor").value = targetColor;
+    document.getElementById("prefColorpick").value = targetColor;
+    document.getElementById("bgColorList").style.backgroundColor = targetColor;
+    
+    document.getElementById("bgColorList").style.backgroundColor = targetColor;
+    return;
+}
 //ブランク関連変更
 this.chgblk=function(id)
 {
@@ -9598,6 +9620,24 @@ with(document){
 
 //シートカラー
     getElementById("prefBGColor").value = xUI.sheetLooks.SheetBaseColor;
+    getElementById("prefColorpick").value = xUI.sheetLooks.SheetBaseColor;
+    var selectButtons = "";
+    for(var btid=0;btid<this.Lists["bgColorList"].length;btid++){
+        var myProps = String(this.Lists["bgColorList"][btid]).split(",");
+        selectButtons += '<button class=colorSelect id="bgColorList'
+        selectButtons += nas.Zf(btid,2);
+        selectButtons += '" onClick="myPref.chgColor(this.id)" value="';
+        selectButtons += (myProps[0]=="=CUSTOM=")? xUI.sheetLooks.SheetBaseColor:myProps[0];
+        selectButtons += '" title="';
+        selectButtons += myProps[2];
+        selectButtons += '" style="background-color:';
+        selectButtons += (myProps[0]=="=CUSTOM=")? xUI.sheetLooks.SheetBaseColor:myProps[0];
+        if (myProps[0]=="=CUSTOM="){
+            selectButtons += ';border-color:black;border-width:1px;'
+        }
+        selectButtons += '"> </button>';
+    }
+    getElementById("bgColorList").innerHTML = selectButtons;
 }
 		if(this.changed){this.changed=false;};
 }
@@ -9680,7 +9720,20 @@ if( document.getElementById("prefBGColor").value != xUI.sheetLooks.SheetBaseColo
 //
 //パネル初期化
 
-this.init=function(){	this.getProp(); }
+this.init=function(){
+    this.getProp();
+// userID control disabled if onSite
+    if (xUI.onSite){
+        document.getElementById('myName').disabled = true;
+    }else{
+        document.getElementById('myName').disabled = false;        
+    }
+    if(serviceAgent.currentStatus=='online-single'){
+        document.getElementById('prefBGColor').disabled = true;
+    }else{
+        document.getElementById('prefBGColor').disabled = false;        
+    }
+}
 
 //パネルを開く
 //すでに開いていたらNOP Return
