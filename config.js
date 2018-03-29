@@ -57,7 +57,7 @@
 	var headerLogo="<img src='images/logo/black.gif' alt='Nekomataya' width=150 height=30 border=0 />";
 	var headerLogo="<img src='//www.nekomataya.info/cgi-bin/garden.cgi?SET=test-logo' alt='Nekomataya' width=150 height=24 border=0 />";
  */
-	var headerLogo="<img src='images/logo/DXtimesheet.png' alt='Nekomataya' width=141 height=24 border=0 />";
+	var headerLogo="<img src='images/logo/UATimesheet.png' alt='Nekomataya' width=141 height=24 border=0 />";
 
 /*
 	var headerLogo_url	="./help/index.html";試験中

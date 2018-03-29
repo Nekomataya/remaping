@@ -5753,6 +5753,17 @@ function nas_Rmp_Startup(){
 //背景カラーを置換
     SheetLooks.SheetBaseColor=SheetBaseColor;
 //シートロゴをアップデート
+/*
+    応急処置
+    ロケーションを確認して　開発／試験サーバ　であった場合はヘッダロゴ画像を差し替える
+*/
+if(location.hostname.indexOf("scivone-dev")>0){
+    headerLogo="<img src='images/logo/UATimesheet_dev.png' alt='Nekomataya' width=141 height=24 border=0 />"
+};
+if(location.hostname.indexOf("remaping-stg")>0){
+    headerLogo="<img src='images/logo/UATimesheet_staging.png' alt='Nekomataya' width=141 height=24 border=0 />"
+};
+console.log(headerLogo);
     document.getElementById("headerLogo").innerHTML=
     "<a href='"+ headerLogo_url +
     "' title='"+ headerLogo_urlComment +
