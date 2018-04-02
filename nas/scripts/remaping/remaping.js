@@ -5784,7 +5784,7 @@ console.log(headerLogo);
     optionString
         コンバート対象のデータがXPSのプロパティ全てを持たない場合があるので
         最低限のプロパティ不足を補うための指定文字列
-        URIencodedIdentifier または　TextIdentifierを指定
+        URIencodedIdentifier または TextIdentifierを指定
         通常はこのデータがファイル名の形式で与えられるのでファイル名をセットする
         空白がセットされた場合は、カット番号その他が空白となる
     overwriteProps
@@ -5824,11 +5824,12 @@ convertXps=function(datastream,optionString,overwriteProps,streamOption){
     if(!streamOption){streamOption=false;}
 // オプションで識別子文字列を受け取る　（ファイル名を利用）
 // 識別子はXps.parseIdentifierでパースして利用
-    if(! optionString){optionString = ''};//'TITLE#EP[subtitle]//s-c=CUTNo.='
+    if(! optionString){optionString = ''};//'=TITLE=#=EP=[=subtitle=]//s-c=CUTNo.=';}
 // optionStringが空文字列の場合は置換処理を行わない
     if(optionString.length){
-        if(optionString.indexOf('_')>=0){optionString=optionString.replace(/_/g,'//');}
-// オプション文字列がカット番号セパレータ'//'を含まない場合　文字列冒頭に'//'を補う
+//ファイル名等でsciセパレータが'__'だった場合'//'に置換
+        if(optionString.indexOf('__')>=0){optionString=optionString.replace(/__/g,'//');}
+// 文字列がsciセパレータ'//'を含まない場合、冒頭に'//'を補って文字列全体をカット番号にする
         if(optionString.indexOf('//') < 0 ){optionString='//' + optionString;}
         var optionTrailer=Xps.parseIdentifier(optionString);
     }else{
