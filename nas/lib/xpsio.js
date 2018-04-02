@@ -1430,23 +1430,24 @@ Xps.prototype.getMap = function (MAP) {
  * カット番号以外の情報はデフォルトの文字列と比較して一致した場合セパレータごと省略
  * オプションで要素の結合状態を編集して返す
  *
- セパレータ文字列は[_#\[]
+ セパレータ文字列は[(__)#\[]
  出力仕様を　クラスメソッド互換に変更
  　オブジェクトメソッドを利用する場合はURIEncodeを使用しないプレーン文字列でやり取りが行われるものとする
  旧:     TITLE_OPUS_SCENE_CUT
- 新:     TITLE#OPUS[subtitle]_sSCENE-cCUT(time)
+ 新:     TITLE#OPUS[subtitle]__sSCENE-cCUT(time)
 
  基本的に’結合文字列をファイル名として使用できる’’ユーザ可読性がある’ことを前提にする
-
+    プロダクションIDとSCiを"__(二連アンダーバー)"でセパレートする
+    各要素にセパレータが含まれる場合は'_ (アンダーバー)'でエスケープを行う…？
  options:
  'full' 全ての要素を含む識別文字列で返す　
-        TITLE#OPUS[subtitle]_sSCENE-cCUT(time)
+        TITLE#OPUS[subtitle]__sSCENE-cCUT(time)
  'cut'
-        #OPUS_sSCENE-cCUT
+        #OPUS__sSCENE-cCUT
  'simple'
-        TITLE#OPUS_sSCENE-cCUT
+        TITLE#OPUS__sSCENE-cCUT
  'complex'
-        TITLE#OPUS[subtitle]_sSCENE-cCUT
+        TITLE#OPUS[subtitle]__sSCENE-cCUT
  * @param opt
  * @returns {string}
  */
@@ -1464,23 +1465,23 @@ if(false){
             }
         }
         myResult.push(this.cut);
-        return myResult.join("_");
+        return myResult.join("__");
     }
 }else{
     var myResult=""
     switch (opt){
     case 'cut':
-        myResult='#'+this.opus+'_s'+this.scene+'-c'+this.cut;
+        myResult='#'+this.opus+'__s'+this.scene+'-c'+this.cut;
     break;
     case 'simple':
-        myResult=this.title+'#'+this.opus+'_s'+this.scene+'-c'+this.cut;
+        myResult=this.title+'#'+this.opus+'__s'+this.scene+'-c'+this.cut;
     break;
     case 'complex':
-        myResult=this.title+'#'+this.opus+'['+this.subtitle+']_s'+this.scene+'-c'+this.cut;
+        myResult=this.title+'#'+this.opus+'['+this.subtitle+']__s'+this.scene+'-c'+this.cut;
     break;
     case 'full':
     default    :
-        myResult=this.title+'#'+this.opus+'['+this.subtitle+']_s'+this.scene+'-c'+this.cut+'('+nas.Frm2FCT(this.time(),3)+')';
+        myResult=this.title+'#'+this.opus+'['+this.subtitle+']__s'+this.scene+'-c'+this.cut+'('+nas.Frm2FCT(this.time(),3)+')';
     }
 
     return myResult;
@@ -2896,11 +2897,12 @@ Xps.stringifyIdf([
      asign/
      オブジェクトメソッドの識別子も解釈可能にする
     
-    　'//'を認識できなかったケースに限り'_'をセパレータとして認識するように変更
+    　'//（二連スラッシュ）'を認識できなかったケースに限り'__（二連アンダーバー）'をセパレータとして認識するように変更
+    　**"_(アンダーバー単独)"はセパレータ以外で使用するケースがあるため要注意
 */
 Xps.parseIdentifier = function(myIdentifier){
     if(! myIdentifier) return false;
-    if(myIdentifier.indexOf( '//' )<0 ){ myIdentifier=myIdentifier.replace(/_/g,'//'); }
+    if(myIdentifier.indexOf( '//' )<0 ){ myIdentifier=myIdentifier.replace(/__/g,'//'); }
     var dataArray = myIdentifier.split('//');
     var result={};
     result.product  = Xps.parseProduct(dataArray[0]);

@@ -70,19 +70,20 @@ xUI.importBox.reset = function(){
 /**
     変換ターゲットとなるFileオブジェクト配列を引数にして以下の関数を呼び出す
     全カット変換終了時のコールバック関数を与えることが可能
-    
+    importBox.importより名称変更
+    特定の環境下で同名の関数がエラーとなるため
 */
 xUI.importBox.read = function(targetFiles,callback){
     if(appHost.platform == "AIR"){
         return false;
 //***AIR  用の分岐は　単ファイルのままで保留2018 0201
     // File APIを利用できるかをチェック
-    if (window.File) {
+  if (window.File) {
       // 指定されたファイルを取得
       var input = targetFiles[0];
 	fileBox.currentFile=new air.File(input.name);
 	xUI.data_well.value =fileBox.readContent();
- }
+  }
     }else{
     // File APIを利用できるかをチェック
     if (window.File) {
@@ -190,8 +191,8 @@ console.log(xUI.importBox);
 xUI.importBox.resetTarget= function(dataTrailer,optionTrailer){
     if (optionTrailer){
       document.getElementById('optionPanelSCI_title').value    = optionTrailer.title;
-      document.getElementById('optionPanelSCI_opus').value     = optionTrailer.opus;
-      document.getElementById('optionPanelSCI_subtitle').value = optionTrailer.subtitle;
+      document.getElementById('optionPanelSCI_opus').value     = optionTrailer.episode;
+      document.getElementById('optionPanelSCI_subtitle').value = optionTrailer.description;
     } else {
       document.getElementById('optionPanelSCI_title').value    = dataTrailer[0].xps.title;
       document.getElementById('optionPanelSCI_opus').value     = dataTrailer[0].xps.opus;
@@ -357,7 +358,7 @@ convertXps=function(datastream,optionString,overwriteProps,streamOption){
 // オプションで識別子文字列を受け取る　（ファイル名を利用）
 // 識別子はXps.parseIdentifierでパースして利用
     if(! optionString){optionString = 'TITLE#EP[subtitle]//s-c=CUTNo.=';}
-    if(optionString.indexOf('_')>=0){optionString=optionString.replace(/_/g,'//');}
+    if(optionString.indexOf('_')>=0){optionString=optionString.replace(/__/g,'//');}
 // オプション文字列がカット番号セパレータ'//'を含まない場合　文字列冒頭に'//'を補う
     if(optionString.indexOf('//') < 0 ){optionString='//' + optionString;}
     var optionTrailer=Xps.parseIdentifier(optionString);
