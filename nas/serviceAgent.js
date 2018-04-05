@@ -3581,10 +3581,11 @@ if(dbg) console.log ('noentry in repository :' +  decodeURIComponent(currentEntr
          return false;
     }
     
-        //currentEntry.issues[0].cutID
+        //currentEntry.issues[0].cutID 
+        // debug : change PATCH to PUT
 if(dbg) console.log(currentEntry.issues[0].cutID);
 	    $.ajax({
-		    type : 'PATCH',
+		    type : 'PUT',
 		    url : this.url+'/api/v2/cuts/:'+currentEntry.issues[0].cutID+'/discard',
 		    success : function(result) {
 		        currentEntry.issues.pop();
