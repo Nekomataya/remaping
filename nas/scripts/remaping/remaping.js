@@ -1375,18 +1375,20 @@ var range=[this.floatSourceAddress,add(this.floatSourceAddress,this.Selection)];
 }
 /*
     現在のファイルからファイル名を作成
-    マクロを付けたい
+    引数でマクロを受け付ける
+    引数が空の場合は標準識別子で返す $TITLE$#$OPUS$[$SUBTITLE$]__s$SCENE$-c$CUT$($TC$)
+    
 */
 xUI.getFileName=function(myFileName){
 //    myResult=(typeof myFileName=="undefined")?"$TITLE$OPUSs$SCENEc$CUT($TC)":myFileName;
-    myResult=(typeof myFileName=="undefined")?"$TITLE$OPUSc$CUT":myFileName;
-    myResult=myResult.replace(/\$TITLE/g,this.XPS.title);
-    myResult=myResult.replace(/\$SUBTITLE/g,this.XPS.subtitle);
-    myResult=myResult.replace(/\$OPUS/g,this.XPS.opus);
-    myResult=myResult.replace(/\$SCENE/g,this.XPS.scene);
-    myResult=myResult.replace(/\$CUT/g,this.XPS.cut);
-    myResult=myResult.replace(/\$TIME/g,this.XPS.time());
-    myResult=myResult.replace(/\$TC/g,this.XPS.getTC(this.XPS.time()));
+    myResult=(typeof myFileName=="undefined")?"$TITLE$#$OPUS$[$SUBTITLE$]__s$SCENE$-c$CUT$($TC$)":myFileName;
+    myResult=myResult.replace(/\$TITLE\$/g,this.XPS.title);
+    myResult=myResult.replace(/\$SUBTITLE\$/g,this.XPS.subtitle);
+    myResult=myResult.replace(/\$OPUS\$/g,this.XPS.opus);
+    myResult=myResult.replace(/\$SCENE\$/g,this.XPS.scene);
+    myResult=myResult.replace(/\$CUT\$/g,this.XPS.cut);
+    myResult=myResult.replace(/\$TIME\$/g,this.XPS.time());
+    myResult=myResult.replace(/\$TC\$/g,this.XPS.getTC(this.XPS.time()));
     myResult=myResult.replace(/[\s\.]/g,"");
     myResult=myResult.replace(/:;\/\\|\,\*\?"＜＞/g,"_");//"
     
@@ -5758,10 +5760,10 @@ function nas_Rmp_Startup(){
     ロケーションを確認して　開発／試験サーバ　であった場合はヘッダロゴ画像を差し替える
 */
 if(location.hostname.indexOf("scivone-dev")>0){
-    headerLogo="<img src='images/logo/UATimesheet_dev.png' alt='Nekomataya' width=141 height=24 border=0 />"
+    headerLogo="<img src='/images/logo/UATimesheet_dev.png' alt='Nekomataya' width=141 height=24 border=0 />"
 };
 if(location.hostname.indexOf("remaping-stg")>0){
-    headerLogo="<img src='images/logo/UATimesheet_staging.png' alt='Nekomataya' width=141 height=24 border=0 />"
+    headerLogo="<img src='/images/logo/UATimesheet_staging.png' alt='Nekomataya' width=141 height=24 border=0 />"
 };
 console.log(headerLogo);
     document.getElementById("headerLogo").innerHTML=
@@ -6468,9 +6470,10 @@ document.getElementById('loginstatus_button').disabled=true;
 //サーバ既存エントリ
             var isNewEntry = (startupXPS.length==0)? true:false;
 //サーバ上で作成したエントリの最初の1回目はサーバの送出データが空
-//空の状態でかつトークンがある場合が存在するので判定に注意！       　           
+//空の状態でかつトークンがある場合が存在するので判定に注意！
+//トークンあり、送出データが存在する場合は、識別子同期自体を省略すること
              if($("#backend_variables").attr("data-cut_token").length){
-//console.log('has cut token');
+console.log('has cut token');
     　           serviceAgent.currentServer.getRepositories(function(){
                      var RepID = serviceAgent.getRepsitoryIdByToken($("#backend_variables").attr("data-organization_token"));
     　               serviceAgent.switchRepository(RepID,function(){
@@ -6485,9 +6488,11 @@ serviceAgent.currentRepository.getProducts(function(){
                 serviceAgent.currentRepository.getSCi(function(){
                     var myIdentifier=serviceAgent.currentRepository.getIdentifierByToken(myCutToken);
                     if((myIdentifier)&&(Xps.compareIdentifier(Xps.getIdentifier(XPS),myIdentifier) < 5)){
-//console.log('syncIdentifier:');
-//console.log(decodeURIComponent(myIdentifier));
-                        xUI.XPS.syncIdentifier(myIdentifier,false);
+console.log('syncIdentifier:');
+console.log(decodeURIComponent(myIdentifier));
+console.log(startupXPS.length);
+                        xUI.XPS.syncIdentifier(myIdentifier,(startupXPS.length > 0));
+                        //時間調整の有無をスタートアップXPSの存在で調整する
                     }
                     if( startupXPS.length==0 ){
 //console.log('detect first open no content');//初回起動を検出　コンテント未設定
@@ -6552,10 +6557,11 @@ if(dbg) console.log('old style new document');
                           myIdentifier = myIdentifier+'('+xUI.XPS.time()+')';
                           var tarceValue = Xps.compareIdentifier(Xps.getIdentifier(xUI.XPS),myIdentifier);
                          if( traceValue < 0){
-    　                       if(dbg) console.log('syncIdentifier new Entry');
-    　                       if(dbg) console.log(Xps.getIdentifier(xUI.XPS));
-    　                       if(dbg) console.log(myIdentifier);
-    　                       if(dbg) console.log(Xps.compareIdentifier(Xps.getIdentifier(xUI.XPS),myIdentifier));
+console.log('syncIdentifier new Entry');
+console.log(Xps.getIdentifier(xUI.XPS));
+console.log(myIdentifier);
+console.log(Xps.compareIdentifier(Xps.getIdentifier(xUI.XPS),myIdentifier));
+    
     　                       XPS.syncIdentifier(myIdentifier,false);
         xUI.XPS.line     = new XpsLine(nas.pm.pmTemplate[0].line);
         xUI.XPS.stage    = new XpsStage(nas.pm.pmTemplate[0].stages[0]);
