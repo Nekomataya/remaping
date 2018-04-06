@@ -3586,7 +3586,7 @@ if(dbg) console.log ('noentry in repository :' +  decodeURIComponent(currentEntr
 if(dbg) console.log(currentEntry.issues[0].cutID);
 	    $.ajax({
 		    type : 'PUT',
-		    url : this.url+'/api/v2/cuts/:'+currentEntry.issues[0].cutID+'/discard',
+		    url : this.url+'/api/v2/cuts/'+currentEntry.issues[0].cutID+'/discard',
 		    success : function(result) {
 		        currentEntry.issues.pop();
                 xUI.resetSheet(new Xps(5,144),new Xps(5,144)) ;

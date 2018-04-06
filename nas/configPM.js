@@ -24,9 +24,10 @@
  クラスのコレクションはテンプレートとして機能
                         assetName           name            hasXPS      code    shortName   description     endNode     linkStages
 */
-nas.Pm.assets.addAsset("SCInfo"          ,["コンテチップ"      ,true  ,"SCI"  ,"コンテ","絵コンテから生成した基礎情報",false,["laika","animatic","roughSketch","layout","1stKeydrawing"]]);
-nas.Pm.assets.addAsset("draft"           ,["ラフスケッチ"      ,true  ,"DRFT" ,"ラフ"  ,"「原図のない」ラフスケッチ",false,["laika","animatic","roughSketch","layout","1stKeydrawing"]]);
-nas.Pm.assets.addAsset("layout"          ,["レイアウト"        ,true  ,"__LO" ,"LO"    ,"レイアウト（原図構成）付きの時間情報ありのスケッチ",false,["laika","animatic","roughSketch","layout","1stKeydrawing","layoutProof","layoutA-D","keydrawing","2ndKeydrawing"]]);
+nas.Pm.assets.addAsset("SCInfo"          ,["コンテチップ"      ,true  ,"SCI"  ,"コンテ","絵コンテから生成した基礎情報",false,["leica","animatic","roughSketch","layout","1stKeydrawing"]]);
+nas.Pm.assets.addAsset("leica"          ,["プリビズ"      ,true  ,"prev"  ,"プリビズ","プリビジュアライゼーション素材",false,["leica","animatic","roughSketch","layout","1stKeydrawing"]]);
+nas.Pm.assets.addAsset("draft"           ,["ラフスケッチ"      ,true  ,"DRFT" ,"ラフ"  ,"「原図のない」ラフスケッチ",false,["leica","animatic","roughSketch","layout","1stKeydrawing"]]);
+nas.Pm.assets.addAsset("layout"          ,["レイアウト"        ,true  ,"__LO" ,"LO"    ,"レイアウト（原図構成）付きの時間情報ありのスケッチ",false,["leica","animatic","roughSketch","layout","1stKeydrawing","layoutProof","layoutA-D","keydrawing","2ndKeydrawing"]]);
 nas.Pm.assets.addAsset("keyAnimation"    ,["原画"              ,true  ,"__KD" ,"原"    ,"キーアニメーション keyDrawing",false,["KDA-D","2ndKdA-D","checkKD","preProofAD","AD"]]);
 nas.Pm.assets.addAsset("AnimationDrawing",["動画"              ,true  ,"__AD" ,"動"    ,"アニメーションドローイング",false,["ADA-D","proofAD","A-D","ADscan","ADcleanUp",'HMechanicalTrace']]);
 nas.Pm.assets.addAsset("cell"            ,["セル"              ,true  ,"CELL" ,"仕"    ,"員数の揃ったコンポジット素材（未完成のものも含む）",true,["AdcleanUp","paint","proofPaint","retouchCell"]]);
@@ -50,7 +51,7 @@ nas.Pm.assets.addAsset("ALL"             ,["（全アセット）"    ,true  ,"_
  *description 日本語の名称を兼ねた説明？
  *output ステージの出力するアセット種別 文字列
  *
- *nas.Pm.stages[ステージ名]={name:一般名,code:短縮コード,shortName:短縮名,description:解説,output:出力アセット};
+ *nas.Pm.stages[ステージ名]={name:一般名,code:短縮コード(4biteまで),shortName:短縮名,description:解説,output:出力アセット};
  *
  *nas.Pm.stages には、その作品で定義されたステージのリファレンスが格納される。
  *管理DBと連結される場合は、このオブジェクトとDB上のステージ定義テーブルが対照・連結される
@@ -72,7 +73,8 @@ nas.Pm.stages.addStage("colorCoordination" ,["色指定"                     ,"C
 nas.Pm.stages.addStage("coordinationModel" ,["色指定カラーモデル"         ,"_ccM"    ,"色指定M" ,"カラーモデル（パレット）型カット別彩色指定データ(animo toonz等)" ,"colorDesign"]);
 nas.Pm.stages.addStage("bgDesign"          ,["美術設定"                   ,"artD"    ,"美設" ,"プロダクション内デザインワーク" ,"BGDsign"]);
 nas.Pm.stages.addStage("SCInfo"            ,["コンテチップ"               ,"_SCI"    ,"コンテチップ" ,"絵コンテを分解してシーンをプロジェクトデータ化したものイニシャルデータなのでこれを出力する同名ステージは無い" ,"SCInfo"]);
-nas.Pm.stages.addStage("laika"             ,["ライカ"                     ,"lika"    ,"ライカ" ,"タイミングを構成したモーションラフ" ,"draft"]);
+nas.Pm.stages.addStage("leica"             ,["ライカ"                     ,"leica"    ,"ライカ" ,"タイミングを構成したモーションラフ" ,"draft"]);
+nas.Pm.stages.addStage("contChip"             ,["絵コンテ撮"                     ,"cntC"    ,"コンテ撮" ,"コンテチップを構成したモーションラフ" ,"draft"]);
 nas.Pm.stages.addStage("animatic"          ,["プリビジュアライゼーション" ,"__pv"    ,"PV" ,"同上" ,"layout"]);
 nas.Pm.stages.addStage("roughSketch"       ,["ラフ原画"                   ,"drft"    ,"ラフ原" ,"同上" ,"drfat"]);
 nas.Pm.stages.addStage("layout"            ,["レイアウト"                 ,"LO"      ,"LO" ,"レイアウト上がり(原図あり)" ,"layout"]);
@@ -155,10 +157,11 @@ nas.Pm.pmTemplate.members.push(new nas.Pm.LineTemplate(nas.Pm,"本線",["レイ�
 nas.Pm.pmTemplate.members.push(new nas.Pm.LineTemplate(nas.Pm,"背景美術",["原図整理","背景","美術検査"]));
 */
 nas.Pm.pmTemplate.addTemplates([
-    ["本線",["レイアウト","原画","動画","色指定","トレス","色トレス","ペイント","セル特効","撮出し検査","撮影"]],
+    ["本線",["コンテ撮","レイアウト","原画","第一原画","作画監督修正","第二原画","発注前動画検査","動画","色指定","トレス","色トレス","ペイント","セル特効","撮出し検査","撮影"]],
     ["背景美術",["原図整理","背景","美術検査"]]
     ])
 /*
+    ["本線",["レイアウト","原画","動画","色指定","トレス","色トレス","ペイント","セル特効","撮出し検査","撮影"]],
     ["本線",["コンテ撮","レイアウト","原画","第一原画","作画監督修正","第二原画","発注前動画検査","動画","色指定","トレス","色トレス","ペイント","セル特効","撮出し検査","撮影"]],
     ["本線",["コンテ撮","レイアウト","原画","動画","色指定","トレス","色トレス","ペイント","セル特効","撮出し検査","撮影"]],
 */
