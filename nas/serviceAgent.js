@@ -294,6 +294,14 @@ ServiceNode.prototype.getRepositories=function(callback){
                     serviceAgent.currentServer
                 ));
                 serviceAgent.repositories[serviceAgent.repositories.length - 1].token = result.data.organizations[rix].token;
+    if(result.data.organizations[rix].owner_name){;//オーナ情報が全てのサーバにに行き渡るまでは判定して避ける
+                serviceAgent.repositories[serviceAgent.repositories.length - 1].owner = new nas.UserInfo(
+                    result.data.organizations[rix].owner_name,
+                    {'token':result.data.organizations[rix].owner_token}
+                );
+    }else{
+                serviceAgent.repositories[serviceAgent.repositories.length - 1].owner = new nas.UserInfo();
+    };//
             };
             var myContents="";
     myContents += '<option selected value=0> = local Repository =</option>' ;
@@ -799,6 +807,8 @@ productsData追加
 localRepository={
     name:'localStrageStore',
     url:'localStorage:',
+    owner:new nas.UserInfo(),
+//    owner:xUI.currentUser,
 //    currentProduct:"",
 //    currentSC:"",
 //    currentLine:"",
@@ -1742,8 +1752,23 @@ if(dbg) console.log('編集権利取得失敗');
         if(callback2 instanceof Function){ setTimeout(callback2,10)};
         return false ;
 }
+/**
+    リポジトリの情報をダイアログで表示
 
-
+*/
+localRepository.showInformation=function (){
+    var ownerString = (xUI.currentUser)? xUI.currentUser.toString(): nas.localize({en:"(Could not acquire.)",ja:"(取得できません)"});
+    var title = nas.localize(nas.uiMsg.aboutOf,this.name);
+    var msg = "";
+    msg += nas.localize(nas.uiMsg.serviceNode) +" : "+ "localRepository<br>";
+    msg += nas.localize(nas.uiMsg.repositoryName) +" : " + this.name +"<br>";
+    msg += nas.localize(nas.uiMsg.repositoryOwner) + " : " + ownerString + "<br>";
+    msg += nas.localize({
+en:"<hr>** This is the area where temporary files are stored using local storage of the browser.　Data can not be shared between users in this repository.<br>",
+ja:"<hr>** ブラウザのローカルストレージを使用した、一時ファイルを保存する領域です。<br>ユーザ間のデータ共有はできません。<br>"
+});
+    nas.showModalDialog("alert",msg,title);
+}
 /*  test data 
     localRepository.currentProduct = "ももたろう#12[キジ参戦！ももたろう地獄模様！！]";
     localRepository.currentSC      = "S-C005 (12+00)/011(3+00)/014(3+00)";
@@ -1757,6 +1782,8 @@ localRepository.pushStore(XPS);
 localRepository.getList();
 //localRepository.entryList[0];
 localRepository.getEntry(localRepository.entryList[0]);
+
+localRepository.showInformation();
 */
 /**
     最終作業の破棄
@@ -1802,9 +1829,13 @@ if(dbg) console.log ('noentry in repository :' +  decodeURIComponent(currentEntr
 リポジトリに 相当する構造は Team
 チームごとにリポジトリが設定される
 Teamへアクセスするためのトークンは、アクセス毎に設定される
+リポジトリは、複数の同一名称のリポジトリが想定されるため、補助的にオーナー情報を保持する仕様を追加
+特に同作品の複製を見分けるために必須　APIに追加
 */
+//NetworkRepository=function(repositoryName,repositoryOwner,myServer,repositoryURI){}
 NetworkRepository=function(repositoryName,myServer,repositoryURI){
     this.name = repositoryName;
+//    this.owner = new nas.UserInfo(repositoryOwner);//リポジトリオーナー情報
     this.service = myServer;//リポジトリの所属するサーバ
     this.url=(typeof repositoryURI == 'undefined')?this.service.url:repositoryURI;//サーバとurlが異なる場合は上書き
     this.token=null;//nullで初期化
@@ -1823,6 +1854,23 @@ NetworkRepository=function(repositoryName,myServer,repositoryURI){
     this.currentIssue;
     this.productsData=[];//workTitleCollectionで置換？タイトルキャリアでノードルートになる
     this.entryList = new listEntryCollection();
+}
+/**
+    リポジトリ情報表示メソッド
+    引数:なし
+    リポジトリのオーナー情報を表示してリポジトリ（共有・チーム）へのアクセスリンクを提供する
+    リポジトリへのリンクはリポジトリ名を使用
+    
+*/
+NetworkRepository.prototype.showInformation = function(){
+    var ownerString = (this.owner.handle)? this.owner.handle: nas.localize({en:"(Could not acquire.)",ja:"(取得できません)"});
+    var title = nas.localize(nas.uiMsg.aboutOf,this.name);
+    var msg = "";
+    msg += nas.localize(nas.uiMsg.serviceNode) +" : <a href='" +this.service.url+"' target='_blank'>"+ this.service.name + "("+this.service.url +")</a><br>";
+    msg += nas.localize(nas.uiMsg.repositoryName) +" : " + this.name +"<br>";
+    msg += nas.localize(nas.uiMsg.repositoryOwner) + " : " + ownerString + "<br>";
+//    msg += "    アクセス先 : " + this.owner.token + "<br>";
+    nas.showModalDialog("alert",msg,title);
 }
 /**
 各層のエントリを識別子で取得
@@ -3813,9 +3861,12 @@ serviceAgent.switchRepository=function(myRepositoryID,callback){
 }else{
         serviceAgent.currentRepository = serviceAgent.repositories[myRepositoryID];
         if((myRepositoryID > 0)&&(myRepositoryID<this.repositories.length)){
-            serviceAgent.currentServer=serviceAgent.currentRepository.service;
+//            serviceAgent.currentServer=serviceAgent.currentRepository.service;
+            serviceAgent.switchService(serviceAgent.currentRepository.service);
         } else {
-            serviceAgent.currentServer     = null;
+//            serviceAgent.currentServer     = null;
+console.log('reset');console.log(serviceAgent.currentServer);
+            //serviceAgent.switchService();
         };
 }
         if(document.getElementById('repositorySelector').value != myRepositoryID){
@@ -3860,6 +3911,7 @@ serviceAgent.switchRepository=function(myRepositoryID,callback){
 //            documentDepot.rebuildList(callback);
         }
     };
+    sync('server-info')
     return this.currentRepository;
 };
 /**

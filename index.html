@@ -512,10 +512,17 @@ serviceAgent.pushEntry(xUI.XPS,function(){xUI.setStored("current");sync();
 	target='pref_'
 	title="各種環境設定"
 >Pref</A></li>
+
+<li><span id=pMrepositoryInfo-d class='pM pM-alt'></span><A id=pMrepositoryInfo
+	HREF='javascript:void(0)'
+	onclick='serviceAgent.currentRepository.showInformation();return false;'
+	title="repository infomation"
+>リポジトリの情報を見る</A> </li>
+
 <li><span id=pMmemoEdit-d class='pM pM-alt'></span><A id=pMmemoEdit
 	HREF='javascript:void(0)'
 	onclick='xUI.sWitchPanel("memo");return false;'
-	title="reload application"
+	title="memo Edit"
 >メモ編集</A> </li>
 <li><span id=pMreload-d class='pM pM-alt'></span><A	id=pMreload
 	HREF='javascript:void(0)'
@@ -955,12 +962,17 @@ serviceAgent.pushEntry(xUI.XPS,function(){xUI.setStored("current");sync();
 </span>
 
 <!--	ツールバーボタン/toolIcons	-->
-
 	<!-- logo -->
 <span id=headerLogo style="float:right">
 <b>りまぴん</b>
-	<!-- logo -->
 </span>
+	<!-- logo -->
+    <!--リポジトリ Repository/Team-->
+<span id=headerRepository style="float:right;vertical-align:bottom;height:24px;padding-right:12px;color:snow;">
+<b>Repository</b>
+</span>
+    <!--リポジトリ Repository/Team-->
+
 </div>
 <!--	/ツールバー/toolbarHeade	-->
 

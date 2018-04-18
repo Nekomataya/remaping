@@ -367,6 +367,8 @@ nas.UserInfo = function UserInfo(nameDescription){
         this.email      = infoArray[1];
     }
     if(String(this.email).match(/\s/)){ this.email.replace(/\s/g,'') };
+//追加プロパティを引数として与える場合は、第二引数オブエジェクトで {props:value}
+    if(arguments.length>1){for(var prop in arguments[1]) this[prop] = arguments[1][prop]};
 }
 nas.UserInfo.prototype.toString = function(opt){
     if(! opt) opt = 0;

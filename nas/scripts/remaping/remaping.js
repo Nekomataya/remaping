@@ -6411,7 +6411,7 @@ document.getElementById("UIheader").style.display="none";
      エレメントが存在すればon-site
  */
 　   if(document.getElementById('backend_variables')){
-//console.log('application server-onsite');
+console.log('Application server-onsite');
         if (serviceAgent.servers.length==1) {
             serviceAgent.switchService(0);
         }else{
@@ -6584,7 +6584,7 @@ console.log(Xps.compareIdentifier(Xps.getIdentifier(xUI.XPS),myIdentifier));
 　       } else {
 //マルチドキュメントモード
 // リポジトリのIDは不問 とりあえず１(ローカル以外)
-if(dbg) console.log('onsite multi-document mode');
+console.log('onsite multi-document mode');
     　       serviceAgent.currentServer.getRepositories(function(){
 //    　           serviceAgent.switchRepository(1,documentDepot.rebuildList);
     　           serviceAgent.switchRepository(1);
@@ -6594,8 +6594,9 @@ if(dbg) console.log('onsite multi-document mode');
 　       }
 //if(serviceAgent.currentRepository.entry(Xps.getIdentifier(xUI.XPS))),
 　   }else{
-if(dbg) console.log('Application Offsite');
+console.log('Application Offsite');
 //オフサイトモード
+    console.log(serviceAgent.currentServer);
 //オンサイト専用UIを隠す
             $("li#pMos").each(function(){$(this).hide()});
             $("li#pMom").each(function(){$(this).hide()});
@@ -6611,11 +6612,12 @@ if(dbg) console.log('Application Offsite');
 //localRepositoryの設定を行う
     serviceAgent.currentRepository.getProducts();
     serviceAgent.switchRepository();
-//        sync('server-info')
+        sync('server-info');
 　   }
 //シートボディを締める
 //    document.getElementById("sheet_body").innerHTML=SheetBody+"<div class=\"screenSpace\"></div>";
 
+    console.log(serviceAgent.currentServer);
 
 /*
 // 初回ページレンダリングでグラフィックパーツを配置
@@ -7156,6 +7158,9 @@ importControllers    ;//インポートリードアウトコントロール
 function sync(prop){
 if (typeof prop == 'undefined') prop = 'NOP_';
 	switch (prop){
+case    "server-info":
+        document.getElementById('headerRepository').innerHTML='<a onclick="serviceAgent.currentRepository.showInformation();" title="'+serviceAgent.currentRepository.owner.handle+'"><b>'+serviceAgent.currentRepository.name+'</b></a>';
+        break;
 case    "importControllers":
 //読み出しコントローラ抑制
     if(
@@ -7178,6 +7183,7 @@ case    "importControllers":
         document.getElementById('dataLoaderGet').disabled=false;   //変換パネルの取り込みボタン
         document.getElementById('myCurrentFile').disabled=false;   //ファイルインプット
     }
+        break;
 case    "recentUsers":
 //ダイアログ類から参照される最近のユーザリスト
     var rcuList = "";

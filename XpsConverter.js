@@ -329,7 +329,7 @@ var processImport=function(){
     以下形式のオブジェクトで　overwriteProps を与えると固定プロパティの指定が可能
     {
         "title":"タイトル文字列",
-        "epispde":"エピソード文字列",
+        "episode":"エピソード文字列",
         "description":" エピソードサブタイトル文字列",
         "cut":"カット番号文字列",
         "time":"カット尺文字列　フレーム数またはTC"

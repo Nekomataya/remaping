@@ -131,6 +131,11 @@ nas.uiMsg.saveAndClose          = {en: "save and close", ja: "保存して閉じ
 nas.uiMsg.savePsdPlease         = {en: "Please save the document in psd format.", ja: "ドキュメントをpsd形式で保存してください。"};
 nas.uiMsg.saveToDonloadfolder   = {en:"save to download folder",ja:"ダウンロードフォルダに保存"};
 nas.uiMsg.saveToDonloadfolderSwap = {en:"save to download folder",ja:"ダウンロードフォルダに %1 を保存"};
+
+nas.uiMsg.serviceNode           = {en: "service node", ja: "共有サーバ"};
+nas.uiMsg.repositoryName        = {en:"share name",ja:"共有名"};
+nas.uiMsg.repositoryOwner        = {en:"share owner",ja:"共有オーナー"};
+
 nas.uiMsg.scene                 = {en: "Scene", ja: "シーン"};
 nas.uiMsg.sceneCut              = {en: "S-C", ja: "S-C"};
 nas.uiMsg.setGuideLayer         = {en: "setGuideLayer", ja: "ガイドレイヤにする"};
