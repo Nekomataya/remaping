@@ -5,7 +5,6 @@
 <title>remaping..</title>
 
 <link rel="shortcut icon" href="./icons/favicon.ico">
-
 <link href="template/remaping.css" type="text/css" rel=stylesheet media="screen,tv">
 <link href="template/printout.css" type="text/css" rel=stylesheet media="print">
 
@@ -85,10 +84,11 @@
 <body 
 	onload="startupTooltip();var nRS = setTimeout('nas_Rmp_Startup()',10);nas.LangPack.chgLocale('ja');serviceAgent.init();SoundEdit.panelInit();"
 	onbeforeunload="return nas_Rmp_reStart();"
-	onContextMenu	=" return true"
-	onSelectStart="return false"
-	onScroll="xUI.onScroll()"
+	onContextMenu	=" return false;"
+	onSelectStart="return false;"
+	onScroll="xUI.onScroll();"
 >
+<!--	onKeyDown='if(document.getElementById("iNputbOx")!==document.activeElement){document.getElementById("iNputbOx").focus();};xUI.keyDwon(event)' -->
 <div id=overlayHeadline >
 <div class=fixedHeadline id=UIheader>
 <div class=fixedHeadline id=UIheaderScrollV
@@ -1051,9 +1051,9 @@ serviceAgent.pushEntry(xUI.XPS,function(){xUI.setStored("current");sync();
 	class=iNputbOx
 	type=text
 	size=24
-	onKeyDown="return xUI.keyDown(event);"
+	onKeyDown ="return xUI.keyDown(event);"
 	onKeyPress="return xUI.keyPress(event);"
-	onKeyUp="return xUI.keyUp(event);"
+	onKeyUp   ="return xUI.keyUp(event);"
 	title="シートにデータを入力します。"
 > 
 <!--
@@ -1253,7 +1253,9 @@ class=optionPanel id=optionPanelProductManagement
 	id=pmfui-new
     class='pmControl pmControl-new' 
     title='新規カットを登録'
-	onclick='serviceAgent.addEntry(xUI.XPS,function(){
+	onclick='xUI.storeDocument();'
+<!--
+	'serviceAgent.addEntry(xUI.XPS,function(){
     var myIdentifier = Xps.getIdentifier(xUI.XPS,false);
     serviceAgent.currentRepository.getSCi(function(){
         serviceAgent.currentRepository.getEntry(myIdentifier);
@@ -1261,6 +1263,7 @@ class=optionPanel id=optionPanelProductManagement
 },function(){
     alert("データ登録失敗");
 });'
+-->
 >新規登録</button>
     </div>
 
@@ -2191,6 +2194,11 @@ You can register to the repository in bulk.
 Please uncheck unnecessary cuts
 Execute with [store SCi] button
 <br>
+現在のタイムシートをリポジトリに登録します。
+
+タイトル、エピソード、カット番号を確認して
+初期工程を選択してください。
+カットに指名メッセージを添えることができます。
 -->
 </span>
 <span class=titleInputLB >TITLE:</span>
@@ -2221,13 +2229,13 @@ Execute with [store SCi] button
     <input  class='SCiInput SCiInput_Number' id=optionPanelSCI_%ID%_sc type=text value='###'
         onChange='xUI.importBox.checkValue(this);'
     >
-<!-- 時間編集UI -->
-<span class=timeInputUI >
+<!-- 時間編集UI ボタン付き
+<span class=timeInputUIwithBt >
 (
 <input
     type = text
     class=timeInputTC 
-    id = 'optionPanelSCI_%ID%_time'
+    id = 'optionPanelSCI_%ID%_time_'
     value ='00+00 .'
     onMouseDown = 'nas.sliderVALUE([event,this.id,"288","1","0",nas.FCT2Frm(this.value)]);'
     onChange ='xUI.importBox.checkValue(this)'
@@ -2255,7 +2263,21 @@ Execute with [store SCi] button
 </button>
     </span>
 <br>
+</span> -->
+<!-- 時間編集UI ボタンなし-->
+<span class=timeInputUI >
+(
+<input
+    type = text
+    class=timeInputTC 
+    id = 'optionPanelSCI_%ID%_time'
+    value ='00+00 .'
+    onChange ='xUI.importBox.checkValue(this)'
+>
+)
+<br>
 </span>
+
 <!-- 時間編集UI -->
 </div>
 <!-- 以上カット別テンプレート -->

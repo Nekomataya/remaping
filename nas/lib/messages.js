@@ -34,10 +34,11 @@ nas.uiMsg.atCreateNewLayer      = {en: "to Create a new Layer", ja: "新規レ�
 nas.uiMsg.backgroundColor       = {en: "background color", ja: "背景色"};
 
 
+nas.uiMsg.confirmEdit           = {en:'(You can edit the contents of the text box.)',ja:'(テキストボックスの内容を編集できます)'};
 nas.uiMsg.confirmOk             = {en:'Is it OK?',ja:'よろしいですか？'};
 nas.uiMsg.confirmExecute        = {en:"Do you want to run it?",ja:"実行してよろしいですか?"};
-nas.uiMsg.confirmCallecho       = {en:"Save the document in the download folder with the following name.\nIs it OK?",ja:"次の名前でダウンロードフォルダに書類を保存します。\nよろしいですか？"};
-nas.uiMsg.confirmCallechoSwap   = {en:"Save %1 in the download folder with the following name.\nIs it OK?",ja:"次の名前でダウンロードフォルダに %1 を保存します。\nよろしいですか？"};
+nas.uiMsg.confirmCallecho       = {en:"Save the document in the download folder with the following name.",ja:"次の名前でダウンロードフォルダに書類を保存します。"};
+nas.uiMsg.confirmCallechoSwap   = {en:"Save %1 in the download folder with the following name.",ja:"次の名前でダウンロードフォルダに %1 を保存します。"};
 nas.uiMsg.baseResolution        = {en: "BaseResolution", ja: "基準解像度"};
 nas.uiMsg.BG                    = {en: "BG", ja: "背景"};
 nas.uiMsg.Book                  = {en: "MG/FG", ja: "BOOK"};
@@ -292,7 +293,7 @@ nas.uiMsg.dmDocumentNosaveExport= {
     en: "Document has not been saved. Do you want to export?",
     ja: "ドキュメントは保存されていません。書出しますか？"
 };
-nas.uiMsg.dmDocumentConfirmOKCancel = {
+nas.uiMsg.dmDocumentConfirmOkCancel = {
     en:"OK:save / Cancel:coninue without saveing",
     ja:"OK:保存する / Cancel:保存せずに続行"
 };

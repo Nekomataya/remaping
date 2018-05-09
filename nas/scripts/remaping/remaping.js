@@ -1569,7 +1569,7 @@ break;
     }
 }else{
     var msg  = localize(nas.uiMsg.dmDocumentNosaveExport);//エクスポートしますか？
-    　　msg += "\n"+localize(nas.uiMsg.dmDocumentConfirmOKCancel)+"\n";//
+    　　msg += "\n"+localize(nas.uiMsg.dmDocumentConfirmOkCancel)+"\n";//
     var myAction=confirm(msg);
     if(myAction){
         //保存処理　後でテンポラリファイルを実装しておくこと        
@@ -4116,21 +4116,27 @@ case	67 :		;	//[ctrl]+[C]/copy
 		this.yank();
 		return false;}else{return true}
 	break;
-/*
 case	79 :		;	//[ctrl]+[O]/ Open Document
-	if ((e.ctrlKey)&&(! e.shiftKey))	{
-		this.openDocument();
-		return false;}else{return true}
-	break;
-case	83 :	alert("SSS");	//[ctrl]+[S]/ Save or Store document
-	if (e.ctrlKey) {
-		 if(e.shiftKey){this.storeDocument("as");}else{this.storeDocument();}
-		return false;
-	}else{
-		return true
+	if ((e.ctrlKey)||(e.metaKey)) {
+		 if(e.shiftKey){
+		    this.openDocument("localFile");
+		}else{
+		    this.openDocument();
+		}
 	}
+//	if ((e.ctrlKey)&&(! e.shiftKey))	{this.openDocument();}
+	return false;
 	break;
-*/
+case	83 :    ;	//[ctrl]+[S]/ Save or Store document
+	if ((e.ctrlKey)||(e.metaKey)) {
+		 if(e.shiftKey){
+		    this.storeDocument("as");
+		}else{
+		    this.storeDocument();
+		}
+	}
+		return false;
+	break;
 case	86 :		;	//[ctrl]+[V]/paste
 	if ((e.ctrlKey)||(e.metaKey))	{
 		this.paste();
@@ -4928,16 +4934,87 @@ default    :    return true;
 //
 //    xUI.Mouse.action    =false    ;//マウスアクション保留フラグ
 //    xUI.Mouse.rID=false    ;//マウスカーソルID
-//ドキュメントを開く
-xUI.openDocument=function(){
-    if(fileBox.openFileDB){fileBox.openFileDB();}else{this.sWitchPanel("Data");}
+/** ドキュメントを開く
+    引数'localFile'の場合は、サーバリポジトリでなくローカルファイルインポートを優先する。
+    fileBox.openFileDBが関数として存在する場合は、　AIR準拠環境でローカルファイルの操作が可能なので実行
+    それ以外は、インポート手順に従ってローカルファイルチューザーを提示
+    失敗時はNOP
+    引数なしのケースでは、リポジトリの操作を行う。（リポジトリドキュメントチューザーを提示）
+    
+*/
+xUI.openDocument=function(mode){
+    if(mode=='localFile'){
+        if(fileBox.openFileDB){
+            fileBox.openFileDB();
+        }else{
+//        this.sWitchPanel("Data");//インポート・エクスポートパネルを呼び出す必要はなくなったので削除
+            if(document.getElementById('optionPanelData').style.display!='inline'){xUI.sWitchPanel('Data')};
+            document.getElementById('loadShortcut').value='true';
+            document.getElementById('myCurrentFile').click();
+        }
+    }else{
+        xUI.sWitchPanel("File");   
+    }
 }
+/** ドキュメントを保存
 
-//ドキュメントを保存
+    現在のドキュメントをしかるべきロケーションに上書き保存する。
+    保存ロケーションの判定はxUI.uiModeによって判別
+    case "floating":  //ローカルファイルを扱える唯一のモード
+         AIRローカルファイル:fileBox.saveFile/fileBox.saveAs
+         その他:serviceAgent.addEntry/callEcho;
+    case "production": // ネットワークドキュメント編集中
+     ネットワークリポジトリドキュメント:serviceAgent.pushEntry(xUI.XPS,function(){xUI.setStored("current");sync();})/
+     
+    default:
+
+    trueに判定される引数が与えられた場合、可能な限りローカルファイルシステムヘの別名保存を行う。
+    AIR環境の場合は、fileBox.saveAs()　それ以外の場合はエコーサーバ経由のダウンロード
+*/
 xUI.storeDocument=function(mode){
-    if(fileBox.saveFile){
-        if(mode){fileBox.saveAs()}else{fileBox.saveFile()}
-    }else{this.sWitchPanel("Data")}
+//        this.sWitchPanel("Data");//インポート・エクスポートパネルを呼び出す必要はなくなったので削除
+    switch(xUI.uiMode){
+        case 'floating':;
+            if(fileBox.saveFile){
+                if(mode){
+                    fileBox.saveAs();
+                }else{
+                    fileBox.saveFile();//setStoredeの判定はsaveFileメソッド内で行うのでここでは不要
+                }
+            }else{
+                if(mode){
+                    callEcho();//ダウンロード保存
+                }else{
+                    serviceAgent.addEntry(xUI.XPS,function(){
+                        var myIdentifier = Xps.getIdentifier(xUI.XPS,false);
+                        serviceAgent.currentRepository.getSCi(function(){
+                            serviceAgent.currentRepository.getEntry(myIdentifier);
+                        },false,myIdentifier);
+                    },function(){
+                    alert("データ登録失敗");
+                    });
+                }
+            }
+        break;
+        case 'production':;
+            if(mode){
+                callEcho();//ダウンロード保存
+            }else{
+    	        if(! (this.setStored())){
+	                serviceAgent.pushEntry(
+	                    xUI.XPS,
+	                    function(){xUI.setStored("current");sync();}
+                    );
+                };//現行ドキュメントの上書き、最終保存から変更なければ処理スキップ
+            }
+        break;
+        case 'browsing':;
+        case 'management':;
+            if(mode){
+                callEcho();//ダウンロード保存
+            }
+        break;
+    }
 }
 
 /*xUI.scrollTo(ID)
@@ -9058,10 +9135,10 @@ xUI.setStored("force");sync();
     引数がなければ、自動生成のファイル名を作成してダイアログで確認
  */
 function callEcho(dlName,callback){
-var msg = localize(nas.uiMsg.confirmCallecho);
+var msg = localize(nas.uiMsg.confirmCallecho)+"\n"+localize(nas.uiMsg.confirmOk)+"\n"+localize(nas.uiMsg.confirmEdit)+"\n";
 var title = localize(nas.uiMsg.saveToDonloadfolder);
     if(!dlName){
-nas.showModalDialog(" prompt",msg,title,xUI.getFileName()+'\.xps',function(){
+nas.showModalDialog("prompt",msg,title,xUI.getFileName()+'\.xps',function(){
 	if(this.status==0){
 	  var storeName=this.value;
 	  xUI.setStored("current");
@@ -9100,14 +9177,14 @@ function callEchoExport(myExt)
    var sendData=xUI.data_well.value;
    
 var form={
-html:"documentHTML",
-xmap:"documentxMap",
-xps:"documentXps",
-ard:"documentArd",
-ardj:"documentArdj",
-csv:"documentCSV",
-sts:"documentSTS",
-tsh:"documentTSheet"
+html: "documentHTML",
+xmap: "documentxMap",
+xps: "documentXps",
+ard: "documentArd",
+ardj: "documentArdj",
+csv: "documentCSV",
+sts: "documentSTS",
+tsh: "documentTSheet"
 }
 		//ファイル保存ではなくエクスポートなので環境リセットは省略;
    if(! myExt){myExt="txt";}
@@ -9121,7 +9198,7 @@ tsh:"documentTSheet"
 	default:
 		myEncoding="utf8";
    }
-  var msg = localize(nas.uiMsg.confirmCallechoSwap,localize(nas.uiMsg[form[myExt]]));
+  var msg = localize(nas.uiMsg.confirmCallechoSwap,localize(nas.uiMsg[form[myExt]]))+"\n"+localize(nas.uiMsg.confirmOk)+"\n"+localize(nas.uiMsg.confirmEdit)+"\n";
   var title = localize(nas.uiMsg.saveToDonloadfolderSwap,localize(nas.uiMsg[form[myExt]]))
 nas.showModalDialog("prompt",msg,title,xUI.getFileName()+'\.'+myExt,function(){
 	if(this.status==0){
@@ -9147,7 +9224,7 @@ function callEchoHTML()
     var sendData=printHTML(true);
     var myExt="html";
    
-    var msg = localize(nas.uiMsg.confirmCallechoSwap,localize(nas.uiMsg.documentHTML));
+    var msg = localize(nas.uiMsg.confirmCallechoSwap,localize(nas.uiMsg.documentHTML))+"\n"+localize(nas.uiMsg.confirmOk)+"\n"+localize(nas.uiMsg.confirmEdit)+"\n";
     var title = localize(nas.uiMsg.saveToDonloadfolderSwap,localize(nas.uiMsg.documentHTML));
 nas.showModalDialog("prompt",msg,title,xUI.getFileName()+'\.'+myExt,function(){
 //	sendData=sendData.replace(/\r?\n/g,"\r\n");

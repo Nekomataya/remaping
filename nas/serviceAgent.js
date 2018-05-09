@@ -910,7 +910,7 @@ _cut=function(myIdentifier){
         ) continue;
         for (var cid = 0 ; cid < this.productsData[idx].episodes[0][eid].cuts[0].length ; cid ++) {
             if (
-                (nas.compareCutIdf(target.sci[0].cut,this.productsData[idx].episodes[0][eid].cuts[0][cid].name))||
+                (Xps.compareCutIdf(target.sci[0].cut,this.productsData[idx].episodes[0][eid].cuts[0][cid].name))||
                 (myIdentifier == this.productsData[idx].episodes[0][eid].cuts[0][cid].token)
             ) return this.productsData[idx].episodes[0][eid].cuts[0][cid];
         };

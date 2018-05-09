@@ -3633,22 +3633,6 @@ nas.parseNumber("A-125.3");
 nas.parseNumber("１２３９３２");
 nas.parseNumber("Final-A 123-under");
 */
-nas.compareCutIdf=function(tgt,dst){
-    var tgtArray = Xps.parseCutIF("-"+tgt);
-    var dstArray = Xps.parseCutIF("-"+dst);
-    if (
-    (((tgtArray[1]=="")&&(dstArray[1]==""))||
-    (nas.RZf(nas.normalizeStr(tgtArray[1]),12)==nas.RZf(nas.normalizeStr(dstArray[1]),12)))&&
-    (nas.RZf(nas.normalizeStr(tgtArray[0]),12)==nas.RZf(nas.normalizeStr(dstArray[0]),12))
-    ) return true ;
-    return false ;
-}
-/*TEST
-nas.compareCutIdf("C12","s-c012");
-nas.compareCutIdf("0012","title_opus_s-c012");
-nas.compareCutIdf("C００１２","s-c012");
-nas.compareCutIdf("S#1-32","s01-c0３２");
-*/
 
 /**
  *  タイムシートのセル記述を比較して同じセルの記述か否かを返す関数
@@ -4077,3 +4061,82 @@ Array.prototype.add=function(itm){
     console.log(A.add("J"));
     console.log(A);
 */
+/**
+    特定文字のエスケープとアンエスケープ
+引数の指定された文字にエスケープ文字を前置して返す関数
+エスケープ文字自体は必ず二重エスケープされるので
+strings にエスケープ文字を含んではならない。
+含まれている場合は、多重処理防止の為エラー終了とする
+
+nas.IdfEscape(sourceString,strings,escapeChar);
+nas.IdfEscape("ABCDE%FG",'ABC','%');
+result:"%A%B%CDE%%FG"
+逆関数あり　逆関数は対象文字列の指定は不要
+*/
+nas.IdfEscape = function(sourceString,strings,escapeChar){
+    if ((String(sourceString).length == 0)||(strings.length < 1)) return sourceString;
+    if(! escapeChar) escapeChar = '\\';
+    if(sourceString.indexOf('\\') >= 0){sourceString = sourceString.replace(/\\/,'\\\\')};
+    if(strings.indexOf(escapeChar) >= 0){
+        return String(sourceString).replace(new RegExp('['+strings+']','g'),escapeChar+'$&');
+    } else {
+        return String(sourceString).replace(new RegExp('['+strings+ '\\' +escapeChar+']','g'),escapeChar+'$&');
+    }
+}
+/**
+    逆関数
+エスケープ文字を渡す際に直接正規表現オブジェクトにわたされるので、メタ文字は\エスケープの要あり
+NG:nas.IdfUnEscape("a23^^DCg",'^');
+OK:nas.IdfUnEscape("a23^^DCg",'\\^');
+
+*/
+nas.IdfUnEscape = function(sourceString,escapeChar){
+    if (String(sourceString).length == 0) return sourceString;
+    if(! escapeChar) escapeChar = '\\';
+    return String(sourceString).replace(new RegExp("\\"+escapeChar+'(.)','g'),'$1');
+}
+//TEST
+/*
+nas.IdfEscape('ASBCDEF\\G','AXC\','%');
+nas.IdfUnEscape('%%A%BCDE%FG','%');
+nas.IdfEscape('ASSDFGERtyusadhjgalll','AS','&');
+*/
+/**
+    特定文字の%エンコーダ
+引数文字列の指定された文字を部分的にURIエンコード(%文字コード)して返す関数
+第一引数が与えられない場合は、エラー
+第二引数が与えられない場合は、encodeURIComponentの値を返す
+
+    要素の文字列は識別子をファイル名等に利用する場合、ファイルシステムで使用できない文字が禁止されるが、この文字も併せて部分エンコードの対象となる。
+    対象文字列は、Windowsの制限文字である　¥\/:*?"<>| に加えて . 及びエンコード前置文字の %
+
+nas.IdfEncode(sourceString,strings);
+nas.IdfEncode("ABCDE%FG",'ABC');
+
+result:
+逆関数なし
+デコードはdecodeURIもしくはdecodeURIComponent関数を使用
+*/
+nas.IdfEncode = function(sourceString,strings){
+    if(typeof sourceString == 'undefined'){return false};
+    if(typeof strings == 'undefined'){return encodeURIComponent(sourceString)};
+    strings = strings + "\¥\\\\\\\/:\\\*\\\?\"<>|\\\.%";
+    if ((String(sourceString).length == 0)||(strings.length < 1)) return encodeURIComponent(sourceString);
+    if(sourceString.indexOf('\\') >= 0){sourceString = sourceString.replace(/\\/,'\\\\')};
+        return String(sourceString).replace(new RegExp('['+strings+']','g'),function(match, p1, p2, p3, offset, string){
+            var myCode = (match).charCodeAt();
+            if(myCode <= 255 ){
+                return "%"+ myCode.toString(16);
+            }else{
+                return encodeURIComponent(match);
+            }
+        });
+}
+//TEST
+/*
+nas.IdfEncode('ASBCDEF\\G','AXC\');
+decodeURIComponent(nas.IdfEncode('%%A%BCDE%FG','%'));
+nas.IdfEncode('ASSDFGERtyusadhjgalll','AS');
+
+*/
+

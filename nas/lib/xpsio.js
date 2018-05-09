@@ -1437,8 +1437,17 @@ Xps.prototype.getMap = function (MAP) {
  新:     TITLE#OPUS[subtitle]__sSCENE-cCUT(time)
 
  基本的に’結合文字列をファイル名として使用できる’’ユーザ可読性がある’ことを前提にする
-    プロダクションIDとSCiを"__(二連アンダーバー)"でセパレートする
-    各要素にセパレータが含まれる場合は'_ (アンダーバー)'でエスケープを行う…？
+    プロダクションIDとSCiは"__(二連アンダーバー)"でセパレートする
+    部分エンコーディング
+    各要素は、自身の要素のセパレータを含む場合'%'を前置して部分的にURIエンコーディングを行う
+    要素の文字列は識別子をファイル名等に利用する場合、ファイルシステムで使用できない文字が禁止されるが、この文字も併せて部分エンコードの対象となる。
+    対象文字列は、Windowsの制限文字である　¥\/:*?"<>| に加えて . 及びエンコード前置文字の %
+    (これらは関数側で記述)
+    
+TITLE　"#"が禁止される
+OPUS    "#","[","__" が禁止される
+subtitle "["."]","__"が禁止される
+SCi     "__","("　が禁止される
  options:
  'full' 全ての要素を含む識別文字列で返す　
         TITLE#OPUS[subtitle]__sSCENE-cCUT(time)
@@ -1471,13 +1480,13 @@ if(false){
     var myResult=""
     switch (opt){
     case 'cut':
-        myResult='#'+this.opus+'__s'+this.scene+'-c'+this.cut;
+        myResult='#'+nas.IdfEncode(this.opus,"#_\[")+'__'+nas.IdfEncode('s'+this.scene +'-c'+this.cut,"_");
     break;
     case 'simple':
-        myResult=this.title+'#'+this.opus+'__s'+this.scene+'-c'+this.cut;
+        myResult=this.title+'#'+nas.IdfEncode(this.opus,"#_\[")+'__'+nas.IdfEncode('s'+this.scene +'-c'+this.cut,"_");
     break;
     case 'complex':
-        myResult=this.title+'#'+this.opus+'['+this.subtitle+']__s'+this.scene+'-c'+this.cut;
+        myResult=nas.IdfEncode(this.title,"#")+'#'+nas.IdfEncode(this.opus,"#_\[")+'['+nas.IdfEncode(this.subtitle,"\[\]_")+']__'+ nas.IdfEncode('s'+this.scene +'-c'+this.cut,"_");
     break;
     case 'full':
     default    :
@@ -2679,6 +2688,7 @@ Xps.sliceReplacementLabel = function (myStr){
      Xpsオブジェクトから識別子を作成するクラスメソッド
      名前を変更するか又はオブジェクトメソッドに統合
      このメソッドは同名別機能のオブジェクトメソッドが存在するので厳重注意
+     クラスメソッドはURIencodingを行い、オブジェクトメソッドは'%'エスケープを行う
 */
 Xps.getIdentifier=function(myXps,opt){
 //この識別子作成は実験コードです　2016.11.14
@@ -2827,12 +2837,11 @@ Xps.parseSCi = function(sciString){
     console.log (Xps.parseSCi('s-cC%23%20(16)/'));
 */
 /**
-カット識別子をパースするメソッド
-カット識別子は時間情報・ステータス等を含まない
-パースされた識別子は、逆順の配列で戻す　最大４要素
+SCiデータ上のカット名をセパレータで分離するクラスメソッド
+この場合のカット名には時間情報・ステータス等を含まないものとする
+パースされたカット名は、カット、シーンの順の配列で戻す　有効最大２要素
 
-    [cut,scene,opus,title]
-    [cut,scene,opus]
+    [cut,scene,<void>,~];//第三要素以降は分離しても使用されないことに注意
     [cut,scene]
     [cut]
 
@@ -2843,14 +2852,38 @@ Xps.parseCutIF = function(myIdentifier){
     for (var ix=0;ix<result.length;ix++){
         if(ix==0){result[ix]=result[ix].replace(/^[CcＣｃ]/,"");};//cut
         if(ix==1){result[ix]=result[ix].replace(/^[SsＳｓ]/,"");};//scene
-        if(ix==2){result[ix]=result[ix].replace(/^[OoＯｏ#＃]/,"");};//opus
+//        if(ix==2){result[ix]=result[ix].replace(/^[OoＯｏ#＃]/,"");};//opus
         result[ix]=result[ix].replace(/^[#＃№]|^(No.)/,"");//ナンバーサインを削除
     };
     return result;
 }
 //test
-//if(dbg) console.log(Xps.parseCutIF("s-c123"));
+//if(dbg) console.log(Xps.parseCutIF("00123#31[124]__s-c123"));
 //
+/**
+パース済みのカット識別子を比較してマッチ情報を返す
+シーン　カット　ともに一致した場合のみ　true　それ以外は false
+引数に秒表記部が含まれないよう　調整が必要
+*/
+Xps.compareCutIdf=function(tgt,dst){
+    if(tgt.match(/\(.+\)/)){tgt = Xps.parseSCi(tgt)[0].cut};
+    if(dst.match(/\(.+\)/)){dst = Xps.parseSCi(dst)[0].cut};
+    var tgtArray = Xps.parseCutIF("-"+tgt);
+    var dstArray = Xps.parseCutIF("-"+dst);
+    if (
+    (((tgtArray[1]=="")&&(dstArray[1]==""))||
+    (nas.RZf(nas.normalizeStr(tgtArray[1]),12)==nas.RZf(nas.normalizeStr(dstArray[1]),12)))&&
+    (nas.RZf(nas.normalizeStr(tgtArray[0]),12)==nas.RZf(nas.normalizeStr(dstArray[0]),12))
+    ) return true ;
+    return false ;
+}
+/*TEST
+Xps.compareCutIdf("C12","s-c012");
+Xps.compareCutIdf("0012","title_opus_s-c012");
+Xps.compareCutIdf("C００１２","s-c012");
+Xps.compareCutIdf("S#1-32","s01-c0３２");
+*/
+
 /**
     配列指定で識別子をビルドするテスト用関数
 引数: [title,opus,subtitle,scene,cut,time,line,stage,job,status]

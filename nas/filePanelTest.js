@@ -197,10 +197,8 @@ Aborted ステータスのエントリは、制作管理モードでのみ表示
         var currentText = decodeURIComponent(myDocuments[dlid].toString(0).split('//')[1]);
         var currentData = myDocuments[dlid];
 //console.log(currentData.cut)
-//        var currentData = Xps.parseSCi(currentText);
        var currentStatus = currentData.getStatus();
 //console.log(currentData);console.log(currentStatus)
-//        var myIdf=Xps.parseCutIF(currentData.dataInfo.sci[0].cut);
         if( (currentData.dataInfo.currentStatus.content.indexOf('Aborted') < 0) &&
             (currentData.dataInfo.sci[0].cut.match(myRegexp))){
             myContents += '<option';
