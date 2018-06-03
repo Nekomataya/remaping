@@ -379,11 +379,16 @@ ServiceNode.prototype.getRepositories=function(callback){
     ステータス
 作業状態を表すキーワード
 Startup/Active/Hold/Fixed/Aborted (開始/作業/保留/終了/削除) の５態
+floating/Finished (浮動/完了) の2態を追加
 
     エントリの識別子自体にドキュメントの情報を埋め込めばサーバ側のパースの必要がない。
     ファイルシステムや一般的なネットワークストレージ、キー／値型のDBをリポジトリとして使う場合はそのほうが都合が良い
     管理DBの支援は受けられないが、作業の管理情報が独立性を持ち、アプリケーションからの管理が容易
-    
+
+ステータスは　それぞれのキーワードで始まり　サブプロパティを含む
+
+    Startup:{asignment:yuid,message:text}
+
  //現状
  var myXps= XPS;
     [encodeURIComponent(myXps.title)+"#"+encodeURIComponent(myXps.opus)+"["+encodeURIComponent(myXps.subtitle)+"]",encodeURIComponent("S"+((myXps.scene)?myXps.scene:"-")+"C"+myXps.cut)+"("+myXps.time()+")",myXps.xMap.currentLine,myXps.xMap.currentStage,myXps.xMap.currentJob].join(" // ");
@@ -495,6 +500,22 @@ listEntry.prototype.toString=function(myIndex){
     }
 }
 /**
+*/
+listEntry.prototype.dumpIssues=function(form){
+    var myResult="";
+    switch(form){
+    case 'html':
+    break;
+    case 'dump':
+    default:
+        for (var idx=0;idx < this.issues.length ;idx++){
+            myResult += decodeURIComponent(this.issues[idx].toString());
+            myResult += '\n';
+        }
+    }
+    return myResult;
+}
+/**
     識別子を引数にして管理情報をサブリストにプッシュする
     管理情報のみが与えられた場合は無条件で追加
     フルサイズの識別子が与えられた場合は SCI部分までが一致しなければ操作失敗
@@ -504,8 +525,6 @@ listEntry.prototype.toString=function(myIndex){
     SCI部分のみでなく ラインとステージが一致しないケースも考慮すること（今回の実装では不用）
     
     ネットワークリポジトリ・DB接続用にIDを増設
-    
-    
 */
 listEntry.prototype.push=function(myIdentifier){
     if(Xps.compareIdentifier(this.issues[0].identifier,myIdentifier) < 1){return false;}
@@ -569,15 +588,18 @@ Fixed   > Active/Aborted(要権限)
 
 フロート化・シンクの　>>　サインは状態の遷移ではなくコピーして登録であり。
 逆方は、全てのステータスからの複製が可能
+移行時にもともとのステータスは保存されない
 
-Float   >> Startup:assignment:comment/Fixed:assignment:comment
-Startup > 変わらず
-Actibe  > Hold
-Hold    > 変わらず
-Fixed   > 変わらず
+現状 >> 遷移先 > 遷移後のサーバ上のデータのステータス
+Float   >> Startup:assignment:comment/Fixed:assignment:comment　> (元データはサーバ上には無い)
+Startup >>Float > 変わらず
+Active  >>Float > Hold
+Hold    >>Float > 変わらず
+Fixed   >>Float > 変わらず
 
 ドキュメントはFloat化する際に必ず複製されて安定化遷移を行う。
-Float状態のデータは決してエントリを持たない
+リポジトリ上には決してFloat状態のエントリを持たない
+エラー等により、Float状態のデータをリポジトリ上に確認した場合は、同ジョブのStartup、またはFixed状態に自動で遷移する?
 
     戻り値は現在のステータス
     ステータスオブジェクトが多分必要
@@ -1030,7 +1052,7 @@ localRepository.getEpisodes=function(callback,callback2,myProductToken,myOpusTok
     エピソード毎にカットリストを取得
     エピソード詳細の内部情報にコンバート    
 引数
-    epToken   ターゲットの話数キー
+    myOpusToken   ターゲットの話数キー(識別子で与える)
     pgNo      リストのページID　1 origin
     ppg       ページごとのエントリ数
  */
@@ -2111,16 +2133,40 @@ NetworkRepository.prototype.getEpisodes=function (callback,callback2,prdToken,ep
     カット一覧にdescriptionを出してもらう
     取得時にentryListを同時更新する
 引数
-    epToken   ターゲットの話数キー
+    epToken   ターゲットの話数キーまたは、カットトークン
     pgNo      リストのページID　1 origin
     ppg       ページごとのエントリ数
+
+    epToken のかわりにカットトークンが与えられた場合は、カット1つのみのリスト作成して高速に処理を完了する。
+    
  */
 NetworkRepository.prototype.getSCi=function (callback,callback2,epToken,pgNo,ppg) {
     var myEpisode = this.opus(epToken);
 //console.log('getSCi :');console.log(myEpisode);
     if((! myEpisode)||(! myEpisode.cuts)) return false;
+/*
+    if(! myEpisode){
+         if(myEpisode == null) {
+            var targetURL='/api/v2/cuts/'+epToken+'.json';// epToken ascutToken
+            $.ajax({
+                url: this.url + targetURL,
+                type: 'GET',
+                dataType: 'json',
+                success: function(result) {
+                    console.log(result);
+                },
+                beforeSend: this.service.setHeader
+            })
+         }else{
+            return false;
+         }
+            return true;
+    }
+*/
     if(typeof pgNo == 'undefined') pgNo = '1';
     if(typeof ppg  == 'undefined')  ppg = myEpisode.cuts[0].length;
+//console.log(arguments);
+//console.log([pgNo,ppg]);
     var targetURL = serviceAgent.currentRepository.url+ '/api/v2/cuts.json?episode_token='+myEpisode.token+'&page_no='+parseInt(pgNo)+'&per_page='+parseInt(ppg);
 	            $.ajax({
                     url: targetURL,
@@ -2193,8 +2239,8 @@ APIの情報は、識別子と一致しているはずだが　照合の上異�
                 ).slice(0,6);//
                 var myEntry=entryArray.slice(0,2).join( "//" );//管理情報を外してSCi部のみ抽出
                 var currentEntry=serviceAgent.currentRepository.entry(myCut.description);//既登録エントリを確認
-                if(currentEntry) {console.log(currentEntry);console.log(currentEntry.remove());console.log('removed')}
-                    //登録されていた場合は削除して新設
+                if(currentEntry) {console.log(decodeURIComponent(myCut.description));console.log(currentEntry);console.log(currentEntry.remove());console.log('current entry removed')}
+                    //登録されていた場合はあらかじめ削除しておく
                 var newEntry = new listEntry(entryArray.join('//'),currentTitle.token,myEpisode.token,myCutToken);
                 newEntry.parent = serviceAgent.currentRepository;
                 serviceAgent.currentRepository.entryList.push(newEntry);
@@ -2204,7 +2250,7 @@ APIの情報は、識別子と一致しているはずだが　照合の上異�
                     var myVersionString=(myCut.versions[vid].description)?
                     myCut.versions[vid].description:entryArray.join("//");
                     var myVersionToken = myCut.versions[vid].version_token;
-                    newEntry.push(myVersionString,currentTitle.token,myEpisode.token,myCutToken,myVersionToken);
+                    newEntry.push(myVersionString,currentTitle.token,myEpisode.token,myCut.token,myVersionToken);
                 }
 //============エントリ更新
     }
@@ -2410,78 +2456,124 @@ NetworkRepository.prototype.getList=function (force,callback){
   　変換のみリスト取得は試みない
 */
 NetworkRepository.prototype.convertPDEL=function (){
-//console.log("clear entryList \n rebuild entryList from documentsData"); console.log(this.productsData); console.log('++==%%');
+console.log("clear entryList \n rebuild entryList from documentsData"); console.log(this.productsData); console.log('++==%%');
     this.entryList.length=0;//エントリリスト初期化
     var newList = []; //新規配列作成
 //プロダクト情報構築
     for(var idx = 0 ;idx < serviceAgent.currentRepository.productsData.length ;idx ++){
         var currentTitle = serviceAgent.currentRepository.productsData[idx];//Object取得
+console.log(currentTitle);
         if((typeof currentTitle.episodes == "undefined")||( currentTitle.episodes[0].length == 0 )) continue;
         //エピソード未登録タイトルはカットが存在しないので処理スキップ
         for(var eid = 0 ;eid < serviceAgent.currentRepository.productsData[idx].episodes[0].length ; eid ++){
+console.log(serviceAgent.currentRepository.productsData[idx].episodes[0][eid]);
             var currentEpisode = currentTitle.episodes[0][eid];
             if((typeof currentEpisode.cuts == "undefined")||( currentEpisode.cuts[0].length == 0 )) continue;
                 for(var cid = 0 ; cid < currentEpisode.cuts[0].length ;cid ++){
 /*
-    管理情報は識別子から取得する
+    管理情報をビルド
 APIの情報は、識別子と一致しているはずだが　照合の上異なる場合はAPIの情報で上書きを行う
 識別子として　cut.description を使用　上位情報は、エントリから再作成
 サブタイトルは　episode.discriptionを使用
 兼用カット情報はペンディング
 */
-                var myCutToken = currentEpisode.cuts[0][cid].token;
-                var myCutLine  = (currentEpisode.cuts[0][cid].line_id)?
-                    currentEpisode.cuts[0][cid].line_id:
-                    (new XpsLine(nas.pmdb.pmTemplate.members[0].line.toString())).toString(true);
-                var myCutStage = (currentEpisode.cuts[0][cid].stage_id)?
-                    currentEpisode.cuts[0][cid].stage_id:
-                    (new XpsStage(nas.pmdb.pmTemplate.members[0].stages[0].toString())).toString(true);
-                var myCutJob   = (currentEpisode.cuts[0][cid].job_id)?
-                    currentEpisode.cuts[0][cid].job_id:
-                    (new XpsStage(nas.pmdb.jobNames.members[0].toString())).toString(true);
-                var myCutStatus= (currentEpisode.cuts[0][cid].status)?
-                    currentEpisode.cuts[0][cid].status:'Startup';
-//管理情報が不足の場合は初期値で補う description情報が未登録の場合は、APIの情報からビルドする？
-if(! currentEpisode.cuts[0][cid].description){
-    currentEpisode.cuts[0][cid].description="";
-if(dbg) console.log(currentEpisode.cuts[0][cid]);
-};
-                var entryArray = (
-                    String(currentEpisode.cuts[0][cid].description).split('//').concat([
-                        encodeURIComponent(myCutLine),
-                        encodeURIComponent(myCutStage),
-                        encodeURIComponent(myCutJob),
-                        myCutStatus.toString(true)
-                    ])
-                ).slice(0,6);//
+
+                var myCut = currentEpisode.cuts[0][cid];
+console.log(myCut);
+console.log(xUI.XPS.currentStatus);
+    if((! myCut.currentStatus)&&(myCut.description)){
+        console.log('no currentStatus');
+//        myCut.line=
+//        myCut.=
+//        myCut.=
+//        myCut.=
+    }
+//管理情報が不足の場合は初期値で補う   初期値の設定はダミー
+  
+    if (myCut.description){
+                var myIdentifier = myCut.description;
+    }else{
+
+                if(! myCut.line_id)　myCut.line_id  =(new XpsLine(nas.pmdb.pmTemplate.members[0])).toString(true);
+                if(! myCut.stage_id) myCut.stage_id =(new XpsStage(nas.pmdb.pmTemplate.members[0].stages.getStage())).toString(true);
+                if(! myCut.job_id)   myCut.job_id   =(new XpsStage(nas.pmdb.jobNames.getTemplate(nas.pmdb.pmTemplate.members[0].stages.getStage(),"init")[0])).toString(true);
+                if(! myCut.status)   myCut.status   =(new JobStatus("Startup")).toString(true);
+
+                var myIdentifier =  encodeURIComponent(currentTitle.name);
+                myIdentifier += '#' + encodeURIComponent(currentEpisode.name);
+                myIdentifier += (currentEpisode.description)? '['+encodeURIComponent(currentEpisode.description) + ']':'';
+                myIdentifier += '//'+encodeURIComponent(myCut.name);
+                myIdentifier += '//'+([
+                    encodeURIComponent(myCut.line_id),
+                    encodeURIComponent(myCut.stage_id),
+                    encodeURIComponent(myCut.job_id),
+                    encodeURIComponent(myCut.status)
+                ]).join('//');
+                myCut.description=myIdentifier;//description情報が未登録の場合は、APIの情報からビルドした識別子を登録
+    }
+console.log(myCut.description);
+console.log(decodeURIComponent(myCut.description));                
+
+                var entryArray = myIdentifier.split('//').slice(0,6);//
                 var myEntry=entryArray.slice(0,2).join( "//" );//管理情報を外してSCi部のみ抽出
                 var currentEntry=serviceAgent.currentRepository.entry(currentEpisode.cuts[0][cid].description);//既登録エントリを確認
-                if(currentEntry){
-                    //データ構造上このパートが実行されるケースは無い…はず　versionIDがつかない＝エラーエントリになる
-                    currentEntry.push(entryArray.slice(2).join("//"),currentTitle.token,currentEpisode.token,myCutToken);
+console.log(currentEntry);
+console.log(entryArray.slice(2).join("//"),currentTitle.token,currentEpisode.token,myCut.token);
+               if(currentEntry){
+/*
+ネットワークリポジトリの場合は、同カットが二重にプロダクトデータに存在することはない。
+存在した場合はエラーを記録してNOP
+*/
+console.log('error : エントリ重複検出');console.log(currentEntry);
                 }else{
-                    var newEntry = new listEntry(entryArray.join('//'),currentTitle.token,currentEpisode.token,myCutToken);
+//当該カットが無いので新規にエントリ
+console.log([entryArray.join('//'),currentTitle.token,currentEpisode.token,myCut.token]);              
+//                    var newEntry = new listEntry(entryArray.slice(0,2).join('//'),currentTitle.token,currentEpisode.token,myCut.token);
+                    var newEntry = new listEntry(myCut.description,currentTitle.token,currentEpisode.token,myCut.token);
                     newEntry.parent = serviceAgent.currentRepository;
-                    serviceAgent.currentRepository.entryList.push(newEntry);
-                    // エントリ配下にversionsがあればそのままpush
-                    if(! currentEpisode.cuts[0][cid].versions){
-                        currentEpisode.cuts[0][cid].versions=[];
+                    serviceAgent.currentRepository.entryList.put(newEntry);
+console.log(newEntry.issues[0].toString());
+console.log(serviceAgent.currentRepository.entryList);
+                };
+// エントリ配下にversionsがあるはずなのでissuesをクリアしてデータをpush
+// versionsが存在しない場合のみissuesに規定値が残る
+                if(! myCut.versions){ myCut.versions=[]};
+                for (var vid = 0;vid < myCut.versions.length;vid++){
+                    var myVersionString=(myCut.versions[vid].description)?
+                        myCut.versions[vid].description:entryArray.join("//");
+                    var myVersionToken = myCut.versions[vid].version_token;
+                    if(vid == 0){
+//第一要素のみ　上書き処理
+console.log('既存のissuesを上書き');
+console.log(entryArray);
+console.log(myCut);
+console.log(newEntry.issues[0]);
+//                        newEntry.issues[0][0]='';
+//                        newEntry.issues[0][1]='';
+//                        newEntry.issues[0][2]='';
+//                        newEntry.issues[0][3]='';
+//                        newEntry.issues[0].time='';
+                        newEntry.issues[0].cutID=myCut.token;
+                        newEntry.issues[0].identifier=myVersionString;
+                        newEntry.issues[0].versionID=myVersionToken;
+                    }else{
+console.log("push entry : "+ myVersionString);
+                        newEntry.push(
+                            myVersionString,
+                            currentTitle.token,
+                            currentEpisode.token,
+                            myCut.token,
+                            myVersionToken
+                        );
                     };
-                    for (var vid = 0;vid<currentEpisode.cuts[0][cid].versions.length;vid++){
-                        var myVersionString=(currentEpisode.cuts[0][cid].versions[vid].description)?
-                            currentEpisode.cuts[0][cid].versions[vid].description:entryArray.join("//");
-                        var myVersionToken = currentEpisode.cuts[0][cid].versions[vid].version_token;
-if(dbg) console.log("push entry : "+ myVersionString);
-                       newEntry.push(myVersionString,currentTitle.token,currentEpisode.token,myCutToken,myVersionToken);
-                    }
-                }
-            };//エピソードループ終了
-        };//プロダクトループ終了
-    }
+                };//バージョンループ
+            };//カットループ
+        };//エピソードループ
+    };//プロダクトループ
+console.log('XXXXXX');
+console.log(serviceAgent.currentRepository.entryList)
     documentDepot.documentsUpdate();
 }
-
-
 /**
 online-sigleモード用にエントリを一つだけ（高速に）作って固定する
 
@@ -2513,19 +2605,26 @@ NetworkRepository.prototype.buildProducts=function(){
 サーバからの読み出し後に、データ照合を行ってデータから生成される識別子がサーバの識別子と一致するように調整
 サーバ側指定を優先してデータは自動更新される
 詳細情報を受け取った際に補助情報又は受け取ったオブジェクトそのものをバックアップすること
+
+UATサーバに対する請求の際に、識別子のかわりにtokenを使用可能にする。
+(targetInfo.title == myIdentifier)であった場合のみcutTokenとして扱う？
+
 */
 NetworkRepository.prototype.getEntry=function (myIdentifier,isReference,callback,callback2){
     if(typeof isReference == 'undefined'){isReference = false;}
     //識別子をパース
     var targetInfo     = Xps.parseIdentifier(myIdentifier);//?
-
     var myIssue = false;
     var refIssue = false;
-
+/*
+  if (targetInfo.title == myIdentifier){
+//トークンが直接与えられたものと判断する
+    var targetURL='/api/v2/cuts/'+myIdentifier+'.json'; 
+  } else {}
+*/
+//識別子からトークンを得る
     var myEntry = this.entry(myIdentifier);
-//    var myCut   = this.cut(myEntry.toString());
     var myCut   = this.cut(myEntry.issues[0].cutID);
-
     if((! myEntry)||(! myCut)){
             var msg=localize({en:"no entry %1 in DB",ja:"DBからエントリ%1の取得に失敗しました"},decodeURIComponent(myIdentifier));
         alert(msg);
@@ -2562,6 +2661,7 @@ if(dbg) console.log( 'no target data :'+ decodeURIComponent(myIdentifier) );//�
         var targetURL=(myIssue.url)? myIssue.url: '/api/v2/cuts/'+myIssue.cutID.toString()+'/'+String(myIssue.versionID)+'.json';
 if(dbg) console.log(targetURL);
     }
+
     if(! isReference){
 /**
 暫定補助情報フォーマット
@@ -3865,7 +3965,7 @@ serviceAgent.switchRepository=function(myRepositoryID,callback){
             serviceAgent.switchService(serviceAgent.currentRepository.service);
         } else {
 //            serviceAgent.currentServer     = null;
-console.log('reset');console.log(serviceAgent.currentServer);
+//console.log('reset');console.log(serviceAgent.currentServer);
             //serviceAgent.switchService();
         };
 }
@@ -4818,7 +4918,7 @@ makeNewEntriesFromFormatedText=function(ix){
 
 /**
     プロダクトデータDB
-object PmTitle={
+object Pm.Title={
     token:token-string, //ローカルリポジトリのキー
     name:title-short-name,
     description:title-string,
@@ -4842,6 +4942,7 @@ object Pm.SCi={
 }
 
 object PM.SCiVersion={
+    content:[line,stage,Job]
     updated_at:time-updated,
     description:entry-identifier-string,
     version_token:59    

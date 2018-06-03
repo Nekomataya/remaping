@@ -1215,15 +1215,16 @@ div.application_status {
     border-style:double;
     z-index:7;
 }
+
 #dialogEdit {
     border-style:none;
 }
-#optionPanelSnd a.minimize{
+#optionPanelSnd a.minimize {
     position:absolute;
     right:32px;
     top:1px;
 }
-#optionPanelSnd a.close{
+#optionPanelSnd a.close {
     position:absolute;
     right:8px;
     top:1px;
@@ -1248,6 +1249,58 @@ div.application_status {
     text-indent:1em;
 }
 
+/*画像フローティングパネル*/
+#optionPanelRef {
+    display:none;
+    position:absolute;
+    top:64px;
+    left:120px;
+	width:640px;
+    padding:0;
+    border-style:none;
+    z-index:7;
+	overflow:hidden;
+}
+/**
+	参照用画像オーバーレイ
+*/
+div.imageOverlay {
+	opacity:.75;
+	background-blend-mode: normal; 
+	overflow:hidden;
+}
+#imgEdit {
+    border-style:none;
+}
+#optionPanelRef a.minimize {
+    position:absolute;
+    right:32px;
+    top:1px;
+}
+#optionPanelRef a.close {
+    position:absolute;
+    right:8px;
+    top:1px;
+}
+#optionPanelRef a.minimize img{
+    border:none;
+}
+#optionPanelRef a.close img{
+    border:none;
+}
+#optionPanelRef dl dt{
+    height:25px;
+    line-height:25px;
+    text-indent:1em;
+    font-weight:bold;
+    cursor:move;
+}
+#optionPanelRef dl dd{
+    margin:0;
+    padding:2em;
+    line-height:1.5;
+    text-indent:1em;
+}
 
 /* 以下オプションパネル群 */
 #optionPanelVer {

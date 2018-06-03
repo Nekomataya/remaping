@@ -478,6 +478,19 @@ xUI.init    =function(editXps,referenceXps){
 //yank関連
     this.yankBuf            ={body:"",direction:""};                    // ヤンクバッファは、comma、改行区切りのデータストリームで
     this.yankBuf.valueOf=function(){return this.body;}
+    this.yankBuf.toString=function(){
+        var matrixArray=this.body.split('\n');
+        for (var rix=0;rix<matrixArray.length;rix++){matrixArray[rix]=matrixArray[rix].split(",");};
+        var transArray=[];
+        for(var f=0;f<matrixArray[0].length;f++){
+            transArray[f]=[];
+            for (var r=0;r<matrixArray.length;r++){
+            transArray[f].push(matrixArray[r][f]);
+            }
+            transArray[f]=transArray[f].join('\t');
+        }
+        return transArray.join('\n');
+    }
 //undo関連
     this.flushUndoBuf();
 //保存ポインタ関連
@@ -1119,8 +1132,7 @@ xUI.mdChg=function(myModes,opt){
 // emode==2以外ではこの状態に入れない
     if((this.edmode==2)&&(! this.viewOnly)){
        this.edmode=3;
-       console.log(this.edmode);
-      this.floatSourceAddress=this.Select.slice();    //移動ソースアドレスを退避
+        this.floatSourceAddress=this.Select.slice();    //移動ソースアドレスを退避
         this.selectedColor    =this.inputModeColor.FLOAT;    //選択セルの背景色
         this.spinAreaColor    =this.inputModeColor.FLOATspin;    //非選択スピン背景色
         this.spinAreaColorSelect    =this.inputModeColor.FLOATspinselected;    //選択スピン背景色
@@ -1746,9 +1758,9 @@ xUI.drawSheetCell = function (myElement){
             if (myStr.match(/[-_─━~＿￣〜]{2,}?/)){
               myStr=(this.showGraphic)?"<br>":"<hr>";
               if((mySection.startOffset()+mySection.duration-1) == tgtID[0]){
-                drawForm =(myStr.match(/[_＿]/))? "line":"sound-section-open";
+                drawForm =(myStr.match(/[_＿]/))? "line":"dialogOpen";
               }else{
-                drawForm =(myStr.match(/[_＿]/))? "line":"sound-section-close";
+                drawForm =(myStr.match(/[_＿]/))? "line":"dialogClose";
               }
             };//セクションパース情報を参照
 	        myStr=myStr.replace(/[-−ー─━]/g,"｜");//音引き縦棒
@@ -1789,19 +1801,31 @@ xUI.drawSheetCell = function (myElement){
                 drawForm = "line";
                 formPostfix +='-cam';
             }
+            if (myStr.match(/^([!|！|\/|／|\\|＼]+)$/)){
+                myStr=(this.showGraphic)?"<br>":myStr;                
+                drawForm = "shake";
+                formPostfix +='-cam';
+                formPostfix += (tgtID[0] % 2)? '-odd':'-evn';
+                if (RegExp.$1.length > 2){
+                    formPostfix +='_l';
+                }else if(RegExp.$1.length == 2){
+                    formPostfix +='_m';
+                }else{
+                    formPostfix +='_s';
+                }
+            }
             else if (myStr.match(/^[▼▽]$/)){
                 myStr=(this.showGraphic)?"<br>":myStr;                
-                drawForm = "section-open";
+                drawForm = "sectionOpen";
            }
             else if (myStr.match(/^[▲△]$/)){
                 myStr=(this.showGraphic)?"<br>":myStr;                
-                drawForm = "section-close";
+                drawForm = "sectionClose";
            }
           break;
           case "effect":;
           case "sfx":;
             var drawForms ={"▲":"fi","▼":"fo","]><[":"transition"};//この配分は仮ルーチン　良くない
-//        myXps.xpsTracks[tgtID[1]].sections[] tgtID[0]
             if (myStr.match(/^[\|｜↑↓\*＊]$/)){
                 if(this.hideSource) myStr="<br>";                
             } else if (myStr.match(/^▼$/)){
@@ -1811,7 +1835,6 @@ xUI.drawSheetCell = function (myElement){
             } else if (myStr.match(/^\]([^\]]+)\[$/)){
                 if(this.hideSource) myStr="<br>";
             }
-//        if(((mySection.startOffset()+mySection.duration-1) == tgtID[0])&&(mySection.subSections)){}
             if((mySection.startOffset()+mySection.duration-1) == tgtID[0]){
                 var formStr = myXps.xpsTracks[tgtID[1]][mySection.startOffset()];
                 drawForm = drawForms[formStr];
@@ -1819,18 +1842,12 @@ xUI.drawSheetCell = function (myElement){
             }
           break;
     }
-//    if(dbg) console.log(target.id+":"+currentTrackOption+":"+myXps.xpsTracks[tgtID[1]][tgtID[0]]+":"+myStr);
-//    target.innerHTML=myStr;
-target.innerHTML=myStr;
+    target.innerHTML=myStr;
 if(this.showGraphic){    
-    if((sectionDraw)&&(drawForm)){
-        
-//        if(console) if(dbg) console.log([tgtID[1],mySection.startOffset()].join("_")+":"+formStr+":"+drawForm+":"+mySection.duration);
-//        setTimeout(function(){xUI.Cgl.sectionDraw([tgtID[1],mySection.startOffset()].join("_"),drawForm,mySection.duration);},0);
+    if((sectionDraw)&&(drawForm)){        
         xUI.Cgl.sectionDraw([tgtID[1],mySection.startOffset()].join("_"),drawForm,mySection.duration);
     }else{
         if(drawForm) targetJQ.addClass('graph_'+drawForm+formPostfix);
-//        setTimeout(function(){xUI.Cgl.draw(target.id,drawForm+formPostfix)},0);
     }
 }
     return myStr;
@@ -1848,7 +1865,7 @@ if(this.showGraphic){
     要素が配列でない場合は直接ターゲットにする
 */
 xUI.trTd=function(myID){
-if(typeof myID =="undefined"){return false;}
+if(typeof myID == "undefined"){return false;}
 //if(typeof arguments[0] =="undefined"){return false;}
     if(! (myID instanceof Array)){
         var target = myID;
@@ -1886,7 +1903,7 @@ if(false){
 //    if(this.Select[0]>0 && this.Select[0]<(this.SheetWidth-1)) target=target.toString().replace(/[\|｜]/ig,'|<br>');
 //    if(target.match(/^[:：]$/)) return ':<br>';//波線
 //    if(target.match(/[-_─━~]{2,}?/)) return "<hr>";//
-return result;
+    return result;
 
 };
 //
@@ -3193,7 +3210,12 @@ xUI.doRapid=function(param){rapidMode.command[param]();};
 戻値:なし
 現在の操作対象範囲をヤンクバッファに退避
  */
-xUI.copy    =function(){this.yank();};
+xUI.copy    =function(){
+    this.yank();
+    if(ClipboardEvent){
+        
+    }
+};
 
 /*    切り取り
 引数:なし
@@ -3888,11 +3910,24 @@ xUI.printStatus    =function(msg,prompt){
     var bodyText=(prompt+msg);
     document.getElementById("app_status").innerHTML=bodyText.replace(/\n/g,"<br>");
 }
-//キーダウンでキー入力をサバく
-//IEがプレスだとカーソルが拾えないようなのでキーダウン
+/**    キーダウンでキー入力をサバく
+
+IEがプレスだとカーソルが拾えないようなのでキーダウン
+iNputbOx以外の入力もこのメソッドで受ける
+フォーカスがiNputbOx以外にある場合は、トラップする特定キー以外はNOPで戻す
+*/
 xUI.keyDown    =function(e){
-//フォーカスされたテーブル上の入力ボックスのキーダウンを検出
+//ブラウザ全体のキーダウンを検出
 	key = e.keyCode;//キーコードを取得
+//フォーカスエレメントがiNputbOx以外なら入力を戻す
+    if(document.activeElement!==document.getElementById("iNputbOx")){
+        if(((key==79)||(key==83))&&((e.ctrlKey)||(e.metaKey))){
+        console.log("capt")
+            return false;
+        }else{
+            return true;
+        }
+    }
 	this.eddt = document.getElementById("iNputbOx").value;
 	var interpKey=110;
 //      console.log(key+':down:');
@@ -4116,6 +4151,11 @@ case	67 :		;	//[ctrl]+[C]/copy
 		this.yank();
 		return false;}else{return true}
 	break;
+case	73 :		;	//[ctrl]+[I]/information 
+	if ((e.ctrlKey)||(e.metaKey))	{
+	    myScenePref.open("edit");
+		return false;}else{return true}
+	break;
 case	79 :		;	//[ctrl]+[O]/ Open Document
 	if ((e.ctrlKey)||(e.metaKey)) {
 		 if(e.shiftKey){
@@ -4123,9 +4163,9 @@ case	79 :		;	//[ctrl]+[O]/ Open Document
 		}else{
 		    this.openDocument();
 		}
+		return false;
 	}
-//	if ((e.ctrlKey)&&(! e.shiftKey))	{this.openDocument();}
-	return false;
+	return true;
 	break;
 case	83 :    ;	//[ctrl]+[S]/ Save or Store document
 	if ((e.ctrlKey)||(e.metaKey)) {
@@ -4134,8 +4174,9 @@ case	83 :    ;	//[ctrl]+[S]/ Save or Store document
 		}else{
 		    this.storeDocument();
 		}
-	}
 		return false;
+	}
+		return true;
 	break;
 case	86 :		;	//[ctrl]+[V]/paste
 	if ((e.ctrlKey)||(e.metaKey))	{
@@ -4800,7 +4841,7 @@ case    "dblclick"    :
 case    "mousedown"    :
 case    "click"    :
 case    "mouseup"    ://終了位置で解決
-    console.log("<<<<<<")
+//    console.log("<<<<<<")
 //[ctrl]同時押しで複製処理
       this.mdChg(0,((e.ctrlKey)||(e.metaKey)));
       this.floatTextHi();
@@ -4940,9 +4981,11 @@ default    :    return true;
     それ以外は、インポート手順に従ってローカルファイルチューザーを提示
     失敗時はNOP
     引数なしのケースでは、リポジトリの操作を行う。（リポジトリドキュメントチューザーを提示）
+    ドキュメント編集中はリポジトリの操作がブロックされるので、強制的にローカルインポートモードに遷移
     
 */
 xUI.openDocument=function(mode){
+    if(xUI.uiMode=='production') {mode='localFile';}
     if(mode=='localFile'){
         if(fileBox.openFileDB){
             fileBox.openFileDB();
@@ -5159,6 +5202,7 @@ File    #optionPanelFile    //ファイルブラウザ（モーダル）
 
 Rol     #optionPanelFile    //入力ロック警告（モーダル）
 Snd     #optionPnaleSnd     //音響パネル(共)
+Img     #optionPnaleImg     //画像パネル(共)
 
 Dbg     #optionPanelDbg	//デバッグコンソール（排他）
 Prog	#optionPanelProg	//プログレス表示（排他モーダル）
@@ -5183,7 +5227,8 @@ var myPanels=["#optionPanelMemo",
 	"#optionPanelPref",
 	"#optionPanelVer",
 	"#optionPanelSnd",
-	"#optionPanelRol"
+	"#optionPanelRef",
+	"#optionPanelRol",
 ];
 /*
 オールクリアは可能だが、ウインドウがフロートに移行するので使用範囲は限定される。
@@ -5242,6 +5287,9 @@ case	"Tbx":	;//ツールボックス
 		if(myTarget.is(':visible')){myTarget.hide()}else{myTarget.show()};
 	break;
 case	"Snd":	;//音声編集パネル(fixed)
+		if(myTarget.is(':visible')){myTarget.hide()}else{myTarget.show()};
+	break;
+case	"Ref":	;//情報参照パネル(fixed)
 		if(myTarget.is(':visible')){myTarget.hide()}else{myTarget.show()};
 	break;
 case	"Utl":	;//ユーティリテーメニューパネル
@@ -5353,7 +5401,7 @@ xUI.Cgl.init=function(){
 }
 /*
     範囲を指定してグラフィック部品を再描画するラッパ関数
-    レンジの書式はXpxの戻すレンジに準ずる
+    レンジの書式はXpsの戻すレンジに準ずる
     [[開始トラック,開始フレーム],[終了トラック,終了フレーム]]
     リファレンスフラグが無い場合は編集対象のXPSを処理する
 */
@@ -5386,19 +5434,65 @@ xUI.Cgl.refresh=function(myRange,isReference){
 　170815
 シートカラーを　ユーザ変更可能にしたので　暗色テーマへの対応が必要
 描画カラーをオブジェクトプロパティ設ける事
+引数myFormの書式は以下
+    Shape[[-Track]-Cycle]_Start-End
+    後ほどShapeごとにプラグイン処理が可能なように変更を行う予定
 
+　引数として以下の形式も受け入れる
+addGraphElement(myId,myForm,start,end)
+
+myForm を事前処理してtargetShapeを事前抽出するように変更20180513
 */
 xUI.Cgl.draw=function addGraphElement(myId,myForm) {
 	    var objTarget  = document.getElementById(myId);//ターゲットシートセルを取得
 	    if(! objTarget){return false;};//シートセルが存在しない場合は操作失敗
         var jqTarget = $('#'+myId);
-
     var classes=jqTarget.attr('class').split(' ');
     for (var cix=0;cix<classes.length;cix++){if (classes[cix].indexOf('graph_')==0){myForm=classes[cix].replace(/^graph_/,'');break;}}
     if(typeof myForm == 'undefined') {return false};//指定無しでかつ取得に失敗した場合はリターン(印刷時に有効)
-    /*区間描画時に形成されたIDの場合はパーセンテージを分解して描画*/
-    if(myForm.match(/(.*)_(\d+)\-(\d+)$/)){ myForm=RegExp.$1; arguments[2]=(RegExp.$2/100); arguments[3]=(RegExp.$3/100);}
-    
+
+/*
+    区間描画時に形成されたIDの場合はパーセンテージを分解して描画する　開始・終了率を先行して分離
+    終了率が省略された場合は、開始率で補う
+    キーワードとして m,l,s が 100,50,25 を表す。
+*/
+    if(myForm.match(/(.*)_(\d+)(\-(\d+))?$/)){
+            myForm=RegExp.$1; arguments[2]=(RegExp.$2/100);
+        if(RegExp.$4){
+            arguments[3]=(RegExp.$4/100);
+        }
+    }else if(myForm.match(/(.*)_([mls])$/)){
+        switch(RegExp.$2){
+            case 'l':
+                arguments[2]=(100/100);
+            break;
+            case 'm':
+                arguments[2]=(50/100);
+            break;
+            case 's':
+                arguments[2]=(25/100);
+            break;
+        }
+    }
+/*
+    myForm を分解して目標形状、目標トラック、Cycle値を取得
+*/
+    var targetShape = (myForm.split('_')[0]).split('-')[0];//ターゲット形状
+    var tragetTrack = (myForm.match(/-(ref|stl|rmt|cam|sfx)/i))? RegExp.$1:"";//トラック指定　ヒットがない場合は全トラック適用
+/*
+    サイクルターゲットパラメータは配列で持つ　[参照値,母数]
+*/
+    var cycleTarget=[0,1];
+    if (myForm.indexOf('evn')>=0){
+        cycleTarget = [0,2];//evnを数値化
+    } else if(myForm.indexOf('odd')>=0){
+        cycleTarget = [1,2];//oddを数値化
+    } else if(myForm.match(/\-(\d+)/)){
+        cycleTarget = RegExp.$1;
+        var myLength=Math.floor(cycleTarget.length/2);
+        cycleTarget=[cycleTarget.slice(0,myLength),cycleTarget.slice(cycleTarget.length-myLength)];
+    }
+
 		if(! this.body[myId]){	this.body[myId] = document.getElementById("cgl"+myId)	;}
 		if( this.body[myId] ){
 			$("#cgl"+myId).remove();delete this.body[myId];
@@ -5450,11 +5544,13 @@ if(appHost.platform != "AIR"){
 	    element.height = objTarget.clientHeight;
 	    var ctx = element.getContext("2d");
 
-switch(myForm){
+switch(targetShape){
 case "line":	    //vertical-line
+/*
 case "line-ref":	    //vertical-line
 case "line-cam":	    //vertical-line
 case "line-sfx":	    //vertical-line
+*/
     if(typeof xUI.Cgl.formCashe[myForm] == 'undefined'){
 		var lineWidth  =3;
 		ctx.strokeStyle='rgb('+xUI.Cgl.baseColorArray.join(',')+')';
@@ -5466,19 +5562,48 @@ case "line-sfx":	    //vertical-line
 	}
 break;
 case "wave":;			//wave-line
+/*
+奇遇フレームのみでなくサイクル動作するフォームを全てサポートする
+Waveは奇遇サイクル
 case "wave-odd":;		//wave-line 偶数フレーム
 case "wave-evn":;		//wave-line 奇数フレーム
 case "wave-ref-odd":;		//wave-line 偶数フレーム
 case "wave-ref-evn":;		//wave-line 奇数フレーム
+*/
     if(typeof xUI.Cgl.formCashe[myForm] == 'undefined'){
-		var waveSpan  =5;		var lineWidth  =3;
+		var waveSpan  =7.5;		var lineWidth  =3;
 		ctx.strokeStyle='rgb('+xUI.Cgl.baseColorArray.join(',')+')';
 		ctx.strokeWidth=lineWidth;
 		ctx.moveTo(element.width*0.5, 0);
-		if(parseInt(myId.split("_").reverse()[0]) % 2){	
+		if(cycleTarget[0]%cycleTarget[1]){
 	ctx.bezierCurveTo(element.width*0.5-waveSpan, element.height*0.5,element.width*0.5-waveSpan, element.height*0.5,  element.width*0.5, element.height);
 		}else{
 	ctx.bezierCurveTo(element.width*0.5+waveSpan, element.height*0.5,element.width*0.5+waveSpan, element.height*0.5,  element.width*0.5, element.height);
+		}
+	    ctx.stroke();
+	    xUI.Cgl.formCashe[myForm] = element.toDataURL("image/png");
+	}
+break;
+case "shake":;			//shake-line
+/*
+シェイク形状は、大中小の副形状をサポートする　ウェーブと初期位相を反転させる
+case "shake-odd":;		//shake-line 偶数フレーム
+case "shake-evn":;		//shake-line 奇数フレーム
+case "shake-cam-odd":;		//shake-line 偶数フレーム
+case "shake-cam-evn":;		//shake-line 奇数フレーム
+*/
+    if(typeof xUI.Cgl.formCashe[myForm] == 'undefined'){
+		var shakeSpan  =(arguments[2])? element.width*arguments[2]/2:element.width/4;
+		var lineWidth  =2;
+		ctx.strokeStyle='rgb('+xUI.Cgl.baseColorArray.join(',')+')';
+		ctx.strokeWidth=lineWidth;
+		ctx.moveTo(element.width*0.5, 0);
+		if(cycleTarget[0]%cycleTarget[1]){
+	ctx.lineTo(element.width*0.5+shakeSpan, element.height*0.5);
+	ctx.lineTo(element.width*0.5, element.height);
+		}else{
+	ctx.lineTo(element.width*0.5-shakeSpan, element.height*0.5);
+	ctx.lineTo(element.width*0.5, element.height);
 		}
 	    ctx.stroke();
 	    xUI.Cgl.formCashe[myForm] = element.toDataURL("image/png");
@@ -5512,7 +5637,9 @@ case "transition":;		//transition
 		ctx.fill();
 break;
 case "circle":;		 //circle
+/*
 case "circle-ref":;	 //circle-reference
+*/
     if(typeof xUI.Cgl.formCashe[myForm] == 'undefined'){
 		var phi  = .9;		var lineWidth  =3;
 		ctx.strokeStyle='rgb('+xUI.Cgl.baseColorArray.join(',')+')';
@@ -5523,7 +5650,9 @@ case "circle-ref":;	 //circle-reference
 	}
 break;
 case "triangle":;		//triangle
+/*
 case "triangle-ref":;	//triangle
+*/
     if(typeof xUI.Cgl.formCashe[myForm] == 'undefined'){
 		var lineWidth  =4;
 		ctx.strokeStyle='rgb('+xUI.Cgl.baseColorArray.join(',')+')';
@@ -5536,7 +5665,7 @@ case "triangle-ref":;	//triangle
 	    xUI.Cgl.formCashe[myForm] = element.toDataURL("image/png");
 	}
 break;
-case "section-open":;		//section-open
+case "sectionOpen":;		//sectionOpen
     if(typeof xUI.Cgl.formCashe[myForm] == 'undefined'){
 	var formFill = arguments[2];
 	    ctx.fillStyle="rgba("+xUI.Cgl.baseColorArray.join(',')+",1)";
@@ -5548,7 +5677,7 @@ case "section-open":;		//section-open
 	    xUI.Cgl.formCashe[myForm] = element.toDataURL("image/png");
 	}
 break;
-case "section-close":;		//section-close
+case "sectionClose":;		//sectionClose
     if(typeof xUI.Cgl.formCashe[myForm] == 'undefined'){
 	var formFill = arguments[2];
 	    ctx.fillStyle="rgba("+xUI.Cgl.baseColorArray.join(',')+",1)";
@@ -5560,7 +5689,7 @@ case "section-close":;		//section-close
 	    xUI.Cgl.formCashe[myForm] = element.toDataURL("image/png");
 	}
 break;
-case "sound-section-open":;		//section-open
+case "dialogOpen":;		//dialogsectionOpen
     if(typeof xUI.Cgl.formCashe[myForm] == 'undefined'){
 	var lineWidth = 3;
 	    ctx.fillStyle="rgba("+xUI.Cgl.baseColorArray.join(',')+",1)";
@@ -5570,7 +5699,7 @@ case "sound-section-open":;		//section-open
 	    xUI.Cgl.formCashe[myForm] = element.toDataURL("image/png");
 	}
 break;
-case "sound-section-close":;		//section-close
+case "dialogClose":;		//dialogsectionClose
     if(typeof xUI.Cgl.formCashe[myForm] == 'undefined'){
 	var lineWidth = 3;
 	    ctx.fillStyle="rgba("+xUI.Cgl.baseColorArray.join(',')+",1)";
@@ -5580,7 +5709,7 @@ case "sound-section-close":;		//section-close
 	    xUI.Cgl.formCashe[myForm] = element.toDataURL("image/png");
 	}
 break;
-case "area-fill":;	//fill sheet cell
+case "areaFill":;	//fill sheet cell
     if(typeof xUI.Cgl.formCashe[myForm] == 'undefined'){
 		ctx.moveTo(0, 0);
 	    ctx.fillStyle="rgba("+xUI.Cgl.baseColorArray.join(',')+",1)";
@@ -5640,6 +5769,7 @@ xUI.setRetrace = function(){
     }else{
         xUI.sessionRetrace = -1;    
     }
+    return xUI.sessionRetrace;
 }
 /**
  *  xUIにターゲットオブジェクトを与えてシートをリセットする関数
@@ -6521,7 +6651,7 @@ console.log('Application server-onsite');
 //        myNames = xUI.recentUsers.covertStringArray();//要素を文字列可した配列
 
     　   if($("#backend_variables").attr("data-episode_token").length > 0){
-//console.log('bind single document');
+console.log('bind single document');
 //シングルドキュメント拘束モード
 		    startupWait=true;//ウェイト表示を予約
 　           serviceAgent.currentStatus='online-single';
@@ -6532,61 +6662,111 @@ document.getElementById('loginstatus_button').disabled=true;
     xUI.pMenu('pMnewdoc','disabled');
     xUI.pMenu('pMnewEntry','disabled');
 //インポート関連をロック　操作をsync('productStatus')に統合（タイミングが同じ）
-// sync("importControllers");
-
-//document.getElementById('loginuser').innerHTML = xUI.currentUser.handle;
-//document.getElementById('serverurl').innerHTML = serviceAgent.currentServer.url;
-//document.getElementById('ibMdiscard').disabled=true;
-//document.getElementById('ibMfloat').disabled=true;
+// sync("importControllers");//document.getElementById('loginuser').innerHTML = xUI.currentUser.handle;//document.getElementById('serverurl').innerHTML = serviceAgent.currentServer.url;//document.getElementById('ibMdiscard').disabled=true;//document.getElementById('ibMfloat').disabled=true;
 　       $('#ibMdiscard').hide();
 　       $('#ibMfloat').hide();
-
 　       $('#pMbrowseMenu').hide();
-　       $('#ibMbrowse').hide();//設定表示
+　       $('#ibMbrowse').hide();
+//設定表示
                  document.getElementById('toolbarHeader').style.backgroundColor='#ddbbbb';
 //サーバ既存エントリ
             var isNewEntry = (startupXPS.length==0)? true:false;
 //サーバ上で作成したエントリの最初の1回目はサーバの送出データが空
 //空の状態でかつトークンがある場合が存在するので判定に注意！
 //トークンあり、送出データが存在する場合は、識別子同期自体を省略すること
-             if($("#backend_variables").attr("data-cut_token").length){
+//カットトークンがない場合はマルチドキュメントモードで初期化
+            if($("#backend_variables").attr("data-cut_token").length){ ;//この判定は仕様変更で不要になっている　ここでトークンのないケースはエラーケース
+ /* ========= シンクルドキュメントバインド時の初期化 ========= */
 console.log('has cut token');
     　           serviceAgent.currentServer.getRepositories(function(){
                      var RepID = serviceAgent.getRepsitoryIdByToken($("#backend_variables").attr("data-organization_token"));
     　               serviceAgent.switchRepository(RepID,function(){
     　                   if(dbg) console.log('switched repository :' + RepID);
-/*最小の情報をトークンベースで取得*/
-                        var myProductToken = $('#backend_variables').attr('data-product_token');
-                        var myEpisodeToken = $('#backend_variables').attr('data-episode_token');
-                        var myCutToken = $('#backend_variables').attr('data-cut_token');
 
-serviceAgent.currentRepository.getProducts(function(){
-        serviceAgent.currentRepository.getEpisodes(function(){
-                serviceAgent.currentRepository.getSCi(function(){
-                    var myIdentifier=serviceAgent.currentRepository.getIdentifierByToken(myCutToken);
+/*  最小の情報をトークンベースで取得
+最短時間で情報を構築するためにAPIを直接コール
+*/
+//get product information
+$.ajax({
+        url:serviceAgent.currentRepository.url+'/api/v2/products/'+ $('#backend_variables').attr('data-product_token') +'.json',
+        type:'GET',
+        dataType: 'json',
+        success: function(productResult) {
+            serviceAgent.currentRepository.productsData=[productResult.data.product];
+//get episode information
+    $.ajax({
+        url:serviceAgent.currentRepository.url+'/api/v2/episodes/'+ $('#backend_variables').attr('data-episode_token') +'.json',
+        type:'GET',
+        dataType: 'json',
+        success: function(episodeResult) {
+            serviceAgent.currentRepository.productsData[0].episodes=[[episodeResult.data.episode]];
+//get cut information
+        $.ajax({
+        url:serviceAgent.currentRepository.url+'/api/v2/cuts/'+ $('#backend_variables').attr('data-cut_token') +'.json',
+        type:'GET',
+        dataType: 'json',
+        success: function(cutResult){
+//データ請求に成功
+        	var myContent=cutResult.data.cut.content;//XPSソーステキストをセット
+        	var currentXps = new Xps(5,144);//一時オブジェクトを作成
+/*
+    有効なリザルトを得た場合は、最新データなのでstartupXPSを入れ換える。
+    ロードのタイミングで他のユーザが書き換えを行った可能性があるので、最新のデータと換装
+    myContent==nullのケースは、サーバに空コンテンツが登録されている場合なので単純にエラー排除してはならない
+*/
+	        if(myContent){
+                startupXPS=myContent;
+                currentXps.parseXps(myContent);
+            //if(cutResult.data.cut.description==0){}
+                
+	        } else if(myContent == null){
+	            var myParseData = Xps.parseSCi((cutResult.data.cut.description)?cutResult.data.cut.description:cutResult.data.cut.name);
+	            currentXps.cut = myParseData[0].cut;
+//ディスクリプション領域に識別子があればそちらを優先、更にdata-scaleが存在すればそれを優先　名前 < 識別子 < data-scale
+	            var spcFrames=nas.FCT2Frm($('#backend_variables').attr('data-scale'));
+                if(spcFrames) myParseData[0].time=String(spcFrames);
+	            currentXps.setDuration(nas.FCT2Frm(String(myParseData[0].time)));
+	        };
+console.log(currentXps);
+console.log([
+    currentXps.line.toString(true),
+    currentXps.stage.toString(true),
+    currentXps.job.toString(true),
+    currentXps.currentStatus.toString(true)
+].join('//'));
+console.log(Xps.getIdentifier(currentXps));
+//本体情報からエントリを作成して要素一つだけのproductsDataリストを作る
+            serviceAgent.currentRepository.productsData[0].episodes[0][0].cuts=[[{
+                token:cutResult.data.cut.token,
+                name:cutResult.data.cut.name,
+//                description:cutResult.data.cut.description,
+                description:Xps.getIdentifier(currentXps),
+                created_at:cutResult.data.cut.created_at,
+                updated_at:cutResult.data.cut.updated_at,
+                versions:cutResult.data.versions
+            }]];
+            serviceAgent.currentRepository.convertPDEL();//エントリリストに変換
+//
+//currentXpsのプロパティをリザルトに同期させる
+                    var myIdentifier=serviceAgent.currentRepository.getIdentifierByToken($('#backend_variables').attr('data-cut_token'));
                     if((myIdentifier)&&(Xps.compareIdentifier(Xps.getIdentifier(XPS),myIdentifier) < 5)){
-console.log('syncIdentifier:');
-console.log(decodeURIComponent(myIdentifier));
-console.log(startupXPS.length);
-                        xUI.XPS.syncIdentifier(myIdentifier,(startupXPS.length > 0));
-                        //時間調整の有無をスタートアップXPSの存在で調整する
+                        xUI.XPS.syncIdentifier(myIdentifier);
                     }
+                    
                     if( startupXPS.length==0 ){
-//console.log('detect first open no content');//初回起動を検出　コンテント未設定
-//console.log('new Entry init');
+//console.log('detect first open no content');//初回起動を検出　コンテント未設定 
                         xUI.XPS.line     = new XpsLine(nas.pmdb.pmTemplate.members[0]);
                         xUI.XPS.stage    = new XpsStage(nas.pmdb.pmTemplate.members[0].stages.getStage());
                         xUI.XPS.job      = new XpsStage(nas.pmdb.jobNames.getTemplate(nas.pmdb.pmTemplate.members[0].stages.getStage(),"init")[0]);
                         xUI.XPS.currentStatus   = new JobStatus("Startup");     
                         xUI.XPS.create_user=xUI.currentUser;
                         xUI.XPS.update_user=xUI.currentUser;
-
-//console.log(xUI.XPS.title);
 //syncIdentifierでカット尺は調整されているはずだが、念のためここで変数を取得して再度調整をおこなう
 //data-scale を廃止した場合は、不用
-                        var myCutTime = nas.FCT2Frm($('#backend_variables').attr('data-scale'));
-                        if(!(isNaN(myCutTime)) && (myCutTime != xUI.XPS.time())){xUI.XPS.setDuration(myCutTime)}
+//                        var myCutTime = nas.FCT2Frm($('#backend_variables').attr('data-scale'));
+//                        if(!(isNaN(myCutTime)) && (myCutTime != xUI.XPS.time())){xUI.XPS.setDuration(myCutTime)}
                     }
+                    xUI.resetSheet(currentXps);
 //ここで無条件でproductionへ移行せずに、チェックが組み込まれているactivateEntryメソッドを使用する
                         xUI.setRetrace();
                         xUI.setUImode('browsing');//初期値設定
@@ -6616,48 +6796,24 @@ console.log(startupXPS.length);
                         }
                         sync('info_');
                         xUI.setUImode(xUI.setUImode());//現モードで再設定
-//console.log('初期化終了');
-//console.log(serviceAgent.currentRepository);                        
-                },false,myEpisodeToken);//getSCi
-        },false,myProductToken,myEpisodeToken);//getEpisodes
-},false,myProductToken);//getProduct
-    　               });
-    　           });
-    　       }else{
-//console.log('has no cut token');
-//ドキュメント新規作成
-/*    旧タイプの処理この状態には入らないはずなので順次削除      */
-if(dbg) console.log('old style new document');
-    　           serviceAgent.currentServer.getRepositories(function(){
-    　               serviceAgent.switchRepository(1,function(){
-    　                   var myIdentifier = serviceAgent.currentRepository.getIdentifierByToken($("#backend_variables").attr("data-episode_token"));
-                          myIdentifier = myIdentifier+'('+xUI.XPS.time()+')';
-                          var tarceValue = Xps.compareIdentifier(Xps.getIdentifier(xUI.XPS),myIdentifier);
-                         if( traceValue < 0){
-console.log('syncIdentifier new Entry');
-console.log(Xps.getIdentifier(xUI.XPS));
-console.log(myIdentifier);
-console.log(Xps.compareIdentifier(Xps.getIdentifier(xUI.XPS),myIdentifier));
-    
-    　                       XPS.syncIdentifier(myIdentifier,false);
-        xUI.XPS.line     = new XpsLine(nas.pm.pmTemplate[0].line);
-        xUI.XPS.stage    = new XpsStage(nas.pm.pmTemplate[0].stages[0]);
-        xUI.XPS.job      = new XpsStage(nas.pm.jobNames.getTemplate(nas.pm.pmTemplate[0].stages[0],"init")[0]);
-        xUI.XPS.currentStatus   = new JobStatus("Startup");     
-        xUI.XPS.create_user=xUI.currentUser;
-        xUI.XPS.update_user=xUI.currentUser;
-    　                       //var msg='新規カットです。カット番号を入力してください';
-    　                       //var newCutName=prompt(msg);
-    　                       //if()
-                            xUI.setRetrace();
-                            xUI.setUImode('browsing');
-                            serviceAgent.activateEntry();
-//                            xUI.setUImode('production');
-                            sync('info_');
-    　                   }
-    　               });
-    　           });
-    　       }
+console.log('初期化終了');
+                },
+        error : function(result){console.log(result)},
+        beforeSend: serviceAgent.currentRepository.service.setHeader
+        });//get cut information
+        },
+        error : function(result){console.log(result)},
+        beforeSend: serviceAgent.currentRepository.service.setHeader
+    });//get episode information
+        },
+        error : function(result){console.log(result)},
+        beforeSend: serviceAgent.currentRepository.service.setHeader
+});//get product information
+
+    　               });//set Repository
+    　           });//get Repository
+    　       };//カットトークンの確認　これがなければ不正処理
+/* ========= シンクルドキュメントバインド時の初期化 ========= */
 　       } else {
 //マルチドキュメントモード
 // リポジトリのIDは不問 とりあえず１(ローカル以外)
@@ -6787,6 +6943,7 @@ $("#optionPanelSCI").dialog({
 //:nas.uiMsg.Sounds
 /* ダイアログをスクリーンに対して固定にする場合はJQuiry UIで初期化する
 こちらで初期化するとスクロール追従となる
+
 $("#optionPanelSnd").dialog({
 	autoOpen:false,
 	modal	:false, 
@@ -7811,7 +7968,8 @@ if (ListStr.match(/「(.+)」?/)) {
 	ListStr=ListStr.replace(/〜/g,"⌇");//音引き縦棒
 */
 	};
-
+//ダイアログトラック以外はカギカッコ開くまたは引用符で開始される引数は、先頭文字を払ってコマ単位で縦に展開して戻す
+if(ListStr.match( /^[\'\"「](.+)/)){    return (RegExp.$1).replace(/./g,"$&,"); };
 //		r導入リピートならば専用展開プロシージャへ渡してしまう
 		if (ListStr.match(/^([\+rR])(.*)$/)){
 			var expdList=TSX_expdList(ListStr);
@@ -8477,6 +8635,42 @@ var myOffset=document.body.getBoundingClientRect();
             jQuery("#optionPanelSnd").css({
                 top:e.pageY  - jQuery("#optionPanelSnd").data("clickPointY")+myOffset.top+"px",
                 left:e.pageX - jQuery("#optionPanelSnd").data("clickPointX")+myOffset.left+"px"
+            })
+        })
+    }).mouseup(function(){
+        jQuery(document).unbind("mousemove")
+    })
+});
+// 画像ウインドウ
+jQuery(function(){
+//    jQuery("#optionPanelRef").unbind("mouseover");
+    jQuery("a.openSnd").click(function(){
+        jQuery("#optionPanelRef").show();
+        return false;
+    })
+    jQuery("#optionPanelRef a.close").click(function(){
+        jQuery("#optionPanelRef").hide();
+        return false;
+    })
+    jQuery("#optionPanelRef a.minimize").click(function(){
+        if(jQuery("#optionPanelRef").height()>100){
+           jQuery("#formSnd").hide();
+           jQuery("#optionPanelRef").height(24);
+	}else{
+           jQuery("#formSnd").show();
+           jQuery("#optionPanelRef").height(700);
+	}
+        return false;
+    })
+    jQuery("#optionPanelRef dl dt").mousedown(function(e){
+        jQuery("#optionPanelRef")
+            .data("clickPointX" , e.pageX - jQuery("#optionPanelRef").offset().left)
+            .data("clickPointY" , e.pageY - jQuery("#optionPanelRef").offset().top);
+        jQuery(document).mousemove(function(e){
+var myOffset=document.body.getBoundingClientRect();
+            jQuery("#optionPanelRef").css({
+                top:e.pageY  - jQuery("#optionPanelRef").data("clickPointY")+myOffset.top+"px",
+                left:e.pageX - jQuery("#optionPanelRef").data("clickPointX")+myOffset.left+"px"
             })
         })
     }).mouseup(function(){

@@ -1108,7 +1108,32 @@ for(var idx=0;idx<currentContent.length;idx++){
 	xUI.selectCell(xUI.Select[0]+"_"+bkFrm);
 //	xUI.spin("fwd");
 }
-
+/*
+	波線引
+	トラック種別を認識して波線を引く
+	ジオメトリトラックに限り　シフトキーで大波　コントロールキーを同時押しで小波を描画する。
+	描画するアイテムを選択してputSectionLineを呼び出すラッパ関数
+*/
+setWave =function(e){
+    var item = "";
+    switch (xUI.XPS.xpsTracks[xUI.Select[0]].option){
+    case "timing":;case "replacement":;item = ":";
+    break;
+    case "camera":;case "geometry":
+        if((e.metaKey)||(e.ctrlKey)) {
+            item = "/";//small
+        } else if (e.shiftKey) {
+            item = "///";//large
+        } else {
+            item = "//";//middle
+        }
+    break;
+    case "sfx":;case "effect":;case "composite":;
+    default:
+        return false;
+    }
+    putSectionLine(item);
+}
 /**
 interpSign()
 引数:なし

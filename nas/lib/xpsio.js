@@ -233,15 +233,25 @@ XpsJob.prototype.toString=function(){
 初期値は"Startup" > 'Floating' 初期値変更
     assign:アクティブまたは中断状態でない作業が持つ次作業者の指名UIDまたは文字列（特にチェックはない）
 初期値は長さ0の文字列
-    message:次の作業に対する申し送りテキスト
+    アサインメント情報として予約値'stageCompleted'を持つことができる。これは当該ステージの終了フラグとして機能する
+    
+    message:次の作業に対する申し送りフリーテキスト
 初期値は長さ0の文字列
+
+    stageComleted:工程の終了フラグ ブーリアン
+どのユーザでも立てることができるが、このフラグ自体は工程の完了を直接意味しない。
+このフラグが立ったカットを、適切な管理者がチェックして実際の完了処理を行う。
+完了処理は次のステージを開くことで行われるので注意が必要
+初期値 false
 
 初期化引数はステータス識別子　または 配列[content,assign,message]いずれか
 assin/messageが存在する場合は出力が以下の形式の文字列となる
 "content:assign:message"
 アサイン、メッセージ情報は、ステータスがFixed,Satartupの際は、次作業へのアサインメントとなる
-Aborted.Floatingはアサインを持たない
+Aborted.Floatingはアサインメントメッセージを持たない
+
 Active,Hold はサーバからエクスポートされた
+現在のユーザ情報をもつ
 */
 function JobStatus (statusArg){
     this.content = "Floating";
@@ -1894,8 +1904,10 @@ Xps.prototype.parseXps = function (datastream) {
  *
  *
  */
-    if (!datastream.match) {
-        return false
+    if ((! datastream)||(!(datastream.match))) {
+//console.log('bad datestream:') ;console.log(datastream);
+//console.log(datastream instanceof String);
+        return false;
     }
     /**
      * ラインで分割して配列に取り込み
