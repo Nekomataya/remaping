@@ -474,6 +474,37 @@ xUI.init    =function(editXps,referenceXps){
     this.dfY                =defaultSIZE.split(",")[1];                 //
     this.dfA                =defaultSIZE.split(",")[2];                 //
     this.timeShift          =TimeShift;                                 // 読み込みタイムシフト
+//systemCLipboardに対するイベント設定
+// ------------------------------------------------------------
+// カット操作が行われると実行されるイベント
+// ------------------------------------------------------------
+window.addEventListener("cut" , function(evt){
+    if(evt.target===document.getElementById('iNputbOx')){
+	    evt.preventDefault();	// デフォルトのカット処理をキャンセル
+	    var data_transfer = (evt.clipboardData) || (window.clipboardData);// DataTransferオブジェクト取得
+	    data_transfer.setData( "text" , xUI.yankBuf.toString() );// 文字列データを格納する
+    }
+});
+window.addEventListener("copy" , function(evt){
+    if(evt.target===document.getElementById('iNputbOx')){
+    	evt.preventDefault();	// デフォルトの処理をキャンセル
+	    var data_transfer = (evt.clipboardData) || (window.clipboardData);// DataTransferオブジェクト取得
+	    data_transfer.setData( "text" , xUI.yankBuf.toString() );// 文字列データを格納する
+	}
+});
+window.addEventListener("paste" , function(evt){
+    if(evt.target===document.getElementById('iNputbOx')){
+	    var data_transfer = (evt.clipboardData) || (window.clipboardData);// DataTransferオブジェクト取得
+console.log('event paste');
+	    var myContent = data_transfer.getData( "text" );// 文字列データを取得
+	    if (myContent.indexOf('\t')>=0){
+	        evt.preventDefault();	// デフォルトの処理をキャンセル
+	        xUI.yank(myContent);
+console.log(xUI.yankBuf);
+            xUI.paste();	        
+	    }
+    }
+});
 
 //yank関連
     this.yankBuf            ={body:"",direction:""};                    // ヤンクバッファは、comma、改行区切りのデータストリームで
@@ -3402,10 +3433,33 @@ if(dbg) {dbgPut("putResult:\n"+putResult)};
 }
 };
 
-/*    ヤンクバッファに選択範囲の方向と値を退避    */
-xUI.yank=function(){
+/**    ヤンクバッファに選択範囲の方向と値を格納
+引数としてタブ区切りテキストが与えられた場合は、行列置換してヤンクバッファの値を更新する
+
+*/
+xUI.yank=function(tabText){
+if(tabText){
+    tabText = String(tabText);
+    var dataArray = tabText.split('\n');
+    var fieldCount = 0;
+    for (var r=0;r<dataArray.length;r++){
+        dataArray[r]=dataArray[r].split('\t');
+        if(dataArray[r].length >= fieldCount) fieldCount=dataArray[r].length;
+    }
+    var myBody=[];
+    for (var f = 0; f < fieldCount;f++){
+        var frameData=[];
+        for (var r=0;r<dataArray.length;r++){
+            frameData.push((dataArray[r][f])?dataArray[r][f]:"");
+        }
+        myBody.push(frameData.join(','));
+    }
+    this.yankBuf.direction = [fieldCount-1,dataArray.length-1];
+    this.yankBuf.body = myBody.join('\n');
+}else{
     this.yankBuf.direction=xUI.Selection.slice();
     this.yankBuf.body=this.getRange();
+}
 };
 
 /*    xUI.actionRange(limit)
@@ -4149,7 +4203,7 @@ case	65 :		;	//[ctrl]+[A]/selectAll
 case	67 :		;	//[ctrl]+[C]/copy
 	if ((e.ctrlKey)||(e.metaKey))	{
 		this.yank();
-		return false;}else{return true}
+		return true;}else{return true}
 	break;
 case	73 :		;	//[ctrl]+[I]/information 
 	if ((e.ctrlKey)||(e.metaKey))	{
@@ -4180,13 +4234,14 @@ case	83 :    ;	//[ctrl]+[S]/ Save or Store document
 	break;
 case	86 :		;	//[ctrl]+[V]/paste
 	if ((e.ctrlKey)||(e.metaKey))	{
-		this.paste();
+//		this.paste();
+		return true;
 		return false;}else{return true}
 	break;
 case	88 :		;	//[ctrl]+[X]/cut
 	if ((e.ctrlKey)||(e.metaKey))	{
 		this.cut();
-		return false;}else{return true}
+		return true;}else{return true}
 	break;
 case	89 :		;	//[ctrl]+[Y]/redo
 	if ((e.ctrlKey)||(e.metaKey))	{
