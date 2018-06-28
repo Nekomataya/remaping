@@ -2483,10 +2483,10 @@ console.log(myCut);
 console.log(xUI.XPS.currentStatus);
     if((! myCut.currentStatus)&&(myCut.description)){
         console.log('no currentStatus');
-//        myCut.line=
-//        myCut.=
-//        myCut.=
-//        myCut.=
+        myCut.line_id="0:trunk";
+        myCut.stage_id="0:noname";
+        myCut.job_id="0:init";
+        myCut.status="Startup";
     }
 //管理情報が不足の場合は初期値で補う   初期値の設定はダミー
   
@@ -2703,7 +2703,8 @@ if(dbg) console.log(targetURL);
 	            var durationChange=xUI.XPS.duration();
 //console.log(xUI.XPS);
 //console.log(myIssue.identifier);
-                xUI.XPS.syncIdentifier(myIssue.identifier,false);
+//                xUI.XPS.syncIdentifier(myIssue.identifier,false);
+                xUI.XPS.syncIdentifier(myIssue.identifier,true);
                 durationChange = (durationChange == xUI.XPS.duration())? false:true;
 	            if(myEntry.issues.length>1){
                     documentDepot.currentReference = new Xps(5,144);//空オブジェクトをあらかじめ新規作成
@@ -2966,7 +2967,7 @@ if (myEntry instanceof listEntry){
 
     var title_name     = myEntry.product.split('#')[0];
     var episode_name   = myEntry.product.split('#')[1];
-    var cut_name       = (myMethod == 'PUT')? myEntry.sci:'s'+((myXps.scene)? myXps.scene:'-')+'c'+myXps.cut+"("+nas.Frm2FCT(myXps.time(),3)+")";
+    var cut_name       = (myMethod == 'PUT')? myEntry.sci:'s'+((myXps.scene)? myXps.scene:'-')+'c'+myXps.cut+"("+nas.Frm2FCT(myXps.time(),3,0,myXps.framerate)+")";
     var line_id        = myXps.line.toString(true);
     var stage_id       = myXps.stage.toString(true);
     var job_id         = myXps.job.toString(true);
@@ -2983,7 +2984,7 @@ if (myEntry instanceof listEntry){
 
     var title_name     = myEntry.product.split('#')[1];
     var episode_name   = encodeURIComponent(myEntry.name);
-    var cut_name       = (myMethod == 'PUT')? myEntry.sci:'s'+((myXps.scene)? myXps.scene:'-')+'c'+myXps.cut+"("+nas.Frm2FCT(myXps.time(),3)+")";
+    var cut_name       = (myMethod == 'PUT')? myEntry.sci:'s'+((myXps.scene)? myXps.scene:'-')+'c'+myXps.cut+"("+nas.Frm2FCT(myXps.time(),30,myXps.framerate)+")";
     var line_id        = myXps.line.toString(true);
     var stage_id       = myXps.stage.toString(true);
     var job_id         = myXps.job.toString(true);

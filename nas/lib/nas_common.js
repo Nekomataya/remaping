@@ -2019,10 +2019,10 @@ nas.FCT2ms = function (fct) {
  * 指定モードとしてtype6(30df)/7(60df)を与える
  * type7は30DF互換なので30DFと同じタイミングで4フレームドロップカウントする
  *
- * @param frames
- * @param type
- * @param ostF
- * @param fpsC
+ * @param frames Int /time value
+ * @param type Int 0 - 7/TC type
+ * @param ostF Int or bool/count origination
+ * @param fpsC Number or Object nas.Framerate/ framerate of value
  * @returns {*}
  * @constructor
  */

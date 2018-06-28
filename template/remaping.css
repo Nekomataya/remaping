@@ -1268,6 +1268,7 @@ div.imageOverlay {
 	opacity:.75;
 	background-blend-mode: normal; 
 	overflow:hidden;
+    position:relative;
 }
 #imgEdit {
     border-style:none;
@@ -1300,6 +1301,16 @@ div.imageOverlay {
     padding:2em;
     line-height:1.5;
     text-indent:1em;
+}
+.panelCorner{
+    position:absolute;
+    right:0px;
+    bottom:0px;
+    height:16px;
+    width:16px;
+    cursor:se-resize;
+	margin:0px;
+	padding:0px;
 }
 
 /* 以下オプションパネル群 */

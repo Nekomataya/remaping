@@ -497,7 +497,8 @@ window.addEventListener("paste" , function(evt){
 	    var data_transfer = (evt.clipboardData) || (window.clipboardData);// DataTransferオブジェクト取得
 console.log('event paste');
 	    var myContent = data_transfer.getData( "text" );// 文字列データを取得
-	    if (myContent.indexOf('\t')>=0){
+	    if ((myContent.indexOf('\n')>=0)||(myContent.indexOf('\t')>=0)){
+console.log(myContent);
 	        evt.preventDefault();	// デフォルトの処理をキャンセル
 	        xUI.yank(myContent);
 console.log(xUI.yankBuf);
@@ -2289,7 +2290,7 @@ if(pageNumber>1){
     _BODY+='<td class="pgHeader opusHeader" id="opus'+pageNumber+'">'+this.XPS.opus+'</td>';
     _BODY+='<td class="pgHeader titleHeader" id="title'+pageNumber+'">'+this.XPS.title+this.XPS.subtitle+'</td>';
     _BODY+='<td class="pgHeader scenecutHeader" id="scene_cut'+pageNumber+'">'+this.XPS.scene+this.XPS.cut+'</td>';
-    _BODY+='<td class="pgHeader timeHeader" id="time'+pageNumber+'">'+nas.Frm2FCT(this.XPS.time(),3)+'</td>';
+    _BODY+='<td class="pgHeader timeHeader" id="time'+pageNumber+'">'+nas.Frm2FCT(this.XPS.time(),3,1,this.XPS.framerate)+'</td>';
     _BODY+='<td class="pgHeader nameHeader" id="update_user'+pageNumber+'">'+(this.XPS.update_user.toString()).split(":")[0]+'</td>';
 //    _BODY+='<td class=pgHeader id="update_user'+pageNumber+'">'+this.XPS.update_user.handle+'</td>';
 //シート番号終了表示
@@ -2311,11 +2312,11 @@ if(pageNumber==1){
     _BODY+='<span class=top_comment ><u>memo:</u>';  
     _BODY+='<span id="transit_dataXXX">';
     if(this.XPS.trin[0]>0){
-        _BODY+="△ "+this.XPS.trin[1]+'('+nas.Frm2FCT(this.XPS.trin[0],3)+')';
+        _BODY+="△ "+this.XPS.trin[1]+'('+nas.Frm2FCT(this.XPS.trin[0],3,0,this.XPS.framerate)+')';
     };
     if((this.XPS.trin[0]>0)&&(this.XPS.trout[0]>0)){    _BODY+=' / ';};
     if(this.XPS.trout[0]>0){
-    _BODY+="▼ "+this.XPS.trout[1]+'('+nas.Frm2FCT(this.XPS.trout[0],3)+')';
+    _BODY+="▼ "+this.XPS.trout[1]+'('+nas.Frm2FCT(this.XPS.trout[0],3,0,this.XPS.framerate)+')';
     };
     _BODY+='</span>';
 
@@ -5967,7 +5968,7 @@ xUI.replaceEndMarker([トラック数,フレーム数],上下オフセットpx);
 */
 xUI.tcControl = function(targetId,tcForm,myStep){
     var myTraget = document.getElementById(targetId);
-    myTraget.value=nas.Frm2FCT(nas.FCT2Frm(myTraget.value)+myStep,tcForm);
+    myTraget.value=nas.Frm2FCT(nas.FCT2Frm(myTraget.value)+myStep,tcForm,0,this.XPS.framerate);
     if(document.getElementById(targetId).onchange) document.getElementById(targetId).onchange();
     return false;
 }
@@ -6769,6 +6770,9 @@ $.ajax({
     ロードのタイミングで他のユーザが書き換えを行った可能性があるので、最新のデータと換装
     myContent==nullのケースは、サーバに空コンテンツが登録されている場合なので単純にエラー排除してはならない
 */
+console.log('getStartupContent')
+console.log(myContent);
+
 	        if(myContent){
                 startupXPS=myContent;
                 currentXps.parseXps(myContent);
@@ -6781,6 +6785,8 @@ $.ajax({
 	            var spcFrames=nas.FCT2Frm($('#backend_variables').attr('data-scale'));
                 if(spcFrames) myParseData[0].time=String(spcFrames);
 	            currentXps.setDuration(nas.FCT2Frm(String(myParseData[0].time)));
+//このケースでは必ずFloatingステータスのデータができるので、ステータスを強制的にStartupへ変更する
+                currentXps.currentStatus= new JobStatus('Startup');
 	        };
 console.log(currentXps);
 console.log([
@@ -6809,7 +6815,7 @@ console.log(Xps.getIdentifier(currentXps));
                     }
                     
                     if( startupXPS.length==0 ){
-//console.log('detect first open no content');//初回起動を検出　コンテント未設定 
+console.log('detect first open no content');//初回起動を検出　コンテント未設定 
                         xUI.XPS.line     = new XpsLine(nas.pmdb.pmTemplate.members[0]);
                         xUI.XPS.stage    = new XpsStage(nas.pmdb.pmTemplate.members[0].stages.getStage());
                         xUI.XPS.job      = new XpsStage(nas.pmdb.jobNames.getTemplate(nas.pmdb.pmTemplate.members[0].stages.getStage(),"init")[0]);
@@ -7642,9 +7648,9 @@ break;
 case	"fct":	;
 //フレームの移動があったらカウンタを更新
 	document.getElementById("fct0").value=
-		nas.Frm2FCT(xUI.Select[1],xUI.fct0[0],xUI.fct0[1]);
+		nas.Frm2FCT(xUI.Select[1],xUI.fct0[0],xUI.fct0[1],0,this.XPS.framerate);
 	document.getElementById("fct1").value=
-		nas.Frm2FCT(xUI.Select[1],xUI.fct1[0],xUI.fct1[1]);
+		nas.Frm2FCT(xUI.Select[1],xUI.fct1[0],xUI.fct1[1],0,this.XPS.framerate);
 	break;
 case	"lvl":	;
 //レイヤの移動があったらボタンラベルを更新
@@ -7778,7 +7784,7 @@ case	"redo":	;
 }
 	break;
 case	"time":	;//時間取得
-	var timestr=nas.Frm2FCT(XPS.time(),3,0);
+	var timestr=nas.Frm2FCT(XPS.time(),3,0,XPS.framerate);
 	document.getElementById(prop).innerHTML=timestr;
 if(xUI.viewMode !="Compact"){
 	for (pg=1;pg<=Math.ceil(XPS.duration()/xUI.PageLength);pg++){
@@ -7788,17 +7794,17 @@ if(xUI.viewMode !="Compact"){
 	break;
 case	"trin":	;
 case	"trout":	;
-	var timestr=nas.Frm2FCT(XPS[prop][0],3,0);
+	var timestr=nas.Frm2FCT(XPS[prop][0],3,0,XPS.framerate);
 	var transit=XPS[prop][1];
 	document.getElementById(prop).innerHTML=
 	(XPS[prop][0]==0)? "-<br/>" : " ("+timestr+")";
 	var myTransit="";
 	if(XPS.trin[0]>0){
-		myTransit+="△ "+XPS.trin[1]+'('+nas.Frm2FCT(XPS.trin[0],3)+')';
+		myTransit+="△ "+XPS.trin[1]+'('+nas.Frm2FCT(XPS.trin[0],3,0,XPS.framerate)+')';
 	}
 	if((XPS.trin[0]>0)&&(XPS.trout[0]>0)){	myTransit+=' / ';}
 	if(XPS.trout[0]>0){
-	myTransit+="▼ "+XPS.trout[1]+'('+nas.Frm2FCT(XPS.trout[0],3)+')';
+	myTransit+="▼ "+XPS.trout[1]+'('+nas.Frm2FCT(XPS.trout[0],3,0,XPS.framerate)+')';
 	}
 	document.getElementById("transit_data").innerHTML=myTransit;
 	break;
@@ -8462,11 +8468,11 @@ spanWord=({
 	sWap.transitionText="";
 
 	if(XPS.trin[0]>0){
-		sWap.transitionText+="△ "+XPS.trin[1]+'\('+nas.Frm2FCT(XPS.trin[0],3)+')';
+		sWap.transitionText+="△ "+XPS.trin[1]+'\('+nas.Frm2FCT(XPS.trin[0],3,0,XPS.framerate)+')';
 	};
 	if((XPS.trin[0]>0)&&(XPS.trout[0]>0)){	sWap.transitionText+=' / ';};
 	if(XPS.trout[0]>0){
-		sWap.transitionText+="▼ "+XPS.trout[1]+'\('+nas.Frm2FCT(XPS.trout[0],3)+')';
+		sWap.transitionText+="▼ "+XPS.trout[1]+'\('+nas.Frm2FCT(XPS.trout[0],3,0,XPS.framerate)+')';
 	};
 	sWap.transitionText=EncodePS2(sWap.transitionText);
 
@@ -8699,6 +8705,7 @@ var myOffset=document.body.getBoundingClientRect();
 // 画像ウインドウ
 jQuery(function(){
 //    jQuery("#optionPanelRef").unbind("mouseover");
+//show/hide
     jQuery("a.openSnd").click(function(){
         jQuery("#optionPanelRef").show();
         return false;
@@ -8707,6 +8714,7 @@ jQuery(function(){
         jQuery("#optionPanelRef").hide();
         return false;
     })
+//minimize/maximaize
     jQuery("#optionPanelRef a.minimize").click(function(){
         if(jQuery("#optionPanelRef").height()>100){
            jQuery("#formSnd").hide();
@@ -8717,7 +8725,23 @@ jQuery(function(){
 	}
         return false;
     })
+//move
     jQuery("#optionPanelRef dl dt").mousedown(function(e){
+        jQuery("#optionPanelRef")
+            .data("clickPointX" , e.pageX - jQuery("#optionPanelRef").offset().left)
+            .data("clickPointY" , e.pageY - jQuery("#optionPanelRef").offset().top);
+        jQuery(document).mousemove(function(e){
+var myOffset=document.body.getBoundingClientRect();
+            jQuery("#optionPanelRef").css({
+                top:e.pageY  - jQuery("#optionPanelRef").data("clickPointY")+myOffset.top+"px",
+                left:e.pageX - jQuery("#optionPanelRef").data("clickPointX")+myOffset.left+"px"
+            })
+        })
+    }).mouseup(function(){
+        jQuery(document).unbind("mousemove")
+    })
+//resize
+    jQuery("#RefPanelCotner").mousedown(function(e){
         jQuery("#optionPanelRef")
             .data("clickPointX" , e.pageX - jQuery("#optionPanelRef").offset().left)
             .data("clickPointY" , e.pageY - jQuery("#optionPanelRef").offset().top);
@@ -8775,7 +8799,7 @@ myCookie[0]=pageAttributes;
 	mySubTitle	= (useCookie.XPSAttrib)?XPS.subtitle:null;
 	myOpus		= (useCookie.XPSAttrib)?XPS.opus:null;
 	myFrameRate	= (useCookie.XPSAttrib)?XPS.framerate:null;
-	Sheet		= (useCookie.XPSAttrib)?nas.Frm2FCT(XPS.xpsTracks[0].length,3):null;//
+	Sheet		= (useCookie.XPSAttrib)?nas.Frm2FCT(XPS.xpsTracks[0].length,3,0,XPS.framerate):null;//
     SoundColumns = (useCookie.XPSAttrib)?xUI.dialogCount:null;
 	SheetLayers	= (useCookie.XPSAttrib)?xUI.timingCount:null;
     CameraworkColumns = (useCookie.XPSAttrib)?xUI.cameraCount:null;
@@ -9253,11 +9277,11 @@ if(xUI.viewOnly) return false;
 	break;
 	case "trin":
 		msg="トランシット情報。時間は括弧で括って、キャプションとの間は空白。\n書式:caption (timecode) /例: c10-c11 wipe. (1+12.)";
-		currentValue=this.XPS.trin[1]+"\ \("+nas.Frm2FCT(this.XPS.trin[0],3,0)+"\)";
+		currentValue=this.XPS.trin[1]+"\ \("+nas.Frm2FCT(this.XPS.trin[0],3,0,this.XPS.framerate)+"\)";
 	break;
 	case "trout":
 		msg="トランシット情報。時間は括弧で括って、キャプションとの間は空白。\n書式:caption (timecode) /例: c10-c11 wipe. (1+12.)";
-		currentValue=this.XPS.trout[1]+"\ \("+nas.Frm2FCT(this.XPS.trout[0],3,0)+"\)";
+		currentValue=this.XPS.trout[1]+"\ \("+nas.Frm2FCT(this.XPS.trout[0],3,0,this.XPS.framerate)+"\)";
 	break;
 	case "scene_cut":
  		msg="シーン・カットナンバーを変更します。データは 空白区切。\nひとつだとカット番号";
@@ -10638,15 +10662,15 @@ this.getProp =function ()
 //nas側でメソッドにすべきダ
 //	現在の時間を取得
 		document.getElementById("scnTime").value=
-		nas.Frm2FCT(XPS.time(),3,0);
+		nas.Frm2FCT(XPS.time(),3,0,XPS.framerate);
 		document.getElementById("scnTrin").value=
 		XPS["trin"][1];
 		document.getElementById("scnTrinT").value=
-		nas.Frm2FCT(XPS["trin"][0],3,0);
+		nas.Frm2FCT(XPS["trin"][0],3,0,XPS.framerate);
 		document.getElementById("scnTrot").value=
 		XPS["trout"][1];
 		document.getElementById("scnTrotT").value=
-		nas.Frm2FCT(XPS["trout"][0],3,0);
+		nas.Frm2FCT(XPS["trout"][0],3,0,XPS.framerate);
 
 //		document.getElementById("scn").value=
 //		document.getElementById("scnLayers").value=
@@ -11331,9 +11355,9 @@ SoundEdit.floatTC = function(changeID){
         else if (this.timeLock == 0) outPoint = inPoint + duration - 1;
     break;
     }
-    document.getElementById('soundInPoint').value  = nas.Frm2FCT(inPoint ,2);
-    document.getElementById('soundOutPoint').value = nas.Frm2FCT(outPoint,2);
-    document.getElementById('soundDuration').value = nas.Frm2FCT(duration,2);
+    document.getElementById('soundInPoint').value  = nas.Frm2FCT(inPoint ,2,0,xUI.XPS.framerate);
+    document.getElementById('soundOutPoint').value = nas.Frm2FCT(outPoint,2,0,xUI.XPS.framerate);
+    document.getElementById('soundDuration').value = nas.Frm2FCT(duration,2,0,xUI.XPS.framerate);
     xUI.selection([xUI.Select[0],xUI.Select[1]+duration-1]);
     xUI.selectCell([xUI.Select[0],inPoint]);
 //    xUI.sectionUpdate();
@@ -11349,9 +11373,9 @@ SoundEdit.getProp = function(){
     var inPoint  = targetSection.startOffset();
     var outPoint = inPoint + targetSection.duration - 1;
     document.getElementById('sndBody').value=targetSection.value.toString();
-    document.getElementById('soundInPoint').value  = nas.Frm2FCT(inPoint ,2);
-    document.getElementById('soundOutPoint').value = nas.Frm2FCT(outPoint,2);
-    document.getElementById('soundDuration').value = nas.Frm2FCT(targetSection.duration,2);
+    document.getElementById('soundInPoint').value  = nas.Frm2FCT(inPoint ,2,0,xUI.XPS.framerate);
+    document.getElementById('soundOutPoint').value = nas.Frm2FCT(outPoint,2,0,xUI.XPS.framerate);
+    document.getElementById('soundDuration').value = nas.Frm2FCT(targetSection.duration,2,0,xUI.XPS.framerate);
 
     document.getElementById('soundLabel').value = targetSection.value.name;
     document.getElementById('soundProps').value = targetSection.value.attributes.join(",");

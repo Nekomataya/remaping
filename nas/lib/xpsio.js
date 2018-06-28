@@ -1500,7 +1500,10 @@ if(false){
     break;
     case 'full':
     default    :
-        myResult=this.title+'#'+this.opus+'['+this.subtitle+']__s'+this.scene+'-c'+this.cut+'('+nas.Frm2FCT(this.time(),3)+')';
+        var timeString=(this.framerate==29.97)?
+        nas.Frm2FCT(this.time(),6):
+        nas.Frm2FCT(this.time(),3,0,this.framerate);
+        myResult=this.title+'#'+this.opus+'['+this.subtitle+']__s'+this.scene+'-c'+this.cut+'('+ timeString+')';
     }
 
     return myResult;
@@ -2086,15 +2089,16 @@ Xps.prototype.parseXps = function (datastream) {
              * 読み取ったフレーム数と指定時間の長いほうでシートを初期化する。
              */
             switch (nAme) {
+                case    "FRAME_RATE":
+                    if(nas.frate != vAlue)
+                    break;
                 case    "TRIN":
+                case    "TROUT":
                 /**
                  * トランシットイン
+                 * トランシットアウト
+                 * @type {*}
                  */
-                case    "TROUT":
-                    /**
-                     * トランシットアウト
-                     * @type {*}
-                     */
                     var tm = nas.FCT2Frm(vAlue.split(",")[0]);
                     if (isNaN(tm)) {
                         tm = 0
@@ -2701,6 +2705,9 @@ Xps.sliceReplacementLabel = function (myStr){
      名前を変更するか又はオブジェクトメソッドに統合
      このメソッドは同名別機能のオブジェクトメソッドが存在するので厳重注意
      クラスメソッドはURIencodingを行い、オブジェクトメソッドは'%'エスケープを行う
+     
+     
+     *** 識別子のフレームレート拡張を行うこと　2018.06.28
 */
 Xps.getIdentifier=function(myXps,opt){
 //この識別子作成は実験コードです　2016.11.14
@@ -2829,6 +2836,10 @@ Xps.parseProduct = function(productString){
     補助情報は持たせない。かつ対比時に比較対象とならないものとする
     カット番号情報は、ここではscene-cutの分離を行わない
     比較の必要がある場合に始めて比較を行う方針でコーディングする
+    sciString末尾の（括弧内）は時間情報部分
+    書式は　(TC//framareteString) or (TC) フレームレートの指定のない場合はデフォルトの値で補われる
+    (1+12),(1+12//24FPS),(1:12//30),(01:12//30DF),(00:00:01:12//59.94)　等
+    デフォルト値は、タイトルから取得
     sciStringに時間情報が含まれないケースあり
     time指定の存在しない識別子の場合"6+0"を補う
 */
