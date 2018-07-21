@@ -211,7 +211,7 @@ var mySubTitle=""	;
 			//サブタイトル 同上
 var myOpus=""	;
 			//制作話数等
-var myFrameRate=24	;
+var myFrameRate="24fps";
 			//初期フレームレートを置いてください。フレーム毎秒
 var Sheet="6+0"	;
 			//カット尺初期値初期タイムシートの長さをタイムコードで
@@ -300,11 +300,11 @@ var SpinValue	=3;
 var SpinSelect	=false;
 			//選択範囲指定でスピン量の指定を行うか
 
-var SheetLength=6;
+var SheetLength   = 6 ;
 			//タイムシート1枚の秒数
 			//	どう転んでも普通６秒シート。でも一応可変。
 			//	2列シートを使う時は偶数の秒数がおすすめ。
-var SheetPageCols=2;
+var SheetPageCols = 2 ;
 			//シートの列数。
 			//	シート秒数を割り切れる数を置いて下さい。
 			//	実際問題としては１または２以外は

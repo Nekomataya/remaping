@@ -43,8 +43,8 @@ function xMap(titleString,targetDecription){
 	this.opus	=	myOpus;//SCi
 	this.title	=	myTitle;//
 	this.subtitle	=	mySubTitle;
+	this.framerate	=	(!nas)? nas.newFramerate("24FPS"):nas.newFramerate(nas.FRATE);//作品情報として追加
 	this.rate	=	(!nas)? "24FPS":nas.RATE;//作品情報として追加
-	this.framerate	=	(!nas)? nas.newFramerate("24FPS"):nas.newFramerate(nas.RATE, nas.FRATE);//作品情報として追加
 	this.standerdFrame = new nas.AnimationField();
 	this.standerdPeg = this.standerdFrame.peg;
 	this.baseResolution = new nas.UnitResolution(nas.RESOLUTION,"dpc");

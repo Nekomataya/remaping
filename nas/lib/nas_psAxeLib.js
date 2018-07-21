@@ -304,8 +304,8 @@ nas.inputMedias.onChange = function () {
     if (nas.RESOLUTION != myDPC) {
         nas.RESOLUTION = myDPC
     }
-    if (nas.FRATE != this.selectedRecord[4]) {
-        nas.FRATE = this.selectedRecord[4]
+    if (nas.FRATE.rate != this.selectedRecord[4]) {
+        nas.FRATE = nas.newFramerate("",this.selectedRecord[4])
     }
     nas.registerMarks.select(this.selectedRecord[5]);
 };
@@ -1494,7 +1494,7 @@ nas.axeVTC.getCurrentFrame = function () {
  * フレームレート取得
  * nas.axeVTC.getFrameRate()
  * 引数:なし
- * 戻値:フレームレート
+ * 戻値:Number framerate
  * タイムライン初期化前では戻り値がnull
  *
  * @returns {*}
@@ -1531,7 +1531,7 @@ nas.axeVTC.getFrameRate = function () {
  */
 nas.axeVTC.setFrameRate = function (myValue, myOption) {
     if ((!myValue) || (myValue <= 0)) {
-        myValue = nas.FRATE;
+        myValue = Number(nas.FRATE);
     }
     if (!myOption) {
         myOption = false;
@@ -1545,8 +1545,8 @@ nas.axeVTC.setFrameRate = function (myValue, myOption) {
         desc.putDouble(stringIDToTypeID("frameRate"), myValue);
         executeAction(charIDToTypeID("setd"), desc, DialogModes.NO);
         var currentFR = this.getFrameRate();
-        if ((!myOption) && (nas.FRATE != currentFR)) {
-            nas.FRATE = currentFR;
+        if ((!myOption) && (nas.FRATE.rate != currentFR)) {
+            nas.FRATE = nas.newFramerate("",currentFR);
         }
     } catch (er) {
         return null;
@@ -1702,7 +1702,7 @@ nas.axeVTC.moveInPoint = function (myOffset) {
     descO.putInteger(stringIDToTypeID("minutes"), 0);
     descO.putInteger(stringIDToTypeID("seconds"), 0);
     descO.putInteger(stringIDToTypeID("frame"), myOffset);
-    descO.putDouble(stringIDToTypeID("frameRate"), nas.FRATE);
+    descO.putDouble(stringIDToTypeID("frameRate"), Number(nas.FRATE));
     descA.putObject(idtimeOffset, stringIDToTypeID("timecode"), descO);
 
     executeAction(stringIDToTypeID("moveInTime"), descA, DialogModes.NO);
@@ -1730,7 +1730,7 @@ nas.axeVTC.moveOutPoint = function (myOffset) {
     descO.putInteger(stringIDToTypeID("minutes"), 0);
     descO.putInteger(stringIDToTypeID("seconds"), 0);
     descO.putInteger(stringIDToTypeID("frame"), myOffset);
-    descO.putDouble(stringIDToTypeID("frameRate"), nas.FRATE);
+    descO.putDouble(stringIDToTypeID("frameRate"), Number(nas.FRATE));
     var idtimecode = stringIDToTypeID("timecode");
     descA.putObject(idtimeOffset, idtimecode, descO);
 

@@ -180,8 +180,8 @@ if(nas[moduleName].isDockingPanel){
 			if(app.project.activeItem instanceof CompItem)
 			{
 				//ターゲット変更フレームレート更新
-				nas.FRATE=app.project.activeItem.frameRate;
-				this.targetComp=app.project.activeItem;
+				nas.FRATE = nas.newFramerate("",app.project.activeItem.frameRate);
+				this.targetComp = app.project.activeItem;
 				return true;
 			}else{
 				//ターゲットリリース

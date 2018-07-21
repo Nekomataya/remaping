@@ -2491,7 +2491,11 @@ console.log(xUI.XPS.currentStatus);
 //管理情報が不足の場合は初期値で補う   初期値の設定はダミー
   
     if (myCut.description){
+console.log(decodeURIComponent(myCut.description));
                 var myIdentifier = myCut.description;
+
+
+
     }else{
 
                 if(! myCut.line_id)　myCut.line_id  =(new XpsLine(nas.pmdb.pmTemplate.members[0])).toString(true);
@@ -2685,10 +2689,17 @@ if(dbg) console.log(targetURL);
 //console.log(result);
 //データ請求に成功したので、現在のデータを判定して処理の必要があれば処理
         	var myContent=result.data.cut.content;//XPSソーステキストをセット
-        	var currentXps = new Xps(5,144);
+        	var currentXps = new Xps();
 	        if(myContent){
 	            currentXps.parseXps(myContent);
 	        }else{
+/*
+    サーバリザルトにタイムシートの内容が含まれない場合は、登録直後の空白データ
+    以下の情報を取得して空のタイムシートをビルドする
+    タイトル、エピソード
+    タイトルのフレームレート（ない場合はシステムデフォルト）
+    識別子に含まれるカット番号　あれば　カット尺（ない場合はシステムデフォルト）
+*/
 //console.log('contents :'+ myContent);
 	            var myParseData = Xps.parseSCi(result.data.cut.name);
 	            currentXps.cut = myParseData.cut;
@@ -4048,10 +4059,15 @@ serviceAgent.getRepsitoryIdByToken=function(myToken){
     引数を判定して動作を決定 カレントリポジトリの操作を呼び出す
     myIdentifier    カット識別子 完全状態で指定されなかった場合は、検索で補う
     isReference    リファレンスとして呼び込むか否かのフラグ 指定がなければ自動判定
-    callback    コールバック関数指定が可能コールバックは以下の型式で
+    callback    コールバック関数指定が可能 コールバックは以下の型式で
     コールバックの指定がない場合は指定データをアプリケーションに読み込む
     コールバック関数以降の引数はコールバックに渡される
     リファレンス取得の際にアプリケーションステータスをリセットする場合があるので注意
+    
+    ネットワークリポジトリからエントリを取得の際コンテンツが空のケースがある。
+    これはエントリ登録直後のデータで、アプリケーション上でタイトル/エピソードに従ったデータをさくせいる必要があるので注意
+    
+    リポジトリ共通の機能としてタイトル/エピソードからデフォルトプロパティの取得を行い、その後、各リポジトリごとに記述子による指定データのパースを行って新規データのビルドを行う。
 */
 serviceAgent.getEntry=function(myIdentifier,isReference,callback,callback2){
 if(dbg) console.log('getEntry ::' + decodeURIComponent(myIdentifier));
@@ -4065,6 +4081,9 @@ if(dbg) console.log('getEntry ::' + decodeURIComponent(myIdentifier));
     if(! myEntry){
 if(dbg) console.log("noProduct : "+ decodeURIComponent(myIdentifier));//プロダクトが無い
         return false;
+    }else{
+//pmdbからプロダクトごとのデフォルト値を取得する
+        
     }
     if(! targetInfo.currentStatus){
    //引数に管理部分がないので、最新のissueとして補う

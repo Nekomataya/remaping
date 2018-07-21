@@ -59,7 +59,7 @@ w.sl00=nas.GUI.addSlider(w,0,0,24,0,vOffset-1,6);
 
 w.cb21=nas.GUI.addComboBox(w,["0+4","0+5","0+6","0+8","0+9","0+12","0+15","0+16","0+18"],w.setFrames,0,.5+vOffset,2,1);
 w.lb22=nas.GUI.addStaticText(w,"frames",2,.7+vOffset,1,1);
-w.cb23=nas.GUI.addComboBox(w,[15,24,23.98,25,30,29.97,59.94,60,100],nas.FRATE,3,.5+vOffset,2,1)
+w.cb23=nas.GUI.addComboBox(w,[15,24,23.98,25,30,29.97,59.94,60,100],Number(nas.FRATE),3,.5+vOffset,2,1)
 w.cb24=nas.GUI.addStaticText(w,"fps",5,.7+vOffset,1,1);
 w.bt31=nas.GUI.addButton(w,"Cancel",0,1.7+vOffset,3,1);
 w.bt32=nas.GUI.addButton(w,"O K",3,1.7+vOffset,3,1);
@@ -68,7 +68,7 @@ w.sl00.onChange=function(){w.cb21.set(nas.Frm2FCT(Math.floor(this.value*nas.FRAT
 
 Slider.on
 w.cb21.onChange=function(){this.parent.setFrames=nas.FCT2Frm(this.value)}
-w.cb23.onChange=function(){nas.FRATE=parseFloat(this.value);if(animationMode=="timelineAnimation"){nas.axeVTC.setFrameRate();}};
+w.cb23.onChange=function(){nas.FRATE=nas.newFramerate("",parseFloat(this.value));if(animationMode=="timelineAnimation"){nas.axeVTC.setFrameRate();}};
 w.bt32.onClick=function(){
 	var myFrames=this.parent.setFrames;
 	if(! isNaN(myFrames)){

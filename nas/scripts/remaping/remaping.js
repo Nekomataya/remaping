@@ -371,7 +371,7 @@ xUI.importBox.checkValue = function(itm){
 xUI.init    =function(editXps,referenceXps){
     this.XPS=editXps;                           //XPSを参照するオブジェクト必須引数
     this.sessionRetrace = -1;                   //管理上の作業セッション状態
-    this.referenceXPS=new Xps(5,144);           //参照用Xps初期値
+    this.referenceXPS=new Xps(5,nas.SheetLength+':00.');           //参照用Xps初期値
 /**
 引数に参照オブジェクトが渡されていたら、優先して解決
     マルチステージ拡張実装後、直接指定された参照ステージは、初期化時のみ優先 
@@ -2774,7 +2774,9 @@ BODY_ += '<tr>';
     var myFrameCount=cols*SheetRows+n;
     var currentSec=(currentPageNumber*SheetLength)+Math.floor(myFrameCount/Math.ceil(this.XPS.framerate));//処理中の秒
     var restFrm= myFrameCount % Math.ceil(this.XPS.framerate);//処理中の　ライン/秒
-    var mySpt=(this.XPS.rate.match(/df/i))?";":":";
+//    var mySpt=(this.XPS.rate.match(/df/i))?";":":";
+    var mySpt=(this.XPS.framerate.opt=='smpte')?";":":";
+
     var myTC=[Math.floor(currentSec/3600)%24,Math.floor(currentSec/60),currentSec%60].join(":")+mySpt+restFrm
     var current_frame= nas.FCT2Frm(myTC,this.XPS.framerate);//FCTからフレームインデックスを導くドロップ時はnull
 
@@ -6015,6 +6017,10 @@ function nas_Rmp_Startup(){
     sync("about_");
 //クッキー指定があれば読み込む
     if(useCookie[0]){ldCk()}; 
+//ライブラリフレームレートの設定
+console.log(myFrameRate);
+    nas.FRATE=nas.newFramerate(myFrameRate);
+console.log(nas.FRATE);
 //背景カラーを置換
     SheetLooks.SheetBaseColor=SheetBaseColor;
 //シートロゴをアップデート
@@ -6038,7 +6044,7 @@ console.log(headerLogo);
 /**
        グローバルの XPSを実際のXpsオブジェクトとして再初期化する
 */
-    XPS=new Xps([SoundColumns,SheetLayers,CameraworkColumns,SfxColumns],MaxFrames);
+    XPS=new Xps([SoundColumns,SheetLayers,CameraworkColumns,SfxColumns],MaxFrames,myFrameRate);
  /*
     convertXps(datastream,optionString,overiteProps,streamOption)
 引数:
@@ -6364,6 +6370,7 @@ XPS.syncIdentifier =function(myIdentifier,withoutTime){
         this.currentStatus = parseData.currentStatus;
     }
     if (! withoutTime){
+console.log(parseData.sci[0].time +':' +Math.ceil((this.trin[0]+this.trout[0])/2))
         var newTime = nas.FCT2Frm(parseData.sci[0].time)+Math.ceil((this.trin[0]+this.trout[0])/2);
         console.log('時間調整 : '+newTime)
         console.log(this.setDuration(newTime));
@@ -6449,7 +6456,7 @@ if(startupXPS.length > 0){
     XPS.readIN(startupXPS);NameCheck=false;
 }
 //リファレンスシートデータがあればオブジェクト化して引数を作成
-        var referenceX=new Xps(5,144);
+        var referenceX=new Xps(5,nas.SheetLength+':00.');
     if((referenceXPS)&&(referenceXPS.length)){
         referenceX.readIN(referenceXPS);
     }
@@ -6554,7 +6561,7 @@ if(document.getElementById( "referenceXPS" ) && document.getElementById( "refere
 
 if(startupXPS.length > 0){ XPS.readIN(startupXPS) }
 //リファレンスシートデータがあればオブジェクト化して引数を作成
-        var referenceX=new Xps(5,144);
+        var referenceX=new Xps(5,nas.SheetLength+':00.');
     if((referenceXPS)&&(referenceXPS.length)){
         referenceX.readIN(referenceXPS);
     }
@@ -6687,6 +6694,16 @@ console.log('Application server-onsite');
 　       document.getElementById('loginstatus_button').disabled  = true;
          document.getElementById('loginuser').innerHTML = xUI.currentUser.handle;
          document.getElementById('serverurl').innerHTML = serviceAgent.currentServer.url;
+//  サーバ指定のフレームレートが存在する場合は最優先で取得してデフォルト値を設定する
+        var frtString=$("#backend_variables").attr("data-frame_rate");
+        if(String(frtString).length){
+console.log("framerate specified : " + frtString);
+            nas.FRATE = nas.newFramerate(frtString);//ここでnas.FRATEを変更するか否か…　一時変数とするケースを考慮のこと
+        }else{
+console.log("no framerate specified");
+        };
+//  データスケール指定が有効ならばフレーム数として取得
+	    var spcFrames=nas.FCT2Frm($('#backend_variables').attr('data-scale'),nas.FRATE);
 //   カラーセット
         var sheetBaseColor=$("#backend_variables").attr("data-sheet_color");
         if (sheetBaseColor.match(/^rgba?\(([\d\s\.,]+)\)$/i)){
@@ -6739,6 +6756,7 @@ console.log('has cut token');
     　               serviceAgent.switchRepository(RepID,function(){
     　                   if(dbg) console.log('switched repository :' + RepID);
 
+console.log(nas.FRATE);
 /*  最小の情報をトークンベースで取得
 最短時間で情報を構築するためにAPIを直接コール
 */
@@ -6748,6 +6766,8 @@ $.ajax({
         type:'GET',
         dataType: 'json',
         success: function(productResult) {
+console.log('get ProductResult');
+console.log(productResult);
             serviceAgent.currentRepository.productsData=[productResult.data.product];
 //get episode information
     $.ajax({
@@ -6755,6 +6775,8 @@ $.ajax({
         type:'GET',
         dataType: 'json',
         success: function(episodeResult) {
+console.log('get EpisodeResult');
+console.log(episodeResult);
             serviceAgent.currentRepository.productsData[0].episodes=[[episodeResult.data.episode]];
 //get cut information
         $.ajax({
@@ -6762,29 +6784,65 @@ $.ajax({
         type:'GET',
         dataType: 'json',
         success: function(cutResult){
+console.log('get CutResult')
+console.log(cutResult)
 //データ請求に成功
         	var myContent=cutResult.data.cut.content;//XPSソーステキストをセット
-        	var currentXps = new Xps(5,144);//一時オブジェクトを作成
+console.log('create new Xps');
+    //data-scaleに有効な値が存在する場合は、その値を参照　後ほど調整する処理を減らす
+            
+        	var currentXps = new Xps(5,(spcFrames)?spcFrames:nas.SheetLength+':00.');//一時オブジェクトを作成
+
+currentXps.title    = productResult.data.product.name;
+currentXps.opus     = episodeResult.data.episode.name;
+currentXps.subtitle = episodeResult.data.episode.description;
+currentXps.cut      = cutResult.data.cut.name;
+currentXps.line      = new XpsLine(cutResult.data.cut.line_id);
+currentXps.stage      = new XpsStage(cutResult.data.cut.stage_id);
+currentXps.job      = new XpsStage(cutResult.data.cut.job_id);
+currentXps.currentStatus      = new JobStatus(cutResult.data.cut.status);
+
+var curentAPIIdentifier = Xps.getIdentifier(currentXps); 
 /*
     有効なリザルトを得た場合は、最新データなのでstartupXPSを入れ換える。
     ロードのタイミングで他のユーザが書き換えを行った可能性があるので、最新のデータと換装
     myContent==nullのケースは、サーバに空コンテンツが登録されている場合なので単純にエラー排除してはならない
+    
+    稀なケースで、登録直後のデータを開いて作業にはいり、アクシデント等で未編集のままサーバの接続を断って自動保存が発生した場合、
+    タイムシートの内容がデフォルト1秒でタイトル・エピソード・カット番号等を失う場合がある　要検出
+    
 */
 console.log('getStartupContent')
-console.log(myContent);
-
+//console.log(myContent);
 	        if(myContent){
-                startupXPS=myContent;
-                currentXps.parseXps(myContent);
-            //if(cutResult.data.cut.description==0){}
+console.log('has Content')
+                var checkSheet = new Xps();
+                checkSheet.parseXps(myContent);//取得した内容で一時データ作成
+                //一時データの整合性を検査
+                var checkIdf=Xps.compareIdentifier(Xps.getIdentifier(checkSheet),Xps.getIdentifier(currentXps));
+                if(checkIdf > 0){
+                    startupXPS=myContent;
+                    //currentXps.parseXps(myContent);
+                    currentXps=checkSheet;//Swapで
+                }
+console.log(currentXps);
                 
+//if(currentXps.time()!=spcFrames)
 	        } else if(myContent == null){
+console.log('no Content get');
 	            var myParseData = Xps.parseSCi((cutResult.data.cut.description)?cutResult.data.cut.description:cutResult.data.cut.name);
 	            currentXps.cut = myParseData[0].cut;
 //ディスクリプション領域に識別子があればそちらを優先、更にdata-scaleが存在すればそれを優先　名前 < 識別子 < data-scale
-	            var spcFrames=nas.FCT2Frm($('#backend_variables').attr('data-scale'));
-                if(spcFrames) myParseData[0].time=String(spcFrames);
-	            currentXps.setDuration(nas.FCT2Frm(String(myParseData[0].time)));
+                if(spcFrames){
+console.log('data scale specified :');
+console.log(spcFrames);
+console.log(nas.FRATE);
+                    myParseData[0].time=String(spcFrames);
+console.log(myParseData);
+                }
+console.log( myParseData[0].time );
+console.log( 'setDuration :'+nas.FCT2Frm(myParseData[0].time,nas.FRATE));
+	            currentXps.setDuration(nas.FCT2Frm(myParseData[0].time,nas.FRATE));
 //このケースでは必ずFloatingステータスのデータができるので、ステータスを強制的にStartupへ変更する
                 currentXps.currentStatus= new JobStatus('Startup');
 	        };
@@ -6796,6 +6854,8 @@ console.log([
     currentXps.currentStatus.toString(true)
 ].join('//'));
 console.log(Xps.getIdentifier(currentXps));
+console.log(currentXps.getIdentifier(true));
+
 //本体情報からエントリを作成して要素一つだけのproductsDataリストを作る
             serviceAgent.currentRepository.productsData[0].episodes[0][0].cuts=[[{
                 token:cutResult.data.cut.token,
@@ -6811,11 +6871,15 @@ console.log(Xps.getIdentifier(currentXps));
 //currentXpsのプロパティをリザルトに同期させる
                     var myIdentifier=serviceAgent.currentRepository.getIdentifierByToken($('#backend_variables').attr('data-cut_token'));
                     if((myIdentifier)&&(Xps.compareIdentifier(Xps.getIdentifier(XPS),myIdentifier) < 5)){
-                        xUI.XPS.syncIdentifier(myIdentifier);
+                        xUI.XPS.syncIdentifier(myIdentifier,false);
+                        
+//同期が行われたのでフラグを立てる
+console.log(xUI.XPS)
                     }
                     
                     if( startupXPS.length==0 ){
-console.log('detect first open no content');//初回起動を検出　コンテント未設定 
+console.log('detect first open no content');//初回起動を検出　コンテント未設定
+console.log(XPS)
                         xUI.XPS.line     = new XpsLine(nas.pmdb.pmTemplate.members[0]);
                         xUI.XPS.stage    = new XpsStage(nas.pmdb.pmTemplate.members[0].stages.getStage());
                         xUI.XPS.job      = new XpsStage(nas.pmdb.jobNames.getTemplate(nas.pmdb.pmTemplate.members[0].stages.getStage(),"init")[0]);
@@ -6824,8 +6888,11 @@ console.log('detect first open no content');//初回起動を検出　コンテ�
                         xUI.XPS.update_user=xUI.currentUser;
 //syncIdentifierでカット尺は調整されているはずだが、念のためここで変数を取得して再度調整をおこなう
 //data-scale を廃止した場合は、不用
-//                        var myCutTime = nas.FCT2Frm($('#backend_variables').attr('data-scale'));
-//                        if(!(isNaN(myCutTime)) && (myCutTime != xUI.XPS.time())){xUI.XPS.setDuration(myCutTime)}
+                        var myCutTime = nas.FCT2Frm($('#backend_variables').attr('data-scale'));
+                        if((myCutTime) && (!(isNaN(myCutTime))) && (myCutTime != xUI.XPS.time())){
+console.log('setDuration with data-scale')
+                            xUI.XPS.setDuration(myCutTime);
+                        }
                     }
                     xUI.resetSheet(currentXps);
 //ここで無条件でproductionへ移行せずに、チェックが組み込まれているactivateEntryメソッドを使用する
@@ -8798,7 +8865,7 @@ myCookie[0]=pageAttributes;
 	myTitle		= (useCookie.XPSAttrib)?XPS.title:null;
 	mySubTitle	= (useCookie.XPSAttrib)?XPS.subtitle:null;
 	myOpus		= (useCookie.XPSAttrib)?XPS.opus:null;
-	myFrameRate	= (useCookie.XPSAttrib)?XPS.framerate:null;
+	myFrameRate	= (useCookie.XPSAttrib)?XPS.framerate.toString():null;
 	Sheet		= (useCookie.XPSAttrib)?nas.Frm2FCT(XPS.xpsTracks[0].length,3,0,XPS.framerate):null;//
     SoundColumns = (useCookie.XPSAttrib)?xUI.dialogCount:null;
 	SheetLayers	= (useCookie.XPSAttrib)?xUI.timingCount:null;
@@ -8921,8 +8988,10 @@ if (ckName == ckStringS[n].split('=')[0]){
 		}
 return null;//判定できなかった場合は空文字列を返す。
 }
-
-//クッキー文字列を配列に戻す。
+/**    クッキー文字列を配列に戻し、グローバル変数に展開する
+    グローバル変数は、設定ファイルの値を持っているので関数の呼び出し後に必用な参照を行う
+    関数内では、ケース毎特定の処理は行わない。
+*/
 function ldCk(ckStrings){
 if (!navigator.cookieEnabled){return false;}
 
@@ -10167,7 +10236,7 @@ function ScenePref(){
 	this.Lists["KEYmtd"]=["min","opt","max"];
 
 	this.Lists["framerate"]=["custom","24","30","29.97","25","15","23.976","48","60"];
-	this.Lists["framerate"+"_name"]=["=CUSTOM=","FILM","NTSC","NTSC-DF","PAL","WEB","DF24","FR48","FR60"];
+	this.Lists["framerate"+"_name"]=["=CUSTOM=","FILM","NTSC","NTSC-DF","PAL","WEB","23.98","FR48","FR60"];
 	this.Lists["SIZEs"]=[	"custom",
 							"640,480,1","720,480,0.9","720,486,0.9","720,540,1",
 							"1440,1024,1","2880,2048,1","1772,1329,1","1276,957,1",
@@ -10323,8 +10392,8 @@ this.chgFRATE =function (id)
 (document.getElementById("scnSetFps").value == 0)?
 document.getElementById("scnFramerate").value : this.Lists["framerate"][document.getElementById("scnSetFps").value] ;
 	}
-nas.FRATE=document.getElementById("scnFramerate").value;
 nas.RATE=this.Lists["framerate_name"][document.getElementById("scnSetFps").value];
+nas.FRATE = nas.newFramerate(nas.RATE,Number(document.getElementById("scnFramerate").value));
 //内部計算用なので親のレートは変更しない
 	this.changed=true;
 	document.getElementById("scnReset").disabled=(! this.changed);
@@ -10658,7 +10727,7 @@ this.getProp =function ()
 	}
 
 //取得したシートのフレームレートをnasのレートに代入する
-	nas.FRATE=document.getElementById("scnFramerate").value;
+	nas.FRATE= nas.newFramerate(document.getElementById("scnFramerate").value);
 //nas側でメソッドにすべきダ
 //	現在の時間を取得
 		document.getElementById("scnTime").value=
@@ -10814,7 +10883,7 @@ this.newProp =function (showMsg)
 //console.log([name,document.getElementById(name).value]);
 	}
 //取得したシートのフレームレートをnasのレートに代入する
-	nas.FRATE=document.getElementById("scnFramerate").value;
+	nas.FRATE= nas.newFramerate(document.getElementById("scnFramerate").value);
 //nas側でメソッドにすべきダ
 //	現在の時間を取得
 		document.getElementById("scnTime").value=Sheet;
@@ -10951,8 +11020,8 @@ document.getElementById("scnTrot").value
 ];
 
 //本体シートのフレームレート更新
-	xUI.XPS.framerate=nas.FRATE;
-	xUI.XPS.rate=nas.RATE;
+	xUI.XPS.framerate= nas.newFramerate(nas.FRATE.toString());
+	xUI.XPS.rate=xUI.XPS.framerate.name;
 //書き直しに必要なUIのプロパティを再設定
 	xUI.PageLength=
 	xUI.SheetLength*Math.ceil(xUI.XPS.framerate);//1ページのコマ数

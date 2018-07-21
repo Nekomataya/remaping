@@ -77,8 +77,8 @@ if(this.importCount)
 //コンポとして読み込んだ静止画フッテージのフレームレートと継続時間を調整しておく(レート一致/継続時間1フレーム（秒？）に)
  for(var ix=0;ix<app.project.items.length;ix++){
 		if((app.project.items[ix+1].selected)&&(app.project.items[ix+1] instanceof CompItem)){
-			app.project.items[ix+1].frameRate=nas.FRATE;
-			app.project.items[ix+1].duration=1/nas.FRATE;			
+			app.project.items[ix+1].frameRate=nas.FRATE.rate;
+			app.project.items[ix+1].duration=1/nas.FRATE.rate;			
 		}
  }
 	alert(this.importCount +" 個のファイルをインポートしました。");

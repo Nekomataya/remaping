@@ -1001,60 +1001,103 @@ nas.Orientation.prototype.valueOf =nas.ARRAYValue;
 
 /*	フレームレートオブジェクト
 コンストラクタ
-	new nas.Framerate(rateString[,rate])?
+	nas.newFramerate(rateString[,rate])?
 引数:
 	reteString String フレームレート文字列
 	rate Number 省略可能　実フレームレート
-	フレームレート文字列は任意　24FPS 25FPS等の\dFPS の場合はその数値を利用
-	またはキーワード SMPTE(NDF),SMPTE60(NDF),SMPTE24NDF　で各 30/1.001 60/1.001 24/1.001 をセットする
-	NDFをキーワードに含む場合はNDFコードを使用する
-	フレームレート文字列に数値が含まれているかまたはキーワードの場合は、第二引数を省略可能
+	フレームレート文字列は任意
+	引数が　24FPS 25fps等の　/\dFPS/i の場合はその数値を利用
+	第一引数が　SMPTE,NTSC,DF を含む場合は、第二引数にかかわらず 30/1.001 で初期化する
+	その際引数に数値　60または59.94が含まれる場合 60/1.001 に更新する
+	その場合ドロップフレーム処理が行われる
+	
+	第一引数が　PAL,SECAM　を含む場合は、第二引数にかかわらず 25　で初期化を行う
+	その際引数に数値　50 が含まれる場合 50 に更新する
+
+    第一引数が reteString(rate)　形式の場合は　括弧の中身を実フレームレートして処理する
+
+	実時間とTCのズレる形のNDFはサポートしない。	
+	
+	フレームレート文字列に数値が含まれているかまたはキーワードの場合は、第二引数を省略可能（無視する）
 	不正な引数で初期化された場合は、クラスプロパティを使用する
+
 初期化メソッドは、以下の動作に変更
 	単一引数の場合
 引数文字列を数値パースしてフレームレートを取得して、文字列自体をnameに設定
+
 二つ以上の場合は、第一引数がname,第二引数がフレームレート
 第一引数が数値のみの場合は"FPS”を補うが、それ以外の場合は文字列全体をnameとする
 	
+名称とフレームレートに不整合があっても許容する
+名称にフレームレートの数値が含まれない場合は名称に"(数値)"を補って出力する
 */
-//nas.Framerate={name:"24FPS",rate:24};
+//nas.Framerate={name:"24FPS",rate:24,opt:null};
 
 nas.Framerate=function(){
-	this.name="24FPS";
-	this.rate=24;
+	this.name = "24FPS";
+	this.rate = 24;
+    this.opt  = null;
 };
 
-nas.Framerate.prototype.toString=function(){return this.name;}
+nas.Framerate.prototype.toString=function(form){return (form)? this.name:this.name+"("+this.rate+")";}
 nas.Framerate.prototype.valueOf=function(){return this.rate;}
+/**
+    新規フレームレート作成メソッド
+    空引数で呼ばれた場合はデフォルト値のフレームレートを返す
+*/
 nas.newFramerate=function(rateString,rate){
 //	var newOne=Object.create(nas.Framerate);
 	var newOne=new nas.Framerate();
 	if(arguments.length){
-	  if(arguments.length>1){
+	　//第一引数がカッコつきでフレームレート指定された文字列ならば第二引数は無効(捨てる)
+	  if(String(rateString).match(/(.*)\(([0-9]+(\.[0-9]*)?)\)/)){
+	    newOne.name = RegExp.$1;
+	    newOne.rate = parseFloat(RegExp.$2);
+	  } else if(arguments.length>1){
+	//引数が2つ設定されている
 	    newOne.name=rateString;
 	    newOne.rate=parseFloat(rate);
+	  }else if(String(rateString).length){
+	//引数が一つのみ
+	    newOne.name=rateString;
+	    newOne.rate=parseFloat(rateString.replace(/^[^-\d]+/,""));//文字列先頭の数値以外のデータを捨てて数値化
 	  }else{
-	      newOne.name=rateString;
-	    if(rateString.indexOf('PAL')>=0){
-	      newOne.rate=25.
-	    }else{
-	      if(rateString.indexOf('SMPTE')>=0){
-	      switch(rateString){
-	case	"SMPTE24":	newOne.rate=24/1.001;break;
-	case	"SMPTE60":
-	case	"SMPTE60NDF": newOne.rate=60/1.001;break;
-	default	:          newOne.rate=30/1.001;break;
-	        }
-	      }else{
-	        newOne.rate=parseFloat(rateString.replace(/^[^-\d]+/,""));
-	      }
-	    }
+	    return newOne;
 	  }
+	}else{
+	//引数がない場合は、デフォルト値を返す
+	    return newOne;
 	}
-	if(!(newOne.rate)){alert(newOne.rate);delete newOne.rate;delete newOne.name;}
+	//名前に特定の強制キーワードを含む
+	if(newOne.name.match(/PAL|SECAM/i)){
+	    if(!(newOne.rate)) newOne.rate = 25;
+	    newOne.rate=( newOne.rate < 37.5 ) ? 25.0: 50.0 ;
+	}else if(newOne.name.match(/SMPTE|NTSC|[^N]DF/i)){
+        newOne.opt='smpte';
+	    if(!(newOne.rate)) newOne.rate = 30;
+	    newOne.rate=(newOne.rate > 45 )? 59.94 : 29.97 ;
+	}
+	if(!(newOne.rate)){
+//  console.log (newOne.rate);
+	    newOne.name=nas.FRATE.name;newOne.rate=nas.FRATE.rate;newOne.opt=nas.FRATE.opt;
+	}
+//最終的に名前がなくなった場合はフレームレート＋"fps"を文字列としてもたせる
+	if(String(newOne.name).length==0) {newOne.name = newOne.rate+'fps'};
+
 	return newOne;
 }
+/*TEST
+nas.newFramerate("smpte60(59.4)").toString();
+nas.newFramerate("PAL(50)").toString(true);
+nas.newFramerate("SECAM",48);
+nas.newFramerate("NDF30");
+nas.newFramerate("FILM",24);
+nas.newFramerate("IMAX",48);
 
+var myRate=nas.newFramerate("SMPTE",60);
+myRate*2;
+
+*/
 /*
 	サイズオブジェクト
 コンストラクタ
@@ -1387,10 +1430,10 @@ TEXTグループは、タイムシート上には配置されず区間の値と�
  * nas.AnimationElementSource Object
  * 各エレメントのソースファイルを統合して扱うオブジェクト
  * 初期化引数:ターゲット記述テキスト
- * .file ソースファイル Fileオブジェクト又はパス文字列　初期値 "/"
- * .framerate ソースフレームレート 主に静止画、ムービーの際に利用　nas.Framerate Object
- * .duration ソース継続時間 主に静止画の際に利用　frames/int
- * .startOffset ソース継続時間に対するオフセット　frames/int
+ * .file ソースファイル object/File 又はパス文字列　初期値 null
+ * .framerate ソースフレームレート 主に静止画、ムービーの際に利用　object / nas.Framerate
+ * .duration ソース継続時間 主に静止画の際に利用　int/frames
+ * .startOffset ソース継続時間に対するオフセット　int/frames
  */
 nas.AnimationElementSource=function(targetDescription){
     this.file;
@@ -1535,7 +1578,8 @@ nas.RATE = '24FPS';
  * サンプルフレームレート(フレーム継続時間に置き換えるか一考)
  * @type {number}
  */
-nas.FRATE = 24;//	nas.FRATE = nas.newFramerate();
+// nas.FRATE = 24;
+nas.FRATE = nas.newFramerate(nas.RATE);
 /**
  * サンプル解像度ppc(dpc)
  * @type {number}
@@ -1976,7 +2020,7 @@ nas.fr2ms = function (frm) {
  * @param ms
  * @param type
  * @param ostF
- * @param fpsC
+ * @param fpsC Object nas.Framerate
  */
 nas.ms2FCT = function (ms, type, ostF, fpsC) {
     if (!type) {
@@ -2155,8 +2199,9 @@ nas.Frm2FCT = function (frames, type, ostF, fpsC) {
  * それ以上の場合は60DFのフレーム数を返す
  * 本来60DFはSMPTEの規格外なので扱いに注意すること
  * 
-    近来　23.8 (ドロップ互換24fps)が広範に利用されているのでそろそろ考慮必要？
- TCタイプを判定する関数が必要だが、このメソッドを拡張するのが良さそう
+近来　23.8 (ドロップ互換24fps)が広範に利用されているのでそろそろ考慮必要？
+TCタイプを判定する関数が必要だが、このメソッドを拡張するのが良さそう
+23.98fps は、SMPTEドロップの規定を使用しない方向で運用されているので、ナチュラルドロップカウントを適用
  
  * TC文字列判定機能増設 キーは第三引数に何かあれば　判定オブジェクトを返す
  判定オブジェクトは　Number にして計算可能　プロパティが付加される
@@ -2169,10 +2214,12 @@ nas.Frm2FCT = function (frames, type, ostF, fpsC) {
  * @constructor
  */
 nas.FCT2Frm = function (Fct, fpsC) {
+if (typeof Fct == 'undefined') return false;
     if (!fpsC) {
-        fpsC = this.FRATE
+        fpsC = Number(this.FRATE)
     }
     fct = Fct.toString();
+
     var negative_flag = 1;
 var myFrames;//
 var ostF;
@@ -2260,7 +2307,8 @@ var TCtype;
          * フレームドロップ判定
          */
         if (((m % 10) > 0) && (s == 0) && (f < dropF)) {
-            return null
+ console.log('SMPTEドロップフレーム不正 : '+ fct);
+           return null
         }
         /**
          * ドロップフレームはヌル戻し
@@ -2364,6 +2412,14 @@ var TCtype;
         s = parseInt(s, 10);
         k = parseInt(k, 10);
         /**
+         * 指定フレームがフレームレートを超える場合場合にかぎり桁上りを行って
+         * 不規TCを正規化する
+         */
+         if (k > Math.ceil(fpsC)){
+            s += Math.floor(k / fpsC);
+            k =  k % Math.ceil(fpsC);
+         } 
+        /**
          * タイムコード的にはすべて整数であることが必須
          * フレームレートが少数点以下の値を含む場合はすべて切り上げてフレームを得る
          * → (1+10.5)は(1+11)にあたる
@@ -2375,8 +2431,10 @@ var TCtype;
          * ナチュラルドロップフレームの判定 フレーム継続時間の末尾が秒境界をまたがった場合をドロップカウントする
          * 連続してフレームがドロップすることはありえないのでこのように判定
          * 整数フレームレート時に実行されていたので、トラップする 2012 0205
+         * TCtype==1の際(フレームドロップが存在しないケース)に実行されていたので修正　20180718
          */
-        if (((fpsC % 1) != 0) && (Math.floor(Frames / fpsC) != (Seconds))) {
+        if ((TCtype > 1)&&((fpsC % 1) != 0) && (Math.floor(Frames / fpsC) != (Seconds))) {
+console.log('TC不正 : ' + fct);
             return null
         }
         /**
@@ -2399,6 +2457,10 @@ console.log(nas.FCT2Frm("000 .",24,true));
 console.log(nas.FCT2Frm("1+12 _",12,true));
 console.log(nas.FCT2Frm("01:01:01;01.",24,true));
 console.log(nas.FCT2Frm("p12/3+0",24,true));
+console.log(nas.FCT2Frm("00:01:00;00"));
+console.log(nas.FCT2Frm("00:01:04:9",10.2));
+console.log(nas.FCT2Frm("00:01:04:10",10.2));
+console.log(nas.FCT2Frm("00:01:04:11",10.2));
 
 */
 /**

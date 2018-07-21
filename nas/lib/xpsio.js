@@ -156,7 +156,7 @@ XpsStage.prototype.toString=function(){
 */
 function XpsLine (lineString){
     this.id   =[0]; this.name ='本線';// 又は'trunk'
-    if(typeof lineString != 'undefined'){
+    if(lineString){
       lineString=String(lineString);
       if(lineString.match(/^[0-9]+$/)){lineString+=':-'}
       var prpArray=lineString.split(':');
@@ -183,8 +183,9 @@ XpsLine.prototype.toString = function(opt){
     記録時は後方型式
 */
 function XpsStage (stageString){
-    this.id = 0 ;this.name = 'startup';
-    if(typeof stageString != 'undefined'){
+    this.id = 0 ;this.name = 'init';
+    if(stageString){
+      stageString=String(stageString);
       var prpArray=stageString.split(':');
       if(prpArray.length){
         if(prpArray[0].match(/^\d+$/)){prpArray.reverse();}
@@ -1024,7 +1025,8 @@ XpsTimelineSubSection.prototype.strtOffset = _getSectionStartOffset;
  * @constructor object Xps コンストラクタ
  * @param Layers タイムライントラックのうちデフォルトのダイアログ(1)を抜いた数
  * @param Length 継続長 フレーム数
- * 
+ * @param Framerate フレームレート Object nas.Framerate or Number fps
+ *
  *     Xpsオブジェクトの初期化引数を拡張
  * 第一引数はかつて「レイヤ数」であったが、これを拡張して配列を受け取れるようにする
  * 引数がスカラの場合は、従来互換として　「リプレースメントトラック数」とする
@@ -1058,7 +1060,14 @@ XpsTimelineSubSection.prototype.strtOffset = _getSectionStartOffset;
  *  末尾プロパティがcommentでない場合にはデフォルトの{comment:1}が補われる
  * 
  */
-function Xps(Layers, Length) {
+function Xps(Layers, Length, Framerate) {
+    if (typeof Framerate == 'undefined'){
+        Framerate = false;
+    } else if (!(Framerate instanceof nas.Framerate)){
+         Framerate = nas.newFramerate(String(Framerate));
+    }
+    if (! Framerate) Framerate = nas.newFramerate(nas.FRATE.toString());
+
     if (!Layers) Layers = 4;	//標準的なA,B,C,D の4レイヤで初期化
     if(!isNaN(Layers)) Layers = [Layers];//単独スカラ引数の場合配列化
     //配列引数の場合トラック配置用のオブジェクトに展開
@@ -1085,8 +1094,12 @@ function Xps(Layers, Length) {
     //引数が配置オブジェクトでなければ、デフォルトの配置オブジェクトを置いてブレイク
     }
 //if(dbg) console.log(trackSpec);
-    if (!Length) Length = (!nas) ? 24 : Math.round(nas.FRATE);//現状のレートで1秒を初期化
-
+    if(isNaN(Length)){Length = nas.FCT2Frm(Length,Framerate)}
+    if (!Length){
+        Length = Math.ceil(Framerate.rate);//現状のレートで1秒を初期化
+console.log (Framerate);
+console.log (Length);
+    }
     /**
      * デフォルト値がレイヤなし継続長なしだと弊害があるのでデフォルト値を変更 2009/10/12
      * 旧オブジェクトに存在したエラーメッセージ群はUIオブジェクトへ分離
@@ -1144,13 +1157,13 @@ function Xps(Layers, Length) {
  */
     this.trin = [0, "trin"];
     this.trout = [0, "trout"];
-    this.rate = (!nas) ? "24FPS" : nas.RATE;
-    this.framerate = (!nas) ? 24 : nas.FRATE;
+    this.framerate = nas.newFramerate(Framerate.toString());
+    this.rate = this.framerate.toString(true); //互換維持のため残置　順次削除
 
     var Now = new Date();
-    this.create_time = (!nas) ? Now.toString() : Now.toNASString();
+    this.create_time = Now.toNASString();
     this.create_user = (xUI.currentUser)? xUI.currentUser:new nas.UserInfo(myName);
-    this.update_time = (!nas) ? Now.toString() : Now.toNASString();
+    this.update_time = Now.toNASString();
     this.update_user = (xUI.currentUser)? xUI.currentUser:new nas.UserInfo(myName);
 
 //  this.memo = "";
@@ -1300,8 +1313,11 @@ Xps.prototype.timeline = function (idx) {
 
  * @param Tracks
  * @param Length
+ * @param Framerate
  */
-Xps.prototype.init = function (Tracks, Length) {
+Xps.prototype.init = function (Tracks, Length, Framerate) {
+    if (!(Framerate instanceof nas.Framerate)) Framerate = nas.newFramerate(String(Framerate));
+    if (Framerate) this.framerate = Framerate;//falseに判定される不正値が戻された場合は処理スキップ
     if (!Tracks) Tracks = 6;
 //trackSpec の作成コードが複製なので後ほど処理を検討
     if(!isNaN(Tracks)) Tracks = [Tracks];//単独スカラ引数の場合配列化
@@ -1328,7 +1344,8 @@ Xps.prototype.init = function (Tracks, Length) {
         };
     //引数が配置オブジェクトでなければ、デフォルトの配置オブジェクトを置いてブレイク
     }
-    if (!Length) Length = Math.round(nas.FRATE);
+    if(isNaN(Length)){Length = nas.FCT2Frm(Length,Framerate)}
+    if (!Length) Length = Math.ceil(this.framerate);
     /**
      * Xps標準のプロパティ設定
      * @type {string}
@@ -1344,12 +1361,12 @@ Xps.prototype.init = function (Tracks, Length) {
     this.trin = [0, "trin"];
     this.trout = [0, "trout"];
 
-    this.rate = (!nas) ? "24FPS" : nas.RATE;
-    this.framerate = (!nas) ? 24 : nas.FRATE;
+//    this.framerate = nas.newFramerate(nas.FRATE.toString());//初期パラメータのチェックで更新済
+    this.rate = this.framerate.name;
     var Now = new Date();
-    this.create_time = (!nas) ? Now.toString() : Now.toNASString();
+    this.create_time = Now.toNASString();
     this.create_user = (xUI.currentUser)? xUI.currentUser:new nas.UserInfo(myName);
-    this.update_time = (!nas) ? Now.toString() : Now.toNASString();
+    this.update_time = Now.toNASString();
     this.update_user = (xUI.currentUser)? xUI.currentUser:new nas.UserInfo(myName);
 
 //    this.memo = "";
@@ -1500,8 +1517,8 @@ if(false){
     break;
     case 'full':
     default    :
-        var timeString=(this.framerate==29.97)?
-        nas.Frm2FCT(this.time(),6):
+        var timeString=(this.framerate.opt=="smpte")?
+        ((this.framerate.rate < 45)?nas.Frm2FCT(this.time(),6):nas.Frm2FCT(this.time(),7)):
         nas.Frm2FCT(this.time(),3,0,this.framerate);
         myResult=this.title+'#'+this.opus+'['+this.subtitle+']__s'+this.scene+'-c'+this.cut+'('+ timeString+')';
     }
@@ -1903,9 +1920,6 @@ Xps.prototype.readIN = function (datastream) {
 Xps.prototype.parseXps = function (datastream) {
 /**
  *  マルチステージ拡張を行うため以前のコードに存在したエラーハンドリングは全廃
- *  
- *
- *
  */
     if ((! datastream)||(!(datastream.match))) {
 //console.log('bad datestream:') ;console.log(datastream);
@@ -1926,7 +1940,7 @@ Xps.prototype.parseXps = function (datastream) {
      * データストリーム判別プロパティ
      * @type {number}
      */
-    SrcData.startLine = 0;//データ開始行
+    SrcData.startLine = -1;//データ開始行
 //	SrcData.dataClass	="";//データバージョン識別用に流用？
     /**
      * データ種別判定は、削除　作業開始2013.04.04
@@ -1939,13 +1953,16 @@ Xps.prototype.parseXps = function (datastream) {
     SrcData.layers = [];//レイヤ情報トレーラー
     SrcData.layerBodyEnd = 0;//レイヤ情報終了行
     SrcData.frameCount = 0;//読み取りフレーム数
-
+    SrcData.framerate = this.framerate ;//フレームレート（現ドキュメントの値）
+    
     /**
      * 第一パス
      * データ冒頭の空白行を無視して、データ開始行を取得
      * 識別行の確認
      * 冒頭ラインが識別コードまたは空行でなかった場合は、さようなら御免ね
      * IEのデータの検証もここでやっといたほうが良い?
+     * 第一パスでフレームレートの取得を行う
+     * パースデータにフレームレートが指定されていない場合は、現在の値を維持
      */
     for (l = 0; l < SrcData.length; l++) {
         if (SrcData[l].match(/^\s*$/)) {
@@ -1958,27 +1975,31 @@ Xps.prototype.parseXps = function (datastream) {
                     SrcData[l] = SrcData[l].slice(0, -1);
             }
             //なぜだかナゾなぜに一文字多いのか?
-
             /**
              *  データ処理中に含まれていた他フォーマットの解析部分は、別ライブラリで吸収
              *  バージョンは 0.5 まで拡張
              */
             if (SrcData[l].match(/^nasTIME-SHEET\ 0\.[1-5]$/)) {
                 SrcData.startLine = l;//データ開始行
-                break;
-            } else {
-//	this.errorMsg[10]=SrcData[l];//message10に当該トークンを格納
-                xUI.errorCode = 2;
-                return false;
-//	"002:どうもすみません。このデータは読めないみたいダ\n"
+            } else if((SrcData.startLine >= 0)&&(SrcData[l].match(/^##FRAME_RATE=(.*)$/))){
+                SrcData.framerate= nas.newFramerate(RegExp.$1);
+                break;//データ開始行のあとにフレームレート指定があればブレーク
             }
         }
     }
     /**
-     * 第一パスおしまい。なんにもデータが無かったらサヨナラ
+     * 第一パス終了
+     * データ識別行がなければ処理中断
+     * データ行が無かったらサヨナラ
      * "読み取るデータがないのです。";
      */
-    if (SrcData.startLine == 0 && SrcData.length == l) {
+    if(SrcData.startLine < 0){
+//	this.errorMsg[10]=SrcData[l];//message10に当該トークンを格納
+        xUI.errorCode = 2;
+        return false;
+//	"002:どうもすみません。このデータは読めないみたいダ\n"
+    }
+    if ((SrcData.length - SrcData.startLine) < 1) {
         xUI.errorCode = 3;
         return false;
     }
@@ -2090,8 +2111,8 @@ Xps.prototype.parseXps = function (datastream) {
              */
             switch (nAme) {
                 case    "FRAME_RATE":
-                    if(nas.frate != vAlue)
-                    break;
+                    //フレームレートは第一パスで取得
+                break;
                 case    "TRIN":
                 case    "TROUT":
                 /**
@@ -2099,7 +2120,7 @@ Xps.prototype.parseXps = function (datastream) {
                  * トランシットアウト
                  * @type {*}
                  */
-                    var tm = nas.FCT2Frm(vAlue.split(",")[0]);
+                    var tm = nas.FCT2Frm(vAlue.split(",")[0],SrcData.framerate.rate);
                     if (isNaN(tm)) {
                         tm = 0
                     }
@@ -2114,7 +2135,7 @@ Xps.prototype.parseXps = function (datastream) {
                      * カット尺
                      * @type {*}
                      */
-                    var tm = nas.FCT2Frm(vAlue);
+                    var tm = nas.FCT2Frm(vAlue,SrcData.framerate.rate);
                     if (isNaN(tm)) {
                         tm = 0
                     }
@@ -2151,7 +2172,9 @@ Xps.prototype.parseXps = function (datastream) {
                 　   *    ステータスがない場合は無視する
                 　   */
                 　case   "CurrentStatus":;
+console.log(vAlue);
                 　   SrcData.currentStatus = new JobStatus(vAlue);
+console.log(SrcData.currentStatus);
                 　  break;
                 　case   "JobAssign":;
                 　   if(SrcData.currentStatus) SrcData.currentStatus.assign = vAlue;
@@ -2245,7 +2268,7 @@ Xps.prototype.parseXps = function (datastream) {
 //	///////////////////////
 //if(dbg) dbgPut("count/duration:"+SrcData.layerCount+":"+SheetDuration);
 
-    this.init(SrcData.trackCount-2, SheetDuration);//再初期化
+    this.init(SrcData.trackCount-2, SheetDuration,SrcData.framerate);//再初期化
 
     /**
      * 第二パスで読み取ったプロパティをXPSに転記
@@ -2481,14 +2504,14 @@ Xps.prototype.toString = function () {
     result += '\n##OPUS=' + this.opus;
     result += '\n##SCENE=' + this.scene;
     result += '\n##CUT=' + this.cut;
-    result += '\n##TIME=' + nas.Frm2FCT(this.time(), 3, 0);
-    result += '\n##TRIN=' + nas.Frm2FCT(this.trin[0], 3, 0) + "," + this.trin[1];
-    result += '\n##TROUT=' + nas.Frm2FCT(this.trout[0], 3, 0) + "," + this.trout[1];
+    result += '\n##TIME=' + nas.Frm2FCT(this.time(), 3, 0, this.framerate);
+    result += '\n##TRIN=' + nas.Frm2FCT(this.trin[0], 3, 0, this.framerate ) + "," + this.trin[1];
+    result += '\n##TROUT=' + nas.Frm2FCT(this.trout[0], 3, 0, this.framerate) + "," + this.trout[1];
     result += '\n##CREATE_USER=' + this.create_user;
     result += '\n##UPDATE_USER=' + this.update_user;
     result += '\n##CREATE_TIME=' + this.create_time;
     result += '\n##UPDATE_TIME=' + Now.toNASString();
-    result += '\n##FRAME_RATE=' + this.framerate;
+    result += '\n##FRAME_RATE=' + this.framerate.toString();
     result += '\n##Line='+this.line.toString();
     result += '\n##Stage='+this.stage.toString();
     result += '\n##Job='+this.job.toString();
@@ -2585,17 +2608,26 @@ if((this.currentStatus.message)&&(this.currentStatus.message.length))
  * シート内容比較メソッド 相互の値が同じか否か比較する関数
  * ユーザ名・時間等は比較しないでシート内容のみ比較する
  * コメント類は連続する空白をひとつにまとめて比較する
- *
+ * フレームレートを比較するオプションのデフォルト値はfalse
  * @param targetXps
+ * @param compareFramerate bool
  * @returns {boolean}
  */
-Xps.prototype.isSame = function (targetXps) {
-    var rejectRegEx = new RegExp("errorCode|errorMsg|mapfile|create_time|create_user|update_time|update_user|layers|xpsTracks|memo|line|stage|job|currentStatus|JobAssign|Message");
+Xps.prototype.isSame = function (targetXps,compareFramerate) {
+    if(typeof compareFramerate == 'undefined') compareFramerate = false;
+
+    if( (compareFramerate) &&
+        ((this.framarate.rate != targetXps.framerate.rate) ||
+         (this.framarate.opt != targetXps.framerate.opt))
+    ){ return false }
+    var rejectRegEx = new RegExp("framerate|errorCode|errorMsg|mapfile|create_time|create_user|update_time|update_user|layers|xpsTracks|memo|line|stage|job|currentStatus|JobAssign|Message");
     /**
      * プロパティリスト
      */
 //    errorCode, errorMsg, mapfile, opus, title, subtitle, scene, cut, trin, trout, framerate, create_time, create_user, update_time, update_user, layers, memo, xpsTracks, mkStage, getInfo, guessLink, init, getMap, duration, time, getTC, readIN, toString, mkAEKey;
-
+/**
+    フレームレートを比較するオプションのデフォルト値はfalse
+*/
     for (var myProp in this) {
         if ((myProp.match(rejectRegEx)) || (this[myProp] instanceof Function)) {
             continue
@@ -2705,9 +2737,18 @@ Xps.sliceReplacementLabel = function (myStr){
      名前を変更するか又はオブジェクトメソッドに統合
      このメソッドは同名別機能のオブジェクトメソッドが存在するので厳重注意
      クラスメソッドはURIencodingを行い、オブジェクトメソッドは'%'エスケープを行う
-     
-     
-     *** 識別子のフレームレート拡張を行うこと　2018.06.28
+
+*** 識別子のフレームレート拡張（予定）
+    (括弧)でくくられた時間情報は、カット尺であり素材継続時間ではない。
+    フレームレートを追加情報として補うことが可能とする
+    その際は以下のルールに従う
+    (FCT/FPS)
+    単独のカットに対して設定されたフレームレートは、そのカットのみで有効
+    基本的には、タイトルのプロパティからフレームレートを取得してそれを適用する。
+    識別子には、基本的にフレームレートを含める必要性はない。
+    タイトルのフレームレートと異なる場合のみ、識別子にフレームレートを埋め込む。
+
+    このコーディングは、pmdb実装後に行われる。2018.07.16
 */
 Xps.getIdentifier=function(myXps,opt){
 //この識別子作成は実験コードです　2016.11.14
@@ -2837,11 +2878,13 @@ Xps.parseProduct = function(productString){
     カット番号情報は、ここではscene-cutの分離を行わない
     比較の必要がある場合に始めて比較を行う方針でコーディングする
     sciString末尾の（括弧内）は時間情報部分
+    (括弧)による記述が2つ以上ある場合は最初の開き括弧の前がカット識別子で、時間情報は最後の（括弧）内の情報を用いる
+    
     書式は　(TC//framareteString) or (TC) フレームレートの指定のない場合はデフォルトの値で補われる
     (1+12),(1+12//24FPS),(1:12//30),(01:12//30DF),(00:00:01:12//59.94)　等
     デフォルト値は、タイトルから取得
     sciStringに時間情報が含まれないケースあり
-    time指定の存在しない識別子の場合"6+0"を補う
+    time指定の存在しない識別子の場合"6:0"を補う
 */
 Xps.parseSCi = function(sciString){
     var dataArray = String(sciString).split('/');
@@ -2851,13 +2894,14 @@ Xps.parseSCi = function(sciString){
         var currentEntry=dataArray[ix].split('(');
         result.push({
         'cut'   :   decodeURIComponent(currentEntry[0]),
-        'time'  :   (currentEntry.length ==1 )? "6+0":decodeURIComponent(currentEntry[1]).replace(/[\(\)]/g,'')
+        'time'  :   (currentEntry.length ==1 )? "6:0":decodeURIComponent(currentEntry[currentEntry.length-1]).replace(/[\(\)]/g,'')
         });
     }
     return result;
 }
 /** test
-    console.log (Xps.parseSCi('s-cC%23%20(16)/'));
+    console.log (Xps.parseSCi('s-cC%23%20(16)/s-c96(13)'));
+    console.log (Xps.parseSCi('s-cC%23%20(16)(18)'));
 */
 /**
 SCiデータ上のカット名をセパレータで分離するクラスメソッド

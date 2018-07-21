@@ -753,15 +753,21 @@ nas.Pm.JobTemplateCollection.prototype.addNames = function(names){
     ジョブタイプ  init/primary/check/* ジョブタイプ'*'は primary+check (! init)
 */
 nas.Pm.JobTemplateCollection.prototype.getTemplate = function(stage,type){
+console.log(stage+':'+type)
     if((! stage)||(! type)){return []};
     var result=[];
+console.log(this.members);
     for (var eid = 0;eid<this.members.length ; eid ++){
+console.log(eid +'/'+ this.members.length);
+console.log(this.members[eid]);
         if((this.members[eid].type == type)||(this.members[eid].type == "*")||(type == "*")&&(this.members[eid].type != "init")){
             if((this.parent.stages.getStage(this.members[eid].stage) === this.parent.stages.getStage(stage))||(this.members[eid].stage == "*")){
-                if( this.members[eid].name.indexOf("*") >= 0){
-                    var myString = this.members[eid].name.replace(/\*/,this.parent.stages.getStage(stage).name);
+                var jobName         = this.members[eid].name;
+                var parentStage = this.parent.stages.getStage(stage);
+                if(( jobName.indexOf("*") >= 0)&&(parentStage)){
+                    var myString = jobName.replace(/\*/,parentStage.name);
                 }else{
-                    var myString = this.members[eid].name;
+                    var myString = jobName;
                 }
                 result.push(myString);
             }

@@ -262,7 +262,7 @@ nas.Push_Log = function (str){this.Log = this.Log.concat([str]);}
 //	ログ 初期化してみる
 nas.Push_Log( "Program Started " + nas.VER);
 nas.Push_Log( Date() );
-nas.Push_Log( "  FrameRate" + nas.FRATE + "(" + nas.FRATE + ")");
+nas.Push_Log( "  FrameRate" + nas.FRATE.toString() );
 //nas_Push_Log( "  Start Mode  [" + MODE + "]" );
 //
 

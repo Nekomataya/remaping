@@ -163,7 +163,7 @@ nas.Pref.tabPanel[0].init=function()
 {
 	this.Uname.text=myName;
 	this.bResolution.text=nas.Dpi();
-	this.fRate.text=nas.FRATE;
+	this.fRate.text=nas.FRATE.toString();
 	this.stLength.text=nas.Frm2FCT(nas.SheetLength*nas.FRATE,3);
 	nas.workTitles.select();
 	this.TitleSelector.reInit();
@@ -256,7 +256,7 @@ nas.Pref.tabPanel[1].MediaList.update = function()
 	this.chgEntry.enabled=false;
 
 	nas.Pref.tabPanel[0].bResolution.text=nas.Dpi();
-	nas.Pref.tabPanel[0].fRate.text=nas.FRATE;
+	nas.Pref.tabPanel[0].fRate.text=nas.FRATE.toString();
 }
 
 //nas.Pref.tabPanel[1].MediaList.update();
@@ -623,7 +623,7 @@ nas.Pref.tabPanel[3].init();
 //nas_common
 	nas.Pref.tabPanel[0].Uname.onChange=function(){myName=this.text};
 	nas.Pref.tabPanel[0].bResolution.onChange=function(){nas.RESOLUTION=this.text/2.54;this.text=nas.Dpi()};
-	nas.Pref.tabPanel[0].fRate.onChange=function(){if(! isNaN(this.text)){nas.FRATE=this.text;};this.text=nas.FRATE;};
+	nas.Pref.tabPanel[0].fRate.onChange=function(){if(! isNaN(this.text)){nas.FRATE=nas.newFramerate(this.text);};this.text=nas.FRATE.toString();};
 	nas.Pref.tabPanel[0].stLength.onChange=function(){var frames=nas.FCT2Frm(this.text);if(! isNaN(frames)){nas.SheetLength=frames};this.text=nas.Frm2FCT(nas.SheetLength,3);};
 
 //TitleDB

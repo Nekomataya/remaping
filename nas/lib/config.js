@@ -56,7 +56,7 @@ var myOpus = "第  話";
  * 初期フレームレートを置いてください。フレーム毎秒
  * @type {number}
  */
-var myFrameRate = 24;
+var myFrameRate = 29.97;
 /**
  * カット尺初期値
  * @type {string}

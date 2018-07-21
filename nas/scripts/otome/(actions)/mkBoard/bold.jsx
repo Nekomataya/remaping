@@ -100,7 +100,7 @@ if(doAction){
 		myXps.update_user=system.userName;//
 		myXps.create_time=(new Date()).toNASString();//
 		myXps.update_time=myXps.create_time;//
-		myXps.framerate=nas.FRATE;//
+		myXps.framerate=nas.newFramerate();//
 	};
 
 	app.beginUndoGroup("addBold");

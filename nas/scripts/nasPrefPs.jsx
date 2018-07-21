@@ -35,7 +35,7 @@ if (exFlag) {
 //		初期化
 //	現在の解像度とフレームレートをバックアップ
     var currentResolution = nas.Dpi();
-    var currentFramerate = nas.FRATE;
+    var currentFramerate = nas.newFramerate(nas.FRATE.toString());
 //		サブプロシジャ
 
 // システム設定に置いたウィンドウオフセット取得。
@@ -178,7 +178,7 @@ if (exFlag) {
 //    nas.RESOLUTION=currentResolution/2.540;//dpc
 //    nas.FRATE=currentFramerate ;
         this.bResolution.text = currentResolution;
-        this.fRate.text = currentFramerate;
+        this.fRate.text = currentFramerate.toString();
     }
 
     nas.Pref.tabPanel[0].init();
@@ -279,7 +279,7 @@ if (exFlag) {
         this.chgEntry.enabled = false;
 
         nas.Pref.tabPanel[0].bResolution.text = nas.Dpi();
-        nas.Pref.tabPanel[0].fRate.text = nas.FRATE;
+        nas.Pref.tabPanel[0].fRate.text = nas.FRATE.toString();
     }
 
 //nas.Pref.tabPanel[1].MediaList.update();
@@ -621,10 +621,10 @@ if (exFlag) {
     };
     nas.Pref.tabPanel[0].fRate.onChange = function () {
         if (!isNaN(this.text)) {
-            nas.FRATE = this.text;
+            nas.FRATE = nas.newFramerate(this.text);
         }
         ;
-        this.text = nas.FRATE;
+        this.text = nas.FRATE.toString();
     };
     nas.Pref.tabPanel[0].stLength.onChange = function () {
         var frames = nas.FCT2Frm(this.text);
@@ -1152,7 +1152,7 @@ if (exFlag) {
 
 //Start GUI
     nas.RESOLUTION = currentResolution / 2.540;//dpc
-    nas.FRATE = currentFramerate;
+    nas.FRATE = nas.newFramerate(currentFramerate.toString());
     nas.Pref.init("0");
     nas.Pref.show();
 //

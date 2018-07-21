@@ -14,7 +14,7 @@
  * @type {number}
  */
 var myLayers = 4;//４レイヤ
-var myLength = nas.FRATE * 3;//3秒
+var myLength = Math.ceil(nas.FRATE * 3);//3秒
 XPS = new Xps(myLayers, myLength);
 
 /**
@@ -239,8 +239,8 @@ nas.inputMedias.onChange = function () {
     if (nas.RESOLUTION != myDPC) {
         nas.RESOLUTION = myDPC
     }
-    if (nas.FRATE != this.selectedRecord[4]) {
-        nas.FRATE = this.selectedRecord[4]
+    if (nas.FRATE.rate != this.selectedRecord[4]) {
+        nas.FRATE = nas.newFramerate("",this.selectedRecord[4]);
     }
 
     nas.registerMarks.select(this.selectedRecord[5]);

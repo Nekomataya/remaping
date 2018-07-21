@@ -153,11 +153,12 @@ nas.Pm.lines.addLine("null"           ,["(未設定)"        ,"(未)"    ,"NULL"
  *   ライン    (ライン識別名で)
  *   ラインごとのステージ標準並び (出現順に配列で名称を列記)
  *  各ラインの持つステージ群の最初のエントリがデフォルトのエントリとなり、ドキュメント初期化の際に候補される　または自動処理で割り当てられる
+ 'startup'ステージは、テンプレート未設定の場合の汎用アウターとアップステージとする
 nas.Pm.pmTemplate.members.push(new nas.Pm.LineTemplate(nas.Pm,"本線",["レイアウト","原画","動画","色指定","トレス","色トレス","ペイント","セル特効","撮出し検査","撮影"]));
 nas.Pm.pmTemplate.members.push(new nas.Pm.LineTemplate(nas.Pm,"背景美術",["原図整理","背景","美術検査"]));
 */
 nas.Pm.pmTemplate.addTemplates([
-    ["本線",["コンテ撮","レイアウト","原画","第一原画","作画監督修正","第二原画","発注前動画検査","動画","色指定","トレス","色トレス","ペイント","セル特効","撮出し検査","撮影"]],
+    ["本線",["Startup","コンテ撮","レイアウト","原画","第一原画","作画監督修正","第二原画","発注前動画検査","動画","色指定","トレス","色トレス","ペイント","セル特効","撮出し検査","撮影"]],
     ["背景美術",["原図整理","背景","美術検査"]]
     ])
 /*
@@ -196,7 +197,7 @@ nas.Pm.pmTemplate.addTemplates([
  *  ステージとして参照のための保存は システムの配下にJobコレクションをおいてそこに追記してゆく
  *  各エントリの名称は重複が考えられるので、Jobコレクションにエントリされたアイテム（名称）はステージに対するリレーションを保存する
  *  アイテムエントリは、以下のメソッドで随時行う
-        nas.Pm.jobNames.addName("Job名",relStage);
+        nas.Pm.jobNames.addName("Job名" , relStage);
 
 工程テンプレートの構成は
 
@@ -331,6 +332,7 @@ nas.Pm.jobNames.addNames([
 nas.Pm.workTitles.addTitle("TVshowSample" ,["0000" ,"名称未設定"   ,"未定"   ,"_UN" ,"24FPS" ,"21:00:00" ,"10in-HDTV" ,"HDTV-720p"]);
 nas.Pm.workTitles.addTitle("kachi"        ,["0001" ,"かちかちやま" ,"か"     ,"_KT" ,"24FPS" ,"20:12:00" ,"10in-HDTV" ,"HDTV-720p"]);
 nas.Pm.workTitles.addTitle("Momotaro"     ,["0002" ,"ももたろう"   ,"も"     ,"_MT" ,"24FPS" ,"19:21:00" ,"10in-HDTV" ,"HDTV-720p"]);
+nas.Pm.workTitles.addTitle("Urashima"     ,["0003" ,"うらしまたろう"   ,"う"     ,"_UR" ,"30DF" ,"19:20;00" ,"12in-HDTV" ,"HDTV-1080p"]);
 
 /*
 　* メディアDB
@@ -350,6 +352,7 @@ description             コメントテキスト
 nas.Pm.medias.addMedia("" ,["" ,"" ,"" ,"" ,"" ,"" ,"" ,""]);
 
  */
+nas.Pm.medias.addMedia("作画フレーム300ppi" ,["" ,"12in-HDTV" ,"300dpi" ,"drawing" ,"SMPTE" ,"ACME" ,"1" ,"参考用作画フレーム"]);
 nas.Pm.medias.addMedia("作画フレーム200dpi" ,["" ,"10in-HDTV" ,"200dpi" ,"drawing" ,"trad-JA" ,"ACME" ,"1" ,"参考用作画フレーム"]);
 nas.Pm.medias.addMedia("作画フレーム192dpi" ,["" ,"10in-HDTV" ,"192dpi" ,"drawing" ,"trad-JA" ,"ACME" ,"1" ,"参考用作画フレーム"]);
 nas.Pm.medias.addMedia("HDTV-720p"          ,["" ,"HDTV" ,"72dpi" ,"movie" ,"SMPTE-drop" ,"invisible" ,"1" ,"HDTV省力原版"]);
