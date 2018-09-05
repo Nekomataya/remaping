@@ -6,7 +6,7 @@
  *
  *  PmUnitを中核にしてそれに含まれる被管理情報をオブジェクトとして保持する
  *
- *  PmUnitは Management Unit(マネジメントユニット)を表す
+ *  PmUnitは Production(or Project) Management Unit(マネジメントユニット)を表す
  *  ＝カット袋に相当するオブジェクトの拡張機能＝
  *
  *  制作ライン及びステージングを管理するためのオブジェクト
@@ -23,19 +23,24 @@ nas.Pm配下のDB通信オブジェクトは、アクセスポイントとして
 nas.pmdb オブジェクトを置いてその配下に参照を配置する
 配置されたオブジェクト群は基本的な情報テンプレートとして働く
 
-Object nas.Pm がアプリケーションとしてのテンプレートキャリア
+ClassObject nas.Pm がアプリケーションとしてのテンプレートキャリア
 初期状態ではnas.pmdbを実アクセスポイントとして参照を置く
 nas.pmdb  は、リポジトリ切り替え毎に各リポジトリの.pmdbに参照先が切り替えられる？
 
+    nas.pmdb.organizations
+         関連組織一覧　組織情報コレクション
+            プライマリエントリーとしてpmdbの組織情報をエントリーする
+            他組織のエントリは、接続情報のみでusersには通常自身のエントリのみを複製する
     nas.pmdb.users
          関連ユーザ一覧　ユーザ情報コレクション
     nas.pmdb.staff
         スタッフ一覧　スタッフコレクション
+
     nas.pmdb.lines
         ライン一覧テーブル   ラインコレクション
     nas.pmdb.stages
         ステージ一覧テーブル  ステージコレクション
-    nas.pmdb.pmTemplate
+    nas.pmdb.pmTemplates
         制作管理テンプレートコレクション
             ラインテンプレート（ライン定義）
                 ラインテンプレートの内容は自分自身と自分で保持するステージコレクション
@@ -45,7 +50,16 @@ nas.pmdb  は、リポジトリ切り替え毎に各リポジトリの.pmdbに�
     nas.pmdb.workTitles
         .workTitles[titleIndex].episodes
             .episodes[episodeIndex].works ?
+
+	nas.pmdb.products
+		
+	nas.pmdb.assets
+		アセット情報コレクション
+			制作時に管理対象となるアセットの定義テーブル
     nas.pmdb.medias
+    	制作メディアコレクション
+    		制作に供されるメディア情報のトレーラー
+
     等々 その際にparent  経由で相互の参照を行うので初期化時のパラメータ注意    
     nas オブジェクト内では以下の相互関係を持つ
 
@@ -59,6 +73,7 @@ nas.pmdb  は、リポジトリ切り替え毎に各リポジトリの.pmdbに�
     各リジョンを適切のパーサに振り分けて、自身のコレクションDBを再初期化する
     各パーサは、追加処理を行うが、設定パーサ側でデータのクリアを行い、再初期化動作とする
     nas.Pm.parseConfig(ストリーム)
+
     nas.pmdb.users
     nas.pmdb.staff
 
@@ -70,8 +85,9 @@ nas.pmdb  は、リポジトリ切り替え毎に各リポジトリの.pmdbに�
     nas.pmdb.jobNames
 
 
-// workTitles はPmクラスのみに存在するキャッシュオブジェクトなので要注意
-    nas.Pm.workTitles
+// products/workTitles はPmクラスのみに存在するキャッシュオブジェクトなので要注意
+   nas.Pm.products	リポジトリ内に記録されたエピソード単位のキャッシュ
+   nas.Pm.workTitles	同、作品単位のデータコレクション
 
 Object PmDomain
     nas.Pm.WorkTitle.pmd
@@ -89,7 +105,21 @@ cut(work)      = episode/cuts/cut.pmdb           //cut.pmdb.parent = cut        
 各ノードはツリー内を相互にアクセスするための .parentプロパティをもつ
 pmdbはノードに対する.parent参照を持つ
 pmdb からツリー上位のpmdbにアクセスするためには　this.parent.parent.pmdbをアクセスする必要がある　OK？
- */
+
+organization:
+repository:
+   product
+    title:
+     opus:
+      pmu:
+      cut:
+    
+
+pmdbの各オブジェクトにはユニークなプロパティを格納するunique配列をもたせる
+この配列に値がある場合、新規メンバー登録の比較条件としてそのプロパティを参照する
+RDBMのuniqueインデックスの付いたフィールドに同じ
+
+*/
 
 nas.Pm = {};
 nas.Pm.users= new nas.UserInfoCollection();
@@ -99,7 +129,9 @@ nas.pmdb = nas.Pm;
     制作管理ディレクトリノード毎に保持される。
     基礎データを必要とするプログラムに基礎データをサービスする
     基本データが未登録の場合は親オブジェクトの同データを参照してサービスを行う
-    
+
+case:localRepository    
+    localRepository.pmdb = new nas.Pm.PmDomain
 */
 nas.Pm.PmDomain=new function(myParent){
     this.parent=myParent;
@@ -141,6 +173,7 @@ nas.Pm.searchProp = function(keyword,target){
             (target.members[prp].name        ==keyword)||
             (target.members[prp].projectName ==keyword)||
             (target.members[prp].episodeName ==keyword)||
+            (target.members[prp].mediaName   ==keyword)||
             (target.members[prp].shortName   ==keyword)||
             (target.members[prp].fullName    ==keyword)||
             (target.members[prp].code        ==keyword) ) return prp;
@@ -164,69 +197,131 @@ nas.Pm._getMember = function(keyword){
 /**
     コレクションメンバーをテキストとしてダンプ出力するメソッド　汎用
     対象コレクション
- nas.Pm.WorkTitleCollection //nas.pmdb.workTitles.toString(true);
- nas.Pm.MediaCollection     //nas.pmdb.medias.toString(true);
- nas.Pm.AssetCollection     //nas.pmdb.assets.toString(true);
- nas.Pm.StageCollection     //nas.pmdb.stages.toString(true);
- nas.Pm.LineCollection      //nas.pmdb.lines.toString(true);
- nsa.Pm.//nas.pmdb.jobNames.toString(true);　これは別わけ　コレクションの構造が異なる
- nas.pmdb.//nas.pmdb.pmTemplate.toString(true);
+ nas.Pm.OrganizationCollection //nas.pmdb.Organizations.dump();
+ nas.Pm.WorkTitleCollection //nas.pmdb.workTitles.dump();
+ nas.Pm.MediaCollection     //nas.pmdb.medias.dump();
+ nas.Pm.AssetCollection     //nas.pmdb.assets.dump();
+ nas.Pm.StageCollection     //nas.pmdb.stages.dump();
+ nas.Pm.LineCollection      //nas.pmdb.lines.dump();
+
+ nsa.Pm.//nas.pmdb.jobNames.dump(true);　これは別わけ　コレクションの構造が異なる
+ nas.pmdb.//nas.pmdb.pmTemplates.dump(true);
     
-    引数なし    メンバーあたり1要素のカンマ区切りテキスト
-    
-    "dump"      プレーンテキスト設定ファイル用のダンプストリーム
-                コレクションの　add  メソッドで処理可能なテキストデータの配列を
-                改行区切りで出力する
-                
-    "JSON"      JSONによるダンプ（可能な場合のみ　いらんかも　現在使ってない 2018.01）
+    引数なし        メンバーあたり1要素のカンマ区切りテキスト  改行なし
+                    代表値　例えばステージならばステージ名を単独でコンマ区切りで戻す
+
+     plain/text     プレーンテキスト　文章形式 config.pmdb用
+                    可読性の高い平文フォーマット改行あり
+                    １要素１行とは限らないので注意
+
+    full/dump      プレーンテキスト設定ファイル用のダンプストリーム　config.pmdb用
+                   コレクションの　addMember メソッドで直接処理可能なテキストデータの配列を改行区切りで出力する
+                   １要素１レコード
+
+    JSON        JSONによるダンプ 汎用的なデータ交換用
+                オブジェクトごとに戻りデータは構造が異なる
+
+データ形式の複雑なものは汎用メソッドを使用せずに専用メソッドを持つ
+ただし仕様は汎用メソッドに準ずる
 */
-/**
-    各コレクションメンバーは、toString　メソッドで自身のテキスト値を返す
-    引数の形式により内容を変化させる。
-    引数なし　代表値　例えばステージならばステージ名
-    "dump"  プレーンテキスト設定ファイル用のダンプストリームを1レコード
-    "JSON"  JSONによるダンプ（可能な場合) ほぼないので、やめておくか？
-*/
-nas.Pm._toString = function(form){
+nas.Pm._dumpList = function(form){
     switch (form){
     case "JSON":
-        try {
-            var result = JSON.stringify(this.members);//JSON.stringify不能なオブジェクトがあるので注意
-        }catch(er){var result = false;}
-        return result;
+        //コレクションのキャリアが配列ベースの場合
+        if(this.members instanceof Array){
+        var result = [];
+            for (var ix =0 ; ix<this.members.length;ix++){
+                result.push(JSON.parse((this.members[ix].dump)?this.members[ix].dump(form):this.members[ix].toString(form)));
+            }
+       }else{
+        //キャリアがオブジェクトベースの場合
+        var result = {};
+            for (var prp in this.members){
+                result[prp]=JSON.parse((this.members[prp].dump)?this.members[prp].dump(form):this.members[prp].toString(form));
+            }
+        }
+        return JSON.stringify(result);
         break;
+    case "full-dump":
+    case "full":
     case "dump":
         var result="";
         //コレクションのキャリアが配列ベースの場合
         if(this.members instanceof Array){
             for (var ix =0 ; ix<this.members.length;ix++){
-                if (ix > 0) result +=",\n";
-                result += this.members[ix].toString('dump');
+//                if (ix > 0) result +=",\n";
+                if (ix > 0) result +="\n";
+                result += (this.members[ix].dump )? this.members[ix].dump('full'):this.members[ix].toString('full');
             }
             result += '\n';
        }else{
+         //キャリアがオブジェクトベースの場合
             for (var prp in this.members){
                 result += '"'+prp+'",';
-                result += this.members[prp].toString('dump');
+                result += (this.members[prp].dump)? this.members[prp].dump('full') : this.members[prp].toString('full');
                 result += '\n';
             }
         }
         return result;
         break;
+    case 'plain-text':
+    case 'plain':
+    case 'text':
     default:
         var result = new Array;
         //コレクションのキャリアが配列ベースの場合
         if(this.members instanceof Array){
             for (var ix =0 ; ix<this.members.length;ix++){
-                result.push(this.members[ix].toString());
+                result.push((this.members[ix].dump)? this.members[ix].dump(form) : this.members[ix].toString(form));
             }
        }else{
+        //キャリアがオブジェクトベースの場合
             for (var prp in this.members){
-                result.push(this.members[prp].toString());
+                result.push((this.members[prp].dump)? this.members[prp].dump(form) : this.members[prp].toString(form));
             }
         }
-        return result.toString();
+        return result.join((form)? '\n':',');
     }
+}
+/*      コレクションオブジェクトのメンバ追加オブジェクト
+    引数  メンバオブジェクトの配列
+    戻値  追加に成功したエントリ数
+    重複メンバーは登録しない
+    重複の条件は、Collection.unique配列を参照　いずれかのバッティングを（_getMember() で）検出
+
+*/
+nas.Pm._addMembers = function(members){
+    var result = 0;
+console.log(this);
+console.log(members)
+    if(!(members instanceof Array)) members = [members];
+    for (var ix = 0 ; ix < members.length ; ix++ ){
+        var tempMember = members[ix];
+        var conflict = false;
+        for (var uix = 0 ; uix < this.unique.length ; uix++ ){
+            if (this.entry(tempMember[this.unique[uix]])!=null){ conflict = true;break;}
+        }
+        if(! conflict){
+            this.members[tempMember[this.unique[0]]]=tempMember;
+            result++;
+        }
+    }
+    return result;
+}
+/*
+ コレクションオブジェクトの設定読み込みメソッド
+    不正データの排除と重複データの排除はコレクションのaddMembersメソッドが受け持つ
+    これは使用されない　メンバーごとのオブジェクトの相関が記述できていない　9/3
+*/
+nas.Pm._parseConfig = function(configStream){
+    if(! configStream) return false;
+    this.members=(this.members instanceof Array)?[]:{};//メンバーキャリアクリア
+    if(configStream.match(/^\{,+\}$/)){
+        var memberArray=JSON.stringify(configStream);
+    }else{
+        var members=String(configStream).split('\n');
+    }
+    this.add(members);
 }
 //test 上記共用メソッドの関与するコレクションの出力確認
 // nas.pmdb.workTitles.toString(true)
@@ -279,8 +374,9 @@ nas.Pm.PmUnit=function(mySCs){
 }
 /*
 制作管理単位の内容ダンプメソッド
-引数：　form 文字列可形式
+引数：　form 文字列可形式　html,plain,
 指定がない場合は　Sciオブジェクトのリストを"//（ダブルスラッシュ）"で区切って戻す
+
 
 */
 nas.Pm.PmUnit.prototype.toString=function(form){
@@ -291,6 +387,19 @@ nas.Pm.PmUnit.prototype.toString=function(form){
     }
 //toString()メソッドは、出力用に調整する
 //
+}
+//制作管理用 Organizationオブジェクト　各Repositoryに対応する
+/*
+nas.Pm.Organization(組織名)
+オブジェクトメソッドで初期化する
+戻り値は組織情報オブジェクト
+実運用上はDBとリンクして動作するように調整
+初期化段階ではプライマリオブジェクトとしてRepositoryに関連付けられた組織一つだけが登録される
+
+Organization.usersには、pmdbのusersへの参照か　またはカレントのuserのみを登録した一時的ユーザコレクションを用いる？　
+*/
+nas.Pm.Organization = function(repoitoryName){
+    
 }
 //制作管理用 WorkTitelオブジェクト　サーバ上のProductに対応する
 /*
@@ -315,7 +424,7 @@ nas.Pm.WorkTitle = function(){
     this.inputMedia; //Object nas.AnimationField スタンダードフレーム
     this.outputMedia; //Object nas.AnimationField 編集スペック
 
-    this.pmTemplate;    //作品内の標準工程テンプレート
+    this.pmTemplates;    //作品内の標準工程テンプレート
     this.staff; //作品のスタッフ一覧　スタッフコレクションオブジェクト
     this.opuses = new nas.Pm.OpusCollection(this);    //Object nas.Pm.OpusCollection タイトル配下の話数コレクション
 //UATサーバのためのプロパティ
@@ -327,11 +436,14 @@ nas.Pm.WorkTitle = function(){
 }
 /* タイトル文字列化
 引数
-    なし      メインタイトルフルネームで返す
-    "dump"  
+    なし          プロジェクト名で返す
+    propName      一致したプロパティを単独で返す 文字列またはオブジェクト
+    "full"        設定ダンプ形式 
+    "plain"       設定ダンプ形式 プレーンテキスト　ダンプと同形式？
+    JSON          データ交換用JSONフォーマット
 */
 nas.Pm.WorkTitle.prototype.toString = function(form){
-    if(form == 'dump'){
+    if(form == 'full'){
         return JSON.stringify([
             this.id,
             this.fullName,
@@ -342,6 +454,33 @@ nas.Pm.WorkTitle.prototype.toString = function(form){
             this.inputMedia,
             this.outputMedia
         ]);
+    }if(form == 'plain'){
+        var result=[
+            this.projectName,
+            "\tid:"+this.id,
+            "\tfullName:"+this.fullName,
+            "\tshortName:"+this.shortName,
+            "\tcode:"+this.code,
+            "\tframerate:"+this.framerate.toString(true),
+            "\tformat:"+nas.Frm2FCT(this.length,2),
+            "\tinputMedia:"+this.inputMedia,
+            "\toutputMedia:"+this.outputMedia
+        ];
+            return result.join('\n');
+    }else if(form == 'JSON'){
+        return JSON.stringify({
+            "projectName":this.projectName,
+            "id":this.id,
+            "fullName":this.fullName,
+            "shortName":this.shortName,
+            "code":this.code,
+            "framerate":this.framerate.toString(true),
+            "format":nas.Frm2FCT(this.length,2),
+            "inputMedia":this.inputMedia,
+            "outputMedia":this.outputMedia
+        });
+    }else if(this[form]){
+        return this[form]
     }
     return this.projectName;
 }
@@ -353,28 +492,129 @@ nas.Pm.WorkTitle.prototype.valueOf=function(){return this.id;}
 nas.Pm.WorkTitleCollection = function(myParent){
     this.parent  = myParent;
     this.members = {};
+    this.unique =["projectName","id","fullName","shortName","code"];
 }
 nas.Pm.WorkTitleCollection.prototype.entry = nas.Pm._getMember;
-
-nas.Pm.WorkTitleCollection.prototype.toString = nas.Pm._toString;
+nas.Pm.WorkTitleCollection.prototype.addMembers = nas.Pm._addMembers;
+nas.Pm.WorkTitleCollection.prototype.dump = nas.Pm._dumpList;
 /*
 function(keyword){
     if(keyword){  return this.entry(keyword)};
     return JSON.stringify(this.members);
 }
 */
-//タイトル登録メソッド
+/*
+    タイトル登録メソッド
+    引数  メンバーオブジェクトの配列
+    戻値  エントリに成功したメンバー数
+
+    重複メンバーは登録しない
+    重複の条件は、projectName,id,fullName,shortName,code　いずれかのバッティングを検出（_getMember）
+    他のプロパティは比較対象外
+    propListの形式は
+    projectName,[id,fullName,shortName,code,framerate,format,inputMedia,outputMedia]
+*/
+/*
+function(members){
+    var result = 0;
+    if(!(members instanceof Array)) members = [members];
+    for (var ix = 0 ; ix < members.length ; ix++ ){
+        var tempTitle = members[ix];
+        if( (this.entry(tempTitle.projectName)==null)&&
+            (this.entry(tempTitle.id)==null)&&
+            (this.entry(tempTitle.fullName)==null)&&
+            (this.entry(tempTitle.shortName)==null)&&
+            (this.entry(tempTitle.code)==null)
+        ){
+            this.members[tempTitle.projectName]=tempTitle;
+            result++;
+        }
+    }
+    return result;
+}
+*/
+/*
+    設定パーサ
+*/
+nas.Pm.WorkTitleCollection.prototype.parseConfig = function(configStream){
+    if(String(configStream).length==0) return false;
+    var newMembers=[];
+    this.members = {};//clear
+    var form = 'plain-text';
+    if(configStream.match(/\{.+\}/)){
+        form = 'JSON';
+    } else if(configStream.match(/.+\,\[.+\]/)){
+        form = 'full-dump';
+    }
+    switch(form){
+    case 'JSON':
+        var configData=JSON.parse(configStream);
+        for(prp in configData){
+            var tempData = configData[prp];
+            var newTitle         = new nas.Pm.WorkTitle();
+            newTitle.projectName = prp;
+            newTitle.id          = tempData.id;
+            newTitle.fullName    = tempData.fullName;
+            newTitle.shortName   = tempData.shortName;
+            newTitle.code        = tempData.code;
+            newTitle.framerate   = new nas.Framerate(tempData.framerate);
+            newTitle.length      = nas.FCT2Frm(tempData.format);
+            newTitle.inputMedia  = tempData.inputMedia;
+            newTitle.outputMedia = tempData.outputMedia;
+            newMembers.push(newTitle);
+        }
+    break;
+    case 'full-dump':
+        configStream=String(configStream).split('\n');
+        for(var ir = 0;ir<configStream.length;ir++){
+            if(configStream[ir].indexOf("#")==0) continue;//コメントスキップ
+            var tempData = JSON.parse("["+configStream[ir]+"]");
+            var newTitle         = new nas.Pm.WorkTitle();
+            newTitle.projectName = tempData[0];
+            newTitle.id          = tempData[1][0];
+            newTitle.fullName    = tempData[1][1];
+            newTitle.shortName   = tempData[1][2];
+            newTitle.code        = tempData[1][3];
+            newTitle.framerate   = new nas.Framerate(tempData[1][4]);
+            newTitle.length      = nas.FCT2Frm(tempData[1][5]);
+            newTitle.inputMedia  = tempData[1][6];
+            newTitle.outputMedia = tempData[1][7];
+            newMembers.push(newTitle);
+        }
+    break;
+    default:
+        configStream=String(configStream).split('\n');
+        var currentTitle=null;
+        for(var ir = 0;ir<configStream.length;ir++){
+            if((configStream[ir].indexOf("#")==0)||(configStream[ir].length==0)) continue;//コメント/空行スキップ
+            if((configStream[ir].match( /^\t([a-z]+)\:(.+)$/i ))&&(currentTitle)){
+                currentTitle[RegExp.$1]=RegExp.$2;//プロパティ設定
+            }else{
+                if (currentTitle) newMembers.push(currentTitle);
+                currentTitle=new nas.Pm.WorkTitle();
+                currentTitle.projectName=String(configStream[ir]);
+            }
+        }
+        newMembers.push(currentTitle);
+    }
+    return this.addMembers(newMembers);
+}
+/*  タイトル登録メソッド　試験用
+    パーサのfull-dumpの部分
+*/
 nas.Pm.WorkTitleCollection.prototype.addTitle = function(titleName,propList){
-    this.members[titleName]             = new nas.Pm.WorkTitle();
-    this.members[titleName].projectName = titleName;
-    this.members[titleName].id          = propList[0];
-    this.members[titleName].fullName    = propList[1];
-    this.members[titleName].shortName   = propList[2];
-    this.members[titleName].code        = propList[3];
-    this.members[titleName].framerate   = new nas.Framerate(propList[4]);
-    this.members[titleName].length      = nas.FCT2Frm(propList[5]);
-    this.members[titleName].inputMedia  = propList[6];
-    this.members[titleName].outputMedia = propList[7];
+    var newTitle         = new nas.Pm.WorkTitle();
+    newTitle.projectName = titleName;
+    newTitle.id          = propList[0];
+    newTitle.fullName    = propList[1];
+    newTitle.shortName   = propList[2];
+    newTitle.code        = propList[3];
+    newTitle.framerate   = new nas.Framerate(propList[4]);
+    newTitle.length      = nas.FCT2Frm(propList[5]);
+    newTitle.inputMedia  = propList[6];
+    newTitle.outputMedia = propList[7];
+
+    this.addMembers(newTitle);
 }
 
 //テンプレート用コレクション
@@ -408,21 +648,44 @@ nas.Pm.Opus = function Opus(myID,myOpus,mySubtitle,myTitle){
     this.pmunits ;//カット袋コレクション
 }
 /**
+引数
+    なし          識別名を返す
+    propName      一致したプロパティを単独で返す 文字列またはオブジェクト
+    "full"        設定ダンプ形式 
+    "plain"       設定ダンプ形式 プレーンテキスト　ダンプと同形式？
+    JSON          データ交換用JSONフォーマット
 toStringメソッド　引数がなければ識別子用の文字列を返す
 引数を与えると設定ファイル形式のJSONを返す
 */
 nas.Pm.Opus.prototype.toString   = function(form){
-    if(form == 'dump'){
+    if(form == 'full'){
         return JSON.stringify([
-            this.episodeName
-        ])
+            this.id,
+            this.name,
+            this.subTitle,
+            this.workTitle.toString(),
+        ]);
+    }if(form == 'plain'){
+        var result=[
+            this.name,
+            "\tid:"+this.id,
+            "\tname:"+this.name,
+            "\tsubTitle:"+this.subTitle,
+            "\ttitle:"+this.workTitle.toString()
+        ];
+            return result.join('\n');
+    }else if(form == 'JSON'){
+        return JSON.stringify({
+            "id":this.id,
+            "name":this.name,
+            "subTitle":this.subTitle,
+            "title":this.workTitle.toString('id')
+        });
+    }else if(this[form]){
+        return this[form]
     }
-    return this.name+(this.subTitle)?"["+this.subTitle+"]":"";
+    return "#"+this.name+(this.subTitle)?"["+this.subTitle+"]":"";
 };
-
-nas.Pm.newOpus = function(){
-    
-}
 /**
     各話（エピソード）コレクションオブジェクト　OpusCorrection
     一般にタイトルの配下に入るが、システム配下でキャッシュとしても利用
@@ -430,15 +693,79 @@ nas.Pm.newOpus = function(){
 nas.Pm.OpusCollection = function(myParent){
     this.parent  = myParent;//parentTitle
     this.members = {};
+    this.unique =["name","id"];
 }
 nas.Pm.OpusCollection.prototype.entry = nas.Pm._getMember;
+nas.Pm.OpusCollection.prototype.addMembers = nas.Pm._addMembers;
+nas.Pm.OpusCollection.prototype.dump =  nas.Pm._dumpList;
+/*
 
-nas.Pm.OpusCollection.prototype.toString = function(keyword){
-    if(keyword){  return this.entry(keyword)};
-    return JSON.stringify(this.members);
+
+nas.Pm.OpusCollection.prototype.addMembers = function(members){
+    var result = 0;
+    if(!(members instanceof Array)) members = [members];
+    for (var ix = 0 ; ix < members.length ; ix++ ){
+        var tempOpus = members[ix];
+        if( (this.entry(tempOpus.name)==null)&&
+            (this.entry(tempOpus.id)==null)
+        ){
+            this.members[tempOpus.name]=tempOpus;
+            result++;
+        }
+    }
+    return result;
+
 }
-
-//タイトル登録メソッド
+*/
+/*
+    設定パーサ
+*/
+nas.Pm.OpusCollection.prototype.parseConfig = function(configStream){
+    if(String(configStream).length==0) return false;
+    var newMembers=[];
+    this.members = {};//clear
+    var form = 'plain-text';
+    if(configStream.match(/\{.+\}/)){
+        form = 'JSON';
+    } else if(configStream.match(/.+\,\[.+\]/)){
+        form = 'full-dump';
+    }
+    switch(form){
+    case 'JSON':
+        var configData=JSON.parse(configStream);
+        for(prp in configData){
+            var tempData = configData[prp];
+            var newOpus  = new nas.Pm.Opus(tempData.id,prp,tmpData.subTitle,this.parent.entry(tempData.title));
+            newMembers.push(newTitle);
+        }
+    break;
+    case 'full-dump':
+        configStream=String(configStream).split('\n');
+        for(var ir = 0;ir<configStream.length;ir++){
+            if(configStream[ir].indexOf("#")==0) continue;//コメントスキップ
+            var tempData = JSON.parse("["+configStream[ir]+"]");
+            var newOpus  = new nas.Pm.Opus(tempData.id,prp,tmpData.subTitle,this.parent.entry(tempData.title));
+            newMembers.push(newTitle);
+        }
+    break;
+    default:
+        configStream=String(configStream).split('\n');
+        var currentOpus=null;
+        for(var ir = 0;ir<configStream.length;ir++){
+            if((configStream[ir].indexOf("#")==0)||(configStream[ir].length==0)) continue;//コメント/空行スキップ
+            if((configStream[ir].match( /^\t([a-z]+)\:(.+)$/i ))&&(currentOpus)){
+                currentOpus[RegExp.$1]=RegExp.$2;//プロパティ設定
+            }else{
+                if (currentOpus) newMembers.push(currentOpus);
+                currentOpus=new nas.Pm.WorkTitle();
+                currentOpus.projectName=String(configStream[ir]);
+            }
+        }
+        newMembers.push(currentOpus);
+    }
+    return this.addMembers(newMembers);
+}
+//エピソード登録メソッド
 //例　addOpus("001",["0s12376","ep001",""])
 nas.Pm.OpusCollection.prototype.addOpus = function(episodeName,propList){
     this.members[titleName].episodeName = episodeName;
@@ -453,47 +780,139 @@ nas.Pm.OpusCollection.prototype.addOpus = function(episodeName,propList){
 //メディアDB
 /*
 メディアDBは、入出力のメディアスペックを記述するための複合オブジェクト
-MAP内部ではワークタイトルに付属する情報として処理
+MAP内部ではワークタイトルに付属する情報として処理する
+animationField,frameRate,baseResolution等は、オブジェクトで保持
+初期化時は、デフォルトの値で作成　再初期化が必用
+idは初期化時は未設定
+コレクション加入時に設定される
+DBとの連結時は連結時に再設定
 */
 nas.Pm.ProductionMedia = function(mediaName,animationField,frameRate){
     this.id             ;
-    this.animationField = new nas.AnimationField();//
-    this.mediaName      = this.animationField.name;//
+    this.animationField = new nas.AnimationField(animationField);
+    this.mediaName      = mediaName;//
     this.baseResolution = new nas.UnitResolution();//
     this.type           ;//mediaType drawing/video
     this.baseWidth      = this.animationField.baseWidth;
     this.frameAspect    = this.animationField.frameAspect;
-    this.frameRate      = new nas.Framerate();
+    this.frameRate      = nas.newFramerate(frameRate);
     this.tcType         ;//string tradJA/SMPTE/TC/frame
     this.pegForm        = this.animationField.peg;//animationField.peg
     this.pegOffset      = this.animationField.pegOffset;
     this.pixelAspect    ;//float
     this.description    ;
 }
+/*
 
+*/
 nas.Pm.ProductionMedia.prototype.toString = function(form){
-    if(form == 'dump'){
+    switch (form){
+    case 'JSON':
+        return JSON.stringify({
+            "mediaName"     :this.mediaName,
+            "id"            :this.id,
+            "animationField":this.animationField.toString(),
+            "baseResolution":this.baseResolution.toString(),
+            "mediaType"     :this.mediaType,
+            "tcType"        :this.tcType,
+            "pegForm"       :this.pegForm.toString(),
+            "pixelAspect"   :this.pixelAspect,
+            "description"   :this.description
+        });
+    break;
+    case 'dump':
+    case 'full':
         return JSON.stringify([
-        this.id,
-        this.animationField,
-        this.baseResolution,
-        this.mediaType,
-        this.tcType,
-        this.pegForm,
-        this.pixelAspect,
-        this.description
+            this.id,
+            this.animationField.toString(),
+            this.baseResolution.toString(),
+            this.mediaType,
+            this.tcType,
+            this.pegForm.toString(),
+            this.pixelAspect,
+            this.description
         ]);
+    break;
+    case 'plain':
+    case 'text':
+        return ([
+            this.mediaName,
+            "\tid:"+this.id,
+            "\tanimationField:"+this.animationField.toString(),
+            "\tbaseResolution:"+this.baseResolution.toString(),
+            "\tmediaType:"+this.mediaType,
+            "\ttcType:"+this.tcType,
+            "\tpegForm:"+this.pegForm.toString(),
+            "\tpixelAspect:"+this.pixelAspect,
+            "\tdescription:"+this.description
+        ]).join('\n');
+    break;
+    default:
+        return this.mediaName;
     }
-    return this.mediaName;
 }
 //
 nas.Pm.MediaCollection= function(myParent){
     this.parent  = myParent;
     this.members = {};
+    this.unique =["mediaName","id"];
 }
 nas.Pm.MediaCollection.prototype.entry = nas.Pm._getMember;
+nas.Pm.MediaCollection.prototype.addMembers= nas.Pm._addMembers;
+nas.Pm.MediaCollection.prototype.dump = nas.Pm._dumpList;
+/*
+    コレクションメンバー登録メソッド
+    引数  メンバーオブジェクト配列
+    戻値  エントリに成功したメンバー数
+    重複メンバーは登録しない
+    重複の条件は、mediaName,id　いずれかのバッティングを検出（_getMember）
+    他のプロパティは比較対象外
+    full-dump の形式は
+    mediaName,[id,animationField,baseResolution,mediaTipe,tcType,pegForm,pixelAspect,descriuption]
+*/
+nas.Pm.MediaCollection.prototype.addMembers=function(members){
+    var result = 0;
+    if(!(members instanceof Array)) members = [members];
+    for (var ix = 0 ; ix < members.length ; ix++ ){
+        var tempOpus = members[ix];
+        if( (this.entry(tempOpus.mediaName)==null)&&
+            (this.entry(tempOpus.id)==null)
+        ){
+            this.members[tempOpus.name]=tempOpus;
+            result++;
+        }
+    }
+    return result;
+}
+/*
+    メディア登録メソッド比較条件は　mediaName,id
+*/
+nas.Pm.MediaCollection.prototype.addMember = function(mediaName,propList){
+    if(   (this.entry(mediaName)==null)&&
+        (this.entry(propList[0])==null)
+    ){
+        var tempMedia = new nas.Pm.ProductionMedia(mediaName);
+        var tempField = new nas.AnimationField(
+            name,
+            basewidth,
+            frameaspect,
+            scale,
+            pegform,
+            pegOffset
+        );
+        tempMedia.id              = (propList[0]=='')? nas.Zf(Object.keys(this.members).length,4):propList[0];
+        tempMedia.animationField  = propList[1];//現在は文字列のまま
+    // 本日は仕様変更が主眼なのでこのまま保留　12/04
+        tempMedia.baseResolution  = propList[2];
+        tempMedia.mediaType       = propList[3];
+        tempMedia.tcType          = propList[4];//nas.Framerate Objectする場合は nas.newFramerate(this.tcType)
+        tempMedia.pegForm         = propList[5];
+        tempMedia.pixelAspect     = propList[6];
+        tempMedia.description     = propList[7];
+        this.members[mediaName]=tempMedia;
+    }
+}
 
-nas.Pm.MediaCollection.prototype.toString = nas.Pm._toString;
 
 nas.Pm.MediaCollection.prototype.addMedia = function(mediaName,propList){
     
@@ -509,7 +928,12 @@ nas.Pm.MediaCollection.prototype.addMedia = function(mediaName,propList){
     this.members[mediaName].pixelAspect     = propList[6];
     this.members[mediaName].description     = propList[7];
 }
-
+/*
+nas.Pm.MediaCollection.prototype.addMembers = function (members){
+    if(!(members instanceof Array)) members =[members];
+    for (var ix=0 ;ix< members.length;ix++) this.addMember(members[ix])
+}
+*/
 nas.Pm.medias = new nas.Pm.MediaCollection(nas.Pm);
 
 /*制作管理用 Assetオブジェクト
@@ -529,6 +953,7 @@ nas.Pm.medias = new nas.Pm.MediaCollection(nas.Pm);
  *
 */
 nas.Pm.Asset = function(){
+    this.assetName      ;
     this.name           ;
     this.hasXPS         ;
     this.code           ;
@@ -539,10 +964,46 @@ nas.Pm.Asset = function(){
 }
 
 nas.Pm.Asset.prototype.toString = function(form){
-    if (form == 'dump') {
-        return JSON.stringify([this.name,this.hasXPS,this.code,this.shortName,this.description,this.endNode,this.callStage]);
+    switch (form) {
+    case 'JSON':
+        return JSON.stringify({
+            name:this.name,
+            hasXPS:this.hasXPS,
+            code:this.code,
+            shortName:this.shortName,
+            descripion:this.description,
+            endNode:this.endNode,
+            callStage:this.callStage
+        });
+    case 'full-dump':
+    case 'full':
+    case 'dump':
+        return JSON.stringify([
+            this.name,
+            this.hasXPS,
+            this.code,
+            this.shortName,
+            this.description,
+            this.endNode,
+            this.callStage
+        ]);
+    case 'plain-text':
+    case 'plain':
+    case 'text':
+        return ([
+            this.assetName,
+            '\tname:'+this.name,
+            '\thasXPS:'+this.hasXPS,
+            '\tcode:'+this.code,
+            '\tshortName:'+this.shortName,
+            '\tdescription:'+this.description,
+            '\tendNode:'+this.endNode,
+            '\tcallStage:'+this.callStage
+        ]).join('\n');
+    default:
+        return this.name;
+//        return nas.Pm.searchProp(this.name,nas.pmdb.assets);
     }
-    return nas.Pm.searchProp(this.name,nas.pmdb.assets);
 }
 /**
     アセットコレクション
@@ -550,14 +1011,16 @@ nas.Pm.Asset.prototype.toString = function(form){
 nas.Pm.AssetCollection = function(myParent){
     this.parent  = myParent;
     this.members = {};
+    this.unique = ["assetName","name","code","shortName"];
 }
 nas.Pm.AssetCollection.prototype.entry = nas.Pm._getMember;
-
-nas.Pm.AssetCollection.prototype.toString = nas.Pm._toString;
+nas.Pm.AssetCollection.prototype.addMembers = nas.Pm._addMembers;
+nas.Pm.AssetCollection.prototype.dump = nas.Pm._dumpList;
 
 //アセット登録メソッド
 nas.Pm.AssetCollection.prototype.addAsset = function(assetName,propList){
     this.members[assetName]             = new nas.Pm.Asset();
+    this.members[assetName].assetName   = assetName;
     this.members[assetName].name        = propList[0];
     this.members[assetName].hasXPS      = (propList[1])?true:false;
     this.members[assetName].code        = propList[2];
@@ -577,6 +1040,7 @@ nas.Pm.AssetCollection.prototype.addAsset = function(assetName,propList){
     ];
 */
 nas.Pm.assets = new nas.Pm.AssetCollection(nas.Pm);
+
 /*制作管理用 PmTemplateオブジェクト
  *プロパティ すべて配列
  *  lineNames   ライン名称コレクション
@@ -603,30 +1067,43 @@ nas.Pm.PmTemplateCollection   = function(myParent){
         this.parent  = myParent;
         this.members = [];
 };
-nas.Pm.PmTemplateCollection.prototype.addTemplates = function(templates){
+/*テンプレートコレクションメンバー追加メソッド
+配列型のみを受け取る
+*/
+nas.Pm.PmTemplateCollection.prototype.addTemplate = function(templates){
         if(! templates[0] instanceof Array){templates = [templates];}
     for (var eid = 0;eid<templates.length ; eid ++){
         //引数: トレーラーオブジェクトの参照,ライン識別名,ステージコレクションの内容配列
         this.members[eid] = new nas.Pm.LineTemplate(this,templates[eid][0],templates[eid][1]);
     }
 };
-nas.Pm.PmTemplateCollection.prototype.toString = nas.Pm._toString;
+/*
+    設定データストリームパーサ
+ストリームは、
+*/
+nas.Pm.PmTemplateCollection.prototype.parseConfig = function(configStream){
+    if(! condifgStream) return false;
+    this.members.length=0;
+    if(configStream.match(/^\{.+\}$/)){
+        var newConfig = JSON.stringify(configStream);//JSON
+    }
+}
+nas.Pm.PmTemplateCollection.prototype.dump = nas.Pm._dumpList;
 
 /**
     ラインテンプレート　ステージデータコレクションを持つ
 引数
+myParent    
 lineName    ライン識別名称
+[myStarges]   ラインの標準的なステージ並びを配列で与える
 
 */
 nas.Pm.LineTemplate = function(myParent,lineName,myStages){
     if (!(myStages instanceof Array)) myStages = [myStages];
     this.parent = myParent;//親参照は不要？
-//    this.lineName   = lineName;
     this.line   = this.parent.parent.lines.getLine(lineName);
-//    this.stages = myStages;
     this.stages = new nas.Pm.StageCollection(this);
     for (var ix=0;ix< myStages.length;ix++){
-//        this.stages.addStage(myStages[ix],this.line);
         var stageKey= nas.Pm.searchProp(myStages[ix],this.parent.parent.stages)
         this.stages.addStage(stageKey,this.parent.parent.stages.members[stageKey]);
     }
@@ -636,16 +1113,29 @@ toString(true)　でテキスト設定形式で書き出す
 
 */
 nas.Pm.LineTemplate.prototype.toString = function(form){
-    if(form == 'dump'){
+    switch(form){
+    case 'full-dump':
+    case 'full':
+    case 'dump':
       return JSON.stringify([
         this.line.toString(),
-        this.stages.toString().split(',')
+        (this.stages.dump()).split(',')
       ]);
+    break;
+    case 'plain-text':
+    case 'plain':
+    case 'text':
+      return ([
+        this.line.toString(),
+        '\tstages:'+this.stages.dump()
+      ]).join('\n');
+    break;
+    default:
+        return this.line.toString();
     }
-    return this.line.toString();
 };
 
-nas.Pm.pmTemplate = new nas.Pm.PmTemplateCollection(nas.Pm);
+nas.Pm.pmTemplates = new nas.Pm.PmTemplateCollection(nas.Pm);
 
 /*制作管理用 Jobオブジェクト
  *プロパティ
@@ -668,17 +1158,17 @@ nas.Pm.pmTemplate = new nas.Pm.PmTemplateCollection(nas.Pm);
  *new Job(jobName?)
 */
 nas.Pm.ProductionJob = function ProductionJob(myName,myStage,myIndex,mySlipNumber){
-    this.name           = myName;
+    this.name           = myName;//*
     this.stage          = myStage;
 // if(! myStage){alert("stage Argument is :"+myStage)}
     this.type           ;
-    this.id             = (typeof myIndex == "undefined")? null:myIndex;//
+    this.id             = (typeof myIndex == "undefined")? null:myIndex;//*
     this.currentStatus  ;//
     this.createUser     ;//
     this.createDate     = new Date();//
     this.updateUser     ;//
     this.updateDate     ;//
-    this.slipNumber     ;//
+    this.slipNumber     ;//*
 };
 nas.Pm.ProductionJob.prototype.getPath = function(){return [this.name,this.stage.getPath()].join(".");}
 
@@ -720,15 +1210,36 @@ nas.Pm.ProductionJob.prototype.toString = function(){
     これらの設定は、
  */
 nas.Pm.JobTemplate = function(jobName,targetStage,jobType){
-    this.name   = jobName    ;
-    this.stage  = targetStage;
-    this.type   = jobType    ;
+    this.jobName   = jobName    ;
+    this.targetStage  = targetStage;
+    this.jobType   = jobType    ;
 };
 nas.Pm.JobTemplate.prototype.toString = function(form){
-    if(form == 'dump'){
-        return JSON.stringify([this.name,this.stage,this.type]);
+    switch(form){
+    case    'JSON':
+        return JSON.stringify({
+            jobName:this.jobName,
+            targetStage:this.targetStage,
+            jobType:this.jobType
+        });
+    break;
+    case    'full-dump':
+    case    'full':
+    case    'dump':
+        return JSON.stringify([this.jobName,this.targetStage,this.jobType]);
+    break;
+    case    'plain-text':
+    case    'plain':
+    case    'text':
+        return ([
+            this.jobName,
+            "\ttargetStage:"+this.targetStage,
+            "\tjobType:"+this.jobType
+        ]).join('\n');
+    break;
+    default:
+        return this.jobName;
     }
-        return this.name;
 };
 nas.Pm.JobTemplateCollection = function(myParent){
     this.parent  = myParent ;
@@ -753,16 +1264,12 @@ nas.Pm.JobTemplateCollection.prototype.addNames = function(names){
     ジョブタイプ  init/primary/check/* ジョブタイプ'*'は primary+check (! init)
 */
 nas.Pm.JobTemplateCollection.prototype.getTemplate = function(stage,type){
-console.log(stage+':'+type)
     if((! stage)||(! type)){return []};
     var result=[];
-console.log(this.members);
     for (var eid = 0;eid<this.members.length ; eid ++){
-console.log(eid +'/'+ this.members.length);
-console.log(this.members[eid]);
-        if((this.members[eid].type == type)||(this.members[eid].type == "*")||(type == "*")&&(this.members[eid].type != "init")){
-            if((this.parent.stages.getStage(this.members[eid].stage) === this.parent.stages.getStage(stage))||(this.members[eid].stage == "*")){
-                var jobName         = this.members[eid].name;
+        if((this.members[eid].jobType == type)||(this.members[eid].jobType == "*")||(type == "*")&&(this.members[eid].jobType != "init")){
+            if((this.parent.stages.getStage(this.members[eid].targetStage) === this.parent.stages.getStage(stage))||(this.members[eid].targetStage == "*")){
+                var jobName         = this.members[eid].jobName;
                 var parentStage = this.parent.stages.getStage(stage);
                 if(( jobName.indexOf("*") >= 0)&&(parentStage)){
                     var myString = jobName.replace(/\*/,parentStage.name);
@@ -775,7 +1282,7 @@ console.log(this.members[eid]);
     }
     return result;
 }
-nas.Pm.JobTemplateCollection.prototype.toString = nas.Pm._toString;
+nas.Pm.JobTemplateCollection.prototype.dump = nas.Pm._dumpList;
 /*
 function(form){
     if(form == 'JSON'){
@@ -811,7 +1318,7 @@ nas.Pm.jobNames = new nas.Pm.JobTemplateCollection(nas.Pm);
  * output Asset ステージの出力アセット
  * staffs Object スタッフリスト（リスト）
  * ステージは必ずステージコレクションを介してラインに所属するので、親ラインの参照はコレクション側のline属性で保持する。
- * ステージ内では、コレクションを parent プロパティで示す　従って親のラインス参照するパスは this.parent.line
+ * ステージ内では、コレクションを parent プロパティで示す　従って親のラインを参照するパスは this.parent.line
 */
 nas.Pm.ProductionStage=function(myName,myParent){
     this.parent=myParent;
@@ -820,6 +1327,7 @@ nas.Pm.ProductionStage=function(myName,myParent){
     this.shortName;
     this.description;
     this.output;
+    this.stageName;
 }
 nas.Pm.ProductionStage.prototype.getPath=function(){return [this.name,this.parent.line.getPath()].join(".")}
 nas.Pm.newStage=function(myStage,myLine){
@@ -835,7 +1343,21 @@ nas.Pm.newStage=function(myStage,myLine){
   　}
 }
 nas.Pm.ProductionStage.prototype.toString=function(form){
-    if(form == 'dump'){
+    
+    switch(form){
+    case 'JSON':
+        return JSON.stringify({
+            name:this.name,
+            code:this.code,
+            shortName:this.shortName,
+            description:this.description,
+            output:this.output,
+            stageName:this.stageName
+        });
+    break;
+    case 'full-dump':
+    case 'full':
+    case 'dump':
         return JSON.stringify([
             this.name,
             this.code,
@@ -843,8 +1365,22 @@ nas.Pm.ProductionStage.prototype.toString=function(form){
             this.description,
             this.output
         ]);
-    }
+    break;
+    case 'plain-text':
+    case 'plain':
+    case 'text':
+        return ([
+            this.stageName,
+            "\tname:"+this.name,
+            "\tcode:"+this.code,
+            "\tshortName:"+this.shortName,
+            "\tdescription:"+this.description,
+            "\toutput:"+this.output
+        ]).join('\n');
+
+    default:
     return this.name;
+    }
 };
 /*    ステージコレクション
  *
@@ -855,10 +1391,13 @@ nas.Pm.ProductionStage.prototype.toString=function(form){
 nas.Pm.StageCollection = function(myParent){
     this.parent  = myParent;
     this.members = {};
+    this.unique =["stageName","name","code","shortName"];
 }
 
-nas.Pm.StageCollection.prototype.toString = nas.Pm._toString;
-
+nas.Pm.StageCollection.prototype.dump = nas.Pm._dumpList;
+nas.Pm.StageCollection.prototype.getStage = nas.Pm._getMember;
+nas.Pm.StageCollection.prototype.entry = nas.Pm._getMember;
+nas.Pm.StageCollection.prototype.addMembers = nas.Pm._addMembers
 //ステージコレクション追加メソッド
 /*
 引数：
@@ -875,10 +1414,67 @@ nas.Pm.StageCollection.prototype.addStage=function(stageName,myStage){
     this.members[stageName].shortName   = myStage[2];
     this.members[stageName].description = myStage[3];
     this.members[stageName].output      = myStage[4];
+    this.members[stageName].stageName   = stageName;
     }
 }
 
-nas.Pm.StageCollection.prototype.getStage = nas.Pm._getMember;
+/*
+設定パーサ
+*/
+nas.Pm.StageCollection.prototype.parseConfig = function(configStream){
+    if(String(configStream).length==0) return false;
+    var newMembers=[];
+    this.members = {};//clear
+    var form = 'plain-text';
+    if(configStream.match(/\{.+\}/))          form = 'JSON';
+    else if(configStream.match(/.+\,\[.+\]/)) form = 'full-dump';
+    switch(form){
+    case 'JSON':
+        var configData=JSON.parse(configStream);
+        for(prp in configData){
+            var tempData = configData[prp];
+            var newStage         = new nas.Pm.ProductionStage(prp,this);
+            newStage.stageName   = prp;
+            newStage.name        = tempData.name;
+            newStage.code        = tempData.code;
+            newStage.shortName   = tempData.shortName;
+            newStage.description = tempData.description;
+            newStage.output      = tempData.output;
+            newMembers.push(newStage);
+        }
+    break;
+    case 'full-dump':
+        configStream=String(configStream).split('\n');
+        for(var ir = 0;ir<configStream.length;ir++){
+            if((configStream[ir].indexOf("#")==0)||(configStream[ir].length==0)) continue;//コメント/空行スキップ
+            var tempData = JSON.parse("["+configStream[ir]+"]");
+            var newStage         = new nas.Pm.ProductionStage(tempData[1][0],this);
+            newStage.stageName   = tempData[0];
+            newStage.name        = tempData[1][0];
+            newStage.code        = tempData[1][1];
+            newStage.shortName   = tempData[1][2];
+            newStage.description = tempData[1][3];
+            newStage.output      = tempData[1][4];
+            newMembers.push(newStage);
+        }
+    break;
+    default:
+        configStream=String(configStream).split('\n');
+        var currentStage=false;
+        for(var ir = 0;ir<configStream.length;ir++){
+            if((configStream[ir].indexOf("#")==0)||(configStream[ir].length==0)) continue;//コメント/空行スキップ
+            if((configStream[ir].match( /^\t([a-z]+)\:(.+)$/i ))&&(currentStage)){
+                currentStage[RegExp.$1]=RegExp.$2;//プロパティ設定
+            }else{
+                if (currentStage) newMembers.push(currentStage);
+                currentStage=new nas.Pm.ProductionStage(configStream[ir],this);
+                currentStage.stageName=String(configStream[ir]);
+            }
+        }
+        newMembers.push(currentStage);
+    }
+    return this.addMembers(newMembers);
+}
 /**
     次のステージの候補を抽出する関数
 引数:
@@ -929,6 +1525,7 @@ description String ラインの説明 ユーザのために必用
 */
 
 nas.Pm.ProductionLine=function(){
+    this.lineName;
     this.name;
     this.shortName;
     this.outputAsset;
@@ -940,7 +1537,20 @@ nas.Pm.ProductionLine=function(){
 nas.Pm.ProductionLine.prototype.getPath = function(){return this.name;}
 
 nas.Pm.ProductionLine.prototype.toString = function(form){
-    if(form == 'dump'){
+    switch (form){
+    case 'JSON':
+        return JSON.stringify({
+            name:this.name,
+            shortName:this.shortName,
+            outputAsset:((this.outputAsset)?this.outputAsset.toString():this.outputAsset),
+            initAsset:((this.initAsset)?this.initAsset.toString():this.initAsset),
+            code:this.code,
+            description:this.description
+        });
+    break;
+    case 'full-dump':
+    case 'full':
+    case 'dump':
         return JSON.stringify([
             this.name,
             this.shortName,
@@ -948,9 +1558,24 @@ nas.Pm.ProductionLine.prototype.toString = function(form){
             (this.initAsset)?this.initAsset.toString():this.initAsset,
             this.code,
             this.description
-        ])
+        ]);
+    break;
+    case 'plain-text':
+    case 'plain':
+    case 'text':
+        return ([
+            this.lineName,
+            '\tname:'+this.name,
+            '\tshortName:'+this.shortName,
+            '\toutoputAsset:'+((this.outputAsset)?this.outputAsset.toString():null),
+            '\tinitAsset:'+((this.initAsset)?this.initAsset.toString():null),
+            '\tcode:'+this.code,
+            '\tdescription:'+this.description
+        ]).join('\n');
+    break;
+    default:
+        return this.name
     }
-    return this.name
 };
 /*    ラインストア
 
@@ -960,26 +1585,98 @@ nas.Pm.ProductionLine.prototype.toString = function(form){
 nas.Pm.LineCollection = function(myParent){
     this.parent  = myParent;
     this.members = {};
+    this.unique =["lineName","name","code","shortName"];
 }
 
-nas.Pm.LineCollection.prototype.toString = nas.Pm._toString;
+nas.Pm.LineCollection.prototype.dump = nas.Pm._dumpList;
 //function(){    return JSON.stringify(this.members);}
+nas.Pm.LineCollection.prototype.addMembers = nas.Pm._addMembers;
 
 /**
 ラインテンプレートの中から指定された名前と一致するオブジェクトを戻す
 lineNameと一致していればそのまま、一致するものがない場合はname/shortName/codeを検索してその順で最初に一致したものを戻す
 */
 nas.Pm.LineCollection.prototype.getLine = nas.Pm._getMember;
+nas.Pm.LineCollection.prototype.entry = nas.Pm._getMember;
 
+/*設定パーサ
+
+*/
+
+nas.Pm.LineCollection.prototype.parseConfig =function(configStream){
+    if(String(configStream).length==0) return false;
+    var newMembers=[];
+    this.members = {};//clear
+    var form = 'plain-text';
+    if(configStream.match(/\{.+\}/)){
+        form = 'JSON';
+    } else if(configStream.match(/.+\,\[.+\]/)){
+        form = 'full-dump';
+    }        
+    switch(form){
+    case    'JSON':
+        var configData=JSON.parse(configStream);
+        for(prp in configData){
+            var tempData = configData[prp];
+            var newLine         = new nas.Pm.ProductionLine();
+            newLine.lineName    = prp;
+            newLine.name        = tempData.name;
+            newLine.shortName   = tempData.shortName;
+            newLine.outputAsset = tempData.outputAsset;
+            newLine.initAsset   = tempData.initAsset;
+            newLine.code        = tempData.code;
+            newLine.description  = tempData.description;
+            newMembers.push(newLine);
+        }
+    break;
+    case    'full-dump':
+    case    'full':
+    case    'dump':
+        configStream=String(configStream).split('\n');
+        for(var ir = 0;ir<configStream.length;ir++){
+            if((configStream[ir].indexOf("#")==0)||(configStream[ir].length==0)) continue;//コメント/空行スキップ
+            var tempData = JSON.parse("["+configStream[ir]+"]");
+            var newLine         = new nas.Pm.ProductionLine();
+            newLine.lineName    = tempData[0];
+            newLine.name        = tempData[1][0];
+            newLine.shortName   = tempData[1][1];
+            newLine.outputAsset = tempData[1][2];
+            newLine.initAsset   = tempData[1][3];
+            newLine.code        = tempData[1][4];
+            newLine.description = tempData[1][5];
+            newMembers.push(newLine);
+        }
+    break;
+    case    'plain-text':
+    case    'plain':
+    case    'text':
+    default:
+        configStream=String(configStream).split('\n');
+        var currentLine=false;
+        for(var ir = 0;ir<configStream.length;ir++){
+            if((configStream[ir].indexOf("#")==0)||(configStream[ir].length==0)) continue;//コメント/空行スキップ
+            if((configStream[ir].match( /^\t([a-z]+)\:(.+)$/i ))&&(currentLine)){
+                currentLine[RegExp.$1]=RegExp.$2;//プロパティ設定
+            }else{
+                if (currentLine) newMembers.push(currentLine);
+                currentLine=new nas.Pm.ProductionLine();
+                currentLine.lineName=String(configStream[ir]);
+            }
+        }
+        newMembers.push(currentLine);
+    }
+    return this.addMembers(newMembers)
+}
 /*
     ライン編集メソッド
 */
 
 nas.Pm.LineCollection.prototype.addLine =function(lineName,propList){
     this.members[lineName]              =new nas.Pm.ProductionLine();
+    this.members[lineName].lineName     =lineName;
     this.members[lineName].name         =propList[0];
     this.members[lineName].shortName    =propList[1];
-    this.members[lineName].outputAsset  =propList[2];
+    this.members[lineName].outputAsset  =nas.Pm.assets.entry(propList[2]);
     this.members[lineName].initAsset    =nas.Pm.assets.entry(propList[3]);
     this.members[lineName].code         =propList[4];
     this.members[lineName].description  =propList[5];
@@ -1097,6 +1794,9 @@ nas.Pm.Issue=function(myLine,myID){
     this.lineCheckInDate    ;//Date: undefined
     this.currentStatus      = "startup";//String:startup active hold fixed aborted 
 }
+/*
+    IssueにJSONの入出力を設置する必用あり
+*/
 nas.Pm.Issue.prototype.toString = function(){
     var myResult = "";
     myResult     += "##CHECK_OUT=("+this.lineName+"):"+this.lineId+" / "+this.lineCheckOutDate.toNASString()+" / "+this.lineCheckOut +";\n";
@@ -1136,9 +1836,10 @@ nas.Pm.LineIssues=function LineIssues(myIssue,myParent){
     this.body=[myIssue];// Object Array;
     this.parent=myParent;//Object xMap;
 }
-/*
-*/
 nas.Pm.LineIssues.prototype.valueOf =function(){return this.body[this.id]};
+/*
+    Issue
+*/
 nas.Pm.LineIssues.prototype.toString=function(){
     var myResult="";
     myResult+="##LINE_ID=("+ this.body[this.currentId].lineName +"):"+this.body[this.currentId].lineId+"\n";
@@ -1379,42 +2080,56 @@ nas.Pm.Staff = function(user,duty,section,access,alias){
     this.typeSet();
 }
 /*
-  テキスト形式の指定を受けてスタッフオブジェクトを最初期化するオブジェクトメソッド
-  palin形式の文字列は、単一レコードでは初期化に必要な情報に欠けるので扱わない
-  dump形式のみを判定　それ以外はfullフォーマットとして扱う
-
+  テキスト形式の指定を受けてスタッフオブジェクトを再初期化するオブジェクトメソッド
+  palin形式の文字列は、単一レコードでは初期化に必要な情報に欠けるのでここでは扱わない
+  StaffCollectionのメソッドのみが受け付ける
+  ここではdump形式のみを判定　それ以外はfullフォーマットとして扱う
 */
 nas.Pm.Staff.prototype.parseStaff = function(staffString){
-    if (staffString.match(/^\[([^\[]+)\]$/)) {;//]dump形式
+    if (staffString.match(/^\[([^\[\]]+)\]$/)) {;
+/*
+[access ,alias  ,user   ,duty   ,section]
+    dump format
+*/
         var myProps=JSON.parse(staffString);
         if (myProps.length!=5) return false;
-        this.access  = myProps[0];
+        this.access  = (String(myProps[0]).match(/-|false/i))?false:true;
         this.alias   = myProps[1];
         this.user    = (myProps[2])? new nas.UserInfo(myProps[2]):null;
         this.duty    = myProps[3];
         this.section = myProps[4];
     } else {
+//full format
+/*
+Access *SECTION* [DUTY] handle:email ALIAS
+
+    Access　以外は順不同
+    ALIAS は、スタッフユーザの表示エイリアスなのでuserエントリがnullの場合は意味を持たないことに注意
+*/
         staffString= staffString.replace(/\s+/g,'\t');//空白をタブに置換
         var myProps = staffString.split('\t');//配列化
         if ((myProps.length<2)||(myProps.length>6)) return false;//フィールド数0,1,6~は不正データ
-        this.access=myProps[0];//第一フィールドは、固定でアクセス可否
+        this.access=(myProps[0].match( /-|false/i ))?false:true;//第一フィールドは、固定でアクセス可否 bool
         //第二フィールド〜ラストまでループでチェック
         for (var ix=1;ix<myProps.length;ix++){
             if(myProps[ix].match(/^\*([^\*]+)\*$/)){
-                this.section=RegExp.$1;
-            }else if(myProps[ix].match(/^\[([^\[])\]$/)){
-                this.duty=RegExp.$1;
+                this.section=RegExp.$1;// *SECTION*
+            }else if(myProps[ix].match(/^\[([^\]]+)\]$/)){
+                this.duty=RegExp.$1;// [duty]
             }else if(myProps[ix].match(/^[^:]+:[^:]+/)){
-                this.user=new nas.UserInfo(myProps[ix]);
+                this.user=new nas.UserInfo(myProps[ix]);// Handle:email
             }else{
                 this.alias = myProps[ix]
             }
         }
-        this.typeSet();
     }
+    this.typeSet();
     return this;
 }
 /*TEST
+var A = new nas.Pm.Staff();
+A.parseStaff('[false,"","","プロデューサ","制作管理"]');
+A.parseStaff(' *うなぎ*　[海遊館]　ハンドル:sample@example.com ほげら');
 
 */
 /*
@@ -1440,16 +2155,22 @@ nas.Pm.Staff.prototype.typeSet = function(){
     同値判定用メソッド
     アクセス可否判定を含めてエントリが完全に一致した場合のみtrueを返す
     ユーザ情報はメールアドレスのみでなくハンドルまで一致した場合にtrue
+    null,"" は、いずれのエントリとも一致しない
+    マッチングの順位あり
+タイプ    部署　役職　ユーザ　ハンドル　アクセス可否
+user        全マッチ以外はfalse
+section
+duty
 */
 nas.Pm.Staff.prototype.sameAs = function(target){
-    if(!(target instanceof nas.Pm.Staff)) return null; 
+    if(!(target instanceof nas.Pm.Staff)) return false; 
     var result = 0;
     //user プロパティに値がある　双方がUserInfoオブジェクトだった場合のみ文字列化して比較　それ以外は直接比較
     if(this.user){
       if ((this.user instanceof nas.UserInfo)&&(target.user instanceof nas.UserInfo)){
             if(this.user.toString()==target.user.toString()) result += 4;
-      }else{
-            if(this.user==target.user) result +=4;
+      } else {
+         if(this.user==target.user) result +=4;
       }
     }else{
     //値がない＞相手先に値がない場合のみマッチ　（nullが"",0,false等とマッチする）
@@ -1561,10 +2282,11 @@ var C=new nas.Pm.Staff(new nas.UserInfo("タヌキ:tanuki@animal.example.com"),"
 */
 /*
      文字列化して返す
-     typeオプション
-plainフォーマット
+     formオプション
+plain-textフォーマット
+        'plain-text'
         'plain'
-        
+        'text'
 この書式は、スタッフコレクションから呼び出された時のみに意味を持つので注意
      sction
 部門                  \t部門名
@@ -1576,8 +2298,10 @@ plainフォーマット
 スタッフコレクションの'plain'オプションに対応する機能
 
 
-fullフォーマット     
+full-dumpフォーマット     
+        'full-dump'
         'full'
+        'dump'
 
 アクセス可否  UID [役職] *部門* 別名
 
@@ -1606,35 +2330,53 @@ dumpフォ−マット
     部門エントリがあればそれを添付する
     
     ユーザエントリーは、ユーザの表示名を返す　オブジェクトに設定されたALIASまたはユーザ情報オブジェクトのハンドル
-    
+
+JSONフォーマット
+    他のDBとのデータ交換用にJSON文字列化したデータを返す
 */
-nas.Pm.Staff.prototype.toString = function(type){
-    if(type == 'plain'){
-        var result=(this.access)?"\t":"FALSE\t";
+nas.Pm.Staff.prototype.toString = function(form){
+    switch(form){
+    case 'JSON':
+        return JSON.stringify({
+            acsess:this.access,
+            type:this.type,
+            alias:this.alias,
+            user:((this.user)?this.user.toString():null),
+            duty:this.duty,
+            section:this.section
+        });
+    break;
+    case    'plain-text':
+    case    'plain':
+    case    'text':
+        var result=(this.access)?"\t":"-\t";
         switch(this.type){
-case "section":
-        result += this.section;
-break;
-case "duty":
-        result += "\t";
-        result += this.duty;
-break;
-case "user":
-        if(this.alias.length){this.user.handle=this.alias}
-        result += "\t";
-        result += "\t";
-        result += this.user.toString(true);
-break;
+        case "section":
+            result += this.section;
+        break;
+        case "duty":
+            result += "\t";
+            result += this.duty;
+        break;
+        case "user":
+            if(this.alias.length){this.user.handle=this.alias}
+                result += "\t\t";
+                result += this.user.toString(true);
+        break;
         }
         return result;
-    }else if (type=='dump'){
+    break
+    case    'full-dump':
+    case    'full':
+    case    'dump':
         var result=(this.access)?[true]:[false];
         result.push(this.alias);
         result.push((this.user)?this.user.toString():'');
         result.push(this.duty);
         result.push(this.section);
         return JSON.stringify(result);
-    }else if(type=='full'){
+    break;
+/*    case 'void':
         var result='';
         result +=(this.access)? "":"-";
         if(this.user){
@@ -1653,10 +2395,11 @@ break;
             result +="\t";
             result += String(this.alias)  ;
         }
-      return result;
-    }else{
-        var result='';
-      switch(this.type){
+        return result;
+*/
+    default:
+        var result=(this.access)?'':'-';
+        switch(this.type){
         case "duty"   :
             result += "["+String(this.duty)+"]";
         break;
@@ -1672,8 +2415,8 @@ break;
         break;
         default:
             return false;
-      }
-      return result;
+        }
+        return result;
     }
 }
 //test　初期化引数　user,duty,section,access,alias
@@ -1700,7 +2443,8 @@ D.sameAs(C);
 .parent     Object      所属するノード　親ノードのstaffをアクセスするパスは this.parent.parent.staffs
 .members    Array       オブジェクトトレーラー配列
 .add()      Function    メンバー追加メソッド　戻り値 追加成功時 Object staff 失敗時 false
-.addStaff() Function    設定ファイルのストリームからメンバーを追加？
+.parseConfig() Function    設定ファイルのストリームからメンバーを入れ替え
+.dump() Functio         ダンプリストを取得
 .toString() Function    
 .remove()   エントリを削除
 
@@ -1714,18 +2458,33 @@ nas.Pm.StaffCollection = function(myParent){
 toStringは、二種の出力フォーマットを持つ
  full/引数なし または dump
 フルフォーマットは可読テキストとして出力
-    第一フィールドに何らかのデータのあるレコードは拒否エントリになる
+    第１フィールドに何らかのデータのあるレコードは拒否エントリになる
     第４フィールドはalias　個々にデータがある場合、そのエントリの表示名称として優先して使用される
         例　\t演出\t監督\t\tbigBoss
         例　\t作画\t原画\tcitten:cat@animals.example.com\tキティちゃん
     各フィールドの値として、h-tabは使用できない
 ダンプフォーマットは、機械読み取り用のフォーマットでaddStaffメソッドの引数形式
     
-*/
+
 nas.Pm.StaffCollection.prototype.toString = function(form){
     var result="";
+console.log(form)
     switch (form){
     case "full":
+            for (var ix =0 ; ix<this.members.length;ix++){
+                if (ix > 0) result +="\n";
+                result += this.members[ix].toString('full');
+            }
+            result += '\n';
+        return result;
+        break;
+    case "plain":
+            for (var ix =0 ; ix<this.members.length;ix++){
+                if (ix > 0) result +="\n";
+                result += this.members[ix].toString('plain');
+            }
+            result += '\n';
+        return result;
         break;
     case "dump":
             for (var ix =0 ; ix<this.members.length;ix++){
@@ -1743,6 +2502,8 @@ nas.Pm.StaffCollection.prototype.toString = function(form){
         return result.toString();
     }
 }
+*/
+nas.Pm.StaffCollection.prototype.dump=nas.Pm._dumpList;
 /*
   コレクションをソートする
   ソート基準は
@@ -1774,67 +2535,98 @@ nas.Pm.StaffCollection.prototype.getMenmber = function(staffString,type){
     var result=new nas.Pm.staffCollection(this.parent);
     var sect='';    var dut ='';    var usr ='';
 }
-/*    .parseStaff
-    スタッフ初期化文字列をパースしてスタッフコレクションを更新するオブエジェクトメソッド
+/*    .parseConfig
+    設定ファイルのスタッフ初期化文字列をパースしてスタッフコレクションを更新するオブエジェクトメソッド
     引数はレコード改行区切りテキストストリーム
-    受け入れ形式は3つ　形式をしているするか、またはストリームの第一レコードで判定
+    受け入れ形式は3つ
+    ストリームの第一有効レコードで判定する
+    
     いずれも行頭 '#'はコメント行　空行は無視 
-
-    dump 引数配列形式
-##_staff_template_type-dump
+    JSON   データ交換用JSON
+{access:<ACESS>,alilas:<ALIAS>,user:<USER>,duty:<DUTY>,section:<SECTION>,type:<TYPE>}
+    full-dump 引数配列形式
 [アクセス可否,"別名","UID","役職","部門"]
 
-    full スペース分離　不定フィールドテキスト
-##_staff_template_type-full
-アクセス	handle:UID	[役職]	*部門*	別名
-
-    plain    タブ区切りフィールド
-##_staff_template_type-plain
+    plain-text    タブ区切りフィールド
 アクセス可否\t部門\t役職\tユーザ\t別名
+
+    free-form スペース分離　不定フィールドテキスト
+アクセス可否	handle:UID	[役職]	*部門*	別名
+
             
 */
-nas.Pm.StaffCollection.prototype.parseStaff = function(dataStream,form){
-    var myStream = String(dataStream).split("\n");
+nas.Pm.StaffCollection.prototype.parseConfig = function(dataStream,form){
     var myMembers =[];
-    var myForm   = form;
-    // 形式が指定されない場合は第一レコードで判定 第一レコード以外で形式指定しているデータは不正データとする
+    // 形式が指定されない場合は、第一有効レコードで判定
     if(! form ){
-        if(myStream[0].indexOf('##_staff_template_type-full')==0)  form='full' ;
-        else if(myStream[0].indexOf('##_staff_template_type-dump')==0)  form='dump' ;
-        else if(myStream[0].indexOf('##_staff_template_type-plain')==0) form='plain';
-        else {console.log('bad data-type');return false;}
+            if (dataStream.match(/^\[\{.+\}\]$/)) form='JSON';//配列JSON
+            else if (dataStream.match(/(\n|^)\[.+\]($|\n)/)) form='full-dump';
+            else if (dataStream.match(/\*[^\*]+\*|\[[^\[\]]+\]/)) form='free-form';//]
+            else  form='plain-text';
     }
-    if ((form == 'dump')||(form == 'full')){
-      for (var rix=0;rix<myStream.length;rix++){
-      if(myStream[rix].indexOf('#')==0) continue;
-        var currentStaff=new nas.Pm.Staff();
-        currentStaff.parseStaff(myStream[rix]);
-        if (currentStaff) myMembers.push(currentStaff);
-      }
-    } else if (form == 'plain'){
-      var currentSection;var currentDuty;
-      for (var rix=0;rix.myStream.length;rix++) {
-        if(myStream[rix].indexOf('#')==0) continue;
-        var currentRecord=myStream[rix].split('\t');
-        //plainフォーマットはタブ区切り　タブ１つは部門　２つで役職　３つでユーザ　ユーザ指定のレコードには別名の指定も可
-        if(currentRecord[0]) {currenAccess   = (currentRecord[0].match(/\+|true/i))?true:false;}else{currenRecord.access=true;}
+    switch(form){
+    case    'JSON':
+console.log('deteect JSON');
+        var tempObject=JSON.parse(dataStream);
+console.log(tempObject);
+        for (var rix=0;rix<tempObject.length;rix++){
+            var currentStaff=new nas.Pm.Staff(
+                tempObject[rix].user,
+                tempObject[rix].duty,
+                tempObject[rix].section,
+                tempObject[rix].access,
+                tempObject[rix].alias
+            );
+            myMembers.push(currentStaff);
+        }
+console.log(myMembers);
+    break;
+    case    'full-dump':
+    case    'free-form':
+        dataStream = String(dataStream).split("\n");
+        for (var rix=0;rix<dataStream.length;rix++){
+            if(dataStream[rix].indexOf('#')==0) continue;
+            var currentStaff=new nas.Pm.Staff();
+            currentStaff.parseStaff(dataStream[rix]);
+            if (currentStaff) myMembers.push(currentStaff);
+        }
+    break;
+    case    'plain-text':
+    default:
+        dataStream = String(dataStream).split("\n");
+      var currentSection=null;var currentDuty=null;
+      for (var rix=0;rix<dataStream.length;rix++) {
+        if((dataStream[rix].indexOf('#')==0)||(dataStream[rix].length == 0)) continue;
+        var currentRecord=dataStream[rix].split('\t');
+        var currentAccess=true;var currentUser=null;var currentAlias="";
+//plainフォーマットはタブ区切り　タブ１つは部門　２つで役職　３つでユーザ　ユーザ指定のレコードには別名の指定も可
+//例:  ^access  section duty user alias
+        if(currentRecord[0]) currentAccess = (String(currentRecord[0]).match( /-|false/i ))?false:true;
         if(currentRecord[1]) {
-            currentSection = currentRecord[1];
-            myMembers.push(new nas.Pm.Staff(null,null,currentSection,currentAccess,""));
+            var mySection = currentRecord[1].replace(/\/$/,"");
+            if(mySection != currentSection) {currentSection=mySection;currentDuty=null;}
+            //myMembers.push(new nas.Pm.Staff(null,null,currentSection,currentAccess,""));
         }
         if(currentRecord[2]) {
             currentDuty    = currentRecord[2];
-            myMembers.push(new nas.Pm.Staff(null,currentDuty,currentSection,currentAccess,""));
+//            myMembers.push(new nas.Pm.Staff(null,currentDuty,currentSection,currentAccess,""));
         }
         if(currentRecord[3]) {
             var currentUser    = new nas.UserInfo(currentRecord[3]);
             var currentAlias   = (currentRecord[4])? currentRecord[4]:"";
-            myMembers.push(new nas.Pm.Staff(currentUser,currentDuty,currentSection,currentAccess,currentAlias));
+//            myMembers.push(new nas.Pm.Staff(currentUser,currentDuty,currentSection,currentAccess,currentAlias));
         }
-      }        
+        myMembers.push(new nas.Pm.Staff(currentUser,currentDuty,currentSection,currentAccess,currentAlias));
+      }
     }
     return this.addStaff(myMembers);
 }
+/*TEST
+
+*/
+
+
+
 /*
       ターゲットになるユーザまたはスタッフとコレクションの内容を比較して、
       一致したエントリIDを返すメソッド
@@ -1849,8 +2641,8 @@ nas.Pm.StaffCollection.prototype.indexOf = function(target){
 /*  スタッフの追加メソッド
     引数は　nas.Pm.Staff　オブジェクト
     引数形式は、Staffオブジェクトまたはオブジェクトの配列
-    可読テキストの再ロードはparseStaffメソッドを利用
-    parseStaffメソッドは、可読テキストをdump形式にコンバートしてこのメソッドを内部で呼び出す
+    可読テキストの再ロードはparseConfigメソッドを利用
+    parseConfigメソッドは、可読テキストをdump形式にコンバートしてこのメソッドを内部で呼び出す
     同内容のエントリがあった場合は追加されない。
     
     追加時に既存のsection/dutyエントリに存在しないプロパティを持ったuserエントリがあった場合は、
@@ -1875,10 +2667,9 @@ nas.Pm.StaffCollection.prototype.addStaff = function(members){
       }else{
         var member = members[ix]
       }
-//console.log(member)
+      if(! member) continue;
       var checkHint = this.indexOf(member);
-//console.log("checkHint :")      
-//console.log(checkHint)      
+//console.log("checkHint : " + checkHint)  ;   
 //一致エントリがないので追加
       if (checkHint < 0){
         this.members.push(member);
@@ -1899,7 +2690,16 @@ nas.Pm.staff=new nas.Pm.StaffCollection(nas.Pm);
 スタッフDB
     部門、役職、ユーザを合成したスタッフDB
         Repository.pmd.staff ~ タイトル、エピソード、カット（ライン、ステージ）までのツリー状の構造の各所でそれぞれのデータを参照可能にするための構造
-        
-        
+
+nas.Pm.inportDB(settingStream)
+ 
+DBとの通信は基本的に serviceAgent配下で各ServiceNodeが行う
+読み出しは低レベル関数をそれぞれのオブジェクトが受け持ち
+設定ファイル読み出しに相当するひとまとまりのアクションを親オブジェクト側で実装する
+
+統一形式
+Object.parseConfig(dataStream)
+
+perseStaff等もリネーム
 
 */

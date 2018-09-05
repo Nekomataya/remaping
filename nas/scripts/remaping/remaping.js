@@ -6509,7 +6509,7 @@ if((NameCheck)||(myName=="")){
                     xUI.currentUser = new nas.UserInfo(newName);
                 }
                 xUI.XPS.update_user = xUI.currentUser;
-                xUI.recentUsers.add(xUI.currentUser);
+                xUI.recentUsers.addMember(xUI.currentUser);
                 sync("recentUsers");
                 sync("update_user");
                 sync("current_user");
@@ -6524,7 +6524,8 @@ if((NameCheck)||(myName=="")){
 //ツールバー表示指定があれば表示 プロパティ廃止
 //    if((xUI.utilBar)&&(!$("#optionPanelUtl").is(':visible'))){$("#optionPanelUtl").show();};//xUI.sWitchPanel('Utl');
     document.getElementById("iNputbOx").focus();
-
+//test タスクコントローラ起動
+    startupTaskController();
 };
 /**
     印字用HTMLスタートアップ　（スタートアップのサブセット)
@@ -10093,7 +10094,7 @@ this.putProp=function ()
 	var newUser=new nas.UserInfo(this.userName);
 	if(!(xUI.currentUser.sameAs(newUser))){
 		xUI.currentUser = newUser;//objectc
-        xUI.recentUsers.add(newUser);//recentUsersにアイテム追加(トライ)
+        xUI.recentUsers.addMember(newUser);//recentUsersにアイテム追加(トライ)
 		XPS.update_user = xUI.currentUser;//object参照
 		sync("recentUsers");
 		sync("update_user");

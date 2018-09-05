@@ -8,8 +8,42 @@
  これらのデータは、リポジトリ内部に設定として分散して配置され、必要に従って編集、更新が可能なように調整される
  
  設定書式は、パーサを共通化するために統一されるのが望ましい　2017 12 02
+ パーサは、text,dump,JSON 全形式に対応する
+ ユーザは好みの方式で記述を行うことができる
+ リジョンごとの記述は、後置優先で後からデータを読み込む際に一切のデータを消去して上書き
+ 
  */
+/**
+ 組織情報
+ 組織オブジェクトは、組織情報トレーラーとして働く
+ pmdbオブジェクト内に一つだけ存在して、それらの共通参照情報となる
+ 
+ 
+プロパティ名  organization
+ name:通常表記名
+ fullName:正式名
+ code:ファイル名等使用コード
+ id:DBリンク用インデックス(UAT token)
+ shortName:短縮名
+ description:解説
+ contact:組織連絡先
 
+    organizationName   name    code    id  shortName   description contact users
+ */
+nas.Pm.organization ={
+    name:       "nekomataya"  ,
+    fullName:   'ねこまたや',
+    code:       'nkmt',
+    id:         '0001',
+    shortName:  'ね',
+    contact:    'ねこまたや:kiyo@nekomataya.info',
+    description:'住所等',
+};
+nas.Pm.organization.toString= function(){return this.name;}
+nas.Pm.organization.valueOf = function(){return parseInt( this.id );}
+
+nas.Pm.organizations=[];//組織コレクションにするか？
+nas.Pm.organizations.push(nas.Pm.organization);//0番要素として基準組織のエントリの参照を置く
 /**
  * アセット分類
  *
@@ -73,8 +107,8 @@ nas.Pm.stages.addStage("colorCoordination" ,["色指定"                     ,"C
 nas.Pm.stages.addStage("coordinationModel" ,["色指定カラーモデル"         ,"_ccM"    ,"色指定M" ,"カラーモデル（パレット）型カット別彩色指定データ(animo toonz等)" ,"colorDesign"]);
 nas.Pm.stages.addStage("bgDesign"          ,["美術設定"                   ,"artD"    ,"美設" ,"プロダクション内デザインワーク" ,"BGDsign"]);
 nas.Pm.stages.addStage("SCInfo"            ,["コンテチップ"               ,"_SCI"    ,"コンテチップ" ,"絵コンテを分解してシーンをプロジェクトデータ化したものイニシャルデータなのでこれを出力する同名ステージは無い" ,"SCInfo"]);
-nas.Pm.stages.addStage("leica"             ,["ライカ"                     ,"leica"    ,"ライカ" ,"タイミングを構成したモーションラフ" ,"draft"]);
-nas.Pm.stages.addStage("contChip"             ,["絵コンテ撮"                     ,"cntC"    ,"コンテ撮" ,"コンテチップを構成したモーションラフ" ,"draft"]);
+nas.Pm.stages.addStage("leica"             ,["ライカ"                     ,"leica"   ,"ライカ" ,"タイミングを構成したモーションラフ" ,"draft"]);
+nas.Pm.stages.addStage("contChip"          ,["絵コンテ撮"                 ,"cntC"    ,"コンテ撮" ,"コンテチップを構成したモーションラフ" ,"draft"]);
 nas.Pm.stages.addStage("animatic"          ,["プリビジュアライゼーション" ,"__pv"    ,"PV" ,"同上" ,"layout"]);
 nas.Pm.stages.addStage("roughSketch"       ,["ラフ原画"                   ,"drft"    ,"ラフ原" ,"同上" ,"drfat"]);
 nas.Pm.stages.addStage("layout"            ,["レイアウト"                 ,"LO"      ,"LO" ,"レイアウト上がり(原図あり)" ,"layout"]);
@@ -108,9 +142,27 @@ nas.Pm.stages.addStage("Htrace"            ,["ペイント"                   ,"
 nas.Pm.stages.addStage("HproofPaint"       ,["セル検査"                   ,"H-pp"    ,"セル検" ,"セル時代の作業を記録するためのエントリ" ,"cell"]);
 nas.Pm.stages.addStage("HretouchCell"      ,["エアブラシ特効"             ,"H-fx"    ,"エアブラシ" ,"セル時代の作業を記録するためのエントリ" ,"cell"]);
 nas.Pm.stages.addStage("composite"         ,["コンポジット"               ,"COMP"    ,"撮影" ,"コンポジット工程をプロダクションに入れるべきか否かは結構悩む 制作工程上終端なので出力は無し 終了シンボルを作るか？" ,"ALL"]);
-nas.Pm.stages.addStage("preCompositCheck"   ,["撮出し検査"                 ,"PCCk" ,"撮出し" ,"撮影前全検査(古い工程を記述するためのエントリ)" ,"ALL"]);
+nas.Pm.stages.addStage("preCompositCheck"   ,["撮出し検査"   ,"PCCk" ,"撮出し" ,"撮影前全検査(古い工程を記述するためのエントリ)" ,"ALL"]);
 nas.Pm.stages.addStage("generalDirectorCheck"   ,["監督チェック"                 ,"GDCk" ,"監督チェック" ,"監督による作業検査" ,"ALL"]);
 nas.Pm.stages.addStage("directorCheck"   ,["演出チェック"                 ,"DcCk" ,"演出チェック" ,"担当演出による作業検査" ,"ALL"]);
+
+/**
+以下の複合ステージを追加する
+海外発注等の一括作業のため本来工程として扱っていたものを複合された１工程として扱う
+ステージ内では新規ステージを初期化する手間を省き、全て連続したジョブとして制作を進める
+ステージの成果物は最終的な成果物をターゲットアセットとする。
+
+    仕上(スキャン、トレース、ペイント等をステージ内ジョブとして持つ複合ステージ)
+    動仕(上記の他に動画を含む複合ステージ)
+    二原動画仕上(上記に更に第二原画を加えたもの)
+
+制作担当者によるステージの切り替えが自動化された場合は、これらの複合ステージを利用せず、外注先でもUATをそのまま利用してもらうことが望ましい。
+                        stageName             name                    code    shortName   description output
+*/
+nas.Pm.stages.addStage("TP"             ,["仕上"                     ,"T&P"      ,"仕上" ,"仕上げ一括(複合)" ,"cell"]);
+nas.Pm.stages.addStage("ATP"            ,["動仕"                     ,"AT&P"     ,"動画仕上" ,"動画仕上一括(複合)" ,"cell"]);
+nas.Pm.stages.addStage("sKATP"          ,["二原動仕"                 ,"sKAT&P"   ,"二原動仕" ,"二原動画仕上一括(複合)" ,"cell"]);
+nas.Pm.stages.addStage("KATP"           ,["原動仕"                   ,"KAT&P"    ,"原動仕" ,"原画動画仕上一括(複合)" ,"cell"]);
 
 /**
  * ライン分類
@@ -157,8 +209,8 @@ nas.Pm.lines.addLine("null"           ,["(未設定)"        ,"(未)"    ,"NULL"
 nas.Pm.pmTemplate.members.push(new nas.Pm.LineTemplate(nas.Pm,"本線",["レイアウト","原画","動画","色指定","トレス","色トレス","ペイント","セル特効","撮出し検査","撮影"]));
 nas.Pm.pmTemplate.members.push(new nas.Pm.LineTemplate(nas.Pm,"背景美術",["原図整理","背景","美術検査"]));
 */
-nas.Pm.pmTemplate.addTemplates([
-    ["本線",["Startup","コンテ撮","レイアウト","原画","第一原画","作画監督修正","第二原画","発注前動画検査","動画","色指定","トレス","色トレス","ペイント","セル特効","撮出し検査","撮影"]],
+nas.Pm.pmTemplates.addTemplate([
+    ["本線",["Startup","コンテ撮","レイアウト","原画","第一原画","作画監督修正","第二原画","発注前動画検査","動画","色指定","スキャン","トレス","色トレス","ペイント","セル特効","撮出し検査","撮影"]],
     ["背景美術",["原図整理","背景","美術検査"]]
     ])
 /*
@@ -175,6 +227,7 @@ nas.Pm.pmTemplate.addTemplates([
  *  ジョブの名称、順序は各ステージオブジェクト（カット）毎に異なっていて良い
  *
  *  どのステージでも０番ジョブは予約で、制作管理者が立ち上げる
+ * ０番ジョブは手続き的なジョブであり、実際に素材が作成されることはほぼない
  * 名称はステージごとに定義されるが、通常は 「初期化」「開始」「作打済」「準備」 等の名称が与えられる
  * 伝票が発行されるのは０番ジョブに対して行なわれる場合が多い
  *
@@ -298,6 +351,12 @@ nas.Pm.jobNames.addNames([
     ["初期化","*","init"],
     ["作打済","*","init"],
     ["準備","*","init"],
+    ["*打合せ","*","init"],
+    ["*発注","*","init"],
+    ["作画打合せ","LO","init"],
+    ["作画打合せ","KD","init"],
+    ["作画打合せ","1G","init"],
+    ["作画打合せ","2G","init"],
     ["*","*","primary"],
     ["*作業","*","primary"],
     ["演出チェック","*","check"],
@@ -329,10 +388,13 @@ nas.Pm.jobNames.addNames([
     テンプレートにないアイテムも使用可能
         
  */
+/*
 nas.Pm.workTitles.addTitle("TVshowSample" ,["0000" ,"名称未設定"   ,"未定"   ,"_UN" ,"24FPS" ,"21:00:00" ,"10in-HDTV" ,"HDTV-720p"]);
 nas.Pm.workTitles.addTitle("kachi"        ,["0001" ,"かちかちやま" ,"か"     ,"_KT" ,"24FPS" ,"20:12:00" ,"10in-HDTV" ,"HDTV-720p"]);
 nas.Pm.workTitles.addTitle("Momotaro"     ,["0002" ,"ももたろう"   ,"も"     ,"_MT" ,"24FPS" ,"19:21:00" ,"10in-HDTV" ,"HDTV-720p"]);
 nas.Pm.workTitles.addTitle("Urashima"     ,["0003" ,"うらしまたろう"   ,"う"     ,"_UR" ,"30DF" ,"19:20;00" ,"12in-HDTV" ,"HDTV-1080p"]);
+*/
+nas.Pm.workTitles.parseConfig('"TVshowSample",["0000","名称未設定","未定","_UN","24FPS","21:00:00 .","10in-HDTV","HDTV-720p"]\n"kachi",["0001","かちかちやま","か","_KT","24FPS","20:12:00 .","10in-HDTV","HDTV-720p"]\n"Momotaro",["0002","ももたろう","も","_MT","24FPS","19:21:00 .","10in-HDTV","HDTV-720p"]\n"Urashima",["0003","うらしまたろう","う","_UR","24FPS","24:08:12 .","12in-HDTV","HDTV-1080p"]');
 
 /*
 　* メディアDB
@@ -352,12 +414,12 @@ description             コメントテキスト
 nas.Pm.medias.addMedia("" ,["" ,"" ,"" ,"" ,"" ,"" ,"" ,""]);
 
  */
-nas.Pm.medias.addMedia("作画フレーム300ppi" ,["" ,"12in-HDTV" ,"300dpi" ,"drawing" ,"SMPTE" ,"ACME" ,"1" ,"参考用作画フレーム"]);
-nas.Pm.medias.addMedia("作画フレーム200dpi" ,["" ,"10in-HDTV" ,"200dpi" ,"drawing" ,"trad-JA" ,"ACME" ,"1" ,"参考用作画フレーム"]);
-nas.Pm.medias.addMedia("作画フレーム192dpi" ,["" ,"10in-HDTV" ,"192dpi" ,"drawing" ,"trad-JA" ,"ACME" ,"1" ,"参考用作画フレーム"]);
-nas.Pm.medias.addMedia("HDTV-720p"          ,["" ,"HDTV" ,"72dpi" ,"movie" ,"SMPTE-drop" ,"invisible" ,"1" ,"HDTV省力原版"]);
-nas.Pm.medias.addMedia("HDTV-1080p"         ,["" ,"HDTV2K" ,"1080dpi" ,"movie" ,"SMPTE" ,"invisible" ,"1" ,"HDTV"]);
-nas.Pm.medias.addMedia("HDTV-2160p"         ,["" ,"HDTV4K" ,"2160dpi" ,"movie" ,"SMPTE" ,"invisible" ,"1" ,"4KHDTV"]);
+nas.Pm.medias.addMedia("作画フレーム300ppi" ,["0000" ,"12in-HDTV" ,"300dpi" ,"drawing" ,"SMPTE" ,"ACME" ,"1" ,"参考用作画フレーム"]);
+nas.Pm.medias.addMedia("作画フレーム200dpi" ,["0001" ,"10in-HDTV" ,"200dpi" ,"drawing" ,"trad-JA" ,"ACME" ,"1" ,"参考用作画フレーム"]);
+nas.Pm.medias.addMedia("作画フレーム192dpi" ,["0002" ,"10in-HDTV" ,"192dpi" ,"drawing" ,"trad-JA" ,"ACME" ,"1" ,"参考用作画フレーム"]);
+nas.Pm.medias.addMedia("HDTV-720p"          ,["0003" ,"HDTV" ,"72dpi" ,"movie" ,"SMPTE-drop" ,"invisible" ,"1" ,"HDTV省力原版"]);
+nas.Pm.medias.addMedia("HDTV-1080p"         ,["0004" ,"HDTV2K" ,"108dpi" ,"movie" ,"SMPTE" ,"invisible" ,"1" ,"HDTV"]);
+nas.Pm.medias.addMedia("HDTV-2160p"         ,["0005" ,"HDTV4K" ,"216dpi" ,"movie" ,"SMPTE" ,"invisible" ,"1" ,"4KHDTV"]);
 
 
 /**
@@ -376,6 +438,7 @@ nas.Pm.medias.addMedia("HDTV-2160p"         ,["" ,"HDTV4K" ,"2160dpi" ,"movie" ,
 #      
 #
 */
+/*
 nas.Pm.users.add(new nas.UserInfo("ねずみ:mouse@animals.example.com"));
 nas.Pm.users.add(new nas.UserInfo("うし:cow@animals.example.com"));
 nas.Pm.users.add(new nas.UserInfo("とら:tiger@animals.example.com"));
@@ -432,5 +495,7 @@ nas.Pm.users.add(new nas.UserInfo("ルリハタ:rurihata@fish.example.com"));
 nas.Pm.users.add(new nas.UserInfo("レモンスズメダイ:remonnsuzumedai@fish.example.com"));
 nas.Pm.users.add(new nas.UserInfo("ロウソクギンポ:rousokuginnpo@fish.example.com"));
 nas.Pm.users.add(new nas.UserInfo("ワカサギ:wakasagi@fish.example.com"));
-
-nas.Pm.staff.parseStaff("	*制作管理*\n	*制作管理*	[プロデューサ]\n	*制作管理*	[統括デスク]\n	*制作管理*	[デスク]\n	*制作管理*	[制作進行]\n	*演出*\n	*演出*	[監督]\n	*演出*	[演出]\n	*演出*	[演出助手]\n	*文芸*\n	*文芸*	[脚本]\n	*文芸*	[設定]\n	*文芸*	[デザイナー]\n	*文芸*	[キャラ設定]\n	*文芸*	[美術設定]\n	*文芸*	[小物設定]\n	*文芸*	[色設計]\n	*作画*\n	*作画*	[総作画監督]\n	*作画*	[作画監督]\n	*作画*	[メカ作画監督]\n	*作画*	[原画]\n	*作画*	[第一原画]\n	*作画*	[第二原画]\n	*作画*	[動画監督]\n	*作画*	[動画検査]\n	*作画*	[動画]\n	*美術*\n	*作画*	[美術監督]\n	*作画*	[美術監督補佐]\n	*作画*	[原図整理]\n	*作画*	[背景]\n	*仕上*\n	*仕上*	[色指定]\n	*仕上*	[トレース]\n	*仕上*	[ペイント]\n	*仕上*	[特殊効果]\n	*撮影*\n	*撮影*	[撮影監督]\n	*撮影*	[撮影監督補佐]\n	*撮影*	[撮影]\n	*無所属*\n	*無所属*	[無所属]\n	*オブザーバ*\n	*オブザーバ*	[オブザーバ]\n	*オブザーバ*	[時代考証]",'full');
+*/
+nas.Pm.users.parseConfig("\nねずみ:mouse@animals.example.com\nうし:cow@animals.example.com\nとら:tiger@animals.example.com\nうさぎ:rabbit@animals.example.com\nたつ:dragon@legend.example.com\nへび:snake@animals.example.com\nうま:horse@animals.example.com\nひつじ:sheep@animals.example.com\nさる:monkey@animals.example.com\nとり:bird@animals.example.com\n犬丸:dog@animals.example.com\nいのしし:boar@animals.example.com\nたぬきスタジオ:tanuki-st@animal.example.com\nたぬき:tanuki.tanuki-st@animal.example.com\nムジナ:mjina.tanuki-st@animal.example.com\n穴熊:anaguma.tanuki-st@animal.example.com\nアイナメ:ainame@fish.example.com\nイワシ:iwashi@fish.example.com\nエソ:eso@fish.example.com\nオコゼ:okoze@fish.example.com\nカサゴ:kasago@fish.example.com\nキス:kisu@fish.example.com\nクロダイ:kurodai@fish.example.com\nケショウフグ:kesyoufugu@fish.example.com\nコノシロ:konoshiro@fish.example.com\nサバ:saba@fish.example.com\nシラウオ:shirauo@fish.example.com\nスズキ:suzuki@fish.example.com\nソメワケベラ:somewake@fish.example.com\nセトダイ:setodai@fish.example.com\nタナゴ:tanago@fish.example.com\nチヌ:chinu@fish.example.com\nツボダイ:tsubodai@fish.example.com\nテッポウウオ:teppouuo@fish.example.com\nトラフグ:torafugu@fish.example.com\nナマズ:namazu@fish.example.com\nニシキゴイ:nishikigoi@fish.example.com\nヌタウナギ:nutaunagi@fish.example.com\nネコザメ:nekozame@fish.example.com\nハゼ:haze@fish.example.com\nヒラメ:hirame@fish.example.com\nフグ:fugu@fish.example.com\nノドグロ:nodoguro@fish.example.com\nヘラ:hera@fish.example.com\nホッケ:hokke@fish.example.com\nマグロ:maguro@fish.example.com\nミゾレフグ:mizorefugu@fish.example.com\nムツゴロウ:mutsugoro@fish.example.com\nメゴチ:megochi@fish.example.com\nモンガラカワハギ:monngarakawahagi@fish.example.com\nヤツメウナギ:yatsumeunagi@fish.exapmle.com\nユメカサゴ:yumekasago@fish.example.com\nヨシキリザメ:yoshikirizame@fish.example.com\nライギョ:raigyo@fish.example.com\nリュウグウノツカイ:ryuuguunotsukai@fish.example.com\n絶滅寸前:ztm@fish.example.com\nウナギ:unagi.ztm@fish.example.com\nねこ:cat@animal.example.com\nこねこ:kitty@animal.example.com\nいぬ:dog@animal.example.com\nこいぬ:puppy@animal.example.com\nかもめ:gull@bird.example.com\n回遊館:kaiyu@fish.example.com\n海洋工房:st-sea@fish.example.com\nマグロ:mgr.st-sea@fish.example.com\nスジクロギンポ:sjk.st-sea@fish.example.com\nワカサギ:wakasagi.st-sea@fish.example.com\nサバ:saba.st-sea@fish.example.com\nレモンスズメダイ:remonnsuzumedai.st-sea@fish.example.com\nロウソクギンポ:rousokuginnpo.st-sea@fish.example.com\nルリハタ:rurihata.st-sea@fish.example.com\nツバメ:swallow@bird.example.com\nスタジオ鳥類:st-bird@bird.example.com\nハト:pigeon@bird.example.com\nスズメ:sparrow@bird.example.com\nオウム:parrot@bird.example.com\nシジュウカラ:tits@bird.example.com\nワシ:eagle@bird.example.com\nアイガモ:duck.aigamo@bird.example.com");
+//nas.Pm.staff.parseConfig("flase	*制作管理*\n-	*制作管理*	[プロデューサ]\n	*制作管理*	[統括デスク]\n	*制作管理*	[デスク]\n	*制作管理*	[制作進行]\n	*演出*\n	*演出*	[監督]\n	*演出*	[演出]\n	*演出*	[演出助手]\n	*文芸*\n	*文芸*	[脚本]\n	*文芸*	[設定]\n	*文芸*	[デザイナー]\n	*文芸*	[キャラ設定]\n	*文芸*	[美術設定]\n	*文芸*	[小物設定]\n	*文芸*	[色設計]\n	*作画*\n	*作画*	[総作画監督]\n	*作画*	[作画監督]\n	*作画*	[メカ作画監督]\n	*作画*	[原画]\n	*作画*	[第一原画]\n	*作画*	[第二原画]\n	*作画*	[動画監督]\n	*作画*	[動画検査]\n	*作画*	[動画]\n	*美術*\n	*作画*	[美術監督]\n	*作画*	[美術監督補佐]\n	*作画*	[原図整理]\n	*作画*	[背景]\n	*仕上*\n	*仕上*	[色指定]\n	*仕上*	[トレース]\n	*仕上*	[ペイント]\n	*仕上*	[特殊効果]\n	*撮影*\n	*撮影*	[撮影監督]\n	*撮影*	[撮影監督補佐]\n	*撮影*	[撮影]\n	*無所属*\n	*無所属*	[無所属]\n	*オブザーバ*\n	*オブザーバ*	[オブザーバ]\n-	*オブザーバ*	[時代考証]",'full');
+nas.Pm.staff.parseConfig("false\t制作管理/\n\t\tプロデューサ\nfalse\t\t\tねずみ\n\t\t統括デスク\n\t\t\tうし\n\t\tデスク\n\t\t\tとら\n\t\t制作進行\n\t\t\tとり\n\t\t\tたつ\n\t\t\tうま\n\t\t\tひつじ\n\t演出/\n\t\t監督\n\t\t\t犬丸:dog@animal.example.com\n\t\t演出\n\t\t\t犬丸:dog@animal.example.com\n\t\t演出助手\n\t\t\tいのしし:boar@animals.example.com\n\t文芸/\n\t\t脚本\n\t\t\tウナギ\n\t\t設定制作\n\t\t\tへび\n\t\tデザイナー\n\t\t\tアイナメ\n\t\tキャラ設定\n\t\t\tいわし\n\t\t美術設定\n\t\t\tワカサギ\n\t\t小物設定\n\t\t\tクロダイ\n\t\t色彩設計\n\t\t\tツバメ:swallow@bird.example.com\n\t作画/\n\t\t総作画監督\n\t\t作画監督\n\t\t\tいわし:iwashi@fish.example.com\n\t\t作画監督補\n\t\tメカ作画監督\n\t\tメカ作画監督補\n\t\t原画\n\t\t\tねこ:cat@animal.example.com\n\t\t\tこねこ:kitty@animal.example.com\n\t\t\tいぬ:dog@animal.example.com\n\t\t\tこいぬ:puppy@animal.example.com\n\t\t\tオコゼ:okoze@fish.example.com\n\t\t\tカサゴ:kasago@fish.example.com\n\t\t\tキス:kisu@fish.example.com\n\t\t第一原画\n\t\t第二原画\n\t\t\tねこ:cat@animal.example.com\n\t\t\tかもめ:gull@bird.example.com\n\t\t動画検査\n\t\t\tサバ:saba@fish.example.com\n\t\t動画監督\n\t\t動画\n\t\t\tスズキ:suzuki@fish.example.com\n\t\t\tソメワケベラ:somewake@fish.example.com\n\t\t\tセトダイ:setodai@fish.example.com\n\t\t\tタナゴ:tanago@fish.example.com\n\t\t\tチヌ:chinu@fish.example.com\n\t\t\tたぬきスタジオ\n\t\t\tたぬき:tanuki.tanuki-st@animal.example.com\n\t\t\tムジナ:mjina.tanuki-st@animal.example.com\n\t\t\t穴熊:anaguma.tanuki-st@animal.example.com\n\t\n\t\t\t回遊館:kaiyu@fish.example.com\n\t美術/\n\t\t美術監督\n\t\t\tマグロ:mgr.st-sea@fish.example.com\n\t\t美術監督補佐\n\t\t\tスジクロギンポ:sjk.st-sea@fish.example.com\n\t\t原図整理\n\t\t\tスジクロギンポ:sjk.st-sea@fish.example.com\n\t\t背景\n\t\t\t海洋工房:st-sea@fish.example.com\n\t\t\tワカサギ:wakasagi.st-sea@fish.example.com\n\t\t\tサバ:saba.st-sea@fish.example.com\n\t\t\tレモンスズメダイ:remonnsuzumedai.st-sea@fish.example.com\n\t\t\tロウソクギンポ:rousokuginnpo.st-sea@fish.example.com\n\t\t\tルリハタ:rurihata.st-sea@fish.example.com\n\t仕上/\n\t\t色指定\n\t\t\tツバメ:swallow@bird.example.com\n\t\tトレース\n\t\t\tアイガモ:duck.aigamo@bird.example.com\n\t\tペイント\n\t\t\tアイガモ:duck.aigamo@bird.example.com\n\t\t\tスズメ:sparrow@bird.example.com\n\t\t\tオウム:parrot@bird.example.com\n\t\t\tシジュウカラ:tits@bird.example.com\n\t\t\tワシ:eagle@bird.example.com\n\t\t特殊効果\n\t\t\tたぬきスタジオ:tanuki-st@animal.example.com\n\t\t\t穴熊:meles.tanuki-st@animal.example.com\n\t撮影/\n\t\t撮影監督\n\t\t\t　さる:mnk@animal.example.com\n\t\t撮影\n\t\t\t猿山撮影所\n\t\t\tさる:mnk.mt-mnk@animal.example.com\n\t\t\tごりら:gori.mt-mnk@animal.example.com\n\t\t\tオランウータン:ora.mt-mnk@animal.example.com\n\t\t\tチンパンジー:pan.mt-mnk@animal.example.com\n\t\t\tニホンザル:mac.mt-mnk@animal.example.com\n\t\t撮影助手\n\t3D/\n\t無所属/\n\t\t＊\t\n\tオブザーバ/\n\t\tオブザーバ\n\t\t時代考証\n\t\nfalse\t\t\tガンモドキ");

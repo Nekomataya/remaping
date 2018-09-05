@@ -191,10 +191,12 @@ nas.xMapElement.prototype.toString=function(){
     dialog
     sound       :blank  
     cell
-    replacement :blank  
+    replacement :blank
     still       :picture グループ代表スチル画像をオブジェクトで＝何も記述しなくとも値ができる
     camarawork  :standerd frame animationField  標準カメラジオメトリ
-    effect      :normal composit 100%   ノーマルコンポジット100% 
+    effect      :normal composit 100%   ノーマルコンポジット100%
+	xps			:null	タイムシートデータへのパス
+	text		:"" ヌルストリング
  */
 nas.xMapGroup =function xMapGroup(myName,myTypeString,myLinkJob){
 	this.id;//セッション内ユニークインデックス
@@ -203,7 +205,7 @@ nas.xMapGroup =function xMapGroup(myName,myTypeString,myLinkJob){
 	this.type=myTypeString;//system,sound,effect,camera,cell/String
 	this.name=myName;//
 	this.content="";//タイプストリング毎の初期化を行うことが必要　未コーディング　2016.09.07
-	this.comment="group";
+	this.comment=this.type + " group";
 	this.elements = new Array();//要素トレーラー
 };
 nas.xMapGroup.prototype.toString=function(jobFilter){

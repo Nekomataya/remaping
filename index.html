@@ -44,13 +44,13 @@
 -->
         <script src=./nas/newValueConstractors.js></script>
         <script src=./nas/pmio.js></script>
-        <script src=./nas/configPM.js></script>
 <!-- new test code -->
 
 <script src=./nas/lib/mapio.js></script>
 <script src=./nas/lib/xpsio.js></script>
 
 <script src=./nas/scripts/remaping/airUI.js></script>
+        <script src=./nas/configPM.js></script>
 <script src=./nas/scripts/remaping/remaping.js></script>
 
 <!-- 下　remaping.js　にマージ予定　-->
@@ -72,6 +72,7 @@
 <script src=./nas/scripts/serverio_test.js></script>
 <script src=./nas/filePanelTest.js></script>
 
+<script src=./nas/newTaksController.js></script>
 <!-- /*  AdobeExtension/Scripts 準互換 多言語化リソース  */ -->
 
 <script src=./nas/lib/nas_locale.js></script>
@@ -959,6 +960,12 @@ serviceAgent.pushEntry(xUI.XPS,function(){xUI.setStored("current");sync();
     class='iconButton iconButton-printer'
 	onClick='printHTML();'
 	title='印刷（テスト）'
+> </button>
+
+<button
+	id=ibMstw
+    class='iconButton iconButton-goToTime'
+	onMouseDown='if(xUI.player.status=="stop"){xUI.player.start()}else{xUI.player.stop()}'
 > </button>
 </span>
 

@@ -1286,7 +1286,7 @@ if(dbg) console.log("noProduct : "+ decodeURIComponent(myIdentifier));//プロ�
                 }
             }
             if (! myIssue){
-if(dbg) console.log( 'no target data :'+ decodeURIComponent(myIdentifier) );//ターゲットのデータが無い
+console.log( 'no target data :'+ decodeURIComponent(myIdentifier) );//ターゲットのデータが無い
                 return false;
             }
         }
@@ -1363,7 +1363,7 @@ if(dbg) console.log(decodeURIComponent(myIssue.identifier));
 localRepository.addTitle=function (myTitle,myDescription,myPm,callback,callback2){
 //現在ローカルリポジトリ側で行う処理は存在しない コールバックの実行のみを行う
 //タイトルDBが実装された場合はDBにエントリを加える
-//console.log(['localRepository.addTitle',myTitle,myDescription,myPm].join(':'));
+console.log(['localRepository.addTitle',myTitle,myDescription,myPm].join(':'));
 　if(callback instanceof Function) callback();
     return true;
 }
@@ -2812,7 +2812,7 @@ function(result){
 NetworkRepository.prototype.addTitle=function (myTitle,myDescription,myPm,callback,callback2){
 /*
     識別子を検出（呼び出し側で）このルーチンまで来た場合は、引数を分解しておくこと
-    2107.01.28時点でAPIにtemplateが出ていないのでpmの処理は省略　遅延で詳細編集を行っても良い
+    2017.01.28時点でAPIにtemplateが出ていないのでpmの処理は省略　遅延で詳細編集を行っても良い
     serviceAgent.currentRepository.addTitle("tST2","testTitlewith API")
     作成時に検査を行い、既存タイトルならば処理を中断する（呼び出し側で）
     タイトル作成前に確認メッセージを出す（これも呼び出し側）
@@ -2826,6 +2826,7 @@ NetworkRepository.prototype.addTitle=function (myTitle,myDescription,myPm,callba
         product: {
           name          : myTitle,
           description   : myDescription,
+          framerate     : nas.FRATE,
         } 
     };
 

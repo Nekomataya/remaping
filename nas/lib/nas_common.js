@@ -370,15 +370,18 @@ nas.UserInfo = function UserInfo(nameDescription){
 //追加プロパティを引数として与える場合は、第二引数オブエジェクトで {props:value}
     if(arguments.length>1){for(var prop in arguments[1]) this[prop] = arguments[1][prop]};
 }
+/*
+引数:
+    JSON または　プロパティ名
+*/
 nas.UserInfo.prototype.toString = function(opt){
     if(! opt) opt = 0;
-    switch (opt){
-        case "email":
-            return this.email; break;
-        case "handle":
-            return this.handle; break;
-        default :
-            return [this.handle,this.email].join(':')
+    if (opt=='JSON'){
+        return JSON.stringify(this);
+    }else if(this[opt]){
+        return this[opt];
+    }else {
+        return [this.handle,this.email].join(':');
     }
 }
 /*
@@ -391,7 +394,7 @@ nas.UserInfo.prototype.sameAs = function(myName){
     if(! this.handle) return false;
     return (
         (((this.email)&&(myName.email))&&(this.email==myName.email))||
-        (((!(this.email))&&(!(myName.email)))&&(this.handle==myName.handle))
+        (((!(this.email))||(!(myName.email)))&&(this.handle==myName.handle))
     )? true:false;
 }
 /*test
@@ -426,21 +429,70 @@ nas.UserInfoCollection = function (users){
     /*
         コレクションメンバーを検索してインデックスを返す
         発見できなかった場合は -1
+        引数がハンドルのみであった場合もハンドルの一致でインデックスを返す
+        その場合先に一致したハンドルが返されるので希望のデータではない可能性があるので注意
     */
     this.userIndexOf = function(searchUser){
         if (this.length == 0) return -1;
-        for (var i = 0;i<this.length;i++){ if(this[i].sameAs(searchUser)) return i;}
+        for (var i = 0;i<this.length;i++){
+            if(this[i].sameAs(searchUser)) return i;
+        }
         return -1;
     }
     /*
         コレクションにメンバーを追加する。既存のメンバーは追加されない。戻り値はメンバーのインデックス
+        配列引数渡しNG
         不正メンバーは追加されない。その場合の戻り値は -1
     */
-    this.add = function(newUser){
-        if (!(newUser instanceof nas.UserInfo)){ newUser = new nas.UserInfo(newUser);}
-        if (! newUser.handle) return -1;
-        var iX = this.userIndexOf(newUser);
-        if ( iX < 0 ) {this.push(newUser);return (this.length-1);}else{return iX;}
+    this.addMember = function(newMember){
+        if (!(newMember instanceof nas.UserInfo)){ newMember = new nas.UserInfo(newMember);}
+        if (! newMember.handle) return -1;
+        var iX = this.userIndexOf(newMember);
+        if ( iX < 0 ) {this.push(newMember);return (this.length-1);}else{return iX;}
+    }
+    /*
+        userストリームをtext出力
+        引数: form String 出力形式指定 full/dump,plain/text または JSON
+        引数無しでカンマ区切りリスト
+    */
+    this.dump=function(form){
+        if (form == 'JSON')     { return JSON.stringify(this);}
+        else if(form=='plain')  { return this.join('\n'); }
+        else if(form=='full')   { return '['+this.toString()+']';}
+        else { return this.toString();}
+    }
+    /*
+        userストリームを引数にしてCollectionの内容をすべて入れ替える
+        ストリームの形式は plain-text または full-dump または　JSON
+        引数が空の場合は、何も操作せずに戻る
+    */
+    this.parseConfig=function(myStream){
+        if(myStream.length==0) return false;
+        this.length = 0;
+        var form = 'plain-text';
+        if(myStream.match(/\[[^\[\]]+\]/)){
+            form = 'full-dump'
+        }else if(myStream.match(/^\{.+/)){
+            form = 'JSON'
+        }
+    
+        switch (form){
+            case 'full-dump':
+                var tempData = JSON.parse(myStream);
+                for(var ix = 0;ix<tempData.length;ix++){ this.addMember(tempData[ix]);}
+            break;
+            case 'JSON':
+                var tempData = JSON.parse(myStream);
+                for(var ix = 0;ix<tempData.length;ix++){
+                    this.addMember(tempData[ix].handle+':'+tempData[ix].email);
+                }
+            break;
+            case 'plain-text':
+            default:
+                var tempData = myStream.split('\n');
+                for(var ix = 0;ix<tempData.length;ix++){ this.addMember(tempData[ix]);}
+            break;
+        }        
     }
 }
 nas.UserInfoCollection.prototype = Array.prototype;
@@ -1059,8 +1111,8 @@ nas.newFramerate=function(rateString,rate){
 	    newOne.rate=parseFloat(rate);
 	  }else if(String(rateString).length){
 	//引数が一つのみ
-	    newOne.name=rateString;
-	    newOne.rate=parseFloat(rateString.replace(/^[^-\d]+/,""));//文字列先頭の数値以外のデータを捨てて数値化
+	    newOne.name=String(rateString);
+	    newOne.rate=parseFloat(String(rateString).replace(/^[^-\d]+/,""));//文字列先頭の数値以外のデータを捨てて数値化
 	  }else{
 	    return newOne;
 	  }
@@ -1313,7 +1365,7 @@ nas.AnimationField Object
 作画アニメーションフレームを保持するオブジェクト
 クリッピングフレーム（カメラワークオブジェクト）の基底クラス
 10インチ標準フレームは、
-	new nas.AnimationFrame(
+	new nas.AnimationField(
 		"10inSTD",
 		new nas.UnitValue("720 pt"),
 		16/9,
@@ -1559,7 +1611,7 @@ nas.CURRENTUSER = myName;
 nas.ccrate = 1000;	//最少計測単位(javascriptではミリ秒固定)
 nas.MODE = "clock";	//表示の初期モード(時計) ストップウオッチ用共用変数
 nas.ClockOption = 12;	//時計の初期モード (12時制) ストップウオッチ用共用変数
-nas.STATUS = "stop";	// ストップウオッチ用共用変数
+nas.STATUS = "stop";	// ウオッチ用共用変数
 /**
  * フレームレート    ここの並びでループする 100fps 24FPS 30NDF 30DF 25FPS
  * @type {string[]}
