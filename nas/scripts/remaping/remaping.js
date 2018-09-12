@@ -423,6 +423,7 @@ xUI.init    =function(editXps,referenceXps){
 /*
     recentUsers 配列の要素は、UserInfo オブジェクト
     myNamesは、アカウント文字列を要素とする配列
+    ユーザインフォコレクションの構造変更で配列ベースでなく　メンバー配列を持ったオブジェクトに更新
 */
     this.spinValue   = SpinValue;       // スピン量
     this.spinSelect  = SpinSelect;      // 選択範囲でスピン指定
@@ -8751,7 +8752,7 @@ jQuery(function(){
            jQuery("#optionPanelSnd").height(24);
 	}else{
            jQuery("#formSnd").show();
-           jQuery("#optionPanelSnd").height(240);
+           jQuery("#optionPanelSnd").height(276);
 	}
         return false;
     })
@@ -11531,7 +11532,8 @@ SoundEdit.open=function(){
         var myDuration=((xUI.Selection[0]==0)&&(xUI.Selection[1]>0))?parseInt(xUI.Selection[1],10):1;
 //フロートセクションがないのでモード遷移をトライ
 //モード遷移に失敗したら新規のセリフ(有値セクション)を作成してそれを選択する
-        if(! xUI.mdChg('section')){
+//        if(! xUI.mdChg('section')){}
+        if(false){
             xUI.selection();
             xUI.selectCell([xUI.Select[0],currentFrame-1]);
             xUI.put('----,'+(new Array(myDuration+1).join(','))+',----')

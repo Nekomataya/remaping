@@ -367,8 +367,13 @@ nas.UserInfo = function UserInfo(nameDescription){
         this.email      = infoArray[1];
     }
     if(String(this.email).match(/\s/)){ this.email.replace(/\s/g,'') };
-//追加プロパティを引数として与える場合は、第二引数オブエジェクトで {props:value}
-    if(arguments.length>1){for(var prop in arguments[1]) this[prop] = arguments[1][prop]};
+//追加プロパティを引数として与える場合は、第二引数をオブエジェクトで {props:value}
+//パーサが受け取った柄プロパティは、コンストラクターに渡す前に分離して引数で与えること
+    if(arguments.length>1){
+//console.log(String(nas.Pm.users.token));
+//console.log(this.toString('JSON'));
+        for(var prop in arguments[1]) this[prop] = arguments[1][prop];
+    };
 }
 /*
 引数:
@@ -381,6 +386,15 @@ nas.UserInfo.prototype.toString = function(opt){
     }else if(this[opt]){
         return this[opt];
     }else {
+        var additionalOpt={};
+        var additionalCount=0;
+    for (prp in this){
+        if((prp=='handle')||(prp=='email')||(this[prp] instanceof Function)) continue;
+console.log(prp)
+        additionalOpt[prp]=this[prp];
+        additionalCount++;
+    }
+        if(additionalCount) return [this.handle,this.email,JSON.stringify(additionalOpt)].join(':');
         return [this.handle,this.email].join(':');
     }
 }
@@ -445,52 +459,77 @@ nas.UserInfoCollection = function (users){
         不正メンバーは追加されない。その場合の戻り値は -1
     */
     this.addMember = function(newMember){
-        if (!(newMember instanceof nas.UserInfo)){ newMember = new nas.UserInfo(newMember);}
+        if (!(newMember instanceof nas.UserInfo)){
+            if(newMember.match(/^(.+)\:(\{[^\{\}]+\}$)/)){
+                var additionalOpt=JSON.parse(RegExp.$2);
+                for(prp in additionalOpt) this[prp] = additionalOpt[prp];
+                newMember = new nas.UserInfo(RegExp.$1,additionalOpt);
+            }else{
+                newMember = new nas.UserInfo(newMember);
+            }
+        }
         if (! newMember.handle) return -1;
         var iX = this.userIndexOf(newMember);
         if ( iX < 0 ) {this.push(newMember);return (this.length-1);}else{return iX;}
     }
-    /*
+    /**
         userストリームをtext出力
         引数: form String 出力形式指定 full/dump,plain/text または JSON
         引数無しでカンマ区切りリスト
     */
     this.dump=function(form){
-        if (form == 'JSON')     { return JSON.stringify(this);}
-        else if(form=='plain')  { return this.join('\n'); }
-        else if(form=='full')   { return '['+this.toString()+']';}
-        else { return this.toString();}
+        switch(form){
+        case    'JSON':
+            return JSON.stringify(this);break;
+        case    'full-dump':
+        case    'full':
+        case    'dump':
+                var resultArray=[];
+            for (var ix=0 ; ix < this.length ;ix ++){ resultArray.push(this[ix].toString()) };
+            return JSON.stringify(resultArray);break;
+        case    'plain-text':
+        case    'plain':
+        case    'text':
+            return this.join('\n');break;
+        default:
+            return this.toString();
+        }
     }
     /*
         userストリームを引数にしてCollectionの内容をすべて入れ替える
         ストリームの形式は plain-text または full-dump または　JSON
         引数が空の場合は、何も操作せずに戻る
     */
-    this.parseConfig=function(myStream){
-        if(myStream.length==0) return false;
+    this.parseConfig=function(dataStream){
+        if(dataStream.length==0) return false;
         this.length = 0;
         var form = 'plain-text';
-        if(myStream.match(/\[[^\[\]]+\]/)){
+        if(dataStream.match(/\[[^\[\]]+\]/)){
             form = 'full-dump'
-        }else if(myStream.match(/^\{.+/)){
+        }else if(dataStream.match(/^\{.+/)){
             form = 'JSON'
         }
     
         switch (form){
-            case 'full-dump':
-                var tempData = JSON.parse(myStream);
-                for(var ix = 0;ix<tempData.length;ix++){ this.addMember(tempData[ix]);}
-            break;
             case 'JSON':
-                var tempData = JSON.parse(myStream);
+                var tempData = JSON.parse(dataStream);
                 for(var ix = 0;ix<tempData.length;ix++){
                     this.addMember(tempData[ix].handle+':'+tempData[ix].email);
                 }
             break;
+            case 'full-dump':
+                var tempData = JSON.parse(dataStream);
+                for(var ix = 0;ix<tempData.length;ix++){
+                     this.addMember(tempData[ix]);
+                }
+            break;
             case 'plain-text':
             default:
-                var tempData = myStream.split('\n');
-                for(var ix = 0;ix<tempData.length;ix++){ this.addMember(tempData[ix]);}
+                var tempData = dataStream.split('\n');
+                for(var ix = 0;ix<tempData.length;ix++){
+                    if((tempData[ix].indexOf("#")==0)||(tempData[ix].length==0)) continue;//コメント/空行スキップ
+                    this.addMember(tempData[ix]);
+                }
             break;
         }        
     }

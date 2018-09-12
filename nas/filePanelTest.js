@@ -1,5 +1,7 @@
-﻿/** UAT
-    documentPanel
+﻿/** 
+    @aouther kiyo@nekomataya.info (ねこまたや)
+    @fileoverview
+    UAT　documentPanel
     サーバ対応ドキュメントパネル機能
     調整後はxUIに統合予定
     

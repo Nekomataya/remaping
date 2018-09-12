@@ -1,4 +1,7 @@
 ﻿/**
+ * 　@auther kiyo@nekomataya.info (ねこまたや)
+ *  @fileoverview ServiceAgent モジュール
+
     サービスエージェント
     一旦このモジュールを通すことで異なる種別のリポジトリの操作を統一する
     サービスエージェントは、ログイン管理を行う
@@ -43,6 +46,7 @@ Object ServiceAgent
     ホームリポジトリ
 ログインしたサーバ上でデフォルトで提供されるリポジトリ
 ログイン時は常に使用可能
+＝チーム
 
     追加リポジトリ
 個人用のリポジトリとは別に設定される共同制作用リポジトリ
@@ -67,15 +71,17 @@ Object ServiceAgent
 プロダクト毎にアクセス可能な（リポジトリ共有＝スタッフ）グループにユーザを登録することができる
 
 登録されたユーザはそのリポジトリにスタッフとしてアクセスしてデータを編集又は閲覧することが可能
-Repository.pmd.users    当該リポジトリ内の基礎ユーザDB
-Repository.pmd.staff    同基礎スタッフDB（ここにユーザを含む必要はないツリー下位のDBが優先）
-Repository.pmd.lines    同ラインテンプレート（テンプレート　ツリー下位のDB優先）
-Repository.pmd.stages　 同ステージテンプレート（同上）
-Repository.pmd.jobNames 同ジョブテンプレート　(同上)
-Repository.pmd.workTitles   作品別の
-Repository.pmd.medias   同メディアテンプレート
-Repository.pmd.
-Repository.pmd.
+Repository.ouganization
+Repository.pmdb.orgnizations
+Repository.pmdb.users           当該リポジトリ内の基礎ユーザDB
+Repository.pmdb.staff           同基礎スタッフDB（ここにユーザを含む必要はないツリー下位のDBが優先）
+Repository.pmdb.lines           同ラインテンプレート（テンプレート　ツリー下位のDB優先）
+Repository.pmdb.stages　        同ステージテンプレート（同上）
+Repository.pmdb.jobNames        同ジョブテンプレート　(同上)
+Repository.pmdb.assets          アセット定義テーブル
+Repository.pmdb.medias          同メディアテンプレート
+Repository.pmdb.workTitles      作品タイトルコレクション
+Repository.pmdb.opuses          プロダクトコレクション
 
 Repository.users    アクセスの可能性がある全ユーザのリスト
 Repository.productsData.staff    アクセス可否情報　リポジトリに対するユーザとその所属・役職のDB
@@ -134,8 +140,13 @@ opusは制作話数であり、個々のドキュメント（pmunit）を含む
 RDBMのサポートのないファイル（ストレージ）上でリポジトリを築く際に必要
 サービスエージェントを介してのDBへの情報請求をここで解決
 これらの権利関連を別紙にまとめる
+
+サービスエージェントはこのまま拡張 pmdb,xMap,Xpstを統合する
+
 */
 /**
+    @constractor
+    
     サービスノードオブジェクト
     複数あるサーバ（ログイン先）の必要な情報を保持するオブジェクト
     複数のサービス情報をプログラム内に保持しないようにドキュメント内の属性として監理する
@@ -158,7 +169,7 @@ ServiceNode=function(serviceName,serviceURL){
 /**
     リクエストのヘッダにトークンを載せる
     トークンの期限が切れていた場合は、再度のトークン取得（再ログイン）を促す
-    v1向けのコーデーデングは考慮しない
+    v1向けのコードは考慮しない
 */
 ServiceNode.prototype.setHeader=function(xhr){
 //  if (this.type=="sivon"){}
@@ -175,6 +186,7 @@ ServiceNode.prototype.setHeader=function(xhr){
     return true;
 }
 /**
+    @undocumented
     データ取得
     参考コード 実際にはコールされない
 */
@@ -223,8 +235,6 @@ if(dbg) console.log(res);
     認証毎にパスワードをユーザに要求する
         myService.authorize()
     パスワードとUIDは、ページ上のフォームから読む
- 
-    
 */
 ServiceNode.prototype.authorize=function(callback){
 if(dbg) console.log("authorize::execute");
@@ -264,7 +274,7 @@ if(dbg) console.log(oauthURL);
 		}
 	});
 }
-/**
+/**　@undocumented
     errorhandle
 */
 ServiceNode.prototype.errorhandle=function(obj){

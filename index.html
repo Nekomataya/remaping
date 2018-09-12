@@ -50,7 +50,8 @@
 <script src=./nas/lib/xpsio.js></script>
 
 <script src=./nas/scripts/remaping/airUI.js></script>
-        <script src=./nas/configPM.js></script>
+<!--        <script src=./nas/configPM.js></script> -->
+        <script src=./pmdb/configPMDB.js></script>
 <script src=./nas/scripts/remaping/remaping.js></script>
 
 <!-- 下　remaping.js　にマージ予定　-->
@@ -965,9 +966,15 @@ serviceAgent.pushEntry(xUI.XPS,function(){xUI.setStored("current");sync();
 <button
 	id=ibMstw
     class='iconButton iconButton-goToTime'
-	onMouseDown='if(xUI.player.status=="stop"){xUI.player.start()}else{xUI.player.stop()}'
+	onMouseDown='if(xUI.player.status=="stop"){xUI.player.start()}else{xUI.put("mark")};'
+> </button>
+<button
+	id=ibMstw
+    class='iconButton iconButton-stop'
+	onMouseDown='if(xUI.player.status=="run"){xUI.player.stop()}else{xUI.selectCell(([xUI.Select[0],0]).join("_"));xUI.selection(([xUI.Select[0],xUI.XPS.duration()]).join("_"));xUI.cut()};'
 > </button>
 </span>
+
 
 <!--	ツールバーボタン/toolIcons	-->
 	<!-- logo -->
@@ -3461,6 +3468,7 @@ duration :
 >🔨</button></span>
 <br>
 </fieldset>
+
 <!-- 共通ボタン -->
 <!-- <input type=button
     id=soundPnlGet value="↑：取込" style="width:10%"
@@ -3483,6 +3491,37 @@ duration :
 	type=button id=soundPnlClose value="閉じる" style="width:10%"
 	onClick='xUI.sWitchPanel("Snd");'
 ><br>-->
+<!-- playbackControll -->
+<!--|< [start/stpo]     -->
+	<div style='height:36px;'>
+	<button
+		style='height:32px;width:120px'
+	onMouseDown='if(xUI.player.status=="stop"){xUI.player.start()}else{xUI.put("----")};'
+		title=""
+	> Start / Mark
+	</button><button
+		style='height:32px;width:120px'
+	onMouseDown='if(xUI.player.status=="run"){xUI.player.stop()}else{xUI.selectCell(([xUI.Select[0],0]).join("_"));xUI.selection(([xUI.Select[0],xUI.XPS.duration()]).join("_"));xUI.cut()};'
+		title="frameReset"
+	> Stop / Reset
+	</button>
+	<!--<button
+		class='iconButton  iconButton-goFWD'
+		onclick=""
+		title=""
+	>
+	</button><button
+		class='iconButton  iconButton-goFWD'
+		onclick=""
+		title=""
+	>
+	</button><button
+		class='iconButton  iconButton-goFWD'
+		onclick=""
+		title=""
+	>
+	</button>-->
+</div>
 <button
     id=soundPanelApply
     style='width:96px;'

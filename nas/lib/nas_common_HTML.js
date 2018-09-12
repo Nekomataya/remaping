@@ -272,7 +272,7 @@ nas.Push_Log( "  FrameRate" + nas.FRATE.toString() );
 これは ひょっとしてなんかのパテントにふれる様な気がしてならない。
 要調査
 これを使うinputオブジェクトは、以下の書式でsliderVALUEを呼ぶ
-sliderVALUE([event,エレメント名,上限,下限,桁数(,初期値)]);
+sliderVALUE([event,エレメント名,上限,下限,桁数(,初期値,方向)]);
 
 初期値の挿入とロック時の動作を追加TC関連の拡張まだ(04.06.06)
 formオブジェクトの参照からinputElementに変更
@@ -281,13 +281,15 @@ formオブジェクトの参照からinputElementに変更
 */
 
 nas.sliderVALUE = function(chnk) {
-//配列で受け渡し [イベント,エレメントID,上限,下限,桁数(,デフォルト値)]
+//配列で受け渡し [イベント,エレメントID,上限,下限,桁数(,デフォルト値,スライド方向)]
 	var startX = chnk[0].screenX;
+	var startY = chnk[0].screenY;
 	var slfocus = document.getElementById(chnk[1]);
 	var slmax = 1*chnk[2];
 	var slmin = 1*chnk[3];
 	var slstp = 1*chnk[4];
 	var baseValue =slmin;
+    var sldir = (chnk[6])? chnk[6]:"y";
 //タイプが、input以外だったりロックされていたらモード変更なしでリターン
 if (slfocus.disabled == true || (!(slfocus instanceof HTMLInputElement)) ) {return false}
 //基準値取得
@@ -301,6 +303,7 @@ if (isNaN(slfocus.value)) {
 	slfocus.blur();//	document.nasExch.elements[slfocus].onchange = '';
 	document.body.sliderTarget=slfocus
 	document.body.sliderTarget.startX= startX;
+	document.body.sliderTarget.startY= startY;
 	document.body.sliderTarget.slmax = slmax;
 	document.body.sliderTarget.slmin = slmin;
 	document.body.sliderTarget.slstp = slstp;
