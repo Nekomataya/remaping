@@ -33,12 +33,12 @@
 function xMap(titleString,targetDecription){
 	this.parent;//親ｘMapへのアクセス ? ステージ内に限る 複製継承をしないほうが良い…？
 /**
- *	//========== 以下のプロパティはグローバルの参照でなく順次DB接続からの参照に置きかえ
- *	//カット番号情報直接でなくオブジェクト化する  ｘMap.prodUnit=new ProductionManagementUnit();
- *	// 作品・兼用を含むカット番号情報等の集合データ  以下のプロパティはそのオブジェクトへの参照を入れる
- *	//MAP標準プロパティ設定
- *	// 作品情報 workTitel-DBの値  nas.workTitles[myTitle]=
- *	//	this.workTitle = new nas.workTitle();//マスタライブラリ側で作成  カレントの作品はそちらで処理
+ *	========== 以下のプロパティはグローバルの参照でなく順次DB接続からの参照に置きかえ
+ *	カット番号情報直接でなくオブジェクト化する  ｘMap.prodUnit=new ProductionManagementUnit();
+ *	作品・兼用を含むカット番号情報等の集合データ  以下のプロパティはそのオブジェクトへの参照を入れる
+ *	MAP標準プロパティ設定
+ *	作品情報 workTitel-DBの値  nas.workTitles[myTitle]=
+ *	this.workTitle = new nas.workTitle();//マスタライブラリ側で作成  カレントの作品はそちらで処理
  */
 	this.opus	=	myOpus;//SCi
 	this.title	=	myTitle;//
@@ -103,11 +103,12 @@ function xMap(titleString,targetDecription){
 //memo
 		this.memo="";
 }
-//コレクション汎用メソッド
-/*配列をコレクションとして使用する場合の標準メソッド*/
-/*	xAdd
+/* コレクション汎用メソッド
+ * 配列をコレクションとして使用する場合の標準メソッド
+ */
+/**
 	全要素を検査して同管理パスの要素があればそれをもどして終了
-	ない場合は、コレクションにメンバーとして追加
+	カブりがない場合は、コレクションに新規メンバーとして追加
 */
 function xAdd(mEmber){
 	for (var ix=0;ix<this.length;ix++){	if(mEmber.getPath()==this[ix].getPath()) return this[ix]	};
@@ -126,6 +127,7 @@ function xAdd(mEmber){
  *	job.stage
  *	job
  */
+
 /*	xRemove
  *	メンバーを削除
  */
@@ -621,6 +623,9 @@ xMap.prototype.parsexMap=function(datastream){
 	SrcData.startLine	=0;//データ開始行
 	SrcData.endLine	=0;//データ終了行（[END]の前行）
 //ソースデータのプロパティ
+/*
+	これらをオブジェクトコレクションに展開する
+*/
 	SrcData.lines	=new Array();//
 	SrcData.stages	=new Array();//
 	SrcData.jobs	=new Array();//
@@ -954,7 +959,7 @@ default:				;//直接結合プロパティ
 return newMap;
 }
 /*
- *	書きだしメソッド
+ *	書き出しメソッド
  *	書き出しの際は  保持しているLine/Stage/Jobは全て書き出す
  *	ブランチは、オブジェクト自体をブランチオブジェクトに設定してそのオブジェクトの書き出しを行うこと
  */

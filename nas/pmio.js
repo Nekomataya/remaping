@@ -356,7 +356,7 @@ nas.Pm._parseConfig = function(dataStream,form){
     var myMembers =[];
     // 形式が指定されない場合は、第一有効レコードで判定
     if(! form ){
-            if (dataStream.match(/^\s*\[\s*\{\s*.+\}\]$/)) form='JSON';//配列JSON
+            if (dataStream.match(/\[\s*\{[^\}]+\}\s*\]/)) form='JSON';//配列JSON
             else if (dataStream.match(/(\n|^)\s*\[\s*.+\]($|\n)/)) form='full-dump';
             else  form='plain-text';
     }
@@ -573,7 +573,7 @@ nas.Pm.OrganizationCollection.prototype.parseConfig = function(configStream){
     var newMembers=[];
     this.members = {};//clear
     var form = 'plain-text';
-    if(configStream.match(/\{\s*.+\s*\}/)){
+    if(configStream.match(/\{[^\}]+\}/)){
         form = 'JSON';
     } else if(configStream.match(/.+\,\[.+\]/)){
         form = 'full-dump';
@@ -651,10 +651,11 @@ nas.Pm.WorkTitle = function(){
     this.length;  //String 納品定尺フレーム数 または nasTC
     this.inputMedia; //Object nas.AnimationField スタンダードフレーム
     this.outputMedia; //Object nas.AnimationField 編集スペック
-
-    this.pmTemplates;    //作品内の標準工程テンプレート
-    this.staff; //作品のスタッフ一覧　スタッフコレクションオブジェクト
-    this.opuses = new nas.Pm.OpusCollection(this);    //Object nas.Pm.OpusCollection タイトル配下の話数コレクション
+//****************************************************************
+//    this.pmTemplates;    //作品内の標準工程テンプレート 不要
+//   this.staff; //作品のスタッフ一覧　スタッフコレクションオブジェクト　不要
+//    this.opuses = new nas.Pm.OpusCollection(this);    //Object nas.Pm.OpusCollection タイトル配下の話数コレクション　不要
+//****************************************************************
 //UATサーバのためのプロパティ
     this.token = this.id;
     this.name = this.projectName;
@@ -780,7 +781,7 @@ nas.Pm.WorkTitleCollection.prototype.parseConfig = function(configStream){
     var newMembers=[];
     this.members = {};//clear
     var form = 'plain-text';
-    if(configStream.match(/\{\s*.+\s*\}/)){
+    if(configStream.match(/\{[^\}]+\}/)){
         form = 'JSON';
     } else if(configStream.match(/.+\,\[.+\]/)){
         form = 'full-dump';
@@ -886,12 +887,22 @@ nas.Pm.workTitles = new nas.Pm.WorkTitleCollection(nas.Pm);
  
 */
 nas.Pm.Opus = function Opus(myID,myOpus,mySubtitle,myTitle){
-    this.id         = myID          ;//DB接続用index
-    this.name       = myOpus        ;//表示名 話数／制作番号等
-    this.subTitle   = mySubtitle    ;//サブタイトル文字列
-    this.workTitle  = myTitle       ;//Object nas.Pm.WorkTitle=parentTitleNode
+    this.id         = myID          ;//DB接続用index　UATtoken
+    this.name       = myOpus        ;//表示名 話数／制作番号等 UATname
+    this.subtitle   = mySubtitle    ;//サブタイトル文字列 UATdescription
+    this.title      = myTitle       ;//String タイトルキー　または　Object　nas.Pm.WorkTitle
     this.valueOf    = function(){return this.id};
-    this.pmunits ;//カット袋コレクション
+//    this.pmunits ;//カット袋コレクション 不要
+}
+
+nas.Pm.newOpus = function(identifier,index){
+    if(! identifier) return false;
+    var arg = Xps.parseIdentifier(identifier);
+    if(arg){
+        return new nas.Pm.Opus(index,arg.opus,arg.subtitle,arg.title);
+    }else{
+        return arg;
+    }
 }
 /**
 引数
@@ -904,33 +915,37 @@ toStringメソッド　引数がなければ識別子用の文字列を返す
 引数を与えると設定ファイル形式のJSONを返す
 */
 nas.Pm.Opus.prototype.toString   = function(form){
-    if(form == 'full'){
+    switch (form){
+    case 'full':
         return JSON.stringify([
             this.id,
             this.name,
-            this.subTitle,
-            this.workTitle.toString(),
+            this.subtitle,
+            this.title
         ]);
-    }if(form == 'plain'){
+    break;
+    case    'plain':
         var result=[
             this.name,
             "\tid:"+this.id,
             "\tname:"+this.name,
-            "\tsubTitle:"+this.subTitle,
-            "\ttitle:"+this.workTitle.toString()
+            "\tsubTitle:"+this.subtitle,
+            "\ttitle:"+this.title.toString()
         ];
             return result.join('\n');
-    }else if(form == 'JSON'){
+    break;
+    case    'JSON':
         return JSON.stringify({
             "id":this.id,
             "name":this.name,
-            "subTitle":this.subTitle,
-            "title":this.workTitle.toString('id')
+            "subTitle":this.subtitle,
+            "title":this.title.toString()
         });
-    }else if(this[form]){
-        return this[form]
+    break;
+    default:
+    //デフォルトは識別子を組んで返す
+    return this.title+"#"+this.name+(this.subtitle)?"["+this.subtitle+"]":"";
     }
-    return "#"+this.name+(this.subTitle)?"["+this.subTitle+"]":"";
 };
 /**
     各話（エピソード）コレクションオブジェクト　OpusCorrection
@@ -971,7 +986,7 @@ nas.Pm.OpusCollection.prototype.parseConfig = function(configStream){
     var newMembers=[];
     this.members = {};//clear
     var form = 'plain-text';
-    if(configStream.match(/\{\s*.+\s*\}/)){
+    if(configStream.match(/\{[^\}]+\}/)){
         form = 'JSON';
     } else if(configStream.match(/.+\,\[.+\]/)){
         form = 'full-dump';
@@ -981,7 +996,7 @@ nas.Pm.OpusCollection.prototype.parseConfig = function(configStream){
         var configData=JSON.parse(configStream);
         for(prp in configData){
             var tempData = configData[prp];
-            var newOpus  = new nas.Pm.Opus(tempData.id,prp,tmpData.subTitle,this.parent.entry(tempData.title));
+            var newOpus  = new nas.Pm.Opus(tempData.id,prp,tmpData.subtitle,this.parent.entry(tempData.title));
             newMembers.push(newTitle);
         }
     break;
@@ -990,7 +1005,7 @@ nas.Pm.OpusCollection.prototype.parseConfig = function(configStream){
         for(var ir = 0;ir<configStream.length;ir++){
             if((configStream[ir].indexOf("#")==0)||(configStream[ir].length==0)) continue;//コメント/空行スキップ
             var tempData = JSON.parse("["+configStream[ir]+"]");
-            var newOpus  = new nas.Pm.Opus(tempData.id,prp,tmpData.subTitle,this.parent.entry(tempData.title));
+            var newOpus  = new nas.Pm.Opus(tempData.id,prp,tmpData.subtitle,this.parent.entry(tempData.title));
             newMembers.push(newTitle);
         }
     break;
@@ -1011,17 +1026,9 @@ nas.Pm.OpusCollection.prototype.parseConfig = function(configStream){
     }
     return this.addMembers(newMembers);
 }
-//エピソード登録メソッド
-//例　addOpus("001",["0s12376","ep001",""])
-nas.Pm.OpusCollection.prototype.addOpus = function(episodeName,propList){
-    this.members[titleName].episodeName = episodeName;
-    this.members[titleName].id          = propList[0];
-    this.members[titleName].name    = propList[1];
-    this.members[titleName].subTitle   = propList[2];
-    this.members[titleName].pmunits   = new nas.PMUCollection();
-}
 
 
+nas.Pm.opuses= new nas.Pm.OpusCollection(nas.Pm);
 
 //メディアDB
 /*
@@ -1138,7 +1145,7 @@ nas.Pm.MediaCollection.prototype.parseConfig = function(configStream){
     var newMembers=[];
     this.members = {};//clear
     var form = 'plain-text';
-    if(configStream.match(/\{\s*.+\s*\}/)){
+    if(configStream.match(/\{[^\}]+\}/)){
         form = 'JSON';
     } else if(configStream.match(/.+\,\[.+\]/)){
         form = 'full-dump';
@@ -1365,7 +1372,7 @@ nas.Pm.AssetCollection.prototype.parseConfig =function(configStream){
     var newMembers=[];
     this.members = {};//clear
     var form = 'plain-text';
-    if(configStream.match(/\{\s*.+\s*\}/)){
+    if(configStream.match(/\{[^\}]+\}/)){
         form = 'JSON';
     } else if(configStream.match(/.+\,\[.+\]/)){
         form = 'full-dump';
@@ -1477,7 +1484,7 @@ nas.Pm.PmTemplateCollection.prototype.parseConfig = function(dataStream,form){
     var myMembers =[];
     // 形式が指定されない場合は、第一有効レコードで判定
     if(! form ){
-            if (dataStream.match(/\[\s*\{\s*.+\\s*}\s*\]/)) form='JSON';//配列JSON
+            if (dataStream.match(/\[\s*\{[^\}]+\}\s*\]/)) form='JSON';//配列JSON
             else if (dataStream.match(/(\n|^)\[.+\]($|\n)/)) form='full-dump';
             else  form='plain-text';
     }
@@ -1743,7 +1750,7 @@ nas.Pm.JobTemplateCollection.prototype.parseConfig = function(dataStream,form){
     var myMembers =[];
     // 形式が指定されない場合は、第一有効レコードで判定
     if(! form ){
-            if (dataStream.match(/\[\s*\{\s*.+\\s*}\s*\]/)) form='JSON';//配列JSON
+            if (dataStream.match(/\[\s*\{[^\}]+\}\s*\]/)) form='JSON';//配列JSON
             else if (dataStream.match(/(\n|^)\[.+\]($|\n)/)) form='full-dump';
             else  form='plain-text';
     }
@@ -1938,7 +1945,7 @@ nas.Pm.StageCollection.prototype.parseConfig = function(configStream){
     var newMembers=[];
     this.members = {};//clear
     var form = 'plain-text';
-    if(configStream.match(/\{\s*.+\s*\}/))          form = 'JSON';
+    if(configStream.match(/\{[^\}]+\}/))          form = 'JSON';
     else if(configStream.match(/.+\,\[.+\]/)) form = 'full-dump';
     switch(form){
     case 'JSON':
@@ -2120,7 +2127,7 @@ nas.Pm.LineCollection.prototype.parseConfig =function(configStream){
     var newMembers=[];
     this.members = {};//clear
     var form = 'plain-text';
-    if(configStream.match(/\{\s*.+\s*\}/)){
+    if(configStream.match(/\{[^\}]+\}/)){
         form = 'JSON';
     } else if(configStream.match(/.+\,\[.+\]/)){
         form = 'full-dump';
@@ -2220,18 +2227,34 @@ nas.Pm.newSC("ktc#01.s-c123","3+12,OL(1+12),--(0+0)",frameRate)
  * プロパティの不足は呼び出し側（newSCi）で行う
  * コンストラクタ内でのチェックはしない
  */
-nas.Pm.SC = function SC(cutName,sceneName,myOpus,myTime,myTRin,myTRout,myRate,myFrate){
-    this.id;//DB連結用 DBに接続していない場合はundefined
-    this.cut     = cutName;//
+nas.Pm.SCi = function SC(cutName,sceneName,myOpus,myTitle,myTime,myTRin,myTRout,myRate,myFrate,myId){
+    this.id         = myId ;//DB連結用 DBに接続していない場合はundefined
+    this.cut        = cutName;//
     this.scene      = sceneName;//
     this.opus       = myOpus;//Object nas.Pm.Opus
-    this.workTitle  = this.opus.workTitle ;//Object nsa.Pm.WorkTitle参照
+    this.title      = myTitle;//Object nsa.Pm.WorkTitle参照
     this.time       = myTime;//ここでは静的プロパティ  フレーム数で記録
     this.trin       = myTRin;//[0,"trin"];//後で初期化
     this.trout      = myTRout;//[0,"trout"];//後で初期化
     this.framerate  = myFrate; //Object nas.Framerate;
 }
-nas.Pm.SC.prototype.toString =function(){
+nas.Pm.newSCi = function(idString,index){
+    var mySCi=Xps.parseIdentifier(idString)
+    var mySC= new nas.PM.SC(
+        mySCi.cut,
+        mySCi.scene,
+        mySCi.opus,
+        mySCi.title,
+        nas.FCT2Frm(mySCi.time),
+        "",
+        "",
+        mySCi.framerate
+    )
+    return mySC
+}
+
+
+nas.Pm.SCi.prototype.toString =function(){
     var myResult="";
     if(arguments.length){
         myResult+= "##CUT="+this.cut+"\n";
@@ -2242,11 +2265,11 @@ nas.Pm.SC.prototype.toString =function(){
         myResult+= "##TROUT="+this.trout+"\n";
         myResult+= "##FRAME_RATE="+this.cut+"\n";
     }else{
-        myResult+=["s",this.scene,"-",this.cut].join("");
+        myResult+=["s",this.scene,"-c",this.cut].join("");
     }
        return myResult;
 };//
-nas.Pm.SC.prototype.valueOf =function(){return this.id;};//
+nas.Pm.SCi.prototype.valueOf =function(){return this.id;};//
 
 /**
        引数をまとめて解釈してSCiオブジェクトを返すPmクラスメソッド
@@ -2260,7 +2283,7 @@ nas.Pm.newSC=function(myTitleString,myTimeString,myRateString){
     var myRate      = (myRateString)? new nas.Framerate(myRateString):myOpus.workTitle.framerate;
     var myTime      = myTimeInfo[0];
     var myTrin      = myTimeInfo[1];
-    return new nas.Pm.SC(myInfo[0],myInfo[1],myOpus,myTimeInfo[0],myTimeInfo[1],myTimeInfo[2],myRate);
+    return new nas.Pm.SCi(myInfo[0],myInfo[1],myOpus,myTimeInfo[0],myTimeInfo[1],myTimeInfo[2],myRate);
 }
 //Test
 // A=nas.Pm.newSC("mte02")
@@ -3076,7 +3099,7 @@ nas.Pm.StaffCollection.prototype.parseConfig = function(dataStream,form){
     var myMembers =[];
     // 形式が指定されない場合は、第一有効レコードで判定
     if(! form ){
-            if (dataStream.match(/\[\s*\{\s*.+\s*\}\s*\]/)) form='JSON';//配列JSON
+            if (dataStream.match(/\[\s*\{[^\}]+\}\s*\]/)) form='JSON';//配列JSON
             else if (dataStream.match(/(\n|^)\[.+\]($|\n)/)) form='full-dump';
             else if (dataStream.match(/\*[^\*]+\*|\[[^\[\]]+\]/)) form='free-form';//]
             else  form='plain-text';

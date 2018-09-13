@@ -966,7 +966,8 @@ serviceAgent.pushEntry(xUI.XPS,function(){xUI.setStored("current");sync();
 <button
 	id=ibMstw
     class='iconButton iconButton-goToTime'
-	onMouseDown='if(xUI.player.status=="stop"){xUI.player.start(3000)}else{xUI.put("mark")};'
+	onMouseDown='if(xUI.player.status=="stop"){xUI.player.start()}else{xUI.player.getCount=true};'
+	onMouseUp='if(xUI.player.status=="run"){xUI.player.getCount=false};'
 > </button>
 <button
 	id=ibMstw
