@@ -356,8 +356,8 @@ nas.Pm._parseConfig = function(dataStream,form){
     var myMembers =[];
     // 形式が指定されない場合は、第一有効レコードで判定
     if(! form ){
-            if (dataStream.match(/^\[\{.+\}\]$/)) form='JSON';//配列JSON
-            else if (dataStream.match(/(\n|^)\[.+\]($|\n)/)) form='full-dump';
+            if (dataStream.match(/^\s*\[\s*\{\s*.+\}\]$/)) form='JSON';//配列JSON
+            else if (dataStream.match(/(\n|^)\s*\[\s*.+\]($|\n)/)) form='full-dump';
             else  form='plain-text';
     }
     switch(form){
@@ -573,7 +573,7 @@ nas.Pm.OrganizationCollection.prototype.parseConfig = function(configStream){
     var newMembers=[];
     this.members = {};//clear
     var form = 'plain-text';
-    if(configStream.match(/\{.+\}/)){
+    if(configStream.match(/\{\s*.+\s*\}/)){
         form = 'JSON';
     } else if(configStream.match(/.+\,\[.+\]/)){
         form = 'full-dump';
@@ -780,7 +780,7 @@ nas.Pm.WorkTitleCollection.prototype.parseConfig = function(configStream){
     var newMembers=[];
     this.members = {};//clear
     var form = 'plain-text';
-    if(configStream.match(/\{.+\}/)){
+    if(configStream.match(/\{\s*.+\s*\}/)){
         form = 'JSON';
     } else if(configStream.match(/.+\,\[.+\]/)){
         form = 'full-dump';
@@ -827,7 +827,14 @@ nas.Pm.WorkTitleCollection.prototype.parseConfig = function(configStream){
         for(var ir = 0;ir<configStream.length;ir++){
             if((configStream[ir].indexOf("#")==0)||(configStream[ir].length==0)) continue;//コメント/空行スキップ
             if((configStream[ir].match( /^\t([a-z]+)\:(.+)$/i ))&&(currentTitle)){
-                currentTitle[RegExp.$1]=RegExp.$2;//プロパティ設定
+                var prop = RegExp.$1;var value = RegExp.$2;
+                switch(prop){
+                case 'format':currentTitle['length']=nas.FCT2Frm(value);//納品フォーマット尺
+                break;
+                case 'framerate':currentTitle['framerate'] = new nas.Framerate(value);
+                break;
+                default:currentTitle[prop] = value;
+                }
             }else{
                 if (currentTitle) newMembers.push(currentTitle);
                 currentTitle=new nas.Pm.WorkTitle();
@@ -964,7 +971,7 @@ nas.Pm.OpusCollection.prototype.parseConfig = function(configStream){
     var newMembers=[];
     this.members = {};//clear
     var form = 'plain-text';
-    if(configStream.match(/\{.+\}/)){
+    if(configStream.match(/\{\s*.+\s*\}/)){
         form = 'JSON';
     } else if(configStream.match(/.+\,\[.+\]/)){
         form = 'full-dump';
@@ -1131,7 +1138,7 @@ nas.Pm.MediaCollection.prototype.parseConfig = function(configStream){
     var newMembers=[];
     this.members = {};//clear
     var form = 'plain-text';
-    if(configStream.match(/\{.+\}/)){
+    if(configStream.match(/\{\s*.+\s*\}/)){
         form = 'JSON';
     } else if(configStream.match(/.+\,\[.+\]/)){
         form = 'full-dump';
@@ -1358,7 +1365,7 @@ nas.Pm.AssetCollection.prototype.parseConfig =function(configStream){
     var newMembers=[];
     this.members = {};//clear
     var form = 'plain-text';
-    if(configStream.match(/\{.+\}/)){
+    if(configStream.match(/\{\s*.+\s*\}/)){
         form = 'JSON';
     } else if(configStream.match(/.+\,\[.+\]/)){
         form = 'full-dump';
@@ -1408,7 +1415,7 @@ nas.Pm.AssetCollection.prototype.parseConfig =function(configStream){
         for(var ir = 0;ir<configStream.length;ir++){
             if((configStream[ir].indexOf("#")==0)||(configStream[ir].length==0)) continue;//コメント/空行スキップ
             if((configStream[ir].match( /^\t([a-z]+)\:(.+)$/i ))&&(currentEntry)){
-                currentEntry[RegExp.$1]=RegExp.$2;//プロパティ設定
+                currentEntry[RegExp.$1]=(RegExp.$1=='callStage')?(RegExp.$2).split(','):RegExp.$2;//プロパティ設定
             }else{
                 if (currentEntry) newMembers.push(currentEntry);
                 currentEntry=new nas.Pm.Asset();
@@ -1470,7 +1477,7 @@ nas.Pm.PmTemplateCollection.prototype.parseConfig = function(dataStream,form){
     var myMembers =[];
     // 形式が指定されない場合は、第一有効レコードで判定
     if(! form ){
-            if (dataStream.match(/^\[\{.+\}\]$/)) form='JSON';//配列JSON
+            if (dataStream.match(/\[\s*\{\s*.+\\s*}\s*\]/)) form='JSON';//配列JSON
             else if (dataStream.match(/(\n|^)\[.+\]($|\n)/)) form='full-dump';
             else  form='plain-text';
     }
@@ -1512,10 +1519,17 @@ entryName
 	prop:value
 */
         if((currentMember)&&(currentField.match( /^\t([a-z]+)\:(.+)$/i ))){
-        	currentMember[RegExp.$1]=RegExp.$2;
+            if(RegExp.$1=='stages'){
+                var stages=(RegExp.$2).split(',');
+                for (var sid=0;sid<stages.length;sid++){
+                   currentMember.stages.addStage(stages[sid],currentMember.parent.parent.stages.entry(stages[sid]));
+                }
+            }else{
+        	    currentMember[RegExp.$1]=RegExp.$2;//追加プロパティ用
+        	}
         } else if(currentField.match( /^.+$/i )) {
         	if(currentMember) myMembers.push(currentMember);
-        	currentMember = new nas.Pm.LineTemplate(this,currentField,null);
+        	currentMember = new nas.Pm.LineTemplate(this,currentField,[]);
         }
       }
       myMembers.push(currentMember);
@@ -1528,7 +1542,7 @@ nas.Pm.PmTemplateCollection.prototype.dump = nas.Pm._dumpList;
 引数
 myParent    
 lineName    ライン識別名称
-[myStarges]   ラインの標準的なステージ並びを配列で与える
+[myStarges]   ラインの標準的なステージ並びを配列で与える 空配列で初期化可能
 
 */
 nas.Pm.LineTemplate = function(myParent,lineName,myStages){
@@ -1538,7 +1552,7 @@ nas.Pm.LineTemplate = function(myParent,lineName,myStages){
     this.stages = new nas.Pm.StageCollection(this);
     for (var ix=0;ix< myStages.length;ix++){
         var stageKey= nas.Pm.searchProp(myStages[ix],this.parent.parent.stages)
-        this.stages.addStage(stageKey,this.parent.parent.stages.members[stageKey]);
+        this.stages.addStage(stageKey,this.parent.parent.stages.entry(stageKey));
     }
 };
 /*
@@ -1729,7 +1743,7 @@ nas.Pm.JobTemplateCollection.prototype.parseConfig = function(dataStream,form){
     var myMembers =[];
     // 形式が指定されない場合は、第一有効レコードで判定
     if(! form ){
-            if (dataStream.match(/^\[\{.+\}\]$/)) form='JSON';//配列JSON
+            if (dataStream.match(/\[\s*\{\s*.+\\s*}\s*\]/)) form='JSON';//配列JSON
             else if (dataStream.match(/(\n|^)\[.+\]($|\n)/)) form='full-dump';
             else  form='plain-text';
     }
@@ -1924,7 +1938,7 @@ nas.Pm.StageCollection.prototype.parseConfig = function(configStream){
     var newMembers=[];
     this.members = {};//clear
     var form = 'plain-text';
-    if(configStream.match(/\{.+\}/))          form = 'JSON';
+    if(configStream.match(/\{\s*.+\s*\}/))          form = 'JSON';
     else if(configStream.match(/.+\,\[.+\]/)) form = 'full-dump';
     switch(form){
     case 'JSON':
@@ -2106,7 +2120,7 @@ nas.Pm.LineCollection.prototype.parseConfig =function(configStream){
     var newMembers=[];
     this.members = {};//clear
     var form = 'plain-text';
-    if(configStream.match(/\{.+\}/)){
+    if(configStream.match(/\{\s*.+\s*\}/)){
         form = 'JSON';
     } else if(configStream.match(/.+\,\[.+\]/)){
         form = 'full-dump';
@@ -3062,7 +3076,7 @@ nas.Pm.StaffCollection.prototype.parseConfig = function(dataStream,form){
     var myMembers =[];
     // 形式が指定されない場合は、第一有効レコードで判定
     if(! form ){
-            if (dataStream.match(/^\[\{.+\}\]$/)) form='JSON';//配列JSON
+            if (dataStream.match(/\[\s*\{\s*.+\s*\}\s*\]/)) form='JSON';//配列JSON
             else if (dataStream.match(/(\n|^)\[.+\]($|\n)/)) form='full-dump';
             else if (dataStream.match(/\*[^\*]+\*|\[[^\[\]]+\]/)) form='free-form';//]
             else  form='plain-text';

@@ -239,8 +239,8 @@ var myFileName= "$TITLE#$OPUS[$SUBTITLE]_s-c$CUT($TC)";
 
 */
 
-var myName=　""	;//---作業ユーザ名	*cookie[2]　ヌルストリングで初期化
-var myNames=　[myName]	;//---作業ユーザリスト	*cookie[2]　ユーザ名配列 
+var myName = ""	;//---作業ユーザ名	*cookie[2]　ヌルストリングで初期化
+var myNames = [myName]	;//---作業ユーザリスト	*cookie[2]　ユーザ名配列 
 
 var NameCheck=true	;
 /*

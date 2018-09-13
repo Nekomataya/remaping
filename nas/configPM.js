@@ -4,31 +4,46 @@
  * この内容はDB側で保持してアプリケーションに送る これはスタンドアロン動作用のデフォルトのデータ群となる
  * DBとの通信が正常に初期化された後、DBから 受信したデータで上書きが行なわれる
  * 又はDBとの通信が確立できなかった場合に読み込まれるように調整される
- 
- これらのデータは、リポジトリ内部に設定として分散して配置され、必要に従って編集、更新が可能なように調整される
- 
- 設定書式は、パーサを共通化するために統一されるのが望ましい　2017 12 02
- パーサは、text,dump,JSON 全形式に対応する
- ユーザは好みの方式で記述を行うことができる
- リジョンごとの記述は、後置優先で後からデータを読み込む際に一切のデータを消去して上書き
- 
  */
 /**
- 組織情報
- 組織オブジェクトは、組織情報トレーラーとして働く
- pmdbオブジェクト内に一つだけ存在して、それらの共通参照情報となる
- 
- 
-プロパティ名  organization
- name:通常表記名
- fullName:正式名
- code:ファイル名等使用コード
- id:DBリンク用インデックス(UAT token)
- shortName:短縮名
- description:解説
- contact:組織連絡先
-
-    organizationName   name    code    id  shortName   description contact users
+ * 組織情報
+ * pmdb.organization
+ *
+ * 組織オブジェクトは、組織情報トレーラーとして働く
+ * pmdbオブジェクト内に一つだけ存在して、それらの共通参照情報となる
+ * 実際は組織情報コレクションの第一エントリーとして記録してその参照を利用する
+ *
+ *
+ *   organization:{
+ *        name:           <String.通常表記名>,
+ *        fullName:       <String.正式名>,
+ *        code:           <String.短縮アイテムコード　４文字程度>,
+ *        id:             <String.DBリンク用インデックス(UAT token)>,
+ *        shortName:      <String.表示用短縮名>,
+ *        description:    <String.解説>,
+ *        contact:        <String.組織連絡先>,
+ *    }
+ *
+ */
+/**
+ * 組織情報コレクション
+ * pmdb.organizations
+ *
+ * 組織情報のコレクション（テーブル）
+ * アプリケーションで複数の組織の情報を保持するためのテーブル
+ * プライマリの組織情報は、このテーブルの冒頭のエントリーとして記録される
+ * pmdb.oroganization はこのテーブルの代表エントリーへの参照
+ *
+ *{<String.プロパティ名>:{
+ *        name:           <String.通常表記名 プロパティ名と同一>,
+ *        fullName:       <String.正式名>,
+ *        code:           <String.短縮アイテムコード　４文字程度>,
+ *        id:             <String.DBリンク用インデックス(UAT token)>,
+ *        shortName:      <String.表示用短縮名>,
+ *        description:    <String.解説>,
+ *        contact:        <String.組織連絡先>,
+ *    }
+ *}
  */
 nas.Pm.organizations.parseConfig(`{
     "nekomataya":{
@@ -63,773 +78,2197 @@ nas.Pm.organizations.parseConfig(`{
     }
 }`);
 /**
-# 共有ユーザ一覧
-#   組織に属する全ユーザのリスト
-#   リストにないユーザは、作業に参加できない
-#   書式:
-#   handle:e-mail[:{option}]
-#   例:
-#   ねこまたや:kiyo@nekomataya.info
-#
-#   リポジトリ（チーム）ごとにユーザリスト作成が必用
-#   ローカルインストールされたアプリケーションでは、オーナーユーザのみのリストを使用する
-#   これは設定ファイルのサンプル
-*/
-/*
-nas.Pm.users.add(new nas.UserInfo("ねずみ:mouse@animals.example.com"));
-nas.Pm.users.add(new nas.UserInfo("うし:cow@animals.example.com"));
-nas.Pm.users.add(new nas.UserInfo("とら:tiger@animals.example.com"));
-nas.Pm.users.add(new nas.UserInfo("うさぎ:rabbit@animals.example.com"));
-nas.Pm.users.add(new nas.UserInfo("たつ:dragon@legend.example.com"));
-nas.Pm.users.add(new nas.UserInfo("へび:snake@animals.example.com"));
-nas.Pm.users.add(new nas.UserInfo("うま:horse@animals.example.com"));
-nas.Pm.users.add(new nas.UserInfo("ひつじ:sheep@animals.example.com"));
-nas.Pm.users.add(new nas.UserInfo("さる:monkey@animals.example.com"));
-nas.Pm.users.add(new nas.UserInfo("とり:bird@animals.example.com"));
-nas.Pm.users.add(new nas.UserInfo("いぬ:dog@animals.example.com"));
-nas.Pm.users.add(new nas.UserInfo("いのしし:boar@animals.example.com"));
-nas.Pm.users.add(new nas.UserInfo("アイナメ:ainame@fish.example.com"));
-nas.Pm.users.add(new nas.UserInfo("イワシ:iwashi@fish.example.com"));
-nas.Pm.users.add(new nas.UserInfo("ウナギ:unagi@fish.example.com"));
-nas.Pm.users.add(new nas.UserInfo("エソ:eso@fish.example.com"));
-nas.Pm.users.add(new nas.UserInfo("オコゼ:okoze@fish.example.com"));
-nas.Pm.users.add(new nas.UserInfo("カサゴ:kasago@fish.example.com"));
-nas.Pm.users.add(new nas.UserInfo("キス:kisu@fish.example.com"));
-nas.Pm.users.add(new nas.UserInfo("クロダイ:kurodai@fish.example.com"));
-nas.Pm.users.add(new nas.UserInfo("ケショウフグ:kesyoufugu@fish.example.com"));
-nas.Pm.users.add(new nas.UserInfo("コノシロ:konoshiro@fish.example.com"));
-nas.Pm.users.add(new nas.UserInfo("サバ:saba@fish.example.com"));
-nas.Pm.users.add(new nas.UserInfo("シラウオ:shirauo@fish.example.com"));
-nas.Pm.users.add(new nas.UserInfo("スズキ:suzuki@fish.example.com"));
-nas.Pm.users.add(new nas.UserInfo("ソメワケベラ:somewake@fish.example.com"));
-nas.Pm.users.add(new nas.UserInfo("セトダイ:setodai@fish.example.com"));
-nas.Pm.users.add(new nas.UserInfo("タナゴ:tanago@fish.example.com"));
-nas.Pm.users.add(new nas.UserInfo("チヌ:chinu@fish.example.com"));
-nas.Pm.users.add(new nas.UserInfo("ツボダイ:tsubodai@fish.example.com"));
-nas.Pm.users.add(new nas.UserInfo("テッポウウオ:teppouuo@fish.example.com"));
-nas.Pm.users.add(new nas.UserInfo("トラフグ:torafugu@fish.example.com"));
-nas.Pm.users.add(new nas.UserInfo("ナマズ:namazu@fish.example.com"));
-nas.Pm.users.add(new nas.UserInfo("ニシキゴイ:nishikigoi@fish.example.com"));
-nas.Pm.users.add(new nas.UserInfo("ヌタウナギ:nutaunagi@fish.example.com"));
-nas.Pm.users.add(new nas.UserInfo("ネコザメ:nekozame@fish.example.com"));
-nas.Pm.users.add(new nas.UserInfo("ハゼ:haze@fish.example.com"));
-nas.Pm.users.add(new nas.UserInfo("ヒラメ:hirame@fish.example.com"));
-nas.Pm.users.add(new nas.UserInfo("フグ:fugu@fish.example.com"));
-nas.Pm.users.add(new nas.UserInfo("ノドグロ:nodoguro@fish.example.com"));
-nas.Pm.users.add(new nas.UserInfo("ヘラ:hera@fish.example.com"));
-nas.Pm.users.add(new nas.UserInfo("ホッケ:hokke@fish.example.com"));
-nas.Pm.users.add(new nas.UserInfo("マグロ:maguro@fish.example.com"));
-nas.Pm.users.add(new nas.UserInfo("ミゾレフグ:mizorefugu@fish.example.com"));
-nas.Pm.users.add(new nas.UserInfo("ムツゴロウ:mutsugoro@fish.example.com"));
-nas.Pm.users.add(new nas.UserInfo("メゴチ:megochi@fish.example.com"));
-nas.Pm.users.add(new nas.UserInfo("モンガラカワハギ:monngarakawahagi@fish.example.com"));
-nas.Pm.users.add(new nas.UserInfo("ヤツメウナギ:yatsumeunagi@fish.exapmle.com"));
-nas.Pm.users.add(new nas.UserInfo("ユメカサゴ:yumekasago@fish.example.com"));
-nas.Pm.users.add(new nas.UserInfo("ヨシキリザメ:yoshikirizame@fish.example.com"));
-nas.Pm.users.add(new nas.UserInfo("ライギョ:raigyo@fish.example.com"));
-nas.Pm.users.add(new nas.UserInfo("リュウグウノツカイ:ryuuguunotsukai@fish.example.com"));
-nas.Pm.users.add(new nas.UserInfo("ルリハタ:rurihata@fish.example.com"));
-nas.Pm.users.add(new nas.UserInfo("レモンスズメダイ:remonnsuzumedai@fish.example.com"));
-nas.Pm.users.add(new nas.UserInfo("ロウソクギンポ:rousokuginnpo@fish.example.com"));
-nas.Pm.users.add(new nas.UserInfo("ワカサギ:wakasagi@fish.example.com"));
-*/
-nas.Pm.users.parseConfig(`{
-    "0":{
+ * 共有ユーザ一覧
+ *   組織に属する全ユーザのリスト
+ *   リストにないユーザは、作業に参加できない
+ *    {
+ *        "handle":             <String.ハンドル名>,
+ *        "email":              <String.メールアドレス>,
+ *        <追加プロパティ>:     <String.追加プロパティ.値>,
+ *        token:                <String.UATtoken 追加プロパティ>
+ *    }
+ *　 トークン等のDB接続用情報は追加プロパティとして実装する
+ *   リポジトリ（チーム）ごとにユーザリスト作成が必用
+ *   ローカルインストールされたアプリケーションでは、通常はオーナーユーザのみのリストを使用する
+ */
+nas.Pm.users.parseConfig(`[{
         "handle":"ねずみ",
         "email":"mouse@animals.example.com",
         "token":"1234566"
     },
-    "1":{
+	{
         "handle":"うし",
         "email":"cow@animals.example.com"
     },
-    "2":{
+	{
         "handle":"とら",
         "email":"tiger@animals.example.com"
     },
-	"3":{
+	{
 	    "handle":"うさぎ",
 	    "email":"rabbit@animals.example.com"
 	},
-	"4":{
+	{
 	    "handle":"たつ",
 	    "email":"dragon@legend.example.com"
 	},
-	"5":{
+	{
 	    "handle":"へび",
 	    "email":"snake@animals.example.com"
 	},
-	"6":{
+	{
 	    "handle":"うま",
 	    "email":"horse@animals.example.com"
 	},
-	"7":{
+	{
 	    "handle":"ひつじ",
 	    "email":"sheep@animals.example.com"
 	},
-	"8":{
+	{
 	    "handle":"さる",
 	    "email":"monkey@animals.example.com"
 	},
-	"9":{
+	{
 	    "handle":"とり",
 	    "email":"bird@animals.example.com"
 	},
-	"10":{
+	{
 	    "handle":"犬丸",
 	    "email":"dog@animals.example.com"
 	},
-	"11":{
+	{
 	    "handle":"いのしし",
 	    "email":"boar@animals.example.com"
 	},
-	"12":{
+	{
 	    "handle":"たぬきスタジオ",
 	    "email":"tanuki-st@animal.example.com"
 	},
-	"13":{
+	{
 	    "handle":"たぬき",
     	"email":"tanuki.tanuki-st@animal.example.com"
 	},
-	"14":{
+	{
 		"handle":"ムジナ",
 	    "email":"mjina.tanuki-st@animal.example.com"
 	},
-	"15":{
+	{
 		"handle":"穴熊",
     	"email":"anaguma.tanuki-st@animal.example.com"
 	},
-	"16":{
+	{
 		"handle":"アイナメ",
 	    "email":"ainame@fish.example.com"
 	},
-	"17":{
+	{
 		"handle":"イワシ",
 	    "email":"iwashi@fish.example.com"
 	},
-	"18":{
+	{
 		"handle":"エソ",
     	"email":"eso@fish.example.com"
 	},
-	"19":{
+	{
 		"handle":"オコゼ",
 	    "email":"okoze@fish.example.com"
 	},
-	"20":{
+	{
 		"handle":"カサゴ",
 	    "email":"kasago@fish.example.com"
 	},
-	"21":{
+	{
 		"handle":"キス",
 	    "email":"kisu@fish.example.com"
 	},
-	"22":{
+	{
 		"handle":"クロダイ",
 	    "email":"kurodai@fish.example.com"
 	},
-	"23":{
+	{
 		"handle":"ケショウフグ",
 	    "email":"kesyoufugu@fish.example.com"
 	},
-	"24":{
+	{
 		"handle":"コノシロ",
 	    "email":"konoshiro@fish.example.com"
 	},
-	"25":{
+	{
 		"handle":"サバ",
 	    "email":"saba@fish.example.com"
 	},
-	"26":{
+	{
 		"handle":"シラウオ",
 	    "email":"shirauo@fish.example.com"
 	},
-	"27":{
+	{
 		"handle":"スズキ",
 	    "email":"suzuki@fish.example.com"
 	},
-	"28":{
+	{
 		"handle":"ソメワケベラ",
 	    "email":"somewake@fish.example.com"
 	},
-	"29":{
+	{
 		"handle":"セトダイ",
 	    "email":"setodai@fish.example.com"
 	},
-	"30":{
+	{
 		"handle":"タナゴ",
 	    "email":"tanago@fish.example.com"
 	},
-	"31":{
+	{
 		"handle":"チヌ",
 		"email":"chinu@fish.example.com"
 	},
-	"32":{
+	{
 		"handle":"ツボダイ",
 		"email":"tsubodai@fish.example.com"
 	},
-	"33":{
+	{
 		"handle":"テッポウウオ",
 		"email":"teppouuo@fish.example.com"
 	},
-	"34":{
+	{
 		"handle":"トラフグ",
 		"email":"torafugu@fish.example.com"
 	},
-	"35":{
+	{
 		"handle":"ナマズ",
 		"email":"namazu@fish.example.com"
 	},
-	"36":{
+	{
 		"handle":"ニシキゴイ",
 		"email":"nishikigoi@fish.example.com"
 	},
-	"37":{
+	{
 		"handle":"ヌタウナギ",
 		"email":"nutaunagi@fish.example.com"
 	},
-	"38":{
+	{
 		"handle":"ネコザメ",
 		"email":"nekozame@fish.example.com"
 	},
-	"39":{
+	{
 		"handle":"ハゼ",
 		"email":"haze@fish.example.com"
 	},
-	"40":{
+	{
 		"handle":"ヒラメ",
 		"email":"hirame@fish.example.com"
 	},
-	"41":{
+	{
 		"handle":"フグ",
 		"email":"fugu@fish.example.com"
 	},
-	"42":{
+	{
 		"handle":"ノドグロ",
 		"email":"nodoguro@fish.example.com"
 	},
-	"43":{
+	{
 		"handle":"ヘラ",
 		"email":"hera@fish.example.com"
 	},
-	"44":{
+	{
 		"handle":"ホッケ",
 		"email":"hokke@fish.example.com"
 	},
-	"45":{
+	{
 		"handle":"マグロ",
 		"email":"maguro@fish.example.com"
 	},
-	"46":{
+	{
 		"handle":"ミゾレフグ",
 		"email":"mizorefugu@fish.example.com"
 	},
-	"47":{
+	{
 		"handle":"ムツゴロウ",
 		"email":"mutsugoro@fish.example.com"
 	},
-	"48":{
+	{
 		"handle":"メゴチ",
 		"email":"megochi@fish.example.com"
 	},
-	"49":{
+	{
 		"handle":"モンガラカワハギ",
 		"email":"monngarakawahagi@fish.example.com"
 	},
-	"50":{
+	{
 		"handle":"ヤツメウナギ",
 		"email":"yatsumeunagi@fish.exapmle.com"
 	},
-	"51":{
+	{
 		"handle":"ユメカサゴ",
 		"email":"yumekasago@fish.example.com"
 	},
-	"52":{
+	{
 		"handle":"ヨシキリザメ",
 		"email":"yoshikirizame@fish.example.com"
 	},
-	"53":{
+	{
 		"handle":"ライギョ",
 		"email":"raigyo@fish.example.com"
 	},
-	"54":{
+	{
 		"handle":"リュウグウノツカイ",
 		"email":"ryuuguunotsukai@fish.example.com"
 	},
-	"55":{
+	{
 		"handle":"絶滅寸前",
 		"email":"ztm@fish.example.com"
 	},
-	"56":{
+	{
 		"handle":"ウナギ",
 		"email":"unagi.ztm@fish.example.com"
 	},
-	"57":{
+	{
 		"handle":"ねこ",
 		"email":"cat@animal.example.com"
 	},
-	"58":{
+	{
 		"handle":"こねこ",
 		"email":"kitty@animal.example.com"
 	},
-	"59":{
+	{
 		"handle":"いぬ",
 		"email":"dog@animal.example.com"
 	},
-	"60":{
+	{
 		"handle":"こいぬ",
 		"email":"puppy@animal.example.com"
 	},
-	"61":{
+	{
 		"handle":"かもめ",
 		"email":"gull@bird.example.com"
 	},
-	"62":{
+	{
 		"handle":"回遊館",
 		"email":"kaiyu@fish.example.com"
 	},
-	"63":{
+	{
 		"handle":"海洋工房",
 		"email":"st-sea@fish.example.com"
 	},
-	"64":{
+	{
 		"handle":"マグロ",
 		"email":"mgr.st-sea@fish.example.com"
 	},
-	"65":{
+	{
 		"handle":"スジクロギンポ",
 		"email":"sjk.st-sea@fish.example.com"
 	},
-	"66":{
+	{
 		"handle":"ワカサギ",
 		"email":"wakasagi.st-sea@fish.example.com"
 	},
-	"67":{
+	{
 		"handle":"サバ",
 		"email":"saba.st-sea@fish.example.com"
 	},
-	"68":{
+	{
 		"handle":"レモンスズメダイ",
 		"email":"remonnsuzumedai.st-sea@fish.example.com"
 	},
-	"69":{
+	{
 		"handle":"ロウソクギンポ",
 		"email":"rousokuginnpo.st-sea@fish.example.com"
 	},
-	"70":{
+	{
 		"handle":"ルリハタ",
 		"email":"rurihata.st-sea@fish.example.com"
 	},
-	"71":{
+	{
 		"handle":"ツバメ",
 		"email":"swallow@bird.example.com"
 	},
-	"72":{
+	{
 		"handle":"スタジオ鳥類",
 		"email":"st-bird@bird.example.com"
 	},
-	"73":{
+	{
 		"handle":"ハト",
 		"email":"pigeon@bird.example.com"
 	},
-	"74":{
+	{
 		"handle":"スズメ",
 		"email":"sparrow@bird.example.com"
 	},
-	"75":{
+	{
 		"handle":"オウム",
 		"email":"parrot@bird.example.com"
 	},
-	"76":{
+	{
 		"handle":"シジュウカラ",
 		"email":"tits@bird.example.com"
 	},
-	"77":{
+	{
 		"handle":"ワシ",
 		"email":"eagle@bird.example.com"
 	},
-	"78":{
+	{
 		"handle":"アイガモ",
 		"email":"duck.aigamo@bird.example.com"
+	}
+]`);
+/**
+ * スタッフ登録
+ * タブ区切りテキストでスタッフリストの形式で
+ * スタッフリストに登録のないユーザは作品に参加できない
+ * 
+ *    {
+ *		"acsess":     <Boolean.アクセス可否>,
+ *		"type":       <String.エントリ種別 "section","duty","user">,
+ *		"alias":      <String.ユーザ別名(ペンネーム等) 空白可>,
+ *		"user":       <String.ユーザID （ハンドル:メールアドレス）または　null>,
+ *		"duty":       <String.役職名 または　null>,
+ *		"section":    <String.部門名　または　null>
+ *	},
+ */
+nas.Pm.staff.parseConfig(`[
+    {
+		"acsess":true,
+		"type":"section",
+		"alias":"",
+		"user":null,
+		"duty":null,
+		"section":"制作管理"
 	},
-	"length":79,
-	"token":"1234566"
-}`);
+	{
+		"acsess":true,
+		"type":"duty",
+		"alias":"",
+		"user":null,
+		"duty":"プロデューサ",
+		"section":"制作管理"
+	},
+	{
+		"acsess":true,
+		"type":"user",
+		"alias":"",
+		"user":"ねずみ:",
+		"duty":"プロデューサ",
+		"section":"制作管理"
+	},
+	{
+		"acsess":true,
+		"type":"duty",
+		"alias":"",
+		"user":null,
+		"duty":"統括デスク",
+		"section":"制作管理"
+	},
+	{
+		"acsess":true,
+		"type":"user",
+		"alias":"",
+		"user":"うし:",
+		"duty":"統括デスク",
+		"section":"制作管理"
+	},
+	{
+		"acsess":true,
+		"type":"duty",
+		"alias":"",
+		"user":null,
+		"duty":"デスク",
+		"section":"制作管理"
+	},
+	{
+		"acsess":true,
+		"type":"user",
+		"alias":"",
+		"user":"とら:",
+		"duty":"デスク",
+		"section":"制作管理"
+	},
+	{
+		"acsess":true,
+		"type":"duty",
+		"alias":"",
+		"user":null,
+		"duty":"制作進行",
+		"section":"制作管理"
+	},
+	{
+		"acsess":true,
+		"type":"user",
+		"alias":"",
+		"user":"とり:",
+		"duty":"制作進行",
+		"section":"制作管理"
+	},
+	{
+		"acsess":true,
+		"type":"user",
+		"alias":"",
+		"user":"たつ:",
+		"duty":"制作進行",
+		"section":"制作管理"
+	},
+	{
+		"acsess":true,
+		"type":"user",
+		"alias":"",
+		"user":"うま:",
+		"duty":"制作進行",
+		"section":"制作管理"
+	},
+	{
+		"acsess":true,
+		"type":"user",
+		"alias":"",
+		"user":"ひつじ:",
+		"duty":"制作進行",
+		"section":"制作管理"
+	},
+	{
+		"acsess":true,
+		"type":"section",
+		"alias":"",
+		"user":null,
+		"duty":null,
+		"section":"演出"
+	},
+	{
+		"acsess":true,
+		"type":"duty",
+		"alias":"",
+		"user":null,
+		"duty":"監督",
+		"section":"演出"
+	},
+	{
+		"acsess":true,
+		"type":"user",
+		"alias":"",
+		"user":"犬丸:dog@animal.example.com",
+		"duty":"監督",
+		"section":"演出"
+	},
+	{
+		"acsess":true,
+		"type":"duty",
+		"alias":"",
+		"user":null,
+		"duty":"演出",
+		"section":"演出"
+	},
+	{
+		"acsess":true,
+		"type":"user",
+		"alias":"",
+		"user":"犬丸:dog@animal.example.com",
+		"duty":"演出",
+		"section":"演出"
+	},
+	{
+		"acsess":true,
+		"type":"duty",
+		"alias":"",
+		"user":null,
+		"duty":"演出助手",
+		"section":"演出"
+	},
+	{
+		"acsess":true,
+		"type":"user",
+		"alias":"",
+		"user":"いのしし:boar@animals.example.com",
+		"duty":"演出助手",
+		"section":"演出"
+	},
+	{
+		"acsess":true,
+		"type":"section",
+		"alias":"",
+		"user":null,
+		"duty":null,
+		"section":"文芸"
+	},
+	{
+		"acsess":true,
+		"type":"duty",
+		"alias":"",
+		"user":null,
+		"duty":"脚本",
+		"section":"文芸"
+	},
+	{
+		"acsess":true,
+		"type":"user",
+		"alias":"",
+		"user":"ウナギ:",
+		"duty":"脚本",
+		"section":"文芸"
+	},
+	{
+		"acsess":true,
+		"type":"duty",
+		"alias":"",
+		"user":null,
+		"duty":"設定制作",
+		"section":"文芸"
+	},
+	{
+		"acsess":true,
+		"type":"user",
+		"alias":"",
+		"user":"へび:",
+		"duty":"設定制作",
+		"section":"文芸"
+	},
+	{
+		"acsess":true,
+		"type":"duty",
+		"alias":"",
+		"user":null,
+		"duty":"デザイナー",
+		"section":"文芸"
+	},
+	{
+		"acsess":true,
+		"type":"user",
+		"alias":"",
+		"user":"アイナメ:",
+		"duty":"デザイナー",
+		"section":"文芸"
+	},
+	{
+		"acsess":true,
+		"type":"duty",
+		"alias":"",
+		"user":null,
+		"duty":"キャラ設定",
+		"section":"文芸"
+	},
+	{
+		"acsess":true,
+		"type":"user",
+		"alias":"",
+		"user":"いわし:",
+		"duty":"キャラ設定",
+		"section":"文芸"
+	},
+	{
+		"acsess":true,
+		"type":"duty",
+		"alias":"",
+		"user":null,
+		"duty":"美術設定",
+		"section":"文芸"
+	},
+	{
+		"acsess":true,
+		"type":"user",
+		"alias":"",
+		"user":"ワカサギ:",
+		"duty":"美術設定",
+		"section":"文芸"
+	},
+	{
+		"acsess":true,
+		"type":"duty",
+		"alias":"",
+		"user":null,
+		"duty":"小物設定",
+		"section":"文芸"
+	},
+	{
+		"acsess":true,
+		"type":"user",
+		"alias":"",
+		"user":"クロダイ:",
+		"duty":"小物設定",
+		"section":"文芸"
+	},
+	{
+		"acsess":true,
+		"type":"duty",
+		"alias":"",
+		"user":null,
+		"duty":"色彩設計",
+		"section":"文芸"
+	},
+	{
+		"acsess":true,
+		"type":"user",
+		"alias":"",
+		"user":"ツバメ:swallow@bird.example.com",
+		"duty":"色彩設計",
+		"section":"文芸"
+	},
+	{
+		"acsess":true,
+		"type":"section",
+		"alias":"",
+		"user":null,
+		"duty":null,
+		"section":"作画"
+	},
+	{
+		"acsess":true,
+		"type":"duty",
+		"alias":"",
+		"user":null,
+		"duty":"総作画監督",
+		"section":"作画"
+	},
+	{
+		"acsess":true,
+		"type":"duty",
+		"alias":"",
+		"user":null,
+		"duty":"作画監督",
+		"section":"作画"
+	},
+	{
+		"acsess":true,
+		"type":"user",
+		"alias":"",
+		"user":"いわし:iwashi@fish.example.com",
+		"duty":"作画監督",
+		"section":"作画"
+	},
+	{
+		"acsess":true,
+		"type":"duty",
+		"alias":"",
+		"user":null,
+		"duty":"作画監督補",
+		"section":"作画"
+	},
+	{
+		"acsess":true,
+		"type":"duty",
+		"alias":"",
+		"user":null,
+		"duty":"メカ作画監督",
+		"section":"作画"
+	},
+	{
+		"acsess":true,
+		"type":"duty",
+		"alias":"",
+		"user":null,
+		"duty":"メカ作画監督補",
+		"section":"作画"
+	},
+	{
+		"acsess":true,
+		"type":"duty",
+		"alias":"",
+		"user":null,
+		"duty":"原画",
+		"section":"作画"
+	},
+	{
+		"acsess":true,
+		"type":"user",
+		"alias":"",
+		"user":"ねこ:cat@animal.example.com",
+		"duty":"原画",
+		"section":"作画"
+	},
+	{
+		"acsess":true,
+		"type":"user",
+		"alias":"",
+		"user":"こねこ:kitty@animal.example.com",
+		"duty":"原画",
+		"section":"作画"
+	},
+	{
+		"acsess":true,
+		"type":"user",
+		"alias":"",
+		"user":"いぬ:dog@animal.example.com",
+		"duty":"原画",
+		"section":"作画"
+	},
+	{
+		"acsess":true,
+		"type":"user",
+		"alias":"",
+		"user":"こいぬ:puppy@animal.example.com",
+		"duty":"原画",
+		"section":"作画"
+	},
+	{
+		"acsess":true,
+		"type":"user",
+		"alias":"",
+		"user":"オコゼ:okoze@fish.example.com",
+		"duty":"原画",
+		"section":"作画"
+	},
+	{
+		"acsess":true,
+		"type":"user",
+		"alias":"",
+		"user":"カサゴ:kasago@fish.example.com",
+		"duty":"原画",
+		"section":"作画"
+	},
+	{
+		"acsess":true,
+		"type":"user",
+		"alias":"",
+		"user":"キス:kisu@fish.example.com",
+		"duty":"原画",
+		"section":"作画"
+	},
+	{
+		"acsess":true,
+		"type":"duty",
+		"alias":"",
+		"user":null,
+		"duty":"第一原画",
+		"section":"作画"
+	},
+	{
+		"acsess":true,
+		"type":"duty",
+		"alias":"",
+		"user":null,
+		"duty":"第二原画",
+		"section":"作画"
+	},
+	{
+		"acsess":true,
+		"type":"user",
+		"alias":"",
+		"user":"ねこ:cat@animal.example.com",
+		"duty":"第二原画",
+		"section":"作画"
+	},
+	{
+		"acsess":true,
+		"type":"user",
+		"alias":"",
+		"user":"かもめ:gull@bird.example.com",
+		"duty":"第二原画",
+		"section":"作画"
+	},
+	{
+		"acsess":true,
+		"type":"duty",
+		"alias":"",
+		"user":null,
+		"duty":"動画検査",
+		"section":"作画"
+	},
+	{
+		"acsess":true,
+		"type":"user",
+		"alias":"",
+		"user":"サバ:saba@fish.example.com",
+		"duty":"動画検査",
+		"section":"作画"
+	},
+	{
+		"acsess":true,
+		"type":"duty",
+		"alias":"",
+		"user":null,
+		"duty":"動画監督",
+		"section":"作画"
+	},
+	{
+		"acsess":true,
+		"type":"duty",
+		"alias":"",
+		"user":null,
+		"duty":"動画",
+		"section":"作画"
+	},
+	{
+		"acsess":true,
+		"type":"user",
+		"alias":"",
+		"user":"スズキ:suzuki@fish.example.com",
+		"duty":"動画",
+		"section":"作画"
+	},
+	{
+		"acsess":true,
+		"type":"user",
+		"alias":"",
+		"user":"ソメワケベラ:somewake@fish.example.com",
+		"duty":"動画",
+		"section":"作画"
+	},
+	{
+		"acsess":true,
+		"type":"user",
+		"alias":"",
+		"user":"セトダイ:setodai@fish.example.com",
+		"duty":"動画",
+		"section":"作画"
+	},
+	{
+		"acsess":true,
+		"type":"user",
+		"alias":"",
+		"user":"タナゴ:tanago@fish.example.com",
+		"duty":"動画",
+		"section":"作画"
+	},
+	{
+		"acsess":true,
+		"type":"user",
+		"alias":"",
+		"user":"チヌ:chinu@fish.example.com",
+		"duty":"動画",
+		"section":"作画"
+	},
+	{
+		"acsess":true,
+		"type":"user",
+		"alias":"",
+		"user":"たぬきスタジオ:",
+		"duty":"動画",
+		"section":"作画"
+	},
+	{
+		"acsess":true,
+		"type":"user",
+		"alias":"",
+		"user":"たぬき:tanuki.tanuki-st@animal.example.com",
+		"duty":"動画",
+		"section":"作画"
+	},
+	{
+		"acsess":true,
+		"type":"user",
+		"alias":"",
+		"user":"ムジナ:mjina.tanuki-st@animal.example.com",
+		"duty":"動画",
+		"section":"作画"
+	},
+	{
+		"acsess":true,
+		"type":"user",
+		"alias":"",
+		"user":"穴熊:anaguma.tanuki-st@animal.example.com",
+		"duty":"動画",
+		"section":"作画"
+	},
+	{
+		"acsess":true,
+		"type":"user",
+		"alias":"",
+		"user":"回遊館:kaiyu@fish.example.com",
+		"duty":"動画",
+		"section":"作画"
+	},
+	{
+		"acsess":true,
+		"type":"section",
+		"alias":"",
+		"user":null,
+		"duty":null,
+		"section":"美術"
+	},
+	{
+		"acsess":true,
+		"type":"duty",
+		"alias":"",
+		"user":null,
+		"duty":"美術監督",
+		"section":"美術"
+	},
+	{
+		"acsess":true,
+		"type":"user",
+		"alias":"",
+		"user":"マグロ:mgr.st-sea@fish.example.com",
+		"duty":"美術監督",
+		"section":"美術"
+	},
+	{
+		"acsess":true,
+		"type":"duty",
+		"alias":"",
+		"user":null,
+		"duty":"美術監督補佐",
+		"section":"美術"
+	},
+	{
+		"acsess":true,
+		"type":"user",
+		"alias":"",
+		"user":"スジクロギンポ:sjk.st-sea@fish.example.com",
+		"duty":"美術監督補佐",
+		"section":"美術"
+	},
+	{
+		"acsess":true,
+		"type":"duty",
+		"alias":"",
+		"user":null,
+		"duty":"原図整理",
+		"section":"美術"
+	},
+	{
+		"acsess":true,
+		"type":"user",
+		"alias":"",
+		"user":"スジクロギンポ:sjk.st-sea@fish.example.com",
+		"duty":"原図整理",
+		"section":"美術"
+	},
+	{
+		"acsess":true,
+		"type":"duty",
+		"alias":"",
+		"user":null,
+		"duty":"背景",
+		"section":"美術"
+	},
+	{
+		"acsess":true,
+		"type":"user",
+		"alias":"",
+		"user":"海洋工房:st-sea@fish.example.com",
+		"duty":"背景",
+		"section":"美術"
+	},
+	{
+		"acsess":true,
+		"type":"user",
+		"alias":"",
+		"user":"ワカサギ:wakasagi.st-sea@fish.example.com",
+		"duty":"背景",
+		"section":"美術"
+	},
+	{
+		"acsess":true,
+		"type":"user",
+		"alias":"",
+		"user":"サバ:saba.st-sea@fish.example.com",
+		"duty":"背景",
+		"section":"美術"
+	},
+	{
+		"acsess":true,
+		"type":"user",
+		"alias":"",
+		"user":"レモンスズメダイ:remonnsuzumedai.st-sea@fish.example.com",
+		"duty":"背景",
+		"section":"美術"
+	},
+	{
+		"acsess":true,
+		"type":"user",
+		"alias":"",
+		"user":"ロウソクギンポ:rousokuginnpo.st-sea@fish.example.com",
+		"duty":"背景",
+		"section":"美術"
+	},
+	{
+		"acsess":true,
+		"type":"user",
+		"alias":"",
+		"user":"ルリハタ:rurihata.st-sea@fish.example.com",
+		"duty":"背景",
+		"section":"美術"
+	},
+	{
+		"acsess":true,
+		"type":"section",
+		"alias":"",
+		"user":null,
+		"duty":null,
+		"section":"仕上"
+	},
+	{
+		"acsess":true,
+		"type":"duty",
+		"alias":"",
+		"user":null,
+		"duty":"色指定",
+		"section":"仕上"
+	},
+	{
+		"acsess":true,
+		"type":"user",
+		"alias":"",
+		"user":"ツバメ:swallow@bird.example.com",
+		"duty":"色指定",
+		"section":"仕上"
+	},
+	{
+		"acsess":true,
+		"type":"duty",
+		"alias":"",
+		"user":null,
+		"duty":"トレース",
+		"section":"仕上"
+	},
+	{
+		"acsess":true,
+		"type":"user",
+		"alias":"",
+		"user":"アイガモ:duck.aigamo@bird.example.com",
+		"duty":"トレース",
+		"section":"仕上"
+	},
+	{
+		"acsess":true,
+		"type":"duty",
+		"alias":"",
+		"user":null,
+		"duty":"ペイント",
+		"section":"仕上"
+	},
+	{
+		"acsess":true,
+		"type":"user",
+		"alias":"",
+		"user":"アイガモ:duck.aigamo@bird.example.com",
+		"duty":"ペイント",
+		"section":"仕上"
+	},
+	{
+		"acsess":true,
+		"type":"user",
+		"alias":"",
+		"user":"スズメ:sparrow@bird.example.com",
+		"duty":"ペイント",
+		"section":"仕上"
+	},
+	{
+		"acsess":true,
+		"type":"user",
+		"alias":"",
+		"user":"オウム:parrot@bird.example.com",
+		"duty":"ペイント",
+		"section":"仕上"
+	},
+	{
+		"acsess":true,
+		"type":"user",
+		"alias":"",
+		"user":"シジュウカラ:tits@bird.example.com",
+		"duty":"ペイント",
+		"section":"仕上"
+	},
+	{
+		"acsess":true,
+		"type":"user",
+		"alias":"",
+		"user":"ワシ:eagle@bird.example.com",
+		"duty":"ペイント",
+		"section":"仕上"
+	},
+	{
+		"acsess":true,
+		"type":"duty",
+		"alias":"",
+		"user":null,
+		"duty":"特殊効果",
+		"section":"仕上"
+	},
+	{
+		"acsess":true,
+		"type":"user",
+		"alias":"",
+		"user":"たぬきスタジオ:tanuki-st@animal.example.com",
+		"duty":"特殊効果",
+		"section":"仕上"
+	},
+	{
+		"acsess":true,
+		"type":"user",
+		"alias":"",
+		"user":"穴熊:meles.tanuki-st@animal.example.com",
+		"duty":"特殊効果",
+		"section":"仕上"
+	},
+	{
+		"acsess":true,
+		"type":"section",
+		"alias":"",
+		"user":null,
+		"duty":null,
+		"section":"撮影"
+	},
+	{
+		"acsess":true,
+		"type":"duty",
+		"alias":"",
+		"user":null,
+		"duty":"撮影監督",
+		"section":"撮影"
+	},
+	{
+		"acsess":true,
+		"type":"user",
+		"alias":"",
+		"user":"　さる:mnk@animal.example.com",
+		"duty":"撮影監督",
+		"section":"撮影"
+	},
+	{
+		"acsess":true,
+		"type":"duty",
+		"alias":"",
+		"user":null,
+		"duty":"撮影",
+		"section":"撮影"
+	},
+	{
+		"acsess":true,
+		"type":"user",
+		"alias":"",
+		"user":"猿山撮影所:",
+		"duty":"撮影",
+		"section":"撮影"
+	},
+	{
+		"acsess":true,
+		"type":"user",
+		"alias":"",
+		"user":"さる:mnk.mt-mnk@animal.example.com",
+		"duty":"撮影",
+		"section":"撮影"
+	},
+	{
+		"acsess":true,
+		"type":"user",
+		"alias":"",
+		"user":"ごりら:gori.mt-mnk@animal.example.com",
+		"duty":"撮影",
+		"section":"撮影"
+	},
+	{
+		"acsess":true,
+		"type":"user",
+		"alias":"",
+		"user":"オランウータン:ora.mt-mnk@animal.example.com",
+		"duty":"撮影",
+		"section":"撮影"
+	},
+	{
+		"acsess":true,
+		"type":"user",
+		"alias":"",
+		"user":"チンパンジー:pan.mt-mnk@animal.example.com",
+		"duty":"撮影",
+		"section":"撮影"
+	},
+	{
+		"acsess":true,
+		"type":"user",
+		"alias":"",
+		"user":"ニホンザル:mac.mt-mnk@animal.example.com",
+		"duty":"撮影",
+		"section":"撮影"
+	},
+	{
+		"acsess":true,
+		"type":"duty",
+		"alias":"",
+		"user":null,
+		"duty":"撮影助手",
+		"section":"撮影"
+	},
+	{
+		"acsess":true,
+		"type":"section",
+		"alias":"",
+		"user":null,
+		"duty":null,
+		"section":"3D"
+	},
+	{
+		"acsess":true,
+		"type":"section",
+		"alias":"",
+		"user":null,
+		"duty":null,
+		"section":"無所属"
+	},
+	{
+		"acsess":true,
+		"type":"duty",
+		"alias":"",
+		"user":null,
+		"duty":"＊",
+		"section":"無所属"
+	},
+	{
+		"acsess":true,
+		"type":"section",
+		"alias":"",
+		"user":null,
+		"duty":null,
+		"section":"オブザーバ"
+	},
+	{
+		"acsess":true,
+		"type":"duty",
+		"alias":"",
+		"user":null,
+		"duty":"オブザーバ",
+		"section":"オブザーバ"
+	},
+	{
+		"acsess":true,
+		"type":"duty",
+		"alias":"",
+		"user":null,
+		"duty":"時代考証",
+		"section":"オブザーバ"
+	},
+	{
+		"acsess":true,
+		"type":"user",
+		"alias":"",
+		"user":"ガンモドキ:",
+		"duty":"時代考証",
+		"section":"オブザーバ"
+	}
+]`);
 
 /**
  * アセット分類
  *
- *  assets[assetName] = {name:"アセット表記名",hasXPS:シートありか？,code:コード,shortName:短縮名,description:解説,endNode:終了ノードか？,linkStage:[呼び出しステージ配列]};
+ *    <アセット名>:{
+ *      "assetName"     :<String.アセット名と同一>,
+ *		"name"          :<String.表示名>,
+ *		"hasXPS"        :<Boolean.データがXPSを持つか否か>,
+ *		"code"          :<String.短縮アイテムコード　４文字程度>,
+ *		"shortName"     :<String.省略表記>,
+ *		"descripion"    :<String.解説>,
+ *		"endNode"       :<Boolean.ラインの終了条件となるか否か>,
+ *		"callStage"     :[<Array.当該アセットを開始条件とすることのできるステージのリスト アセットによって存在しない>]
+ *	},
  *
- *  呼び出しステージ配列は アセット側としては、アセットを受けて開始することが可能なステージ群
- *  ステージ側から見るとそのステージの開始に最低限必要なアセット
- *  呼び出しステージ配列が空のアセットはストアにストックされるのみで、次のステージを開始しない
- *  assetName  は重複不可のindex
-アセットは、システムごとに定義してユーザによる編集（追加・削除・内容の変更）が可能
-
- クラスのコレクションはテンプレートとして機能
-                        assetName           name            hasXPS      code    shortName   description     endNode     linkStages
 */
-nas.Pm.assets.addAsset("SCInfo"          ,["コンテチップ"      ,true  ,"SCI"  ,"コンテ","絵コンテから生成した基礎情報",false,["leica","animatic","roughSketch","layout","1stKeydrawing"]]);
-nas.Pm.assets.addAsset("leica"          ,["プリビズ"      ,true  ,"prev"  ,"プリビズ","プリビジュアライゼーション素材",false,["leica","animatic","roughSketch","layout","1stKeydrawing"]]);
-nas.Pm.assets.addAsset("draft"           ,["ラフスケッチ"      ,true  ,"DRFT" ,"ラフ"  ,"「原図のない」ラフスケッチ",false,["leica","animatic","roughSketch","layout","1stKeydrawing"]]);
-nas.Pm.assets.addAsset("layout"          ,["レイアウト"        ,true  ,"__LO" ,"LO"    ,"レイアウト（原図構成）付きの時間情報ありのスケッチ",false,["leica","animatic","roughSketch","layout","1stKeydrawing","layoutProof","layoutA-D","keydrawing","2ndKeydrawing"]]);
-nas.Pm.assets.addAsset("keyAnimation"    ,["原画"              ,true  ,"__KD" ,"原"    ,"キーアニメーション keyDrawing",false,["KDA-D","2ndKdA-D","checkKD","preProofAD","AD"]]);
-nas.Pm.assets.addAsset("AnimationDrawing",["動画"              ,true  ,"__AD" ,"動"    ,"アニメーションドローイング",false,["ADA-D","proofAD","A-D","ADscan","ADcleanUp",'HMechanicalTrace']]);
-nas.Pm.assets.addAsset("cell"            ,["セル"              ,true  ,"CELL" ,"仕"    ,"員数の揃ったコンポジット素材（未完成のものも含む）",true,["AdcleanUp","paint","proofPaint","retouchCell"]]);
-nas.Pm.assets.addAsset("characterDesign" ,["キャラクター設定"  ,false ,"chrD" ,"キャラ","キャラクターデザイン",true,["undefined"]]);
-nas.Pm.assets.addAsset("propDesign"      ,["プロップ設定"      ,false ,"crpD" ,"プロップ","プロップデザイン",true,[]]);
-nas.Pm.assets.addAsset("BGDesign"        ,["美術設定"          ,false ,"bgaD" ,"美設"  ,"美術デザイン",true,[]]);
-nas.Pm.assets.addAsset("referenceSheet"  ,["参考設定"          ,false ,"refD" ,"参考"  ,"その他参考設定",true,[]]);
-nas.Pm.assets.addAsset("colorDesign"     ,["色彩設計"          ,false ,"colD" ,"色設"  ,"メインの色彩設計（打込みデータを除く）",true,[]]);
-nas.Pm.assets.addAsset("colorCoordiante" ,["色指定"            ,true  ,"colC" ,"指定"  ,"色指定（打込みデータ）",true,[]]);
-nas.Pm.assets.addAsset("backgroundArt"   ,["背景"              ,true  ,"_BGA" ,"背景"  ,"背景画",true,[]]);
-nas.Pm.assets.addAsset("cast3D"          ,["3Dアニメーション"  ,true  ,"3DCC" ,"3D"    ,"3D-CGICast",true,[]]);
-nas.Pm.assets.addAsset("EXTRA"           ,["（空アセット）"    ,false ,"NULL" ,"EXTRA" ,"無情報・EXTRAライン導入のため空の本線が出すアセット",true,[]]);
-nas.Pm.assets.addAsset("ALL"             ,["（全アセット）"    ,true  ,"_ALL" ,"ALL"   ,"全素材・コンポジットに必要な全素材シンボル 一時アセット",false,[]]);
+
+nas.Pm.assets.parseConfig(`{
+    "SCInfo":{
+		"name":"コンテチップ",
+		"hasXPS":"true",
+		"code":"SCI",
+		"shortName":"コンテ",
+		"descripion":"null",
+		"endNode":"false",
+		"callStage":["leica","animatic","roughSketch","layout","1stKeydrawing"]},
+	"leica":{
+		"name":"プリビズ",
+		"hasXPS":"true",
+		"code":"prev",
+		"shortName":"プリビズ",
+		"descripion":"null",
+		"endNode":"false",
+		"callStage":["leica","animatic","roughSketch","layout","1stKeydrawing"]},
+	"draft":{
+		"name":"ラフスケッチ",
+		"hasXPS":"true",
+		"code":"DRFT",
+		"shortName":"ラフ",
+		"descripion":"null",
+		"endNode":"false",
+		"callStage":["leica","animatic","roughSketch","layout","1stKeydrawing"]},
+	"layout":{
+		"name":"レイアウト",
+		"hasXPS":"true",
+		"code":"__LO",
+		"shortName":"LO",
+		"descripion":"null",
+		"endNode":"false",
+		"callStage":["leica","animatic","roughSketch","layout","1stKeydrawing","layoutProof","layoutA-D","keydrawing","2ndKeydrawing"]},
+	"keyAnimation":{
+		"name":"原画",
+		"hasXPS":"true",
+		"code":"__KD",
+		"shortName":"原",
+		"descripion":"null",
+		"endNode":"false",
+		"callStage":["KDA-D","2ndKdA-D","checkKD","preProofAD","AD"]},
+	"AnimationDrawing":{
+		"name":"動画",
+		"hasXPS":"true",
+		"code":"__AD",
+		"shortName":"動",
+		"descripion":"null",
+		"endNode":"false",
+		"callStage":["ADA-D","proofAD","A-D","ADscan","ADcleanUp","HMechanicalTrace"]},
+	"cell":{
+		"name":"セル",
+		"hasXPS":"true",
+		"code":"CELL",
+		"shortName":"仕",
+		"descripion":"null",
+		"endNode":"true",
+		"callStage":["AdcleanUp","paint","proofPaint","retouchCell"]},
+	"characterDesign":{
+		"name":"キャラクター設定",
+		"hasXPS":"false",
+		"code":"chrD",
+		"shortName":"キャラ",
+		"descripion":"null",
+		"endNode":"true",
+		"callStage":["undefined"]},
+	"propDesign":{
+		"name":"プロップ設定",
+		"hasXPS":"false",
+		"code":"crpD",
+		"shortName":"プロップ",
+		"descripion":"null",
+		"endNode":"true"},
+	"BGDesign":{
+		"name":"美術設定",
+		"hasXPS":"false",
+		"code":"bgaD",
+		"shortName":"美設",
+		"descripion":"null",
+		"endNode":"true"},
+	"referenceSheet":{
+		"name":"参考設定",
+		"hasXPS":"false",
+		"code":"refD",
+		"shortName":"参考",
+		"descripion":"null",
+		"endNode":"true"},
+	"colorDesign":{
+		"name":"色彩設計",
+		"hasXPS":"false",
+		"code":"colD",
+		"shortName":"色設",
+		"descripion":"null",
+		"endNode":"true"},
+	"colorCoordiante":{
+		"name":"色指定",
+		"hasXPS":"true",
+		"code":"colC",
+		"shortName":"指定",
+		"descripion":"null",
+		"endNode":"true"},
+	"backgroundArt":{
+		"name":"背景",
+		"hasXPS":"true",
+		"code":"_BGA",
+		"shortName":"背景",
+		"descripion":"null",
+		"endNode":"true"},
+	"cast3D":{
+		"name":"3Dアニメーション",
+		"hasXPS":"true",
+		"code":"3DCC",
+		"shortName":"3D",
+		"descripion":"null",
+		"endNode":"true"},
+	"EXTRA":{
+		"name":"（空アセット）",
+		"hasXPS":"false",
+		"code":"NULL",
+		"shortName":"EXTRA",
+		"descripion":"null",
+		"endNode":"true"},
+	"ALL":{
+		"name":"（全アセット）",
+		"hasXPS":"true",
+		"code":"_ALL",
+		"shortName":"ALL",
+		"descripion":"null",
+		"endNode":"false"}
+}`);
+
 /**
  * ステージ分類
  *ステージの持つプロパティ
- *stageName 定義名称：オブジェクトのコールに使用する キャメル記法で
- *name 名称
- *code 省略表記コード
- *shortName 日本語用省略表記コード
- *description 日本語の名称を兼ねた説明？
- *output ステージの出力するアセット種別 文字列
- *
- *nas.Pm.stages[ステージ名]={name:一般名,code:短縮コード(4biteまで),shortName:短縮名,description:解説,output:出力アセット};
- *
- *nas.Pm.stages には、その作品で定義されたステージのリファレンスが格納される。
- *管理DBと連結される場合は、このオブジェクトとDB上のステージ定義テーブルが対照・連結される
- *ここでは、独立駆動のためのテーブルを定義している
- 
-ステージを定義する際にステージにグループ・スタッフロール・個人ユーザを連結することができる
-明示的な連結のないステージは　＊（全ユーザ）に連結される。
-連結テーブルは別に設ける
-リンクのキーはステージID(stageName)
-                        stageName             name                          code    shortName   description output
+ *<String.propName>：{
+ *      stageName:      <String.propNmaeに同じ（省略可）オブジェクトのコールに使用する キャメル記法で>,
+ *      name:           <String.表記名>,
+ *      code:           <String.短縮アイテムコード　４文字程度>,
+ *      shortName:      <String.省略表記名>,
+ *      description:    <String.説明>,
+ *      output:         <String.ステージの出力するアセット種別>
+ *}
  */
-nas.Pm.stages.addStage("undefined"         ,["未定義"                    ,"(undef)" ,"(undefined)" ,"未定義ステージ 制作預りとして扱う。基本的にアセットストアへの編入を指す" ,"SCInfo"]);
-nas.Pm.stages.addStage("init"              ,["初期化"                    ,"init"    ,"開始" ,"初期化ステージ 制作預りとして扱う。制作開始前処理" ,"SCInfo"]);
-nas.Pm.stages.addStage("characterDesign"   ,["キャラクターデザイン"      ,"chrD"    ,"キャラデ" ,"プロダクション管理デザイン（各話発注デザイン）＊メインデザインは別管理" ,"characterDesign"]);
-nas.Pm.stages.addStage("propDesign"        ,["プロップデザイン"          ,"prpD"    ,"プロップ" ,"プロダクション管理デザイン（各話発注デザイン）" ,"propDesign"]);
-nas.Pm.stages.addStage("colorDesign"       ,["色彩設計"                   ,"CD"      ,"色彩設計" ,"カラーデザイン（基本色彩設計）" ,"colorDesign"]);
-nas.Pm.stages.addStage("colorModel"        ,["色彩設計カラーモデル"       ,"coMD"    ,"色彩設計M" ,"カラーモデル（パレット）型基本色彩設計(animo toonz等)" ,"colorDesign"]);
-nas.Pm.stages.addStage("colorCoordination" ,["色指定"                     ,"CC"      ,"色指定" ,"カット別彩色指定データ" ,"colorDesign"]);
-nas.Pm.stages.addStage("coordinationModel" ,["色指定カラーモデル"         ,"_ccM"    ,"色指定M" ,"カラーモデル（パレット）型カット別彩色指定データ(animo toonz等)" ,"colorDesign"]);
-nas.Pm.stages.addStage("bgDesign"          ,["美術設定"                   ,"artD"    ,"美設" ,"プロダクション内デザインワーク" ,"BGDsign"]);
-nas.Pm.stages.addStage("SCInfo"            ,["コンテチップ"               ,"_SCI"    ,"コンテチップ" ,"絵コンテを分解してシーンをプロジェクトデータ化したものイニシャルデータなのでこれを出力する同名ステージは無い" ,"SCInfo"]);
-nas.Pm.stages.addStage("leica"             ,["ライカ"                     ,"leica"   ,"ライカ" ,"タイミングを構成したモーションラフ" ,"draft"]);
-nas.Pm.stages.addStage("contChip"          ,["絵コンテ撮"                 ,"cntC"    ,"コンテ撮" ,"コンテチップを構成したモーションラフ" ,"draft"]);
-nas.Pm.stages.addStage("animatic"          ,["プリビジュアライゼーション" ,"__pv"    ,"PV" ,"同上" ,"layout"]);
-nas.Pm.stages.addStage("roughSketch"       ,["ラフ原画"                   ,"drft"    ,"ラフ原" ,"同上" ,"drfat"]);
-nas.Pm.stages.addStage("layout"            ,["レイアウト"                 ,"LO"      ,"LO" ,"レイアウト上がり(原図あり)" ,"layout"]);
-nas.Pm.stages.addStage("LayoutAD"          ,["LOスキャン"                 ,"LO-D"    ,"レイアウトA/D" ,"layout to Data レイアウトをデータ化したもの" ,"layout"]);
-nas.Pm.stages.addStage("fstKeydrawing"     ,["第一原画"                   ,"1G"      ,"一原" ,"レイアウトを含むラフ原画シート付き" ,"layout"]);
-nas.Pm.stages.addStage("fstKdAD"           ,["第一原画A/D"                ,"1G-D"    ,"一原A/D" ,"" ,"layout"]);
-nas.Pm.stages.addStage("keydrawing"        ,["原画"                       ,"KD"      ,"原" ,"原画上がり作画監督修正含む keyDrawing" ,"keyAnimation"]);
-nas.Pm.stages.addStage("KDAD"              ,["原画A/D"                    ,"KD-D"    ,"原画A/D" ,"keyAnimation to Data 原画をデータ化したもの" ,"keyAnimation"]);
-nas.Pm.stages.addStage("sndKeydrawing"     ,["第二原画"                   ,"2G"      ,"二原" ,"第一原画を原画としてフィニッシュしたもの" ,"keyAnimation"]);
-nas.Pm.stages.addStage("sndKdAD"           ,["第二原画A/D"                ,"2G-D"    ,"二原A/D" ,"第二原画は原画相当" ,"keyAnimation"]);
-nas.Pm.stages.addStage("checkKD"           ,["原画作監修正"               ,"KD+"     ,"作監" ,"上がりは原画として扱う" ,"keyAnimation"]);
-nas.Pm.stages.addStage("preProofAD"        ,["発注前動画検査"             ,"2G+"     ,"前動検" ,"実質上の第三原画又は第二原画修正" ,"keyAnimation"]);
-nas.Pm.stages.addStage("BGOrderMeeting"    ,["BG打合せ"                   ,"BGOM"    ,"BG打ち" ,"グロス発注のための打合せステージ。素材の変更なし" ,"layout"]);
-nas.Pm.stages.addStage("layoutProof"       ,["美術原図整理"               ,"BGLP"    ,"原図整理" ,"レイアウト原図を整理加筆してFIXしたもの" ,"backgroundArt"]);
-nas.Pm.stages.addStage("layoutAD"          ,["背景原図スキャン"           ,"LP-D"    ,"原図スキャン" ,"" ,"backgroundArt"]);
-nas.Pm.stages.addStage("bgArt"             ,["背景美術"                   ,"BG"      ,"背景" ,"完成背景美術" ,"backgroundArt"]);
-nas.Pm.stages.addStage("chaeckBgArt"       ,["美術検査"                   ,"BG+"     ,"美監検査" ,"" ,"backgroundArt"]);
-nas.Pm.stages.addStage("BgArtAD"           ,["美術A/D"                    ,"BG-D"    ,"背景スキャン" ,"" ,"backgroundArt"]);
-nas.Pm.stages.addStage("AD"                ,["動画"                       ,"AD"      ,"動" ,"動画上がり animationDrawing" ,"AnimationDrawing"]);
-nas.Pm.stages.addStage("ADAD"              ,["動画A/D"                    ,"AD/D"    ,"動画A/D" ,"animation to Data 動画をデータ化したもの" ,"AnimationDrawing"]);
-nas.Pm.stages.addStage("proofAD"           ,["動画検査"                   ,"AD+"     ,"動検" ,"上がりは動画 動画検査をステージ扱いする場合に使用" ,"AnimationDrawing"]);
-nas.Pm.stages.addStage("ADscan"            ,["スキャン"                   ,"AD-D"    ,"スキャン" ,"彩色データ作成のためのデジタイズ処理・半製品ペイントデータ" ,"cell"]);
-nas.Pm.stages.addStage("ADcleanUp"         ,["動画クリンアップ"           ,"ADCL"    ,"Adcleanup" ,"デジタイズされた動画をクリンアップする作業(これをトレースと呼ぶソフトもある)" ,"cell"]);
-nas.Pm.stages.addStage("paint"             ,["彩色"                       ,"PT"      ,"PAINT" ,"ソフトウェア作業によるセル彩色" ,"cell"]);
-nas.Pm.stages.addStage("proofPaint"        ,["彩色検査"                   ,"PT+"     ,"セル検" ,"彩色済みデータ" ,"cell"]);
-nas.Pm.stages.addStage("retouchCell"       ,["セル特効"                   ,"PTfx"    ,"特効" ,"加工済みデータ" ,"cell"]);
-nas.Pm.stages.addStage("HMechanicalTrace"  ,["マシントレース"             ,"H-mt"    ,"M-trace" ,"動画をセルに機械転写したもの(古い形式のデータを記述するためのエントリ)" ,"cell"]);
-nas.Pm.stages.addStage("Htrace"            ,["ハンドトレース"             ,"H-tr"    ,"トレス" ,"セル時代の作業を記録するためのエントリ" ,"cell"]);
-nas.Pm.stages.addStage("HcolorTrace"       ,["色トレス"                   ,"H-ct"    ,"色T" ,"セル時代の作業を記録するためのエントリ" ,"cell"]);
-nas.Pm.stages.addStage("Htrace"            ,["ペイント"                   ,"H-pt"    ,"彩色" ,"セル時代の作業を記録するためのエントリ" ,"cell"]);
-nas.Pm.stages.addStage("HproofPaint"       ,["セル検査"                   ,"H-pp"    ,"セル検" ,"セル時代の作業を記録するためのエントリ" ,"cell"]);
-nas.Pm.stages.addStage("HretouchCell"      ,["エアブラシ特効"             ,"H-fx"    ,"エアブラシ" ,"セル時代の作業を記録するためのエントリ" ,"cell"]);
-nas.Pm.stages.addStage("composite"         ,["コンポジット"               ,"COMP"    ,"撮影" ,"コンポジット工程をプロダクションに入れるべきか否かは結構悩む 制作工程上終端なので出力は無し 終了シンボルを作るか？" ,"ALL"]);
-nas.Pm.stages.addStage("preCompositCheck"   ,["撮出し検査"   ,"PCCk" ,"撮出し" ,"撮影前全検査(古い工程を記述するためのエントリ)" ,"ALL"]);
-nas.Pm.stages.addStage("generalDirectorCheck"   ,["監督チェック"                 ,"GDCk" ,"監督チェック" ,"監督による作業検査" ,"ALL"]);
-nas.Pm.stages.addStage("directorCheck"   ,["演出チェック"                 ,"DcCk" ,"演出チェック" ,"担当演出による作業検査" ,"ALL"]);
-
+nas.Pm.stages.parseConfig(`{
+    "undefined":{
+		"name":"未定義",
+		"code":"(undef)",
+		"shortName":"(undefined)",
+		"description":"未定義ステージ 制作預りとして扱う。基本的にアセットストアへの編入を指す",
+		"output":"SCInfo",
+		"stageName":"undefined"
+	},
+	"init":{
+		"name":"初期化",
+		"code":"init",
+		"shortName":"開始",
+		"description":"初期化ステージ 制作預りとして扱う。制作開始前処理",
+		"output":"SCInfo",
+		"stageName":"init"
+	},
+	"characterDesign":{
+		"name":"キャラクターデザイン",
+		"code":"chrD",
+		"shortName":"キャラデ",
+		"description":"プロダクション管理デザイン（各話発注デザイン）＊メインデザインは別管理",
+		"output":"characterDesign",
+		"stageName":"characterDesign"
+	},
+	"propDesign":{
+		"name":"プロップデザイン",
+		"code":"prpD",
+		"shortName":"プロップ",
+		"description":"プロダクション管理デザイン（各話発注デザイン）",
+		"output":"propDesign",
+		"stageName":"propDesign"
+	},
+	"colorDesign":{
+		"name":"色彩設計",
+		"code":"CD",
+		"shortName":"色彩設計",
+		"description":"カラーデザイン（基本色彩設計）",
+		"output":"colorDesign",
+		"stageName":"colorDesign"
+	},
+	"colorModel":{
+		"name":"色彩設計カラーモデル",
+		"code":"coMD",
+		"shortName":"色彩設計M",
+		"description":"カラーモデル（パレット）型基本色彩設計(animo toonz等)",
+		"output":"colorDesign",
+		"stageName":"colorModel"
+	},
+	"colorCoordination":{
+		"name":"色指定",
+		"code":"CC",
+		"shortName":"色指定",
+		"description":"カット別彩色指定データ",
+		"output":"colorDesign",
+		"stageName":"colorCoordination"
+	},
+	"coordinationModel":{
+		"name":"色指定カラーモデル",
+		"code":"_ccM",
+		"shortName":"色指定M",
+		"description":"カラーモデル（パレット）型カット別彩色指定データ(animo toonz等)",
+		"output":"colorDesign",
+		"stageName":"coordinationModel"
+	},
+	"bgDesign":{
+		"name":"美術設定",
+		"code":"artD",
+		"shortName":"美設",
+		"description":"プロダクション内デザインワーク",
+		"output":"BGDsign",
+		"stageName":"bgDesign"
+	},
+	"SCInfo":{
+		"name":"コンテチップ",
+		"code":"_SCI",
+		"shortName":"コンテチップ",
+		"description":"絵コンテを分解してシーンをプロジェクトデータ化したものイニシャルデータなのでこれを出力する同名ステージは無い",
+		"output":"SCInfo",
+		"stageName":"SCInfo"
+	},
+	"leica":{
+		"name":"ライカ",
+		"code":"leica",
+		"shortName":"ライカ",
+		"description":"タイミングを構成したモーションラフ",
+		"output":"draft",
+		"stageName":"leica"
+	},
+	"contChip":{
+		"name":"絵コンテ撮",
+		"code":"cntC",
+		"shortName":"コンテ撮",
+		"description":"コンテチップを構成したモーションラフ",
+		"output":"draft",
+		"stageName":"contChip"
+	},
+	"animatic":{
+		"name":"プリビジュアライゼーション",
+		"code":"__pv",
+		"shortName":"PV",
+		"description":"同上",
+		"output":"layout",
+		"stageName":"animatic"
+	},
+	"roughSketch":{
+		"name":"ラフ原画",
+		"code":"drft",
+		"shortName":"ラフ原",
+		"description":"同上",
+		"output":"drfat",
+		"stageName":"roughSketch"
+	},
+	"layout":{
+		"name":"レイアウト",
+		"code":"LO",
+		"shortName":"LO",
+		"description":"レイアウト上がり(原図あり)",
+		"output":"layout",
+		"stageName":"layout"
+	},
+	"LayoutAD":{
+		"name":"LOスキャン",
+		"code":"LO-D",
+		"shortName":"レイアウトA/D",
+		"description":"layout to Data レイアウトをデータ化したもの",
+		"output":"layout",
+		"stageName":"LayoutAD"
+	},
+	"fstKeydrawing":{
+		"name":"第一原画",
+		"code":"1G",
+		"shortName":"一原",
+		"description":"レイアウトを含むラフ原画シート付き",
+		"output":"layout",
+		"stageName":"fstKeydrawing"
+	},
+	"fstKdAD":{
+		"name":"第一原画A/D",
+		"code":"1G-D",
+		"shortName":"一原A/D",
+		"stageName":"fstKdAD"
+	},
+	"keydrawing":{
+		"name":"原画",
+		"code":"KD",
+		"shortName":"原",
+		"description":"原画上がり作画監督修正含む keyDrawing",
+		"output":"keyAnimation",
+		"stageName":"keydrawing"
+	},
+	"KDAD":{
+		"name":"原画A/D",
+		"code":"KD-D",
+		"shortName":"原画A/D",
+		"description":"keyAnimation to Data 原画をデータ化したもの",
+		"output":"keyAnimation",
+		"stageName":"KDAD"
+	},
+	"sndKeydrawing":{
+		"name":"第二原画",
+		"code":"2G",
+		"shortName":"二原",
+		"description":"第一原画を原画としてフィニッシュしたもの",
+		"output":"keyAnimation",
+		"stageName":"sndKeydrawing"
+	},
+	"sndKdAD":{
+		"name":"第二原画A/D",
+		"code":"2G-D",
+		"shortName":"二原A/D",
+		"description":"第二原画は原画相当",
+		"output":"keyAnimation",
+		"stageName":"sndKdAD"
+	},
+	"checkKD":{
+		"name":"原画作監修正",
+		"code":"KD+",
+		"shortName":"作監",
+		"description":"上がりは原画として扱う",
+		"output":"keyAnimation",
+		"stageName":"checkKD"
+	},
+	"preProofAD":{
+		"name":"発注前動画検査",
+		"code":"2G+",
+		"shortName":"前動検",
+		"description":"実質上の第三原画又は第二原画修正",
+		"output":"keyAnimation",
+		"stageName":"preProofAD"
+	},
+	"BGOrderMeeting":{
+		"name":"BG打合せ",
+		"code":"BGOM",
+		"shortName":"BG打ち",
+		"description":"グロス発注のための打合せステージ。素材の変更なし",
+		"output":"layout",
+		"stageName":"BGOrderMeeting"
+	},
+	"layoutProof":{
+		"name":"美術原図整理",
+		"code":"BGLP",
+		"shortName":"原図整理",
+		"description":"レイアウト原図を整理加筆してFIXしたもの",
+		"output":"backgroundArt",
+		"stageName":"layoutProof"
+	},
+	"layoutAD":{
+		"name":"背景原図スキャン",
+		"code":"LP-D",
+		"shortName":"原図スキャン",
+		"stageName":"layoutAD"
+	},
+	"bgArt":{
+		"name":"背景美術",
+		"code":"BG",
+		"shortName":"背景",
+		"description":"完成背景美術",
+		"output":"backgroundArt",
+		"stageName":"bgArt"
+	},
+	"chaeckBgArt":{
+		"name":"美術検査",
+		"code":"BG+",
+		"shortName":"美監検査",
+		"stageName":"chaeckBgArt"
+	},
+	"BgArtAD":{
+		"name":"美術A/D",
+		"code":"BG-D",
+		"shortName":"背景スキャン",
+		"stageName":"BgArtAD"
+	},
+	"AD":{
+		"name":"動画",
+		"code":"AD",
+		"shortName":"動",
+		"description":"動画上がり animationDrawing",
+		"output":"AnimationDrawing",
+		"stageName":"AD"
+	},
+	"ADAD":{
+		"name":"動画A/D",
+		"code":"AD/D",
+		"shortName":"動画A/D",
+		"description":"animation to Data 動画をデータ化したもの",
+		"output":"AnimationDrawing",
+		"stageName":"ADAD"
+	},
+	"proofAD":{
+		"name":"動画検査",
+		"code":"AD+",
+		"shortName":"動検",
+		"description":"上がりは動画 動画検査をステージ扱いする場合に使用",
+		"output":"AnimationDrawing",
+		"stageName":"proofAD"
+	},
+	"ADscan":{
+		"name":"スキャン",
+		"code":"AD-D",
+		"shortName":"スキャン",
+		"description":"彩色データ作成のためのデジタイズ処理・半製品ペイントデータ",
+		"output":"cell",
+		"stageName":"ADscan"
+	},
+	"ADcleanUp":{
+		"name":"動画クリンアップ",
+		"code":"ADCL",
+		"shortName":"Adcleanup",
+		"description":"デジタイズされた動画をクリンアップする作業(これをトレースと呼ぶソフトもある)",
+		"output":"cell",
+		"stageName":"ADcleanUp"
+	},
+	"paint":{
+		"name":"彩色",
+		"code":"PT",
+		"shortName":"PAINT",
+		"description":"ソフトウェア作業によるセル彩色",
+		"output":"cell",
+		"stageName":"paint"
+	},
+	"proofPaint":{
+		"name":"彩色検査",
+		"code":"PT+",
+		"shortName":"セル検",
+		"description":"彩色済みデータ",
+		"output":"cell",
+		"stageName":"proofPaint"
+	},
+	"retouchCell":{
+		"name":"セル特効",
+		"code":"PTfx",
+		"shortName":"特効",
+		"description":"加工済みデータ",
+		"output":"cell",
+		"stageName":"retouchCell"
+	},
+	"HMechanicalTrace":{
+		"name":"マシントレース",
+		"code":"H-mt",
+		"shortName":"M-trace",
+		"description":"動画をセルに機械転写したもの(古い形式のデータを記述するためのエントリ)",
+		"output":"cell",
+		"stageName":"HMechanicalTrace"
+	},
+	"HcolorTrace":{
+		"name":"色トレス",
+		"code":"H-ct",
+		"shortName":"色T",
+		"description":"セル時代の作業を記録するためのエントリ",
+		"output":"cell",
+		"stageName":"HcolorTrace"
+	},
+	"HretouchCell":{
+		"name":"エアブラシ特効",
+		"code":"H-fx",
+		"shortName":"エアブラシ",
+		"description":"セル時代の作業を記録するためのエントリ",
+		"output":"cell",
+		"stageName":"HretouchCell"
+	},
+	"composite":{
+		"name":"コンポジット",
+		"code":"COMP",
+		"shortName":"撮影",
+		"description":"コンポジット工程をプロダクションに入れるべきか否かは結構悩む 制作工程上終端なので出力は無し 終了シンボルを作るか？",
+		"output":"ALL",
+		"stageName":"composite"
+	},
+	"preCompositCheck":{
+		"name":"撮出し検査",
+		"code":"PCCk",
+		"shortName":"撮出し",
+		"description":"撮影前全検査(古い工程を記述するためのエントリ)",
+		"output":"ALL",
+		"stageName":"preCompositCheck"
+	},
+	"generalDirectorCheck":{
+		"name":"監督チェック",
+		"code":"GDCk",
+		"shortName":"監督チェック",
+		"description":"監督による作業検査",
+		"output":"ALL",
+		"stageName":"generalDirectorCheck"
+	},
+	"directorCheck":{
+		"name":"演出チェック",
+		"code":"DcCk",
+		"shortName":"演出チェック",
+		"description":"担当演出による作業検査",
+		"output":"ALL",
+		"stageName":"directorCheck"
+	},
+	"TP":{
+		"name":"仕上",
+		"code":"T&P",
+		"shortName":"仕上",
+		"description":"仕上げ一括(複合)",
+		"output":"cell",
+		"stageName":"TP"
+	},
+	"ATP":{
+		"name":"動仕",
+		"code":"AT&P",
+		"shortName":"動画仕上",
+		"description":"動画仕上一括(複合)",
+		"output":"cell",
+		"stageName":"ATP"
+	},
+	"KATP":{
+		"name":"原動仕",
+		"code":"KAT&P",
+		"shortName":"原動仕",
+		"description":"原画動画仕上一括(複合)",
+		"output":"cell",
+		"stageName":"KATP"
+	},
+	"sKATP":{
+		"name":"二原動仕",
+		"code":"sKAT&P",
+		"shortName":"二原動仕",
+		"description":"二原動画仕上一括(複合)",
+		"output":"cell",
+		"stageName":"sKATP"}
+}`);
 /**
-以下の複合ステージを追加する
-海外発注等の一括作業のため本来工程として扱っていたものを複合された１工程として扱う
-ステージ内では新規ステージを初期化する手間を省き、全て連続したジョブとして制作を進める
-ステージの成果物は最終的な成果物をターゲットアセットとする。
-
-    仕上(スキャン、トレース、ペイント等をステージ内ジョブとして持つ複合ステージ)
-    動仕(上記の他に動画を含む複合ステージ)
-    二原動画仕上(上記に更に第二原画を加えたもの)
-
-制作担当者によるステージの切り替えが自動化された場合は、これらの複合ステージを利用せず、外注先でもUATをそのまま利用してもらうことが望ましい。
-                        stageName             name                    code    shortName   description output
-*/
-nas.Pm.stages.addStage("TP"             ,["仕上"                     ,"T&P"      ,"仕上" ,"仕上げ一括(複合)" ,"cell"]);
-nas.Pm.stages.addStage("ATP"            ,["動仕"                     ,"AT&P"     ,"動画仕上" ,"動画仕上一括(複合)" ,"cell"]);
-nas.Pm.stages.addStage("sKATP"          ,["二原動仕"                 ,"sKAT&P"   ,"二原動仕" ,"二原動画仕上一括(複合)" ,"cell"]);
-nas.Pm.stages.addStage("KATP"           ,["原動仕"                   ,"KAT&P"    ,"原動仕" ,"原画動画仕上一括(複合)" ,"cell"]);
-
-/**
- * ライン分類
- * 管理モデルの簡略化のため 本線・傍線ともに分離後の個別の合流はないものとする
- * 必要なアセットはストアから引き出す
- * 制作ラインの前方にはスタートラインがあり SCinfoで始まる
- * 後方コンポジット工程の手前にアセットストア（合流）ラインがあり、ここをストアとして全ての素材がマージされる
- * カット情報を持ったコンポジット素材はコンポジット情報を元に各カットへ配分される それ以外のアセットは参照アセットとして格納される
- * 参照アセットは随時引き出し可能
- *
- *nas.Pm.lines には、その作品で定義された工程のリファレンスが格納される。
- *管理DBと連結される場合は、このオブジェクトとDB上のライン定義テーブルが対照・連結される
- *ここでは、独立駆動のためのテーブルを定義している
- *
-                    id                ,[識別名称         ,shortName  ,outputAsset      ,initAsset,code  ,description]
-*/
-//デフォルト
-nas.Pm.lines.addLine("trunk"          ,["本線"            ,"本線"    ,"cell"           ,"SCInfo" ,"cell","管理本線となるセルライン"]);
-
-nas.Pm.lines.addLine("backgroundArt"  ,["背景美術"        ,"背景"    ,"backgroundArt"  ,"layout" ,"bg__"  ,"美術作業"]);
-nas.Pm.lines.addLine("cast3D"         ,["3Dアニメーション","3D"      ,"3DCast"         ,"SCInfo" ,"__3D","3Dアニメーションキャスト"]);
-nas.Pm.lines.addLine("characterDesign",["キャラクター設定","キャラ設","characterDesign","EXTRA"  ,"cd"  ,"キャラクター設定"]);
-nas.Pm.lines.addLine("propDesign"     ,["プロップ設定"    ,"プロップ","propDesign"     ,"EXTRA"  ,"_prp","プロップ設定"]);
-nas.Pm.lines.addLine("BGDesign"       ,["美術設定"        ,"美設"    ,"BGDesign"       ,"EXTRA"  ,"_bga","美術設定作業"]);
-nas.Pm.lines.addLine("colorDesign"    ,["色彩設計"        ,"色設計"  ,"colorDesign"    ,"EXTRA"  ,"colD","色彩設計"]);
-nas.Pm.lines.addLine("colorCoordiante",["色指定"          ,"指定"    ,"colorDesign"    ,"SCInfo" ,"__cc","色指定"]);
-nas.Pm.lines.addLine("composite"      ,["コンポジット"    ,"撮影"    ,"ALL"            ,"ALL"    ,"comp","撮影"]);
-nas.Pm.lines.addLine("ALL"            ,["(全素材)"        ,"全"      ,"ALL"            ,"ALL"    ,"_all","カット情報を持って一時的に集積されるライン"]);
-nas.Pm.lines.addLine("null"           ,["(未設定)"        ,"(未)"    ,"NULL"           ,"NULL"   ,"null","初期化前のオブジェクトに設定するダミーライン"]);
-/*========================================================================*/
+ * ライン
+ *   <ライン名>:{
+ *        "name":           <String.表示名>,
+ *        "shortName":      <String.短縮名>,
+ *        "initAsset":      <String.ライン開始条件アセット>,
+ *        "code":           <String.短縮アイテムコード>,
+ *        "description":    <String.説明>
+ *    }
+ * *
+ */
+nas.Pm.lines.parseConfig(`{
+    "trunk":{
+        "name":"本線",
+        "shortName":"本線",
+        "initAsset":"コンテチップ",
+        "code":"cell",
+        "description":"管理本線となるセルライン"
+    },
+    "backgroundArt":{
+        "name":"背景美術",
+        "shortName":"背景",
+        "initAsset":"レイアウト",
+        "code":"bg__",
+        "description":"美術作業"
+    },
+    "cast3D":{
+        "name":"3Dアニメーション",
+        "shortName":"3D",
+        "initAsset":"コンテチップ",
+        "code":"__3D",
+        "description":"3Dアニメーションキャスト"
+    },
+    "characterDesign":{
+        "name":"キャラクター設定",
+        "shortName":"キャラ設",
+        "initAsset":"（空アセット）",
+        "code":"cd",
+        "description":"キャラクター設定"
+    },
+    "propDesign":{
+        "name":"プロップ設定",
+        "shortName":"プロップ",
+        "initAsset":"（空アセット）",
+        "code":"_prp",
+        "description":"プロップ設定"
+    },
+    "BGDesign":{
+        "name":"美術設定",
+        "shortName":"美設",
+        "initAsset":"（空アセット）",
+        "code":"_bga",
+        "description":"美術設定作業"
+    },
+    "colorDesign":{
+        "name":"色彩設計",
+        "shortName":"色設計",
+        "initAsset":"（空アセット）",
+        "code":"colD",
+        "description":"色彩設計"
+    },
+    "colorCoordiante":{
+        "name":"色指定",
+        "shortName":"指定",
+        "initAsset":"コンテチップ",
+        "code":"__cc",
+        "description":"色指定"
+    },
+    "composite":{
+        "name":"コンポジット",
+        "shortName":"撮影",
+        "initAsset":"（全アセット）",
+        "code":"comp",
+        "description":"撮影"
+    },
+    "ALL":{
+        "name":"(全素材)",
+        "shortName":"全",
+        "initAsset":"（全アセット）",
+        "code":"_all",
+        "description":"カット情報を持って一時的に集積されるライン"
+    },
+    "null":{
+        "name":"(未設定)",
+        "shortName":"(未)",
+        "initAsset":"（空アセット）",
+        "code":"null",
+        "description":"初期化前のオブジェクトに設定するダミーライン"
+    }
+}`);
 
 /**
  *   制作基準テンプレート
- *  制作管理のため基準値として利用
- *   このデータは基礎データとしてユーザが編集する必要あり
- *　 サイトごとのライン内のステージの流れをテンプレートとして保存する
- *   以下に設定するのは参考用テンプレート
- * 引数
- *   親オブジェクト    (nas.Pmは参照用マスターDB　他はリポジトリを置く 対応する　lines,stages,jobNames　を配下に持っているオブジェクト)
- *   ライン    (ライン識別名で)
- *   ラインごとのステージ標準並び (出現順に配列で名称を列記)
- *  各ラインの持つステージ群の最初のエントリがデフォルトのエントリとなり、ドキュメント初期化の際に候補される　または自動処理で割り当てられる
- 'startup'ステージは、テンプレート未設定の場合の汎用アウターとアップステージとする
-nas.Pm.pmTemplate.members.push(new nas.Pm.LineTemplate(nas.Pm,"本線",["レイアウト","原画","動画","色指定","トレス","色トレス","ペイント","セル特効","撮出し検査","撮影"]));
-nas.Pm.pmTemplate.members.push(new nas.Pm.LineTemplate(nas.Pm,"背景美術",["原図整理","背景","美術検査"]));
-*/
-nas.Pm.pmTemplates.addTemplate([
-    ["本線",["Startup","コンテ撮","レイアウト","原画","第一原画","作画監督修正","第二原画","発注前動画検査","動画","色指定","スキャン","トレス","色トレス","ペイント","セル特効","撮出し検査","撮影"]],
-    ["背景美術",["原図整理","背景","美術検査"]]
-    ])
-/*
-    ["本線",["レイアウト","原画","動画","色指定","トレス","色トレス","ペイント","セル特効","撮出し検査","撮影"]],
-    ["本線",["コンテ撮","レイアウト","原画","第一原画","作画監督修正","第二原画","発注前動画検査","動画","色指定","トレス","色トレス","ペイント","セル特効","撮出し検査","撮影"]],
-    ["本線",["コンテ撮","レイアウト","原画","動画","色指定","トレス","色トレス","ペイント","セル特効","撮出し検査","撮影"]],
-*/
+ *
+ *  {
+ *       "line":<String.ライン名>,
+ *       "stages":[<Array.ステージ標準並び（この通りにすべてのステージが並ぶとは限らないが標準的な並びを定義する）>]
+ *   }
+ *
+ */
+nas.Pm.pmTemplates.parseConfig(`[
+    {
+        "line":"本線",
+        "stages":["絵コンテ撮","レイアウト","原画","第一原画","第二原画","発注前動画検査","動画","色指定","スキャン","色トレス","セル特効","撮出し検査","コンポジット"]
+    },
+    {
+        "line":"背景美術",
+        "stages":["美術原図整理","背景美術","美術検査"]
+    }
+]`)
+
 /**
- *  ジョブは、ステージごとに定義される
- *  正確には作業中に初期状態の名称リストの他に逐次新しい名前を定義して良い
- *  定義された名称はステージごとに蓄積される
- *  以降の同ステージの作業者はそのリストから自分の作業にふさわしいジョブ名称を選択することができる
- *  新しい作業名を入力して良い
- *  ジョブの名称、順序は各ステージオブジェクト（カット）毎に異なっていて良い
+ *  ジョブ名称テンプレート
+ * 
+ *  {
+ *        "jobName":      <String.ジョブ名>,
+ *		"targetStage":  <String.ジョブの所属するステージ名 または "*">,
+ *		"jobType":      <String.ジョブのタイプ"init","primary","check">
+ *  },
  *
- *  どのステージでも０番ジョブは予約で、制作管理者が立ち上げる
- * ０番ジョブは手続き的なジョブであり、実際に素材が作成されることはほぼない
- * 名称はステージごとに定義されるが、通常は 「初期化」「開始」「作打済」「準備」 等の名称が与えられる
- * 伝票が発行されるのは０番ジョブに対して行なわれる場合が多い
- *
- *  １番ジョブは、通常そのステージの主作業
- * 原画ステージなら「原画」作業 動画ステージならば「動画」作業となる
- *
- *  ２番ジョブ以降は、主作業に対するチェック作業となる場合が多い
- *  原画ステージならば「演出検査」「作監検査」「監督検査」など
- *  ステージ内の差し戻し作業（やり直し）が発生した場合は、リテイク処理とは別に ステージ内差し戻し作業が発生する
- *  例えば演出検査で演技の変更指示が発生した場合などは、ジョブ番号を増加させて原画作業者が再度作業を行う
- *  ジョブ番号の上限は無い
- *  ステージが求めるアセットが完成するまでジョブを重ねてステージを終了させるものとする。
- 
-＊＊特殊事例として、「作画キャラクター制」での制作作業では、一般に作画作業者間での頻繁なやり取りが想定される。
-この場合は素材の引き渡し毎に何度も「（原画）作画」作業が繰り返されることになる。
-「作画キャラクター制」の場合、キャラクター統一のための作画監督作業は一般に存在しない （アニメーションディレクターとしてのチェックはある）
-
- *  JobDB =エントリーリスト は、ステージ・カットごとの独立したデータとなる
- *  カットとしての保存位置は、ドキュメントのエントリー記録そのもの
- *  ステージとして参照のための保存は システムの配下にJobコレクションをおいてそこに追記してゆく
- *  各エントリの名称は重複が考えられるので、Jobコレクションにエントリされたアイテム（名称）はステージに対するリレーションを保存する
- *  アイテムエントリは、以下のメソッドで随時行う
-        nas.Pm.jobNames.addName("Job名" , relStage);
-
-工程テンプレートの構成は
-
-ラインの出力アセットでステージをフィルタする
-
-    ライン.outputAsset==ステージ.output
-
-抽出されたステージが入力候補となる
-
-ステージのidでジョブ名をフィルターして
-そのステージで使用可能なジョブの入力候補を取得する
-
-ジョブ名のDBは単純な名称とリレーションするステージのセットとする
-ジョブ名,ステージ名,プロパティ(init/primary/check)
-ジョブ名の'*'は置換予約語でこの記述は、指定ステージ名の名称と同一の名称を用いる
-ステージidの'*'は、ワイルドカード展開を行いすべてのステージに対して同じジョブを追加する
-
-
-    以下は、初期値
- 
-nas.Pm.jobNames.addNames([
-	["作業開始","*","init"],
-	["初期化","*","init"],
-	["作打済","*","init"],
-	["準備","*","init"],
-	["演出チェック","*","check"],
-	["監督チェック","*","check"],
-	["作監チェック","*","check"],
-	["総作監チェック","*","check"],
-	["メカ作監チェック","*","check"],
-	["美監チェック","bgArt","check"],
-	["動画検査","AD","check"],
-	["動画検査","ADAD","check"],
-	["セル検査","H-pt","check"],
-	["彩色検査","PT","check"],
-	["トレース検査","H-tr","check"],
-	["トレース検査","ADscan","check"],
-	["クリンアップ検査","ADcleanup","check"],
-	["*作業","*","primary"]
-]);
-
-下は英訳分だけどどうも日本式の役職の英語訳はワカラン　というか　ムチャじゃね？
-nas.Pm.jobNames.addNames([
-	["startup","*","init"],
-	["init","*","init"],
-	["standby","*","init"],
-	["ready","*","init"],
-	["Director","*","check"],
-	["ChiefDirector","*","check"],
-	["AnimationDirector","*","check"],
-	["ChiefAnimationDirector","*","check"],
-	["","*","check"],
-	["ArtDirector","bgArt","check"],
-	["AnimationChecker","AD","check"],
-	["動画検査","ADAD","check"],
-	["セル検査","H-pt","check"],
-	["PaintCheck","PT","check"],
-	["トレース検査","H-tr","check"],
-	["ScanCheck","ADscan","check"],
-	["CleanupCheck","ADcleanup","check"],
-	["*-job","*","primary"]
-]);
-
-テンプレートは、作品ごとの標準工程を示す
-ユーザの入力時に入力値候補として提示される
-line(並列)
-stage(ラインごと順次)
-job(ステージごとtype別)
-
-line
-    stage
-        job
-        job
-    stage
-        job
-        job
-        job
-    stage
-        job
-        job
-        job
-
-3層のデータ構造を持つ
-ジョブ名は重複が多いので省略表記設定を採用
-
-実処理の際に展開？
-又は
-初期化時に展開？
-
-展開メソッドを設けて使用時に展開するのが最もヨサゲ
-
-ProductionLine/ProductionStage/ProductionJob
-各オブジェクトを初期化するのは実際にエントリを作成するタイミングで
-
-*/
-nas.Pm.jobNames.addNames([
-    ["作業開始","*","init"],
-    ["初期化","*","init"],
-    ["作打済","*","init"],
-    ["準備","*","init"],
-    ["*打合せ","*","init"],
-    ["*発注","*","init"],
-    ["作画打合せ","LO","init"],
-    ["作画打合せ","KD","init"],
-    ["作画打合せ","1G","init"],
-    ["作画打合せ","2G","init"],
-    ["*","*","primary"],
-    ["*作業","*","primary"],
-    ["演出チェック","*","check"],
-    ["監督チェック","*","check"],
-    ["作監チェック","*","check"],
-    ["総作監チェック","*","check"],
-    ["メカ作監チェック","*","check"],
-    ["美監チェック","bgArt","check"],
-    ["動画検査","AD","check"],
-    ["動画検査","ADAD","check"],
-    ["セル検査","H-pt","check"],
-    ["彩色検査","PT","check"],
-    ["トレース検査","H-tr","check"],
-    ["トレース検査","ADscan","check"],
-    ["クリンアップ検査","ADcleanup","check"]
-]);
+ */
+nas.Pm.jobNames.parseConfig(`[
+    {
+        "jobName":"作業開始",
+		"targetStage":"*",
+		"jobType":"init"
+	},
+	{
+	    "jobName":"初期化",
+		"targetStage":"*",
+		"jobType":"init"
+	},
+	{
+		"jobName":"作打済",
+		"targetStage":"*",
+		"jobType":"init"
+	},
+	{
+		"jobName":"準備",
+		"targetStage":"*",
+		"jobType":"init"
+	},
+	{
+		"jobName":"*打合せ",
+		"targetStage":"*",
+		"jobType":"init"
+	},
+	{
+		"jobName":"*発注",
+		"targetStage":"*",
+		"jobType":"init"
+	},
+	{
+		"jobName":"作画打合せ",
+		"targetStage":"LO",
+		"jobType":"init"
+	},
+	{
+		"jobName":"作画打合せ",
+		"targetStage":"KD",
+		"jobType":"init"
+	},
+	{
+		"jobName":"作画打合せ",
+		"targetStage":"1G",
+		"jobType":"init"
+	},
+	{
+		"jobName":"作画打合せ",
+		"targetStage":"2G",
+		"jobType":"init"
+	},
+	{
+		"jobName":"*",
+		"targetStage":"*",
+		"jobType":"primary"
+	},
+	{
+		"jobName":"*作業",
+		"targetStage":"*",
+		"jobType":"primary"
+	},
+	{
+		"jobName":"演出チェック",
+		"targetStage":"*",
+		"jobType":"check"
+	},
+	{
+		"jobName":"監督チェック",
+		"targetStage":"*",
+		"jobType":"check"
+	},
+	{
+		"jobName":"作監チェック",
+		"targetStage":"*",
+		"jobType":"check"
+	},
+	{
+		"jobName":"総作監チェック",
+		"targetStage":"*",
+		"jobType":"check"
+	},
+	{
+		"jobName":"メカ作監チェック",
+		"targetStage":"*",
+		"jobType":"check"
+	},
+	{
+		"jobName":"美監チェック",
+		"targetStage":"bgArt",
+		"jobType":"check"
+	},
+	{
+		"jobName":"動画検査",
+		"targetStage":"AD",
+		"jobType":"check"
+	},
+	{
+		"jobName":"動画検査",
+		"targetStage":"ADAD",
+		"jobType":"check"
+	},
+	{
+		"jobName":"セル検査",
+		"targetStage":"H-pt",
+		"jobType":"check"
+	},
+	{
+		"jobName":"彩色検査",
+		"targetStage":"PT",
+		"jobType":"check"
+	},
+	{
+		"jobName":"トレース検査",
+		"targetStage":"H-tr",
+		"jobType":"check"
+	},
+	{
+		"jobName":"トレース検査",
+		"targetStage":"ADscan",
+		"jobType":"check"
+	},
+	{
+		"jobName":"クリンアップ検査",
+		"targetStage":"ADcleanup",
+		"jobType":"check"
+	}
+]`);
+    
 
 /**
  * タイトルDB
  *
- *タイトル文字列  ,[ID(リレーションID) ,フルネーム ,ショートネーム ,コード ,フレームレート ,定尺 ,入力メディア" ,"出力メディア"]
+ *    <Sting.propName>:{
+ *        "projectName":      <String.propNameに同じ>,
+ *        "id":               <String.DB接続用ID UATtoken>,
+ *        "fullName":         <String.タイトル名>,
+ *        "shortName":        <String.表示用短縮名>,
+ *        "code":             <String.短縮アイテムコード>,
+ *        "framerate":        <String.フレームレート文字列>,
+ *        "format":           <String.納品尺をタイムコードで>,
+ *        "inputMedia":       <String.入力（作画）メディア>,
+ *        "outputMedia":      <String.出力（編集/納品）メディア>
+ *    },
  *
- *このタイトル分類と同内容のデータがDBとの通信で扱われる
- *各アプリケーションのタイトルDBをこの形式に統一
- タイトルごとの製作工程テンプレートが必要
-    テンプレートの作成用UIをサーバ上に構築
-    タイトルの付随情報としてテンプレートオブジェクトを持たせる
-    テンプレートオブジェクトを介して nas.PmのDBオブジェクトをアクセスする
-    テンプレートにないアイテムも使用可能
-        
+ *        
  */
-/*
-nas.Pm.workTitles.addTitle("TVshowSample" ,["0000" ,"名称未設定"   ,"未定"   ,"_UN" ,"24FPS" ,"21:00:00" ,"10in-HDTV" ,"HDTV-720p"]);
-nas.Pm.workTitles.addTitle("kachi"        ,["0001" ,"かちかちやま" ,"か"     ,"_KT" ,"24FPS" ,"20:12:00" ,"10in-HDTV" ,"HDTV-720p"]);
-nas.Pm.workTitles.addTitle("Momotaro"     ,["0002" ,"ももたろう"   ,"も"     ,"_MT" ,"24FPS" ,"19:21:00" ,"10in-HDTV" ,"HDTV-720p"]);
-nas.Pm.workTitles.addTitle("Urashima"     ,["0003" ,"うらしまたろう"   ,"う"     ,"_UR" ,"30DF" ,"19:20;00" ,"12in-HDTV" ,"HDTV-1080p"]);
-*/
-nas.Pm.workTitles.parseConfig('"TVshowSample",["0000","名称未設定","未定","_UN","24FPS","21:00:00 .","10in-HDTV","HDTV-720p"]\n"kachi",["0001","かちかちやま","か","_KT","24FPS","20:12:00 .","10in-HDTV","HDTV-720p"]\n"Momotaro",["0002","ももたろう","も","_MT","24FPS","19:21:00 .","10in-HDTV","HDTV-720p"]\n"Urashima",["0003","うらしまたろう","う","_UR","24FPS","24:08:12 .","12in-HDTV","HDTV-1080p"]');
+nas.Pm.workTitles.parseConfig(`{
+    "TVshowSample":{
+        "projectName":"TVshowSample",
+        "id":"0000",
+        "fullName":"名称未設定",
+        "shortName":"未定",
+        "code":"_UN",
+        "framerate":"24FPS",
+        "format":"21:00:00 .",
+        "inputMedia":"10in-HDTV",
+        "outputMedia":"HDTV-720p"
+    },
+    "kachi":{
+        "projectName":"kachi",
+        "id":"0001",
+        "fullName":"かちかちやま",
+		"shortName":"か",
+		"code":"_KT",
+		"framerate":"24FPS",
+		"format":"20:12:00 .",
+		"inputMedia":"10in-HDTV",
+		"outputMedia":"HDTV-720p"
+	},
+	"Momotaro":{
+	    "projectName":"Momotaro",
+		"id":"0002",
+		"fullName":"ももたろう",
+		"shortName":"も",
+		"code":"_MT",
+		"framerate":"24FPS",
+		"format":"19:21:00 .",
+		"inputMedia":"10in-HDTV",
+		"outputMedia":"HDTV-720p"
+	},
+	"Urashima":{
+	    "projectName":"Urashima",
+		"id":"0003",
+		"fullName":"うらしまたろう",
+		"shortName":"う",
+		"code":"_UR",
+		"framerate":"24FPS",
+		"format":"24:08:12 .",
+		"inputMedia":"12in-HDTV",
+		"outputMedia":"HDTV-1080p"}
+}`);
 
 /*
 　* メディアDB
 
  *mediaName ,[ID(リレーションID) ,animationField, baseResolution ,mediaType ,tcType ,pegForm ,pixelAspect ,description]
-mediaName               名称　識別名
-ID                      リレーションID　登録順連番整数　DB接続時に再解決する
-animationField          作画時の標準フィールドのリンク又は識別名称　主に画面縦横比（画郭）を指定するための要素
-baseResolution          基本的な画像解像度（走査線密度==縦方向解像度）String　単位付き文字列で
-mediaType               メディアタイプキーワード string　"drawing"=="input"||"intermediate"||"movie"=="output"
-tcType                  タイムコードタイプ   frames,trag-JA,SMPTE,SMPTE-drop,page-Frames,page-SK　等の文字列で指定？
-pegForm                 タップの型式         invisible,ACME,jis2hales,us3hales ビデオ等のタップと無関係のデータはinvisible　　
-pixelAspect             ピクセル縦横比　縦方向を１として対する横方向の比率を浮動小数点数値で
-description             コメントテキスト
-
-
-nas.Pm.medias.addMedia("" ,["" ,"" ,"" ,"" ,"" ,"" ,"" ,""]);
-
+{
+mediaName:               <String.識別名>,
+id:                      <String.リレーションID　登録順連番整数　DB接続時に再解決する>,
+animationField:          <String.作画時の標準フィールドのリンク又は識別名称　主に画面縦横比（画郭）を指定するための要素>,
+baseResolution:          <String.基本的な画像解像度（走査線密度==縦方向解像度）String　単位付き文字列で>,
+mediaType:               <String.メディアタイプキーワード string　"drawing"=="input"||"intermediate"||"movie"=="output">,
+tcType:                  <String.タイムコードタイプ   frames,trag-JA,SMPTE,SMPTE-drop,page-Frames,page-SK　等の文字列で指定？>,
+pegForm:                 <String.タップの型式         "invisible","ACME","jis2hales","us3hales" ビデオ等のタップと無関係のデータはinvisible>,　　
+pixelAspect:             <String.ピクセル縦横比　縦方向を１として対する横方向の比率を浮動小数点数値で>,
+description:             <String.コメントテキスト>
+}
  */
-nas.Pm.medias.addMedia("作画フレーム300ppi" ,["0000" ,"12in-HDTV" ,"300dpi" ,"drawing" ,"SMPTE" ,"ACME" ,"1" ,"参考用作画フレーム"]);
-nas.Pm.medias.addMedia("作画フレーム200dpi" ,["0001" ,"10in-HDTV" ,"200dpi" ,"drawing" ,"trad-JA" ,"ACME" ,"1" ,"参考用作画フレーム"]);
-nas.Pm.medias.addMedia("作画フレーム192dpi" ,["0002" ,"10in-HDTV" ,"192dpi" ,"drawing" ,"trad-JA" ,"ACME" ,"1" ,"参考用作画フレーム"]);
-nas.Pm.medias.addMedia("HDTV-720p"          ,["0003" ,"HDTV" ,"72dpi" ,"movie" ,"SMPTE-drop" ,"invisible" ,"1" ,"HDTV省力原版"]);
-nas.Pm.medias.addMedia("HDTV-1080p"         ,["0004" ,"HDTV2K" ,"108dpi" ,"movie" ,"SMPTE" ,"invisible" ,"1" ,"HDTV"]);
-nas.Pm.medias.addMedia("HDTV-2160p"         ,["0005" ,"HDTV4K" ,"216dpi" ,"movie" ,"SMPTE" ,"invisible" ,"1" ,"4KHDTV"]);
+nas.Pm.medias.parseConfig(`{
+    "作画フレーム300ppi":{
+		"mediaName":"作画フレーム300ppi",
+		"id":"0000",
+		"animationField":"12in-HDTV",
+		"baseResolution":"300dpi",
+		"mediaType":"drawing",
+		"tcType":"SMPTE",
+		"pegForm":"ACME",
+		"pixelAspect":"1",
+		"description":"参考用作画フレーム"
+	},
+	"作画フレーム200dpi":{
+		"mediaName":"作画フレーム200dpi",
+		"id":"0001",
+		"animationField":"10in-HDTV",
+		"baseResolution":"200dpi",
+		"mediaType":"drawing",
+		"tcType":"trad-JA",
+		"pegForm":"ACME",
+		"pixelAspect":"1",
+		"description":"参考用作画フレーム"
+	},
+	"作画フレーム192dpi":{
+		"mediaName":"作画フレーム192dpi",
+		"id":"0002",
+		"animationField":"10in-HDTV",
+		"baseResolution":"192dpi",
+		"mediaType":"drawing",
+		"tcType":"trad-JA",
+		"pegForm":"ACME",
+		"pixelAspect":"1",
+		"description":"参考用作画フレーム"
+	},
+	"HDTV-720p":{
+		"mediaName":"HDTV-720p",
+		"id":"0003",
+		"animationField":"HDTV",
+		"baseResolution":"72dpi",
+		"mediaType":"movie",
+		"tcType":"SMPTE-drop",
+		"pegForm":"invisible",
+		"pixelAspect":"1",
+		"description":"HDTV省力原版"
+	},
+	"HDTV-1080p":{
+		"mediaName":"HDTV-1080p",
+		"id":"0004",
+		"animationField":"HDTV2K",
+		"baseResolution":"108dpi",
+		"mediaType":"movie",
+		"tcType":"SMPTE",
+		"pegForm":"invisible",
+		"pixelAspect":"1",
+		"description":"HDTV"
+	},
+	"HDTV-2160p":{
+		"mediaName":"HDTV-2160p",
+		"id":"0005",
+		"animationField":"HDTV4K",
+		"baseResolution":"216dpi",
+		"mediaType":"movie",
+		"tcType":"SMPTE",
+		"pegForm":"invisible",
+		"pixelAspect":"1",
+		"description":"4KHDTV"
+	}
+}`);
 
 

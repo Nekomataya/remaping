@@ -50,8 +50,8 @@
 <script src=./nas/lib/xpsio.js></script>
 
 <script src=./nas/scripts/remaping/airUI.js></script>
-<!--        <script src=./nas/configPM.js></script> -->
-        <script src=./pmdb/configPMDB.js></script>
+       <script src=./nas/configPM.js></script>
+<!--         <script src=./pmdb/configPMDB.js></script> -->
 <script src=./nas/scripts/remaping/remaping.js></script>
 
 <!-- 下　remaping.js　にマージ予定　-->
@@ -966,7 +966,7 @@ serviceAgent.pushEntry(xUI.XPS,function(){xUI.setStored("current");sync();
 <button
 	id=ibMstw
     class='iconButton iconButton-goToTime'
-	onMouseDown='if(xUI.player.status=="stop"){xUI.player.start()}else{xUI.put("mark")};'
+	onMouseDown='if(xUI.player.status=="stop"){xUI.player.start(3000)}else{xUI.put("mark")};'
 > </button>
 <button
 	id=ibMstw
@@ -3496,7 +3496,7 @@ duration :
 	<div style='height:36px;'>
 	<button
 		style='height:32px;width:120px'
-	onMouseDown='if(xUI.player.status=="stop"){xUI.player.start()}else{xUI.put("----")};'
+	onMouseDown='if(xUI.player.status=="stop"){xUI.player.start(3000)}else{xUI.put("----")};'
 		title=""
 	> Start / Mark
 	</button><button

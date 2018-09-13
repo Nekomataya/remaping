@@ -8,12 +8,17 @@ var startupTaskController=function(){
     xUI.player.startClick = (new Date()).getTime();
     xUI.player.status   = 'stop';
     xUI.player.loop     = false;
-    xUI.player.start = function(){
+    xUI.player.start = function(waitClocks){
+        xUI.player.startClick = (new Date()).getTime();
+        waitClocks = (isNaN(waitClocks))? 0:parseInt(waitClocks);
         xUI.selectBackup      = xUI.Select.slice();
         xUI.selectionBackup   = xUI.Selection.slice();
         xUI.selection();//バックアップとってクリア
-        xUI.player.startClick = (new Date()).getTime();
+        xUI.player.wait   = (waitClocks)?  waitClocks : 0;
+        xUI.player.waitCount   = parseInt(xUI.player.wait);
         xUI.player.status   = 'run';
+        console.log(xUI.player.wait);
+        console.log(waitClocks);
     };
     xUI.player.stop      = function(){
         xUI.player.status   = 'stop';
@@ -83,10 +88,22 @@ ex:
      タスク実行用のインターバルプロシジャはなるべく小さくする。
 */
 xUI.tskWatcher = function(){
-	var ClockClicks = new Date();
-    var frms = Math.floor((ClockClicks.getTime() - xUI.player.startClick) / (1000 / xUI.XPS.framerate));
+	var ClockClicks = (new Date()).getTime();
+    var frms = Math.floor((ClockClicks - (xUI.player.startClick+xUI.player.wait)) / (1000 / xUI.XPS.framerate));
 //play head move
     if(xUI.player.status　==　'run'){
+//wait
+      if(xUI.player.waitCount > 0){
+        var count = xUI.player.wait-(ClockClicks-xUI.player.startClick);
+//        var countString = ([Math.floor (xUI.player.waitCount / 1000),(xUI.player.waitCount%1000)/100]).join('_');
+        if(xUI.player.waitCount) {
+            var countString = ([Math.ceil(xUI.player.waitCount / 1000),('---------|').slice(-1*Math.floor(xUI.player.waitCount%1000/100))]).join('');
+            if(document.getElementById("app_status").innerHTML!=countString) xUI.printStatus(countString);
+            xUI.player.waitCount = count;
+        }else{
+            xUI.printStatus();
+        }
+      } else if(document.getElementById("app_status").innerHTML) {xUI.printStatus();}
         var currentOffset = (xUI.selectBackup[1]+frms);//再生開始後の経過フレーム
         if((! xUI.player.loop)&&(currentOffset >= xUI.XPS.xpsTracks.duration)){
             xUI.player.stop();xUI.selectCell([xUI.Select[0],0]);

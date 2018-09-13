@@ -42,14 +42,15 @@
  
 プロパティ名  organization
 
- name:通常表記名
- fullName:正式名
- code:ファイル名等使用コード
- id:DBリンク用インデックス(UAT token)
- shortName:短縮名
- description:解説
- contact:組織連絡先
- serviceUrl:サービス元URL　リポジトリのサービスを提供するUATサーバのURL　または　Webストレージ等のファイルリポジトリのURL
+    name:通常表記名
+    fullName:正式名
+    code:ファイル名等使用コード
+    id:DBリンク用インデックス(UAT token)
+    shortName:短縮名
+    description:解説
+    contact:組織連絡先
+    serviceUrl:サービス元URL　リポジトリのサービスを提供するUATサーバのURL　または　Webストレージ等のファイルリポジトリのURL
+
     organizationName   name    code    id  shortName   description contact users
  */
 
@@ -486,15 +487,14 @@ ALL
  *
  *nas.Pm.stages[ステージ名]={name:一般名,code:短縮コード(4biteまで),shortName:短縮名,description:解説,output:出力アセット};
  *
- *nas.Pm.stages には、その作品で定義されたステージのリファレンスが格納される。
- *管理DBと連結される場合は、このオブジェクトとDB上のステージ定義テーブルが対照・連結される
- *ここでは、独立駆動のためのテーブルを定義している
- 
-ステージを定義する際にステージにグループ・スタッフロール・個人ユーザを連結することができる
-明示的な連結のないステージは　＊（全ユーザ）に連結される。
-連結テーブルは別に設ける
-リンクのキーはステージID(stageName)
-                        stageName             name                          code    shortName   description output
+ *  nas.Pm.stages には、その作品で定義されたステージのリファレンスが格納される。
+ *  管理DBと連結される場合は、このオブジェクトとDB上のステージ定義テーブルが対照・連結される
+ *  ここでは、独立駆動のためのテーブルを定義している
+ *
+ *  ステージを定義する際にステージにグループ・スタッフロール・個人ユーザを連結することができる
+ *  明示的な連結のないステージは　＊（全ユーザ）に連結される。
+ *  連結テーブルは別に設ける
+ *  リンクのキーはステージID(stageName)
  */
 nas.Pm.stages.parseConfig(`
 undefined

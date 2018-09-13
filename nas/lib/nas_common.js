@@ -368,8 +368,8 @@ nas.UserInfo = function UserInfo(nameDescription){
     }
     if(String(this.email).match(/\s/)){ this.email.replace(/\s/g,'') };
 //追加プロパティを引数として与える場合は、第二引数をオブエジェクトで {props:value}
-//パーサが受け取った柄プロパティは、コンストラクターに渡す前に分離して引数で与えること
-    if(arguments.length>1){
+//パーサが受け取ったプロパティは、コンストラクターに渡す前に分離して引数で与えること
+    if((arguments.length>1)&&(arguments[1] instanceof Object)){
 //console.log(String(nas.Pm.users.token));
 //console.log(this.toString('JSON'));
         for(var prop in arguments[1]) this[prop] = arguments[1][prop];
@@ -417,27 +417,30 @@ nas.UserInfo.prototype.sameAs = function(myName){
     A.sameAs(B);
 */
 /**
-    nas.UserInfoCollection　配列ベースUserInfoCollection
+    nas.UserInfoCollection
     要素は、nas.UserInfoオブジェクト
     引数にオブジェクトまたは文字列の配列を与えて初期化可能
     直接操作する場合は必ずオブジェクトで与えること
     不正メンバーはコレクション対象外
+    空コレクションをつくる際は引数で空配列を渡す
 */
 nas.UserInfoCollection = function (users){
+    this.members=[];
     if(users instanceof Array){
         for (var j = 0;j<users.length;j++){
             if (!(users[j] instanceof nas.UserInfo)){
                 users[j]= new nas.UserInfo(String(users[j]));
             }
-            if(users[j].handle) this.push(users[j]);
+            if(users[j].handle) this.members.push(users[j]);
         }
     }
+}
     /*
          コレクションメンバーを文字列の配列で返す
     */
-    this.convertStringArray = function(){
+    nas.UserInfoCollection.prototype.convertStringArray = function(){
         var resultArray =[];
-        for (var i = 0;i<this.length;i++){ resultArray.push(this[i].toString());}
+        for (var i = 0;i<this.members.length;i++){ resultArray.push(this.members[i].toString());}
         return resultArray;
     }
     /*
@@ -446,10 +449,10 @@ nas.UserInfoCollection = function (users){
         引数がハンドルのみであった場合もハンドルの一致でインデックスを返す
         その場合先に一致したハンドルが返されるので希望のデータではない可能性があるので注意
     */
-    this.userIndexOf = function(searchUser){
-        if (this.length == 0) return -1;
-        for (var i = 0;i<this.length;i++){
-            if(this[i].sameAs(searchUser)) return i;
+    nas.UserInfoCollection.prototype.userIndexOf = function(searchUser){
+        if (this.members.length == 0) return -1;
+        for (var i = 0;i<this.members.length;i++){
+            if(this.members[i].sameAs(searchUser)) return i;
         }
         return -1;
     }
@@ -458,11 +461,12 @@ nas.UserInfoCollection = function (users){
         配列引数渡しNG
         不正メンバーは追加されない。その場合の戻り値は -1
     */
-    this.addMember = function(newMember){
+    nas.UserInfoCollection.prototype.addMember = function(newMember){
         if (!(newMember instanceof nas.UserInfo)){
+console.log(typeof newMember);
             if(newMember.match(/^(.+)\:(\{[^\{\}]+\}$)/)){
                 var additionalOpt=JSON.parse(RegExp.$2);
-                for(prp in additionalOpt) this[prp] = additionalOpt[prp];
+               // for(prp in additionalOpt) newMember[prp] = additionalOpt[prp];
                 newMember = new nas.UserInfo(RegExp.$1,additionalOpt);
             }else{
                 newMember = new nas.UserInfo(newMember);
@@ -470,29 +474,29 @@ nas.UserInfoCollection = function (users){
         }
         if (! newMember.handle) return -1;
         var iX = this.userIndexOf(newMember);
-        if ( iX < 0 ) {this.push(newMember);return (this.length-1);}else{return iX;}
+        if ( iX < 0 ) {this.members.push(newMember);return (this.members.length-1);}else{return iX;}
     }
     /**
         userストリームをtext出力
         引数: form String 出力形式指定 full/dump,plain/text または JSON
         引数無しでカンマ区切りリスト
     */
-    this.dump=function(form){
+    nas.UserInfoCollection.prototype.dump=function(form){
         switch(form){
         case    'JSON':
-            return JSON.stringify(this);break;
+            return JSON.stringify(this.members);break;
         case    'full-dump':
         case    'full':
         case    'dump':
                 var resultArray=[];
-            for (var ix=0 ; ix < this.length ;ix ++){ resultArray.push(this[ix].toString()) };
+            for (var ix=0 ; ix < this.members.length ;ix ++){ resultArray.push(this.members[ix].toString()) };
             return JSON.stringify(resultArray);break;
         case    'plain-text':
         case    'plain':
         case    'text':
-            return this.join('\n');break;
+            return this.members.join('\n');break;
         default:
-            return this.toString();
+            return this.members.toString();
         }
     }
     /*
@@ -500,21 +504,30 @@ nas.UserInfoCollection = function (users){
         ストリームの形式は plain-text または full-dump または　JSON
         引数が空の場合は、何も操作せずに戻る
     */
-    this.parseConfig=function(dataStream){
+    nas.UserInfoCollection.prototype.parseConfig=function(dataStream){
         if(dataStream.length==0) return false;
-        this.length = 0;
+        this.members.length = 0;
         var form = 'plain-text';
-        if(dataStream.match(/\[[^\[\]]+\]/)){
-            form = 'full-dump'
-        }else if(dataStream.match(/^\{.+/)){
-            form = 'JSON'
-        }
-    
+        if(dataStream.match(/^\s*\[\s*\{/)){
+            form = 'JSON';
+        }else if(dataStream.match(/\[[^\[\]]+\]/)){
+            form = 'full-dump';
+        };
         switch (form){
             case 'JSON':
                 var tempData = JSON.parse(dataStream);
                 for(var ix = 0;ix<tempData.length;ix++){
-                    this.addMember(tempData[ix].handle+':'+tempData[ix].email);
+                    var optProp ={};var hasOpt=false;
+                    for(prp in tempData[ix]){
+                        if((prp == 'handle')||(prp == 'email')) continue;
+                        hasOpt=true;
+                        optProp[prp] = tempData[ix][prp];
+                    }
+                    if(hasOpt){
+                        this.addMember(new nas.UserInfo([tempData[ix].handle,tempData[ix].email].join(':'),optProp));
+                    }else{
+                        this.addMember(new nas.UserInfo(tempData[ix].handle+':'+tempData[ix].email));
+                    }
                 }
             break;
             case 'full-dump':
@@ -533,8 +546,7 @@ nas.UserInfoCollection = function (users){
             break;
         }        
     }
-}
-nas.UserInfoCollection.prototype = Array.prototype;
+
 /*test
 A = new nas.UserInfo("A123:123@23456");
 B = new nas.UserInfo("B123@4567");
