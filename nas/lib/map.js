@@ -134,15 +134,15 @@ nas.MapGroup = function (myType, myMap, nameLabel) {
             this.value = nas.dafaultValues.camerawork;
             break;
         case "sound":
-            this.value =;
+            this.value = nas.defaultValues.soundtrack;
             break;
         case"effect":
         case"composit":
-            this.value =;
+            this.value = nas.defaultValue.composit;
             break;
         case "cell":
         default:
-            this.value =;
+            this.value = nas.defaultValue.cell;
     }
     this.scale;
 

@@ -66,6 +66,7 @@ div.server-info {
   text-align:right;
 }
 div #toolbarHeader {
+	padding:0 0 0 8px;
 	float:left;
 	width:100%;
 	background-color:#a0a0a0;
@@ -719,6 +720,69 @@ button.colorSelect {
     -webkit-border-radius: 3px;
     border-radius: 3px;
 }
+/*	タブコントロール
+*/
+button.tabControll {
+	font-size:100%;
+	height:24px;
+	margin:0;
+	vertical-align:middle;
+	border-style:none;
+	background-color:#eeeeee;
+
+/*タブUI背景イメージ*/
+
+background-image: url(images/ui/tabOverlay.png);
+}
+
+button.tabControll-xmap {
+	width:128px;
+}
+button.tabControll-xpst {
+	width:116px;
+}
+
+button.tabControll:hover {
+	color:#ff8080;
+	font-weight:bold;
+}
+
+button.tabControll:disabled {
+	color:#888888;
+}
+
+/*	icon offset positioning 0/12,24
+spacer-left-deactive
+spacer-left-active
+spacer-midd-deactive
+spacer-midd-active-left
+spacer-midd-active-right
+spacer-right-deactive
+spacer-right-active
+
+active
+deactive
+
+*/
+
+.tabControll-left-deactive           { background-position: 0 0px; }
+.tabControll-left-active   			 { background-position: 0 -24px; }
+.tabControll-left-active-overlay     { background-position: 0 -48px; }
+.tabControll-left-deactive-overlay   { background-position: 0 -72px; }
+.tabControll-midd-deactive           { background-position: -12px -96px; }
+.tabControll-midd-deactive-overlay   { background-position: -12px -120px; }
+.tabControll-midd-active-overlay     { background-position: -12px -144px; }
+.tabControll-right-deactive          { background-position: -12px -168px; }
+.tabControll-right-active            { background-position: -12px -192px; }
+
+div.tabSelector	{
+	background-color:#eeeeee;
+}
+div#tabSelector-base.tabSelector	{
+	background-color:#888888;
+	border-top:4px solid #888888;
+}
+
 
 /*		UI　AEキー　コンバートスイッチ
 */
@@ -839,6 +903,7 @@ button.spinCtl-bottom {
 /**
  * .timeControlButton
  */
+
 .timeControl {
 	margin: 2px 62px 2px 0;
 }
@@ -942,7 +1007,8 @@ input.toolTip	{
 */
 div.optionPanel{
 	display:none;
-	margin:0 0 0 16px 
+	padding:0 0 0 8px;
+	backgroung-color:snow;
 }
 div.optionPanelModal{
 	display:none;
@@ -1100,11 +1166,19 @@ td.colSep {
 	z-index:auto;
 }
 .headerTool {
+	padding:0 0 0 8px;
+	width:100%;
+	top:64px;
+	z-index: 7;
+}
+.XpstHeaderTool {
+	padding:0 0 0 8px;
 	width:100%;
 	top:64px;
 	z-index: 7;
 }
 .footerTool {
+	padding:0 0 0 8px;
 	width:100%;
 	top:0;
 	margin:0;

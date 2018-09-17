@@ -4,7 +4,7 @@
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 <title>remaping..</title>
 
-<link rel="shortcut icon" href="./icons/favicon.ico">
+<link rel="shortcut icon" href="./icons/pmu.ico">
 <link href="template/remaping.css" type="text/css" rel=stylesheet media="screen,tv">
 <link href="template/printout.css" type="text/css" rel=stylesheet media="print">
 
@@ -81,7 +81,6 @@
 <script src=./nas/scripts/remaping/messages.js></script>
 
 <!-- ライブラリインストール -->
-
 </head>
 <body 
 	onload="startupTooltip();var nRS = setTimeout('nas_Rmp_Startup()',10);nas.LangPack.chgLocale('ja');serviceAgent.init();SoundEdit.panelInit();"
@@ -91,39 +90,62 @@
 	onScroll="xUI.onScroll();"
     onKeyDown="return xUI.keyDown(event);"
 >
+<!--	オーバレイヘッドライン
+	Xpstアプリケーション内でスクロールモードの際、固定のシート見出しとして有効化される領域
+	第一、第二、第三象限用
+	ページモードの際は非表示
+
+
+
+-->
 <!--	onKeyDown='if(document.getElementById("iNputbOx")!==document.activeElement){document.getElementById("iNputbOx").focus();};xUI.keyDwon(event)' -->
 <div id=overlayHeadline >
-<div class=fixedHeadline id=UIheader>
-<div class=fixedHeadline id=UIheaderScrollV
-	onMouseDown =" return xUI.Mouse(event)"
-	onMouseUp =" return xUI.Mouse(event)"
-	onDblClick =" return xUI.Mouse(event)"
-	onMouseOver =" xUI.Mouse(event)"
-	class=sheet
-></div>
-<div class=fixedHeadline id=UIheaderScrollH
-	onMouseDown =" return xUI.Mouse(event)"
-	onMouseUp =" return xUI.Mouse(event)"
-	onDblClick =" return xUI.Mouse(event)"
-	onMouseOver =" xUI.Mouse(event)"
-> </div>
-<div class=fixedHeadline id=UIheaderFix > </div>
-</div></div>
+	<div class=fixedHeadline id=UIheader>
+		<div class=fixedHeadline id=UIheaderScrollV
+			onMouseDown =" return xUI.Mouse(event)"
+			onMouseUp =" return xUI.Mouse(event)"
+			onDblClick =" return xUI.Mouse(event)"
+			onMouseOver =" xUI.Mouse(event)"
+			class=sheet
+		></div>
+		<div class=fixedHeadline id=UIheaderScrollH
+			onMouseDown =" return xUI.Mouse(event)"
+			onMouseUp =" return xUI.Mouse(event)"
+			onDblClick =" return xUI.Mouse(event)"
+			onMouseOver =" xUI.Mouse(event)"
+		> </div>
+		<div class=fixedHeadline id=UIheaderFix ></div>
+	</div>
+</div>
+<!--	オーバレイヘッドライン	-->
 
-<!--	簡易UIヘッダ	-->
 
-
-<!-- 固定コントロール fixedHeaderは、UIのマージン等を取得するためのエレメント 		onMouseOver=xUI.Mouse(event);
+<!-- 固定コントロール
+ fixedHeaderは、XpstエディタUIのマージンを取得するためのエレメント
+ xMapブラウザ、エディタはすべてこの中に含まれる
+// 		onMouseOver=xUI.Mouse(event);
 -->
-	<div id="fixedHeader"
-	>
+<div id="fixedHeader"
+>
+<!-- ブラウザ用ドロップダウンメニュー
+	dropdown menu for browser 
+	Xpstアプリケーションのためのドロップダウンメニュー領域
+-->
+<!--	ドキュメントメニュー
 
-<!-- dropdown menu for browser ブラウザ用ドロップダウンメニュー　-->
+
+-->
+
 <div id=pMenu>
-<ul id=pMenu>
-<li><span id=pMdocument>Document</span>
-<ul>
-<!-- 一般ドキュメントメニュー インポート／エクスポートは別に
+	<ul id=pMenu>
+		<li><span id=pMdocument>Document</span>
+			<ul>
+<!-- 一般ドキュメントメニュー
+	インポート／エクスポートは別に設定する
+	
+
+
+-->
 <li id=pMom><span id=pMmenuRoot-d class='pM pM-alt'>タイトル</span><a id=pMmenuRoot
 	href='javascript:void(0);'
 	onclick='return backToDocumentList("products");'
@@ -139,19 +161,19 @@
 	onclick='return backToDocumentList("cuts");'
 	title="カット一覧へ"
 >カット</a></li>
-<hr>
--->
+
+
 <li id=pMbrowseMenu><span id=pMbrowse-d class='pM pM-alt'>書類選択</span><A	id=pMbrowse
 	href = 'javascript:void(0)'
 	onclick = 'xUI.sWitchPanel("File");return false;//myScenePref.open();document.getElementById("scnNewSheet").checked=true;return false;'
 	title="ドキュメントを選択"
->書類選択</A></li><hr>
+>書類選択</A><hr></li>
 
 <li><span id=pMnewdoc-d class='pM pM-alt'>新規書類</span><A id=pMnewdoc
 	href = 'javascript:void(0)'
 	onclick = 'myScenePref.open("new");return false;'
 	title="新規書類"
->新規書類</A></li><hr>
+>新規書類</A><hr></li>
 <li><span id=pMcheckin-d class='pM pM-alt'>作業開始</span><A id=pMcheckin
 	href = 'javascript:void(0)'
 	onclick = 'serviceAgent.checkinEntry();return false;'
@@ -186,7 +208,11 @@ serviceAgent.pushEntry(xUI.XPS,function(){xUI.setStored("current");sync();
 >編集破棄</A></li>
 <hr>
 
-<!-- 制作管理用ドキュメントメニュー -->
+<!-- 制作管理用ドキュメントメニュー
+
+
+
+-->
 <li id=auiMenu><span id=pMnewEntry-d class='pM pM-alt'>新規カット</span><A	id=pMnewEntry
 	href = 'javascript:void(0)'
 	onclick = 'xUI.sWitchPanel("File");return false;'
@@ -236,7 +262,7 @@ serviceAgent.pushEntry(xUI.XPS,function(){xUI.setStored("current");sync();
 	onclick="if(fileBox.saveFile){fileBox.saveFile();}"
 	title="保存（ファイル）"
 >Save</A></li>
-<li id=dMair><<span id=pMexportFS-d class='pM pM-alt'>Save As</span><A	id=pMexportFS
+<li id=dMair><span id=pMexportFS-d class='pM pM-alt'>Save As</span><A	id=pMexportFS
 	href="javascript:void(0);"
 	onclick="if(fileBox.saveAs){fileBox.saveAs();}else{alert('現在ファイルの操作ができません')};return false;"
 	title="別名で保存（ファイル）"
@@ -324,8 +350,13 @@ serviceAgent.pushEntry(xUI.XPS,function(){xUI.setStored("current");sync();
 >Reload</a></li>-->
 </ul>
 </li>
+<!-- 編集メニュー
 
-<li><span id=pMedit>Edit</span>
+
+
+
+-->
+<li class=xpst><span id=pMedit>Edit</span>
 <ul>
 <li><span id=pMselectAll-d class='pM pM-alt'>selectAll</span><A	id=pMselectAll
 	HREF='javascript:void(0);'
@@ -446,7 +477,12 @@ serviceAgent.pushEntry(xUI.XPS,function(){xUI.setStored("current");sync();
 >clearBackup</A></li>
 </ul>
 </li>
+<!-- 参照メニュー
+	
 
+
+
+-->
 <li><span id=pMreference>Ref..</span>
 <ul>
 <li id=dMcgi><span id=pMimportReference-d class='pM pM-alt'></span><A	id=pMimportReference
@@ -501,6 +537,14 @@ serviceAgent.pushEntry(xUI.XPS,function(){xUI.setStored("current");sync();
 <li><span id=pM41><a href='/'>cmd</a></span></li>
 </ul>
 </li>
+-->
+<!--
+	ツールメニュー
+
+
+
+
+
 -->
 <li><span id=pMtools>Tools</span>
 <ul>
@@ -643,7 +687,7 @@ serviceAgent.pushEntry(xUI.XPS,function(){xUI.setStored("current");sync();
 <li><span id=pMcommandbar-d class='pM pM-alt'></span><A	id=pMcommandbar
 	HREF='javascript:void(0);'
 	onclick='xUI.sWitchPanel("Utl");return false;'
-	title="ユーティリテーメニュー"
+	title="ユーティリティーメニュー"
 >commandBar</A></li>
 <li><span id=pMmemoArea-d class='pM pM-alt'></span><A id=pMmemoArea
 	HREF='javascript:void(0);'
@@ -742,6 +786,10 @@ serviceAgent.pushEntry(xUI.XPS,function(){xUI.setStored("current");sync();
 <!--	ツールバー/toolbarHeader	-->
 <div id=toolbarHeader>
 <!--	ツールバーボタン/toolIcons	-->
+ <button
+ title = 'hide toolbar'
+ onclick="document.getElementById('toolbarHeader').style.display=(document.getElementById('toolbarHeader').style.display=='none')?'inline':'none';xUI.adjustSpacer();"
+>[☓]</button>
 <!-- <span id="siteMenu">
 	<button
 	id=ibMmenuBack
@@ -967,12 +1015,14 @@ serviceAgent.pushEntry(xUI.XPS,function(){xUI.setStored("current");sync();
 	id=ibMstw
     class='iconButton iconButton-goToTime'
 	onMouseDown='if(xUI.player.status=="stop"){xUI.player.start()}else{xUI.player.getCount=true};'
-	onMouseUp='if(xUI.player.status=="run"){xUI.player.getCount=false;};'
+	onMouseUp='if(xUI.player.status=="run"){xUI.player.getCount=false};'
+	title='stop watch test start'
 > </button>
 <button
 	id=ibMstw
     class='iconButton iconButton-stop'
-	onMouseDown='if(xUI.player.status=="run"){xUI.player.stop();}else{clearMark();};'
+	onMouseDown='if(xUI.player.status=="run"){xUI.player.stop()}else{clearMark()};'
+	title='stop watch test stop'
 > </button>
 </span>
 
@@ -992,113 +1042,245 @@ serviceAgent.pushEntry(xUI.XPS,function(){xUI.setStored("current");sync();
 </div>
 <!--	/ツールバー/toolbarHeade	-->
 
-
-
-<!-- 固定ヘッダ 最上段　印刷時非表示　id="fixed"-->
-<div class=headerTool id=headerTool>
-<br>	<!-- カウンタ -->
-<input	type=button
-	id=activeLvl
-	name=activeLvl
-	class=aekConvert
-	value=A
-	onclick="chkValue(this.id);"
-	title="AEキー変換"
->
-<input	type=text
-	id=fct0
-	name=fct0
-	class=fct
-	value='00:00:00+00_'
-	onChange='chkValue(this.id);'
-	title="変更するとジャンプ"
-><input	type=text
-	id=fct1
-	name=fct1
-	class=fct
-	value='p00 / 000+00_'
-	onChange='chkValue(this.id);'
-	title="数字だけはコマ数"
->
-	<!-- カウンタ -->
-
-<span style="float:right;">
-	<!-- スピン -->
-<input	type=text
-	name=spin_V
-	id=spin_V
-	class=spinCtl
-	value=3
-	onMousedown="nas.sliderVALUE([event,this.id,'24','1','0']);"
-	onChange="chkValue(this.id);"
-	title="スピン値"
->
-<span style="position:relative;height:16px;width:24px;">
+<!--	ユーティリティーコマンドバー	最上段に配置　-->
+<div class=optionPanel id=optionPanelUtl >
+<hr>
+ <button
+	id=tbLock
+ title = 'hide toolbar'
+ onclick='xUI.sWitchPanel("Utl");return false;'
+>[☓]</button>
 <button
-	name=spin_Vup
-	id=v_up
-	class="subControl subControl-incr spinCtl spinCtl-top"
-	onclick="chkValue(this.id);"
-	title="SPIN増"
-> </button><button
-	name=spin_Vdn
-	id=v_dn
-	class="subControl subControl-decr spinCtl spinCtl-bottom"
-	onclick="chkValue(this.id);"
-	title="SPIN減"
-> </button></span>
-<a
-	id=spinCkLb
-	href="javascript:void(0);"
-	onClick='return chg("spinCk");'
-	title="選択範囲をスピン指定にする"
-
-> Spin </a><input type=checkbox
-	name=spinCk
-	id=spinCk
-	onChange="chkValue(this.id);"
-	title="選択範囲をスピン指定にする"
+    id=ibMcopyToReference
+    class='iconButton  iconButton-toReference'
+	title="参照エリアに転記"
+	onclick='putReference();'
 >
- 
-	<!-- スピン -->
-
-<input	name=iNputbOx
-	id=iNputbOx
-	class=iNputbOx
-	type=text
-	size=24
-	onKeyPress="return xUI.keyPress(event);"
-	onKeyUp   ="return xUI.keyUp(event);"
-	title="シートにデータを入力します。"
-> 
-<!--
-	onKeyDown ="return xUI.keyDown(event);"
-	onBlur='xUI.put(this.value);'
-	onKeyPress="console.log(xUI.keyPress(event));return true;"
--->
-<button
-	name=ok
-	id=ok
-	style="width:36px;position:relative;top:4px;"
-	onclick="chkValue(this.id);"
-	title="確定[Enter]"
->
-		<img src=./images/ui/ok.png height=16>
-<!--		    <span class='ui-icon ui-icon-radio-off'>
--->
 </button><button
-	name=ng
-	id=ng
-	style="width:20px;position:relative;top:4px;"
-	onclick="chkValue(this.id);"
-	title="取り消し[esc]"
+    id=ibMcopyFromReference
+    class='iconButton  iconButton-fromReference'
+	title="参照エリアを複製"
+	onclick='getReference();'
 >
-		<img src=./images/ui/ng.png height=16> 
-<!--    <span class='ui-icon ui-icon-close'>
--->
 </button>
-</span>
+<button
+    id=ibMpushBackup
+    class='iconButton  iconButton-set'
+	title="バックアップ更新"
+	onclick="xUI.setBackup();"
+>
+</button><button
+    id=ibMrestoreBackup
+    class='iconButton  iconButton-get'
+	title="バックアップを読み出し"
+	onclick="xUI.getBackup();"
+>
+</button><button
+    id=ibMclearTL
+    class='iconButton  iconButton-clearTL'
+	title="選択されたタイムラインのデータを全消去"
+	onclick='clearTL();'
+>
+</button><button
+    id=ibMformatTL
+    class='iconButton  iconButton-reformat'
+	title="タイムラインを１列整形"
+	onclick="reformatTimeline();"
+>
+</button><button
+    id=ibMsimplifyTL
+    class='iconButton  iconButton-simplify'
+	title="タイムラインを１列清掃"
+	onclick="simplifyTimeline();"
+>
+</button><button
+    id=ibMfootStamp
+    class='iconButton  iconButton-footStamp'
+    style="color:snow;font-size:16px;"
+	title="差分機能切り替え"
+	onclick='xUI.footstampReset(!(xUI.footMark));'
+>✓
+</button><button
+    id=ibMpaintFS
+    class='iconButton  iconButton-paintFS'
+	title="差分表示"
+	onclick='xUI.footstampPaint();'
+>
+</button><button
+    id=ibMclearFS
+    class='iconButton  iconButton-clearFS'
+	title="フットスタンプをクリアします"
+	onclick='xUI.footstampClear();'
+>
+</button><button
+    id=ibMrenameTL
+    class='iconButton  iconButton-layerName'
+	title="タイムライン名前変更"
+	onclick="reNameLabel(xUI.Select[0]);"
+>
+</button><button
+    id=ibMaddSoundTrack
+    class='iconButton  iconButton-addSoundTL'
+	title="音響トラック追加"
+	onclick="addTimeline('dialog');"
+>
+</button><button
+    id=ibMaddStilTL
+    class='iconButton  iconButton-addStillTL'
+	title="静止画タイムライン追加"
+	onclick="addTimeline('still');"
+>
+</button><button
+    id=ibMaddReplacementTL
+    class='iconButton iconButton-addReplacementTL'
+	title="セル追加"
+	onclick="addTimeline('timing');"
+>
+</button><button
+    id=ibMaddCameraTL
+    class='iconButton  iconButton-addCameraTL'
+	title="カメラワーク追加"
+	onclick="addTimeline('camera');"
+>
+</button><button
+    id=ibMaddSfxTL
+    class='iconButton  iconButton-addEffectsTL'
+	title="エフェクト追加"
+	onclick="addTimeline('effect');"
+>
+</button><button
+    id=ibMinsertTL
+    class='iconButton  iconButton-insertTL'
+	title="タイムラインを挿入します"
+	onclick="insertColumns();"
+>
+</button><button
+    id=ibMseleteTL
+    class='iconButton  iconButton-removeTL'
+	title="タイムラインを削除します"
+	onclick="deleteColumns();"
+>
+</button><button
+    id=ibMinsertBlank
+    class='iconButton  iconButton-blockInsert'
+	title="空白データを挿入して以降後送"
+	onclick="insertBlank();"
+>
+</button><button
+    id=ibMblockRemove
+    class='iconButton  iconButton-blockRemove'
+	title="選択範囲を削除して間を詰める"
+	onclick="deleteBlank();"
+>
+</button><button
+    id=ibMaddCircle
+    class='iconButton  iconButton-addCircle'
+	title="丸囲い"
+	onclick="addCircle('circle');"
+>
+</button><button
+    id=ibMaddAangles
+    class='iconButton  iconButton-addAngles'
+	title="矢囲い"
+	onclick="addCircle('triangle');"
+>
+</button><button
+    id=ibMaddBlackets
+    class='iconButton  iconButton-addBrackets'
+	title="角括弧"
+	onclick="addCircle('brackets')"
+>
+</button><button
+    id=ibMincrementNum
+    class='iconButton  iconButton-incrCell'
+	title="セルを繰り上げる"
+	onclick="incrementCell(1);"
+>
+</button><button
+    id=ibMdecrementNum
+    class='iconButton  iconButton-decrCell'
+	title="セルを繰り下げる"
+	onclick="incrementCell(-1);"
+>
+</button><button
+    id=ibMvBar
+    class='iconButton  iconButton-vLine'
+	title="選択範囲に縦線"
+	onclick="putSectionLine('|');"
+>
+</button><button
+    id=ibMwBar
+    class='iconButton  iconButton-wLine'
+	title="選択範囲に波線"
+	onclick='setWave(event);'
+>
+</button><button
+    id=ibMinterpSign
+    class='iconButton  iconButton-interpDot'
+	title="補間記号"
+	onclick="interpSign();"
+>
+</button><button
+    id=ibMcamera
+    class='iconButton  iconButton-interpSection'
+	title="選択範囲をカメラワークに"
+	onclick="writeNewSection('camera');"
+>
+</button><button
+    id=ibMtransition
+    class='iconButton  iconButton-transition'
+	title="選択範囲をトランジションに"
+	onclick="writeNewSection('transition');"
+>
+</button><button
+    id=ibMfadein
+    class='iconButton  iconButton-FI'
+	title="選択範囲をフェードインに"
+	onclick="writeNewSection('FI');"
+>
+</button><button
+    id=ibMfadeout
+    class='iconButton  iconButton-FO'
+	title="選択範囲をフェードアウトに"
+	onclick="writeNewSection('FO');"
+>
+</button>
+<hr></div>
+<!--     コマンドツールバーここまで          -->
+<!-- ploject status bar -->
+<div
+style = 'text-align:right'
+>
+Project：カット袋の識別情報 /　TITLE#OPUS // s-c004 / s-c012 // 0: (本線) // 0: [レイアウト] // 3: 演出検査
 </div>
+<hr>
+<!-- タブコントロール
+プロジェクト(xMAP)/タイムシート(Xpst)の切り替えUI
+カットが増えすぎた場合は、スクロールを行うので準備が必用
+-->
+<div class=tabSelector id=tabSelector-base>
+<button
+	id =tab_0
+	class ='tabControll tabControll-xmap tabControll-left-deactive'
+	onClick = xUI.tabSelect(0);
+>プロジェクト
+</button><button
+	id=tab_1
+	class='tabControll tabControll-xpst tabControll-midd-active-overlay'
+	onClick = xUI.tabSelect(1);
+>カット	　１
+</button><button
+	id=tab_2
+	class='tabControll tabControll-xpst tabControll-right-deactive'
+	onClick = xUI.tabSelect(2);
+>カット　２
+</button>
+</div>
+<div class=tabSelector id=tabSelector>
+<br>
+</div>
+<!-- タブコントロール -->
+
 <!-- 管理IDコントロール UI-->
     <div id =pmcui class=pmcui>
 <button
@@ -1268,6 +1450,7 @@ class=optionPanel id=optionPanelProductManagement
     class='pmControl pmControl-new' 
     title='新規カットを登録'
 	onclick='xUI.storeDocument();'
+>新規登録</button>
 <!--
 	'serviceAgent.addEntry(xUI.XPS,function(){
     var myIdentifier = Xps.getIdentifier(xUI.XPS,false);
@@ -1278,7 +1461,7 @@ class=optionPanel id=optionPanelProductManagement
     alert("データ登録失敗");
 });'
 -->
->新規登録</button>
+
     </div>
 
 <hr><hr>
@@ -1350,10 +1533,119 @@ class=optionPanel id=optionPanelProductManagement
 <span style='border-style:solid;border-color:red;'> Read Only </span> 
 </div>
 <!-- ドキュメント ステータス　オーバレイ　-->
+<!--	タイムシートUIヘッダ　-->
+<!-- 固定ヘッダ 最上段　印刷時非表示　id="fixed"-->
+
+<div class='XpstHeaderTool xpst' id=XpstHeaderTool>
+<!-- カウンタ -->
+<input	type=button
+	id=activeLvl
+	name=activeLvl
+	class=aekConvert
+	value=A
+	onclick="chkValue(this.id);"
+	title="AEキー変換"
+>
+<input	type=text
+	id=fct0
+	name=fct0
+	class=fct
+	value='00:00:00+00_'
+	onChange='chkValue(this.id);'
+	title="変更するとジャンプ"
+><input	type=text
+	id=fct1
+	name=fct1
+	class=fct
+	value='p00 / 000+00_'
+	onChange='chkValue(this.id);'
+	title="数字だけはコマ数"
+>
+	<!-- カウンタ -->
+
+<span style="float:right;">
+	<!-- スピン -->
+<input	type=text
+	name=spin_V
+	id=spin_V
+	class=spinCtl
+	value=3
+	onMousedown="nas.sliderVALUE([event,this.id,'24','1','0']);"
+	onChange="chkValue(this.id);"
+	title="スピン値"
+>
+<span style="position:relative;height:16px;width:24px;">
+<button
+	name=spin_Vup
+	id=v_up
+	class="subControl subControl-incr spinCtl spinCtl-top"
+	onclick="chkValue(this.id);"
+	title="SPIN増"
+> </button><button
+	name=spin_Vdn
+	id=v_dn
+	class="subControl subControl-decr spinCtl spinCtl-bottom"
+	onclick="chkValue(this.id);"
+	title="SPIN減"
+> </button></span>
+<a
+	id=spinCkLb
+	href="javascript:void(0);"
+	onClick='return chg("spinCk");'
+	title="選択範囲をスピン指定にする"
+
+> Spin </a><input type=checkbox
+	name=spinCk
+	id=spinCk
+	onChange="chkValue(this.id);"
+	title="選択範囲をスピン指定にする"
+>
+ 
+	<!-- スピン -->
+
+<input	name=iNputbOx
+	id=iNputbOx
+	class=iNputbOx
+	type=text
+	size=24
+	onKeyPress="return xUI.keyPress(event);"
+	onKeyUp   ="return xUI.keyUp(event);"
+	title="シートにデータを入力します。"
+> 
+<!--
+	onKeyDown ="return xUI.keyDown(event);"
+	onBlur='xUI.put(this.value);'
+	onKeyPress="console.log(xUI.keyPress(event));return true;"
+-->
+<button
+	name=ok
+	id=ok
+	style="width:36px;position:relative;top:4px;"
+	onclick="chkValue(this.id);"
+	title="確定[Enter]"
+>
+		<img src=./images/ui/ok.png height=16>
+<!--		    <span class='ui-icon ui-icon-radio-off'>
+-->
+</button><button
+	name=ng
+	id=ng
+	style="width:20px;position:relative;top:4px;"
+	onclick="chkValue(this.id);"
+	title="取り消し[esc]"
+>
+		<img src=./images/ui/ng.png height=16> 
+<!--    <span class='ui-icon ui-icon-close'>
+-->
+</button>
+</span>
+</div>
+<!--	タイムシートUIヘッダ　-->
+
 <!-- シートヘッダテーブル　編集機能あり縮小UIの際は非表示または縮小表示に -->
-<div id=sheetHeaderTable>
+<div id=sheetHeaderTable class=xpst>
 <!-- コンパクトビューの時は　インジケータ　カット番号　時間　を残して非表示-->
-<table class=info border=0 >
+<table class=info>
 <tr>
      <td id=edchg>
 	編集中
@@ -1403,214 +1695,9 @@ class=optionPanel id=optionPanelProductManagement
 </table>
 </div>
 <!-- 固定ヘッダ ここまで 以下は表示切り換えのパネル群 -->
-<!--	ユーティリティーコマンドバー	最上段に配置　-->
-<div class=optionPanel id=optionPanelUtl >
-<hr>
- <input type=checkbox
-	id=tbLock
-	style='display:none;'
-	title="toolbar-lock"
-	checked=false
->
-<button
-    id=ibMcopyToReference
-    class='iconButton  iconButton-toReference'
-	title="参照エリアに転記"
-	onclick='putReference();'
->
-</button><button
-    id=ibMcopyFromReference
-    class='iconButton  iconButton-fromReference'
-	title="参照エリアを複製"
-	onclick='getReference();'
->
-</button>
-<button
-    id=ibMpushBackup
-    class='iconButton  iconButton-set'
-	title="バックアップ更新"
-	onclick="xUI.setBackup();"
->
-</button><button
-    id=ibMrestoreBackup
-    class='iconButton  iconButton-get'
-	title="バックアップを読み出し"
-	onclick="xUI.getBackup();"
->
-</button><button
-    id=ibMclearTL
-    class='iconButton  iconButton-clearTL'
-	title="選択されたタイムラインのデータを全消去"
-	onclick='clearTL();'
->
-</button><button
-    id=ibMformatTL
-    class='iconButton  iconButton-reformat'
-	title="タイムラインを１列整形"
-	onclick="reformatTimeline();"
->
-</button><button
-    id=ibMsimplifyTL
-    class='iconButton  iconButton-simplify'
-	title="タイムラインを１列清掃"
-	onclick="simplifyTimeline();"
->
-</button><button
-    id=ibMfootStamp
-    class='iconButton  iconButton-footStamp'
-    style="color:snow;font-size:16px;"
-	title="差分機能切り替え"
-	onclick='xUI.footstampReset(!(xUI.footMark));'
->✓
-</button><button
-    id=ibMpaintFS
-    class='iconButton  iconButton-paintFS'
-	title="差分表示"
-	onclick='xUI.footstampPaint();'
->
-</button><button
-    id=ibMclearFS
-    class='iconButton  iconButton-clearFS'
-	title="フットスタンプをクリアします"
-	onclick='xUI.footstampClear();'
->
-</button><button
-    id=ibMrenameTL
-    class='iconButton  iconButton-layerName'
-	title="タイムライン名前変更"
-	onclick="reNameLabel(xUI.Select[0]);"
->
-</button><button
-    id=ibMaddSoundTrack
-    class='iconButton  iconButton-addSoundTL'
-	title="音響トラック追加"
-	onclick="addTimeline('dialog');"
->
-</button><button
-    id=ibMaddStilTL
-    class='iconButton  iconButton-addStillTL'
-	title="静止画タイムライン追加"
-	onclick="addTimeline('still');"
->
-</button><button
-    id=ibMaddReplacementTL
-    class='iconButton iconButton-addReplacementTL'
-	title="セル追加"
-	onclick="addTimeline('timing');"
->
-</button><button
-    id=ibMaddCameraTL
-    class='iconButton  iconButton-addCameraTL'
-	title="カメラワーク追加"
-	onclick="addTimeline('camera');"
->
-</button><button
-    id=ibMaddSfxTL
-    class='iconButton  iconButton-addEffectsTL'
-	title="エフェクト追加"
-	onclick="addTimeline('effect');"
->
-</button><button
-    id=ibMinsertTL
-    class='iconButton  iconButton-insertTL'
-	title="タイムラインを挿入します"
-	onclick="insertColumns();"
->
-</button><button
-    id=ibMseleteTL
-    class='iconButton  iconButton-removeTL'
-	title="タイムラインを削除します"
-	onclick="deleteColumns();"
->
-</button><button
-    id=ibMinsertBlank
-    class='iconButton  iconButton-blockInsert'
-	title="空白データを挿入して以降後送"
-	onclick="insertBlank();"
->
-</button><button
-    id=ibMblockRemove
-    class='iconButton  iconButton-blockRemove'
-	title="選択範囲を削除して間を詰める"
-	onclick="deleteBlank();"
->
-</button>
-<button
-    id=ibMaddCircle
-    class='iconButton  iconButton-addCircle'
-	title="丸囲い"
-	onclick="addCircle('circle');"
->
-<button
-    id=ibMaddAangles
-    class='iconButton  iconButton-addAngles'
-	title="矢囲い"
-	onclick="addCircle('triangle');"
->
-</button><button
-    id=ibMaddBlackets
-    class='iconButton  iconButton-addBrackets'
-	title="角括弧"
-	onclick="addCircle('brackets')"
->
-</button><button
-    id=ibMincrementNum
-    class='iconButton  iconButton-incrCell'
-	title="セルを繰り上げる"
-	onclick="incrementCell(1);"
->
-</button><button
-    id=ibMdecrementNum
-    class='iconButton  iconButton-decrCell'
-	title="セルを繰り下げる"
-	onclick="incrementCell(-1);"
->
-</button><button
-    id=ibMvBar
-    class='iconButton  iconButton-vLine'
-	title="選択範囲に縦線"
-	onclick="putSectionLine('|');"
->
-</button><button
-    id=ibMwBar
-    class='iconButton  iconButton-wLine'
-	title="選択範囲に波線"
-	onclick='setWave(event);'
->
-</button><button
-    id=ibMinterpSign
-    class='iconButton  iconButton-interpDot'
-	title="補間記号"
-	onclick="interpSign();"
->
-</button><button
-    id=ibMcamera
-    class='iconButton  iconButton-interpSection'
-	title="選択範囲をカメラワークに"
-	onclick="writeNewSection('camera');"
->
-</button><button
-    id=ibMtransition
-    class='iconButton  iconButton-transition'
-	title="選択範囲をトランジションに"
-	onclick="writeNewSection('transition');"
->
-</button><button
-    id=ibMfadein
-    class='iconButton  iconButton-FI'
-	title="選択範囲をフェードインに"
-	onclick="writeNewSection('FI');"
->
-</button><button
-    id=ibMfadeout
-    class='iconButton  iconButton-FO'
-	title="選択範囲をフェードアウトに"
-	onclick="writeNewSection('FO');"
->
-</button>
-<!--     コマンドツールバーここまで          -->
-<hr></div>
-<!--	ユーティリティーパネル	-->
+
+
+<!--	以下ユーティリティーパネル群	-->
 <!--    トラックラベルセレクタ  -->
 <div class=optionPanel id=optionPanelTrackLabel >
 
@@ -1760,7 +1847,7 @@ onclick='nas.incrFCTonHTMLInput(document.getElementById("editTC"),"-(1)")'
 </div>
 <!--	プログレスパネル	-->
 <!--	AEキー変換	-->
-<div class=optionPanel id=optionPanelAEK >
+<div class='optionPanel' id=optionPanelAEK >
 <table>
 <tr>
 <td>AE keyペースト用データ<br>
@@ -3037,7 +3124,7 @@ debug console
 	<th id=tBitems>よく使う文字</th>
 	<td colspan=3>
 		<input	type=checkbox
-			naem=single
+			name=single
 			id=single
 			checked=true
 		><a href="javascript:void(0)" onClick='return chg("single")'>single-click</a>
@@ -3397,9 +3484,9 @@ onchange=';SoundEdit.sync();'
 IN :
 <button id=soundInpointLock type=button class="iconButton"
 	onClick='SoundEdit.syncTCL(0);'
->🔓</button><input type=test id=soundInPoint value="0:00:00 ." class='tcInput'
+>🔓</button><input type=text id=soundInPoint value="0:00:00 ." class='tcInput'
 	onMousedown="this.value=nas.FCT2Frm(this.value);nas.sliderVALUE([event,this.id,xUI.XPS.xpsTracks.duration-1,'0','0']);"
-    onchanging='return'
+    onChanging='return'
     onChange='this.value=nas.Frm2FCT(nas.FCT2Frm(this.value.toString()),2,0);SoundEdit.floatTC(0);'
 ><span class='subControl_SPIN'>
 <button
@@ -3418,9 +3505,9 @@ IN :
 OUT :
 <button id=soundOutpointLock type=button class="iconButton"
 	onClick='SoundEdit.syncTCL(1);'
->🔒</button><input type=test id=soundOutPoint value="0:00:00 ." class='tcInput'
+>🔒</button><input type=text id=soundOutPoint value="0:00:00 ." class='tcInput'
 	onMousedown="this.value=nas.FCT2Frm(this.value);nas.sliderVALUE([event,this.id,xUI.XPS.xpsTracks.duration-1,'0','0']);"
-    onchanging='return'
+    onChanging='return'
     onChange='this.value=nas.Frm2FCT(nas.FCT2Frm(this.value.toString()),2,0);SoundEdit.floatTC(1);'
 ><span class='subControl_SPIN'>
 <button
@@ -3494,8 +3581,7 @@ duration :
 ><br>-->
 <!-- playbackControll -->
 <!--|< [start/stpo]     -->
-	<div style='height:36px;'>
-<!--	onMouseDown='if(xUI.player.status=="stop"){xUI.player.start(3000)}else{xUI.put("----")};' -->
+			<div style='height:36px;'>
 	<button
 		style='height:32px;width:120px'
 	onMouseDown='if(xUI.player.status=="stop"){xUI.player.start()}else{xUI.player.getCount=true};'
@@ -3524,7 +3610,7 @@ duration :
 		title=""
 	>
 	</button>-->
-</div>
+			</div>
 <button
     id=soundPanelApply
     style='width:96px;'
@@ -3543,25 +3629,25 @@ duration :
 	onClick='xUI.sWitchPanel("Snd");'
 >閉じる</button>
 
-</div>
-</div>
+		</div>
+	</div>
 <!--	ラベル付き音響編集パネル	-->
 
 <!-- 参照用オーバーレイウインドウ optionPanelRef > optionPanelRef-->
-<div class='optionPanelFloat' id =optionPanelRef >
+	<div class='optionPanelFloat' id =optionPanelRef >
 <dl>
 <dt style="background-color:#888888;"><span id=soundPnl class=SoundPanel>画像</span><a href="" class=minimize ><img src=images/ui/minimize.png alt="＿"></a><a href="" class=close ><img src=images/ui/close.png alt="×"></a></dt>
 <dt style="background-color:#aaaaaa;">[+][-][100%] [URL]  　[-----◆---------]</dt></dl>
-<div class=imageOverlay>
+		<div class=imageOverlay>
     <iframe id ='referencePanelWindow' src="http://www.nekomataya.info/test/references/" title="iframe example" width="640" height="480" style='opcity:0.75'>
   <p>Your browser does not support iframes.</p>
-    </iframe></div>
+    	</iframe></div>
     <img src=./images/ui/cornerTip.png id=RefPanelCotner class=panelCorner>
-</div>
+	</div>
 <!-- 参照用オーバーレイウインドウ optionPanelRef > optionPanelRef-->
 <!-- メモ編集エリア　画面表示のみ　印刷時はシートヘッダ上に別表示-->
-<div id=memoArea>
-   <div id=memo_header >
+	<div id=memoArea class=xpst>
+		<div id=memo_header >
    <a href="javascript:void(0);"
     onclick='xUI.sWitchPanel("memoArea");'
     title='hide note text'
@@ -3569,9 +3655,9 @@ duration :
    <a href="javascript:void(0);"
 	onclick='xUI.sWitchPanel("memo");return false;'
 >MEMO : </a> <span id="transit_data"></span>
-   </div>
+		</div>
 <!--	コメント編集	-->
-<div class=optionPanel id=optionPanelMemo >
+		<div class=optionPanel id=optionPanelMemo >
 <table>
 <tr>
 <td>
@@ -3607,42 +3693,62 @@ duration :
 >word table</span>
 </td>
 </tr></table>
-</div>
+		</div>
 <!--	コメント編集	-->
-<!-- メモ欄表示欄     -->
-   <div id=memo></div>
-</div>
+<!-- メモ表示欄     -->
+		<div id=memo></div>
+	</div>
 <!-- メモ表示欄　-->
-<div class=application_status id=app_status>***<br></div>
+
+
+<!--  アプリケーション内　共用 1行ステータス表示エリア　-->
+	<div class=application_status id=app_status><br></div>
+<!--  アプリケーション内　共用 1行ステータス表示エリア　-->
 </div>
-<div id=sheet_view>
- <div class=headerTool>
-  <div id="scrollSpaceHd" class="screenSpace"></div>
-</div>
+<div id=sheet_view class=xpst>
+	<div class=headerTool>
+  		<div id="xpstScrollSpaceHd" class="screenSpace">
+  		</div>
+ 	</div>
 <!-- ここまで印刷時に非表示　-->
 
 <!--   以降シート本体     -->
-    <div id=sheet_body
-	onMouseDown = " return xUI.Mouse(event)"
-	onMouseUp   = " return xUI.Mouse(event)"
-	onClick  	= " return xUI.Mouse(event)"
-	onDblClick  = " return xUI.Mouse(event)"
-	onMouseOver = " xUI.Mouse(event)"
-	onMouseOut  = " xUI.Mouse(event)"
->
-      <div align=center>
+  	<div id=sheet_body
+		onMouseDown = " return xUI.Mouse(event)"
+		onMouseUp   = " return xUI.Mouse(event)"
+		onClick  	= " return xUI.Mouse(event)"
+		onDblClick  = " return xUI.Mouse(event)"
+		onMouseOver = " xUI.Mouse(event)"
+		onMouseOut  = " xUI.Mouse(event)"
+	>
+    	<div id='splashText' align='center'>
 <br><br><br><br><br><br><br><br>ただいま準備中…ちょっぴりお待ちください<br>
 あ、非常に申し訳ありませんがりまぴんはIEでは正常に動作しません。<br>サポート外です。<br>
 <h3> タイムシート編集サービス　テスト中 </h3><img src=images/remaping.gif border=0 /><br /><img src=images/ui/wait.gif width=48 height=48><br>
 index.html ,v 1.7 2018/03/05  support@u-at.net <br />
-<span id=myVer1></span> <span id=myServer1>[no-server]</span>
+	<span id=myVer1></span>
+	<span id=myServer1>[no-server]</span>
 <br>
-      </div><hr>
+		</div><hr>
 <!-- <form> -->
     <textarea id="startupContent"  ></textarea>
     <textarea id="startupReference"></textarea>
-  </div>
-  <div id="scrollSpaceFt" class=\"screenSpace\"><br></div>
+	</div>
+</div>
+<div class=xmap>
+	<div class=headerTool>
+  		<div id="xmapScrollSpaceHd" class="screenSpace">
+  		</div>
+ 	</div>
+<!-- ここまで印刷時に非表示　-->
+<hr><br><br><br><br><br><br><br><br><br><br>
+xMap area
+<br><br><br><br><br><br><br><br><br><br><hr>
+
+</div>
+
+
+	<div id='scrollSpaceFt' class='screenSpace'><br></div>
   <!--
 	サーバーオンサイトの状況を真似る場合
 	この位置に　backend_variables　を置いて

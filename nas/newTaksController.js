@@ -115,15 +115,15 @@ xUI.tskWatcher = function(){
         var currentOffset = (xUI.selectBackup[1]+frms);//再生開始後の経過フレーム
         if((! xUI.player.loop)&&(currentOffset >= xUI.XPS.xpsTracks.duration)){
             xUI.player.stop();xUI.selectCell([xUI.Select[0],0]);
-            console.log(xUI.player.countStack);
+//            console.log(xUI.player.countStack);
         }else{
             var currentFrame = currentOffset % xUI.XPS.xpsTracks.duration;
             if(xUI.Select[1] != currentFrame) xUI.selectCell([xUI.Select[0],currentFrame]);
             if(currentFrame != xUI.player.currentFrame){
                 xUI.player.currentFrame = currentFrame;
                 if(xUI.player.getCount){
-                     xUI.player.countStack.push(currentFrame);
-                     document.getElementById([xUI.Select[0],currentFrame].join('_')).innerHTML="XXX";
+                     xUI.player.countStack.push([xUI.Select[0],currentFrame]);
+                     markFrame(document.getElementById([xUI.Select[0],currentFrame].join('_')));
                 }
             }
         }
@@ -143,3 +143,24 @@ setInterval(xUI.tskWatcher,10);
 }
 //  タスク監視スタートアップはこのプロシジャ全体をxUIの最初期化あとに実行する必要あり  2018 08 29
 // test
+/** ストップウオッチ機能のための補助機能
+
+*/
+markFrame=function(element){
+     element.style.backgroundColor='red';
+     element.innerHTML='<span style="color:red;">XXX</span>';
+}
+clearMark=function(){
+    xUI.resetSheet();
+    xUI.player.countStack=[];
+}
+buildCount=function(trackID){
+    var buidTarget=[];
+    for (var cix = 0 ; cix < xUI.countStack.length ;cix ++){
+        if(xUI.countStack[cix][0]==trackID) buidTarget.push(xUI.countStack[cix][1])
+    }
+    for (var fix = 0 ; fix < buitdTarget.length ; fix ++){
+        var sectionStart=0;        sectionEnd=0
+    }
+    
+}
