@@ -12,9 +12,9 @@
 $.fn.isVisible = function() {
     return $.expr.filters.visible(this[0]);
 };
-/* xUI
+/**  class xUI
  *     UIコントロールオブジェクト
- * 
+ *      
  */
 //----------------------------------- UIコントロールオブジェクトを作成、初期化
 function new_xUI(){
@@ -43,8 +43,11 @@ function new_xUI(){
     xUI.backupStore    ="0123456789";    //作業バックアップ
 
 //------------------------ 以下インターフェースカラープロパティ
-//カラー・トラック幅等のルック決定要素はundefinedで初期化して　遅延解決に移行する
+//カラー・トラック幅等のルック決定要素はundefinedで初期化して  遅延解決に移行する
+//Xmap
+    xUI.baseColor             ; //背景色
 
+//Xpst タイムシートルック
     xUI.sheetbaseColor        ; //タイムシート背景色
     xUI.sheetblankColor       ; //編集不可領域の背景色
     xUI.footstampColor        ; //フットスタンプの色
@@ -130,7 +133,7 @@ xUI.importBox.reset = function(){
 xUI.importBox.read = function (targetFiles,callback){
         console.log("platform : "+appHost.platform);
     if(appHost.platform == "AIR"){
-//***AIR  用の分岐は　単ファイルのままで保留2018 0201
+//***AIR  用の分岐は  単ファイルのままで保留2018 0201
     // File APIを利用できるかをチェック
         if (window.File) {
       // 指定されたファイルを取得
@@ -169,7 +172,7 @@ xUI.importBox.read = function (targetFiles,callback){
       // ファイルの読み込みに成功したら、その内容をxUI.data_wellに反映
       reader.addEventListener('load', function(e) {
         var output = reader.result;//
-        xUI.data_well.value = reader.result;//最後に読み込んだ内容で上書きされるので注意　20180220
+        xUI.data_well.value = reader.result;//最後に読み込んだ内容で上書きされるので注意  20180220
 
         var myXps = convertXps(reader.result,divideExtension(reader.name)[1],xUI.importBox.overwriteProps);// 指定オプション無しで一旦変換する
         if(!myXps){
@@ -197,7 +200,7 @@ xUI.importBox.read = function (targetFiles,callback){
   }
       }else{
 //FileReaderが無いブラウザ(Safari等)では、お詫びしてオシマイ
-var msg = "no FileReader! :\n　このブラウザはFileReaderオブジェクトをサポートしていません。\n残念ですが、この環境ではローカルファイルは読みだし出来ません。\nThis browser does not support the FileReader object. \n Unfortunately, you can't read local files now.";
+var msg = "no FileReader! :\n  このブラウザはFileReaderオブジェクトをサポートしていません。\n残念ですが、この環境ではローカルファイルは読みだし出来ません。\nThis browser does not support the FileReader object. \n Unfortunately, you can't read local files now.";
 	alert(msg);
       };//if(window.FileReader)
     };//if(window.File)
@@ -336,9 +339,10 @@ xUI.importBox.checkValue = function(itm){
     }
     document.getElementById('resetSCiTarget').disabled = false;
 }
-//そのほか
+//そのほか  コレはAE用の旧バージョン変数なので要注意
     xUI.keyMethod        = KEYMethod;    //キー変換方式
     xUI.aeVersion        = AEVersion;    //キーにつけるバージョン番号
+
 /**     xUIオブジェクト初期化メソッド
  *      編集対象となるXpsオブジェクトを与えて初期化する。
  *      初期化時点の参照変数はconfig.js内で設定された値及び
@@ -352,37 +356,291 @@ xUI.importBox.checkValue = function(itm){
     production  常に writeable 管理情報をユーザ編集することは無い
     management  ドキュメントに対してはreadonly 管理情報に対して writeable
     browsing    常に readonly
-    floating    常に writeable 管理情報を編集可能　ただし作業セッション外になる
+    floating    常に writeable 管理情報を編集可能  ただし作業セッション外になる
 
         各モード内で作業条件によって readonlyの状態が発生する
-        セッション溯及ステータスを実装　2017 01
+        セッション溯及ステータスを実装  2017 01
 
     sessionRetrace
-        制作管理上の作業セッションはジョブに　１：１で対応する
+        制作管理上の作業セッションはジョブに  １：１で対応する
         整数値で作業の状態を表す データを読み取った際にセットされる
         その都度のドキュメントの保存状態から計算される値なのでデータ内での保存はされない
-    -1  所属セッションなし(初期値)　全てwriteable
+    -1  所属セッションなし(初期値)  全てwriteable
     0   最新セッション 編集対象 wtiteable
     1~  数値分だけ遡ったセッション 編集対象外 常にreadonly
 
         ステータスがFloationgモードのドキュメントをサーバ(リポジトリ)に記録することはない
-        要注意　ドキュメントステータスと動作モードの混同は避けること
+        要注意  ドキュメントステータスと動作モードの混同は避けること
+        
+マルチドキュメント拡張    2018 09
+XPSシングルドキュメントではなくxMapシングルドキュメントに変更
+xMapに関連つけられる１以上複数のタイムシート（=SCi）
+アプリケーション的には、Object XpsCollectionを作成してやる必要がある
+
+従来の XPS,sessionRetrace,referenceXPS 等のSCiにアタッチされるべきバッファはコレクションに収容される
+UNDOバッファもドキュメント切り替えのたびにリセットではなく、セッション内ではドキュメントごとに保持
+XpsはxMapの配下にアタッチする？
+ドキュメントコレクション
+xUI.documents = new xUI.documentCollection()
+
+xUI.documents[idx]= new xUI.xMapDocument(xMap);
+xUI.documents[idx].Xpsts=[];
+xUI.documents[idx].sessionRetarace
+xUI.documents[0].referenceContent;
+xUI.documents[0].yank;
+xUI.documents[0].yank;
+
+xMap,Xpst(,Xpst,Xpst,Xpst,Xpst,…） タブに対応
+undo関連
+sessionRetrace  セッション
+referenceXPS 一時参照バッファ
+
 */
-xUI.init    =function(editXps,referenceXps){
-    this.XPS=editXps;                           //XPSを参照するオブジェクト必須引数
+xUI.Document=function(targetObject,referenceObject){
+        this.content          =targetObject;
+        this.type             =(targetObject instanceof xMap)? "xmap":"xpst";
+        this.undoBuffer       = new xUI.UndoBuffer();
+        this.sessionRetrace   = -1;
+        this.referenceContent =(typeof referenceObject == 'undefined')? null:referenceObject;
+}
+/**
+    ドキュメントトレーラー配列
+    内容は現在編集中のドキュメントすべて
+    ID:0  は必ずxMap
+    ID:1  は必ずXpst
+    兼用カットがある場合は、順次IDが増す
+*/
+xUI.documents=[];
+xUI.documents.activate=function(idx){
+console.log(idx)
+        xUI.activeDocumentId=idx
+        xUI.activeDocument=xUI.documents[idx]
+    if(idx == 0){
+        xUI.XMAP=xUI.activeDocument.content;
+    }else{
+console.log(xUI.activeDocument);
+        xUI.XPS = xUI.activeDocument.content;
+        xUI.XPS.readIN = xUI._readIN ;
+    }
+}
+
+xUI.documents.clear=function(){
+    xUI.documents.length=0;
+}
+/**
+        Xpsクラスメソッドを上書きするためのファンクション
+        データインポートを自動判定
+        xUI.sessionRetrace == -1    通常の読み出し
+        xUI.sessionRetrace == 0     内容のみ入れ替え
+        xUI.sessionRetrace > 0     読み込んだ後に-1にリセット
+        
+*/
+xUI._readIN=function(datastream){
+    xUI.errorCode=0;//読み込みメソッドが呼ばれたので最終のエラーコードを捨てる。
+    if(! datastream.toString().length ){
+      xUI.errorCode=1;return false;
+//"001:データ長が0です。読み込みに失敗したかもしれません",
+    }else{
+//データが存在したら、コンバータに送ってコンバート可能なデータをXPS互換ストリームに変換する
+/**
+        データインポートは自動判定
+        xUI.sessionRetrace == -1    通常の読み出し
+        xUI.sessionRetrace == 0     内容のみ入れ替え
+        xUI.sessionRetrace > 0     読み込んだ後に-1にリセット
+    import判定がtrueの場合、現データの以下のプロパティを保護する
+    カット尺を保護する場合は、リファレンスに読み込んで部分コピーを行う
+*/
+        var isImport=((xUI.sessionRetrace==0)&&(xUI.uiMode=='production'))? true:false;
+        var newXps = convertXps(datastream);
+/*
+読み込まれたデータ内にシナリオ形式のダイアログ記述が存在する可能性があるので、これを探して展開する
+現在は処理をハードコーディングしてあるが、この展開処理はトラックを引数にして処理メソッドに渡す形に変更する予定
+*/
+//ここでセリフトラックのチェックを行って、シナリオ形式のエントリを検知したら展開を行う
+    for(var tix=0;tix<newXps.xpsTracks.length;tix++){
+        var targetTrack=newXps.xpsTracks[tix]
+        if(targetTrack.option=='dialog'){
+            var convertQueue=[];//トラックごとにキューを置く
+            var currentEnd =false;//探索中の終了フレーム
+            
+            for(var fix=0;fix<targetTrack.length;fix++){
+                var entryText=String(targetTrack[fix]);
+//末尾検索中
+                if((convertQueue.length>0)&&(currentEnd)){
+//キューエントリが存在してかつブランクを検知、次のエントリの開始または、トラック末尾に達した場合はキューの値を更新
+//トラック末尾の場合のみ検出ポイントが異なるので注意
+                    if((nas.CellDescription.type(entryText)=='blank')||
+                       ((entryText.length>1)&&(entryText.indexOf('「')>=0))||
+                       (fix==(targetTrack.length-1))){
+                        var endOffset = (fix==(targetTrack.length-1))? 2:1;  
+                        convertQueue[convertQueue.length-1][2]=currentEnd+endOffset;
+                        currentEnd=false;
+                    }else{
+                        currentEnd=fix;
+                    }
+                }
+//開きカッコを持ったテキスト長１以上のエントリがあったらオブジェクトを作成してキューに入れ
+//終了点探索に入る
+                if((entryText.length>1)&&
+                   (entryText.indexOf('「')>=0)){
+                    var dialogValue=new nas.AnimationSound(targetTrack[fix]);
+                    dialogValue.parseContent();//
+                    convertQueue.push([dialogValue,fix,0]);// [値,開始フレーム,終了フレーム(未定義)]
+                    currentEnd = fix;
+                }
+            }
+//キューにあるダイアログを一括して処理
+            for(var qix=0;qix<convertQueue.length;qix++){
+                var dialogOffset = (String(convertQueue[qix][0].name).length)? 2:1;
+                    dialogOffset += convertQueue[qix][0].attributes.length;
+//console.log(dialogOffset);
+                var dialogDuration = convertQueue[qix][2]-convertQueue[qix][1]; 
+                var startAddress =[tix,(convertQueue[qix][1] - dialogOffset)];
+//console.log(startAddress);
+                var dialogStream =(convertQueue[qix][0].getStream(dialogDuration)).join(',');
+//console.log(dialogStream);
+                newXps.put(startAddress,dialogStream);
+            }
+        }
+    }
+//インポートが必要な場合は、新規オブジェクトに現行のドキュメントから固定対象のプロパティを転記する
+//
+        if(isImport){
+/*
+            "xMap",         ;//Object xMap      ドキュメント側を使用（xMap実装後はマージが必要マージメソッドを作成）
+            "line",         ;//Object XpsLine   ドキュメント側を使用   
+            "stage",        ;//Object XpsStage  ドキュメント側を使用
+            "job",          ;//Object XpsStage  ドキュメント側を使用
+            "currentStatus",;//Object JobStatus ドキュメント側を使用
+            "mapfile",      ;//String           ドキュメント側を使用
+            "opus",         ;//String           ドキュメント側を使用
+            "title",        ;//String           ドキュメント側を使用
+            "subtitle",     ;//String           ドキュメント側を使用
+            "scene",        ;//String           ドキュメント側を使用
+            "cut",          ;//String           ドキュメント側を使用
+//          "trin",         ;//Array                        インポート側を使用
+//          "trout",        ;//Array                        インポート側を使用
+//          "rate",         ;//Strting                      インポート側を使用
+//          "framerate",    ;//String                       インポート側を使用
+            "create_time",  ;//String           ドキュメント側を使用
+            "create_user",  ;//Object UserInfo  ドキュメント側を使用
+            "update_time",  ;//Stirng           ドキュメント側を使用
+            "update_user",  ;//Object UserInfo  ドキュメント側を使用
+//          "xpsTracks"     ;//Object XpsTrackCollection    インポート側を使用
+
+  */
+            var props = ["xMap","line","stage","job","currentStatus","mapfile","opus","title","subtitle","scene","cut","create_time","create_user","update_time","update_user"];
+            for (var ix=0;ix<props.length;ix++){newXps[props[ix]]=xUI.XPS[props[ix]]}
+        }else{
+            var props = ["xMap","line","stage","job","currentStatus","mapfile","opus","title","subtitle","scene","cut","create_time","create_user","update_time","update_user"];
+            if((xUI.importBox.importCount==1)&&(xUI.importBox.selectedContents.length)){
+                for (var ix=0;ix<props.length;ix++){
+                    if(xUI.importBox.selectedContents[0][props[ix]]) newXps[props[ix]]=xUI.importBox.selectedContents[0][props[ix]];
+                }
+            };
+        }
+//        if(xUI.sessionRetrace > 0) xUI.sessionRetrace= -1;
+        return this.parseXps(newXps.toString());
+    }
+}
+
+/** xUIの初期化メソッド
+引数にdocumentオブジェクト（Xps/xMap）を渡す
+    オブジェクトがxMapの場合は、アタッチされたXpsをすべてドキュメントトレーラーにセットして開始
+    Xpsが未設定の場合は、Xpsの初期化を保留
+    
+    オブジェクトがXpsの場合は、Xpsに関連づけられたxMapを初期化してドキュメントトレーラーを設定
+    xMapが存在しない場合は、新しいxMapを初期化して使用する
+    xMapのみのオープンは許されるが、
+  
+*/
+xUI.init    =function(targetObj,referenceObj){
+    var initializeDocument= (targetObj instanceof xUI.Document)?
+    targetObj : new xUI.Document(targetObj,referenceObj);
+    if(! initializeDocument.content) return false;//不正引数のため初期化失敗
+
+
+
+    if(initializeDocument.type == "xpst"){
+/*Xpst
+    タイムシートオブジェクトが与えられた場合
+    Xpstに関連つけられたxMapを検索して取得
+    存在しない場合は新規のxMapを作成
+    初期化オブジェクトをdocID:1/xMapをdocID:0としてxUIを初期化する
+    リファレンスオブジェクトが存在していればそれを利用する
+    リポジトリからXpstが得られなかった場合は、
+    xMap上のカットに対応するXpsを新規に作成してドキュメントトレーラーに登録する
+*/
+        var editXpst = initializeDocument.content;
+        var editxMap = editXpst.xMap;
+
+        this.documents.clear();
+        this.documents.push(new xUI.Document(editxMap));
+        this.documents.push(initializeDocument);
+        
+    }else if((initializeDocument.type == "xMap")){
+/*xMap
+    xMapが与えられた場合
+    ｘMapに関連つけられたXpstを検索してすべて登録する
+    リポジトリからXpstが得られなかった場合は、
+    xMap上のカットに対応するXpsを新規に作成してドキュメントトレーラーに登録する
+*/
+        var editxMap = initializeDocument.content;
+        this.documents.push(initializeDocument);
+      for(var six=0;six<editxMap.sci.length;six++){
+        var Idf = editxMap.sci[six].toString('full');
+        var myXps = serviceAgent.currentRepository.getEntry(Idf);
+        if(! myXps){
+            myXps = new Xps();
+            myXps.syncIdentifier(Idf);
+        }
+        this.documents.push(new xUI.Document(myXps));
+      }
+        var editXpst = this.documents[1].content;
+
+        this.documents.push(new xUI.Document(editxMap));
+ 
+    }else{
+        var editxMap = new xMap();
+        var editXpst = XPS;//暫定的にグローバルのXPSを利用
+        initializeDocument = new Document(editXpst,new Xps());
+    }
+
+
+/** 以下は  Xmapに対しての拡張
+    xMap コントロールは分離可能に？
+    acriveDocumentIdは、以下の遷移をする
+    0   ドキュメントの代表となるxMap
+        xMapは１番以降のドキュメントにはならない
+    1~  0番ドキュメントに含まれるCSCiにアタッチされるXpst
+        一個以上、複数
+        ど
+*/
+    this.XMAP = editxMap;               //編集対象のxMap
+    this.XPS  = editXpst;               //XPSを参照する編集バッファ
+
+    this.activeDocumentId = 1;//仮設プロパティ マルチシート拡張を行った後にシートの切り替えを行うようになる
+
+    this.tabCount=3;
+
+
+    this.activeDocument     =  this.documents[this.activeDocumentId];
+
     this.sessionRetrace = -1;                   //管理上の作業セッション状態
     this.referenceXPS=new Xps(5,nas.SheetLength+':00.');           //参照用Xps初期値
 /**
 引数に参照オブジェクトが渡されていたら、優先して解決
     マルチステージ拡張実装後、直接指定された参照ステージは、初期化時のみ優先 
     参照用XPSは初期化の引数で与える（優先）
-    初期化時点で参照Xpsが与えられなかった場合は、XPSに含まれる参照ステージの内容、XPS内のステージストアにある現行ステージの前段のステージを利用する セットアップのタイミングはUIの初期化以降に保留される
+    初期化時点で参照Xpsが与えられなかった場合は、XPSに含まれる参照ステージの内容
+    XPS内のステージストアにある現行ステージの前段のステージを利用する
+    セットアップのタイミングはUIの初期化以降に保留される
 */
     if ((typeof referenceXps != "undefined") && (referenceXps instanceof Xps)){
         this.referenceXPS=referenceXps;
     };
 /**
-    参照Xpsのうち表示させる種別をプロパティ名の配列で与える　
+    参照Xpsのうち表示させる種別をプロパティ名の配列で与える  
     キーワード機能未実装:
         "all"=["replacement","timing","camerawork","effect","still","dialog","sound"],
         "cell(スチル含む)"=["timing","still"]
@@ -405,16 +663,16 @@ xUI.init    =function(editXps,referenceXps){
             サーバ上のデータを開いて内容をブラウズしている状態
             書込／変更は禁止
         production
-            作業中　他ユーザはproductionに移行できない
+            作業中  他ユーザはproductionに移行できない
         management
-            管理中　カットのプロパティが変更できるが、内容は編集できない
+            管理中  カットのプロパティが変更できるが、内容は編集できない
     viewOnly    編集禁止（データのreadonlyではなくUI上の編集ブロック）
 */
     this.viewMode    = ViewMode;        // 表示モード Compact/WordProp
     this.uiMode      ='floating';      // ui基本動作モード production/management/browsing/floating 
     this.viewOnly    = false;            // 編集禁止フラグ
     this.hideSource  = false;           // グラフィック置き換え時にシートテキストを隠す
-    this.showGraphic = true;            // 置き換えグラフィックを非表示　＝　テキスト表示
+    this.showGraphic = true;            // 置き換えグラフィックを非表示  ＝  テキスト表示
 //if(appHost.platform=="AIR") this.showGraphic    = false;
     this.onSite   = false;           // Railsサーバ上での動作時サーバのurlが値となる
     this.currentUser = new  nas.UserInfo(myName); // 実行ユーザをmyNameから作成
@@ -423,7 +681,7 @@ xUI.init    =function(editXps,referenceXps){
 /*
     recentUsers 配列の要素は、UserInfo オブジェクト
     myNamesは、アカウント文字列を要素とする配列
-    ユーザインフォコレクションの構造変更で配列ベースでなく　メンバー配列を持ったオブジェクトに更新
+    ユーザインフォコレクションの構造変更で配列ベースでなく  メンバー配列を持ったオブジェクトに更新
 */
     this.spinValue   = SpinValue;       // スピン量
     this.spinSelect  = SpinSelect;      // 選択範囲でスピン指定
@@ -534,7 +792,7 @@ console.log(xUI.yankBuf);
 //シート入力関連
     this.eddt   ="";        //編集バッファ
     this.edchg  =false;     //編集フラグ
-    this.edmode=0;          //編集操作モード　0:通常入力　1:ブロック移動　2:区間編集
+    this.edmode=0;          //編集操作モード  0:通常入力  1:ブロック移動  2:区間編集
     this.floatSourceAddress = [0,0];//選択範囲及び区間移動元アドレス
     this.floatDestAddress   = [0,0];//同移動先アドレス
     this.selectBackup       ;//カーソル位置バックアップ
@@ -648,7 +906,7 @@ xUI.setSheetLook(SheetLooks);xUI.footstampPaint();
 /**
     インターフェースルック設定
     カラー・及びシートルックを更新
-    分離のみ　暗色のテーマにはまだ対応していないので注意　2017.02.04
+    分離のみ  暗色のテーマにはまだ対応していないので注意  2017.02.04
     ラップ関数を作成した方が良いかも
 */
 xUI.setSheetLook = function(sheetLooks){
@@ -656,11 +914,11 @@ xUI.setSheetLook = function(sheetLooks){
 /**
     シートのカラーデータを構築
     別の関数に分離予定
-        指定引数は　SheetBaseColorのみ？
+        指定引数は  SheetBaseColorのみ？
 */
     if (! String(sheetLooks.SheetBaseColor).match(/^#[0-9a-f]+/i)){sheetLooks.SheetBaseColor = nas.colorAry2Str(nas.colorStr2Ary(sheetLooks.SheetBaseColor));};
 
-//編集不可領域の背景色 背景色を自動設定　やや暗　これは初期状態で対向色を設定してその間で計算を行うように変更
+//編集不可領域の背景色 背景色を自動設定  やや暗  これは初期状態で対向色を設定してその間で計算を行うように変更
 
     this.sheetbaseColor     = sheetLooks.SheetBaseColor;                                        //タイムシート背景色
     var baseColor = nas.colorStr2Ary(this.sheetbaseColor);  //基本色をRBGのまま配列化
@@ -672,8 +930,8 @@ xUI.setSheetLook = function(sheetLooks){
     
     this.sheetblankColor    = nas.colorAry2Str(mul(nas.colorStr2Ary(this.sheetbaseColor),.95)); //編集不可領域の背景色
     this.sheetborderColor   = nas.colorAry2Str(mul(nas.colorStr2Ary(this.sheetbaseColor),.75)); //罫線基本色
-    this.footstampColor     = nas.colorAry2Str(div( add (nas.colorStr2Ary(sheetLooks.FootStampColor),nas.colorStr2Ary(this.sheetbaseColor)),2));                        //フット/差分　スタンプの色 背景色との中間値
-//    this.footstampColor     = sheetLooks.FootStampColor;                                        //フット/差分　スタンプの色 背景色との中間値
+    this.footstampColor     = nas.colorAry2Str(div( add (nas.colorStr2Ary(sheetLooks.FootStampColor),nas.colorStr2Ary(this.sheetbaseColor)),2));                        //フット/差分  スタンプの色 背景色との中間値
+//    this.footstampColor     = sheetLooks.FootStampColor;                                        //フット/差分  スタンプの色 背景色との中間値
 //       this.inputModeColor   = new Object();                                      //  入力モード色
         this.inputModeColor.NORMAL  = nas.colorAry2Str(div( add (nas.colorStr2Ary(sheetLooks.SelectedColor),nas.colorStr2Ary(this.sheetbaseColor)),2));                      //  ノーマル色
         this.inputModeColor.EXTEND  = nas.colorAry2Str(div( add (nas.colorStr2Ary(sheetLooks.RapidModeColor),nas.colorStr2Ary(this.sheetbaseColor)),2));                    //  ラピッド入力基本色
@@ -690,7 +948,7 @@ xUI.setSheetLook = function(sheetLooks){
 //タイムライン・ラベル識別カラ－
     this.cameraColor    = nas.colorAry2Str(div(add([0,1,0],mul(nas.colorStr2Ary(this.sheetbaseColor),6)),7));
     this.sfxColor       = nas.colorAry2Str(div(add([0,0,1],mul(nas.colorStr2Ary(this.sheetbaseColor),5)),6));
-    this.stillColor     = nas.colorAry2Str(div(add([1,0,0],mul(nas.colorStr2Ary(this.sheetbaseColor),6)),7));　//タイムライン全体に着色
+    this.stillColor     = nas.colorAry2Str(div(add([1,0,0],mul(nas.colorStr2Ary(this.sheetbaseColor),6)),7));  //タイムライン全体に着色
 
 //中間色自動計算
         this.inputModeColor.NORMALspin=
@@ -764,7 +1022,7 @@ if(this.sheetbaseDark){
     this.stillColor     = nas.colorAry2Str(sub([1,1,1],nas.colorStr2Ary(this.stillColor)));
 
 //中間色自動計算
-        this.inputModeColor.NORMALspin　= nas.colorAry2Str(sub([1,1,1],nas.colorStr2Ary(this.inputModeColor.NORMALspin)));
+        this.inputModeColor.NORMALspin  = nas.colorAry2Str(sub([1,1,1],nas.colorStr2Ary(this.inputModeColor.NORMALspin)));
         this.inputModeColor.EXTENDspin = nas.colorAry2Str(sub([1,1,1],nas.colorStr2Ary(this.inputModeColor.EXTENDspin)));
         this.inputModeColor.FLOATspin = nas.colorAry2Str(sub([1,1,1],nas.colorStr2Ary(this.inputModeColor.FLOATspin)));
         this.inputModeColor.SECTIONspin = nas.colorAry2Str(sub([1,1,1],nas.colorStr2Ary(this.inputModeColor.SECTIONspin)));
@@ -857,7 +1115,9 @@ for(var idx=0;idx<mySeps.length;idx++){
     nas.addCssRule("."+mySeps[idx]+"_Blank","background-color:"+xUI.sheetblankColor)
 };
 //================================================================================================================================ シートカラーcss設定
-
+//  タブUIに  背景色を設定
+    $('.tabControll').css('background-color',this.sheetbaseColor);
+    $('#tabSelector').css('background-color',this.sheetbaseColor);
 
 //================================================================================================================================ シートカラーcss設定2
 //    シート境界色設定
@@ -879,7 +1139,7 @@ for(var idx=0;idx<mySeps.length;idx++){
 /**
     xUI.setDocumentStatus(myCommnad)
     ドキュメントのステータスを変更する
-    引数：キーワード　activate/deactivate/checkin/checkout/abort/reseipt //sink/float
+    引数：キーワード  activate/deactivate/checkin/checkout/abort/reseipt //sink/float
     ステータス変更成功時は、モードにあわせてアプリケーションのモードを設定
     引数がカラの場合は、現在のステータスを返す
     非同期のサービスレスポンス待ちなのでコールバック渡し
@@ -898,7 +1158,7 @@ xUI.setDocumentStatus = function(myCommand){
     if (typeof myCommand == 'undefined') return this.XPS.currentStatus;
     switch (myCommand){
         case 'float':
-        // float /現在のドキュメントを複製して自由編集状態にする　元ドキュメントはActive状態を解除する
+        // float /現在のドキュメントを複製して自由編集状態にする  元ドキュメントはActive状態を解除する
             if(this.XPS.currentStatus.content.match(/^Active/i)){
                 serviceAgent.currentRepository.deactivateEntry(function(){
                     xUI.setDocumentStatus('float');
@@ -947,9 +1207,9 @@ xUI.setDocumentStatus = function(myCommand){
         case 'checkin':
             //check-in / 開く
             if(this.XPS.currentStatus.content.match(/^Startup|^Fixed/i)){
-            //現テータスがStartup/Fixedの場合新しいジョブの名称が必要　ジョブ名は第二引数で置く　ジョブIDは繰り上がる 
-//                     　var newJobName = (arguments[1])? arguments[1]:xUI.XPS.update_user.split(':')[0];
-                     　var newJobName = (arguments[1])? arguments[1]:xUI.XPS.update_user.handle;
+            //現テータスがStartup/Fixedの場合新しいジョブの名称が必要  ジョブ名は第二引数で置く  ジョブIDは繰り上がる 
+//                       var newJobName = (arguments[1])? arguments[1]:xUI.XPS.update_user.split(':')[0];
+                       var newJobName = (arguments[1])? arguments[1]:xUI.XPS.update_user.handle;
                        var newJob = new XpsStage([parseInt(xUI.XPS.job.id)+1,newJobName].join(':'));
                 serviceAgent.currentRepository.checkinEntry(newJob,function(){
                     //成功時はドキュメントのステータスを更新してアプリモードをproductへ変更
@@ -988,7 +1248,7 @@ xUI.setDocumentStatus = function(myCommand){
     
 /**
     xUI.setUImode(newMode)
-    uiMode変更　引数がなければ変更なし
+    uiMode変更  引数がなければ変更なし
     引数がモードキーワード以外ならば、モードを順次切り替えて
     現在のモード値を返す
     current モード変更なし
@@ -1006,7 +1266,7 @@ xUI.setUImode = function (myMode){
             break;
         case 'production':;
             if(xUI.XPS.currentStatus.content != 'Active'){return xUI.uiMode;}
-            　xUI.viewOnly = false;//メニュー切替
+              xUI.viewOnly = false;//メニュー切替
     $('#ddp-man').hide();
 	$('#pmaui').hide();
 	$('#pmfui').hide();
@@ -1029,10 +1289,10 @@ xUI.setUImode = function (myMode){
         if(xUI.XPS.currentStatus.content.indexOf("Floating")<0){return xUI.uiMode;}
          //floating で必要なメニュー
          /*
-         新規登録　カレントドキュメントを現在のリポジトリに登録する
+         新規登録  カレントドキュメントを現在のリポジトリに登録する
          
          */
-            　xUI.viewOnly = false;//メニュー切替
+              xUI.viewOnly = false;//メニュー切替
     $('#ddp-man').hide();
 	$('#pmaui').hide();
 	$('#pmfui').show();
@@ -1053,7 +1313,7 @@ xUI.setUImode = function (myMode){
 // スタッフリストで制作管理者であるか、またはオーナーユーザであること
     if(false){ return xUI.uiMode;}
             //メニュー切替
-            　xUI.viewOnly =  true;
+              xUI.viewOnly =  true;
     $('#ddp-man').show();
 	$('#pmaui').show();
 	$('#pmfui').hide();
@@ -1071,7 +1331,7 @@ xUI.setUImode = function (myMode){
             break;
         case 'browsing':;
             //メニュー切替
-            　xUI.viewOnly = true;
+              xUI.viewOnly = true;
     $('#ddp-man').hide();
 	$('#pmaui').hide();
 	$('#pmfui').hide();
@@ -1148,13 +1408,13 @@ xUI.edChg=function(status,opt){
 //
 /*xUI.mdChg(myModes,opt)
 引数:
-    myModes    モードを数値または文字列で指定　数値で格納
+    myModes    モードを数値または文字列で指定  数値で格納
     opt    オプション引数
     編集モードを変更してカラーをアップデートする
     リフレッシュつき
 */
 xUI.mdChg=function(myModes,opt){
-            //編集操作モード　0:通常入力　1:ブロック移動　2:区間編集　3:領域フロート状態
+            //編集操作モード  0:通常入力  1:ブロック移動  2:区間編集  3:領域フロート状態
     if(typeof myModes == "undefined") myModes="normal";
 //モード遷移にあわせてUIカラーの変更
     switch(myModes){
@@ -1176,8 +1436,8 @@ xUI.mdChg=function(myModes,opt){
     case "section":
     case 2:
 /*
- *  モード'normal'かつトラックのダブルクリックでセクション編集モードに入る　抜けるには明示的にmdChg('normal')をコールする必要がある
- *  現行でタイムライン種別トラップあり　ダイアログトラックのみ遷移可能
+ *  モード'normal'かつトラックのダブルクリックでセクション編集モードに入る  抜けるには明示的にmdChg('normal')をコールする必要がある
+ *  現行でタイムライン種別トラップあり  ダイアログトラックのみ遷移可能
   さらにダイアログトラックでは値のない区間は選択を抑制中
 */
 //sectionManipulateOffsetは、ここでは初期化されない
@@ -1329,7 +1589,7 @@ if((this.XPS.xpsTracks[this.Select[0]].option=='dialog')){
 引数:
     destination 移動先フレーム
 参照プロパティ:    
-    xUI.sectionManipulateOffset は[編集サブモード,選択中のセル（ヘッド）に対するオフセット]　ターゲットから計算する
+    xUI.sectionManipulateOffset は[編集サブモード,選択中のセル（ヘッド）に対するオフセット]  ターゲットから計算する
     
  */
 xUI.sectionPreview=function(destination){
@@ -1342,7 +1602,7 @@ xUI.sectionPreview=function(destination){
     switch(xUI.sectionManipulateOffset[0]){
     case    0   :
     case 'head' :
-//先頭指定　末尾固定で伸縮
+//先頭指定  末尾固定で伸縮
         var tail=xUI.getid('Selection');
         xUI.selectCell([xUI.Select[0],destination-xUI.sectionManipulateOffset[1]]);
         xUI.selection(tail);
@@ -1355,7 +1615,7 @@ xUI.sectionPreview=function(destination){
     case    2   :
     case 'tail' :
     default     :
-//末尾指定　先頭固定で伸縮 sectionManipulateOffsetを更新
+//末尾指定  先頭固定で伸縮 sectionManipulateOffsetを更新
         var duration=xUI.Selection[1]+(destination-hotpoint);
         xUI.selection(add(xUI.Select,[0,duration]));
         xUI.sectionManipulateOffset[1]=xUI.Selection[1];
@@ -1368,7 +1628,7 @@ xUI.sectionPreview=function(destination){
 //xUI.sectionPreview(3,4);
 // 
 /*
-引数：　action
+引数：  action
     セクション操作の結果を実際の画面に反映させるメソッド
     Xps.xpsTracks.menber.manipulateSection()に対応するxUI側の処理
     データ配置の際にトラック全体を書き直すので、カーソル位置を復帰させるためにundoStackに第４要素を積む
@@ -1397,7 +1657,7 @@ xUI.sectionUpdate=function(){
     if(SoundEdit)SoundEdit.getProp();
 }
 /*    xUI.floatTextHi()
-引数:なし　モード変数を確認して動作
+引数:なし  モード変数を確認して動作
 モードチェンジの際に編集（保留）中のテキストを薄く表示する/もどす
 */
 xUI.floatTextHi=function(){
@@ -1443,7 +1703,7 @@ xUI.getFileName=function(myFileName){
         xUI.flush(content)
         現在のシートの入力領域をすべてcontentで埋める
         戻り値は常にtrue
-        これは試験用関数：実用性は無い　確かもう使ってない　20161106
+        これは試験用関数：実用性は無い  確かもう使ってない  20161106
 */
 //
 xUI.flush=function(content){
@@ -1461,7 +1721,16 @@ xUI.flush=function(content){
     this.syncSheetCell();
     return true;
 };
-
+/** xUI.UndoBuffer オブジェクト
+ * @constractor
+ *
+ */
+xUI.UndoBuffer=function(){
+    this.undoStack= []       ;//アンドウスタック
+    this.undoPt  = 0         ;//アンドウポインタ初期化
+    this.skipCt  = 0         ;//再描画抑制カウンタ初期化
+    this.storePt = 0         ;//保存ポインタ初期化
+}
 /*    undoバッファ初期化
         undoバッファをクリアして初期化
             undoStackのデータ構造
@@ -1483,35 +1752,40 @@ NOP    :    新規作成/保存/ダウンロード
 
     undoに画面描画保留機能を追加
     undoカウンタが立っている限り画面の再描画を行わない
+
+xUI.activeDocument.undoBuffer.
+
  */
+ 
 xUI.flushUndoBuf=function(){
-    this.inputFlag="nomal";//入力フラグ["nomal","undo","redo"]
-    this.undoStack=new Array();//アンドウスタック
-        this.undoStack.push([[0,1],[0,0],'']);
-    this.undoPt  =0 ;      //アンドウポインタ初期化
-    this.skipCt  =0 ;      //再描画抑制カウンタ初期化
-    this.storePt =0 ;     //保存ポインタ初期化
+    this.inputFlag= "nomal";//入力フラグ["nomal","undo","redo"]
+    this.activeDocument.undoBuffer.undoStack= [] ;//アンドウスタック
+    if(this.activeDocument.type=='xpst')
+        this.activeDocument.undoBuffer.undoStack.push([[0,1],[0,0],'']);
+    this.activeDocument.undoBuffer.undoPt  =0 ;      //アンドウポインタ初期化
+    this.activeDocument.undoBuffer.skipCt  =0 ;      //再描画抑制カウンタ初期化
+    this.activeDocument.undoBuffer.storePt =0 ;     //保存ポインタ初期化
 };
 /*
     保存ポインタを参照してドキュメントが保存されているか否かを返す関数
     保存状態の変更とリセットも可能
 
  */
-xUI.isStored=function(){return (this.undoPt==this.storePt)};//このリザルトが保存状態を表す
+xUI.isStored=function(){return (this.activeDocument.undoBuffer.undoPt==this.activeDocument.undoBuffer.storePt)};//このリザルトが保存状態を表す
 xUI.setStored=function(myPt){
     switch(myPt){
-    case "current":this.storePt=this.undoPt;
+    case "current":this.activeDocument.undoBuffer.storePt=this.activeDocument.undoBuffer.undoPt;
     break;
-    case "zero":this.storePt=0;
+    case "zero":this.activeDocument.undoBuffer.storePt=0;
     break;
-    case "force":this.storePt=-1;//常にfalseになる値
+    case "force":this.activeDocument.undoBuffer.storePt=-1;//常にfalseになる値
     break;
     default:
         if(myPt>=0){
-            this.storePt=Math.floor(myPt);//正の数値ならその数値を整数でセット
+            this.activeDocument.undoBuffer.storePt=Math.floor(myPt);//正の数値ならその数値を整数でセット
         }
     }
-    return (this.undoPt==this.storePt);//セット後の状態を戻す
+    return (this.activeDocument.undoBuffer.undoPt==this.activeDocument.undoBuffer.storePt);//セット後の状態を戻す
 };
 /*
     作業用バックアップオブジェクト
@@ -1519,10 +1793,72 @@ xUI.setStored=function(myPt){
     明示的に破棄することが可能
     実行環境の違いによる動作の違いはメソッド内で吸収する。
 
+    xUI.buildBackup();現在の作業バックアップをビルドして返す
+    バックアップは無名オブジェクトで
+        {
+            documents:[ドキュメント配列],
+            references:[リファレンスデータ配列],
+            activeDocumentId:<Number.ID>,
+            sessionId:[セッション追跡ID配列],
+            undoBuffers:[配列]
+        }
     xUI.setBackup();現在の作業バックアップをストアする
-    xUI.getBackup();現状のバックアップデータを返す　バックアップデータがない場合はfalse
+    xUI.getBackup();現状のバックアップデータを返す  バックアップデータがない場合はfalse
     xUI.clearBackup();現在のバックアップデータを廃棄する。
 */
+xUI.buildBackup=function(){
+    var backupClast={
+            documents:[this.documents[0].content.toString()],
+            references:[],
+            activeDocumentId:parseInt(this.activeDocumentId),
+            sessionId:[String(this.documents[0].sessionRetrace)]
+    };
+//    ,undoBuffers:[JSON.stringify(this.documents[0].undoBuffer)]        
+
+    for (var bix=1;bix<this.documents.length;bix++){
+        backupClast.documents.push(this.documents[bix].content.toString());
+        backupClast.references.push((this.documents[bix].referenceContent)? this.documents[bix].referenceContent.toString():null );
+        backupClast.sessionId.push(String(this.documents[bix].sessionRetrace));
+//        backupClast.undoBuffers.push(JSON.stringify(this.documents[bix].undoBuffer));
+    }
+console.log(backupClast);
+console.log(JSON.stringify(backupClast));
+    return JSON.stringify(backupClast);
+}
+
+xUI.restoreBackup=function(BackupStream){
+console.log(BackupStream)
+    var backupClast= JSON.parse(BackupStream);
+console.log(backupClast);
+    if(backupClast.documents.length){
+        this.documents.clear();//アプリケーションドキュメントバッファクリア
+        this.documents.push(
+            new xUI.Document(
+                new xMap().parsexMap(backupClast.documents[0]),
+                null
+            )
+        );
+        this.documents[0].undoBuffer=new xUI.UndoBuffer();
+//        Object.assign(this.documents[0].undoBuffer,JSON.parse(backupClast.undoBuffers[0]));
+        this.documents[0].sessionRetrace=backupClast.sessionId[0];
+        for (var bix=1;bix<backupClast.documents.length;bix++){
+//console.log(backupClast.documents[bix]);
+//console.log(new Xps().parseXps(backupClast.documents[bix]));
+            this.documents.push(
+                new xUI.Document(
+                    new Xps().parseXps(backupClast.documents[bix]),
+                    new Xps().parseXps(backupClast.references[bix-1])
+                )
+            );
+            this.documents[bix].undoBuffer=new xUI.UndoBuffer();
+//            Object.assign(this.documents[bix].undoBuffer,JSON.parse(backupClast.undoBuffers[bix]));
+            this.documents[bix].sessionRetrace=backupClast.sessionId[bix];
+        }
+        this.documents.activate(backupClast.activeDocumentId);
+        this.resetSheet();
+    }
+}
+
 xUI.setBackup=function(){
 /*
     保存・レストア・削除を一つのメソッドに統一して処理する。
@@ -1534,19 +1870,20 @@ xUI.setBackup=function(){
     AIR他のlocalStorageのない環境に対して操作互換のlocalStorageオブジェクトを作成 2016.06.17
 */
     if(typeof localStorage=="undefined"){
-//localStorageのないブラウザならサーバストア・CGIダウンロード　どちらもダメなら別ウインドウに書き出し
+//localStorageのないブラウザならサーバストア・CGIダウンロード  どちらもダメなら別ウインドウに書き出し
 //CGIダウンロード時にはリスタートが実行されるのでその部分の排除コードが必要
 //↑==callEcho時点で先行で保存フラグを立てれば自動的に回避可能
 //AIRならsaveAs tempSave モーダル保存があった方がよいかも
 if(fileBox.saveFile){fileBox.saveFile();}else{writeXPS(this.XPS);}
 
     }else{
-        localStorage.setItem("info.nekomataya.remaping.backupData",this.XPS.toString());
+        localStorage.setItem("info.nekomataya.remaping.backupData",this.buildBackup());
+/*リファレンスデータ込みでまるごとバックアップクラスタにまとめたので、このエリアは不要
         if(this.referenceXPS){
 //            alert(this.referenceXPS.toString());
           localStorage.setItem("info.nekomataya.remaping.referenceData",this.referenceXPS.toString());
 //            alert(this.referenceXPS.toString());
-        }
+        }*/
         if(false){
             var msg = localize(nas.uiMsg.dmBackupDone);//バックアップ終了
             alert(msg);
@@ -1560,21 +1897,14 @@ xUI.getBackup =function(){
 //
     var myBackup=localStorage.getItem("info.nekomataya.remaping.backupData");
     if(myBackup!==null){
-      if(confirm(localize(nas.uiMsg.dmBackupConfirm))){
-        xUI.data_well.value=myBackup;
-    var myReference=localStorage.getItem("info.nekomataya.remaping.referenceData");
-        if(this.XPS.readIN(xUI.data_well.value)){
-            if(myReference){xUI.referenceXPS.parseXps(myReference);}
-            xUI.resetSheet(xUI.XPS,xUI.referenceXPS);
-        }
-     }
+      if(confirm(localize(nas.uiMsg.dmBackupConfirm))) xUI.restoreBackup(myBackup);
     }else{
       alert(localize(nas.uiMsg.dmBackupNodata));//バックアップにデータなし
     }
 }
 xUI.clearBackup =function(){
     var myBackup=localStorage.removeItem("info.nekomataya.remaping.backupData");
-    var myReference=localStorage.removeItem("info.nekomataya.remaping.backupReference");
+    //var myReference=localStorage.removeItem("info.nekomataya.remaping.backupReference");
     alert(localize(nas.uiMsg.dmBackupClear));//バックアップクリア
 }
 /*    未保存時の処理をまとめるメソッド
@@ -1592,8 +1922,8 @@ var    msg = localize(nas.uiMsg.dmDocumentNosave);
 /*
     function(){
     switch (this.status){
-case 0:;//yes 保存処理　後でテンポラリファイルを実装しておくこと        
-            fileBox.openMode=mode;//ファイル保存に続行処理モードが必要　デフォルトは保存のみ
+case 0:;//yes 保存処理  後でテンポラリファイルを実装しておくこと        
+            fileBox.openMode=mode;//ファイル保存に続行処理モードが必要  デフォルトは保存のみ
             fileBox.saveFile();
 break;
 case 1:;
@@ -1605,8 +1935,8 @@ break;
 */
     var myAction=confirm(msg);
     if(myAction){
-        //保存処理　後でテンポラリファイルを実装しておくこと        
-            fileBox.openMode=mode;//ファイル保存に続行処理モードが必要　デフォルトは保存のみ
+        //保存処理  後でテンポラリファイルを実装しておくこと        
+            fileBox.openMode=mode;//ファイル保存に続行処理モードが必要  デフォルトは保存のみ
             fileBox.saveFile();
             return false;
     }else{
@@ -1614,10 +1944,10 @@ break;
     }
 }else{
     var msg  = localize(nas.uiMsg.dmDocumentNosaveExport);//エクスポートしますか？
-    　　msg += "\n"+localize(nas.uiMsg.dmDocumentConfirmOkCancel)+"\n";//
+        msg += "\n"+localize(nas.uiMsg.dmDocumentConfirmOkCancel)+"\n";//
     var myAction=confirm(msg);
     if(myAction){
-        //保存処理　後でテンポラリファイルを実装しておくこと        
+        //保存処理  後でテンポラリファイルを実装しておくこと        
             writeXPS(XPS);xUI.setStored("current");sync();
             return true
 //HTMLモードの保存は頻繁だと作業性が低下するので一考
@@ -1639,7 +1969,13 @@ xUI.adjustSpacer=function(){
 // ////////////alert("start adjust : "+$("#app_status").offset().top +":"+document.getElementById("fixedHeader").clientHeight );
     var headHeight=(this.viewMode=="Compact")? $("#app_status").offset().top-$("#pMenu").offset().top:document.getElementById("fixedHeader").clientHeight;
  var myOffset=(this.viewMode=="Compact")? $("#app_status").offset().top-headHeight:0;
+//一時コード  あとで調整  20180916
+if(document.getElementById("scrollSpaceHd"))
     document.getElementById("scrollSpaceHd").style.height=(headHeight-myOffset)+"px";
+if(document.getElementById("xpstScrollSpaceHd"))
+    document.getElementById("xpstScrollSpaceHd").style.height=(headHeight-myOffset)+"px";
+if(document.getElementById("xmapScrollSpaceHd"))
+    document.getElementById("xmapScrollSpaceHd").style.height=(headHeight-myOffset)+"px";
 
     document.getElementById("UIheaderScrollH").style.top=(headHeight+$("#app_status").height())+"px";
     document.getElementById("UIheaderFix").style.top=(headHeight+$("#app_status").height())+"px";
@@ -1658,7 +1994,7 @@ xUI.adjustSpacer=function(){
 "UIheaderScrollV"
 "sheet_body"
 ドキュメント内に存在しないエレメントは無視（印字用）
-スケーリングするターゲットを別に指定する場合は　idまたはid の配列で
+スケーリングするターゲットを別に指定する場合は  idまたはid の配列で
 */
 xUI.adjustScale=function(myScale,scaleTargetID){
     if(typeof myScale == "undefined"){myScale=[1,1]}
@@ -1695,18 +2031,18 @@ xUI.zoomSwitch.currentPreset=0;
 /*        xUI.reInitBody(newTimelines,newDuration);
 引数:
     newTimelines    Number 新規トラック数
-    newDuration    Number 新規継続時間　フレーム数
+    newDuration    Number 新規継続時間  フレーム数
 戻値:
     指定された大きさにシートを書き直す。
     元データは可能な限り維持
 
     undoの構造上サイズが変わると弊害が大きいので
     undoバッファは初期化する。undoを改装するまでは必須
-    undoバッファ改変中　0923
+    undoバッファ改変中  0923
 
     データ構造上Xpsのメソッドの方が良いので、
     データ改変部分をXPSlibに移動して
-    ここではXPSのメソッドを呼び出す形式に変更　2013.02.23
+    ここではXPSのメソッドを呼び出す形式に変更  2013.02.23
     タイムシートの拡縮をundo対象に拡張    2015.09.14
     新規に現在のXPSの複製をとって、それを拡縮した後putメソッドに渡す
     putメソッド内部でUNDO処理を行う
@@ -1767,7 +2103,7 @@ xUI.drawSheetCell = function (myElement){
         var sectionDraw = false;
         var mySection = myXps.xpsTracks[tgtID[1]].getSectionByFrame(tgtID[0]);
 
-//シートセルに　graph_*クラスがあれば削除
+//シートセルに  graph_*クラスがあれば削除
         var myClasses=targetJQ.attr('class').split(' ');
         for (var cix=0;cix<myClasses.length;cix++){
             if(myClasses[cix].indexOf('graph_')==0) targetJQ.removeClass(myClasses[cix]);
@@ -1858,7 +2194,7 @@ xUI.drawSheetCell = function (myElement){
           break;
           case "effect":;
           case "sfx":;
-            var drawForms ={"▲":"fi","▼":"fo","]><[":"transition"};//この配分は仮ルーチン　良くない
+            var drawForms ={"▲":"fi","▼":"fo","]><[":"transition"};//この配分は仮ルーチン  良くない
             if (myStr.match(/^[\|｜↑↓\*＊]$/)){
                 if(this.hideSource) myStr="<br>";                
             } else if (myStr.match(/^▼$/)){
@@ -1948,7 +2284,7 @@ if(false){
 
 xUI.getid=function(name){
 
-    if ((this[name].length==0)||(this[name][0]==null))　return '';
+    if ((this[name].length==0)||(this[name][0]==null))  return '';
   switch(name){
     case "Selection":
         return add(this.Select,this[name]).join("_");
@@ -2015,12 +2351,12 @@ if(! (ID instanceof Array)) ID = ID.split('_') ;
     全体の位置に加えて、現在のスクーンサイズを条件に追加して使用感を改善すること
     2015-0331
     
-  　区間選択状態または選択状態のドラグ時に選択セルに対するフォーカスオフセットが働くように改装
-  　2017-0324
+    区間選択状態または選択状態のドラグ時に選択セルに対するフォーカスオフセットが働くように改装
+    2017-0324
 
 オートスクロール起動条件
 縦方向    セルフォーカスが表示範囲上下一定（６または８？）フレーム以内であること(上下別の条件に)
-横方向　セルフォーカスが表示範囲左右一定（２～４？）カラム以内であること（左右別条件に）
+横方向  セルフォーカスが表示範囲左右一定（２～４？）カラム以内であること（左右別条件に）
 かつ移動余裕があること=各条件がシート端からの距離以上であること
 スクロール停止フラグが立っていないこと
 
@@ -2101,7 +2437,7 @@ default            :
 };
 var range=this.actionRange();
 //    dbgPut("selectionHi :\n"+range.join("\n"));
-//新選択範囲をハイライト スタートアドレスに負数を許容　150919
+//新選択範囲をハイライト スタートアドレスに負数を許容  150919
 //セクション編集のために選択範囲の末尾を色変え可能に拡張
     for (C=range[0][0];C<=range[1][0];C++){
         for (L=range[0][1];L<=range[1][1];L++){
@@ -2285,13 +2621,13 @@ if(pageNumber>1){
 }else{
     _BODY+='<table class=sheetHeader>';
 };
-//　ページヘッダとシートヘッダの共通表示
+//  ページヘッダとシートヘッダの共通表示
 
     _BODY+='<tr>';
     _BODY+='<td class="pgHeader opusHeader" id="opus'+pageNumber+'">'+this.XPS.opus+'</td>';
     _BODY+='<td class="pgHeader titleHeader" id="title'+pageNumber+'">'+this.XPS.title+this.XPS.subtitle+'</td>';
     _BODY+='<td class="pgHeader scenecutHeader" id="scene_cut'+pageNumber+'">'+this.XPS.scene+this.XPS.cut+'</td>';
-    _BODY+='<td class="pgHeader timeHeader" id="time'+pageNumber+'">'+nas.Frm2FCT(this.XPS.time(),3,1,this.XPS.framerate)+'</td>';
+    _BODY+='<td class="pgHeader timeHeader" id="time'+pageNumber+'">'+nas.Frm2FCT(this.XPS.time(),3,0,this.XPS.framerate)+'</td>';
     _BODY+='<td class="pgHeader nameHeader" id="update_user'+pageNumber+'">'+(this.XPS.update_user.toString()).split(":")[0]+'</td>';
 //    _BODY+='<td class=pgHeader id="update_user'+pageNumber+'">'+this.XPS.update_user.handle+'</td>';
 //シート番号終了表示
@@ -2307,7 +2643,7 @@ if(pageNumber==Pages){
     _BODY+='</table>';
 
     _BODY+='<table  class=sheetHeaderMargin ><tr><td class=memoSpace>';
-//第一ページのみシート全体のコメントを書き込む（印刷用）　表示用には別のエレメントを使用
+//第一ページのみシート全体のコメントを書き込む（印刷用）  表示用には別のエレメントを使用
 if(pageNumber==1){
 //シート書き出し部分からコメントを外す 印刷時は必要なので注意 2010/08/21
     _BODY+='<span class=top_comment ><u>memo:</u>';  
@@ -2349,7 +2685,7 @@ if(pageNumber==1){
  *        引数はページ番号を整数で
  *        戻り値はページ内容のHTMLテキスト
  *ページヘッダであった場合のみ固定のタイムラインヘッダーを出力する（画面表示専用）
- * 固定ヘッダの　第一第二第三　象限を出力する
+ * 固定ヘッダの  第一第二第三  象限を出力する
  *   2  |  1 (横スクロール)
  *  ----+-----
  *  3   |   4
@@ -2358,7 +2694,7 @@ if(pageNumber==1){
  *0    第一象限(-1)
  *-1    第二象限(-2)
  *-2    第三象限(-3)
- *    内部パラメータでは各値ともに減算して使用　--
+ *    内部パラメータでは各値ともに減算して使用  --
  *    0以上は通常ページの出力（0 org）
  *
  *
@@ -2379,10 +2715,10 @@ var hasEndMarker=false;// 継続時間終了時のエンドマーカー配置判
 }
 /*
 (2010/11/06)
-    現在　PageLengthは冗長フレームを含む <秒数×フレーム母数>
+    現在  PageLengthは冗長フレームを含む <秒数×フレーム母数>
     シート秒数が指定カラムで割り切れない場合は最後のカラムの秒数を1秒短縮して対応する仕様にする
-    5秒シート　2段組みの場合　2.5秒2段でなく　3秒と2秒の段を作る
-    従って1段のフレーム数は　切り上げ（指定秒数/指定段数）×フレーム母数
+    5秒シート  2段組みの場合  2.5秒2段でなく  3秒と2秒の段を作る
+    従って1段のフレーム数は  切り上げ（指定秒数/指定段数）×フレーム母数
 
 (2014/11/17)
     簡易表示のためのタイムラインヘッダを戻す機能を追加
@@ -2399,10 +2735,10 @@ var hasEndMarker=false;// 継続時間終了時のエンドマーカー配置判
 
 (2015/01/07)
     アクション欄をたたむ（非表示）
-    アクション欄のタイムライン　表示プロパティの増設
+    アクション欄のタイムライン  表示プロパティの増設
 (2016/07/16)
     アクション（リファレンス）欄の表示オプションを増設
-    xUI.referenveView に　種別キーワードを配列で格納
+    xUI.referenveView に  種別キーワードを配列で格納
     初期状態ではセル（置きかえ＋スチル）のみを表示する
 (2016/08/19)
     xpsTracksとlayersの統合に伴うチューニング
@@ -2613,7 +2949,7 @@ default:
 /*********** Edit Area *************/
 //=====================編集セル本体をタイムライン種別に合わせて配置(ラベル部分)
         for (r=0;r<this.XPS.xpsTracks.length-1;r++){
-            //末尾レコードはコメント固定なので判定せず（レコード長から1減算）　
+            //末尾レコードはコメント固定なので判定せず（レコード長から1減算）  
  switch (this.XPS.xpsTracks[r].option)
  {
 case "dialog":BODY_ +='<th class="dialogSpan tlhead" ';break;
@@ -2651,7 +2987,7 @@ BODY_ +='<th rowspan=2 class="tclabel annotationText" ';
 BODY_ +=' ><span class=timeguide> TIME </span></th>';
 /*********** Action Ref *************/
 BODY_ +='<th colspan="'+this.referenceLabels.length+ '" id="rnArea" class="rnArea annotationText" ondblclick=sync("referenceLabel") title=""';
-//　ここは参照シートの識別名に置き換え 
+//  ここは参照シートの識別名に置き換え 
 BODY_ +=' >Reference</th>';
 /*********** Dialog Area*************/
 BODY_ +='<th rowspan=2 class="dialoglabel annotationText" ';
@@ -2763,7 +3099,7 @@ BODY_ +='</th>';
     };
 BODY_ +='</tr>';
 
-//以下　シートデータ本体　pageNumberが-3以下の場合は固定(冒頭ダイアログ)部分まで出力
+//以下  シートデータ本体  pageNumberが-3以下の場合は固定(冒頭ダイアログ)部分まで出力
 if((pageNumber>=0)||(pageNumber<-2)){
 /*=========================シートデータエリア==========================*/
 //alert("SheetRows : "+ SheetRows +"\nthis.PageCols : "+this.PageCols);
@@ -2774,7 +3110,7 @@ BODY_ += '<tr>';
 //フレーム毎のプロパティを設定
     var myFrameCount=cols*SheetRows+n;
     var currentSec=(currentPageNumber*SheetLength)+Math.floor(myFrameCount/Math.ceil(this.XPS.framerate));//処理中の秒
-    var restFrm= myFrameCount % Math.ceil(this.XPS.framerate);//処理中の　ライン/秒
+    var restFrm= myFrameCount % Math.ceil(this.XPS.framerate);//処理中の  ライン/秒
 //    var mySpt=(this.XPS.rate.match(/df/i))?";":":";
     var mySpt=(this.XPS.framerate.opt=='smpte')?";":":";
 
@@ -2783,7 +3119,7 @@ BODY_ += '<tr>';
 
 //alert([myFrameCount,currentSec,restFrm].join("\n"));break;
 // var current_frame=(this.PageLength*currentPageNumber)+cols*SheetRows+n;//カレントフレームの計算がTCベースになる必要あり
-//現在処理中のフレームは有効か否かをフラグ　フレームがドロップまたは継続時間外の場合は無効フレーム
+//現在処理中のフレームは有効か否かをフラグ  フレームがドロップまたは継続時間外の場合は無効フレーム
     var isBlankLine =((current_frame != null)&&(current_frame < this.XPS.duration()))? false:true;
 // alert(isBlankLine+" : "+current_frame)
 
@@ -2998,14 +3334,14 @@ BODY_ +='';
     this.Select=restoreValue;
     return BODY_;
 };
-/* エンドマーカー位置調整メソッド　endMarker
+/* エンドマーカー位置調整メソッド  endMarker
     上記で配置したendMarkerの位置を実際の終了フレームの真下に再配置するメソッド
     '#0_'+String(this.XPS.xpsTracks.duration-1);
     '#'+String(this.XPS.xpsTracks.length-1)+'_'+String(this.XPS.xpsTracks.duration-1);
     自動化のため参照エレメントの情報をendMakerのinnerHTML内に埋め込む
     [this.XPS.xpsTracks.length-1,this.XPS.xpsTracks.duration-1]
     この形式によって位置計算にjQueryを利用しないでマーカーの再配置を行う
-    以下のメソッドは　単独の関数としても利用可能
+    以下のメソッドは  単独の関数としても利用可能
  */
 xUI.replaceEndMarker = function(endPoint,markerOffset){
     if(! document.getElementById('endMarker')) return;
@@ -3085,14 +3421,16 @@ var PageCount=(this.viewMode=="Compact")?1:Math.ceil(this.XPS.duration()/this.Pa
    }
 };
 
-/*
-UI関連メソッド
+/**  UI関連メソッド
+
+ユーザインターフェースコントロール
+
 */
 /*
     スピンアクション
 xUI.spin(vAlue)
 引数:
-設定するスピン量　数値
+設定するスピン量  数値
 または
 キーワード right/left/up/doun/fwd/back
 引数無しで現在のスピン量を返す
@@ -3298,7 +3636,7 @@ xUI.move(dest,dup);
 カットとペーストを自動で行うのではなくundoの対象を1回にするために、移動範囲のバウンディングボックスを生成してput一回で処理する
 
 移動先が編集範囲外のデータは消去
-移動が発生しなかった場合は移動失敗　undoバッファの更新は行われない
+移動が発生しなかった場合は移動失敗  undoバッファの更新は行われない
 移動指定時に、フォーカスが範囲外に出るケースは、失敗とする
 このルーチン内で完結させて xUI.putメソッドには渡さない
 
@@ -3321,7 +3659,7 @@ xUI.move    =function(dest,dup){
     var fkPos=add(bkPos,dest);//[dest[0]+bkPos[0],dest[1]+bkPos[1]];//移動終了後のフォーカス
 //alert(fkPos)
     if ((fkPos[0]<0)||(fkPos[1]<0)||(fkPos[0]>this.XPS.xpsTracks.length)||(fkPos[1]>this.XPS.xpsTracks[0].length)){return false}
-    //いずれもシート外にフォーカスが出るので禁止　これを排除するので変更範囲は処理可能となる
+    //いずれもシート外にフォーカスが出るので禁止  これを排除するので変更範囲は処理可能となる
 //変更範囲を算出(この計算では範囲外の値が出るが、フォーカスがシートを外れないのでこのまま)
     var left  =(dest[0]<0)? dest[0]+myRange[0][0]:myRange[0][0];
     var top   =(dest[1]<0)? dest[1]+myRange[0][1]:myRange[0][1];
@@ -3374,11 +3712,11 @@ if(! dup){
 //    セル書き直し
     this.syncSheetCell(putResult[0][0],putResult[0][1]);
 
-        this.undoPt++;
+        this.activeDocument.undoBuffer.undoPt++;
         this.undoGc=0;
-        this.undoStack[this.undoPt]=UNDO;
-        if (this.undoStack.length>(this.undoPt+1))
-            this.undoStack.length=(this.undoPt+1);
+        this.activeDocument.undoBuffer.undoStack[this.activeDocument.undoBuffer.undoPt]=UNDO;
+        if (this.activeDocument.undoBuffer.undoStack.length>(this.activeDocument.undoBuffer.undoPt+1))
+            this.activeDocument.undoBuffer.undoStack.length=(this.activeDocument.undoBuffer.undoPt+1);
 // undoバッファの状態を表示
     sync("undo");sync("redo");
 
@@ -3390,19 +3728,19 @@ if(! dup){
 
 /**
     やり直し
-引数: undoOffset 遡るべきundo回数 undoポインタを超えることはできない　省略時は 1
+引数: undoOffset 遡るべきundo回数 undoポインタを超えることはできない  省略時は 1
    
  */
 xUI.undo    =function (undoOffset){
-    if(this.undoPt==0) {
+    if(this.activeDocument.undoBuffer.undoPt==0) {
 if(dbg) {dbgPut("UNDOバッファが空")};
         return;
     };
     //UNDOバッファが空なので失敗
     if(typeof undoOffset == 'undefined') undoOffset = 1;
-    this.skipCt=(undoOffset-1);
+    this.activeDocument.undoBuffer.skipCt=(undoOffset-1);
 while(undoOffset>0){
-if(dbg) {dbgPut("undoPt:"+this.undoPt+":\n"+this.undoStack[this.undoPt].join("\n"))};
+if(dbg) {dbgPut("undoPt:"+this.activeDocument.undoBuffer.undoPt+":\n"+this.activeDocument.undoBuffer.undoStack[this.activeDocument.undoBuffer.undoPt].join("\n"))};
     this.inputFlag="undo";
     var putResult=this.put();
     if(putResult){
@@ -3417,14 +3755,14 @@ if(dbg) {dbgPut("putResult:\n"+putResult)};
 
 /*    やり直しのやり直し    */
 xUI.redo    =function(redoOffset){
-    if((this.undoPt+1)>=this.undoStack.length) {
+    if((this.activeDocument.undoBuffer.undoPt+1)>=this.activeDocument.undoBuffer.undoStack.length) {
 if(dbg){dbgPut("REDOバッファが空")};
         return;
     };
         //REDOバッファが空
     if(typeof redoOffset == 'undefined') redoOffset = 1;
 while(redoOffset>0){
-if(dbg) {dbgPut("undoPt:"+this.undoPt+"\n:"+this.undoStack[this.undoPt].join("\n"))};
+if(dbg) {dbgPut("undoPt:"+this.activeDocument.undoBuffer.undoPt+"\n:"+this.activeDocument.undoBuffer.undoStack[this.activeDocument.undoBuffer.undoPt].join("\n"))};
     this.inputFlag="redo";
     var putResult=this.put();
     if(putResult){
@@ -3471,7 +3809,7 @@ if(tabText){
 戻値:[[TrackStartAddress,FrameStartAddress],[TrackEndAddress,FrameEndAddress]]
     現在のUI上の操作範囲の抽出
      引数は、制限範囲を絶対量で与える。通常は入力データサイズ
-    省略可能　省略時は選択範囲と同一
+    省略可能  省略時は選択範囲と同一
     指定時は、UNDOバッファ消費を押さえるために制限範囲と選択範囲の重なる部分を返す
     [0,0]が指定された場合は、該当セルのみを返すので開始終了アドレスが同一
     戻値は絶対座標で[左上座標、右下座標]の形式
@@ -3558,8 +3896,8 @@ xUI.getRange    =function(Range)
 
 /*    xUI.putReference(dataStream[,direction])
 引数
-    :dataStream    シートに設定するデータ　単一の文字列　またはXpsオブジェクト または　配列　省略可
-    :direction    データ開始位置ベクトル　配列　省略可　省略時は[0,0]
+    :dataStream    シートに設定するデータ  単一の文字列  またはXpsオブジェクト または  配列  省略可
+    :direction    データ開始位置ベクトル  配列  省略可  省略時は[0,0]
       参照シートに外部から値を流し込むメソッド
         xUI.putReference(データストリーム)
         読み込み時も使用
@@ -3572,8 +3910,8 @@ xUI.putReference    =function(datastream,direction){
 }
 /*    xUI.put(dataStream[[,direction],toReference])
 引数
-    :dataStream     シートに設定するデータ　単一の文字列　またはXpsオブジェクト または　配列　省略可
-    :direction      データ開始位置ベクトル　配列　省略可　省略時は[0,0]
+    :dataStream     シートに設定するデータ  単一の文字列  またはXpsオブジェクト または  配列  省略可
+    :direction      データ開始位置ベクトル  配列  省略可  省略時は[0,0]
     :toReference    ターゲットオブジェクト切り替えフラグ
     シートに外部から値を流し込むメソッド
         xUI.put(データストリーム)
@@ -3592,7 +3930,7 @@ xUI.putReference    =function(datastream,direction){
     マクロ展開後には同様に必要範囲内のフットマーク再表示を行う
     
     参照エリアに対する描画高速化のために、このメソッドでリファレンスの書換をサポートする
-    引数に変更がなければ従来動作　フラグが立っていればリファレンスを書換
+    引数に変更がなければ従来動作  フラグが立っていればリファレンスを書換
     リファレンス操作時はundo/redoは働かない
 
     再描画抑制undoカウンタを設置
@@ -3611,9 +3949,9 @@ xUI.put = function(datastream,direction,toReference){
   if(! toReference){
 //  undo/redo 事前処理
     switch (this.inputFlag){
-    case "redo":        this.undoPt++             ;   //REDO処理時
+    case "redo":        this.activeDocument.undoBuffer.undoPt++             ;   //REDO処理時
     case "undo":                                  ;   //UNDO処理時
-        var undoTarget   = this.undoStack[this.undoPt];    //処理データ取得
+        var undoTarget   = this.activeDocument.undoBuffer.undoStack[this.activeDocument.undoBuffer.undoPt];    //処理データ取得
 // undo内容をオブジェクトメソッドでputするためにホットポイントを作成する
 // ホットポイント設定
         var hotPoint=[
@@ -3636,15 +3974,15 @@ xUI.put = function(datastream,direction,toReference){
 
 やりとりするデータの基本形式は、コンマ区切り文字列
 フレーム方向のストリームで、改行で次のレイヤに移動
-制御トークン等は無し　データのみ
+制御トークン等は無し  データのみ
     '1,,,2,,\n1,,,,,\n"x",,,,,\n'
 
 Xpsオブジェクトの際は、シート全体を入れ替え
 構造変更や大規模な変更をまとめる際はこの方法を推奨
 
 データテーブル以外の各プロパティは、配列を使用して指定
-配列は[プロパティ名称,値]　で　UNDOスタックには[プロパティ名称,変更前の値]　を積む
-2015.09.14　修正
+配列は[プロパティ名称,値]  で  UNDOスタックには[プロパティ名称,変更前の値]  を積む
+2015.09.14  修正
 
     07/08/07    undoGroup着手
 
@@ -3658,7 +3996,7 @@ Xpsオブジェクトの際は、シート全体を入れ替え
 コピーした配列から変更範囲全体をXPSに流し込んで、UNDOを更新する。
 こんな予定、でもまだやってない
 
-undoGroupは優先度低い　ほぼいらないような気がするのでまあアレだ
+undoGroupは優先度低い  ほぼいらないような気がするのでまあアレだ
 2015.09.14 
 
 undoスタックに格納する値は
@@ -3680,7 +4018,7 @@ if(this.edmode >= 2){
 };
 /*    入力データを判定    */
 if(datastream instanceof Xps){
-/*    Xpsならばシートの入れ替えを行う。現在のシート複製をundoStackに格納　*/
+/*    Xpsならばシートの入れ替えを行う。現在のシート複製をundoStackに格納  */
     if(toReference){
 //入力データをXPSに設定   
         xUI.resetSheet(undefined,datastream);//リファレンス更新
@@ -3695,13 +4033,13 @@ if(datastream instanceof Xps){
 /*    引数が配列の場合は、Xps のプロパティを編集する
 形式:    [kEyword,vAlue]
     キーワード列とプロパティの対応リストは以下を参照
-    キーワードは基本的にプロパティ文字列　"parent""stage"等
-    タイムラインコレクションの個別プロパティは　"id.1.xpsTracks"等の"."接続した倒置アドレスで指定
+    キーワードは基本的にプロパティ文字列  "parent""stage"等
+    タイムラインコレクションの個別プロパティは  "id.1.xpsTracks"等の"."接続した倒置アドレスで指定
 
 //        Xps標準のプロパティ設定
-    parent      ;//親Xps参照用プロパティ　初期値はnull（参照無し）編集可
-    stage       ;//初期化の際に設定する　編集不可
-    mapfile     ;//初期化の際に設定する　編集不可
+    parent      ;//親Xps参照用プロパティ  初期値はnull（参照無し）編集可
+    stage       ;//初期化の際に設定する  編集不可
+    mapfile     ;//初期化の際に設定する  編集不可
     opus        ;//編集対象
     title       ;//編集対象
     subtitle    ;//編集対象
@@ -3711,27 +4049,27 @@ if(datastream instanceof Xps){
     trout       ;//編集対象(ドキュメント構成変更)
     rate        ;//編集対象(ドキュメント構成変更)
     framerate   ;//編集対象(ドキュメント構成変更)
-    create_time ;//システムハンドリング　編集不可
-    create_user ;//システムハンドリング　編集不可
-    update_time ;//システムハンドリング　編集不可
-    update_user ;//システムハンドリング　編集不可
+    create_time ;//システムハンドリング  編集不可
+    create_user ;//システムハンドリング  編集不可
+    update_time ;//システムハンドリング  編集不可
+    update_user ;//システムハンドリング  編集不可
 
-    xpsTracks   ;タイムラインコレクション　構成変更のケースと内容変更の両ケースあり
-                ;コレクションのエントリ数が変更になる場合は全て構成変更　それ以外は内容編集
+    xpsTracks   ;タイムラインコレクション  構成変更のケースと内容変更の両ケースあり
+                ;コレクションのエントリ数が変更になる場合は全て構成変更  それ以外は内容編集
 
 xpsTimelineTrackオブジェクトのプロパティ
     noteText    ;//編集対象
     
-    id      ;//識別用タイムラインラベル　編集対象
+    id      ;//識別用タイムラインラベル  編集対象
     sizeX   ;//デフォルト幅 point    編集対象（編集価値低）
     sizeY   ;//デフォルト高 point    編集対象（編集価値低）
-    aspect  ;//デフォルトのpixelAspect　編集対象（編集価値低）
-    lot     ;//map接続データ　編集禁止（編集価値低）
-    blmtd   ;//セレクター利用　
-    blpos   ;//セレクター利用　
+    aspect  ;//デフォルトのpixelAspect  編集対象（編集価値低）
+    lot     ;//map接続データ  編集禁止（編集価値低）
+    blmtd   ;//セレクター利用  
+    blpos   ;//セレクター利用  
     option  ;//セレクター利用 トラック種別変更時はセクションキャッシュをクリア
-    link    ;//セレクター利用　
-    parent  ;//セレクター利用　
+    link    ;//セレクター利用  
+    parent  ;//セレクター利用  
 
 
 */
@@ -3815,25 +4153,25 @@ if(dbg){dbgPut("XPS.put :\n"+putResult.join("\n"));}
     }
 }
 
-//  if(this.undoStack[this.undoPt][0].join()!=selectBackup[0].join()) this.undoStack[this.undoPt][3]=selectBackup;
+//  if(this.activeDocument.undoBuffer.undoStack[this.activeDocument.undoBuffer.undoPt][0].join()!=selectBackup[0].join()) this.activeDocument.undoBuffer.undoStack[this.activeDocument.undoBuffer.undoPt][3]=selectBackup;
   if(! toReference){
 //操作別に終了処理
 switch (this.inputFlag){
 case "undo":
 case "redo":
-        this.undoStack[this.undoPt][2]=UNDO[2];    //UNDO処理時
+        this.activeDocument.undoBuffer.undoStack[this.activeDocument.undoBuffer.undoPt][2]=UNDO[2];    //UNDO処理時
 if(undoTarget.length>=4){
 //第４要素がある場合のみredo用のデータを設定して、カーソル復帰処理を行う
     var currentAddress =undoTarget[3][0].slice();
     var currentRange   =undoTarget[3][1].slice();
-    if(this.undoStack[this.undoPt][0].join()!=selectBackup[0].join()) this.undoStack[this.undoPt][3]=selectBackup;
+    if(this.activeDocument.undoBuffer.undoStack[this.activeDocument.undoBuffer.undoPt][0].join()!=selectBackup[0].join()) this.activeDocument.undoBuffer.undoStack[this.activeDocument.undoBuffer.undoPt][3]=selectBackup;
     this.selection (add(this.Select,currentRange));
     this.selectCell(currentAddress);
 }else{
     this.selection(add(undoTarget[0],undoTarget[1]));
     this.selectCell(undoTarget[0].join('_'));
 };
-        if(this.inputFlag=="undo") this.undoPt--;
+        if(this.inputFlag=="undo") this.activeDocument.undoBuffer.undoPt--;
         break;
 case "nomal":   ;//通常のデータ入力
 case "cut":     ;
@@ -3857,11 +4195,11 @@ if(dbg){
   }
 case "move":
 default:    ;//カット・コピー・ペースト操作の際はカーソル移動無し
-        this.undoPt++;
+        this.activeDocument.undoBuffer.undoPt++;
         this.undoGc=0;
 if(dbg){    dbgPut(    "UNDO stack add:\n"+UNDO.join("\n")); }
-        this.undoStack[this.undoPt]=UNDO;
-        if (this.undoStack.length>(this.undoPt+1)){ this.undoStack.length=(this.undoPt+1)};
+        this.activeDocument.undoBuffer.undoStack[this.activeDocument.undoBuffer.undoPt]=UNDO;
+        if (this.activeDocument.undoBuffer.undoStack.length>(this.activeDocument.undoBuffer.undoPt+1)){ this.activeDocument.undoBuffer.undoStack.length=(this.activeDocument.undoBuffer.undoPt+1)};
 };
     this.inputFlag="nomal";
 // undoバッファの状態を表示
@@ -3880,7 +4218,7 @@ return [[TrackStartAddress,FrameStartAddress],lastAddress];
     アドレス一致の場合は、一コマのみ
 */
 xUI.syncSheetCell=function(startAddress,endAddress,isReference){
-    if(this.skipCt > 0) {this.skipCt --;return;};//?
+    if(this.activeDocument.undoBuffer.skipCt > 0) {this.activeDocument.undoBuffer.skipCt --;return;};//?
     var targetXps=(isReference)? this.referenceXPS:this.XPS;
     if((! startAddress)||(! endAddress)){
         startAddress=[0,0];
@@ -3928,7 +4266,7 @@ if((r>=0)&&(r<targetXps.xpsTracks.length)&&(f>=0)&&(f<targetXps.xpsTracks.durati
     };
     setTimeout(function(){xUI.Cgl.refresh([startAddress,endAddress],isReference)},0);//非同期処理
 }
-//syncSheetCell シートセルの表示を編集内容に同期させる　
+//syncSheetCell シートセルの表示を編集内容に同期させる  
 /**
     リファレンス領域と編集領域のデータが異なっているか否かを返す関数
     標準で[トラックid,フレーム]を配列で、又は ID文字列"trc_frm"
@@ -3975,6 +4313,36 @@ iNputbOx以外の入力もこのメソッドで受ける
 フォーカスがiNputbOx以外にある場合は、トラップする特定キー以外はNOPで戻す
 */
 xUI.keyDown    =function(e){
+if((xUI.player)&&(xUI.player.keyboard)){
+//	var ClockClicks = (new Date()).getTime();
+	if(e.keyCode == 32) {
+//[space]='if(xUI.player.status=="stop"){xUI.player.start()}else{if(xUI.player.markSwap){xUI.player.getCount=true}else{xUI.player.stop()}};'
+		if(xUI.player.status=='stop'){
+				xUI.player.start();
+		} else {
+			if(xUI.player.markSwap){
+				xUI.player.getCount=true;
+			}else{
+				xUI.player.stop();
+			}
+		}
+		return false;
+	} else if(e.keyCode == 13){
+//[enter]='if(xUI.player.status=="run"){if(xUI.player.markSwap){xUI.player.stop()}else{xUI.player.getCount=true}}else{clearMark()};'
+		if(xUI.player.status=='run'){
+			if(xUI.player.markSwap){
+				xUI.player.stop()
+			}else{
+				xUI.player.getCount=true
+			}
+			return false;
+		}else{
+			if(xUI.player.countStack.length){clearMark();return false;}
+		}
+	}else if((e.keyCode == 35)||(e.keyCode == 36)){
+		if(xUI.player.status=='run') return false;
+	}
+}
 //ブラウザ全体のキーダウンを検出
 	key = e.keyCode;//キーコードを取得
 //フォーカスエレメントがiNputbOx以外なら入力を戻す
@@ -4128,7 +4496,7 @@ case	40	:		//
 //		    this.sectionUpdate();
 /*		    
             var trackContents = xUI.floatTrack.sections.manipulateSection(xUI.floatSectionId,xUI.Select[1],xUI.Selection[1]);
-    　if(false){
+      if(false){
 //undo保留の場合は上のルーチン
             xUI.XPS.put([xUI.Select[0],0],trackContents);
             xUI.syncSheetCell([xUI.Select[0],0],[xUI.Select[0],xUI.XPS.xpsTracks[0].duration]);
@@ -4537,7 +4905,7 @@ case	27	: 			;//esc
 	return false;
 case	25	:if(! Safari) break;
 case	0	:if(Firefox){return true;};//キーコード0を返すコントロールキー群
-//  fierfox　が keypress で全てキーコード0:を返す状態になっている　2017.12
+//  fierfox  が keypress で全てキーコード0:を返す状態になっている  2017.12
 case	9	:			;//またはTAB および ctr-I
 //	return false;
 
@@ -4577,6 +4945,15 @@ default :;
 //
 //キーアップもキャプチャする。UI制御に必要 今のところは使ってない?
 xUI.keyUp = function (e){
+	if(xUI.player.keyboard){
+//		[space]='if((xUI.player.markSwap)&&(xUI.player.status=="run")){xUI.player.getCount=false};
+//		[enter]='if(!(xUI.player.markSwap)&&(xUI.player.status=="run")){xUI.player.getCount=false};'
+		if(xUI.player.markSwap){
+			if((e.keyCode == 32)&&(xUI.player.status=='run')) xUI.player.getCount=false;
+		}else{
+			if((e.keyCode == 13)&&(xUI.player.status=='run')) xUI.player.getCount=false;
+		}
+	}
 	key = e.keyCode;//キーコードを取得
 //      console.log(key+':up:');
 	if(this.eXMode>=2){
@@ -4773,14 +5150,14 @@ default    :    return true;
 ３種のターゲットがある
         body
 セクション全体がトラック内を前後に移動する
-フローティングムーブに準ずる処理　ホットポイントオフセットが存在する
+フローティングムーブに準ずる処理  ホットポイントオフセットが存在する
         head
         tail
 トラック内でセクションが伸縮
-他のノードを固定してヘッドまたはテールノードが移動することでセクションを伸縮する　
+他のノードを固定してヘッドまたはテールノードが移動することでセクションを伸縮する  
 
-edmode==3　中は、マウスオーバーでセクション body||head||tail 移動
-リリースで移動（＝編集）を解決　1回毎に更新回数を記録
+edmode==3  中は、マウスオーバーでセクション body||head||tail 移動
+リリースで移動（＝編集）を解決  1回毎に更新回数を記録
 ダブルクリックまたは対象トラック外をクリックで解決してモード解除
 エスケープまたは対象トラック外右クリックで変更を廃棄して編集前に戻す
 
@@ -4794,9 +5171,9 @@ edmode==3　中は、マウスオーバーでセクション body||head||tail �
                      [esc]
                      
     セクション操作オフセットをxUIのプロパティで設定する
-    値が０なら前方伸長　値が末尾なら後方伸長それ以外は移動
+    値が０なら前方伸長  値が末尾なら後方伸長それ以外は移動
     継続時間が1の場合は末尾として扱う
-    解決順が　末尾＞先頭＞以外になれば操作種別を１種にできる
+    解決順が  末尾＞先頭＞以外になれば操作種別を１種にできる
     すべてsectionMove(start,duration)に集約できそう
     
 */
@@ -4842,7 +5219,7 @@ case    "mousedown"    :
     xUI.Mouse.action=true;
 //    console.log([xUI.edmode,hotpoint,xUI.sectionManipulateOffset,xUI.Mouse.action]);
 break;
-case    "click"    :;//クリックしたセルで解決　(any):body/+[ctrl]:head/+[shift]:tail 
+case    "click"    :;//クリックしたセルで解決  (any):body/+[ctrl]:head/+[shift]:tail 
     if(hottrack!=xUI.Select[0]) {
         //対象トラック外なら確定して解除
         this.mdChg("normal");        
@@ -4907,7 +5284,7 @@ case    "mouseup"    ://終了位置で解決
 break;
 case    "mouseover"    ://可能な限り現在位置で変数を更新
     if(!(TargeT.id.match(/^([0-9]+)_([0-9]+)$/))){return false};//シートセル以外を排除
-//オフセットを参照して　.Select .Selection を操作する
+//オフセットを参照して  .Select .Selection を操作する
 /*
     
 */
@@ -5036,7 +5413,7 @@ default    :    return true;
 //    xUI.Mouse.rID=false    ;//マウスカーソルID
 /** ドキュメントを開く
     引数'localFile'の場合は、サーバリポジトリでなくローカルファイルインポートを優先する。
-    fileBox.openFileDBが関数として存在する場合は、　AIR準拠環境でローカルファイルの操作が可能なので実行
+    fileBox.openFileDBが関数として存在する場合は、  AIR準拠環境でローカルファイルの操作が可能なので実行
     それ以外は、インポート手順に従ってローカルファイルチューザーを提示
     失敗時はNOP
     引数なしのケースでは、リポジトリの操作を行う。（リポジトリドキュメントチューザーを提示）
@@ -5071,7 +5448,7 @@ xUI.openDocument=function(mode){
     default:
 
     trueに判定される引数が与えられた場合、可能な限りローカルファイルシステムヘの別名保存を行う。
-    AIR環境の場合は、fileBox.saveAs()　それ以外の場合はエコーサーバ経由のダウンロード
+    AIR環境の場合は、fileBox.saveAs()  それ以外の場合はエコーサーバ経由のダウンロード
 */
 xUI.storeDocument=function(mode){
 //        this.sWitchPanel("Data");//インポート・エクスポートパネルを呼び出す必要はなくなったので削除
@@ -5213,7 +5590,7 @@ var offsetV=0;var offsetH=0;
 /* xUI.onScroll
     SheetBody(document.body)のスクロールイベントに合わせ相当量の移動をヘッダに与える
 ３秒目からセルの高さが減少するのは、出力ルーチン側のカラム処理の問題だと思われる
-スクロールが外れるのは、Rmp_initを通過しない書き換え部分で　body の初期化が発生するためと推測
+スクロールが外れるのは、Rmp_initを通過しない書き換え部分で  body の初期化が発生するためと推測
 onscrollの設定位置を一考
 マージン部分のカバーをするか、または全体paddingが必要
 キーボードによるスクロールが発生した場合、ケースを見て対応が必要
@@ -5244,15 +5621,15 @@ onscrollの設定位置を一考
 /*
 	xUI.sWitchPanel(引数)
 パネル類の表示をコントローする
-引数="clear"または　なしの場合は、排他表示のパネル類を表示クリア（hide）して表示を初期化する
+引数="clear"または  なしの場合は、排他表示のパネル類を表示クリア（hide）して表示を初期化する
 
 引数	JQobject	備考
 
 //排他表示
-login   #optionPanelLogin   //ログインUI（　排他）
-memo    #optionPanelMemo    //メモ編集（　排他）
-Data    #optionPanelData    //Import/Export（　排他）
-AEKey   #optionPanelAEK     //キー変換（　排他）
+login   #optionPanelLogin   //ログインUI（  排他）
+memo    #optionPanelMemo    //メモ編集（  排他）
+Data    #optionPanelData    //Import/Export（  排他）
+AEKey   #optionPanelAEK     //キー変換（  排他）
 Scn     #optionPanelScn     //シーン設定(モーダル)
 SCIs    #optionPanelSCI    //複数対応簡易シーン設定(モーダル)
 Pref    #optionPanelPref    //環境設定（モーダル）
@@ -5288,6 +5665,7 @@ var myPanels=["#optionPanelMemo",
 	"#optionPanelSnd",
 	"#optionPanelRef",
 	"#optionPanelRol",
+	"#optionPanelTimer"
 ];
 /*
 オールクリアは可能だが、ウインドウがフロートに移行するので使用範囲は限定される。
@@ -5331,6 +5709,12 @@ case	"Rol":	;//書き込み警告パネル
 		
 	break;
 //割り込みパネル
+case	"Timer":;//タイマーパネル
+	var myStatus=(myTarget.is(':visible'))? true:false;
+	xUI.player.keyboard=(myStatus)?false:true;
+	this.sWitchPanel("clear");
+	if(myStatus){myTarget.hide()}else{myTarget.show()};
+break;
 case	"Login":;//ログインパネル
 case	"Data":	;//データパネル
 case	"Dbg":	;//デバッグパネル
@@ -5391,14 +5775,14 @@ case	"AEKey":	;//キー表示
 	if(! myTarget.is(':visible')){
 		this.sWitchPanel("clear");
 			//パネル初期化が必要
-			//var myIdx=["blmtd","blpos","aeVersion"]//キーメッソド固定に変更されるので不要　,"keyMethod"
+			//var myIdx=["blmtd","blpos","aeVersion"]//キーメッソド固定に変更されるので不要  ,"keyMethod"
 			//for (var idx=0;idx<myIdx.length;idx++){document.getElementById(myIdx[idx]).value=xUI[myIdx[idx]];}
 		myTarget.show();
 	}else{
 		myTarget.hide();
 	};
 	break;
-case	"memu":	;//ドロップダウンメニューバー　消す時に操作性が阻害されるケースがあるので警告を入れる
+case	"memu":	;//ドロップダウンメニューバー  消す時に操作性が阻害されるケースがあるので警告を入れる
 	if($("#pMenu").is(":visible")){
 		if(appHost.platform!="AIR"){
 		    var msg=localize(nas.uiMsg.dmConfirmClosepMenu);//
@@ -5484,20 +5868,20 @@ xUI.Cgl.refresh=function(myRange,isReference){
 }
 /**
 	セル画像部品描画コマンド
-位置計算をブラウザに任せるため　絶対座標でなく相対座標で各テーブルセル自体にCANVASをアタッチする
+位置計算をブラウザに任せるため  絶対座標でなく相対座標で各テーブルセル自体にCANVASをアタッチする
 
-基本部品はすべてキャッシュを行い　image Objectを作成する。
+基本部品はすべてキャッシュを行い  image Objectを作成する。
 
 印字の際に描画の動作独立性を高める必要があるので、セルに埋め込んだ画像クラスを判定してその描画を行う仕様に変更
 具体的には、myFormに優先してターゲットセルの"graph_"で開始されるクラス名からFormを取得するように変更
-　170815
-シートカラーを　ユーザ変更可能にしたので　暗色テーマへの対応が必要
+  170815
+シートカラーを  ユーザ変更可能にしたので  暗色テーマへの対応が必要
 描画カラーをオブジェクトプロパティ設ける事
 引数myFormの書式は以下
     Shape[[-Track]-Cycle]_Start-End
     後ほどShapeごとにプラグイン処理が可能なように変更を行う予定
 
-　引数として以下の形式も受け入れる
+  引数として以下の形式も受け入れる
 addGraphElement(myId,myForm,start,end)
 
 myForm を事前処理してtargetShapeを事前抽出するように変更20180513
@@ -5511,7 +5895,7 @@ xUI.Cgl.draw=function addGraphElement(myId,myForm) {
     if(typeof myForm == 'undefined') {return false};//指定無しでかつ取得に失敗した場合はリターン(印刷時に有効)
 
 /*
-    区間描画時に形成されたIDの場合はパーセンテージを分解して描画する　開始・終了率を先行して分離
+    区間描画時に形成されたIDの場合はパーセンテージを分解して描画する  開始・終了率を先行して分離
     終了率が省略された場合は、開始率で補う
     キーワードとして m,l,s が 100,50,25 を表す。
 */
@@ -5537,9 +5921,9 @@ xUI.Cgl.draw=function addGraphElement(myId,myForm) {
     myForm を分解して目標形状、目標トラック、Cycle値を取得
 */
     var targetShape = (myForm.split('_')[0]).split('-')[0];//ターゲット形状
-    var tragetTrack = (myForm.match(/-(ref|stl|rmt|cam|sfx)/i))? RegExp.$1:"";//トラック指定　ヒットがない場合は全トラック適用
+    var tragetTrack = (myForm.match(/-(ref|stl|rmt|cam|sfx)/i))? RegExp.$1:"";//トラック指定  ヒットがない場合は全トラック適用
 /*
-    サイクルターゲットパラメータは配列で持つ　[参照値,母数]
+    サイクルターゲットパラメータは配列で持つ  [参照値,母数]
 */
     var cycleTarget=[0,1];
     if (myForm.indexOf('evn')>=0){
@@ -5561,7 +5945,7 @@ xUI.Cgl.draw=function addGraphElement(myId,myForm) {
     以下の場合分けは、ノーマル時の処理とAIR環境のバグ回避コード
     先の処理のほうがオーバヘッドが小さいので推奨だが、AIRで正常に処理されない
 - td配下に置いたcanvasエレメントが、position=absoluteを指定するとページ全体又はテーブルを包括するdivの原点をベースに描画される。
-- element.top/.left で指定した座標が反映されないことがある　element.style.top/.left は正常
+- element.top/.left で指定した座標が反映されないことがある  element.style.top/.left は正常
  動作異状の検出ルーチンはまだ組んでいない。ビルド毎にAIRに当該のバグがあるか否か確認が必要
  2016.11.12
 */
@@ -5579,7 +5963,7 @@ if(appHost.platform != "AIR"){
         var myLeft      = objTarget.offsetLeft + "px";
 }
 /**
-    formCache　を作成する
+    formCache  を作成する
     単一セルに対するformは初回描画時にpngにレンダリングCacheに格納される
     ２度め以降はその都度利用される。
     トランジション系は形状が安定しないため都度描画
@@ -5645,7 +6029,7 @@ case "wave-ref-evn":;		//wave-line 奇数フレーム
 break;
 case "shake":;			//shake-line
 /*
-シェイク形状は、大中小の副形状をサポートする　ウェーブと初期位相を反転させる
+シェイク形状は、大中小の副形状をサポートする  ウェーブと初期位相を反転させる
 case "shake-odd":;		//shake-line 偶数フレーム
 case "shake-evn":;		//shake-line 奇数フレーム
 case "shake-cam-odd":;		//shake-line 偶数フレーム
@@ -5835,7 +6219,7 @@ xUI.setRetrace = function(){
  *  初期化手順を用いていた部分の置換え用途で作成
  *  初期化手順内でもこの手続を呼び出すように変更
  *  この手続内では基本的にundo処理は行わない
- *　したがって必要に従ってこの手続を呼ぶ前にundoの初期化を行うか、またはundo操作を行う必要がある。
+ *  したがって必要に従ってこの手続を呼ぶ前にundoの初期化を行うか、またはundo操作を行う必要がある。
  */
 xUI.resetSheet=function(editXps,referenceXps){
 //  現在のカーソル配置をバックアップ
@@ -5858,7 +6242,7 @@ xUI.resetSheet=function(editXps,referenceXps){
             "opus","title","subtitle","scene","cut","trin","trout","rate","framerate",
             "create_time","create_user","update_time","update_user",
         ];
-//"xpsTracks"　以外のプロパティを全て本体プロパティで置きかえ
+//"xpsTracks"  以外のプロパティを全て本体プロパティで置きかえ
             for(var pix=0;pix<prps.length;pix++){editXps[prps[pix]]=xUI.XPS[prps[pix]]};
         }
         */
@@ -5878,7 +6262,7 @@ xUI.resetSheet=function(editXps,referenceXps){
 //  バックアップしたカーソル位置が新しいシートで範囲外になる場合は範囲内にまるめる
     if(restorePoint[0] >= xUI.XPS.xpsTracks.length)   restorePoint[0] = xUI.XPS.xpsTracks.length -1;
     if(restorePoint[1] >= xUI.XPS.xpsTracks.duration) restorePoint[1] = xUI.XPS.xpsTracks.duration -1;
-//表示プロパティのリフレッシュを行う　シートが変更されていなければ不用
+//表示プロパティのリフレッシュを行う  シートが変更されていなければ不用
     this._checkProp();
 //セルグラフィック初期化( = 画面クリア)
 //    this.Cgl.init();
@@ -5894,12 +6278,12 @@ xUI.resetSheet=function(editXps,referenceXps){
     );//タイムシートの基礎トラック専有幅を算出
     var tableColumnWidth=this.sheetLooks.TimeGuideWidth + tableRefereneceWidth + tableEditWidth;
 //if(this.viewMode != "Compact"){    };//マルチカラムの場合、マージン付きでカラム数複製する
-    var tableBodyWidth = tableColumnWidth * this.PageCols +　(this.sheetLooks.ColumnSeparatorWidth * (this.PageCols-1) );
+    var tableBodyWidth = tableColumnWidth * this.PageCols +  (this.sheetLooks.ColumnSeparatorWidth * (this.PageCols-1) );
 //  UI上メモとトランジション表示をシート表示と切り分けること 関連処理注意
     sync("memo");
 //  シートボディの表示
     if(this.viewMode=="Compact"){
-//コンパクトモード　コンパクトUI用のラベルヘッダーを作成
+//コンパクトモード  コンパクトUI用のラベルヘッダーを作成
         document.getElementById("UIheaderFix").innerHTML=this.pageView(-1);
         document.getElementById("UIheaderScrollH").innerHTML=this.pageView(0);
         document.getElementById("UIheaderScrollV").innerHTML=this.pageView(-2);
@@ -5911,7 +6295,7 @@ xUI.resetSheet=function(editXps,referenceXps){
         SheetBody += this.pageView(1);
         SheetBody += '</div>';
     }else{
-//ノーマルモード　コンパクトUI用のラベルヘッダーを隠す
+//ノーマルモード  コンパクトUI用のラベルヘッダーを隠す
         document.getElementById("UIheader").style.display="none";
         var SheetBody='';
         for (Page=1 ;Page <=Math.ceil(XPS.duration()/this.PageLength);Page++){
@@ -5922,7 +6306,7 @@ xUI.resetSheet=function(editXps,referenceXps){
             SheetBody += '</div>';
         };
     }
-//　シートボディを締める
+//  シートボディを締める
     document.getElementById("sheet_body").innerHTML=SheetBody+"<div class=\"screenSpace\"></div>";
 
 // グラフィックパーツを配置(setTimeoutで無名関数として非同期実行)
@@ -5950,9 +6334,9 @@ xUI.resetSheet=function(editXps,referenceXps){
 //セクション編集状態であれば解除
     if(this.edmode>0){this.mdChg('normal');}
 
-/* エンドマーカー位置調整　endMarker
-//印字用endマーカーは　印刷cssを参照して誤差を反映させること　フレームのピッチを計算すること
-印刷画面は印刷画面出力時に再度同メソッドで調整　トラック間の
+/* エンドマーカー位置調整  endMarker
+//印字用endマーカーは  印刷cssを参照して誤差を反映させること  フレームのピッチを計算すること
+印刷画面は印刷画面出力時に再度同メソッドで調整  トラック間の
 xUI.replaceEndMarker([トラック数,フレーム数],上下オフセットpx);
  */
     xUI.replaceEndMarker([xUI.XPS.xpsTracks.length,xUI.XPS.xpsTracks.duration],4);
@@ -5975,39 +6359,98 @@ xUI.tcControl = function(targetId,tcForm,myStep){
     if(document.getElementById(targetId).onchange) document.getElementById(targetId).onchange();
     return false;
 }
+/**
+    xUI.XPS < 編集対象のXpstが参照される
+    xUIに編集対象Xpsトレーラを増設
+    各Xpsごとにテータスを持つのでそれを参照して切り替えを行うようにする
+*/
+/** タブコントロール
+引数 tabID 0:project 1~ :Xpst 1~
 
-
+0
+    xmap    if(xpst1)? left-active-overlay:left-active;
+    xpst    if(xpst[ix+1])? right-dectivate:mid-deactivate-overlay;   
+1~
+    xmap    if(xpst[1] == active)? left-dective:left-deactive-overlay;
+    xpst    if(xpst[ix+1])? mid: right;
+            if(idx==ix)? active:(midd) ? dective-overlay : deactive;
+*/
+xUI.tabSelect =function(tabId){
+        if(xUI.activeDocumentId != tabId){xUI.activeteDocument(tabId)}
+    if(tabId){
+        $('.xpst').show();$('.xmap').hide();
+    }else{
+        $('.xpst').hide();$('.xmap').show();
+    }
+    xUI.adjustSpacer();
+    return this.activeDocumentId;
+}
+xUI.activeteDocument  = function(tabId){
+    if((typeof tabId == 'undefined')||(tabId == this.activeDocumentId)) return this.activeDocumentId;
+//タブループ
+    for (var tix=0;tix<this.tabCount; tix++){
+        targetTab = $('#tab_'+tix);
+        var prefix=(tix==0)?'left':'midd';
+        var currentStatus=(tix==this.activeDocumentId)?'active':'deactive';
+        var status=(tix==tabId)?'active':'deactive';
+        var currentPostfix=((prefix=='mid')&&(currentStatus=='deactive')&&(tix-1!=this.activeDocumentId))?'overlay':false;
+        var postfix=((prefix=='midd')&&(status=='deactive')&&(tix-1!=tabId))?'overlay':false;
+        var currentClass=(currentPostfix)?['tabControll',prefix,currentStatus,currentPostfix].join('-'):['tabControll',prefix,currentStatus].join('-');
+        var newClass=(postfix)?['tabControll',prefix,status,postfix].join('-'):['tabControll',prefix,status].join('-');
+        if(tix==(this.tabCount-1)){
+            var endTab = $('#tab_end');
+            var curreentEndClass = (currentStatus=='active')? 'tabControll-end-active':'tabControll-end-deactive';
+            var newEndTabClass   = (status=='active')?     'tabControll-end-active':'tabControll-end-deactive';
+            if(endTab.hasClass(curreentEndClass)){
+                endTab.removeClass(curreentEndClass).addClass(newEndTabClass);
+            }else{
+                endTab.addClass(newEndTabClass);            
+            }
+        }
+        if(targetTab.hasClass(currentClass)){
+            targetTab.removeClass(currentClass).addClass(newClass);
+        }else{
+            targetTab.addClass(newClass);            
+        }
+    }
+    this.activeDocumentId=tabId;
+    return this.activeDocumentId;
+}
 
 //オブジェクト戻す
-return xUI;
+	return xUI;
 };
-    
-/*
-りまぴん スタートアップ
-
-    スタートアップを他の位置へまとめる必要があるかも
-    remaping.js　が充分すぎるほどスパゲッティなので神様が来そう　2015.06.09
-*/
+/*================================================================================================ 
+ *  アプリケーションスタートアップ
+ *
+ *   スタートアップを他の位置へまとめる必要があるかも
+ *   リロードの際に一度だけ自校される部分
+ */
 //ユーザ設定を予備加工
     var MaxFrames=nas.FCT2Frm(Sheet);//タイムシート尺
     var MaxLayers=[SoundColumns,SheetLayers,CameraworkColumns,SfxColumns];//セル重ね数
-//    オブジェクト初期化用ダミーマップ
-    var MAP=new xMap(MaxLayers);
-//    新規XPSオブジェクト作成・初期化
-var XPS          = new Object() ;//ダミーオブジェクトとして初期化
-var startupXPS   = ''           ;//初期状態のXPS本文text
-var referenceXPS = ''           ;//同参照XPStext
+
 //始動オブジェクトとして空オブジェクトで初期化する スタートアップ終了までのフラグとして使用
 var xUI         =new Object();
     xUI.Mouse   =function(){return};
     xUI.onScroll=function(){return};
+
+//    オブジェクト初期化用ダミーマップ
+//    var MAP=new xMap(MaxLayers);
+//    新規XPSオブジェクト作成・初期化
+    var XPS          = {} ;//ダミーオブジェクトとしてグローバル変数を初期化
+    var XMAP         = {} ;//ダミーオブジェクトとしてグローバル変数を初期化
+    var startupDocument   = ''           ;//初期ドキュメント　XPSまたはXMAP
+    var referenceDocuemnt = ''           ;//初期参照ドキュメントXpst
+
 //コード読込のタイミングで行う初期化
+
 /** Startup
     nas_Rmp_Startup
 プログラム及び全リソースをロード後に１回だけ実行される手続
 
     nas_Rmp_Init
-データドキュメントロード時に毎回実行される手続　UI初期化を含む
+データドキュメントロード時に毎回実行される手続  UI初期化を含む
 画面書き換え用のメソッドxUI.resetSheet を内部で呼び出す
 
     nas_Rmp_reStart
@@ -6027,7 +6470,7 @@ console.log(nas.FRATE);
 //シートロゴをアップデート
 /*
     応急処置
-    ロケーションを確認して　開発／試験サーバ　であった場合はヘッダロゴ画像を差し替える
+    ロケーションを確認して  開発／試験サーバ  であった場合はヘッダロゴ画像を差し替える
 */
 if(location.hostname.indexOf("scivone-dev")>=0){
     headerLogo="<img src='/images/logo/UATimesheet_dev.png' alt='Nekomataya' width=141 height=24 border=0 />"
@@ -6067,13 +6510,13 @@ console.log(headerLogo);
 
     複数データ用コンバート関数
     内部でparseXpsメソッドを呼んでリザルトを返す
-    以下形式のオブジェクトで　overwriteProps を与えると固定プロパティの指定が可能
+    以下形式のオブジェクトで  overwriteProps を与えると固定プロパティの指定が可能
     {
         "title":"タイトル文字列",
         "epispde":"エピソード文字列",
         "description":" エピソードサブタイトル文字列",
         "cut":"カット番号文字列",
-        "time":"カット尺文字列　フレーム数またはTC"
+        "time":"カット尺文字列  フレーム数またはTC"
     }
     いずれのプロパテイも省略可能
     指定されたプロパティは、その値でダイアログを上書きして編集が固定される
@@ -6084,8 +6527,8 @@ console.log(headerLogo);
     固定プロパティ強制のケースでは複数のドキュメントに同一のカット番号をもたせることはできないので
     カット番号のロックは行われない
     不正データ等の入力でコンバートに失敗した場合はfalseを戻す
-    旧来の戻り値と同じ形式が必要な場合は　convertXps(datastream,"",{},true) と指定する事
-戻値:　Object Xps or XpsStream or false
+    旧来の戻り値と同じ形式が必要な場合は  convertXps(datastream,"",{},true) と指定する事
+戻値:  Object Xps or XpsStream or false
     
 */
 convertXps=function(datastream,optionString,overwriteProps,streamOption){
@@ -6094,7 +6537,7 @@ convertXps=function(datastream,optionString,overwriteProps,streamOption){
     }else{
 // streamOption
     if(!streamOption){streamOption=false;}
-// オプションで識別子文字列を受け取る　（ファイル名を利用）
+// オプションで識別子文字列を受け取る  （ファイル名を利用）
 // 識別子はXps.parseIdentifierでパースして利用
     if(! optionString){optionString = ''};//'=TITLE=#=EP=[=subtitle=]//s-c=CUTNo.=';}
 // optionStringが空文字列の場合は置換処理を行わない
@@ -6134,7 +6577,7 @@ convertXps=function(datastream,optionString,overwriteProps,streamOption){
         break;
         case    (/^Adobe\ After\ Effects\x20([456]\.[05])\ Keyframe\ Data/).test(datastream):
             try{datastream=AEK2XDS(datastream)}catch(err){alert(err);return false}
-            //AEKey のみトラック情報がないので　ダミーXpsを先に作成してそのトラックにデータをputする
+            //AEKey のみトラック情報がないので  ダミーXpsを先に作成してそのトラックにデータをputする
             var myXps=new Xps();
             myXps.put(datastream);
             datastream=myXps.toString();
@@ -6212,176 +6655,6 @@ convertXps=function(datastream,optionString,overwriteProps,streamOption){
     return false;    
   }
 }
-
-/**
-        クラスメソッドを上書き
-        データインポートを自動判定
-        xUI.sessionRetrace == -1    通常の読み出し
-        xUI.sessionRetrace == 0     内容のみ入れ替え
-        xUI.sessionRetrace > 0     読み込んだ後に-1にリセット
-        
-*/
-XPS.readIN=function(datastream){
-    xUI.errorCode=0;//読み込みメソッドが呼ばれたので最終のエラーコードを捨てる。
-    if(! datastream.toString().length ){
-      xUI.errorCode=1;return false;
-//"001:データ長が0です。読み込みに失敗したかもしれません",
-    }else{
-//データが存在したら、コンバータに送ってコンバート可能なデータをXPS互換ストリームに変換する
-/**
-        データインポートは自動判定
-        xUI.sessionRetrace == -1    通常の読み出し
-        xUI.sessionRetrace == 0     内容のみ入れ替え
-        xUI.sessionRetrace > 0     読み込んだ後に-1にリセット
-    import判定がtrueの場合、現データの以下のプロパティを保護する
- カット尺は、ユーザに問い合わせる必要があるかも…　いや無い！
- 
- カット尺を保護する場合は、リファレンスに読み込んで部分コピーを行うべき
-*/
-        var isImport=((xUI.sessionRetrace==0)&&(xUI.uiMode=='production'))? true:false;
-//        var newXps = convertXps(datastream,"",{},true);//旧メソッド互換ストリーム
-        var newXps = convertXps(datastream);//新メソッド　コンバートとオブジェクト変換を同時に
-/*
-読み込まれたデータ内にシナリオ形式のダイアログ記述が存在する可能性があるので、これを探して展開する
-現在は処理をハードコーディングしてあるが、この展開処理はトラックを引数にして処理メソッドに渡す形に変更する予定
-*/
-//ここでセリフトラックのチェックを行って、シナリオ形式のエントリを検知したら展開を行う
-    for(var tix=0;tix<newXps.xpsTracks.length;tix++){
-        var targetTrack=newXps.xpsTracks[tix]
-        if(targetTrack.option=='dialog'){
-            var convertQueue=[];//トラックごとにキューを置く
-            var currentEnd =false;//探索中の終了フレーム
-            
-            for(var fix=0;fix<targetTrack.length;fix++){
-                var entryText=String(targetTrack[fix]);
-//末尾検索中
-                if((convertQueue.length>0)&&(currentEnd)){
-//キューエントリが存在してかつブランクを検知、次のエントリの開始または、トラック末尾に達した場合はキューの値を更新
-//トラック末尾の場合のみ検出ポイントが異なるので注意
-                    if((nas.CellDescription.type(entryText)=='blank')||
-                       ((entryText.length>1)&&(entryText.indexOf('「')>=0))||
-                       (fix==(targetTrack.length-1))){
-                        var endOffset = (fix==(targetTrack.length-1))? 2:1;  
-                        convertQueue[convertQueue.length-1][2]=currentEnd+endOffset;
-                        currentEnd=false;
-                    }else{
-                        currentEnd=fix;
-                    }
-                }
-//開きカッコを持ったテキスト長１以上のエントリがあったらオブジェクトを作成してキューに入れ
-//終了点探索に入る
-                if((entryText.length>1)&&
-                   (entryText.indexOf('「')>=0)){
-                    var dialogValue=new nas.AnimationSound(targetTrack[fix]);
-                    dialogValue.parseContent();//
-                    convertQueue.push([dialogValue,fix,0]);// [値,開始フレーム,終了フレーム(未定義)]
-                    currentEnd = fix;
-                }
-            }
-//キューにあるダイアログを一括して処理
-            for(var qix=0;qix<convertQueue.length;qix++){
-                var dialogOffset = (String(convertQueue[qix][0].name).length)? 2:1;
-                    dialogOffset += convertQueue[qix][0].attributes.length;
-//console.log(dialogOffset);
-                var dialogDuration = convertQueue[qix][2]-convertQueue[qix][1]; 
-                var startAddress =[tix,(convertQueue[qix][1] - dialogOffset)];
-//console.log(startAddress);
-                var dialogStream =(convertQueue[qix][0].getStream(dialogDuration)).join(',');
-//console.log(dialogStream);
-                newXps.put(startAddress,dialogStream);
-            }
-        }
-    }
-//インポートが必要な場合は、新規オブジェクトに現行のドキュメントから固定対象のプロパティを転記する
-//
-        if(isImport){
-/*
-        var props=[
-            "xMap",         ;//Object xMap      ドキュメント側を使用（xMap実装後はマージが必要マージメソッドを作成）
-            "line",         ;//Object XpsLine   ドキュメント側を使用   
-            "stage",        ;//Object XpsStage  ドキュメント側を使用
-            "job",          ;//Object XpsStage  ドキュメント側を使用
-            "currentStatus",;//Object JobStatus ドキュメント側を使用
-            "mapfile",      ;//String           ドキュメント側を使用
-            "opus",         ;//String           ドキュメント側を使用
-            "title",        ;//String           ドキュメント側を使用
-            "subtitle",     ;//String           ドキュメント側を使用
-            "scene",        ;//String           ドキュメント側を使用
-            "cut",          ;//String           ドキュメント側を使用
-//          "trin",         ;//Array                        インポート側を使用
-//          "trout",        ;//Array                        インポート側を使用
-//          "rate",         ;//Strting                      インポート側を使用
-//          "framerate",    ;//String                       インポート側を使用
-            "create_time",  ;//String           ドキュメント側を使用
-            "create_user",  ;//Object UserInfo  ドキュメント側を使用
-            "update_time",  ;//Stirng           ドキュメント側を使用
-            "update_user",  ;//Object UserInfo  ドキュメント側を使用
-//          "xpsTracks"     ;//Object XpsTrackCollection    インポート側を使用
-        ];
-
-  */
-        var props = [
-            "xMap","line","stage","job","currentStatus",
-            "mapfile","opus","title","subtitle","scene","cut",
-            "create_time","create_user","update_time","update_user"
-        ];
-//             var props=[];
-//            for (var prp in xUI.XPS){if(!(xUI.XPS[prp] instanceof Function)){props.push(prp)}};
-// console.log(props);
-            for (var ix=0;ix<props.length;ix++){newXps[props[ix]]=xUI.XPS[props[ix]]}
-        }else{
-        var props = [
-            "xMap","line","stage","job","currentStatus",
-            "mapfile","opus","title","subtitle","scene","cut",
-            "create_time","create_user","update_time","update_user"
-        ];
-            if((xUI.importBox.importCount==1)&&(xUI.importBox.selectedContents.length)){
-                for (var ix=0;ix<props.length;ix++){
-                    if(xUI.importBox.selectedContents[0][props[ix]]) newXps[props[ix]]=xUI.importBox.selectedContents[0][props[ix]];
-                }
-            };
-        }
-//        if(xUI.sessionRetrace > 0) xUI.sessionRetrace= -1;
-        return this.parseXps(newXps.toString());
-    }
-}
-
-/** 識別子の情報でカットのプロパティを上書きする
-    インポート時に必要な情報は識別子にすべて含まれるためそれで上書きを行う
-    duration は
-        元シートのデータを維持
-        新シートに合わせる
-    の二択となるので要注意
-    新規作成時にライン〜ステータス情報が欠落するのでそれは判定して補う
-    識別子に含まれる時間情報を同期させる場合は、引数withoutTimeにfalseを与える
-    初期値はtrue(時間同期なし)
-*/
-XPS.syncIdentifier =function(myIdentifier,withoutTime){
-    if(typeof withoutTime == 'undefined') withoutTime = true;
-    var parseData   = Xps.parseIdentifier(myIdentifier);
-    this.title      = parseData.title;
-    this.cut        = parseData.cut;
-    this.opus       = parseData.opus;
-    this.subtitle   = parseData.subtitle;
-    this.scene      = parseData.scene;
-    if(parseData.currentStatus){
-        this.line       = parseData.line;
-        this.stage      = parseData.stage;
-        this.job        = parseData.job;
-        this.currentStatus = parseData.currentStatus;
-    }
-    if (! withoutTime){
-console.log(parseData.sci[0].time +':' +Math.ceil((this.trin[0]+this.trout[0])/2))
-        var newTime = nas.FCT2Frm(parseData.sci[0].time)+Math.ceil((this.trin[0]+this.trout[0])/2);
-        console.log('時間調整 : '+newTime)
-        console.log(this.setDuration(newTime));
-    }
-return parseData;
-}
-
-//    ダミーマップを与えて情報取り込み
-//    var MAP=new xMap(SheetLayers);
-//ダミーマップがある程度の機能を持ち始めたのでグローバルへ移行
 /*
     Mapオブジェクトの改装を始めるので、いったん動作安定のため切り離しを行う
     デバッグモードでのみ接続
@@ -6389,29 +6662,34 @@ if(dbg)    XPS.getMap(MAP);
 */
 /*============*     初期化時のデータ取得    *============*/
 /*
- *  再優先・レンダリング時にドキュメント内にスタートアップデータが埋め込まれている
+ *  最優先・レンダリング時にドキュメント内にスタートアップデータが埋め込まれている
+ *  読み取ったスタートアップデータを判別して
  */
-//    ドキュメント内にスタートアップデータがあれば読み出し
+//    ドキュメント内にスタートアップデータがあれば読み出し  startupDocument >startupDocument
 
-if(document.getElementById( "startupXPS" )){
-        startupXPS=document.getElementById("startupXPS").innerHTML;
-        var dataStart=startupXPS.indexOf("nasTIME-SHEET");
+if(document.getElementById( "startupContent" )){
+         startupDocument=document.getElementById("startupContent").innerHTML;
+        var dataStart= startupDocument.indexOf("nasMAP-FILE");
+//        var dataStart= startupDocument.indexOf("nasTIME-SHEET");
         if(dataStart<0){
-            startupXPS="";
+             startupDocument="";
         }else if(dataStart>0){
-            startupXPS=startupXPS.slice(dataStart);
+             startupDocument= startupDocument.slice(dataStart);
         }
-        if(startupXPS.indexOf("&amp;")>=0){startupXPS=startupXPS.replace(/&amp;/g,"&");}
-        if(startupXPS.indexOf("&lt;")>=0){startupXPS=startupXPS.replace(/&lt;/g,"<");}
-        if(startupXPS.indexOf("&gt;")>=0){startupXPS=startupXPS.replace(/&gt;/g,">");}
+        if( startupDocument.indexOf("&amp;")>=0){ startupDocument= startupDocument.replace(/&amp;/g,"&");}
+        if( startupDocument.indexOf("&lt;")>=0){ startupDocument= startupDocument.replace(/&lt;/g,"<");}
+        if( startupDocument.indexOf("&gt;")>=0){ startupDocument= startupDocument.replace(/&gt;/g,">");}
 }
-//    同ドキュメント内にスタートアップ用参照データがあれば読み出し
+//    同ドキュメント内にスタートアップ用参照データがあれば読み出し referenceXPS > referenceDocument
 
-if(document.getElementById( "referenceXPS" ) && document.getElementById( "referenceXPS" ).innerHTML.length){
-        referenceXPS=document.getElementById("referenceXPS").innerHTML;
-        if(referenceXPS.indexOf("&amp;")>=0){referenceXPS=referenceXPS.replace(/&amp;/g,"&");}
-        if(referenceXPS.indexOf("&lt;")>=0){referenceXPS=referenceXPS.replace(/&lt;/g,"<");}
-        if(referenceXPS.indexOf("&gt;")>=0){referenceXPS=referenceXPS.replace(/&gt;/g,">");}
+if(document.getElementById( "startupReference" ) && document.getElementById( "startupReference" ).innerHTML.length){
+        referenceDocument=document.getElementById("startupReference").innerHTML;
+        if(referenceDocument.indexOf("&amp;")>=0){referenceDocument=referenceDocument.replace(/&amp;/g,"&");}
+        if(referenceDocument.indexOf("&lt;")>=0){referenceDocument=referenceDocument.replace(/&lt;/g,"<");}
+        if(referenceDocument.indexOf("&gt;")>=0){referenceDocument=referenceDocument.replace(/&gt;/g,">");}
+}else{
+        referenceDocument='';
+
 }
 
 
@@ -6421,9 +6699,9 @@ if(document.getElementById( "referenceXPS" ) && document.getElementById( "refere
 
 //    UI生成
     xUI=new_xUI();
-//    *** xUI オブジェクトは実際のコール前に必ずXPSを与えての再初期化が必要　要注意
-
-//if(startupXPS.length == 0){};
+    XPS.readIN=xUI._readIN;
+//    *** xUI オブジェクトは実際のコール前に必ずXPSを与えての再初期化が必要  要注意
+//if( startupDocument.length == 0){};
 if(false){
     if(appHost.platform == "AIR"){
         var myBackup=localStorage.getItem("info.nekomataya.remaping.backupData");
@@ -6438,28 +6716,33 @@ if(false){
             var myReference="";
         }
     }
-    if((startupXPS.length==0)&&(myBackup)&&(myBackup.length)){
+    if((startupDocument.length==0)&&(myBackup)&&(myBackup.length)){
+        myBackup=JSON.parse(myBackup);
+        /*
+            [0]~[n]配列化テキストで
+        */
+        console.log(myBackup);
 //        var msg="バックアップ保存されたデータがあります。\n復元しますか？\n\nOK:復元 / CANCEL:新規";
 //        if(confirm(msg)){        };
-            startupXPS=myBackup;
+            startupDocument=myBackup;
             if(myReference){
                 if(myReference.length>0){
-                    referenceXPS=myReference;//ソーステキスト代入
+                    referenceDocument=myReference;//ソーステキスト代入
                 }else{
-                    referenceXPS="";
+                    referenceDocument="";
                 }
             }
     }
 };//    記録されたバックアップデータが有れば読み出し(サーバ運用に向けて停止中) 
 
-if((!startupXPS)&&(fileBox)&&(fileBox.contentText.length)){startupXPS=fileBox.contentText;}
-if(startupXPS.length > 0){
-    XPS.readIN(startupXPS);NameCheck=false;
+if((! startupDocument)&&(fileBox)&&(fileBox.contentText.length)){ startupDocument=fileBox.contentText;}
+if( startupDocument.length > 0){
+    XPS.readIN( startupDocument);NameCheck=false;
 }
 //リファレンスシートデータがあればオブジェクト化して引数を作成
         var referenceX=new Xps(5,nas.SheetLength+':00.');
-    if((referenceXPS)&&(referenceXPS.length)){
-        referenceX.readIN(referenceXPS);
+    if((referenceDocument)&&(referenceDocument.length)){
+        referenceX.readIN(referenceDocument);
     }
     xUI.init(XPS,referenceX);//初回実行時にxUIにデータを与えて初期化
 /**
@@ -6485,10 +6768,10 @@ if(startupXPS.length > 0){
 
 //================================================================================================================================ シートカラーcss設定2
 */
-//startupXPSがない場合でフラグがあればシートに書き込むユーザ名を問い合わせる
+// startupDocumentがない場合でフラグがあればシートに書き込むユーザ名を問い合わせる
 /*
     この時点のユーザ問い合わせ手順に問題あり
-    問い合わせが必要か否かの条件を調整　かつ　問い合わせ時に記録からユーザの情報を取得して選択肢として提示するUIが必要
+    問い合わせが必要か否かの条件を調整  かつ  問い合わせ時に記録からユーザの情報を取得して選択肢として提示するUIが必要
     ユーザ設定フラグを判定してUIを提示する
     html5のオートコンプリートを利用するのでinput初期値はカラに
     UIを提示しない場合は、デフォルトの値またはクッキーで記録した最後のユーザが設定される
@@ -6529,7 +6812,7 @@ if((NameCheck)||(myName=="")){
     startupTaskController();
 };
 /**
-    印字用HTMLスタートアップ　（スタートアップのサブセット)
+    印字用HTMLスタートアップ  （スタートアップのサブセット)
 
 
 
@@ -6548,27 +6831,28 @@ function nas_Prt_Startup(callback){
  */
 //    ドキュメント内スタートアップデータを読み出し
 
-if(document.getElementById( "startupXPS" )){
-        startupXPS=document.getElementById("startupXPS").innerHTML;
+if(document.getElementById( "startupContent" )){
+         startupDocument=document.getElementById("startupContent").innerHTML;
 }
 //    同ドキュメント内にスタートアップ用参照データがあれば読み出し
 
-if(document.getElementById( "referenceXPS" ) && document.getElementById( "referenceXPS" ).innerHTML.length){
-        referenceXPS=document.getElementById("referenceXPS").innerHTML;
+if(document.getElementById( "startupReference" ) && document.getElementById( "startupReference" ).innerHTML.length){
+        referenceDocument=document.getElementById("startupReference").innerHTML;
 }
 //    UI生成
     xUI=new_xUI();
 
-//    *** xUI オブジェクトは実際のコール前に必ずXPSを与えての再初期化が必要　要注意
+    XPS.readIN=xUI._readIN;
+//    *** xUI オブジェクトは実際のコール前に必ずXPSを与えての再初期化が必要  要注意
 
-if(startupXPS.length > 0){ XPS.readIN(startupXPS) }
+if( startupDocument.length > 0){ XPS.readIN( startupDocument) }
 //リファレンスシートデータがあればオブジェクト化して引数を作成
         var referenceX=new Xps(5,nas.SheetLength+':00.');
-    if((referenceXPS)&&(referenceXPS.length)){
-        referenceX.readIN(referenceXPS);
+    if((referenceDocument)&&(referenceDocument.length)){
+        referenceX.readIN(referenceDocument);
     }
-    xUI.init(XPS,referenceX);//初回実行時にxUIにデータを与えて初期化
-    
+//    xUI.init(XPS,referenceX);//初回実行時にxUIにグローバルのXPSを渡して初期化
+      xUI.init(XPS,referenceX);
 //    xUI.replaceEndMarker(undefined,4);//編集HTML用のみ
     var pgRect     = document.getElementById("printPg1").getBoundingClientRect();
     var headerRect = document.getElementById("pg1Header").getBoundingClientRect();
@@ -6589,14 +6873,13 @@ if(startupXPS.length > 0){ XPS.readIN(startupXPS) }
     if(callback instanceof Function) callback();
 };
 //
-/*
-タイムシートのUIをリセットする手続き
+/** タイムシートのUIをリセットする手続き
 タイムシートの変更があった場合はxUI.init(XPS)を先にコールしてxUIのアップデートを行うこと
 
-引数としてuiModeを文字列で与えて　リセット後のuiModeを指定可能 未指定の場合はリセット前のモードを継続
+引数としてuiModeを文字列で与えて  リセット後のuiModeを指定可能 未指定の場合はリセット前のモードを継続
     ↓
-シート内容のみの変更の場合は、xUI.resetSheetを用いる　その際xUI.initを省略することが必要
-xUI.initの初期化手続は１回のみに変更　コードを組み替えて整理すること。
+シート内容のみの変更の場合は、xUI.resetSheetを用いる  その際xUI.initを省略することが必要
+xUI.initの初期化手続は１回のみに変更  コードを組み替えて整理すること。
 
 シート変更時の画面リフレッシュを別の手続'xUI.resetSheet'へ移行
 この手続は、UIの再初期化手続として利用される
@@ -6611,13 +6894,13 @@ function nas_Rmp_Init(uiMode){
 if(false){
 //プロパティのリフレッシュ
     xUI._checkProp();
-    xUI.Cgl.init();//特にこの処理を重点的にチェック　このルーチンは実行回数が少ないほど良い
+    xUI.Cgl.init();//特にこの処理を重点的にチェック  このルーチンは実行回数が少ないほど良い
 }
 //    xUI.resetSheet();
 
-/*　表示モード増設 
+/*  表示モード増設 
 Compactモード時は強制的に
-  表示１列　コンテの継続時間とページ長を一致させる
+  表示１列  コンテの継続時間とページ長を一致させる
 表示モードにしたがって
   タイトルヘッドラインの縮小
 */
@@ -6633,7 +6916,7 @@ viewOnly プロパティは再初期化前の状態を再生
 
     sync('productStatus');
 /*
-//タイムシートテーブルボディ幅の再計算 ここにトラック種別が反映されていない　注意
+//タイムシートテーブルボディ幅の再計算 ここにトラック種別が反映されていない  注意
 //(タイムヘッダ幅+ダイアログ幅+レイヤ数*幅+コメント欄幅+余分)×ページカラム数＋カラムセパレータ幅×(ページカラム数?1)
 
     var tableBodyWidth=(
@@ -6656,7 +6939,7 @@ if(dbg) var TimeStart=new Date();
 
 if(xUI.viewMode=="Compact"){
 //    alert("compact xD:"+ XPS.duration()+" pL: "+xUI.PageLength );
-//コンパクトモード　コンパクトUI用のラベルヘッダーを作成
+//コンパクトモード  コンパクトUI用のラベルヘッダーを作成
 document.getElementById("UIheaderFix").innerHTML=xUI.pageView(-1);
 document.getElementById("UIheaderScrollH").innerHTML=xUI.pageView(0);
 document.getElementById("UIheaderScrollV").innerHTML=xUI.pageView(-2);
@@ -6666,7 +6949,7 @@ document.getElementById("UIheader").style.display="inline";
         SheetBody+= '<br>';//UI調整用に１行（ステータス行の分）
         SheetBody+= xUI.pageView(1);
 }else{
-//ノーマルモード　コンパクトUI用のラベルヘッダーを隠す
+//ノーマルモード  コンパクトUI用のラベルヘッダーを隠す
 document.getElementById("UIheader").style.display="none";
 //
     var SheetBody='';
@@ -6682,7 +6965,7 @@ document.getElementById("UIheader").style.display="none";
 サーバーオンサイトであるか否かを判定して表示を更新
      エレメントが存在すればon-site
  */
-　   if(document.getElementById('backend_variables')){
+     if(document.getElementById('backend_variables')){
 console.log('Application server-onsite');
         if (serviceAgent.servers.length==1) {
             serviceAgent.switchService(0);
@@ -6690,17 +6973,17 @@ console.log('Application server-onsite');
             serviceAgent.switchService(0);//デフォルトサーバのIDを置く
         }
         xUI.onSite = serviceAgent.currentServer.url.split('/').slice(0,3).join('/');
-　       serviceAgent.currentStatus='online';
+         serviceAgent.currentStatus='online';
 //  ドキュメント表示更新
-　       document.getElementById('loginstatus_button').innerHTML = '=ONLINE=';
-　       document.getElementById('loginstatus_button').disabled  = true;
+         document.getElementById('loginstatus_button').innerHTML = '=ONLINE=';
+         document.getElementById('loginstatus_button').disabled  = true;
          document.getElementById('loginuser').innerHTML = xUI.currentUser.handle;
          document.getElementById('serverurl').innerHTML = serviceAgent.currentServer.url;
 //  サーバ指定のフレームレートが存在する場合は最優先で取得してデフォルト値を設定する
         var frtString=$("#backend_variables").attr("data-frame_rate");
         if(String(frtString).length){
 console.log("framerate specified : " + frtString);
-            nas.FRATE = nas.newFramerate(frtString);//ここでnas.FRATEを変更するか否か…　一時変数とするケースを考慮のこと
+            nas.FRATE = nas.newFramerate(frtString);//ここでnas.FRATEを変更するか否か…  一時変数とするケースを考慮のこと
         }else{
 console.log("no framerate specified");
         };
@@ -6725,38 +7008,38 @@ console.log("no framerate specified");
         myName = xUI.currentUser.toString();//旧変数互換 まとめて処理する関数が必要
 //        myNames = xUI.recentUsers.covertStringArray();//要素を文字列可した配列
 
-    　   if($("#backend_variables").attr("data-episode_token").length > 0){
+         if($("#backend_variables").attr("data-episode_token").length > 0){
 console.log('bind single document');
 //シングルドキュメント拘束モード
 		    startupWait=true;//ウェイト表示を予約
-　           serviceAgent.currentStatus='online-single';
+             serviceAgent.currentStatus='online-single';
 document.getElementById('loginstatus_button').innerHTML='>ON-SITE<';
 document.getElementById('loginstatus_button').disabled=true;
 
 //新規作成メニューをブロック
     xUI.pMenu('pMnewdoc','disabled');
     xUI.pMenu('pMnewEntry','disabled');
-//インポート関連をロック　操作をsync('productStatus')に統合（タイミングが同じ）
+//インポート関連をロック  操作をsync('productStatus')に統合（タイミングが同じ）
 // sync("importControllers");//document.getElementById('loginuser').innerHTML = xUI.currentUser.handle;//document.getElementById('serverurl').innerHTML = serviceAgent.currentServer.url;//document.getElementById('ibMdiscard').disabled=true;//document.getElementById('ibMfloat').disabled=true;
-　       $('#ibMdiscard').hide();
-　       $('#ibMfloat').hide();
-　       $('#pMbrowseMenu').hide();
-　       $('#ibMbrowse').hide();
+         $('#ibMdiscard').hide();
+         $('#ibMfloat').hide();
+         $('#pMbrowseMenu').hide();
+         $('#ibMbrowse').hide();
 //設定表示
                  document.getElementById('toolbarHeader').style.backgroundColor='#ddbbbb';
 //サーバ既存エントリ
-            var isNewEntry = (startupXPS.length==0)? true:false;
+            var isNewEntry = ( startupDocument.length==0)? true:false;
 //サーバ上で作成したエントリの最初の1回目はサーバの送出データが空
 //空の状態でかつトークンがある場合が存在するので判定に注意！
 //トークンあり、送出データが存在する場合は、識別子同期自体を省略すること
 //カットトークンがない場合はマルチドキュメントモードで初期化
-            if($("#backend_variables").attr("data-cut_token").length){ ;//この判定は仕様変更で不要になっている　ここでトークンのないケースはエラーケース
+            if($("#backend_variables").attr("data-cut_token").length){ ;//この判定は仕様変更で不要になっている  ここでトークンのないケースはエラーケース
  /* ========= シンクルドキュメントバインド時の初期化 ========= */
 console.log('has cut token');
-    　           serviceAgent.currentServer.getRepositories(function(){
+                 serviceAgent.currentServer.getRepositories(function(){
                      var RepID = serviceAgent.getRepsitoryIdByToken($("#backend_variables").attr("data-organization_token"));
-    　               serviceAgent.switchRepository(RepID,function(){
-    　                   if(dbg) console.log('switched repository :' + RepID);
+                     serviceAgent.switchRepository(RepID,function(){
+                         if(dbg) console.log('switched repository :' + RepID);
 
 console.log(nas.FRATE);
 /*  最小の情報をトークンベースで取得
@@ -6791,7 +7074,7 @@ console.log(cutResult)
 //データ請求に成功
         	var myContent=cutResult.data.cut.content;//XPSソーステキストをセット
 console.log('create new Xps');
-    //data-scaleに有効な値が存在する場合は、その値を参照　後ほど調整する処理を減らす
+    //data-scaleに有効な値が存在する場合は、その値を参照  後ほど調整する処理を減らす
             
         	var currentXps = new Xps(5,(spcFrames)?spcFrames:nas.SheetLength+':00.');//一時オブジェクトを作成
 
@@ -6806,12 +7089,12 @@ currentXps.currentStatus      = new JobStatus(cutResult.data.cut.status);
 
 var curentAPIIdentifier = Xps.getIdentifier(currentXps); 
 /*
-    有効なリザルトを得た場合は、最新データなのでstartupXPSを入れ換える。
+    有効なリザルトを得た場合は、最新データなので startupDocumentを入れ換える。
     ロードのタイミングで他のユーザが書き換えを行った可能性があるので、最新のデータと換装
     myContent==nullのケースは、サーバに空コンテンツが登録されている場合なので単純にエラー排除してはならない
     
     稀なケースで、登録直後のデータを開いて作業にはいり、アクシデント等で未編集のままサーバの接続を断って自動保存が発生した場合、
-    タイムシートの内容がデフォルト1秒でタイトル・エピソード・カット番号等を失う場合がある　要検出
+    タイムシートの内容がデフォルト1秒でタイトル・エピソード・カット番号等を失う場合がある  要検出
     
 */
 console.log('getStartupContent')
@@ -6823,7 +7106,7 @@ console.log('has Content')
                 //一時データの整合性を検査
                 var checkIdf=Xps.compareIdentifier(Xps.getIdentifier(checkSheet),Xps.getIdentifier(currentXps));
                 if(checkIdf > 0){
-                    startupXPS=myContent;
+                     startupDocument=myContent;
                     //currentXps.parseXps(myContent);
                     currentXps=checkSheet;//Swapで
                 }
@@ -6834,7 +7117,7 @@ console.log(currentXps);
 console.log('no Content get');
 	            var myParseData = Xps.parseSCi((cutResult.data.cut.description)?cutResult.data.cut.description:cutResult.data.cut.name);
 	            currentXps.cut = myParseData[0].cut;
-//ディスクリプション領域に識別子があればそちらを優先、更にdata-scaleが存在すればそれを優先　名前 < 識別子 < data-scale
+//ディスクリプション領域に識別子があればそちらを優先、更にdata-scaleが存在すればそれを優先  名前 < 識別子 < data-scale
                 if(spcFrames){
 console.log('data scale specified :');
 console.log(spcFrames);
@@ -6879,8 +7162,8 @@ console.log(currentXps.getIdentifier(true));
 console.log(xUI.XPS)
                     }
                     
-                    if( startupXPS.length==0 ){
-console.log('detect first open no content');//初回起動を検出　コンテント未設定
+                    if(  startupDocument.length==0 ){
+console.log('detect first open no content');//初回起動を検出  コンテント未設定
 console.log(XPS)
                         xUI.XPS.line     = new XpsLine(nas.pmdb.pmTemplates.members[0]);
                         xUI.XPS.stage    = new XpsStage((xUI.XPS.line.stages).split(',')[0]);
@@ -6904,7 +7187,7 @@ console.log('setDuration with data-scale')
                         switch(xUI.XPS.currentStatus.content){
                             case "Active":
                         // チェックイン直後の処理の際はactivate処理が余分なのでケースわけが必要
-                        // jobIDがフラグになる　スタートアップ直後の自動チェックインの場合のみ処理をスキップしてモード変更
+                        // jobIDがフラグになる  スタートアップ直後の自動チェックインの場合のみ処理をスキップしてモード変更
                                 if(xUI.XPS.job.id==1){
                                     xUI.setUImode('production');
                                 }else{
@@ -6940,23 +7223,23 @@ console.log('初期化終了');
         beforeSend: serviceAgent.currentRepository.service.setHeader
 });//get product information
 
-    　               });//set Repository
-    　           });//get Repository
-    　       };//カットトークンの確認　これがなければ不正処理
+                     });//set Repository
+                 });//get Repository
+             };//カットトークンの確認  これがなければ不正処理
 /* ========= シンクルドキュメントバインド時の初期化 ========= */
-　       } else {
+         } else {
 //マルチドキュメントモード
 // リポジトリのIDは不問 とりあえず１(ローカル以外)
 console.log('onsite multi-document mode');
-    　       serviceAgent.currentServer.getRepositories(function(){
-//    　           serviceAgent.switchRepository(1,documentDepot.rebuildList);
-    　           serviceAgent.switchRepository(1);
-    　       });
+             serviceAgent.currentServer.getRepositories(function(){
+//                 serviceAgent.switchRepository(1,documentDepot.rebuildList);
+                 serviceAgent.switchRepository(1);
+             });
             $("li#pMos").each(function(){$(this).hide()});//シングルドキュメントモード専用UI
 
-　       }
+         }
 //if(serviceAgent.currentRepository.entry(Xps.getIdentifier(xUI.XPS))),
-　   }else{
+     }else{
 console.log('Application Offsite');
 //オフサイトモード
     console.log(serviceAgent.currentServer);
@@ -6976,7 +7259,7 @@ console.log('Application Offsite');
     serviceAgent.currentRepository.getProducts();
     serviceAgent.switchRepository();
         sync('server-info');
-　   }
+     }
 //シートボディを締める
 //    document.getElementById("sheet_body").innerHTML=SheetBody+"<div class=\"screenSpace\"></div>";
 
@@ -7000,7 +7283,7 @@ window.setTimeout(function(){
 //    xUI.selectCell("1_0")    ;//フォーカスして,"startup"
     xUI.bkup([XPS.xpsTracks[1][0]]);
 //    xUI.focusCell()    ;//リリース
-//jquery関連　パネル類の初期化
+//jquery関連  パネル類の初期化
 //    initPanels();
 /*
 りまぴん
@@ -7290,7 +7573,7 @@ default:
         var myTgt=$("#"+UIViewIdList[ix]);
         if(ToolView.toString().charAt(ix)=="0"){myTgt.hide()}else{myTgt.show()} 
     }
-//暫定　プラットホームを判定して保存関連のボタンを無効化したほうが良い　後でする
+//暫定  プラットホームを判定して保存関連のボタンを無効化したほうが良い  後でする
 
 //開発用表示
 if(dbg){
@@ -7311,11 +7594,13 @@ if(dbg){
 //    if(dbg) alert(msg);
     dbg=false;
 }
+
 /* ヘッダ高さの初期調整*/
-xUI.adjustSpacer();
+//xUI.adjustSpacer();
+xUI.tabSelect(xUI.activeDocumentId);
 /* */
 xUI.selection();
-//スタートアップ中に時間のかかる処理をしていた場合はプログレスパネルで画面ロック　解除は操作側から行う
+//スタートアップ中に時間のかかる処理をしていた場合はプログレスパネルで画面ロック  解除は操作側から行う
 if(startupWait){xUI.sWitchPanel('Prog');};//ウェイト表示
 };
 /*
@@ -7324,9 +7609,9 @@ if(startupWait){xUI.sWitchPanel('Prog');};//ウェイト表示
 function nas_Rmp_reStart(evt){
 //ファイルがオープン後に変更されていたら、警告する
 /*
-    変更判定は xUI.storePt と xUI.undoPtの比較で行う
+    変更判定は xUI.activeDocument.undoBuffer.storePt と xUI.activeDocument.undoBuffer.undoPtの比較で行う
 storePtはオープン時および保存時に現状のundoPtを複製するので、
-内容変化があれば (xUI.storePt != xUI.undoPt) となる
+内容変化があれば (xUI.activeDocument.undoBuffer.storePt != xUI.activeDocument.undoBuffer.undoPt) となる
 
 */
 //    if(! xUI.isStored()){
@@ -7357,7 +7642,7 @@ storePtはオープン時および保存時に現状のundoPtを複製するの�
 //    現在のウィンドウサイズを取得してクッキーかき出し
     if (useCookie[0]) {
         writeCk(buildCk());
-    };//現在　cookie:0 は常にfalse
+    };//現在  cookie:0 は常にfalse
 
 //データ保存の有無に関係なくセッションチェックイン中ならば保留する（自動）
     if(xUI.uiMode=='production'){
@@ -7403,8 +7688,8 @@ startup内でXPSデータを認識したら。フレームセットのプロパ�
 
 
 2015 01 10
-メモ　シートの秒数を減らす際にスクロールスペーサーのサイズ計算が間違っている
-計算違いではなく　ステータス表示エレメントの位置がズレて、その値から計算しているのでおおきくなる
+メモ  シートの秒数を減らす際にスクロールスペーサーのサイズ計算が間違っている
+計算違いではなく  ステータス表示エレメントの位置がズレて、その値から計算しているのでおおきくなる
 エラー検出が必要かも
 全尺が大きい時に顕著？
 
@@ -7422,10 +7707,10 @@ startup内でXPSデータを認識したら。フレームセットのプロパ�
 ヤンク>
 
 */
-/*　---------- sync.js
+/*  ---------- sync.js
 		パネル情報同期
 
-ユニット名称	HTML-Elements　説明
+ユニット名称	HTML-Elements  説明
 
 	headline	ヘッドライン・常用ツール
 	body		タイムシート本体
@@ -7532,7 +7817,7 @@ case    "importControllers":
         (xUI.XPS.currentStatus.content.indexOf('Active')<0)
     ){
         document.getElementById('updateSCiTarget').disabled=true;
-        xUI.pMenu('pMimportDatas','desable');//プルダウンメニュー　
+        xUI.pMenu('pMimportDatas','desable');//プルダウンメニュー  
         xUI.pMenu('pMopenFS','disable');        //ファイルオープン
         xUI.pMenu('pMopenFSps','disable');      //Photoshop用ファイルオープン
         document.getElementById('ibMimportDatas').disabled=true;  //アイコンボタンインポート（オープン）
@@ -7540,7 +7825,7 @@ case    "importControllers":
         document.getElementById('myCurrentFile').disabled=true;   //ファイルインプット
     }else{
         document.getElementById('updateSCiTarget').disabled=false;
-        xUI.pMenu('pMimportDatas','enable');//プルダウンメニュー　
+        xUI.pMenu('pMimportDatas','enable');//プルダウンメニュー  
         xUI.pMenu('pMopenFS','enable');        //ファイルオープン
         xUI.pMenu('pMopenFSps','enable');      //Photoshop用ファイルオープン
         document.getElementById('ibMimportDatas').disabled=false;  //アイコンボタンインポート（オープン）
@@ -7573,7 +7858,7 @@ case    "editLabel":
     $("th").each(function(){
         if(this.id=='editArea'){
             this.innerHTML =(this.innerHTML == 'Animation')? editLabel:'Animation';
-            this.title 　　= editTitle;
+            this.title     = editTitle;
         };
     });
     break;
@@ -7582,15 +7867,15 @@ case    "referenceLabel":
 /*
     リファレンスが編集中のデータと同エントリーでステージ・ジョブ違いの場合はissueの差分表示を行う。
 タイトルテキストは
-    同ステージのジョブなら　　jobID:jobName
-    別ステージのジョブならば　stageID:stageName//jobID:jobName
-    別ラインのジョブならば　　lineID:lineName//stageID:stageName//jobID:jobName
-    別カットならば　IDFをすべて
+    同ステージのジョブなら    jobID:jobName
+    別ステージのジョブならば  stageID:stageName//jobID:jobName
+    別ラインのジョブならば    lineID:lineName//stageID:stageName//jobID:jobName
+    別カットならば  IDFをすべて
 ラベル表示は上記の1単語省略形で
-    同ステージのジョブなら　　jobName
-    別ステージのジョブならば　stageName
-    別ラインのジョブならば　　lineName
-    別カットならば　cutIdf(Xps.getIdentifier(true))
+    同ステージのジョブなら    jobName
+    別ステージのジョブならば  stageName
+    別ラインのジョブならば    lineName
+    別カットならば  cutIdf(Xps.getIdentifier(true))
 */
     var myIdf  =Xps.getIdentifier(xUI.XPS);
     var refIdf =Xps.getIdentifier(xUI.referenceXPS);
@@ -7619,7 +7904,7 @@ case    "referenceLabel":
     $("th").each(function(){
         if(this.id=='rnArea'){
             this.innerHTML = (this.innerHTML == referenceLabel)? 'Referenece' : referenceLabel;
-            this.title 　　= referenceTitle;
+            this.title     = referenceTitle;
         };
     });
     break;
@@ -7698,7 +7983,7 @@ case	"productStatus":;
         (xUI.XPS.currentStatus.content.indexOf('Active')<0)
     ){
         document.getElementById('updateSCiTarget').disabled=true;
-        xUI.pMenu('pMimportDatas','desable');//プルダウンメニュー　
+        xUI.pMenu('pMimportDatas','desable');//プルダウンメニュー  
         xUI.pMenu('pMopenFS','disable');        //ファイルオープン
         xUI.pMenu('pMopenFSps','disable');      //Photoshop用ファイルオープン
         document.getElementById('ibMimportDatas').disabled=true;  //アイコンボタンインポート（オープン）
@@ -7706,7 +7991,7 @@ case	"productStatus":;
         document.getElementById('myCurrentFile').disabled=true;   //ファイルインプット
     }else{
         document.getElementById('updateSCiTarget').disabled=false;
-        xUI.pMenu('pMimportDatas','enable');//プルダウンメニュー　
+        xUI.pMenu('pMimportDatas','enable');//プルダウンメニュー  
         xUI.pMenu('pMopenFS','enable');        //ファイルオープン
         xUI.pMenu('pMopenFSps','enable');      //Photoshop用ファイルオープン
         document.getElementById('ibMimportDatas').disabled=false;  //アイコンボタンインポート（オープン）
@@ -7740,7 +8025,7 @@ stat=(XPS.xpsTracks[xUI.Select[0]]["option"].match(/still|timing|replacement/))?
 
 	document.getElementById("activeLvl").value=label;
 	document.getElementById("activeLvl").disabled=stat;
-	//現在タイムリマップトラック以外はdisable　将来的には各トラックごとの処理あり
+	//現在タイムリマップトラック以外はdisable  将来的には各トラックごとの処理あり
 	document.getElementById("blmtd").value=bmtd;
 	document.getElementById("blpos").value=bpos;
 	document.getElementById("blmtd").disabled=stat;
@@ -7841,14 +8126,14 @@ case	"framerate":	;break;
 case	"undo":	;
 {
 //undoバッファの状態を見てボタンラベルを更新
-	stat=(xUI.undoPt==0)? true:false ;
+	stat=(xUI.activeDocument.undoBuffer.undoPt==0)? true:false ;
 	$("#ibMundo").attr("disabled",stat);
 }
 	break;
 case	"redo":	;
 {
 //redoバッファの状態を見てボタンラベルを更新
-	stat=((xUI.undoPt+1)>=xUI.undoStack.length)? true:false ;
+	stat=((xUI.activeDocument.undoBuffer.undoPt+1)>=xUI.activeDocument.undoBuffer.undoStack.length)? true:false ;
 	$("#ibMredo").attr("disabled",stat);
 }
 	break;
@@ -7886,7 +8171,7 @@ case	"lbl":	;
 //NOP 
     break;
 /*
-//UIモード増加に伴って切り分けが発生　コンパクトモード時はラベル書き換えを分岐
+//UIモード増加に伴って切り分けが発生  コンパクトモード時はラベル書き換えを分岐
   if(xUI.viewMode=="Compact"){
 //隠れる分のヘッダと固定ヘッダをを書き換え
 	for(r=xUI.dialogSpan-1 ;r<XPS.xpsTracks.length;r++){
@@ -8042,12 +8327,12 @@ if(! n){n=xUI.Select[0]; }
 
 //リスト展開プロシージャ
 /**
-引数:	ソース文字列　ListStr /   再帰呼出しフラグ　rcl
+引数:	ソース文字列  ListStr /   再帰呼出しフラグ  rcl
 戻値:	putメソッドの引数ストリーム
 	マクロ記法の文字列をputメソッドに引き渡し可能なストリームへ展開する
 	リスト展開エンジンは汎用性を持たせたいので、無理やりグローバルに置いてある。
 	要注意
-	戻り値の形式は　"1,,2,,3,,4,,5"等のスピン展開後のカンマ区切りテキストストリーム
+	戻り値の形式は  "1,,2,,3,,4,,5"等のスピン展開後のカンマ区切りテキストストリーム
 */
 	var expd_repFlag	=false	;
 	var expd_skipValue	=0	;//グローバルで宣言
@@ -8064,7 +8349,7 @@ function nas_expdList(ListStr,rcl){
 //(スキップ量はスピン-１)この値はグローバルの値を参照
 	var SepChar="\.";
 //	台詞トラックの場合、カギ括弧の中をすべてセパレートして戻す
-//　ダイアログトラックは固定ではなくなったので判定を変更
+//  ダイアログトラックは固定ではなくなったので判定を変更
 //  コメントトラックを排除する必要あり
 //この判定をxUIに依存すると汎用性がなくなるので、コール側で引数渡しに変更する必要あり？
 	if (
@@ -8077,13 +8362,13 @@ function nas_expdList(ListStr,rcl){
             mySound.parseContent();
             console.log(mySound)
             var sectionLength= xUI.spinValue * (mySound.bodyText.length + mySound.comments.length);
-    　      ListStr= mySound.getStream(sectionLength).join(',');
-    　      return ListStr;
+            ListStr= mySound.getStream(sectionLength).join(',');
+            return ListStr;
         }
 /*
     201801変更
     ダイアログの展開をオブジェクトメソッドに移行
-    引数がシナリオ形式であること　ListStr.indexOf("「")>0
+    引数がシナリオ形式であること  ListStr.indexOf("「")>0
     スピンの量をみて展開範囲を得る
 if (ListStr.match(/「([^「]*)」?/)) ;
 if (ListStr.match(/「(.+)」?/)) {
@@ -8235,7 +8520,7 @@ function writeXPS(obj)
 	XPSデータを印刷および閲覧用htmlに変換
 引数：動作モード
 true時はhtmlをそのまま文字列でリザルトするがfalseの際は別ウィンドウを開いて書き出す
-"body-only"　で<body>タグ内のHTML本体のみを返す
+"body-only"  で<body>タグ内のHTML本体のみを返す
 */
 function printHTML(mode){
 /*
@@ -8256,7 +8541,9 @@ if((xUI.onSite)&&(window.location.href.indexOf(serviceAgent.currentRepository.ur
     myBody+='</title><link REL=stylesheet TYPE="text/css" HREF="/remaping/template/printout.css">';//for TEST onSite
     var libOffset = '/remaping/'
 }else{
-    myBody+='</title><link REL=stylesheet TYPE="text/css" HREF="'+location+'template/printout.css">';//for TEST offSite
+    var myAddress = window.location.href;
+    if (myAddress.match(/(.+\/)(\S+\.html?$)/i)) myAddress = RegExp.$1;
+    myBody+='</title><link REL=stylesheet TYPE="text/css" HREF="'+myAddress+'template/printout.css">';//for TEST offSite
     var libOffset = './'   
 }
 
@@ -8293,10 +8580,10 @@ myBody+= 'onload="var nRS = setTimeout(\'nas_Prt_Startup(function(){xUI.syncShee
 myBody+='" >';//
     };//ここまでbody-only時は省力
 
-myBody+='<textarea id="startupXPS" >';
+myBody+='<textarea id=" startupDocument" >';
 myBody+= xUI.XPS.toString();
 myBody+='</textarea>';
-myBody+='<textarea id="referenceXPS">';
+myBody+='<textarea id="referenceDocument">';
 myBody+= xUI.referenceXPS.toString();
 myBody+='</textarea>';
 myBody+='<div id="sheet_body">';//
@@ -8334,7 +8621,7 @@ _w=window.open ("","xpsFile","width=1120,height=1600,scrollbars=yes,menubar=yes"
 }
 /*
 	File API を使用したデータの読み込み（ブラウザでローカルファイルを読む）
-	File API　は、Chrome Firefoxではローカルファイルの読み出し可能だが、
+	File API  は、Chrome Firefoxではローカルファイルの読み出し可能だが、
 	IE,Safari等他の環境では、情報取得のみ可能
 	File.nameは、ブラウザではパスを含まないファイル名（＋拡張子）のみ。
 	ただし、AIR環境ではフルパスのローカルFSパスが戻る。
@@ -8400,13 +8687,13 @@ var processImport=function(autoBuffer){
 
 /*
 	テンプレートを利用したeps出力
-テンプレートは、サーバ側で管理したほうが良いのだけど　一考
+テンプレートは、サーバ側で管理したほうが良いのだけど  一考
 
 */
 /*
 	XPSから出力に必要な本体データを切り出し、1ページづつepsエンコードして返す
 
-	引数は整数　ページナンバー 1から開始
+	引数は整数  ページナンバー 1から開始
 	引数が0 又は引数なしは全ページリザルト
 	ページが存在しない場合は空データを返す
 */
@@ -8433,8 +8720,8 @@ getBodyData=function(myPage){
 	リファレンスXpsから出力に必要なデータを切り出し、epsエンコードして返す
 	横幅はリファレンスデータそのまま（コメント省略）
 	継続時間が本体データを越えた部分をカットする（返すべきかも？）
-	引数はページナンバー　1から開始
-	引数が0　又は無ければ全ページを返す
+	引数はページナンバー  1から開始
+	引数が0  又は無ければ全ページを返す
 	ページが存在しない場合は空データを返す
  */
 getReferenceData=function(myPage){
@@ -8468,17 +8755,17 @@ getReferenceData=function(myPage){
 FrameRate	XPSから転記
 PageRength	ｘUIから転記
 PageColumns	xUIから転記
-"camColumns"	現在固定　ただしカメラワーク指定可能になり次第xUIから転記
+"camColumns"	現在固定  ただしカメラワーク指定可能になり次第xUIから転記
 
 Columns	XPSの値から計算
 	各フォーマットごとに規定数あり
 	規定数以下なら規定数を確保（読みやすいので）
 	規定数をオーバーした際は段組変更を警告
-	A3 2段組　規定 6/3 最大8/4
-	A3 1段組　規定10/5 最大18/9
+	A3 2段組  規定 6/3 最大8/4
+	A3 1段組  規定10/5 最大18/9
 
 トランジションの尺と注釈を転記してない！
-MemoTextの前に挿入する　
+MemoTextの前に挿入する  
 
 この部分は epsExporter としてソース分離すべき
 */
@@ -8486,7 +8773,7 @@ var pushEps= function (myTemplate){
 //テンプレート取得後に呼び出される。
  myTemplate=decodeURI(myTemplate);
 /*====================置換え用データ生成
-置き換えのためのキャリアオブジェクトを作成してevalを避ける　13/06/22
+置き換えのためのキャリアオブジェクトを作成してevalを避ける  13/06/22
 */
 	var sWap=[];
 //フレームレートのドロップ処理をしていない、ドロップ処置が済むまでは小数点以下のレートは扱わない
@@ -8664,7 +8951,7 @@ case "CEP":
 		myContents.push(epsBodys[pageCount]);//配列にスタックする 配列の要素数が処理判定
 //		if(fileBox) { myCount=fileBox.storeOtherExtensionFile(epsBodys[pageCount],"eps");}
 	//このルーチンではページ毎の処理ができないのであまり良くない
-	//SJIS化もできていないのでOUT callEchoEpsに準じた処理が必要　CEP CSXも同様の処理が必要
+	//SJIS化もできていないのでOUT callEchoEpsに準じた処理が必要  CEP CSXも同様の処理が必要
 	//さらにローカル保存なのでロケーション指定を一箇所にして連番処理に
 //		alert(pageCount+":"+myCount);
 break;
@@ -8830,7 +9117,7 @@ var myOffset=document.body.getBoundingClientRect();
 //    document.getElementById("soundProplist")
 //    SoundEdit.PanelInit();
 /*
-// IE用コードとのこと　今回はもうIEは動作対象外なので勘弁
+// IE用コードとのこと  今回はもうIEは動作対象外なので勘弁
 jQuery("#optionPanelTbx dl dt").mousedown(function(e){
     jQuery("body").bind('selectstart', function(){
         return false;
@@ -8929,7 +9216,7 @@ if(useCookie.UIView){
 		ToolView.push(($('#'+UIViewIdList[ix]).css('display')=='none')? 0:1);				
 	};
 	ToolView=ToolView.join("");
-//	alert(ToolView);//　beforunloadで呼び出すのでその際のアラート、コンソールは読めない
+//	alert(ToolView);//  beforunloadで呼び出すのでその際のアラート、コンソールは読めない
 };//記録チェックがない場合は元のデータを変更しない
 myCookie[7]=ToolView;
 if(dbg) console.log(ToolView);
@@ -9511,8 +9798,8 @@ nas.showModalDialog("prompt",msg,title,xUI.getFileName()+'\.xps',function(){
     }
 }
 /*	拡張子を引数にしてコールする
-txt,html,ard,tsh,eps,ard　など
-送信データ本体は、document.saveXps.XPSBody.value なので　あらかじめ値をセットしてからコールする必要あり
+txt,html,ard,tsh,eps,ard  など
+送信データ本体は、document.saveXps.XPSBody.value なので  あらかじめ値をセットしてからコールする必要あり
 :nas.uiMsg
 */
 function callEchoExport(myExt)
@@ -9586,7 +9873,7 @@ nas.showModalDialog("prompt",msg,title,xUI.getFileName()+'\.'+myExt,function(){
 }
 /*
 	現行のデータをページ番号を指定してepsデータとして保存する関数
-	epsデータは１ページ毎の別ファイルなので　複数葉の場合このダウンロードルーチンが
+	epsデータは１ページ毎の別ファイルなので  複数葉の場合このダウンロードルーチンが
 	ページごとに順次コールされる。
 	名前付けや、番号付けはこの関数の外で行われる
 */
@@ -9613,7 +9900,7 @@ function callEchoEps(myContent,myName,myNumber)
 拡張ツール用
 
 ツールボックスは、ペン等のポインタを使用した汎用入力パネル
-jquery導入に合わせて、ドラッガブルでミニマイズ可能な作りに変更　2013.04.07
+jquery導入に合わせて、ドラッガブルでミニマイズ可能な作りに変更  2013.04.07
 
 */
 /**
@@ -9862,7 +10149,7 @@ function Pref(){
 this.Lists.aserch=function(name,ael){if(this[name]){for (var n=0;n<this[name].length;n++){if(this[name][n]==ael)return n}};return -1;}
 
 	this.userName=xUI.currentUser.toString();
-//ユーザ名変更　プリファレンスパネルは大幅に変更があるのでこのメッセージの翻訳は保留　:nas.uiMsg.
+//ユーザ名変更  プリファレンスパネルは大幅に変更があるのでこのメッセージの翻訳は保留  :nas.uiMsg.
 this.chgMyName=function(newName){
 	if(! newName){
 		var msg = localize(nas.uiMsg.dmAskUserinfo)+
@@ -9872,15 +10159,15 @@ this.chgMyName=function(newName){
 //ユーザ変更UIを拡充
 /*
     ブラウザにユーザを複数記録する。
-    記録形式は　handle:uid　に変更する
+    記録形式は  handle:uid  に変更する
     UI上は、ユーザID(マスタープロパティ)とハンドル（補助プロパティ）を別に提示
-    ユーザIDリストで表示する　 ユーザIDは、サインイン用のIDとして使用する
+    ユーザIDリストで表示する   ユーザIDは、サインイン用のIDとして使用する
 
 ユーザID
 */
 		nas.showModalDialog("confirm",msg,localize(nas.uiMsg.userInfo),xUI.currentUser,function(){
 		    if(this.status==0){
-//このダイアログは直接xUIのプロパティを変更しない　一時オブジェクトを作成してPrefの表示のみを変更する
+//このダイアログは直接xUIのプロパティを変更しない  一時オブジェクトを作成してPrefの表示のみを変更する
 		        var newName = new nas.UserInfo(document.getElementById('new_user_account').value);
 		        myPref.chgMyName(newName.toString());
 		    }
@@ -9891,9 +10178,9 @@ this.chgMyName=function(newName){
 	if((!(xUI.currentUser.sameAs(this.userName)))&&(! this.changed)){this.changed=true;};
     }
 }
-//背景カラー変更　引数はエレメントid
+//背景カラー変更  引数はエレメントid
 /*  
-    "prefBGColor",　"prefColorpick" または 候補ボタンID "bgColorList##" が引数として与えられる　
+    "prefBGColor",  "prefColorpick" または 候補ボタンID "bgColorList##" が引数として与えられる  
 */
 this.chgColor = function(id){
 	if (! id) id="prefBGColor";
@@ -10130,7 +10417,7 @@ if(	xUI.SheetLength !=document.getElementById("prefSheetLength").value ||
 	xUI["viewMode"] = newMode;
 // シート外観の変更が必要なので再初期化する
 	xUI.SheetLength=document.getElementById("prefSheetLength").value;
-		xUI.PageLength	=xUI.SheetLength　*　XPS.framerate;
+		xUI.PageLength	=xUI.SheetLength  *  XPS.framerate;
 	xUI.PageCols= cols;
 //実行
         xUI.resetSheet();
@@ -10214,7 +10501,7 @@ this.close=function(){
 
 シーンプロパティ編集UIにモードを設ける
 通常時は
-A	シーン（カット）登録　Title/Opus/S_C + time
+A	シーン（カット）登録  Title/Opus/S_C + time
 B	シーン属性編集	各トラックのプロパティ編集
 の２面UIとする
 Aは管理DBにエントリ登録を行う専用UI
@@ -10488,13 +10775,13 @@ return myLabels;
 }
 //
 /**
-　201802改修　レイヤブラウザの位置づけ変更
-　AE依存のパラメータを使用しない
-　基本はデータ編集をロックして閲覧のみ
-　引数はトラック数
+  201802改修  レイヤブラウザの位置づけ変更
+  AE依存のパラメータを使用しない
+  基本はデータ編集をロックして閲覧のみ
+  引数はトラック数
 */
 this.mkLayerSheet =function (lot){
-//	レイヤブラウザを作る　終端のフレームコメントを除くすべて
+//	レイヤブラウザを作る  終端のフレームコメントを除くすべて
 //	引数はレイヤの数
 var body_='<table cellspacing=0 cellpadding=0 border=0 >';//
 
@@ -10668,10 +10955,10 @@ this.getProp =function ()
     }else{
         document.getElementById("scnPushentry").disabled=true;
     }
-//ドキュメントパネルから新規ドキュメントフラグを削除　削除に伴う変更まだ
+//ドキュメントパネルから新規ドキュメントフラグを削除  削除に伴う変更まだ
 //ドキュメント一覧からプロジェクト一覧を取得してリストに展開する
     var myProducts = documentDepot.products;
-    　　this.titles   =[];    this.episodes =[];
+        this.titles   =[];    this.episodes =[];
     for (var pix=0;pix<documentDepot.products.length;pix++){
         var product=Xps.parseProduct(documentDepot.products[pix]);
         this.episodes.push(product);
@@ -10762,15 +11049,15 @@ this.getLayerProp =function (){
 		if (i<this.tracks &&! document.getElementById("scnNewSheet").checked)
 		{
 			document.getElementById("scnLopt_"+i).value=
-			currentTrack["option"]; // 種別　0番は固定
+			currentTrack["option"]; // 種別  0番は固定
 	        document.getElementById("scnLopt_"+i).disabled = (i==0)? true:false;
 
 			document.getElementById("scnLlnk_"+i).value=
-			currentTrack["link"];//リンク　現在固定
+			currentTrack["link"];//リンク  現在固定
 			document.getElementById("scnLlnk_"+i).disabled=true;
 
 			document.getElementById("scnLpnt_"+i).value=
-			currentTrack["parent"];//ペアレント　現在固定
+			currentTrack["parent"];//ペアレント  現在固定
 			document.getElementById("scnLpnt_"+i).disabled=true;
 
 			document.getElementById("scnLlbl_"+i).value=
@@ -10988,7 +11275,7 @@ nas.FCT2Frm(document.getElementById("scnTime").value);
     if(document.getElementById("scnNewSheet").checked) xUI.setUImode('floating');
 //シートメモ転記
 		XPS.xpsTracks.noteText = document.getElementById("scnMemo").value;
-//値の変換不要なパラメータをまとめて更新　"mapfile"を削除　ユーザ編集は可能性自体が無い
+//値の変換不要なパラメータをまとめて更新  "mapfile"を削除  ユーザ編集は可能性自体が無い
 	var names=[
 "title","subtitle","opus","scene","cut"
 	];//
@@ -11180,8 +11467,8 @@ SoundEdit ={
     timeLock:0,
 //0:inPointLock,1:outPointLock,2:durationLock
 /*
-label参照配列　カット／作品内のラベルをストアして入力候補として提示するためのデータ
-タイトルごとの集積データを持つ　タイトルDB内の香盤データとして監理する
+label参照配列  カット／作品内のラベルをストアして入力候補として提示するためのデータ
+タイトルごとの集積データを持つ  タイトルDB内の香盤データとして監理する
 新規に入力されたラベルがあれば、香盤に加える（最終的にはそうする）
 ＊香盤への操作は香盤DBに対しての通信として実装する＊
 新規入力ラベルはこのデータに対して最新候補として追加すること
@@ -11228,7 +11515,7 @@ label参照配列　カット／作品内のラベルをストアして入力候
 /*
     パネル初期化
     xUI.edmode に従ってパネル状態を設定
-    各コントロールの有効無効化　視覚化隠蔽等を行う
+    各コントロールの有効無効化  視覚化隠蔽等を行う
     
     現在はダイアログ関連のコントロールのみ
 
@@ -11309,7 +11596,7 @@ SoundEdit.syncTCL=function(ix){
         }
     }   
 }
-/*　編集対象のパネルのラベルを入れ替える
+/*  編集対象のパネルのラベルを入れ替える
 引数:ダイアログラベル文字列
 */
 SoundEdit.setLabel = function(myName){
@@ -11321,7 +11608,7 @@ SoundEdit.setLabel = function(myName){
     document.getElementById('sndBody').value=targetSection.value.toString();
     xUI.sectionUpdate();
 }
-/*　編集対象のダイアログの属性を入れ替える
+/*  編集対象のダイアログの属性を入れ替える
 引数:属性配列または属性文字列
 文字列の形式は,(コンマ)で区切られたリスト
 引数が未定義または空文字列の場合は、属性を全削除
@@ -11347,10 +11634,10 @@ SoundEdit.setProp = function(myProp){
     tc  TC文字列
     target 目的のプロパティ"inPoint","outPoint","duration"
 ロックされているプロパティに値を設定しようとすると、自動でロックが入れ替わる
-　　in点     → out点
-　　out点    → in点
-　　duration → in点
-　　ただしあらかじめ他のロックが行われている場合は、自動変更は働かない
+    in点     → out点
+    out点    → in点
+    duration → in点
+    ただしあらかじめ他のロックが行われている場合は、自動変更は働かない
 */
 SoundEdit.setTime = function(tc,target){
     if(xUI.edmode<2) return;//NOP
@@ -11451,7 +11738,7 @@ SoundEdit.getProp = function(){
     document.getElementById('soundLabel').value = targetSection.value.name;
     document.getElementById('soundProps').value = targetSection.value.attributes.join(",");
 }
-/** パネルの内容をシートに同期反映させる　値が同じプロパティはスキップ
+/** パネルの内容をシートに同期反映させる  値が同じプロパティはスキップ
     forceオプションが立っていたら強制的にスピン適用を行う
 */
 SoundEdit.sync = function(force){
@@ -11468,7 +11755,7 @@ SoundEdit.sync = function(force){
     }
     targetSection.value.contentText = newContent.contentText;
     //テキストエリアの内容が正しいコンテンツ型式であるか保証されないので注意！
-    //パーサにチェック機能を設けるか　またはフィルタすること
+    //パーサにチェック機能を設けるか  またはフィルタすること
     targetSection.value.parseContent();
 
     //変更したデータでリストを更新する。変更が発生していればHTMLを書き直し
@@ -11513,10 +11800,10 @@ SoundEdit.close = function(){
 	return null;
 }
 /*  パネルを開く
-    すでに開いていたら最小化されていないか確認して開く　最小化もされていなければ　NOP Return
+    すでに開いていたら最小化されていないか確認して開く  最小化もされていなければ  NOP Return
     開く際モードを確認して必要に合わせてモードを変更する
     null値セクションの場合は、選択範囲の前後にセクションノードを挿入して空の値セクションを作成して選択
-    その後　mdChg(2)
+    その後  mdChg(2)
 */
 SoundEdit.open=function(){
     var targetTrack   = xUI.XPS.xpsTracks[xUI.Select[0]];

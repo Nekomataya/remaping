@@ -152,7 +152,7 @@ myFilerevision = ('2.0');
  *  appHost はオブジェクトで作成してプラットフォーム及びバージョンを識別できる情報を与える HTML関連コードからこちらへ移動済み
  
  *  @class AppHost オブジェクト
- *	AppHost.ESTK　bool
+ *	AppHost.ESTK  bool
  *	AppHost.platform string
  *	AppHost.version string
  *	AppHost.os    string
@@ -340,7 +340,7 @@ var currentUser = new nas.UnserInfo("user@example.co.jp")
 メールアドレスなら uid部をハンドルとして使用
 それ以外の場合は、全体をハンドルにしてメールアドレスをnullで初期化する
 メールアドレス整合性のチェックは特になし
-一致比較は、メールアドレス側で行う　null,空白は いずれの場合も一致なし
+一致比較は、メールアドレス側で行う  null,空白は いずれの場合も一致なし
 空白で初期化したデフォルトの値はシステムで利用しないように注意する
  */
 nas.UserInfo = function UserInfo(nameDescription){
@@ -377,7 +377,7 @@ nas.UserInfo = function UserInfo(nameDescription){
 }
 /*
 引数:
-    JSON または　プロパティ名
+    JSON または  プロパティ名
 */
 nas.UserInfo.prototype.toString = function(opt){
     if(! opt) opt = 0;
@@ -501,7 +501,7 @@ console.log(typeof newMember);
     }
     /*
         userストリームを引数にしてCollectionの内容をすべて入れ替える
-        ストリームの形式は plain-text または full-dump または　JSON
+        ストリームの形式は plain-text または full-dump または  JSON
         引数が空の場合は、何も操作せずに戻る
     */
     nas.UserInfoCollection.prototype.parseConfig=function(dataStream){
@@ -565,7 +565,7 @@ console.log(E);
 nas.UNITRegex=new RegExp('^(in|inches|mm|millimeters|cm|centimeters|pt|picas|points|mp|millipoints)$','i');
 
 /*=============================================================================================再利用メソッド*/
-//不正単位系の処理を追加　07-04 2016
+//不正単位系の処理を追加  07-04 2016
 /**
 	common method
 */
@@ -631,10 +631,10 @@ nas.ARRAYValue	=function(myUnit){
  * コンストラクタ:
  * 	new nas.UnitValue("値"[,"単位"]);
  * 引数:
- * 	値　String 単位つき文字列または数値文字列又は数値
- * 	単位 String 単位を文字列で　省略可　省略時は'pt'
+ * 	値  String 単位つき文字列または数値文字列又は数値
+ * 	単位 String 単位を文字列で  省略可  省略時は'pt'
  * 
- * 例　	new nas.UnitValue("値"[,"単位"]);
+ * 例  	new nas.UnitValue("値"[,"単位"]);
  * 
  * 	A = new nas.UnitValue("123","mm");
  * 	A = new nas.UnitValue("-72pt","in");
@@ -644,7 +644,7 @@ nas.ARRAYValue	=function(myUnit){
  * 
  * 単位が指定されない場合は第一引数の単位を使用、異なる場合は第一引数の値を第二引数の単位へ変換してオブジェクト化する
  * どちらも無効な場合は、第一引数の数値部分をpointで換算
- * 無効な単位系で初期化された場合は単位系を無効のまま数値のみ初期化して　無効単位系に対する要求はptで代用する？＜estk互換
+ * 無効な単位系で初期化された場合は単位系を無効のまま数値のみ初期化して  無効単位系に対する要求はptで代用する？＜estk互換
  * 無効な値で初期化された場合は値を0に設定する。＜estk互換
  *  (Adobe Extend Script 準拠)
  * 有効な単位は	in,inches,mm,millimeters,cm,centimeters,pt,picas,points,mp,millipoints
@@ -704,12 +704,12 @@ nas.UnitValue.prototype.valueOf	=nas.UNITValue;
 	値	Number or String 単位付き数値または数値
 	単位	 String 単位文字列省略可能
 
-使用可能な値は　/^(d|degrees|°|度|)$/)
+使用可能な値は  /^(d|degrees|°|度|)$/)
 指定値以外または単位なしで初期化された場合は radians
 単位変換機能付き
 例:	A=new nas.UnitAngle("180 degrees","radians");//	180度相当の値がラディアンで格納される
 	A=new nas.UnitAngle(1);//1 rad
-	A=new nas.UnitAngle("27.4 d");//27.4 degrees　として格納
+	A=new nas.UnitAngle("27.4 d");//27.4 degrees  として格納
 
 オブジェクトメソッド:
 nas.UnitAngle.as("単位文字列")	指定された単位文字列に変換した数値を返す
@@ -737,15 +737,15 @@ nas.UnitAngle.prototype.toString=nas.UNITString;
 nas.UnitAngle.prototype.valueOf	=nas.UNITValue;
 /*
 	nas.UnitResolution Object
-コンストラクタ　単位付き解像度オブジェクト
+コンストラクタ  単位付き解像度オブジェクト
 	new nas.UnitResolution("解像度"[,"単位"])
 
-引数:	解像度　String or Number 単位付き文字列または数値
+引数:	解像度  String or Number 単位付き文字列または数値
 	単位	String	単位を文字列で
 	双方が異なっていれば指定単位に換算
-	指定可能な単位は (/dpi|ppi|lpi|dpc|ppc|lpc/i)　実質は2種　デフォルトは dpc
-	無効値で初期化された場合は　72dpi相当の密度に設定する(nas標準値か？)
-	値0はどの単位系でも発散が起きるのでダメ　これも値を矯正する
+	指定可能な単位は (/dpi|ppi|lpi|dpc|ppc|lpc/i)  実質は2種  デフォルトは dpc
+	無効値で初期化された場合は  72dpi相当の密度に設定する(nas標準値か？)
+	値0はどの単位系でも発散が起きるのでダメ  これも値を矯正する
 
 例:	new Resolution('120dpi','dpc');
 	new Resolution( 50,'dpc');
@@ -788,15 +788,15 @@ nas.UnitResolution.prototype.valueOf	=nas.UNITValue;
 
 または
 	new nas.Point(nas.Point)
-第一引数がnas.Point　オブジェクトだった場合は、そのオブジェクトの複製を初期化する
+第一引数がnas.Point  オブジェクトだった場合は、そのオブジェクトの複製を初期化する
 
 または
 	new nas.Point(値リスト/配列[,単位])
-値リストでの初期化も可能　多くの実装で配列形式の座標を扱うので互換をもたせるものとする
-　myPoint=new nas.Point([myX,myY]);
-　myPoint=new nas.Point([0,128,255],"pt");
+値リストでの初期化も可能  多くの実装で配列形式の座標を扱うので互換をもたせるものとする
+  myPoint=new nas.Point([myX,myY]);
+  myPoint=new nas.Point([0,128,255],"pt");
 
-Point.length　で次数が取得できる
+Point.length  で次数が取得できる
 
 プロパティはUnitValue
 引数が数値ならばptとして初期化する
@@ -804,7 +804,7 @@ Point.length　で次数が取得できる
 引数なしの場合は2次元 ["0pt","0pt"] で初期化される
 
 	プロパティ
-nas.Point.length	Int　整数　保持している値の次数
+nas.Point.length	Int  整数  保持している値の次数
 nas.Point.x	UnitValue x座標値
 nas.Point.y	UnitValue y座標値
 nas.Point.z	UnitValue z座標値
@@ -819,7 +819,7 @@ nas.Point.toString([指定単位])	;指定単位に揃えてリストで返す
 nas.Point.valueOf([指定単位])	;指定単位にそろえて配列を戻す
 単位指定がない場合は、登録された単位で返す
 
-nas.Position は古いので　nas.Pointを使えやゴルァ
+nas.Position は古いので  nas.Pointを使えやゴルァ
 コンストラクタと初期化クラスメソッドを割ったほうが良いかも？
 
 */
@@ -914,7 +914,7 @@ nas.newPoint=function(){
  * 引数は UnitValueまたは文字列、Pointオブジェクトの初期化に準ずる
  * Pointオブジェクトを与えて初期化することも可能？
  * 
- * Position.point.length　で次数が取得できる
+ * Position.point.length  で次数が取得できる
  * 
  * プロパティはUnitValue
  * 引数が数値ならばptとして初期化する
@@ -922,7 +922,7 @@ nas.newPoint=function(){
  * 引数なしの場合は2次元["0pt","0pt"]で初期化される
  * 
  * 	プロパティ
- * nas.Position.point	Object nas.Point　保持している座標の値
+ * nas.Position.point	Object nas.Point  保持している座標の値
  * nas.Position.x	UnitValue   x座標値 this.point.x
  * nas.Position.y	UnitValue   y座標値 this.point.y
  * nas.Position.z	UnitValue   z座標値 this.point.z
@@ -985,24 +985,24 @@ nas.Offset=function(myPos,myOrt){
 	new nas.Vector(終点[,始点][,単位])
 1次元、2次元、3次元の値が初期化可能
 引数
-	終点・始点　/nas.Point
+	終点・始点  /nas.Point
 	単位文字列
 
 引数の次元のうち次数の高い方に合わせたVectorを初期化する
-Vector.dimension　で次数が取得できる
+Vector.dimension  で次数が取得できる
 単位文字列が指定されなかった場合は、第一引数の単位を使用する
 
-プロパティは　nas.Point
+プロパティは  nas.Point
 与えられない次数のプロパティは0として扱う
 
 引数なしの場合はデフォルトの単位値で原点を始点とする２次元の単位ベクトルを戻す
 
 	プロパティ
 
-nas.Vector.dimension	Int　整数　保持している値の次数1～3
+nas.Vector.dimension	Int  整数  保持している値の次数1～3
 nas.Vector.origin	Point 始点座標
 nas.Vector.value	Point ベクトル値(=終点座標-始点座標)
-nas.Vector.type	String　単位文字列
+nas.Vector.type	String  単位文字列
 
 始点を省略した場合は、原点を始点に置く
 オブジェクトメソッド:
@@ -1107,17 +1107,17 @@ nas.Orientation.prototype.valueOf =nas.ARRAYValue;
 	nas.newFramerate(rateString[,rate])?
 引数:
 	reteString String フレームレート文字列
-	rate Number 省略可能　実フレームレート
+	rate Number 省略可能  実フレームレート
 	フレームレート文字列は任意
-	引数が　24FPS 25fps等の　/\dFPS/i の場合はその数値を利用
-	第一引数が　SMPTE,NTSC,DF を含む場合は、第二引数にかかわらず 30/1.001 で初期化する
-	その際引数に数値　60または59.94が含まれる場合 60/1.001 に更新する
+	引数が  24FPS 25fps等の  /\dFPS/i の場合はその数値を利用
+	第一引数が  SMPTE,NTSC,DF を含む場合は、第二引数にかかわらず 30/1.001 で初期化する
+	その際引数に数値  60または59.94が含まれる場合 60/1.001 に更新する
 	その場合ドロップフレーム処理が行われる
 	
-	第一引数が　PAL,SECAM　を含む場合は、第二引数にかかわらず 25　で初期化を行う
-	その際引数に数値　50 が含まれる場合 50 に更新する
+	第一引数が  PAL,SECAM  を含む場合は、第二引数にかかわらず 25  で初期化を行う
+	その際引数に数値  50 が含まれる場合 50 に更新する
 
-    第一引数が reteString(rate)　形式の場合は　括弧の中身を実フレームレートして処理する
+    第一引数が reteString(rate)  形式の場合は  括弧の中身を実フレームレートして処理する
 
 	実時間とTCのズレる形のNDFはサポートしない。	
 	
@@ -1152,7 +1152,7 @@ nas.newFramerate=function(rateString,rate){
 //	var newOne=Object.create(nas.Framerate);
 	var newOne=new nas.Framerate();
 	if(arguments.length){
-	　//第一引数がカッコつきでフレームレート指定された文字列ならば第二引数は無効(捨てる)
+	  //第一引数がカッコつきでフレームレート指定された文字列ならば第二引数は無効(捨てる)
 	  if(String(rateString).match(/(.*)\(([0-9]+(\.[0-9]*)?)\)/)){
 	    newOne.name = RegExp.$1;
 	    newOne.rate = parseFloat(RegExp.$2);
@@ -1210,7 +1210,7 @@ myRate*2;
 
 
 	TimingCurve	/	timing	
-引数がない場合は単位"pt"でサイズ 72x72　二次元のオブジェクトを初期化
+引数がない場合は単位"pt"でサイズ 72x72  二次元のオブジェクトを初期化
 
 コンストラクタでタイミングカーブを初期化する必要は無い
 Size オブジェクトはPointを中核データとしたサイズを扱うオブジェクト
@@ -1264,11 +1264,11 @@ Vectorオブジェクト
 
 
 1次元のVevtorはbool / 2次元のVectorは 1次元のOrientation（Z）/ 3次元のVeltorは 3次元のOrientation (XYZ)を持つ
-プロパティで持たせるか、またはラムダ関数で導くか？　アクセス頻度？
+プロパティで持たせるか、またはラムダ関数で導くか？  アクセス頻度？
 
 */
 /*
-Curve　Object
+Curve  Object
 new nas.Curve(point1,point2,isAbs)
 アークを指定するための複合Object
 座標系のObjectに持たせるcurveプロパティの値
@@ -1287,8 +1287,8 @@ nas.Curve=function(){
 	this.ctlrpt2;
 }
 /*
-　TimingCurve　Object
-　タイミング指定をするための配列ベースのObject
+  TimingCurve  Object
+  タイミング指定をするための配列ベースのObject
 値を持つObjectに全て持たせることが可能
 値は二次元に限定 / 値範囲は0-1に限定
 始点を[0,0] 終点を[1,1]と置いて第一制御点と第二制御点を少数値で与える
@@ -1339,7 +1339,7 @@ nas.AnimationPeg Object
 nasペグシステムでサポートするペグオブジェクト
 
 以下のペグをサポートする
-0:表示のないペグ　角合せ及び中央合せ	中央合わせがデフォルト値
+0:表示のないペグ  角合せ及び中央合せ	中央合わせがデフォルト値
 	0:中央合せ
 	1:左下合せ(ステージ第一象限)
 	2:左上合せ(ステージ第二象限)
@@ -1347,35 +1347,35 @@ nasペグシステムでサポートするペグオブジェクト
 	4:右下合せ(ステージ第四象限)
 	5:他任意の位置
 	プリセットで色々作る
-　各ポイントは、ペグ（レジストレーション点）として扱う
+  各ポイントは、ペグ（レジストレーション点）として扱う
 	可視、不可視の属性を持ち、外見プロパティを持たせることができる。
 	外見プロパティの登録がない場合簡易表示として、レジストリシンボルを使う
-　エレメントグループ内部のみで角合わせを行うとレジストレーション点が画面中央で初期化されたりするが通常の動作である
-　必要に従って、新たなタップを作成（ステージにタップ＝カメラワークフレームを設定＝設置）して其処にジオメトリネットワークを構築する
-　実物線画台と異なり同じ位置に別のタップが置ける　干渉は無い
+  エレメントグループ内部のみで角合わせを行うとレジストレーション点が画面中央で初期化されたりするが通常の動作である
+  必要に従って、新たなタップを作成（ステージにタップ＝カメラワークフレームを設定＝設置）して其処にジオメトリネットワークを構築する
+  実物線画台と異なり同じ位置に別のタップが置ける  干渉は無い
 
 外見プロパティは以下から選択できるように設定
 0:不可視、表示の際はシンボルで
 1:ACME	ACME があれば問題ないと思う
-2:丸あな2穴	穴径及び間隔は別に設定　またはシンボル
-3:丸あな3穴	タイプはASAのみ用意する　ほかはいらん
+2:丸あな2穴	穴径及び間隔は別に設定  またはシンボル
+3:丸あな3穴	タイプはASAのみ用意する  ほかはいらん
 
-ペグ（レジストレーション）システムとして考えた場合　角合せも中央整列もペグの位置指定と同じ
-フレームからのレジストレーション点オフセットのデータ書式は同じ　→　ケースわけしない
+ペグ（レジストレーション）システムとして考えた場合  角合せも中央整列もペグの位置指定と同じ
+フレームからのレジストレーション点オフセットのデータ書式は同じ  →  ケースわけしない
 レジストレーション代表点は、ペグの場合各ペグの中心（ACMEならセンターホール中心）、０番系列はポイントそのもの
 向きはエレメントグループ内で揃っていれば同じ
 データ上のオフセットは、レジストリ点のローカル座標とローテーション
 pegオフセットは、フレーム中心からのペグ（レジストレーション点）のオフセットとローテーション
 
-したがってフレーム中心のローカル座標は　sub(offset,pegOffset)となる。
+したがってフレーム中心のローカル座標は  sub(offset,pegOffset)となる。
 
-基本構成は同じだが、AnimationPegはオブジェクトでなく　AnimationFrameオブジェクトのプロパティとして実装してそのプロパティの一部としてPegFormを設定する。
+基本構成は同じだが、AnimationPegはオブジェクトでなく  AnimationFrameオブジェクトのプロパティとして実装してそのプロパティの一部としてPegFormを設定する。
 これがペグの外形を保持するように実装
 
 オフセットプロパティ群の関連は以下のリスト
 
- GeometryOffset　オブジェクト　基底クラスオブジェクト
- 位置オフセット+回転（オリエンテーション）値で成立する　回転に際して正規化が発生する
+ GeometryOffset  オブジェクト  基底クラスオブジェクト
+ 位置オフセット+回転（オリエンテーション）値で成立する  回転に際して正規化が発生する
 
 offset
 	セルエレメントのローカル座標内のペグ位置オフセット
@@ -1436,9 +1436,9 @@ nas.AnimationField=function(myName,baseWidth,frameAspect,scale,peg,pegOffset){
 //区間要素群のtoString()	メソッドの仕様
 
 /*
-	Obj.toString() 又は　Obj.toString(0 or false)
+	Obj.toString() 又は  Obj.toString(0 or false)
 	代表値を保存形式出力で
-	Obj.toString(出力キーワード) 又は　Obj.toString(1 or true)
+	Obj.toString(出力キーワード) 又は  Obj.toString(1 or true)
 	先頭 \t フィールドデリミタ \n でフルスペック出力
 	Obj.toString([プロパティ名配列])
 	指定プロパティを先頭 \t フィールドデリミタ \n で列挙
@@ -1453,8 +1453,8 @@ nas.AnimationField=function(myName,baseWidth,frameAspect,scale,peg,pegOffset){
 
 toString():引数なし	標準型
 toString("all"):true ? 全プロパティ出力
-toString(propName):プロパティ名　単独プロパティ
-toString([propNames]):プロパティ名配列　指定プロパティを改行で区切って連続で与える
+toString(propName):プロパティ名  単独プロパティ
+toString([propNames]):プロパティ名配列  指定プロパティを改行で区切って連続で与える
 
 
 例(セル):
@@ -1502,7 +1502,7 @@ B	B-1	"c:\\\\Users\\Me\\Desktop\\Datas\\B_00001.png",640pt,480pt,
 	セッションユニークID
 	所属グループ
 	名前
-	値	アニメーションリプレースメントエレメント　ファイル実体とアニメーションフィールドを持つ複合オブジェクト
+	値	アニメーションリプレースメントエレメント  ファイル実体とアニメーションフィールドを持つ複合オブジェクト
 
 [A	CELL	254mm,142.875mm,]
 
@@ -1514,7 +1514,7 @@ B	B-1	"c:\\\\Users\\Me\\Desktop\\Datas\\B_00001.png",640pt,480pt,
 	兼用して参照渡しにするのが最良と思われる
 
 	作成するオブジェクトのリスト＞＞トラックの種類だけ必要
-nas.AnimationSound	　音響
+nas.AnimationSound	  音響
 nas.AnimationReaplacement	置きかえ（画像ーセル＊静止画と動画を双方含む）
 nas.AnimationGeometry	ジオメトリ（カメララーク）
 nas.AnimationComposite	合成（撮影効果）
@@ -1523,7 +1523,7 @@ nas.AnimationComposite	合成（撮影効果）
 XPSグループのエントリは時間属性を持ったリプレースメントオブジェクトとして扱う
 
 TEXTグループは、タイムシート上には配置されず区間の値となることは無い…と思う
-字幕等 の　AnimationSoundに準ずるAnimationTextオブジェクトは、そのうち必要かも  
+字幕等 の  AnimationSoundに準ずるAnimationTextオブジェクトは、そのうち必要かも  
 
 これでOK？
 
@@ -1533,10 +1533,10 @@ TEXTグループは、タイムシート上には配置されず区間の値と�
  * nas.AnimationElementSource Object
  * 各エレメントのソースファイルを統合して扱うオブジェクト
  * 初期化引数:ターゲット記述テキスト
- * .file ソースファイル object/File 又はパス文字列　初期値 null
- * .framerate ソースフレームレート 主に静止画、ムービーの際に利用　object / nas.Framerate
- * .duration ソース継続時間 主に静止画の際に利用　int/frames
- * .startOffset ソース継続時間に対するオフセット　int/frames
+ * .file ソースファイル object/File 又はパス文字列  初期値 null
+ * .framerate ソースフレームレート 主に静止画、ムービーの際に利用  object / nas.Framerate
+ * .duration ソース継続時間 主に静止画の際に利用  int/frames
+ * .startOffset ソース継続時間に対するオフセット  int/frames
  */
 nas.AnimationElementSource=function(targetDescription){
     this.file;
@@ -1629,11 +1629,11 @@ nas.AnimationElementSource=function(targetDescription){
         .getDuration()  セクションの値を合計して継続時間をフレーム数で戻す
         
     XpsTimelineSction   セクションメンバ
-        .id             セクションの現行index　==parent.sections[id]
+        .id             セクションの現行index  ==parent.sections[id]
         .parent         タイムライントラック  
         .duration       継続時間（フレーム数）
-        .value          .this.mapElement.value　または同等の値オブジェクト
-        .mapElement     nas.xMapElement　値へは.value経由でアクセスする
+        .value          .this.mapElement.value  または同等の値オブジェクト
+        .mapElement     nas.xMapElement  値へは.value経由でアクセスする
         .subSections    
 
 
@@ -2061,8 +2061,8 @@ nas.cak = function (StartSize, EndSize, TargetSize) {
 指定桁数が引数の桁よりも少ない場合は何も操作されない
 数値が小数部を含む場合は、整数部を指定桁数に揃える
 数字以外の文字が前置されていた場合はNaNを戻す
-今回の修正で以下の変更が行われるため要注意　2017.10.18
-引数 旧戻値　新戻値
+今回の修正で以下の変更が行われるため要注意  2017.10.18
+引数 旧戻値  新戻値
 "0123",0 "0123" "123"
 "0123A",0 "0123A" "123"
  */
@@ -2280,7 +2280,7 @@ nas.Frm2FCT = function (frames, type, ostF, fpsC) {
 /**
  * nas.FCT2Frm(Fct,fpsC,check)
  * 引数 :タイムカウンタ文字列[,カウンタフレームレート][,タイプ判定オプション]
- * 戻値 :フレーム数　または　TCタイプ判別オブジェクト プロパティを下げたNumberオブジェクトで
+ * 戻値 :フレーム数  または  TCタイプ判別オブジェクト プロパティを下げたNumberオブジェクトで
  *
  * カウンタ文字から0スタートのフレーム値を返す
  * カウンタ文字列と認識できなかった場合は'元の文字列'を返す[仕様変更]
@@ -2302,12 +2302,12 @@ nas.Frm2FCT = function (frames, type, ostF, fpsC) {
  * それ以上の場合は60DFのフレーム数を返す
  * 本来60DFはSMPTEの規格外なので扱いに注意すること
  * 
-近来　23.8 (ドロップ互換24fps)が広範に利用されているのでそろそろ考慮必要？
+近来  23.8 (ドロップ互換24fps)が広範に利用されているのでそろそろ考慮必要？
 TCタイプを判定する関数が必要だが、このメソッドを拡張するのが良さそう
 23.98fps は、SMPTEドロップの規定を使用しない方向で運用されているので、ナチュラルドロップカウントを適用
  
- * TC文字列判定機能増設 キーは第三引数に何かあれば　判定オブジェクトを返す
- 判定オブジェクトは　Number にして計算可能　プロパティが付加される
+ * TC文字列判定機能増設 キーは第三引数に何かあれば  判定オブジェクトを返す
+ 判定オブジェクトは  Number にして計算可能  プロパティが付加される
     Number.type     TCタイプ
     Number.offset   オリジネーション
  
@@ -2356,14 +2356,14 @@ var TCtype;
     if (fct.match(/^([0-9]+:){0,2}[0-9]+;[0-9]+$/)) {
     /**
     * SMPTE hh:mm:ss;ff
-    * ポストフィックス判定を一旦破棄して　ostF = 0; にセットする　
+    * ポストフィックス判定を一旦破棄して  ostF = 0; にセットする  
     * @type {string}
     */
         fct = fct.replace(/;/g, ":");//セミコロンを置換
         fpsC = (fpsC < 45) ? 29.97 : 59.94;//SMPTEドロップが指定されたので強制的にフレームレート調整
         ostF = 0;
         PostFix = "";
-        TCtype = (fpsC < 45)?　6 : 7;
+        TCtype = (fpsC < 45)?  6 : 7;
         /**
          * 一時係数設定
          * @type {number}
@@ -2534,7 +2534,7 @@ var TCtype;
          * ナチュラルドロップフレームの判定 フレーム継続時間の末尾が秒境界をまたがった場合をドロップカウントする
          * 連続してフレームがドロップすることはありえないのでこのように判定
          * 整数フレームレート時に実行されていたので、トラップする 2012 0205
-         * TCtype==1の際(フレームドロップが存在しないケース)に実行されていたので修正　20180718
+         * TCtype==1の際(フレームドロップが存在しないケース)に実行されていたので修正  20180718
          */
         if ((TCtype > 1)&&((fpsC % 1) != 0) && (Math.floor(Frames / fpsC) != (Seconds))) {
 console.log('TC不正 : ' + fct);
@@ -3385,9 +3385,9 @@ nas.mInverse = function (Matrix) {
     '1,0,0,1','1,0,0,0,1,0,0,0,1' ,'1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1'
 コンマ区切り文字列リストただしコンマ区切りの要素数が4,9,16(それぞれ2,3,4次の正方行列)のみ
     ['1,0','0,1'],['1,0,0','0,1,0','0,0,1'],['1,0,0,0','0,1,0,0','0,0,1,0','0,0,0,1']
-コンマ区切りリスト文字列を要素とする１次配列　同上それぞれ2,3,4次の正方行列のみ
+コンマ区切りリスト文字列を要素とする１次配列  同上それぞれ2,3,4次の正方行列のみ
     [[1,2,3],[4,5,6],[7,8,9],[10,11,12]]
-２次元配列　要素数は自由　引数配列の要素すべてが配列でなければならない　次数は自由
+２次元配列  要素数は自由  引数配列の要素すべてが配列でなければならない  次数は自由
 内包要素の次数はすべて揃っている必要がある。
 戻り値は配列に変更
 
@@ -3541,8 +3541,17 @@ nas.biteClip = function (myString, count) {
 };
 
 /**
+ * 前後の空白を払う
+ * @param myString
+ * @returns {XML|string}
+ */
+nas.chopString = function (myString) {
+    return myString.replace(/^\s+/, "").replace(/\s+$/, "");
+}
+
+/**
  * nas.incrStr(myString,Step,Opt)
- * 引数　任意文字列
+ * 引数  任意文字列
  * 戻値	文字列の末尾の番号部分をステップ数くり上げて返す
  * ステップに負の数を与えると減算 戻り値が0負の数の場合は元の文字列を戻す
  * １０進数値のみサポート
@@ -3710,7 +3719,7 @@ nas.decodeUnit = function (myValue, resultUnit) {
  * 文字列の数字に先行する部分をラベル(=prefix)
  * 最初に現れる数値連続部分を整数値
  * 残りを後置情報とする。
- * この関数はラベル、後置文字列の意味は問わない　
+ * この関数はラベル、後置文字列の意味は問わない  
  * @param myString
  * @param mySep
  * @returns {*}
@@ -3768,7 +3777,7 @@ if(str.normalize){return str.normalize("NFKC");}
     .replace(/’/g, "'")
     .replace(/‘/g, "`")
     .replace(/￥/g, "\\")
-    .replace(/　/g, " ")
+    .replace(/  /g, " ")
     .replace(/〜/g, "~");
 }
 
@@ -3782,7 +3791,7 @@ console.log (nas.normalizeStr("安全ｶｸﾆﾝＢＡＮＤ（12３④５）")
  * 正規化フィルタを通し
  * 最初の数値の前の数字以外の文字を払い１０進で整数化して返す
  * 数値部分が含まれない場合は NaN が戻る
- * この関数は　
+ * この関数は  
  *   先行する数字以外をラベル
  *   数字の連続部分を数字部
  *   それ以降を後置部
@@ -3803,10 +3812,10 @@ nas.parseNumber("Final-A 123-under");
  *  タイムシートのセル記述を比較して同じセルの記述か否かを返す関数
  *
  *  空白はいずれのセル記述ともマッチしない
- *　カラセル記号、省略記号、等の機能記述記号はいずれのセル記述ともマッチしない
- *　原画記述の特定のセルを表さない中間値補間記号はいずれのセルともマッチしない
- *　記述はノーマライズして比較される
- *　同一トラック内の記述比較のみ正しい判定を行う(xMapエレメントの比較ではない )
+ *  カラセル記号、省略記号、等の機能記述記号はいずれのセル記述ともマッチしない
+ *  原画記述の特定のセルを表さない中間値補間記号はいずれのセルともマッチしない
+ *  記述はノーマライズして比較される
+ *  同一トラック内の記述比較のみ正しい判定を行う(xMapエレメントの比較ではない )
  * 引数は、記述文字列または記述オブジェクト
  * 実際の判定はセル記述オブジェクトのメソッドを利用するので、
  * 比較するどちらかの要素がセル記述オブジェクトであることが明確なケースでは
@@ -3842,12 +3851,12 @@ myDescription      主記述・シートに記述する基本的なテキスト
 
     ブランク記述 カラセルを表す予約語
         配列BlankSignsに登録された文字列が単独で記述されたもの
-    中間値補間記述　補間（動画）記号用予約語
+    中間値補間記述  補間（動画）記号用予約語
         配列InterpolationSignsに登録された文字列が単独で記述されたもの
     省略記述 記述されたセルが直前のセルの値を継承する事を示す予約語
         配列EllipsisSignsに登録された文字列で始まる記述、空文字列及び空白文字
 
-    一般記述　上記の特殊記述以外の記述        
+    一般記述  上記の特殊記述以外の記述        
         記述が値を持つ場合は、システム上関連付けられた値を示す。
         値を持たない場合は省略記述と同様に直前のセルの値を継承する
         
@@ -3858,7 +3867,7 @@ myPostfix
     以下の文字列によるオーバレイまたはアンダーレイの指定を一種のみ
     +,修正,修,上,下,カブセ,u|under,o|over,overlay
     文字を重ねるかまたは直後に重ね数を付加して使用する
-    例　"+","++","+3"
+    例  "+","++","+3"
     主記述に指定のある場合はそちらを優先する
     ブランク記述の場合は意味を持たないが、記述規則上ポストフィックスが記述されることは無い
     ポストフィックスが与えられた場合、特殊記述でなく一般記述となる
@@ -3881,7 +3890,7 @@ nas.CellDescription=function(cellDescription,cellPrefix){
     this.body     = "";
     this.postfix  = "";
     this.modifier = "none";
-    this.content  ;//undefinedで初期化　ここに値があればtoStringで返す　キャッシュ扱い
+    this.content  ;//undefinedで初期化  ここに値があればtoStringで返す  キャッシュ扱い
     this.type     = "inherit";
   if(cellDescription instanceof Array){
     this.prefix   = cellDescription[0];
@@ -3916,7 +3925,7 @@ console.log(new nas.CellDescription("C8-修q","b")) ;//none|"" |C|8-修q
     セル記述のタイプをセットするメソッド
     引数がなければ現在のタイプを返す
 "normal"        一般記述
-"inherit"       空文字列、空白、省略記号　等の先行の値を継承する記述
+"inherit"       空文字列、空白、省略記号  等の先行の値を継承する記述
 "blank"         カラ記述
 "interpolation" 中間値補間記号
 */
@@ -3933,11 +3942,11 @@ nas.CellDescription.prototype.setType=function(myType){
 */
 /**
     nas.CellDescription.toString(type)
-    引数:　type 文字列化タイプ　"origin","normal","complete"
-    "origin" ユーザ記述のままを返す　  content
+    引数:  type 文字列化タイプ  "origin","normal","complete"
+    "origin" ユーザ記述のままを返す    content
         contentに値がない場合は"normal"の値をcontentに設定して返す デフォルト
-    "normal" 正規化済の文字列で返す　  [body,postfix].join("")
-    "complete" 完全な修飾子付きで返す　[prefix,body,postfix].join("-")
+    "normal" 正規化済の文字列で返す    [body,postfix].join("")
+    "complete" 完全な修飾子付きで返す  [prefix,body,postfix].join("-")
 */
 nas.CellDescription.prototype.toString=function(type){
     if(typeof type == "undefined") type= 'origin';
@@ -3988,12 +3997,12 @@ nas.CellDescription.prototype.parseContent(シート記述,ラベル)
 
 主記述と前置部を強調修飾することが可能
 強調修飾は
-    (.+)　丸囲い
-    <.+>　三角囲い
-    [.+]　四角囲い
+    (.+)  丸囲い
+    <.+>  三角囲い
+    [.+]  四角囲い
 の三種
 いずれも前置部と主記述
-または主記述のみを囲うことで表現できる　両者は同じ要素として扱う
+または主記述のみを囲うことで表現できる  両者は同じ要素として扱う
 
 主記述は基本的に動画番号または原画番号である
 一般に正の整数値であるが、文字列も原画番号として許容される
@@ -4002,33 +4011,33 @@ nas.CellDescription.prototype.parseContent(シート記述,ラベル)
 幾つかの文字は機能文字として予約されているので使用時に注意が必要となる。
 
 
-　後置部分は、同じセル記述に対するオーバレイ/アンダーレイを表す。
-　予約語とその重なりで同一セル関連のオーバーレイを示す
-　現在の予約語は以下
-　   +           :  オーバーレイ(簡略表記)
-　   o/overlay   :  オーバーレイ
-　   u/underlay  :  アンダーレイ
-　   修/修正     :  修正オーバーレイ
-　   カ/カブセ   :  日本語でオーバーレイの慣用表現
+  後置部分は、同じセル記述に対するオーバレイ/アンダーレイを表す。
+  予約語とその重なりで同一セル関連のオーバーレイを示す
+  現在の予約語は以下
+     +           :  オーバーレイ(簡略表記)
+     o/overlay   :  オーバーレイ
+     u/underlay  :  アンダーレイ
+     修/修正     :  修正オーバーレイ
+     カ/カブセ   :  日本語でオーバーレイの慣用表現
      上          :  漢字オーバーレイ
-     下          :　漢字アンダーレイ
+     下          :  漢字アンダーレイ
 
   後置部分の異なる同一名のセルは別々のセルではあるが強力な関連性を持つ
-　ただしこの関連性は、同一ステージ内に限定される
-　ステージが異なる場合の同名記述は基本的に弱い関連性しか持たない点に注意
-　主記述とポストフィックス間のセパレータはあってもなくても良い
+  ただしこの関連性は、同一ステージ内に限定される
+  ステージが異なる場合の同名記述は基本的に弱い関連性しか持たない点に注意
+  主記述とポストフィックス間のセパレータはあってもなくても良い
 
-　例
-　A-1
-　A-1-修正
-　
-　この2つは異なるセルだが、A-1修は、A-1に関連付けられたオーバレイとして働く
-　修正レベルによっては前バージョンの絵が残らない場合もある。
-　
-　修正オーバーレイは、必要に従って何層でも重ねることが可能であるその際は後置文字を重ねるか、またはオーバーレイの層数を数値でおく
+  例
+  A-1
+  A-1-修正
+  
+  この2つは異なるセルだが、A-1修は、A-1に関連付けられたオーバレイとして働く
+  修正レベルによっては前バージョンの絵が残らない場合もある。
+  
+  修正オーバーレイは、必要に従って何層でも重ねることが可能であるその際は後置文字を重ねるか、またはオーバーレイの層数を数値でおく
   例
   +,++,+++,+4 等
-　
+  
 
 パーサは与えられた記述をパースしてセル記述オブジェクトを返す
 オブジェクトは以下のプロパティを持つ
@@ -4037,11 +4046,11 @@ nas.CellDescription.prototype.parseContent(シート記述,ラベル)
 .prefix     前置部文字列 セパレータは含まない または前置オブジェクト
 .body       正規化された記述部本体文字列 または オブジェクト
 .postfix    後置部文字列 セパレータは含まない またはオブジェクト
-.modifier   記述修飾子　"none","circle","triangle","brackets"
-.type       記述タイプ　"normal","inherit","blank","interpolation"
+.modifier   記述修飾子  "none","circle","triangle","brackets"
+.type       記述タイプ  "normal","inherit","blank","interpolation"
 
 パーサに値が与えられなかった場合、既存のプロパティからdescription-contentの更新を行う
-丸数字は失われ標準表記の(丸括弧)に置換される　
+丸数字は失われ標準表記の(丸括弧)に置換される  
 */
 nas.CellDescription.prototype.parseContent=function(description,prefixStr){
     if (typeof description == "undefined"){
@@ -4099,31 +4108,31 @@ A= new nas.CellDescription("");
 A.parseContent("A-(12)-修");
 comnsole.log(A)
 */
-/** 　nas.CellDescription.prototype.compare(description,lbl)
+/**   nas.CellDescription.prototype.compare(description,lbl)
 オブジェクトメソッド
 与えられた記述または記述オブジェクトと自身を対比して同じ記述か否かを判定
  引数:
-    description　記述オブジェクト  または　記述文字列 ラベルを付加しても良い
+    description  記述オブジェクト  または  記述文字列 ラベルを付加しても良い
  戻値:
-    一致状況で返す　バイナリ
+    一致状況で返す  バイナリ
     00000
     11111
-    　    0:no match
-    　1. +1:body match　記述内容が基本的に一致（空白でない）
-    　2. +2:body+postfix match　ポストフィックス一致（ポストフィックス空白は一致）
-    　3. +4:prefix+body+postfix match　プレフィックス一致（プレフィックス空白は一致）
+          0:no match
+      1. +1:body match  記述内容が基本的に一致（空白でない）
+      2. +2:body+postfix match  ポストフィックス一致（ポストフィックス空白は一致）
+      3. +4:prefix+body+postfix match  プレフィックス一致（プレフィックス空白は一致）
       4. +8:and modifier match
-    　基本的にモデファイヤが異なっても同じ記述となるので、4.はあまり意味が無いが一応
+      基本的にモデファイヤが異なっても同じ記述となるので、4.はあまり意味が無いが一応
 
 以下の条件に当てはまる場合はマッチが発生しない。（先に判定して抜ける）
-    記述が　空文字列、空白、ブランク記号、中間値補間記号　または　省略記号
-    等価条件　.type != "normal"
+    記述が  空文字列、空白、ブランク記号、中間値補間記号  または  省略記号
+    等価条件  .type != "normal"
 */
 nas.CellDescription.prototype.compare=function(desc,lbl){
     if ( this.type != "normal") return 0;
     if (!(desc instanceof nas.CellDescription)){ desc = nas.CellDescription.parse(desc,lbl);}
     if ( desc.type != "normal") return 0;
-    var myResult　=　0;
+    var myResult  =  0;
     if ( this.body     == desc.body)     { myResult ++ ;}else{return myResult;}
     if ( this.postfix  == desc.postfix)  { myResult += 2;}
     if ( this.prefix   == desc.prefix)   { myResult += 4;}
@@ -4143,7 +4152,7 @@ console.log(A)
     xMAPに該当するグループがあればそのエントリからタイプを得る
     なければ引数を判定してタイプの推測値を返す
 "normal"        一般記述
-"inherit"       空文字列、空白、省略記号　等の先行の値を継承する記述
+"inherit"       空文字列、空白、省略記号  等の先行の値を継承する記述
 "blank"         カラ記述
 "interpolation" 中間値補間記号
 */
@@ -4168,8 +4177,8 @@ if(targetMap){
 /*
     記述内容からの判定とxMap参照の差異は
     "normal"判定された記述のうちｘMapエントリの存在しないものが"inherit"になる点
-    フォーマット上は、ｘMapエントリとして予約語を登録可能なので他種の記述が"normal"になる場合もあり　これは　タイプとして判断すべき内容か？
-    xMapに問い合わせを行い　結果でtypeを設定する
+    フォーマット上は、ｘMapエントリとして予約語を登録可能なので他種の記述が"normal"になる場合もあり  これは  タイプとして判断すべき内容か？
+    xMapに問い合わせを行い  結果でtypeを設定する
 */    
 }else{
  	if (
@@ -4184,7 +4193,7 @@ if(targetMap){
  	   type="blank";//カラセル
  	}
 }
-//記述オブジェクトだった場合　オブジェクトのプロパティを更新する
+//記述オブジェクトだった場合  オブジェクトのプロパティを更新する
     if(desc instanceof nas.CellDescription){ desc.type = type; }
  	return type;
 }
@@ -4196,8 +4205,8 @@ if(targetMap){
     label           トラックラベル(省略可)
 
         または配列
-    [trackID,frameID]　トラックIDとフレームIDの配列 ?
-    これは良くない　クラスメソッドが別のオブジェクトに縛られることになるので却下
+    [trackID,frameID]  トラックIDとフレームIDの配列 ?
+    これは良くない  クラスメソッドが別のオブジェクトに縛られることになるので却下
     逆にxUIのオブジェクトなら可
 */
 nas.CellDescription.parse=function(desc,lbl){
@@ -4206,7 +4215,7 @@ nas.CellDescription.parse=function(desc,lbl){
 
 /** nas.ItemList Object
 拡張した配列
-メソッドとして　add(Item) メソッドを持つ
+メソッドとして  add(Item) メソッドを持つ
 要素内を検索して同値の要素が存在すればその要素を配列の先頭に移動
 存在しない場合は配列に追加する
 戻り値は当該のアイテム
@@ -4221,7 +4230,7 @@ Array.prototype.add=function(itm){
     return idx;
 }
 /* TEST
-　　var A = ["A","B","C","D","E","F","G","H"];
+    var A = ["A","B","C","D","E","F","G","H"];
     console.log(A.add("A"));
     console.log(A.add("J"));
     console.log(A);
@@ -4236,7 +4245,7 @@ strings にエスケープ文字を含んではならない。
 nas.IdfEscape(sourceString,strings,escapeChar);
 nas.IdfEscape("ABCDE%FG",'ABC','%');
 result:"%A%B%CDE%%FG"
-逆関数あり　逆関数は対象文字列の指定は不要
+逆関数あり  逆関数は対象文字列の指定は不要
 */
 nas.IdfEscape = function(sourceString,strings,escapeChar){
     if ((String(sourceString).length == 0)||(strings.length < 1)) return sourceString;
@@ -4273,7 +4282,7 @@ nas.IdfEscape('ASSDFGERtyusadhjgalll','AS','&');
 第二引数が与えられない場合は、encodeURIComponentの値を返す
 
     要素の文字列は識別子をファイル名等に利用する場合、ファイルシステムで使用できない文字が禁止されるが、この文字も併せて部分エンコードの対象となる。
-    対象文字列は、Windowsの制限文字である　¥\/:*?"<>| に加えて . 及びエンコード前置文字の %
+    対象文字列は、Windowsの制限文字である  ¥\/:*?"<>| に加えて . 及びエンコード前置文字の %
 
 nas.IdfEncode(sourceString,strings);
 nas.IdfEncode("ABCDE%FG",'ABC');

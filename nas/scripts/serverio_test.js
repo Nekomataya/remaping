@@ -160,7 +160,7 @@ function backToDocumentList(myTarget){
 
 */
 	if(xUI.onSite){
-		var backLocation =　(serviceAgent.currentStatus == 'online-single')?
+       var backLocation =　(serviceAgent.currentStatus == 'online-single')?
 			'/cuts?episode_token='+$('#backend_variables').attr('data-episode_token'):
 			'/'	;
 		xUI.sWitchPanel('Prog');

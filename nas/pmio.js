@@ -1848,7 +1848,8 @@ nas.Pm.ProductionStage=function(myName,myParent){
     this.output;
     this.stageName;
 }
-nas.Pm.ProductionStage.prototype.getPath=function(){return [this.name,this.parent.line.getPath()].join(".")}
+//nas.Pm.ProductionStage.prototype.getPath=function(){return [this.name,this.parent.line.getPath()].join(".")}
+nas.Pm.ProductionStage.prototype.getPath=function(){return [this.name,this.line.getPath()].join(".")}
 nas.Pm.newStage=function(myStage,myLine){
     var newStage= nas.Pm.stages.getStage(myStage);//参照をとっているが、これは複製？
     if(newStage){
@@ -2043,7 +2044,7 @@ description String ラインの説明 ユーザのために必用
 
 */
 
-nas.Pm.ProductionLine=function(){
+nas.Pm.ProductionLine=function(lineName,){
     this.lineName;
     this.name;
     this.shortName;

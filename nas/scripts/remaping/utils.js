@@ -5,8 +5,8 @@
 /*						*/
 /*					-------getSample.js
 	サンプルデータ取得用プロシジャ(ajaxお試し)
-	prototype.js　置き換え　2013.02.10
-	Chrome　はローカルファイルだと弾かれる。
+	prototype.js 置き換え 2013.02.10
+	Chrome はローカルファイルだと弾かれる。
 	File API 版を作ること
 	なんだかprototypeよりもjQueryのほうがイロイロ楽なので
 	更にjQueryに置き換えてみる。2013.02.24
@@ -96,26 +96,26 @@ timing
 2015拡張
 
 次回フォーマットでは
--機種依存文字の制限を緩和する。少なくとも丸囲い文字を開放①～㊿をサポート　切り替えは付ける
+-機種依存文字の制限を緩和する。少なくとも丸囲い文字を開放①～㊿をサポート 切り替えは付ける
 -動画番号は数値を主体とするテキスト数字は全角半角を区別しないフィールドセパレータとレコードセパレータを含むことはできない
 -区間連続の記号は、グラフィックパーツに置きかえられる
 
 dialog
 -台詞は、ダイアログ開始マーカと終了マーカーの間に置かれる
 -ダイアログ開始マーカーはダイアログ開始前のフレームに置き、ダイアログ終了マーカーはダイアログ区間の後方フレームに置かれる。
--テキスト表現のマーカーは。「カギカッコ」"引用符" 又は　[-|_]　3個以上の連続とする。シート上の表記は、これらを横線に置き換える。
+-テキスト表現のマーカーは。「カギカッコ」"引用符" 又は [-|_] 3個以上の連続とする。シート上の表記は、これらを横線に置き換える。
 -ダイアログ内の注釈データは(丸括弧)でエスケープされる
 -マーカー外の記述は、すべて注釈である
 -マーカー内の記述は、注釈以外は一連の内容テキストとして配置される。空白及びヌル文字は取り除かれる。
 
 camera
-画像ピクセルを持たずジオメトリを持つトラックがこれに相当する　カメラワーク／セルワークがこれにあたる
+画像ピクセルを持たずジオメトリを持つトラックがこれに相当する カメラワーク／セルワークがこれにあたる
 -以下の有効記述がある
 	-登録されたキーフレーム（値を持つ）角括弧による指定がない場合はこれを補う
 	-[角括弧]でキーフレーム指定が行われた記述 MAPにエントリーがない場合は、入力を促す
-	-区間開始マーカー(ダイアログマーカーと異なり区間内に含まれる)　▼▽（慣例的に逆三角が標準）中間値生成ノードを兼ねる
-	-区間終了マーカー(ダイアログマーカーと異なり区間内に含まれる)　▲△　中間値生成ノードを兼ねない場合がある
-	-中間値生成記述　|(バーチカルバー)　・（中黒）-(ハイフン)
+	-区間開始マーカー(ダイアログマーカーと異なり区間内に含まれる) ▼▽（慣例的に逆三角が標準）中間値生成ノードを兼ねる
+	-区間終了マーカー(ダイアログマーカーと異なり区間内に含まれる) ▲△ 中間値生成ノードを兼ねない場合がある
+	-中間値生成記述 |(バーチカルバー) ・（中黒）-(ハイフン)
 		中間値生成区間内では、区間終了マーカー以外の有効記述が補間値生成マーカーとして働く
 		終了マーカーは、ケースによって中間値生成ノードを兼ねない
 -有効記述以外はすべて注釈でありデータ解析上の意味は前方データの継承。
@@ -131,13 +131,13 @@ camera
 	有効値は、値とともにタイミングを保持する
 
 effect
-ジオメトリを持たないプロパティがこれに相当する　フェード・中OL（二重フェード）・透過光・レイヤートレーラーの合成モードなどがこれにあたる
+ジオメトリを持たないプロパティがこれに相当する フェード・中OL（二重フェード）・透過光・レイヤートレーラーの合成モードなどがこれにあたる
 -以下の有効記述がある
 	-登録されたキーフレーム（値を持つ）矢括弧による指定がない場合はこれを補う
 	-<矢括弧>でキー値指定が行われた記述 MAPにエントリーがない場合は、入力を促す
-	-区間開始マーカー(ダイアログマーカーと異なり区間内に含まれる)　（慣例的に何種かの記号を標準に定める）
-	-区間終了マーカー(ダイアログマーカーと異なり区間内に含まれる)　開始記号と同一の記号で閉じる
-	-補間値生成マーカー　|(バーチカルバー)　・（中黒）-(ハイフン)
+	-区間開始マーカー(ダイアログマーカーと異なり区間内に含まれる) （慣例的に何種かの記号を標準に定める）
+	-区間終了マーカー(ダイアログマーカーと異なり区間内に含まれる) 開始記号と同一の記号で閉じる
+	-補間値生成マーカー |(バーチカルバー) ・（中黒）-(ハイフン)
 		中間値生成区間内では、区間終了マーカー以外の有効記述が補間値生成マーカーとして働く
 		終了マーカーは、ケースによって中間値生成ノードを兼ねない
 -有効記述以外はすべて注釈でありデータ解析上の意味は前方データの継承。
@@ -172,7 +172,7 @@ function reformatTLC(id,range){
 	var myTargetBody=XPS.xpsTracks[id];//指定タイムラインのデータを配列参照
 	var myDestTLBody=new Array();//編集用カラ配列
 	var bufNoChange=new Array(); var bufModified=new Array();//編集バッファ
-	var fix=true;//値固定（中間値生成ではない）区間か否かのフラグ　生成区間の未記入セルに中間値生成記号を補間する？
+	var fix=true;//値固定（中間値生成ではない）区間か否かのフラグ 生成区間の未記入セルに中間値生成記号を補間する？
 /*第一フレームが有効記述か否か確認
 カメラワークトラックでは開始フレームが無効記述・区間開始ノードであった場合、
 その値は初期値ではなく次に区間切り替えノードがあるか、有効値を持った記述があるまでは保留状態とする。
@@ -259,7 +259,7 @@ function reformatTL(id,range){
 	レンジでクリップしてリザルトを返す
 */
 //引数 rangeは配列[開始フレーム,終了フレーム]  指定がない場合は全尺
-	if(typeof range == "undefined")　range=[0,XPS.xpsTracks[0].length];
+	if(typeof range == "undefined") range=[0,XPS.xpsTracks[0].length];
 //ターゲットタイムライン
 	var myTargetBody=XPS.xpsTracks[id];//指定タイムラインのバルクデータを配列で参照
 	var myDestTLBody=new Array();//編集用カラ配列
@@ -472,7 +472,7 @@ if(flg=="all"){
 	xUI.selection(currentSelection);	//選択状態の復帰
 }else{
 	var currentSelection=add(xUI.Select,xUI.Selection);//保存
-//範囲指定がなければ現在のタイムラインを処理　あれば範囲内を処理＝入替えストリームをビルドしてput
+//範囲指定がなければ現在のタイムラインを処理 あれば範囲内を処理＝入替えストリームをビルドしてput
 	if(xUI.Selection.join()=="0,0"){
 		xUI.selection();//範囲クリア
 		if((! flg) && (xUI.Select[0]>=1 && xUI.Select[0]<(XPS.xpsTracks.length-1))){
@@ -528,17 +528,17 @@ vxPrompt= function(msg,params){return prompt(msg,params);};
 	既存のタイムラインラベルは変更されない
 	必要ならば挿入後に変名を行う
 
-	UNDO拡張に伴って変更　2015.09.14
+	UNDO拡張に伴って変更 2015.09.14
 
 addTimeline(kind,label)
-	kind　はタイムライン種別
+	kind はタイムライン種別
 	dialog,sound,still,timing,replacement,camera,effect いずれか
-	label　はタイムラインラベル
+	label はタイムラインラベル
 	指定がない場合は以下の基準で命名
 	ダイアログ	指定順に N2 N3 N4 ～ナンバリング
 	タイミング	右端追加の場合のみABC順で次のラベル
 			それ以外の場合は現在のタイムラインラベルに数字を加算
-	カメラ/エフェクト	挿入後のタイムラインID　3番タイムラインでの指定時には必ず"04"
+	カメラ/エフェクト	挿入後のタイムラインID 3番タイムラインでの指定時には必ず"04"
 */
 addTimeline=function(myOpt,myName){
 	if(xUI.Select[0]>XPS.xpsTracks.length-2){return false;};//コメントの右側へは挿入不可
@@ -557,7 +557,7 @@ case	"timing":
 		for (var pIdx=xUI.Select[0];pIdx<XPS.xpsTracks.length;pIdx++){if(XPS.xpsTracks[pIdx].option=="timing")countTiming++;}
 //		alert(countTiming);//
 		if(countTiming<=0){
-		　var currentLabels=[]
+		 var currentLabels=[]
 		//タイミングラベルの最大を検出して次の文字をピックアップ 
 		for (var pIdx = 0; pIdx < XPS.xpsTracks.length;pIdx++){if (XPS.xpsTracks[pIdx].option=="timing")currentLabels.push(XPS.xpsTracks[pIdx].id.charAt(0));}
 		currentName=currentLabels.sort()[currentLabels.length-1];
@@ -567,7 +567,7 @@ break;
 case	"still":
 case	"camera":
 case	"effect":
-default	:	myName=nas.Zf(insertPoint[0],2).toString();//挿入点のID　二桁文字列
+default	:	myName=nas.Zf(insertPoint[0],2).toString();//挿入点のID 二桁文字列
 		
 		}
 	}
@@ -800,8 +800,8 @@ var myTop=(myRange[1]<0)?origPoint[1]+myRange[1]:origPoint[1];
 	単独ラベルの場合はタイムラインラベルの種別を判定してUIを表示する
 	セル	A-Z?
 	静止画	BG/BOOK インクリメント・デクリメント
-	カメラワーク　FIX/PAN/SL/TU/TB/TILT/
-	効果 WXP/透過光/FI/FO/OL/FLT　通常/加算/SC/覆焼/乗算/焼込/差分
+	カメラワーク FIX/PAN/SL/TU/TB/TILT/
+	効果 WXP/透過光/FI/FO/OL/FLT 通常/加算/SC/覆焼/乗算/焼込/差分
 	種別の編集は行わない
 */
 reNameLabel=function(TimelineId) {
@@ -868,7 +868,7 @@ inputButtonText=function(myText){
 	document.getElementById("nas_modalInput").value=myText;nas.showModalDialog("result",0);
 }
 /** リファレンスシートへのコピー
-引数:	キーワード　"all"又は"timing","replacement","camerawork","sfx","dialog"
+引数:	キーワード "all"又は"timing","replacement","camerawork","sfx","dialog"
 
 デフォルトはreplacement
 */
@@ -947,7 +947,7 @@ getReference=function(){
 // 今捜査対象がタイムライン一つだけど複数列に拡張したほうがよいかも
 */
 incrementCell=function(myShift){
-	if((!myShift)||(isNaN(myShift))) return ;//引数ゼロ＝操作なし　とみなす
+	if((!myShift)||(isNaN(myShift))) return ;//引数ゼロ＝操作なし とみなす
 	myShift=parseInt(myShift);
   var bkCell=xUI.Select.join("_");
 	var bkSelect=[xUI.Select[0]+xUI.Selection[0],xUI.Select[1]+xUI.Selection[1]].join("_");
@@ -985,7 +985,7 @@ for(var idx=0;idx<currentContent.length;idx++){
 動作条件は、指定範囲が単一タイムラインで２フレーム以上ある場合（１フレームの区間は対象外）
 選択タイムラインが
 カメラワーク→両端に区間端子（三角）を置き前後に値ノードを配置する。
-エフェクト→両端に区間端子シンボルを置いて注釈を挿入する。シンボルは、ラベルで判定　判定不能な場合はデフォルト
+エフェクト→両端に区間端子シンボルを置いて注釈を挿入する。シンボルは、ラベルで判定 判定不能な場合はデフォルト
 ダイアログ→サウンドエフェクト区間を入れる
 セリフはダイアログの方から入力
 スチル	→NOP
@@ -1092,7 +1092,7 @@ putSectionLine=function(myTarget){
       case "effect":
       case "timing":
 //すでに入力されているセルはそのままで "","|",";" のみを編集対象セルにする？
-//↑しない　全て上書き
+//↑しない 全て上書き
 for(var idx=0;idx<currentContent.length;idx++){
 	if(currentContent[0]==myTarget){myBody.push("");}else{myBody.push(myTarget);}
 }
@@ -1111,7 +1111,7 @@ for(var idx=0;idx<currentContent.length;idx++){
 /*
 	波線引
 	トラック種別を認識して波線を引く
-	ジオメトリトラックに限り　シフトキーで大波　コントロールキーを同時押しで小波を描画する。
+	ジオメトリトラックに限り シフトキーで大波 コントロールキーを同時押しで小波を描画する。
 	描画するアイテムを選択してputSectionLineを呼び出すラッパ関数
 */
 setWave =function(e){
@@ -1147,7 +1147,7 @@ interpSign()
 
 有効記述だった場合はNOP？
 
-選択範囲がある場合　範囲が一列ならばそのまま動作対象に
+選択範囲がある場合 範囲が一列ならばそのまま動作対象に
 複数列の場合はフォーカスのある一列に変更して
 その区間にSPIN指定の間隔で補完サインを配置する。基点は選択範囲の最も上のシートセル
 */
@@ -1197,7 +1197,7 @@ interpSign=function(){
 xUI.XPS.xpsTracks[tid].
 
 <矢括弧>(=△囲み)は、中間値補間サインとして予約されているので中間値チェックにかかるため先に判定して抜ける。
-戻り値は、変更後のストリーム？  入力したセル数？　最終アドレス？
+戻り値は、変更後のストリーム？  入力したセル数？ 最終アドレス？
 */
 addCircle=function(kwd){
 	if(! kwd) kwd="circle";
@@ -1233,7 +1233,7 @@ addCircle=function(kwd){
 
       if (n != n) { // shortcut for verifying if it's NaN
         n = 0;// NaNならば０開始
-      } else if (n != 0 && n != Infinity && n != -Infinity) {//ゼロ　無限大　マイナス無限大以外　すなわち実数範囲　の場合負数を全て-1 それ以外を整数化
+      } else if (n != 0 && n != Infinity && n != -Infinity) {//ゼロ 無限大 マイナス無限大以外 すなわち実数範囲 の場合負数を全て-1 それ以外を整数化
          n = (n > 0 || -1) * Math.floor(Math.abs(n));
       }
     }
@@ -1243,7 +1243,7 @@ addCircle=function(kwd){
     }
 //範囲を設定
     var k = (n >= 0)? n : Math.max(len - Math.abs(n), 0);
-//順次検索　compare　メソッドの戻値が１以上でヒット
+//順次検索 compare メソッドの戻値が１以上でヒット
     for (; k < len; k++) {
       if (k in t && (t[k].compare(description) > 0)) {
         return k;
@@ -1259,7 +1259,7 @@ addCircle=function(kwd){
 
 	xUI.selectCell([currentColumn,myRange[0][1]]);
 	xUI.selection([currentColumn,myRange[1][1]]);
-//ターゲット収集　最低数は０
+//ターゲット収集 最低数は０
 	for(var f=myRange[0][1];f<=myRange[1][1];f++){
 		var myDesc = new nas.CellDescription(XPS.xpsTracks[currentColumn][f]);
 
@@ -1272,7 +1272,7 @@ addCircle=function(kwd){
 		}
 	}
 //収集後に処理対象数が０の場合は機能終了
-　if(targetDescriptions.length == 0) return;
+ if(targetDescriptions.length == 0) return;
 /*
 	if(false){
 		if((myValue.match(/^\<(.*)\>$/))||(
@@ -1354,7 +1354,7 @@ buildActionSheet =function(){
 			console.log('clear :'+xUI.XPS.xpsTracks[lix].id)
 			xUI.selectCell(String(lix)+"_0");
 			clearTL();
-		}		　
+		}		 
 	}
 	xUI.selectCell(bkPos);	//バックアップ位置へ復帰
 }
@@ -1367,7 +1367,7 @@ pageZoom = function(){
 }
 /**
 	アプリケーション開始時にjQuery-uiのtooltipを初期化するプロシジャ
-	起動時に一回だけ実行　xUIの初期化前に実行されること
+	起動時に一回だけ実行 xUIの初期化前に実行されること
 */
 
 startupTooltip=function(){
@@ -1387,14 +1387,14 @@ for (var tid=0;tid<myToolTips.length;tid++){
 
 /*
 	タイムラインをセクションへ変換する関数
-	Section オブジェクトは　Timeline.sectionsのメンバーである
-	sections[0]〜　メンバーは以下のプロパティを持つ
+	Section オブジェクトは Timeline.sectionsのメンバーである
+	sections[0]〜 メンバーは以下のプロパティを持つ
 	Section.inpoint	: Int Frames
 	Section.duration	: Int Frames 
 	Section.body 	: Array.
 	Section.isInterp	: Bool 補間フラグ
 	Section.value		: String 値 Timeline.valueAt()関数はこの値から現在の値を算出する
-	値は空白の場合がある　未定義の値は空白となる場合がある
+	値は空白の場合がある 未定義の値は空白となる場合がある
 	補間フラグがあればその区間は中間値補間区間となる
 	補間区間は基本的に値を持たず、前後区間の値を補完する
 	補間区間が連続する場合は前方区間が終了値を持つ場合がある

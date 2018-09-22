@@ -166,6 +166,16 @@ th.pageLabel{width:8em;}
 	border-width:0;
 }
 /*
+xMap Design-TEST 
+
+*/
+.mapButton {width:96px;}
+.note {color:#d0d0d0;}
+.thumbnail {width:320px;}
+.thumbnailS {width:128px;}
+
+.xmap {display:none;}
+/*
 	
 */
 .annotationText {
@@ -741,6 +751,9 @@ button.tabControll-xmap {
 button.tabControll-xpst {
 	width:116px;
 }
+button.tabControll-end {
+	width:12px;
+}
 
 button.tabControll:hover {
 	color:#ff8080;
@@ -767,13 +780,11 @@ deactive
 
 .tabControll-left-deactive           { background-position: 0 0px; }
 .tabControll-left-active   			 { background-position: 0 -24px; }
-.tabControll-left-active-overlay     { background-position: 0 -48px; }
-.tabControll-left-deactive-overlay   { background-position: 0 -72px; }
-.tabControll-midd-deactive           { background-position: -12px -96px; }
-.tabControll-midd-deactive-overlay   { background-position: -12px -120px; }
-.tabControll-midd-active-overlay     { background-position: -12px -144px; }
-.tabControll-right-deactive          { background-position: -12px -168px; }
-.tabControll-right-active            { background-position: -12px -192px; }
+.tabControll-midd-deactive-overlay   { background-position: 0 -48px; }
+.tabControll-midd-deactive           { background-position: 0 -72px; }
+.tabControll-midd-active             { background-position: 0 -96px; }
+.tabControll-end-deactive            { background-position: 0 -120px; }
+.tabControll-end-active              { background-position: 0 -144px; }
 
 div.tabSelector	{
 	background-color:#eeeeee;
@@ -1413,6 +1424,7 @@ div.imageOverlay {
     background-color:#efefef;
     padding:6px;
     border-style:double;
+	text-align:center;
 }
 
 #optionPanelPref {
@@ -1767,4 +1779,21 @@ div.documentStatusOverlay {
 .dialogComment {
 	width:36px;
 	height:24px;
+}
+
+
+/*
+　UI右よせ
+ */
+.floating-right {
+	position:relative;
+	float:right;
+	right:16px;	
+}
+/*
+	ストップウオッチバー
+*/
+#optionPanelTimer {
+	color:#22dd22;
+	background-color:#222222;
 }

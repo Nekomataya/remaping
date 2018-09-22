@@ -1530,8 +1530,7 @@ AVLayer.prototype.applyTimeline = function (parentComp, myXps, linkID) {
      * @type {number}
      */
     var myTimelineID = linkID - 1;
-//    if (myXps.layers[myTimelineID]) {}
-    if (myXps.xpsTracks[myTimelineID) {
+    if (myXps.xpsTracks[myTimelineID]) {
         /**
          * 乙女専用AEキー生成プロシジャ
          *

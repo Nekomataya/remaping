@@ -5,8 +5,8 @@
  * 2013.04.02 外部フォーマット解析部分分離
  * 2015.06.12 Xps及びMap関連オブジェクトをnas.配下に移動
  * 2016.04.15 psAxe系とりまぴん系のマージ
- * 2016.08.20 データ構造の変更　Xps.layersとXps.xpsBodyをXps.xpsTracksに統合
- * 2016.12.01 オブジェクトに Line/Stage/Jobのプロパティを増設　パーサと出力も対応
+ * 2016.08.20 データ構造の変更Xps.layersとXps.xpsBodyをXps.xpsTracksに統合
+ * 2016.12.01 オブジェクトに Line/Stage/Jobのプロパティを増設パーサと出力も対応
  * Xpsオブジェクト初期化手順
  * Xpsオブジェクトの新規作成
  * コンストラクタ
@@ -32,17 +32,6 @@
  * すべてのプロパティをリセット
  * 指定されたレイヤ数とフレーム長で空の値のテーブルを作成する。
  * 以前のデータは消去。new_XPSは、内部でこのメソッドを呼ぶ。
- *
- * MAPオブジェクトの参照メソッド
- * method    [object Xps].getMap([object Map])
- * このメソッドに引数としてマップオブジェクト[省略不可]を与える。
- * マップファイルがない場合は、falseを戻す。
- * 現在の使用には、明示的にダミーオブジェクトを与える。
- * 戻り値は取り込み成功時に true
- * マップオブジェクトを参照して得られるプロパティは、
- *
- * レイヤ情報初期値群
- * タイトル・サブタイトル 初期値
  *
  * 現在の継続時間を返す
  * method    [object Xps].duration()
@@ -91,7 +80,7 @@ still
 cell
 timing
 replacement
-    プロパティサイン　原画、原画アタリ（参考）、中間値補間サイン、ブランクサイン
+    プロパティサイン原画、原画アタリ（参考）、中間値補間サイン、ブランクサイン
 camera
 camerawork
 geometry
@@ -132,13 +121,13 @@ var XpsTrackPropRegex=new RegExp(XpsTrackProperties.join("|"),"i");
  * @param myParent
  * @param myStage
  * @param myJob
- ラインを含めて統合された　nas.PmU オブジェクトと置換する予定
+ ラインを含めて統合されたnas.PmU オブジェクトと置換する予定
  */
 /*
 function XpsStage(myParent, myStage, myJob) {
     this.body = myParent;//ステージ・ジョブストリームを記録する配列
-    this.name = myStage;//String　ステージ識別名称（任意文字列）
-    this.job = myJob;//String　ジョブ識別名称（任意文字列）
+    this.name = myStage;//Stringステージ識別名称（任意文字列）
+    this.job = myJob;//Stringジョブ識別名称（任意文字列）
     this.stageIndex = 0;//Int
     this.jobIndex = 0;//Int
 }
@@ -151,7 +140,7 @@ XpsStage.prototype.toString=function(){
     '(本線):0',1:(背景),'(背景3D-build):1:1','1-1:(背景3D-build)'
     等
      識別名の(括弧)は払う
-     前置型式　後置型式　どちらでも解釈
+     前置型式後置型式どちらでも解釈
      数値のみの指定の場合は、無名ステージのidとして処理
 */
 function XpsLine (lineString){
@@ -230,7 +219,7 @@ XpsJob.prototype.toString=function(){
 /*
     JobStatus
     Jobの状況（＝カットの作業状態）
-    content:作業状態を示すキーワード　　Startup/Active/Hold/Fixed/Aborted//Floating
+    content:作業状態を示すキーワードStartup/Active/Hold/Fixed/Aborted//Floating
 初期値は"Startup" > 'Floating' 初期値変更
     assign:アクティブまたは中断状態でない作業が持つ次作業者の指名UIDまたは文字列（特にチェックはない）
 初期値は長さ0の文字列
@@ -245,7 +234,7 @@ XpsJob.prototype.toString=function(){
 完了処理は次のステージを開くことで行われるので注意が必要
 初期値 false
 
-初期化引数はステータス識別子　または 配列[content,assign,message]いずれか
+初期化引数はステータス識別子または 配列[content,assign,message]いずれか
 assin/messageが存在する場合は出力が以下の形式の文字列となる
 "content:assign:message"
 アサイン、メッセージ情報は、ステータスがFixed,Satartupの際は、次作業へのアサインメントとなる
@@ -256,7 +245,7 @@ Active,Hold はサーバからエクスポートされた
 */
 function JobStatus (statusArg){
     this.content = "Floating";
-//初期値は "Startup"から"Floating"に変更　Startupステータスはリポジトリ登録成功時に割り当てられるステータスとする
+//初期値は "Startup"から"Floating"に変更Startupステータスはリポジトリ登録成功時に割り当てられるステータスとする
     this.assign  = "";
     this.message = "";
     if (statusArg instanceof Array){
@@ -370,7 +359,7 @@ function _getMapDefault(myOption) {
  *
  * エレメントは値に名前を与えて、名前を利用したアクセスを可能にする
  *
- * セクションの値は　MAPエレメント
+ * セクションの値はMAPエレメント
  * MAPエレメントは、オブジェクトとして値を持つ
  *
  * MAPエレメントのvalueOfは自身の値オブジェクトを返す？
@@ -379,24 +368,24 @@ function _getMapDefault(myOption) {
  * .toString    >    Xps用ストリーム
  * .valueOf    >    Xps用配列戻し
  * MAPエレメント
- * .toString    >    xMapデータ用テキストエンコーダ　モードつき
+ * .toString    >    xMapデータ用テキストエンコーダモードつき
  * 値
  * .toString    >    xMapデータ用テキストエンコーダ
- * .valueOf    >    必要にしたがって各種演算数値　又は　自身のオブジェクト（オーバーライド不要）
+ * .valueOf    >    必要にしたがって各種演算数値又は自身のオブジェクト（オーバーライド不要）
  */
 
 /**
  * xpsTracks Object
  * Array based Class
  * 親のXpsが保持しているのでトラックコレクション内部にカット情報を保存する必要なし
- * jobへの参照のみをプロパティとして持つ　固定プロパティ
+ * jobへの参照のみをプロパティとして持つ固定プロパティ
  * 上流の工程情報はJobに内包・管理情報（user/date）はこのオブジェクトが保持する
  * 別のプロパティを保持する必要はない
  * 管理情報DBを利用しない場合もデフォルトのJobオブジェクトはユーザ及び日付情報を持つ
  * このオブジェクトに記録される情報はJob本体ではなく参照情報Job-ID(Int)
  * コレクションの初期化は、ライン、ステージ、ジョブの新規発行の際にシステムにより行なわれる
  * リファレンスエリアの一時バッファとして、リファレンスステージを設定する
- * このステージにはJobが１つだけしか存在しない　常にデータの最終状態のリファレンスエリアの内容を維持する
+ * このステージにはJobが１つだけしか存在しない常にデータの最終状態のリファレンスエリアの内容を維持する
  * 個人作業用としてはリファレンスバックアップと同一だが、クライアント環境をまたいで使用することが可能
  * JobID=-1
 
@@ -410,8 +399,8 @@ function _getMapDefault(myOption) {
  必要に従って呼び出し側でオブジェクトメソッドを用いてトラック編集を行う
  */
 XpsTrackCollection = function(parent,index,duration){
-	this.parentXps=parent;//固定情報　親Xps
-	this.jobIndex=index;//固定情報　JobID
+	this.parentXps=parent;//固定情報親Xps
+	this.jobIndex=index;//固定情報JobID
 	this.duration=duration;
 	this.noteText="";//property dopesheet note-text
 	this.length=2;//メンバーをundefinedで初期化する。
@@ -456,7 +445,7 @@ XpsTrackCollection = function(parent,index,duration){
         if (!(args instanceof Array)) {
             args = [args]
         }
-        args.sort().reverse();//ソートして反転　後方から順次削除しないと不整合が起きる
+        args.sort().reverse();//ソートして反転後方から順次削除しないと不整合が起きる
         for (var idx = 0; idx < args.length; idx++) {
         //操作範囲外の値は無視
             var targetIndex = args[idx];
@@ -512,13 +501,13 @@ XpsTrackCollection.prototype = Array.prototype;
  */
 function XpsTimelineTrack(myLabel, myType, myParent, myLength) {
 	
-	this.index;//indexは自動制御　生成時点ではundefined　タイムラインコレクションへの組み込み時点で設定される
+	this.index;//indexは自動制御生成時点ではundefinedタイムラインコレクションへの組み込み時点で設定される
 	this.xParent=myParent;//親オブジェクトへの参照（トラックコレクションxpsTracksへの参照）
 	this.length=myLength;//配列メンバーを空文字列に設定する
 		for(var ix=0;ix<this.length;ix++){this[ix]="";}
     this.duration=this.length;
     this.id = myLabel;//識別用タイムラインid(文字列)タイムライン名
-    this.option = (typeof myType == "undefined") ? "timing" : myType;//still/timing/dialog/sound/camera/camerawork/effect/composit/comment　のいずれか
+    this.option = (typeof myType == "undefined") ? "timing" : myType;//still/timing/dialog/sound/camera/camerawork/effect/composit/commentのいずれか
     this.sizeX = "640";//デフォルト幅 point
     this.sizeY = "480";//デフォルト高 point
     this.aspect = "1";//デフォルトのpixelAspect
@@ -534,7 +523,7 @@ function XpsTimelineTrack(myLabel, myType, myParent, myLength) {
 /**
  * 削除メソッドをトラックオブジェクトに実装する	
  * XpsTimelineTrack.remove()
- * 削除の派生機能としてトラックオブジェクト側に　removeメソッドを作る
+ * 削除の派生機能としてトラックオブジェクト側にremoveメソッドを作る
  * =自分自身の削除命令を親コレクションに対して発行する
  */
     this.remove=function(){
@@ -587,7 +576,7 @@ function XpsTimelineTrack(myLabel, myType, myParent, myLength) {
      */
         if (this.option !== "timing") { return false;}
     /**
-     * 現在は、timing専用　タイミングタイムライン以外の要求にはfalseを戻す
+     * 現在は、timing専用タイミングタイムライン以外の要求にはfalseを戻す
      * タイミングタイムラインの内部処理に必要な環境を作成
      * @type {String}
      */
@@ -731,10 +720,10 @@ function XpsTimelineSectionCollection(myParent) {
 /*  セクション編集メソッド
  *      insertSection(id,newSection)
  *  指定idの前方にセクションを挿入する後方のセクションは、継続時間を維持したままさらに後方へ再配置される
- *  カットの時間範囲を越えたセクションは消去または後方をカットされる（配列データとして後方へ「ブロックインサート」してフレーム単位で削除　その後再パース）
+ *  カットの時間範囲を越えたセクションは消去または後方をカットされる（配列データとして後方へ「ブロックインサート」してフレーム単位で削除その後再パース）
 
  *      removeSection(id)
- *  指定されたidのセクションを消去、前後のセクションの値が同じ場合は結合　異なる場合は別のセクションとして残置（相当部分の配列要素を削除して前方へ詰める「ブロックデリート」のほうが良いかも…）
+ *  指定されたidのセクションを消去、前後のセクションの値が同じ場合は結合異なる場合は別のセクションとして残置（相当部分の配列要素を削除して前方へ詰める「ブロックデリート」のほうが良いかも…）
 
  *      editSection(id,startOffset,duration)
  *      manipulateSection(id,startOffset,duration)
@@ -744,17 +733,17 @@ function XpsTimelineSectionCollection(myParent) {
     新規の開始位置は０フレームよりも小さくなることは許されない
     新規の終了位置がカットの継続時間を超えることは許されない
 
-    開始位置が移動した場合　前方区間は可能な限り　editSection(前方区間id,前方既存startOffset,修正後の新規継続時間)　で処理される。
+    開始位置が移動した場合前方区間は可能な限りeditSection(前方区間id,前方既存startOffset,修正後の新規継続時間)で処理される。
     新規の開始位置が前方区間の開始時間よりも小さくなった場合は、前方区間が消失してさらに前方の区間を影響区間とする
  
-    終了位置が移動する場合　後方区間は可能な限り　editSection(後方区間id,新規後方startOffset,既存の終了位置から導かれる新規継続時間)　で処理される。
+    終了位置が移動する場合後方区間は可能な限りeditSection(後方区間id,新規後方startOffset,既存の終了位置から導かれる新規継続時間)で処理される。
     新規の終了位置が後方区間の終了時間よりも大きくなった場合は、後方区間が消失してさらに後方の区間を影響区間とする 
 
     値の再配置は値の種別ごとに処理が異なるので要注意
 
 戻り値は、セクションを加工したトラック全体のストリーム（xUI.put Xps.putメソッドの引数として使用可能なストリーム）
 + フォーカス位置のオフセット(0~)
-例：　['1,,,3,,,4,,,7,,,8,,,9,,,0,,',0]
+例：['1,,,3,,,4,,,7,,,8,,,9,,,0,,',0]
      */
     this.manipulateSection = function (id,headOffset,tailOffset) {
         var targetSection = this[id];
@@ -789,10 +778,10 @@ function XpsTimelineSectionCollection(myParent) {
                 continue;
             }else if((ix==(id-1))&&(sectionHead < startOffset)){
         //前方隣接ID && ヘッドノードがスタートオフセットよりも小さい 
-                var duration =　startOffset-this[ix].startOffset();
+                var duration =startOffset-this[ix].startOffset();
                 var newContent = (this[ix].value)? this[ix].value.toString(duration).split(','):new Array(duration);
             }else if(sectionTail < startOffset){
-                var duration =　this[ix].duration;
+                var duration =this[ix].duration;
                 var newContent = this[ix].toString(true).split(',');            
             }else{
                 continue;
@@ -837,7 +826,7 @@ function XpsTimelineSectionCollection(myParent) {
         if((this.length-1) == id){
 console.log('後方区間処理 : blanks');//処理区間の情報取得
             var duration   =  xUI.XPS.xpsTracks.duration-(startOffset+endOffset-1);
-/*後方区間長さが負になるケースをトラップして　単純に処理をスキップ*/
+/*後方区間長さが負になるケースをトラップして単純に処理をスキップ*/
             if (duration > 0){
                 var newContent = (new Array(duration)).join();
                 myResult       = myResult.concat(newContent);
@@ -855,7 +844,7 @@ console.log('後方区間処理 : blanks');//処理区間の情報取得
                 var duration = sectionTail-outPoint-1;
                 var newContent = (this[ix].value)? this[ix].value.toString(duration).split(','):new Array(duration);
             }else if(sectionHead > outPoint){
-                var duration =　this[ix].duration;
+                var duration =this[ix].duration;
                 var newContent = this[ix].toString(true).split(',');
             }else{
                 continue;
@@ -888,7 +877,7 @@ XpsTimelineSectionCollection.prototype = Array.prototype;
     ターゲットセクションの値種別が範囲外記述を含む場合
     かつ
     ターゲット前方区間の合計継続時間がターゲットセクションの前方範囲外記述(topFlow)の数を下回る場合
-     (* この時点で　myResult.length=0)
+     (* この時点でmyResult.length=0)
      前方範囲外記述分のオフセットが必要になる
 */
 
@@ -898,18 +887,18 @@ XpsTimelineSectionCollection.prototype = Array.prototype;
  * セクションオブジェクト
  * りまぴんではセクション編集時に都度生成される
  * セクションはトラックの要素でありセクションコレクションに格納される
- * 中間値生成セクションはそのプロパティとしてCollectionを持ち　中間値生成サブセクションを内包する
+ * 中間値生成セクションはそのプロパティとしてCollectionを持ち中間値生成サブセクションを内包する
  * parentにトラックオブジェクトを与えて初期化すると標準セクションセクションオブジェクトを与えると中間値補間サブセクションとして機能する
   * 継続時間は調整可能
- * 値は後から設定する　初期値はundefined
+ * 値は後から設定する初期値はundefined
  * 区間は必ずしも値をもたない
- 　値なし(undefined)のケースは、
- 　	-デフォルト値を継承 
- 　	-前後のセクションが値を持ち、サブセクションが値を得るための情報を持つ
- 　の2ケースがあるので注意
- 　
- 　セクションを中間値生成セクションとして初期化するためには、引数isInterpをtrueにする
- 　subSectionsが初期化されデフォルトのサブセクションが登録される
+ 値なし(undefined)のケースは、
+ 	-デフォルト値を継承 
+ 	-前後のセクションが値を持ち、サブセクションが値を得るための情報を持つ
+ の2ケースがあるので注意
+ 
+ セクションを中間値生成セクションとして初期化するためには、引数isInterpをtrueにする
+ subSectionsが初期化されデフォルトのサブセクションが登録される
 
  * @param myParent
  * @param myDuration
@@ -932,7 +921,7 @@ function _getSectionStartOffset() {
 };
 /**
  * ValueInterpolatorは必要な情報を収集して、value プロパティに対して中間値を請求するオブジェクト
- * 実際の計算は各値のValue自身が行い　仮のオブジェクトを作成して返す
+ * 実際の計算は各値のValue自身が行い仮のオブジェクトを作成して返す
  * 値エージェントとなるオブジェクト
  各valueプロパティには中間値補間
  startValue.interpolate(endValue,indexCount,indexOffset,frameCount,frameOffset,props)
@@ -963,7 +952,7 @@ nas.ValueInterpolator.prototype.valueOf=function(myProp){
  * (直接メンバーとなるコレクションではなくコレクションを保持する上位オブジェクトで)
  *
  *  parentがXpsTimelineTrackの場合は、基礎セクション(有値セクション及び中間値補間セクション)となる
- *    　有値セクションは、セクションのvalueとしてnas.xMapElementのcontentプロパティを指し かつsectionsプロパティがundefinedとなる。
+ *    有値セクションは、セクションのvalueとしてnas.xMapElementのcontentプロパティを指し かつsectionsプロパティがundefinedとなる。
  *      中間値補間セクションは、valueを持たない(undefined)かつsectionsプロパティにメンバーを持つ
  *   parentがXpsTimelineSectionの場合は、サブセクション（中間値補間サブセクション）となる
  *       中間値補間サブセクションは valueプロパティとしてValueInterpolatorオブジェクトを持ちmapElementを持たない
@@ -985,7 +974,7 @@ function XpsTimelineSection(myParent, myDuration, isInterp) {
             if(this.value){
                 return this.value.toString(this.duration);
                 // **値によって戻り値がdurationと異なる場合があるので要注意
-            　}else{
+            }else{
                 return new Array(this.duration).join();
             }
         }else{
@@ -1004,9 +993,9 @@ XpsTimelineSection.prototype.startOffset = _getSectionStartOffset;
     動画中割及びジオメトリ、コンポジットタイムラインの中間値を生成するオブジェクト
     区間内インデックスをもち
     親タイムライン上の先行するセクションの値と後方セクションの間の値を生成して返す
-    valueプロパティは　nas.ValueInterpolator Object
+    valueプロパティはnas.ValueInterpolator Object
 * parentにはセクションオブジェクトを与えて初期化する
-   サブセクションはセクションオブジェクトを兼用？？　＞＞　兼用する
+   サブセクションはセクションオブジェクトを兼用？？＞＞兼用する
     
 
 function XpsTimelineSubSection(myParent, myDuration) {
@@ -1029,7 +1018,7 @@ XpsTimelineSubSection.prototype.strtOffset = _getSectionStartOffset;
  *
  *     Xpsオブジェクトの初期化引数を拡張
  * 第一引数はかつて「レイヤ数」であったが、これを拡張して配列を受け取れるようにする
- * 引数がスカラの場合は、従来互換として　「リプレースメントトラック数」とする
+ * 引数がスカラの場合は、従来互換として「リプレースメントトラック数」とする
  * 配列であった場合は、以下の順で解決を行う
  * 
 [リプレースメントトラック数]
@@ -1038,7 +1027,7 @@ XpsTimelineSubSection.prototype.strtOffset = _getSectionStartOffset;
 [ダイアログトラック数,リプレースメントトラック数,ジオメトリトラック数,コンポジットトラック数]
 
 配列長が1の場合は、特例でリプレースメントトラック数とする
-ダイアログトラック数は、1以上とする　1以下の値が与えられた際は1として初期化される。
+ダイアログトラック数は、1以上とする1以下の値が与えられた際は1として初期化される。
 
 完全な指定を行う場合は、引数として専用の指定オブジェクトを渡す
 例:
@@ -1054,7 +1043,7 @@ XpsTimelineSubSection.prototype.strtOffset = _getSectionStartOffset;
     sound:2
 }
  *  各プロパティの出現順位置・回数は任意
- *  冒頭は基本的にdialigで　1以上の値にすること
+ *  冒頭は基本的にdialigで1以上の値にすること
  *  末尾プロパティはcommentで値1とすること
  *  冒頭プロパティがdialogでない場合は、{dialog:1} が補われる
  *  末尾プロパティがcommentでない場合にはデフォルトの{comment:1}が補われる
@@ -1109,14 +1098,14 @@ console.log (Length);
      * すべてのプロパティでXpsを初期化するのは、基準値トレーラーとしての基底オブジェクトのみ
      * (Xps.parentStage == null)
      * 以降のステージは、基底オブジェクトをprototypeとして作成される。
-     prptotype継承案は廃止　ステージを新設する毎に必要ならば複製を作ってそれを編集する
+     prptotype継承案は廃止ステージを新設する毎に必要ならば複製を作ってそれを編集する
      xpsTracksに複製メソッドが必要
      addLine又はbranch,add(new)Stage,add(new)Job,
      */
-    this.parent;//親Xps参照用プロパティ　初期値は undefined（参照無し）
+    this.parent;//親Xps参照用プロパティ初期値は undefined（参照無し）
     /**
-    Xpsの　stageオブジェクトは　xMap共用の　Pm.Issueオブジェクトと置換する
-    Issueオブジェクトの文字列化メソッドは標準で　xMap記録文字列
+    XpsのstageオブジェクトはxMap共用のPm.Issueオブジェクトと置換する
+    Issueオブジェクトの文字列化メソッドは標準でxMap記録文字列
     オプションでXps文字列・カット識別子文字列の切り替え
     */
 
@@ -1130,14 +1119,14 @@ console.log (Length);
 //    this.currentStatus = 'Startup';//old
     this.currentStatus = new JobStatus();//new
     /**
-     * オブジェクトでないほうが良いかも　＞　line/stage/job のオブジェクトに変更予定
-     * ファイルパスでなく参照オブジェクトに変更予定　オブジェクト側に参照可能なパスがあるものとする
+     * オブジェクトでないほうが良いかも＞line/stage/job のオブジェクトに変更予定
+     * ファイルパスでなく参照オブジェクトに変更予定オブジェクト側に参照可能なパスがあるものとする
      * @type {string}
      */
     this.mapfile = "";
 
     /**
-     * @desc ここから　オブジェクト化を検討中
+     * @desc ここからオブジェクト化を検討中
      * @type {string}
      *
     this.opus = (myOpus) ? myOpus : "--";
@@ -1158,7 +1147,7 @@ console.log (Length);
     this.trin = [0, "trin"];
     this.trout = [0, "trout"];
     this.framerate = nas.newFramerate(Framerate.toString());
-    this.rate = this.framerate.toString(true); //互換維持のため残置　順次削除
+    this.rate = this.framerate.toString(true); //互換維持のため残置順次削除
 
     var Now = new Date();
     this.create_time = Now.toNASString();
@@ -1167,7 +1156,7 @@ console.log (Length);
     this.update_user = (xUI.currentUser)? xUI.currentUser:new nas.UserInfo(myName);
 
 //  this.memo = "";
-    //メモはトラックコレクションのプロパティへ移行　プロパティ名は　Xps.xpsTracks.noteText
+    //メモはトラックコレクションのプロパティへ移行プロパティ名はXps.xpsTracks.noteText
 
     /**
      * タイムライントラックコレクション配列
@@ -1182,7 +1171,7 @@ console.log (Length);
  * 新規タイムライントレーラを作成
  * 固定のダイアログタイムライン及びフレームコメントタイムラインがある。
  * この二つのタイムラインは、レコードの開始及び終了マーカーを兼ねるため削除できないので注意
- *　現状で以前の引数を踏襲しているため旧のレイヤーカウントで初期化が行なわれる
+ *現状で以前の引数を踏襲しているため旧のレイヤーカウントで初期化が行なわれる
  *  トラックカウントに変更の予定
 trackSpec オブジェクトで初期化に変更
  * @param trackCount
@@ -1261,7 +1250,7 @@ Xps.prototype.newTracks = function (trackSpec,trackDuration) {
                 };
             break;
             default:
-                continue;//コメント等　他のトラックはスキップ
+                continue;//コメント等他のトラックはスキップ
         }
         trackCount ++;
     }
@@ -1309,7 +1298,7 @@ Xps.prototype.timeline = function (idx) {
 /**
  * 再初期化
  
- 現状旧オブジェクトの影響でレイヤ数(==トラック数-2)で初期化されるようになっている　トラック数で初期化に変更する準備中
+ 現状旧オブジェクトの影響でレイヤ数(==トラック数-2)で初期化されるようになっているトラック数で初期化に変更する準備中
 
  * @param Tracks
  * @param Length
@@ -1351,7 +1340,7 @@ Xps.prototype.init = function (Tracks, Length, Framerate) {
      * @type {string}
      */
     this.xMap =new xMap();//参照用xMapを初期化
-//    if (this.mapfile);//Xps初期化手順に注意　初期化時にxMapを与えるのが正道
+//    if (this.mapfile);//Xps初期化手順に注意初期化時にxMapを与えるのが正道
     this.opus = myOpus;
     this.title = myTitle;
     this.subtitle = mySubTitle;
@@ -1379,10 +1368,8 @@ Xps.prototype.init = function (Tracks, Length, Framerate) {
     this.xpsTracks = this.newTracks(trackSpec, Length);
 };
 
-/**
- * マップオブジェクトを与えて初期化
- * @param MAP
- * @returns {boolean}
+/*
+    getMAPメソッド自体が不要（）
  */
 Xps.prototype.getMap = function (MAP) {
      /**
@@ -1396,7 +1383,7 @@ Xps.prototype.getMap = function (MAP) {
     /**
      * レイヤプロパティ設定()
      */
-//xMapの性質が変わったため、mapBodyプロパティは廃止　Mapを参照してレイヤ数を決定する必要なし
+//xMapの性質が変わったため、mapBodyプロパティは廃止Mapを参照してレイヤ数を決定する必要なし
 
 //    this.xpsTracks.length = (MAP.mapBody.length - 2 > this.xpsTracks.length) ?
 //  MAP.mapBody.length - 2 : this.xpsTracks.length;//大きいほうを採る
@@ -1453,13 +1440,13 @@ Xps.prototype.getMap = function (MAP) {
  * カット識別子を返すオブジェクトメソッド
  * Xps.getIdentifier(識別オプション,)
  * カット識別文字列を返す
- * カット識別子は　タイトル、制作番号、シーン、カット番号　の各情報をセパレータ"_"で結合した文字列
+ * カット識別子はタイトル、制作番号、シーン、カット番号の各情報をセパレータ"_"で結合した文字列
  * カット番号以外の情報はデフォルトの文字列と比較して一致した場合セパレータごと省略
  * オプションで要素の結合状態を編集して返す
  *
  セパレータ文字列は[(__)#\[]
- 出力仕様を　クラスメソッド互換に変更
- 　オブジェクトメソッドを利用する場合はURIEncodeを使用しないプレーン文字列でやり取りが行われるものとする
+ 出力仕様をクラスメソッド互換に変更
+ オブジェクトメソッドを利用する場合はURIEncodeを使用しないプレーン文字列でやり取りが行われるものとする
  旧:     TITLE_OPUS_SCENE_CUT
  新:     TITLE#OPUS[subtitle]__sSCENE-cCUT(time)
 
@@ -1468,15 +1455,15 @@ Xps.prototype.getMap = function (MAP) {
     部分エンコーディング
     各要素は、自身の要素のセパレータを含む場合'%'を前置して部分的にURIエンコーディングを行う
     要素の文字列は識別子をファイル名等に利用する場合、ファイルシステムで使用できない文字が禁止されるが、この文字も併せて部分エンコードの対象となる。
-    対象文字列は、Windowsの制限文字である　¥\/:*?"<>| に加えて . 及びエンコード前置文字の %
+    対象文字列は、Windowsの制限文字である¥\/:*?"<>| に加えて . 及びエンコード前置文字の %
     (これらは関数側で記述)
     
-TITLE　"#"が禁止される
+TITLE"#"が禁止される
 OPUS    "#","[","__" が禁止される
 subtitle "["."]","__"が禁止される
-SCi     "__","("　が禁止される
+SCi     "__","("が禁止される
  options:
- 'full' 全ての要素を含む識別文字列で返す　
+ 'full' 全ての要素を含む識別文字列で返す
         TITLE#OPUS[subtitle]__sSCENE-cCUT(time)
  'cut'
         #OPUS__sSCENE-cCUT
@@ -1526,13 +1513,44 @@ if(false){
     return myResult;
 }   
 };
+
+/** 識別子の情報でカットのプロパティを上書きする
+    インポート時に必要な情報は識別子にすべて含まれるためそれで上書きを行う
+    duration は
+        元シートのデータを維持
+        新シートに合わせる
+    の二択となるので要注意
+    新規作成時にライン〜ステータス情報が欠落するのでそれは判定して補う
+    識別子に含まれる時間情報を同期させる場合は、引数withoutTimeにfalseを与える
+    初期値はtrue(時間同期なし)
+*/
+Xps.prototype.syncIdentifier =function(myIdentifier,withoutTime){
+    if(typeof withoutTime == 'undefined') withoutTime = true;
+    var parseData   = Xps.parseIdentifier(myIdentifier);
+    this.title      = parseData.title;
+    this.cut        = parseData.cut;
+    this.opus       = parseData.opus;
+    this.subtitle   = parseData.subtitle;
+    this.scene      = parseData.scene;
+    if(parseData.currentStatus){
+        this.line       = parseData.line;
+        this.stage      = parseData.stage;
+        this.job        = parseData.job;
+        this.currentStatus = parseData.currentStatus;
+    }
+    if (! withoutTime){
+        var newTime = nas.FCT2Frm(parseData.sci[0].time)+Math.ceil((this.trin[0]+this.trout[0])/2);
+    }
+return parseData;
+}
+
 /**
  * 継続時間をフレーム数で返す
  * ダイアログタイムラインの要素数で返す
  * 初期状態でボディの存在しないシートが存在しないように注意
  * 未記述でも空ボディのタイムラインが存在する。
  * エラー関連コードは排除の方向で
- *　チェックが進んだら　関数自体を廃してxpsTracks.durationの参照に切り替える
+ *チェックが進んだら関数自体を廃してxpsTracks.durationの参照に切り替える
  * @returns {*}
  */
 Xps.prototype.duration = function () {
@@ -1585,10 +1603,10 @@ Xps.prototype.getTC = function (mtd) {
 Xps.prototype.insertTL = function (myId, myTimelines) {
     //引数が配列ではないまたは単独のタイムライントラックオブジェクトである場合配列化する
     /**
-        XpsTimelineTrackが配列ベースのためか、通常の配列を　instanceof XpsTimelineTrack で判定すると trueが戻るので
+        XpsTimelineTrackが配列ベースのためか、通常の配列をinstanceof XpsTimelineTrack で判定すると trueが戻るので
         プロパティで判定を行う
-        obj.id　(トラックラベル)があればタイムライントラック
-        typeof　obj.length　== "undefined"ならば 配列以外
+        obj.id(トラックラベル)があればタイムライントラック
+        typeofobj.length== "undefined"ならば 配列以外
     */
     if ((myTimelines.id) || (typeof myTimelines.length == "undefined")){
         myTimelines = [myTimelines];
@@ -1599,7 +1617,7 @@ Xps.prototype.insertTL = function (myId, myTimelines) {
     for (var idx = 0; idx < myTimelines.length; idx++) {
         /**
          * 挿入データの検査
-         * 挿入データがタイムライントラック以外なら　挿入データをラベルに持つtimingタイムラインを作成する
+         * 挿入データがタイムライントラック以外なら挿入データをラベルに持つtimingタイムラインを作成する
          */
         if (!(myTimelines[idx].id)) {
             if (myTimelines[idx]) {
@@ -1623,7 +1641,7 @@ Xps.prototype.insertTL = function (myId, myTimelines) {
  * 指定idのタイムラインを削除する。1～
  * デフォルトの音声タイムラインとフレームコメントの削除はできない
  * IDを単独又は配列渡しで
- * XpsLayer　と　xpsTracks はそのうちタイムラインとして統合すべきかと思う。
+ * XpsLayerとxpsTracks はそのうちタイムラインとして統合すべきかと思う。
  *
  * @param args
  */
@@ -1646,7 +1664,7 @@ Xps.prototype.deleteTL = function (args) {
 };
 /**
      Xpsの継続時間を変更する
-     引数：　int フレーム数
+     引数：int フレーム数
      現在の値と同じ場合は何もしない
      継続時間が減少する場合はシート後方から削除
      増加の場合は""で初期化
@@ -1693,7 +1711,7 @@ Xps.prototype.reInitBody = function (newTimelines, newDuration) {
     }
     var widthUp    = (newTimelines > oldWidth)   ? 1 : (newTimelines == oldWidth)   ? 0 : -1 ;
     var durationUp = (newDuration > oldDuration) ? 1 : (newDuration == oldDuration) ? 0 : -1 ;
-//  トラック数を先に編集　トラック数が増えた場合は空白ラベルで挿入　減っている場合は削除メソッドを発行
+//  トラック数を先に編集トラック数が増えた場合は空白ラベルで挿入減っている場合は削除メソッドを発行
     if(widthUp > 0){
         var newTracks=[];
         var widthUpCount = newTimelines-oldWidth;
@@ -1782,8 +1800,8 @@ if(this.xpsTracks.duration){
  * Xps.getRange(Range:[[startC,startF],[endC,endF]])
  * 範囲内のデータをストリームで返す
  * xpsのメソッドに移行 2013.02.23
- * 範囲外のデータは、ヌルストリングを返す　2015.09.18
- * 負のアドレスを許容　150919
+ * 範囲外のデータは、ヌルストリングを返す2015.09.18
+ * 負のアドレスを許容150919
  * 全てシートの範囲外を指定された場合は、範囲のサイズの空ストリームを返す
  * チェックはない（不要）空ストリームを得る場合に使用可能
  * 開始と終了のアドレスが一致している場合は、該当セルの値を返す
@@ -1913,7 +1931,7 @@ Xps.prototype.readIN = function (datastream) {
  * 他フォーマットのデータパーサはライブラリに分離される。
  * このメソッドはXpsのパース専用になる
  * (将来の拡張用として必須)2013.04.06
- *
+ * パース成功時はオブジェクト自身を返す。
  * @param datastream
  * @returns {boolean}
  */
@@ -1943,7 +1961,7 @@ Xps.prototype.parseXps = function (datastream) {
     SrcData.startLine = -1;//データ開始行
 //	SrcData.dataClass	="";//データバージョン識別用に流用？
     /**
-     * データ種別判定は、削除　作業開始2013.04.04
+     * データ種別判定は、削除作業開始2013.04.04
      * ソースデータのプロパティ
      * @type {number}
      */
@@ -2088,7 +2106,7 @@ Xps.prototype.parseXps = function (datastream) {
         }
         //なぜだかナゾなぜに一文字多いのか?
         /**
-         * 申し送り取得フラグが立っていれば　コメントと他の有効記述以外をメッセージに加算
+         * 申し送り取得フラグが立っていればコメントと他の有効記述以外をメッセージに加算
          * 終了サインまたは他の有効記述で取得終了
          */
         if(readMessage){
@@ -2142,49 +2160,49 @@ Xps.prototype.parseXps = function (datastream) {
                     SrcData[props[nAme]] = tm;
 
                     break;
-                　  /**
-                　   *  user_info
-                　   *   ユーザ関連情報はオブジェクトに置き換え
-                　   */
+                  /**
+                   *  user_info
+                   *   ユーザ関連情報はオブジェクトに置き換え
+                   */
                   case  "CREATE_USER":
                   case  "UPDATE_USER":
-                　   SrcData[props[nAme]] = new nas.UserInfo(vAlue);
+                   SrcData[props[nAme]] = new nas.UserInfo(vAlue);
                     break;
                     /**
-                     * 管理情報　シングルステージドキュメントの際のみ処理
+                     * 管理情報シングルステージドキュメントの際のみ処理
                      *
                      */
-                　case   "Line":;
-                　   SrcData[props[nAme]] = (vAlue)?
-                　       new XpsLine(vAlue):new XpsLine("0:"+nas.Pm.pmTemplate[0].line);
-                　  break;
-                　case   "Stage":;
-                　   SrcData[props[nAme]] = (vAlue)?
-                　       new XpsStage(vAlue):new XpsStage("0:"+nas.Pm.pmTemplate[0].stages[0]);
-                　  break;
-                　case   "Job":;
-                　   SrcData[props[nAme]] = (vAlue)?
-                　       new XpsStage(vAlue):new XpsStage("0:"+nas.Pm.jobNames[0]);
-                　  break;
-                　  /**
-                　   *   ステータス関連
-                　   *    指名情報及び申し送りはステータスのサブプロパティとして扱う
-                　   *    ステータスがない場合は無視する
-                　   */
-                　case   "CurrentStatus":;
+                case   "Line":;
+                   SrcData[props[nAme]] = (vAlue)?
+                       new XpsLine(vAlue):new XpsLine("0:"+nas.Pm.pmTemplate[0].line);
+                  break;
+                case   "Stage":;
+                   SrcData[props[nAme]] = (vAlue)?
+                       new XpsStage(vAlue):new XpsStage("0:"+nas.Pm.pmTemplate[0].stages[0]);
+                  break;
+                case   "Job":;
+                   SrcData[props[nAme]] = (vAlue)?
+                       new XpsStage(vAlue):new XpsStage("0:"+nas.Pm.jobNames[0]);
+                  break;
+                  /**
+                   *   ステータス関連
+                   *    指名情報及び申し送りはステータスのサブプロパティとして扱う
+                   *    ステータスがない場合は無視する
+                   */
+                case   "CurrentStatus":;
 console.log(vAlue);
-                　   SrcData.currentStatus = new JobStatus(vAlue);
+                   SrcData.currentStatus = new JobStatus(vAlue);
 console.log(SrcData.currentStatus);
-                　  break;
-                　case   "JobAssign":;
-                　   if(SrcData.currentStatus) SrcData.currentStatus.assign = vAlue;
-                　  break;
-                　case   "Message":;
-                　               //messageは複数行にわたるので読み出しルーチンが必要
-                　   if(SrcData.currentStatus) SrcData.currentStatus.message = vAlue;
+                  break;
+                case   "JobAssign":;
+                   if(SrcData.currentStatus) SrcData.currentStatus.assign = vAlue;
+                  break;
+                case   "Message":;
+                               //messageは複数行にわたるので読み出しルーチンが必要
+                   if(SrcData.currentStatus) SrcData.currentStatus.message = vAlue;
                                 //申し送りメッセージ取得フラグを立てて次のループに入る
                      readMessage=true;continue;
-                　  break;
+                  break;
                 default:
                     /**
                      * 時間関連以外
@@ -2471,7 +2489,7 @@ console.log(SrcData.currentStatus);
         alert("error :" + localize(xUI.errorMsg[xUI.errorCode]));
 //	xUI.errorCode=0;
     }
-    return true;
+    return this;
 };
 
 /**
@@ -2639,7 +2657,7 @@ Xps.prototype.isSame = function (targetXps,compareFramerate) {
             continue
         }
         /**
-         * 配列プロパティをスキップしているので注意　後で配列比較を書く
+         * 配列プロパティをスキップしているので注意後で配列比較を書く
          */
         if ((this[myProp] == targetXps[myProp])) {
             continue
@@ -2694,7 +2712,7 @@ Xps.prototype.isSame = function (targetXps,compareFramerate) {
         }
     }
     /**
-     * 比較順序は後で見直しが必要　多分
+     * 比較順序は後で見直しが必要多分
      */
     return true;
 };
@@ -2704,7 +2722,7 @@ Xps.prototype.isSame = function (targetXps,compareFramerate) {
     Reaplacmentトラック用
 
 引数:セルエントリ文字列
-戻値:　配列[エントリ文字列,グループラベル]
+戻値:配列[エントリ文字列,グループラベル]
 
 グループラベルが存在しない文字列の戻値は要素数１の配列
  */
@@ -2751,7 +2769,7 @@ Xps.sliceReplacementLabel = function (myStr){
     このコーディングは、pmdb実装後に行われる。2018.07.16
 */
 Xps.getIdentifier=function(myXps,opt){
-//この識別子作成は実験コードです　2016.11.14
+//この識別子作成は実験コードです2016.11.14
     if(typeof opt=='undefined') opt=true;
     var myIdentifier=[
             encodeURIComponent(myXps.title)+
@@ -2769,9 +2787,11 @@ Xps.getIdentifier=function(myXps,opt){
             encodeURIComponent(myXps.job.toString(true)),
             myXps.currentStatus.toString(true)
     ]);
-//識別子を作成してネットワークリポジトリに送信する　正常に追加・更新ができた場合はローカルリストの更新を行う（コールバックで）
+//識別子を作成してネットワークリポジトリに送信する正常に追加・更新ができた場合はローカルリストの更新を行う（コールバックで）
     return myIdentifier.join("//");;
 }
+
+
 /*
     仮の比較関数
     SCiオブジェクトに統合予定
@@ -2785,7 +2805,7 @@ Xps.getIdentifier=function(myXps,opt){
                 4   :job match
                 5   :status match
 
-ステータス情報のうちassign/messageの比較は行わない　ステータス自体の比較もほぼ利用されないので省略を検討
+ステータス情報のうちassign/messageの比較は行わないステータス自体の比較もほぼ利用されないので省略を検討
 */
 Xps.compareIdentifier =function (target,destination){
     var tgtInfo  = Xps.parseIdentifier(target);
@@ -2880,8 +2900,8 @@ Xps.parseProduct = function(productString){
     sciString末尾の（括弧内）は時間情報部分
     (括弧)による記述が2つ以上ある場合は最初の開き括弧の前がカット識別子で、時間情報は最後の（括弧）内の情報を用いる
     
-    書式は　(TC//framareteString) or (TC) フレームレートの指定のない場合はデフォルトの値で補われる
-    (1+12),(1+12//24FPS),(1:12//30),(01:12//30DF),(00:00:01:12//59.94)　等
+    書式は(TC//framareteString) or (TC) フレームレートの指定のない場合はデフォルトの値で補われる
+    (1+12),(1+12//24FPS),(1:12//30),(01:12//30DF),(00:00:01:12//59.94)等
     デフォルト値は、タイトルから取得
     sciStringに時間情報が含まれないケースあり
     time指定の存在しない識別子の場合"6:0"を補う
@@ -2906,7 +2926,7 @@ Xps.parseSCi = function(sciString){
 /**
 SCiデータ上のカット名をセパレータで分離するクラスメソッド
 この場合のカット名には時間情報・ステータス等を含まないものとする
-パースされたカット名は、カット、シーンの順の配列で戻す　有効最大２要素
+パースされたカット名は、カット、シーンの順の配列で戻す有効最大２要素
 
     [cut,scene,<void>,~];//第三要素以降は分離しても使用されないことに注意
     [cut,scene]
@@ -2929,8 +2949,8 @@ Xps.parseCutIF = function(myIdentifier){
 //
 /**
 パース済みのカット識別子を比較してマッチ情報を返す
-シーン　カット　ともに一致した場合のみ　true　それ以外は false
-引数に秒表記部が含まれないよう　調整が必要
+シーンカットともに一致した場合のみtrueそれ以外は false
+引数に秒表記部が含まれないよう調整が必要
 */
 Xps.compareCutIdf=function(tgt,dst){
     if(tgt.match(/\(.+\)/)){tgt = Xps.parseSCi(tgt)[0].cut};
@@ -2957,7 +2977,7 @@ Xps.compareCutIdf("S#1-32","s01-c0３２");
 */
 Xps.stringifyIdf = function(myData){
 //myDataはlength==10の配列であること
-//この識別子作成は実験コードです　2016.11.14
+//この識別子作成は実験コードです2016.11.14
     var myIdentifier=[
             encodeURIComponent(String(myData[0]))+
         "#"+encodeURIComponent(String(myData[1]))+
@@ -2992,13 +3012,13 @@ Xps.stringifyIdf([
      データ識別子をパースして無名オブジェクトで戻す
      データ判定を兼ねる
      分割要素がカット番号を含まない（データ識別子でない）場合はfalseを戻す
-     SCi/listEntryオブジェクトとの兼ね合いを要調整　20170104
+     SCi/listEntryオブジェクトとの兼ね合いを要調整20170104
      
      asign/
      オブジェクトメソッドの識別子も解釈可能にする
     
-    　'//（二連スラッシュ）'を認識できなかったケースに限り'__（二連アンダーバー）'をセパレータとして認識するように変更
-    　**"_(アンダーバー単独)"はセパレータ以外で使用するケースがあるため要注意
+    '//（二連スラッシュ）'を認識できなかったケースに限り'__（二連アンダーバー）'をセパレータとして認識するように変更
+    **"_(アンダーバー単独)"はセパレータ以外で使用するケースがあるため要注意
 */
 Xps.parseIdentifier = function(myIdentifier){
     if(! myIdentifier) return false;
@@ -3021,7 +3041,7 @@ Xps.parseIdentifier = function(myIdentifier){
         result.currentStatus   = new JobStatus(dataArray[5]);
         //ステータスはデコード不用(オブジェクト自体がデコードする)
     }
-    /*ここでは初期化しない　undefined で戻す
+    /*ここでは初期化しないundefined で戻す
     {
         result.line     = new XpsLine(nas.pm.pmTemplate[0].line);
         result.stage    = new XpsStage(nas.pm.pmTemplate[0].stages[0]);
@@ -3117,7 +3137,7 @@ Xps.prototype.getNormarizedStream = function (layer_id) {
      * あらかじめ与えられた最大ロット変数と有効データ中の最大の値を比較して
      * 大きいほうをとる
      * ここで、layer_max_lot が 0 であった場合変換すべきデータが無いので処理中断
-     *  >全部ブランクであってもリザルトは返すように変更　
+     *  >全部ブランクであってもリザルトは返すように変更
      */
     if (false) {
         if (layer_max_lot == 0) {
@@ -3134,7 +3154,7 @@ Xps.prototype.getNormarizedStream = function (layer_id) {
 };
 
 /**
- * 2016改装用オブジェクト追加記述　2016/01/05
+ * 2016改装用オブジェクト追加記述2016/01/05
  * XpsReplacement オブジェクト
  * 置きかえトラックのセクションの値となるオブジェクト（現状、文字列で代用するのが良いか？）
  * 通常に値を求めた場合は、セルの値が戻値
@@ -3180,7 +3200,7 @@ XpsReplacement = function (name) {
  * カメラワークトラック・セクションの値
  * 通常に値を求める場合XpsCameraworkオブジェクト自体が戻値
  *
- * XpsCameraworkオブジェクトは、識別子を持ち　位置、オフセット、サイズ、スケール、ペグオフセット等のプロパティを持った複合オブジェクト
+ * XpsCameraworkオブジェクトは、識別子を持ち位置、オフセット、サイズ、スケール、ペグオフセット等のプロパティを持った複合オブジェクト
  * アニメーション補間可能なプロパティは多岐に渡るが、タイムシート上は単一の代表タイミングのみが表示される
  * オフセット（2D/3D）スケールの影響を受けない
  * ペグオフセット（2D/3D）スケールの影響を受ける
@@ -3234,7 +3254,7 @@ XpsReplacement = function (name) {
     /^\([^\)]+\)$|^<[^>]+>$|^\[[^\]]+\]$/    インラインコメント
     その他は
     ブランク中ならばラベル
-    音響Object区間ならばコンテントテキストに積む　空白は無視する
+    音響Object区間ならばコンテントテキストに積む空白は無視する
     ⇒セリフ中の空白は消失するので、空白で調整をとっている台詞は不可
     オリジナルとの照合が必要な場合は本文中の空白を削除した状態で評価すること
     
@@ -3246,17 +3266,17 @@ XpsReplacement = function (name) {
         新規にセクションコレクションを作り、正常な処理終了後に先にあるセクションコレクションを上書きする
         ＊作成中に、同じ内容のセクションはキャッシュとして使用する？
         戻り値はビルドに成功したセクション数(最低で１セクション)
-        値として　無音区間の音響オブジェクト（値）を作るか又は現状のままfalse(null)等で処理するかは一考
+        値として無音区間の音響オブジェクト（値）を作るか又は現状のままfalse(null)等で処理するかは一考
 */
 _parseSoundTrack =function(){
     var myCollection = new XpsTimelineSectionCollection(this);//自分自身を親としてセクションコレクションを新作
     //この実装では開始マーカーが０フレームにしか位置できないので必ずブランクセクションが発生する
     //継続時間０で先に作成 同時にカラのサウンドObjectを生成
     var currentSection=myCollection.addSection(null);//区間値false
-    var currentSound=new nas.AnimationSound("");//第一有値区間の値　コンテンツはカラで初期化も保留
+    var currentSound=new nas.AnimationSound("");//第一有値区間の値コンテンツはカラで初期化も保留
     for (var fix=0;fix<this.length;fix++){
         currentSection.duration ++;//currentセクションの継続長を加算
-        //未記入データ　最も多いので最初に判定しておく
+        //未記入データ最も多いので最初に判定しておく
         if(this[fix]=="") continue;
         //括弧でエスケープされたコメント又は属性
         if(this[fix].match(/(^\([^\)]+\)$|^<[^>]+>$|^\[[^\]]+\]$)/)){
@@ -3267,7 +3287,7 @@ _parseSoundTrack =function(){
             }
             continue;
         }
-        //セクションセパレータ　少ない
+        //セクションセパレータ少ない
         if(this[fix].match(/^[-_~^〜＿ー￣]{3,4}$/)){
             if(currentSection.value){
                 currentSection.duration --;//加算した継続長をキャンセル
@@ -3283,8 +3303,8 @@ _parseSoundTrack =function(){
             }
                         continue;
         }
-//判定を全て抜けたデータは本文又はラベル　ラベルは上書きで更新
-//ラベル無しの音声オブジェクトは無しのまま保存　必要に従って先行オブジェクトのラベルを引継ぐ
+//判定を全て抜けたデータは本文又はラベルラベルは上書きで更新
+//ラベル無しの音声オブジェクトは無しのまま保存必要に従って先行オブジェクトのラベルを引継ぐ
         if(currentSection.value){
             if(this[fix]=="|") this[fix]="ー";
             currentSound.bodyText+=this[fix];

@@ -81,6 +81,60 @@
 <script src=./nas/scripts/remaping/messages.js></script>
 
 <!-- ライブラリインストール -->
+<script>
+startupTooltip=function(){
+    jQuery( function() {
+var myToolTips=["#airMenu","#cgiMenu","#psMenu","#commonEditMenu","#optionPanelUtl"];
+for (var tid=0;tid<myToolTips.length;tid++){
+        jQuery(myToolTips[tid]).tooltip( {
+        position: {
+            my: "center top",
+            at: "center bottom",
+            track:true,
+        }
+    } );
+ }
+    } );
+}
+
+startupChangeView=function(){
+	document.getElementById('sheet_body').style.display='none';
+	document.getElementById('memo_header').style.display='none';
+	document.getElementById('memo').style.display='none';
+	document.getElementById('headerTool').style.display='none';
+	document.getElementById('app_status').style.display='none';
+}
+
+flipView=function(myID){
+	if(document.getElementById(myID).style.display!='inline'){
+		document.getElementById(myID).style.display='inline';
+		document.getElementById(myID+"_alt").style.display='none';
+	}else{
+		document.getElementById(myID).style.display='none';
+		document.getElementById(myID+'_alt').style.display='inline';
+	}
+}
+chgView=function(myID){
+	if(document.getElementById(myID).style.display!='inline'){
+		document.getElementById(myID).style.display='inline';
+	}else{
+		document.getElementById(myID).style.display='none';
+	}
+}
+switchTab=function(myID,myNumber,maxNumber){
+    for(var tabNumber=1;tabNumber<=maxNumber;tabNumber++){
+        var button=document.getElementById(myID+tabNumber+"bt");
+        var tab=document.getElementById(myID+tabNumber);
+        if(myNumber==tabNumber){
+            button.disabled=true;
+            tab.style.display="inline";
+        }else{
+            button.disabled=false;
+            tab.style.display="none";
+        };
+    }
+}
+</script>
 </head>
 <body 
 	onload="startupTooltip();var nRS = setTimeout('nas_Rmp_Startup()',10);nas.LangPack.chgLocale('ja');serviceAgent.init();SoundEdit.panelInit();"
@@ -723,7 +777,8 @@ serviceAgent.pushEntry(xUI.XPS,function(){xUI.setStored("current");sync();
 </ul>
 </div>
 <!-- dropdown menu for browser ブラウザ用ドロップダウンメニュー　-->
-<div id=account_box>
+
+<div id=account_box >
     <div class=server-info
         id = server-info
         client_id='b115aead773388942473e77c1e014f4d7d38e4d4829ae4fd1fa0e48e1347b4cd'
@@ -734,8 +789,9 @@ serviceAgent.pushEntry(xUI.XPS,function(){xUI.setStored("current");sync();
         last_authrized=''
     >
 
- <span id="serverurl"></span> :
- <span id=loginuser ></span> : <button id='loginstatus_button' onclick='xUI.sWitchPanel("Login");return false' title="ユーザ切り替え"> =OFFLINE= </button> 
+        <span id="serverurl"></span> :
+        <span id=loginuser ></span> :
+        <button id='loginstatus_button' onclick='xUI.sWitchPanel("Login");return false' title="ユーザ切り替え"> =OFFLINE= </button> 
     </div>
     <div style="float:clear;">
 		<form	name=saveXps
@@ -893,7 +949,7 @@ serviceAgent.pushEntry(xUI.XPS,function(){xUI.setStored("current");sync();
 	</button>
  </span>
 
-<span id="psMenu">
+ <span id="psMenu">
     <button
 	id=ibMopenFSps
 		class='iconButton  iconButton-imp'
@@ -1014,15 +1070,8 @@ serviceAgent.pushEntry(xUI.XPS,function(){xUI.setStored("current");sync();
 <button
 	id=ibMstw
     class='iconButton iconButton-goToTime'
-	onMouseDown='if(xUI.player.status=="stop"){xUI.player.start()}else{xUI.player.getCount=true};'
-	onMouseUp='if(xUI.player.status=="run"){xUI.player.getCount=false};'
-	title='stop watch test start'
-> </button>
-<button
-	id=ibMstw
-    class='iconButton iconButton-stop'
-	onMouseDown='if(xUI.player.status=="run"){xUI.player.stop()}else{clearMark()};'
-	title='stop watch test stop'
+	onClick='xUI.sWitchPanel("Timer");'
+	title='stopwatch test'
 > </button>
 </span>
 
@@ -1249,38 +1298,19 @@ serviceAgent.pushEntry(xUI.XPS,function(){xUI.setStored("current");sync();
 <!--     コマンドツールバーここまで          -->
 <!-- ploject status bar -->
 <div
-style = 'text-align:right'
+    style = 'text-align:right'
 >
-Project：カット袋の識別情報 /　TITLE#OPUS // s-c004 / s-c012 // 0: (本線) // 0: [レイアウト] // 3: 演出検査
-</div>
-<hr>
-<!-- タブコントロール
-プロジェクト(xMAP)/タイムシート(Xpst)の切り替えUI
-カットが増えすぎた場合は、スクロールを行うので準備が必用
--->
-<div class=tabSelector id=tabSelector-base>
-<button
-	id =tab_0
-	class ='tabControll tabControll-xmap tabControll-left-deactive'
-	onClick = xUI.tabSelect(0);
->プロジェクト
-</button><button
-	id=tab_1
-	class='tabControll tabControll-xpst tabControll-midd-active-overlay'
-	onClick = xUI.tabSelect(1);
->カット	　１
-</button><button
-	id=tab_2
-	class='tabControll tabControll-xpst tabControll-right-deactive'
-	onClick = xUI.tabSelect(2);
->カット　２
-</button>
-</div>
-<div class=tabSelector id=tabSelector>
-<br>
-</div>
-<!-- タブコントロール -->
+<div>
+<span class=note>カット袋の識別情報 (デコード済み識別子のみ)[⇒]</span>　<A href='javascript:return void(0);' onclick='alert("詳細作品情報ブラウザ")'>かちかちやま#000[かちかちやまにひがのぼる]</A></div>
+<!--<div>
 
+<span class=note>(ひねり矢印で展開表示)</span>[⇓]title: かちかちやま / episode: #000 / subtitle: かちかちやまにひがのぼる / 定尺: 00:21:25:00 (24fps)
+　<br>
+演出: (犬) / 作監: 鰯 / 美術監督: マグロ / 担当制作: マダラカミキリ
+　</div>-->
+</div>
+<!-- ploject status bar -->
+<hr>
 <!-- 管理IDコントロール UI-->
     <div id =pmcui class=pmcui>
 <button
@@ -1342,24 +1372,24 @@ class=optionPanel id=optionPanelProductManagement
 >作業検収</button><button
 	id=pmaui-checkout
     class='pmControl pmControl-checkout'
-    disabled = true
+    disabled
     title='作業中のカットを強制的に終了（回収）'
 >作業終了</button><button
 	id=pmaui-abort
     class='pmControl pmControl-adort'
-    disabled = true
+    disabled
     title='カットの全工程を停止（カット削除）'
 >制作中断</button>
 
 <button
 	id=pmaui-branch
     class='pmControl pmControl-branch'
-    disabled = true
+    disabled
     title='新規ラインを立ち上げる'
 >ライン分岐</button><button
 	id=pmaui-merge
     class='pmControl pmControl-merge'
-    disabled = true
+    disabled
     title='分岐したラインを収束'
 >ラインマージ</button>
 
@@ -1528,11 +1558,46 @@ class=optionPanel id=optionPanelProductManagement
 <hr>-->
         </div>
 <!-- ドキュメントコントロール(制作管理)メニュー-->
+
+<!-- タブコントロール
+プロジェクト(xMAP)/タイムシート(Xpst)の切り替えUI
+カットが増えすぎた場合は、スクロールを行うので準備が必用
+-->
+<div class=tabSelector id=tabSelector-base>
+<button
+	id =tab_0
+	class ='tabControll tabControll-xmap tabControll-left-deactive'
+	onClick = xUI.tabSelect(0);
+>プロジェクト
+</button><button
+	id=tab_1
+	class='tabControll tabControll-xpst tabControll-midd-active'
+	onClick = xUI.tabSelect(1);
+>カット	　１
+</button><button
+	id=tab_2
+	class='tabControll tabControll-xpst tabControll-midd-deactive'
+	onClick = xUI.tabSelect(2);
+>カット　２
+</button><button
+	id=tab_end
+	class='tabControll tabControll-end tabControll-end-deactive'
+></button>
+
+</div>
+<div class=tabSelector id=tabSelector>
+<br>
+</div>
+<!-- タブコントロール -->
+
+
 <!-- ドキュメント ステータス　オーバレイ　-->
 <div id=documentWritable class=documentStatusOverlay>
 <span style='border-style:solid;border-color:red;'> Read Only </span> 
 </div>
 <!-- ドキュメント ステータス　オーバレイ　-->
+
+
 <!--	タイムシートUIヘッダ　-->
 <!-- 固定ヘッダ 最上段　印刷時非表示　id="fixed"-->
 
@@ -1563,7 +1628,7 @@ class=optionPanel id=optionPanelProductManagement
 >
 	<!-- カウンタ -->
 
-<span style="float:right;">
+<span class='floating-right'>
 	<!-- スピン -->
 <input	type=text
 	name=spin_V
@@ -1836,9 +1901,9 @@ onclick='nas.incrFCTonHTMLInput(document.getElementById("editTC"),"-(1)")'
 <br>
 <br>
 <br>
-		<center><b>処理中です…</b></center><br>
-		<center><img src=images/ui/wait.gif width=42 height=42></center><br>
-		<center><b>processing......</b></center><br>
+		<b>処理中です…</b><br>
+		<img src=images/ui/wait.gif width=42 height=42><br>
+		<b>processing......</b><br>
 <br>
 <br>
 <br>
@@ -3587,12 +3652,12 @@ duration :
 	onMouseDown='if(xUI.player.status=="stop"){xUI.player.start()}else{xUI.player.getCount=true};'
 	onMouseUp='if(xUI.player.status=="run"){xUI.player.getCount=false;};'
 		title="stopwatch test start/mark"
-	> Start / Mark
+	> START / Mark
 	</button><button
 		style='height:32px;width:120px'
 	onMouseDown='if(xUI.player.status=="run"){xUI.player.stop()}else{clearMark()};'
 		title="frameReset"
-	> Stop / Reset
+	> STOP / Reset
 	</button>
 	<!--<button
 		class='iconButton  iconButton-goFWD'
@@ -3645,6 +3710,62 @@ duration :
     <img src=./images/ui/cornerTip.png id=RefPanelCotner class=panelCorner>
 	</div>
 <!-- 参照用オーバーレイウインドウ optionPanelRef > optionPanelRef-->
+
+<!-- ストップウオッチUIパネル stopwatch　-->
+<div
+	class= optionPanel
+	id = optionPanelTimer
+>
+ :<span id=timerDisplay></span>
+<span class=floating-right>
+<button
+	id=timerSwitchPrm
+	onMouseDown='if(xUI.player.status=="stop"){xUI.player.start()}else{if(xUI.player.markSwap){xUI.player.getCount=true}else{xUI.player.stop()}};'
+	onMouseUp='if((xUI.player.markSwap)&&(xUI.player.status=="run")){xUI.player.getCount=false};'
+>START/STOP</button>
+<button
+	id=timerSwitchSub
+	onMouseDown='if(xUI.player.status=="run"){if(xUI.player.markSwap){xUI.player.stop()}else{xUI.player.getCount=true}}else{clearMark()};'
+	onMouseUp='if(!(xUI.player.markSwap)&&(xUI.player.status=="run")){xUI.player.getCount=false};'
+	title='stopwatch test stop'
+>Mark/Reset</button>
+<button
+	onClick='if(xUI.player.status=="stop"){buildCount()};'
+	title='stopwatch test'
+	disabled
+>applyMark</button>
+<input
+	id=waitCount
+	class=spinCtl
+	type=text
+	value='3'
+><input
+	id=timerCount
+	type=checkbox
+	onChange='xUI.player.wait=(this.checked)?document.getElementById("waitCount").value*1000:0;'
+>count
+<input
+	type=checkbox
+	onChange='xUI.player.loop=(this.checked)?true:false;'
+>loop
+<input
+	id=swapButtonAssign
+	type=checkbox
+	onChange='xUI.player.markSwap=(this.checked)?true:false;document.getElementById("timerSwitchPrm").innerHTML=(this.checked)?"START/Mark":"START/STOP";document.getElementById("timerSwitchSub").innerHTML=(this.checked)?"STOP/Reset":"Mark/Reset";'
+	title='change butonn function assignment'
+>mark
+<input
+	id=timerStandbyPositionStart
+	type=checkbox
+	onChange='xUI.player.standbyStart=(this.checked)?true:false;'
+	title='set standby-frame start'
+>standby
+</span>
+</div>
+<!-- ストップウオッチUIパネル -->
+
+
+
 <!-- メモ編集エリア　画面表示のみ　印刷時はシートヘッダ上に別表示-->
 	<div id=memoArea class=xpst>
 		<div id=memo_header >
@@ -3705,6 +3826,639 @@ duration :
 	<div class=application_status id=app_status><br></div>
 <!--  アプリケーション内　共用 1行ステータス表示エリア　-->
 </div>
+
+<!-- 以上UIパネル部分 　以下はxMapUI -->
+
+<div class=xmap>
+	<div class=headerTool>
+  		<div id="xmapScrollSpaceHd" class="screenSpace">
+  		</div>
+ 	</div>
+<!-- ここまで印刷時に非表示　-->
+<!-- Map ブラウザスケッチ-->
+<div>
+<hr>
+<!-- ナビゲートメニューは操作パネルへ移動　必須でない
+<div
+    id=unitsNavigator
+    class='navigator'
+    style='text-align:right;vertical-align:middle;'
+>
+    <span class=note >
+    (ナビゲータメニューを配置 - 全カット見えるのは管理者のみ 作業者は自分の手元のカット袋のみが見える)
+    </span>
+    <button title='前のカット袋へ'
+    >◀◀        </button><button title='前のカットへ'
+    >◀[C003]    </button> ： <button titel='次のカットへ'
+    >[C005]▶    </button><button title='次のカット袋へ'
+    >▶▶         </button>
+</div>
+<hr>
+<div
+>
+    LINE : 0 (本線) /
+    Stage : 3 原画　/
+    Job : 2 演出検査
+    <span class=note >ここにセレクタが必用　管理ルートが線形管理なので、直線的な（ツリー形式でない）セレクタをつくる　他のラインへの切り替えも考慮</span>
+</div>
+<hr>
+    -->
+
+<table>
+	<tr>
+		<th
+		    id   ='LBL_picuture'
+		    class='LBL'
+		>
+		    picture
+		</th>
+		<th
+		    id ='LBL_SCi'
+            class ='LBL'
+		>
+		    CUT# (time)
+		</th>
+		<th
+		    id ='LBL_note'
+            class ='LBL'
+		>
+		    note.
+		</th>
+	</tr>
+        <tr>
+<td rowspan=2><img class=thumbnail src=./mapEditorTestData/samplePic.png ><br><span class=note>絵コンテのサムネイル<br>２つ以上のコマのあるコンテは縦方向にサムネイルを積む</span></td>
+<td>
+ <a href="javascript:alert('サムネイル切り替え')" title="open XPS">C#004 ( 4+00)</a><br>
+<span class=note >上の段は代表カットを表示する<br>文字サイズは兼用カットと同じで</span>
+</td>
+<td width="640" rowspan=2>☆PAN ↑ [A]→[B]<br>
+☆BOOKあり<br>
+☆入射光<br>
+<span class=note >(カット袋のコメントをここに展開　<br>タイムシートに付くカットのメモではなく「カット袋」のコメント　<br>手描き（イラスト）もサポートする)<br>この場での入力もあったほうが良い</span></td>
+        </tr>
+	<tr>
+<td>
+ <a href="javascript:alert('サムネイル切り替え')" title="open XPS">C#012 (12+00)</a><br>
+ <b>C#014 ( 1+00)</b><br>
+ <a href="javascript:alert('サムネイル切り替え')" title="open XPS">C#020 ( 12+00)</a><br>
+ <a href="javascript:alert('サムネイル切り替え')" title="open XPS">C#304 ( 2+00)</a><br>
+<span class=note >下の段は兼用カットを列挙して表示する<br>兼用カットがなければ空欄<br>カット番号をクリックするとサムネイルが<br>そのカットに切り替わる<br>サムネイルを表示しているカットはボールド体</span>
+</td>
+	</tr>
+	</table>
+
+<div>
+<div><button class=mapButton onClick="chgView('block02')">香盤情報</button> / </div>
+    <div id=block02 style="display:none;">
+	<table width=900>
+<tr>
+	<th width=180>場所</th><th width=180>時刻</th><th width=180>登場人物</th><th width=180>メカ</th><th width=180>プロップ</th>
+</tr>
+<tr>
+	<td>美術設定：かちかちやま中腹</td>
+	<td>午後早く</td>
+	<td>メインキャラ設定：姐さん</td>
+	<td>猟銃</td>
+	<td>荷物,うちわ</td>
+</tr>
+	</table>
+<hr>
+    </div>
+</div>
+<hr>
+<div>
+<button class=mapButton onClick="chgView('block01')">作業進捗</button> /<span class=note>ガントチャート兼用</span>
+</div>
+<div id=block01 style="display:none;">
+<div id=view01 style="display:inline">
+	<table>
+	<tr>
+<th width=72><button class=mapButton onClick="flipView('view01');">(本線)</button></th>
+<th width=72 style="background-color:#888888;">LO</th>
+<th width=72 style="background-color:#eeeeee;">原画</th>
+<th width=72>動画</th>
+<th width=72>SCAN</th>
+<th width=72>PAINT</th>
+<th width=72> </th>
+	</tr>
+	</table></div>
+<div id=view01_alt style="display:none">
+	<table>
+<tr>
+<th width=72><button class=mapButton onClick="flipView('view01');">(本線)</button></th>
+<th width=72>LO</th>
+<th width=72>原画</th>
+<th width=72>動画</th>
+<th width=72>SCAN</th>
+<th width=72>PAINT</th>
+<th width=72> </th>
+    </tr><tr>
+<td>担当</td>
+<td>ねこ</td>
+<td>かもめ</td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+    </tr><tr>
+<td>status</td>
+<td>[ 済 ]</td>
+<td>(検査中)</td>
+<td>--</td>
+<td>--</td>
+<td>--</td>
+<td>--</td>
+    </tr><tr>
+<td>check</td>
+<td>UP:02/20 21:34<br>演出:02/24 15:32<br>監督:02/25 10:02<br>作監:02/25 17:50 </td>
+<td>UP:02/20 21:34<br>演出:02/24 15:32<br></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+    </tr><tr>
+<td>LO</td>
+<td>1</td>
+<td>--</td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+    </tr><tr>
+<td>BG原図</td>
+<td>1</td>
+<td>--</td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+    </tr><tr>
+<td>A</td>
+<td>3</td>
+<td>3</td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+    </tr><tr>
+<td>B</td>
+<td>1</td>
+<td>1</td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+    </tr><tr>
+<td>C</td>
+<td>2</td>
+<td>16</td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+    </tr><tr>
+<td>D</td>
+<td>8</td>
+<td>8</td>
+<td></td>
+<td></td>
+<td></td>
+<td></td></tr><tr>
+<td>合計</td>
+<td>--</td>
+<td>28</td>
+<td></td>
+<td></td>
+<td></td>
+<td></td></tr></table></div><div id=view02 style="display:inline"><table><tr>
+<th width=72><button class=mapButton onClick="flipView('view02');">(美術)</button></th>
+<th width=72 style="background-color:#888888;">LO</th>
+<th width=72 style="background-color:#888888;">原図整理</th>
+<th width=72 style="background-color:#888888;">美術</th>
+<th width=72 style="background-color:#eeeeee;">SCAN</th>
+<th width=72>色調整</th>
+<th width=72> </th></tr></table></div><div id=view02_alt style="display:none"><table><tr>
+<th width=72><button class=mapButton onClick="flipView('view02');">(美術)</button></th>
+<th width=72 style="color:#8888ff;">LO</th>
+<th width=72>原図整理</th>
+<th width=72>美術</th>
+<th width=72>SCAN</th>
+<th width=72>色調整</th>
+<th width=72> </th>
+    </tr><tr>
+<td>担当</td>
+<td style="color:#8888ff;">ねこ</td>
+<td>スジクロギンポ</td>
+<td>サバ</td>
+<td>サバ</td>
+<td></td>
+<td></td>
+    </tr><tr>
+<td>status</td>
+<td style="color:#8888ff;">[ 済 ]</td>
+<td>[ 済 ]</td>
+<td>[ 済 ]</td>
+<td>(作業中)</td>
+<td>--</td>
+<td>--</td>
+</tr><tr><td>check</td>
+<td style="color:#8888ff;">UP:02/20 21:34<br>演出:02/24 15:32<br>監督:02/25 10:02<br>作監:02/25 17:50 </td>
+<td>UP:02/27 21:34<br>美監:02/28 15:32<br></td>
+<td>UP:02/28 20:45</td>
+<td></td><td></td>
+<td></td></tr></table></div><div id=view03 style="display:inline"><table><tr>
+<th width=72><button class=mapButton onClick="flipView('view03');">(3D-CGI)</button></th>
+<th width=72 style="background-color:#888888;">LO</th>
+<th width=72 style="background-color:#888888;">セットアップ</th>
+<th width=72 style="background-color:#888888;">モーション</th>
+<th width=72 style="background-color:#eeeeee;">マテリアル</th>
+<th width=72>ライティング</th>
+<th width=72>レンダリング</th>
+    </tr></table></div><div id=view03_alt style="display:none">
+	<table>
+　<tr>
+<th width=72><button class=mapButton onClick="flipView('view03');">(3D-CGI)</button></th>
+<th width=72 style="color:#8888ff;">LO</th>
+<th width=72>セットアップ</th>
+<th width=72>モーション</th>
+<th width=72>マテリアル</th>
+<th width=72>ライティング</th>
+<th width=72>レンダリング</th>
+    </tr><tr>
+<td>担当</td>
+<td style="color:#8888ff;">ねこ</td>
+<td>ブンチョウ</td>
+<td>カケス</td>
+<td>ハイタカ</td>
+<td></td>
+<td></td>
+    </tr><tr>
+<td>status</td>
+<td style="color:#8888ff;">[ 済 ]</td>
+<td>[ 済 ]</td>
+<td>[ 済 ]</td>
+<td>(作業中)</td>
+<td>--</td>
+<td>--</td>
+    </tr><tr>
+<td>check</td>
+<td style="color:#8888ff;">UP:02/20 21:34<br>演出:02/24 15:32<br>監督:02/25 10:02<br>作監:02/25 17:50 </td>
+<td>UP:02/26 15:34<br>チェック:02/26 16:56<br></td>
+<td>UP:02/27 17:45</td>
+<td></td>
+<td></td>
+<td></td>
+    </tr>
+	</table></div>
+
+<hr>
+</div>
+<div>
+<button class=mapButton onClick="chgView('block03')">登録素材</button> / </div>
+<div id=block03 style="display:none;">
+<div>
+<hr>
+
+<button id=tab1bt class=mapButton onClick='switchTab("tab",1,5)' disabled=true>LO</button>
+<button id=tab2bt class=mapButton onClick='switchTab("tab",2,5)'>原画</button>
+<button id=tab3bt class=mapButton onClick='switchTab("tab",3,5)'>動画</button>
+<button id=tab4bt class=mapButton onClick='switchTab("tab",4,5)'>CELL</button>
+<button id=tab5bt class=mapButton onClick='switchTab("tab",5,5)'>美術</button>
+<span class=note >(Stage selector)素材の存在するステージのみが表示される？</span>
+    <div id=tab1 style="display:inline">
+<table width=900>
+<tr>
+    <td style='text-align:left;'> <button class=mapButton onClick='chgView("pic1")'>pictures</button> 登録数 :  5 / 1</td>
+</tr>
+<!-- LO -->
+<tr id=pic1 style="display:inline;">
+<td>
+	<table>
+<tr><th>LO</th></tr>
+<tr><td><img class=thumbnailS src=./mapEditorTestData/sample/LO/BG.png >BG.png</td><tr>
+<tr><td><img class=thumbnailS src=./mapEditorTestData/sample/LO/CELL.png >CELL.png</td><tr>
+<tr><td><img class=thumbnailS src=./mapEditorTestData/sample/LO/CELL+.png >CELL+.png</td><tr>
+<tr><td><img class=thumbnailS src=./mapEditorTestData/sample/LO/ML.png >ML.png</td><tr>
+<tr><td><img class=thumbnailS src=./mapEditorTestData/sample/LO/PAN.png >PAN.png</td><tr>
+	</table>
+</td>
+</tr>
+</table>
+<!-- ----------- -->
+    <div><hr>
+<table width=900>
+<tr><td style='text-align:left;'><button class=mapButton onClick='chgView("camLO")'>camerawork</button> 2 / 1 </td></tr>
+<tr id=camLO  style="display:none">
+<td>
+	<table width=100%>
+<tr><th width=100%>PAN</th></tr>
+<tr><td>A : 10FLD4S <span class=note>(カメラワーク記述のダンプ)</span></td></tr>
+<tr><td>B : 0N <span class=note>ダンプ表示は順次グラフィックと置きかえる</span></td></tr>
+	</table>
+</td>
+</tr>
+</table>
+
+    </div>
+    <div><hr>
+<table width=900>
+<tr><td style='text-align:left;'><button class=mapButton onClick='chgView("sndLO")'>sound</button> 1 / 1 </td></tr>
+<tr id=sndLO  style="display:none">
+<td>
+	<table width=100%>
+<tr><th>dialog</th></tr>
+<tr><td>姐さん「あぢぢぢ…」</td></tr>
+	</table>
+</td>
+</tr>
+</table>
+    </div>
+    <div><hr>
+<table width=900>
+<tr><td style='text-align:left;'><button class=mapButton onClick='flipView("efLO")'>effect</button> 1 / 1 </td></tr>
+<tr id=efLO  style="display:none">
+<td>
+	<table width=100%>
+<tr><th>入射光</th></tr>
+<tr><th width=20%>＊</th><td>入射光エフェクト　右上から画面中央へ<span class=note>(エフェクト記述のダンプ)</span></td></tr>
+	</table>
+</td>
+</tr>
+</table>
+    </div>
+    </div>
+    <div id=tab2 style="display:none">
+<table width=900>
+<tr>
+    <td style='text-align:left;'><button class=mapButton onClick='flipView("pic2")'>pictures</button> 登録数 :  7 / 3</td>
+</tr>
+<tr id=pic2 style="display:inline;">
+<td>
+	<table>
+<tr><th>A</th><th>B</th><th>C</th><tr>
+<tr><td><img src=./mapEditorTestData/sample/KD/A001.png class=thumbnailS></td><td><img src=./mapEditorTestData/sample/KD/B001.png class=thumbnailS></td><td><img src=./mapEditorTestData/sample/KD/C001.png class=thumbnailS></td><tr>
+<tr><td> </td><td><img src=./mapEditorTestData/sample/KD/B001+.png class=thumbnailS></td><td></td><tr>
+<tr><td> </td><td><img src=./mapEditorTestData/sample/KD/B002.png class=thumbnailS></td><td></td><tr>
+<tr><td> </td><td><img src=./mapEditorTestData/sample/KD/B002+.png class=thumbnailS></td><td></td><tr>
+<tr><td> </td><td><img src=./mapEditorTestData/sample/KD/B002○.png class=thumbnailS></td><td></td><tr>
+	</table>
+</td>
+</tr>
+</table>
+
+<!-- ----------- -->
+    <div><hr>
+<table width=900>
+<tr><td style='text-align:left;'><button class=mapButton onClick='chgView("camKD")'>camerawork</button> 2 / 1 </td></tr>
+<tr id=camKD  style="display:none">
+<td>
+	<table>
+<tr><th width=100%>PAN</th></tr>
+<tr><td>A : 10FLD4S <span class=note>(カメラワーク記述のダンプ)</span></td></tr>
+<tr><td>B : 0N <span class=note>ダンプ表示は順次グラフィックと置きかえる</span></td></tr>
+	</table>
+</td>
+</tr>
+</table>
+
+    </div>
+    <div><hr>
+<table width=900>
+<tr><td style='text-align:left;'><button class=mapButton onClick='chgView("sndKD")'>sound</button> 1 / 1 </td></tr>
+<tr id=sndKD  style="display:none">
+<td>
+	<table width=100%>
+<tr><th>dialog</th></tr>
+<tr><td>姐さん「あぢぢぢ…」</td></tr>
+	</table>
+</td>
+</tr>
+</table>
+    </div>
+    <div><hr>
+<table width=900>
+<tr><td style='text-align:left;'><button class=mapButton onClick='flipView("efKD")'>effect</button> 1 / 1 </td></tr>
+<tr id=efKD  style="display:none">
+<td>
+	<table width=100%>
+<tr><th>入射光</th></tr>
+<tr><th width=20%>＊</th><td>入射光エフェクト　右上から画面中央へ<span class=note>(エフェクト記述のダンプ)</span></td></tr>
+	</table>
+</td>
+</tr>
+</tr>
+</table>
+    </div>
+    </div>
+    <div id=tab3 style="display:none">
+<table width=900>
+<tr>
+    <td style='text-align:left;'><button class=mapButton onClick='chgView("pic3")'>pictures</button> 登録数 : 10 / 3</td>
+</tr>
+
+<tr id=pic3 style="display:inline;">
+<td>
+	<table>
+<tr><th>A</th><th>B</th><th>C</th><tr>
+<tr><td><img src=./mapEditorTestData/sample/AD/A/A001.png class=thumbnailS></td><td><img src=./mapEditorTestData/sample/AD/B/B001.png class=thumbnailS></td><td><img src=./mapEditorTestData/sample/AD/C/C001.png class=thumbnailS></td><tr>
+<tr><td></td><td><img src=./mapEditorTestData/sample/AD/B/B002.png class=thumbnailS></td><td></td><tr>
+<tr><td></td><td><img src=./mapEditorTestData/sample/AD/B/B003.png class=thumbnailS></td><td></td><tr>
+<tr><td></td><td><img src=./mapEditorTestData/sample/AD/B/B004.png class=thumbnailS></td><td></td><tr>
+<tr><td></td><td><img src=./mapEditorTestData/sample/AD/B/B005.png class=thumbnailS></td><td></td><tr>
+<tr><td></td><td><img src=./mapEditorTestData/sample/AD/B/B006.png class=thumbnailS></td><td></td><tr>
+<tr><td></td><td><img src=./mapEditorTestData/sample/AD/B/B007.png class=thumbnailS></td><td></td><tr>
+<tr><td></td><td><img src=./mapEditorTestData/sample/AD/B/B008.png class=thumbnailS></td><td></td><tr>
+	</table>
+</td>
+</tr>
+</table>
+
+<!-- ----------- -->
+    <div><hr>
+<table width=900>
+<tr><td style='text-align:left;'><button class=mapButton onClick='chgView("camAD")'>camerawork</button> 2 / 1 </td></tr>
+<tr id=camAD  style="display:none">
+<td>
+	<table>
+<tr><th width=100%>PAN</th></tr>
+<tr><td>A : 10FLD4S <span class=note>(カメラワーク記述のダンプ)</span></td></tr>
+<tr><td>B : 0N <span class=note>ダンプ表示は順次グラフィックと置きかえる</span></td></tr>
+	</table>
+</td>
+</tr>
+</table>
+
+    </div>
+    <div><hr>
+<table width=900>
+<tr><td style='text-align:left;'><button class=mapButton onClick='chgView("sndAD")'>sound</button> 1 / 1 </td></tr>
+<tr id=sndAD  style="display:none">
+<td>
+	<table width=100%>
+<tr><th>dialog</th></tr>
+<tr><td>姐さん「あぢぢぢ…」</td></tr>
+	</table>
+</td>
+</tr>
+</table>
+    </div>
+    <div><hr>
+<table width=900>
+<tr><td style='text-align:left;'><button class=mapButton onClick='flipView("efAD")'>effect</button> 1 / 1 </td></tr>
+<tr id=efAD  style="display:none">
+<td>
+	<table width=100%>
+<tr><th>入射光</th></tr>
+<tr><th width=20%>＊</th><td>入射光エフェクト　右上から画面中央へ<span class=note>(エフェクト記述のダンプ)</span></td></tr>
+	</table>
+</td>
+</tr>
+<tr id=view12_alt style="display:inline">
+</tr>
+</table>
+    </div>
+    </div>
+    <div id=tab4 style="display:none">
+
+<table width=900>
+<tr>
+    <td style='text-align:left;'><button class=mapButton onClick='flipView("pic4")'>pictures</button> 登録数 : 10 / 3</td>
+</tr>
+
+<tr id=pic4 style="display:inline;">
+<td>
+	<table>
+<tr><th>A</th><th>B</th><th>C</th><tr>
+<tr><td><img src=./mapEditorTestData/sample/CELL/A/A001.png class=thumbnailS></td><td><img src=./mapEditorTestData/sample/CELL/B/B001.png class=thumbnailS></td><td><img src=./mapEditorTestData/sample/CELL/C/C001.png class=thumbnailS></td><tr>
+<tr><td></td><td><img src=./mapEditorTestData/sample/CELL/B/B002.png class=thumbnailS></td><td></td><tr>
+<tr><td></td><td><img src=./mapEditorTestData/sample/CELL/B/B003.png class=thumbnailS></td><td></td><tr>
+<tr><td></td><td><img src=./mapEditorTestData/sample/CELL/B/B004.png class=thumbnailS></td><td></td><tr>
+<tr><td></td><td><img src=./mapEditorTestData/sample/CELL/B/B005.png class=thumbnailS></td><td></td><tr>
+<tr><td></td><td><img src=./mapEditorTestData/sample/CELL/B/B006.png class=thumbnailS></td><td></td><tr>
+<tr><td></td><td><img src=./mapEditorTestData/sample/CELL/B/B007.png class=thumbnailS></td><td></td><tr>
+<tr><td></td><td><img src=./mapEditorTestData/sample/CELL/B/B008.png class=thumbnailS></td><td></td><tr>
+	</table>
+</td>
+</tr>
+<!-- -->
+</table>
+
+<!-- ----------- -->
+    <div><hr>
+<table width=900>
+<tr><td style='text-align:left;'><button class=mapButton onClick='chgView("camCELL")'>camerawork</button> 2 / 1 </td></tr>
+<tr id=camCELL  style="display:none">
+<td>
+	<table>
+<tr><th width=100%>PAN</th></tr>
+<tr><td>A : 10FLD4S <span class=note>(カメラワーク記述のダンプ)</span></td></tr>
+<tr><td>B : 0N <span class=note>ダンプ表示は順次グラフィックと置きかえる</span></td></tr>
+	</table>
+</td>
+</tr>
+</table>
+
+    </div>
+    <div><hr>
+<table width=900>
+<tr><td style='text-align:left;'><button class=mapButton onClick='chgView("sndCELL")'>sound</button> 1 / 1 </td></tr>
+<tr id=sndCELL  style="display:none">
+<td>
+	<table width=100%>
+<tr><th>dialog</th></tr>
+<tr><td>姐さん「あぢぢぢ…」</td></tr>
+	</table>
+</td>
+</tr>
+</table>
+    </div>
+    <div><hr>
+<table width=900>
+<tr><td style='text-align:left;'><button class=mapButton onClick='flipView("efCELL")'>effect</button> 1 / 1 </td></tr>
+<tr id=efCELL  style="display:none">
+<td>
+	<table width=100%>
+<tr><th>入射光</th></tr>
+<tr><th width=20%>＊</th><td>入射光エフェクト　右上から画面中央へ<span class=note>(エフェクト記述のダンプ)</span></td></tr>
+	</table>
+</td>
+</tr>
+</tr>
+</table>
+    </div>
+    </div>
+    <div id=tab5 style="display:none">
+<table width=900>
+<tr>
+    <td style='text-align:left;'><button class=mapButton onClick='flipView("pic5")'>pictures</button> 登録数 :  1 / 1</td>
+</tr>
+<tr id=pic5 style="display:inline">
+<td>
+	<table>
+<tr><th>背景</th></tr>
+<tr><td><img src=./mapEditorTestData/sample/BG/kt00c004BG.png class=thumbnailS>BG.png</td><tr>
+	</table>
+</td>
+</tr>
+</table>
+<!-- ----------- -->
+    <div><hr>
+<table width=900>
+<tr><td style='text-align:left;'><button class=mapButton onClick='chgView("camBG")'>camerawork</button> 2 / 1 </td></tr>
+<tr id=camBG  style="display:none">
+<td>
+	<table>
+<tr><th width=100%>PAN</th></tr>
+<tr><td>A : 10FLD4S <span class=note>(カメラワーク記述のダンプ)</span></td></tr>
+<tr><td>B : 0N <span class=note>ダンプ表示は順次グラフィックと置きかえる</span></td></tr>
+	</table>
+</td>
+</tr>
+</table>
+
+    </div>
+    <div><hr>
+<table width=900>
+<tr><td style='text-align:left;'><button class=mapButton onClick='chgView("sndBG")'>sound</button> 1 / 1 </td></tr>
+<tr id=sndBG  style="display:none">
+<td>
+	<table width=100%>
+<tr><th>dialog</th></tr>
+<tr><td>姐さん「あぢぢぢ…」</td></tr>
+	</table>
+</td>
+</tr>
+</table>
+    </div>
+    <div><hr>
+<table width=900>
+<tr><td style='text-align:left;'><button class=mapButton onClick='flipView("efBG")'>effect</button> 1 / 1 </td></tr>
+<tr id=efBG  style="display:none">
+<td>
+	<table width=100%>
+<tr><th>入射光</th></tr>
+<tr><th width=20%>＊</th><td>入射光エフェクト　右上から画面中央へ<span class=note>(エフェクト記述のダンプ)</span></td></tr>
+	</table>
+</td>
+</tr>
+</table>
+    </div>
+    </div>
+
+<!--
+<tr><th>3D-CGI</th></tr>
+<tr>
+<td></td>
+</tr>
+-->
+</div>
+</div>
+<!-- Map ブラウザスケッチ-->
+
+</div>
+</div>
+<!-- 以上xMapUI部分 　以下は　タイムシートUI -->
+
 <div id=sheet_view class=xpst>
 	<div class=headerTool>
   		<div id="xpstScrollSpaceHd" class="screenSpace">
@@ -3731,22 +4485,370 @@ index.html ,v 1.7 2018/03/05  support@u-at.net <br />
 <br>
 		</div><hr>
 <!-- <form> -->
-    <textarea id="startupContent"  ></textarea>
+    <textarea id="startupContent"  >nasMAP-FILE 1.9x
+# 1.9xは試験用
+##CREATE_USER=kiyo
+##UPDATE_USER=kiyo
+##CREATE_TIME=2016/1/31 18:45:36
+##UPDATE_TIME=2016/4/14 8:20:27
+
+##TITLE=かちかちやま
+##SUB_TITLE=チュートリアルデータ
+##OPUS=00
+##RATE=24FPS
+##FRAME_RATE=24
+##STANDERD_FRAME=AJA.Fr01
+##STANDERD_PEG=ACME
+##BASE_RESOLUTION=200dpi
+
+# #SCENE=シーン記述はなくても良い　その場合は""で補われる
+##CUT=4
+##INHERIT=4,12
+#================================================================
+#	本線から外れた管理単位は複製が作成されるそれを識別する情報が必要
+#	払いだした本線（トランク）側の記述とチェックアウトされたデータの整合が必要なので払い出し側に対抗記述を記載
+#	現在のラインID（識別名と数値インデックス）を記録してトランクからの距離を出すこと
+#	発行記録が開始された後はラインの宣言が行われるまでの間は
+#	本線側
+##LINE_ID=(本線):0
+##currentStatus=Fixed
+##CHECK_OUT=(背景美術):1 / 2016.01.31 18:45:36 / kiyo@nekomataya.info;
+#	トランクから離れたタイミングを記述
+#  	##CHECK_IN=(背景美術):1 / 2016.02.23 16:21:32 / kiyo@nekomataya.info;	マージ情報
+#	##CHECK_OUT=(3DAnimation):2 / 2016.02.12 09:15:02 / kiyo@nekomataya.info;　列記
+#
+#	支線側:1
+#	##LINE_ID=(背景美術):1	こんな感じ
+#	##CHECK_OUT=2016.01.31 18:45:36/kiyo@nekomataya.info;	トランクから離れたタイミングを記述（本データ内に同内容の記述あり）
+#	支線側:2
+#	##LINE_ID=(3DAnimation):2	こんな感じ
+#	##CHECK_OUT=(3DAnimation):2 / 2016.02.12 09:15:02 / kiyo@nekomataya.info;
+#
+#	ブランチがブランチを出す場合は以下
+#	ブランチ側では必ずID>1 || CHECK_INが一つしかない>記述が発生した時点でラインが収束する
+#	支線側:
+#	##LINE_ID=(3DAnimation):2
+#	##CHECK_OUT=(3DAnimation):2 / 2016.02.12 09:15:02 / kiyo@nekomataya.info;
+#	##CHECK_OUT=(3DTexture):2:2 / 2016.02.13 12:53:11 / kiyo@nekomataya.info;←この分岐を本線は知らない
+#	＊本線の知らない分岐は、支線のコミット又はマージの際に本線側へ通知される
+#	＊支支線がフィックスするまで、支線はフィックしない。
+#	支支線側
+#	##LINE_ID=(3DTexture):2:2
+#	##CHECK_OUT=(3DTexture):2:2 / 2016.02.13 12:53:11 / kiyo@nekomataya.info;←本線の知らない分岐はコミット時に通知
+#----------------------------------------------------------------
+#	分岐時のグループ更新制限を列挙 この制限記述は不要になった　2016
+# #DENY=
+# #ALLOW=
+#----------------------------------------------------------------
+##currentStatus=Fixed
+#------ここまでの記述はライン記述開始に先立って行なわれること
+##<(本線)>
+##checkIn=kiyo
+##UPDATE_USER=kiyo
+##CREATE_TIME=2016/1/31 18:45:36
+##UPDATE_TIME=2016/4/14 8:20:27
+#======== SCIinfo Object Elements ===========
+#	この要素（アセット）は全制作工程で利用可能でなくてはならない
+#	制作のスターターオブジェクトである特殊なオブジェクトとなる
+#	所属は　ライン<(本線)>ステージ[init]ジョブは[[SCIinfo]]
+#	全てのステージの前に設定
+#	ステータス類は一切省略（全部親Mapを継承）
+#	_EXTRA_ の場合はグループ・エレメントの内容が空の場合もある
+#	通常は絵コンテの内容がそのまま格納される
+#	カットにつき画像１点シート１点以上
+#	ダイアログ・ト書き・等の情報も格納される
+##[init]
+##[[SCInfo]]
+[timesheet	xps]
+timesheet	s-c4	"./kachi#00_s-c004.xps"
+[picture	cell]
+picture s-c4-01	"./sample/_SCI/samplePic.png"
+
+[description	text]
+description	s-c4
+#----------------------------------------------------------------
+	カメラ背中側から
+	PAN↑UP
+	立てかけた猟銃　その他　猟師さん風荷物など見える
+	
+	バタバタとうちわであおぐ
+#----------------------------------------------------------------
+[台詞	SOUND]
+#----------------------------------------------------------------
+姐さん（セリフ　意味不明にブツブツと続く…）「あぢあぢ　うぇあおんがごげ」
+#----------------------------------------------------------------
+[time	text]
+timeText	s-c4	4+0
+##[LO]
+##[[作画打合せ]id:0]
+##created=2016.01.31 18:45:36/kiyo@nekomataya.info;
+##updated=2016.01.31 19:05:00/kiyo@nekomataya.info;
+##manager=kiyo@nekomataya.info;
+##worker=cat@animal.example.com;
+##slipNumber=0001020304087;
+##[[作画打合せ]]/
+##[[レイアウト]id:1]
+##created=2016.02.05 21:00:15/cat@animalexample.com;
+##updated=2016.02.06 17:23:34/cat@animalexample.com;
+##
+#================================================================
+#	ブラケットで各エントリー第一階層を記述
+#	空行は無視
+#	[ グループID	グループカテゴリ	グループに関する幾何情報(有れば) ]
+#
+#----------------------------------------------------------------
+[LO	CELL	]
+LO	BG	"./sample/LO/BG.png"
+LO	A1_B	"./sample/LO/CELL.png"
+LO	ML	"./sample/LO/ML.png"
+LO	PAN	"./sample/LO/PAN.png"
+#================================================================
+[PAN	CAMERAWORK　]
+		size=252mm,142.875mm
+		position=0mm,0mm,0mm
+		offset=0mm,104.875mm
+		rotation=0d
+		comment=10in/StanderdFrame/16:9/HDTV
+# 作品データの継承があるのでこのサンプルでは本来は記述不要
+#----------------------------------------------------------------
+PAN	<START>
+		position=0mm,-71mm
+		positionTiming=0, 0, 0, 0 #リニア相当 タイミングパラメタは単位なし
+
+PAN	<END>
+		position=0mm,0mm
+
+##[[レイアウト]]/
+##[[演出検査]id:2]
+##created=2016.02.7 13:00:30 / dog@animalexample.com;
+##updated=2016.02.7 17:12:45 / dog@animalexample.com;
+##
+[LO	CELL	]
+LO	A1_B+	"./sample/LO/CELL+.png"
+##[[演出検査]]/
+##[[監督チェック]id:3]
+##created=2016.02.7 17:12:45 / lion@animalexample.com;
+##updated=2016.02.7 17:12:45 / lion@animalexample.com;
+##
+##[[監督チェック]]/
+##[[作監チェック]id:4]
+##created=2016.02.09 19:45:12 / iwashi@fish.example.com;
+##updated=2016.02.10 12:30:00 / iwashi@fish.example.com;
+##
+##[[作監チェック]]/
+##[LO]/
+##[KD]
+##[[作画打合せ]id:0]
+##created=2016.01.31 18:45:36/kiyo@nekomataya.info;
+##updated=2016.02.10 17:12:67/cat@animal.example.com;
+##manager=kiyo@nekomataya.info;
+##worker=cat@animal.example.com;
+##slipNumber=0001020304087;
+##
+##[[作画打合せ]]/
+##[[原画]id:1]
+##created=2016.02.10 12:00:00/cat@animal.example.com;
+##updated=2016.02.17 12:00:00/cat@animal.example.com;
+##
+[A]
+A	A-1	"./sample/KD/A001.png"
+#
+[B]
+B	B-1	"./sample/KD/B001.png"
+B	B-2	"./sample/KD/B002.png"
+B	B-2◯	"./sample/KD/B002◯.png"
+#
+[C]
+C	C-1	"./sample/KD/C001.png"
+#
+##[[原画]]/
+##[[原画演出チェック]id:2]
+##created=2016.02.21 16:32:22/dog@animal.example.com;
+##updated=2016.02.21 16:45:23/dog@animal.example.com;
+##
+##[[原画演出チェック]]/
+##[[原画作監チェック]id:3]
+##created=2016.02.21 20:21:45/iwashi@fish.example.com;
+##updated=2016.02.21 20:29:54/iwashi@fish.example.com;
+##
+[B]
+B	B-1+	"./sample/KD/B001+.png"
+B	B-2+	"./sample/KD/B002+.png"
+##[[原画作監チェック]]/
+##[KD]/
+##[AD]
+##[[動画発注]]
+##created=2016.02.01 ::/@.example.com;
+##updated=2016.02.01 ::/@.example.com;
+##manager=kiyo@nekomataya.info;
+##worker=cat@animal.example.com;
+##slipNumber=0001020304087;
+##
+#==============
+#実質的に動画発注時に打合せは存在しないことが多い　ただし伝票は必ず発行する
+#他のイベントがない場合でも、「発注」イベントを登録する
+##[[動画発注]]/
+##[[動画]]
+##created=2016.02.1 ::/@.example.com;
+##updated=2016.02.1 ::/@.example.com;
+##
+#================================================================
+[A	CELL	841.32,841.32]
+#----------------------------------------------------------------
+A	A-1	"./sample/AD/A/A001.png",640,480	"第四フィールドにデータがあればコメント /無ければ無視"
+#================================================================
+[B	CELL	841.32,841.32]
+#----------------------------------------------------------------
+B	B-1	"./sample/AD/B/B001.png"
+B	B-2	"./sample/AD/B/B002.png"
+B	B-3	"./sample/AD/B/B003.png"
+B	B-4	"./sample/AD/B/B004.png"
+B	B-5	"./sample/AD/B/B005.png"
+B	B-6	"./sample/AD/B/B006.png"
+B	B-7	"./sample/AD/B/B007.png"
+B	B-8	"./sample/AD/B/B008.png"	end
+#================================================================
+[C	CELL	]
+#----------------------------------------------------------------
+C	C-1
+		path	=	"./sample/AD/C/C001.png"
+		size	=	841.23pt,841.23pt
+		offset	=	321pt,243.27890pt
+		rotation=	0.000d
+		comment	=	"手書きの場合はこの記法の方を推奨"
+
+#================================================================
+##[[動画]]/
+##[[動画検査]]
+##created=2016.02.1 ::/@.example.com;
+##updated=2016.02.1 ::/@.example.com;
+##
+##[[動画検査]]/
+##[AD]/
+##[CC]
+##[[色指定発注]]
+##created=2016.02.1 ::/@.example.com;
+##updated=2016.02.1 ::/@.example.com;
+##manager=kiyo@nekomataya.info;
+##worker=@.example.com;
+##slipNumber=;
+##
+##[[色指定発注]]/
+##[[色指定]]
+##created=2016.02.1 ::/@.example.com;
+##updated=2016.02.1 ::/@.example.com;
+##
+##[[色指定]]/
+##[CC]/
+
+##[PAINT]
+##[[彩色発注]id:0]
+##created=2016.02.1 ::/@.example.com;
+##updated=2016.02.1 ::/@.example.com;
+##manager=kiyo@nekomataya.info;
+##worker=@.example.com;
+##slipNumber=;
+#
+##[[彩色発注]]/
+##[[彩色]]
+##created=2016.02.1 ::/@.example.com;
+##updated=2016.02.1 ::/@.example.com;
+#
+#================================================================
+[Blank-CELL	SYSTEM]
+Blank	X	"./_blank/blank.tif"	デフォルトのカラセル
+Blank	D-X	"./_blank/D_blank.tif"	ブランクセルはブランクフォルダへ
+
+#	一般行はエントリーレコード
+#	第一フィールドは所属するグループID
+
+#================================================================
+[A	CELL	841.32,841.32]
+#----------------------------------------------------------------
+A	A-1	"./sample/CELL/A/A001.png",841.32,841.32	"第四フィールドにデータがあればコメント /無ければ無視/同じ値なら本来は記述不要"
+#================================================================
+[B	CELL	841.32,841.32]
+#----------------------------------------------------------------
+B	B-1	"./sample/CELL/B/B001.png"	"最低限のセル記述-寸法はグループの代表値を継承"
+B	B-2	"./sample/CELL/B/B002.png"	,640,483	"同グループ内で寸法の違うセルを許容します。"
+B	B-3	"./sample/CELL/B/B003.png"	,640,480,321,243.2789,-0.13d	"オフセットを同時指定可能"
+B	B-4	"./sample/CELL/B/B004.png"
+B	B-5	"./sample/CELL/B/B005.png"
+B	B-6	"./sample/CELL/B/B006.png"
+B	B-7	"./sample/CELL/B/B007.png"
+B	B-8	"./sample/CELL/B/B008.png"	end
+#================================================================
+[C	CELL	]
+#----------------------------------------------------------------
+C	C-1
+		path	=	"./sample/CELL/C/C001.png"
+		size	=	841.23pt,841.23pt
+		offset	=	420.615pt,420.615pt
+		rotation=	0.000d
+		comment	=	"手書きの場合はこの記法の方を推奨"
+
+#================================================================
+##[[彩色]]/
+##[PAINT]/
+##<(本線)>/
+##
+##<(背景美術)>
+#================================================================
+#	別ラインへグロス発注などの際に伝票が共有されないこともあるので注意
+#	切り分けでデータを出せるよう配慮が必要
+#
+#================================================================
+##[BG打合せ]
+#================================================================
+#	グロス等で工程全体へ伝票を切る際に伝票を切るためだけの
+#	ステージを設ける必要がある　グロス背景発注などがそれにあたる
+#	作業／打合せ等のイベントがなくてもステージを設ける
+#	この下の例はそのケース　１回めの全体の打合せがその作品のカット全てに転記される
+#================================================================
+##[[BG打合せ]id:0]
+##created=2016.01.31 18:45:36 / kiyo@nekomataya.info;
+##updated=2016.02.08 23:23:23/kiyo@nekomataya.info;
+##manager=kiyo@nekomataya.info;
+##worker=maguro@fish.example.com;
+##slipNumber=09089806743355;
+##[[BG打合せ]]/
+##[BG打合せ]/
+
+##[原図整理]
+##[[原図発注]id:0]
+##created=2016.0. ::/@.example.com;
+##updated=2016.0. ::/@.example.com;
+##manager=kiyo@nekomataya.info;
+##worker=@.example.com;
+#--------------伝票発行を伴わないジョブには伝票番号なし。ただし発注イベントは発生する
+##[[原図発注]]/
+##[[原図整理]id:1]
+##[[原図整理]]/
+##[[美術監督チェック]id:3]
+##[[美術監督チェック]]/
+##[原図整理]
+
+##[背景美術]
+##[[原図発注]id:0]
+##created=2016.0. ::/@.example.com;
+##updated=2016.0. ::/@.example.com;
+##manager=kiyo@nekomataya.info;
+##worker=@.example.com;
+##[[原図発注]]/
+##[[背景美術]id:2]
+##[[背景美術]]/
+##[[美術監督チェック]id:3]
+##[[美術監督チェック]]/
+TITLE/
+##<(背景美術)>/
+##
+[END]
+
+ENDマークの後方は自由記述です
+常にそう</textarea>
     <textarea id="startupReference"></textarea>
 	</div>
 </div>
-<div class=xmap>
-	<div class=headerTool>
-  		<div id="xmapScrollSpaceHd" class="screenSpace">
-  		</div>
- 	</div>
-<!-- ここまで印刷時に非表示　-->
-<hr><br><br><br><br><br><br><br><br><br><br>
-xMap area
-<br><br><br><br><br><br><br><br><br><br><hr>
-
-</div>
-
 
 	<div id='scrollSpaceFt' class='screenSpace'><br></div>
   <!--

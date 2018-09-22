@@ -10,9 +10,9 @@ AdobeScript/Air(Flash)/CGI上で使用するサーバーーローカルファイ
 
 AIR環境にバリエーションが増えているので要注意
 AIRブラウザは
-WIN・Mac・Linux・Andoroid・iOS (一応互換が望まれるが未確認　と言うか完全互換はムリ)
-AdobeExtension上の CSX/CEP　(互換なしプラットフォームが異なる)
-これらの切り分けが必要　特にりまぴんのような全環境対応が望まれるアプリケーション
+WIN・Mac・Linux・Andoroid・iOS (一応互換が望まれるが未確認  と言うか完全互換はムリ)
+AdobeExtension上の CSX/CEP  (互換なしプラットフォームが異なる)
+これらの切り分けが必要  特にりまぴんのような全環境対応が望まれるアプリケーション
 */
 	switch (appHost.platform){
 case "AIR":
@@ -130,7 +130,7 @@ return;
 		fileBox.defaultDir=null; // The default directory location.
 		fileBox.chooserMode=null; // Whether the FileChooser.html window is used as an Open or Save As window.
 		fileBox.fileQueue=null;
-		fileBox.openMode=null;//ファイルモード　saveAndOpen/saveAndOpenDropFile/saveAndOpenArgFile or ""
+		fileBox.openMode=null;//ファイルモード  saveAndOpen/saveAndOpenDropFile/saveAndOpenArgFile or ""
 		fileBox.recentDocuments=new Array();//recentDocumentsStack
 		fileBox.contentText="";//テキストバッファ
 			/**
@@ -140,7 +140,7 @@ return;
 				fileBox.defaultDir = air.File.documentsDirectory;
 			}
 /**
- *recentDocumentにファイルを加えるメソッド　同じファイルがあったら追加しない
+ *recentDocumentにファイルを加えるメソッド  同じファイルがあったら追加しない
  */
 	fileBox.recentDocuments.add=function(myFile){
 //if(dbg){dbgPut("add file :"+this.length +" : "+ this.toString());}
@@ -243,7 +243,7 @@ return;
 					if(myResult){xUI.resetSheet(XPS);//nas_Rmp_Init();
 					}
 					// ここで取得したストリームをそのまま返す
-					document.title=fileBox.currentFile;//ちょと注意　一括変更部分が必要
+					document.title=fileBox.currentFile;//ちょと注意  一括変更部分が必要
 					return myResult;
 				}
 				catch(error)
@@ -282,7 +282,7 @@ return;
 
 /*
  * fileBox.saveContent();
- *	シンプルに内容をカレントファイルに保存する　ダイアログ類は全て省略
+ *	シンプルに内容をカレントファイルに保存する  ダイアログ類は全て省略
  事前にfileBox.contenText .currentFileを設定しておくこと
  */
 	fileBox.saveContent=function(){
@@ -354,7 +354,7 @@ return;
 			}
 
 /*
-複数ファイルを同ロケーションに保存可能なように拡張　20160126
+複数ファイルを同ロケーションに保存可能なように拡張  20160126
 contentを配列で与えると連番で保存
 */
 fileBox.storeOtherExtensionFile=function(content,extsn){
@@ -539,7 +539,7 @@ function setMenu(){
 // mac
 	if (air.NativeApplication.supportsMenu) {
 	application.menu.addEventListener(air.Event.SELECT, selectCommandMenu);
-//元から存在するメニューを削除　または名前を変更して使ってもよい…
+//元から存在するメニューを削除  または名前を変更して使ってもよい…
 if(false){
 application.menu.removeItemAt(1);
 application.menu.removeItemAt(2);
@@ -981,7 +981,7 @@ if(appHost.platform=="CSX"){
 
 
 /*	ファイルハンドリングオブジェクト
-	Adobe機能拡張用　ファイルは暫定的にフルパスのURIフォーム
+	Adobe機能拡張用  ファイルは暫定的にフルパスのURIフォーム
  */
 	var fileBox=new Object();
 
@@ -990,7 +990,7 @@ if(appHost.platform=="CSX"){
 		fileBox.defaultDir=null; // The default directory location.
 		fileBox.chooserMode=null; // Whether the FileChooser.html window is used as an Open or Save As window.
 		fileBox.fileQueue=null;
-		fileBox.openMode=null;//ファイルモード　saveAndOpen/saveAndOpenDropFile/saveAndOpenArgFile or ""
+		fileBox.openMode=null;//ファイルモード  saveAndOpen/saveAndOpenDropFile/saveAndOpenArgFile or ""
 		fileBox.recentDocuments=new Array();//recentDocumentsStack
 		fileBox.contentText="";//テキストバッファ
 			/**
@@ -1005,15 +1005,15 @@ if(appHost.platform=="CSX"){
 }
 			}
 /*
- *recentDocumentにファイルを加えるメソッド　同じファイルがあったら追加しない
+ *recentDocumentにファイルを加えるメソッド  同じファイルがあったら追加しない
 nasで扱うファイルオブジェクトは、読み書きを直接は行わないオブジェクトとして定義する
-ファイルハンドルもない　読み書きの実行は外部のエージェントにデータをまるごと受け渡しする
+ファイルハンドルもない  読み書きの実行は外部のエージェントにデータをまるごと受け渡しする
 プロパティ
 nas.File.body	<本体データ Array パスを分解して配列に格納したもの
 初期化入力は将来的には	String 相対パス、絶対パス、またはURI等のファイルの所在を表す文字列データなんでも
 現状はとりえずURI形式 estkのFileが返すfullNameと同等品
 nas.File.fullName()	URIに整形して返すURIエンコードだよ ようするに元の値を書き出す
-nas.File.fsNama()	ローカルのフルパスに整形して返す　fsName互換　win/mac
+nas.File.fsNama()	ローカルのフルパスに整形して返す  fsName互換  win/mac
 nas.File.relativePath(currentDir)	カレントディレクトリを与えて相対パスを返す relativeURIと同じ
  */
 
@@ -1059,7 +1059,7 @@ if(appHost.os=="Win"){
 if(appHost.platform=="CSX"){
 	var tmpFileName=_Adobe.JSXInterface.call("eval",myEx);
 		if(tmpFileName){
-			return　fileBox.openFile(tmpFileName)　;
+			return  fileBox.openFile(tmpFileName)  ;
 		}else{
 			return false;
 		};
@@ -1164,7 +1164,7 @@ if(appHost.platform=="CSX"){
 
 					// ここで取得したストリームをそのまま返す
 
-					document.title=fileBox.currentFile;//ちょと注意　一括変更部分が必要
+					document.title=fileBox.currentFile;//ちょと注意  一括変更部分が必要
 					return myResult;
 }else{
 //	try{window.__adobe_cep__.evalScript(myEx,function(er){alert(er)})}catch (eR){alert(eR)}
@@ -1184,7 +1184,7 @@ if(appHost.platform=="CSX"){
 					if(myResult){xUI.resetSheet(XPS);//nas_Rmp_Init();
 					}
 					// ここで取得したストリームをそのまま返す
-	//				document.title=fileBox.currentFile.name;//ちょと注意　一括変更部分が必要
+	//				document.title=fileBox.currentFile.name;//ちょと注意  一括変更部分が必要
 					return myResult;
 				});
 }
@@ -1224,7 +1224,7 @@ if(appHost.platform=="CSX"){
 			}
 /*
  * fileBox.saveContent();
- *	シンプルに内容をカレントファイルに保存する　ダイアログ類は全て省略
+ *	シンプルに内容をカレントファイルに保存する  ダイアログ類は全て省略
  事前にfileBox.contenText .currentFileを設定しておくこと
  */
  	fileBox.saveContent=function(){
@@ -1345,7 +1345,7 @@ if(appHost.platform =="CSX"){
 			}
 
 /*
-	別の拡張子でファイル保存を行う仕様を拡張　20160126
+	別の拡張子でファイル保存を行う仕様を拡張  20160126
 	contentを配列で与えた場合一つの保存先に対してコンテンツの数だけ連番を後置して保存する
 */
 
@@ -1357,7 +1357,7 @@ fileBox.storeOtherExtensionFile=function(content,extsn){
 	var myName=xUI.getFileName();
 if(content.length==1){
 	var fileChooser =(fileBox.currentFile instanceof String)? encodeURI(fileBox.currentFile.replace(/\.[^.]*$/,extsn)) : myName+"."+extsn;
-//カレントファイルの拡張子を入れ替えた初期ファイル名を作成　カレントが存在しない場合は"現在のドキュメントから取得"
+//カレントファイルの拡張子を入れ替えた初期ファイル名を作成  カレントが存在しない場合は"現在のドキュメントから取得"
 	var myEx ='var myFile =new File("'+fileChooser+'").saveDlg("'+ "export as "+extsn +'","'+extsn+'");(myFile)? myFile.fullName:false;';
 	fileBox.contentText=content[0];//データが一つならばファイルボックスに本体データをセット
   if(appHost.platform=="CSX"){
@@ -1368,7 +1368,7 @@ if(content.length==1){
   }
 }else{
 	var fileChooser =(fileBox.currentFile instanceof String)? encodeURI(fileBox.currentFile.replace(/\.[^.]*$/,""))+"_[0]."+extsn : myName+"_[0]."+extsn;
-//カレントファイルの拡張子を入れ替えた初期ファイル名を作成　カレントが存在しない場合は"現在のドキュメントから取得"
+//カレントファイルの拡張子を入れ替えた初期ファイル名を作成  カレントが存在しない場合は"現在のドキュメントから取得"
 	var myEx ='var myFolder =new File("'+fileChooser+'").parent.selectDlg("'+ "export as "+extsn +'","'+extsn+'");(myFolder)? myFolder.fullName:false;';
   if(appHost.platform=="CSX"){
   	var myTargetFolder=_Adobe.JSXInterface.call("eval",myEx);
@@ -1561,7 +1561,7 @@ if(typeof localStorage=="undefined"){
 		 }
 		return true;
 	}
-	/** localStorageの場合に呼び出される自動保存　fileBox環境のない場合は何もしない
+	/** localStorageの場合に呼び出される自動保存  fileBox環境のない場合は何もしない
 		短時間に連続して非同期／同期IOを呼び出す可能性があるのでこのメソッドを呼ぶ前にisLocalStorageプロパティを一時的にfalseにすること
 	*/
 	this.autoSave =function(){
@@ -1641,5 +1641,5 @@ Ax["V"]="1234";
  *現在の問題点
  *	remaping-AIRで複数のウインドウを開いた場合はlocalStorage保存ファイルがバッティングするので注意
  *	複数ドキュメントの同時編集をサポートの際には解決しておくこと
- *	というか　AIRでローカルストレージをサポートしてほしい
+ *	というか  AIRでローカルストレージをサポートしてほしい
  */

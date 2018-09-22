@@ -1,35 +1,44 @@
 ﻿/**
     ｘUIにタスクコントローラを設けてバックグラウンド処理をコントロールする
     以下のプロパティを新設
+
+ ■□◀▶◇◆①
     
 */
+
 var startupTaskController=function(){
         xUI.player = {};
     xUI.player.startClick = (new Date()).getTime();
+    xUI.player.stopClick  = xUI.player.startClick;
     xUI.player.status     = 'stop';
     xUI.player.loop       = false;
-    xUI.player.wait       = 0;
+    xUI.player.standbyStart = false;
+    xUI.player.wait       = 10000;
+    xUI.player.keyboard	  = false;
+    xUI.player.markSwap   = false
     xUI.player.waitCount  = 0;
     xUI.player.countStack = [];
+    xUI.player.countAnimation=['■■■■#■■■■','□■■■#■■■■','□□■■#■■■■','□□□■#■■■■','□□□□#■■■■','□□□□#□■■■','□□□□#□□■■','□□□□#□□□■','□□□□#□□□□','＝＝＝＝③＝＝＝＝','＝＝＝＝②＝＝＝＝','ーーーー◆ーーーー']
     
-    xUI.player.start = function(waitClocks){
+    xUI.player.start = function(clickClock){
         xUI.player.startClick = (new Date()).getTime();
-        waitClocks = (isNaN(waitClocks))? 0:parseInt(waitClocks);
+        if(clickClock)xUI.player.startClick =clickClock;
+//        waitClocks = (isNaN(waitClocks))? 0:parseInt(waitClocks);
         xUI.selectBackup      = xUI.Select.slice();
         xUI.selectionBackup   = xUI.Selection.slice();
         xUI.selection();//バックアップとってクリア
-        xUI.player.wait       = (waitClocks)?  waitClocks : 0;
         xUI.player.waitCount     = parseInt(xUI.player.wait);
         xUI.player.currentFrame  = 0 ;//処理中のフレーム
-        xUI.player.getCount      = false ;//フレーム取得フラグ
-        xUI.player.countStack    = [];//clear data stack
+        xUI.player.getCount      = false ;//フレーム取得フラグリセット
+//        xUI.player.countStack    = [];//スタート時点の自動クリアを行わない　明示的なクリアまでマークと共に保持する
         xUI.player.status        = 'run';
-        console.log(xUI.player.wait);
-        console.log(waitClocks);
     };
-    xUI.player.stop      = function(){
+    xUI.player.stop      = function(clickClock){
+        xUI.player.stopClick = (new Date()).getTime();
         xUI.player.status   = 'stop';
+        if(clickClock)xUI.player.stopClick =clickClock;
         xUI.selection(add(xUI.Select,xUI.selectionBackup));
+        if(this.waitCount !=0 ){ this.waitCount=0;if(document.getElementById("timerDisplay").innerHTML) document.getElementById("timerDisplay").innerHTML='';}
     };
     
       xUI.taskQueue = [];//タスク待ち配列
@@ -99,23 +108,29 @@ xUI.tskWatcher = function(){
     var frms = Math.floor((ClockClicks - (xUI.player.startClick+xUI.player.wait)) / (1000 / xUI.XPS.framerate));
 //play head move
     if(xUI.player.status  ==  'run'){
-//wait
       if(xUI.player.waitCount > 0){
-        var count = xUI.player.wait-(ClockClicks-xUI.player.startClick);
-//        var countString = ([Math.floor (xUI.player.waitCount / 1000),(xUI.player.waitCount%1000)/100]).join('_');
+    	//waiting
+        var count = xUI.player.wait-(ClockClicks-xUI.player.startClick);//スタート後の経過時間をウエイトから減算して残ウエイトを出す
         if(xUI.player.waitCount) {
-            var countString = ([Math.ceil(xUI.player.waitCount / 1000),('---------|').slice(-1*Math.floor(xUI.player.waitCount%1000/100))]).join('');
-            if(document.getElementById("app_status").innerHTML!=countString) xUI.printStatus(countString);
+            var waitCountSecond = Math.ceil(xUI.player.waitCount / 1000);//(Math.floor(xUI.player.waitCount%1000/100) < 10)? "":waitCountSecond;//?
+            if(xUI.player.waitCount < 1001){
+            	var countString = (xUI.player.waitCount < 916)?'':xUI.player.countAnimation[11];
+            }else if(xUI.player.waitCount < 3001){	
+            	var countString = ((xUI.player.waitCount%1000) < 750)?'':(xUI.player.countAnimation[12-waitCountSecond]);
+            }else{
+            	var countString = xUI.player.countAnimation[Math.floor((xUI.player.waitCount%1000)/125)+1].replace(/\#/,String(waitCountSecond));	
+            }
+            if(document.getElementById("timerDisplay").innerHTML!=countString)
+            	document.getElementById("timerDisplay").innerHTML=countString;
             xUI.player.waitCount = count;
         }else{
-            xUI.printStatus();
+            if(document.getElementById("timerDisplay").innerHTML) document.getElementById("timerDisplay").innerHTML='';
         }
-      } else if(document.getElementById("app_status").innerHTML) {xUI.printStatus();}
-      
+      }else{ 
         var currentOffset = (xUI.selectBackup[1]+frms);//再生開始後の経過フレーム
         if((! xUI.player.loop)&&(currentOffset >= xUI.XPS.xpsTracks.duration)){
-            xUI.player.stop();xUI.selectCell([xUI.Select[0],0]);
-//            console.log(xUI.player.countStack);
+        	var standbyFrame=(xUI.player.standbyStart)? 0:xUI.XPS.xpsTracks.duration-1;
+            xUI.player.stop();xUI.selectCell([xUI.Select[0],standbyFrame]);//終了フレーム
         }else{
             var currentFrame = currentOffset % xUI.XPS.xpsTracks.duration;
             if(xUI.Select[1] != currentFrame) xUI.selectCell([xUI.Select[0],currentFrame]);
@@ -127,6 +142,7 @@ xUI.tskWatcher = function(){
                 }
             }
         }
+      }
 	}
 /*   タスク列処理  */
     for(var tid = xUI.taskQueue.length -1 ;tid >= 0; tid --){
@@ -141,17 +157,18 @@ xUI.tskWatcher = function(){
 xUI.taskQueue.push(new UItask());
 setInterval(xUI.tskWatcher,10);
 }
-//  タスク監視スタートアップはこのプロシジャ全体をxUIの最初期化あとに実行する必要あり  2018 08 29
+//  タスク監視スタートアップはこのプロシジャ全体をxUIの再初期化あとに実行する必要あり  2018 08 29
 // test
 /** ストップウオッチ機能のための補助機能
 
 */
 markFrame=function(element){
-     element.style.backgroundColor='red';
-     element.innerHTML='<span style="color:red;">XXX</span>';
+     element.style.backgroundColor='red';//フォーカスの通過でクリアされるのであまり意味がない?
+     element.innerHTML='<span style="color:red;">◆</span>';
 }
 clearMark=function(){
-    xUI.resetSheet();
+	xUI.selectCell([xUI.Select[0],0]);
+	xUI.resetSheet();
     xUI.player.countStack=[];
 }
 buildCount=function(trackID){

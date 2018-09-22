@@ -44,17 +44,25 @@ function xMap(titleString,targetDecription){
 	this.title	=	myTitle;//
 	this.subtitle	=	mySubTitle;
 	this.framerate	=	(!nas)? nas.newFramerate("24FPS"):nas.newFramerate(nas.FRATE);//作品情報として追加
+
 	this.rate	=	(!nas)? "24FPS":nas.RATE;//作品情報として追加
+
 	this.standerdFrame = new nas.AnimationField();
 	this.standerdPeg = this.standerdFrame.peg;
 	this.baseResolution = new nas.UnitResolution(nas.RESOLUTION,"dpc");
+
 // 兼用カットトレーラー
 	this.scene	= "";//シーン所属を記録・空白でも可  この情報は死に体だが、互換のため残置
 	this.cut	= "";//S-C形式代表カットを指定する  外部アセットの場合予約語"_EXTRA_"を使用
+
 	this.inherit	= "";//S-C形式で兼用カットを列挙  代表カットは記述してもしなくても良い  重複は別に整理する  兼用がなければ省略可
+
 	this.inheritParent	= "";//参照（継承）する外部の単独ｘMapをファイルパスで記述  (継承の詳細は未定  2016.04)
+
 	this.extraAsset	;//cutが"_EXTRA_"である場合に記述・最終目的のアセットを保持する
-// 作業内容登録
+
+
+//------- 作業内容登録 --------//
 // 内部変数scene-cutを整理して格納する配列
 		this.scenes = new Array();//extraアセットの場合配列要素数は0のままである  そういうケースが多い
 // 代表名称
@@ -72,18 +80,20 @@ function xMap(titleString,targetDecription){
 
 //========= 進捗管理情報 分離可能に
 		this.currentJob;//	=	"";//job  フォーカスのあるオブジェクトへの参照
-//	ジョブがリンクしているのでステージとラインは特定可能
-		this.lines	=new Array();
-		this.stages	=new Array();
-		this.jobs	=new Array();
+//	ジョブがリンクしているのでステージとラインは特定可能  オブジェクト化を検討　現在は配列
+		this.lines	=[];
+		this.stages	=[];
+		this.jobs	=[];
 //
 		this.lines.add	=xAdd;
 		this.stages.add	=xAdd;
-		this.jobs.add	=xAdd;;
+		this.jobs.add	=xAdd;
+		
 //現在のMapが制御下に置くライン情報
 //	this.currentLine=0;//##LINE_ID から抽出
 
 	this.lineIssues=	new nas.Pm.LineIssues(new nas.Pm.Issue("trunc",0),this);
+
 //ライン発行記録  ライン情報の転記（自動更新）素材の変更権限は各ラインごとの記録
 /*
 	この部分は独立オブジェクトにするのが良さそう
@@ -93,13 +103,15 @@ function xMap(titleString,targetDecription){
 	
 */
 //========= データ保持構造をオブジェクト化したほうが良さそう？
+
 		this.currentIndex = 0;//フォーカスのあるエレメントID
+
 //エレメントには  Job/Groupの参照があり  GroupからStageへの参照がある
 //ステージ内の同名（同グループ）エレメントであっても、Jobが異なる場合は双方を維持する
 //通常のリクエストには際後発のエレメントを戻す
 //
-		this.elementGroups   = new Array();
-		this.elementStore = new Array();
+		this.elementGroups   = [];
+		this.elementStore    = [];
 //memo
 		this.memo="";
 }
@@ -126,11 +138,19 @@ function xAdd(mEmber){
  *	job.stage.line
  *	job.stage
  *	job
+
+ラインID	二次元配列化整数
+ステージID	ライン通しの整数ID
+ジョブID	ステージ内通しの整数ID
+各IDの規則変更に留意
  */
+
+
 
 /*	xRemove
  *	メンバーを削除
  */
+
 
 //xMap.のメソッドを定義
 xMap.prototype.getElementById =function(idx){
@@ -151,6 +171,10 @@ xMap.prototype.getElementByName =function(myName){
 /**
 エントリ毎にlinkJobが登録されている
 Jobが異なるとグループを新たに登録可能
+
+xMapElementは、所属するJobへの参照(linkJob)
+xMapGroupは、初登録時のJobへの参照(linkJob)で管理されるがステージ内でunique
+
 
 group   "B"
 name    "B-1"
@@ -187,7 +211,8 @@ nas.xMapElement.prototype.toString=function(){
 };
 /*
  *	Class xMapGroup
- *	合成素材をグルーピングするクラス  グループラベル・グループのデフォルト値を保持するのが主な目的
+ *	合成素材をグルーピングするクラス  グループラベル等グループのプロパティを保持する
+ *	グループに属するelementのデフォルト値を持つ
  *	グループ登録時に親のプロパティの複製をとってエレメントに設定する
  contentプロパティには、グループのデフォルト値となる値を持ったインスタンスを置く
     dialog
@@ -203,12 +228,12 @@ nas.xMapElement.prototype.toString=function(){
 nas.xMapGroup =function xMapGroup(myName,myTypeString,myLinkJob){
 	this.id;//セッション内ユニークインデックス
 	this.parent=this;//xMap/Object
-	this.link=myLinkJob;//linkPmJob/Object
+	this.link=myLinkJob;//linked PmJob/Object
 	this.type=myTypeString;//system,sound,effect,camera,cell/String
 	this.name=myName;//
-	this.content="";//タイプストリング毎の初期化を行うことが必要  未コーディング  2016.09.07
+	this.content=null;//タイプストリング毎の初期化を行うことが必要  未コーディング  2016.09.07
 	this.comment=this.type + " group";
-	this.elements = new Array();//要素トレーラー
+	this.elements = [];//要素トレーラー配列
 };
 nas.xMapGroup.prototype.toString=function(jobFilter){
 	var myResult="["+this.name+"\t"+this.type +"\t"+this.content.toString()+"\t"+this.comment+"]\n";
@@ -381,7 +406,7 @@ xMap.prototype.new_xMapElement = function (myName,myOption,myLink,contentSource)
  *	nas.Pm.lines[キーワード]  から複製をとってプロパティを追加する
  */
 xMap.prototype.new_ProductionLine=function(myName){
-	var newLine=nas.Pm.lines.getLine(myName);//名前からラインのテンプレートを取得する。失敗のケースあり
+	var newLine=nas.pmdb.lines.entry(myName);//名前からラインのテンプレートを取得する。失敗のケースあり
 	if(!(newLine instanceof nas.Pm.ProductionLine)){
 		return false;//ここは取得失敗時（新規ラインかもしれない）の処理  今日はfalse  20160412
 	}else{
@@ -403,7 +428,7 @@ xMap.prototype.new_ProductionLine=function(myName){
 	ステージオブジェクトに親をもたせたほうが良いかもしれない
 */
 xMap.prototype.new_ProductionStage=function(myName,myLine){
-	var newStage=nas.Pm.stages.getStage(myName);//取得失敗時はfalse
+	var newStage=nas.pmdb.stages.entry(myName);//取得失敗時はfalse
 	if(!(newStage instanceof nas.Pm.ProductionStage )){
 		return false;//ここは取得失敗時（新規ステージかもしれない）の処理  今日はfalse  20160412
 	}else{
@@ -642,6 +667,7 @@ xMap.prototype.parsexMap=function(datastream){
 	第一パス
 	データ冒頭の空白行を無視して、データ開始行を取得
 	識別行の確認
+	^nasMAP-FILE\ 1\.9x$
 	冒頭ラインが識別コードまたは空行でなかった場合は、さようなら御免ね
 		**IEのデータの検証もここで
 */
@@ -677,55 +703,60 @@ if(SrcData[l].match(/^nasMAP-FILE\ 1\.9x$/))
 	if(SrcData.startLine==0 && SrcData.length==l){ xUI.errorCode=3;return false;}
 //##変数名とプロパティ名の対照テーブル//
 //	var props =new Array(varNames.length);
-	var props ={
+var props ={
 	CREATE_USER:"create_user",
 	UPDATE_USER:"update_user",
 	CREATE_TIME:"create_time",
 	UPDATE_TIME:"update_time",
-	TITLE:"title",
-	SUB_TITLE:"subtitle",
-	OPUS:"opus",
-	RATE:"rate",
-	FRAME_RATE:"frameRate",
+		TITLE:"title",
+		SUB_TITLE:"subtitle",
+		OPUS:"opus",
+		RATE:"rate",
+		FRAME_RATE:"frameRate",
 	STANDERD_FRAME:"standerdFrame",
 	STANDERD_PEG:"standerdPeg",
 	BASE_RESOLUTION:"baseResolution",
-	SCENE:"scene",
-	CUT:"cut",
-	INHERIT:"inherit",
-	INHERIT_PARENT:"inheritParent",
-LINE_ID:"lineID",
-CHECK_OUT:"checkOut",
-CHECK_IN:"checkIn",
-currentStatus:"currentStatus",
-	created:"",
-	updated:"",
-	manager:"",
-	worker:"",
-	currentStatus:"",
-END:""
+		SCENE:"scene",
+		CUT:"cut",
+		INHERIT:"inherit",
+		INHERIT_PARENT:"inheritParent",
+	LINE_ID:"lineID",
+	CHECK_OUT:"checkOut",
+	CHECK_IN:"checkIn",
+	currentStatus:"currentStatus",
+		created:"",
+		updated:"",
+		manager:"",
+		worker:"",
+		currentStatus:"",
+	END:""
 };
 /*
 	データ走査第二パス
 	エレメントの取得に先行して管理データのみを構築する
-	必要時にここで切り離しが可能  管理オブジェクトの独立化をする
+	必要時にここで切り離しが可能  管理オブジェクトの独立化を行う
 
 	ライン・ステージ・ジョブの記述開始  及び終了を検査する
 	それぞれのステータス
 		
 		line
+
 	宣言前は"LineUndefined"  この状態での記述は
 	##による全体記述以外は全て無効
 	（記述を捨てる）
 	宣言後は明示的に閉じられるか、又は他のラインが宣言されるまでは宣言されたライン
 	宣言ラインが閉じられたあと他のラインが開かれていない場合は、宣言前の状態に戻る
+
 		stage
+
 	各ライン内でステージ宣言前は、"StageUndefined"この状態での記述は
 	##による全体記述以外は全て無効
 	（記述を捨てる）
 	宣言後は明示的に閉じられるか、又は他のラインが宣言されるまでは宣言されたステージ
 	宣言ステージが閉じた後は宣言前の状態に戻る
+
 		job	
+
 	各ステージ内でジョブ宣言前は、"JobUndefined"
 	この状態での記述は##による全体記述以外は全て無効
 	（記述を捨てる）
@@ -738,8 +769,6 @@ END:""
 	
 
 	それぞれの区間は同型のオブジェクトでテーブルに記録する？
-
-
 
 */
 var issueDescription=false;//分岐情報フラグ
@@ -774,13 +803,13 @@ var currentJob;//
 //			分岐状況フラグが立っている場合は別ストリームに取り出す
 			if(issueDescription){
 				if(! nAme.match(/CHECK_IN|CHECK_OUT|currentStatus/)){
-	  	dbgPut(line +": exit IssueStreamMode:\n"+issueStream+":");
+console.log(line +": exit IssueStreamMode:\n"+issueStream+":");
 					issueDescription=false;
 				//ここでストリームを処理する
 					newMap.lineIssues=nas.Pm.parseIssue(issueStream+"\n");
 //ストリームの処理後に判定行はプロセスに工程に流す
 				}else{
-	  	dbgPut(line+": add IssueStream :"+SrcData[line]+":");
+console.log(line+": add IssueStream :"+SrcData[line]+":");
 					issueStream += SrcData[line]+"\n";
 					continue;
 				}
@@ -789,7 +818,7 @@ var currentJob;//
 /*================================================================*/
 //	カレントラインの取得  = ドキュメントに一つ(二つ目以降はあっても無視)
 //	モードを変更して分岐情報を別のストリームにまとめる
-	  	if (nAme=="LINE_ID") dbgPut(line +": detect LINE_ID :"+SrcData[line]);
+	  	if (nAme=="LINE_ID") console.log(line +": detect LINE_ID :"+SrcData[line]);
 	  if((issueStream.length==0)&&(nAme=="LINE_ID")){
 	  	issueDescription=true;
 	  	issueStream+=SrcData[line]+"\n";
@@ -798,19 +827,19 @@ var currentJob;//
 /*================================================================*/
 //	ライン記述モード遷移
 	  if(nAme.match(/^<\(([^\)]+)\)>(.*)$/)){
-	  	dbgPut(line +": detect productionLine : "+nAme +":"+RegExp.$1+":"+RegExp.$2);
+console.log(line +": detect productionLine : "+nAme +":"+RegExp.$1+":"+RegExp.$2);
 	  	if(RegExp.$2.length){
 	  	//記述終了
-//			dbgPut(line+": ライン設定解除 :"+currentLine.getPath())
-			dbgPut(line+": ライン設定解除 :"+SrcData[line]);
+//console.log(line+": ライン設定解除 :"+currentLine.getPath())
+console.log(line+": ライン設定解除 :"+SrcData[line]);
 			currentLine=undefined;
 	  	}else{
 			currentLine=newMap.new_ProductionLine(RegExp.$1);//xMapにメソッドで登録
 //既に存在するラインを送った場合は追加されない  その場合はcorrentLineがfalse
 		  	if(currentLine instanceof nas.Pm.ProductionLine){
-		  		dbgPut(line+": line setup:"+RegExp.$1+":"+currentLine.getPath());
+console.log(line+": line setup:"+RegExp.$1+":"+currentLine.getPath());
 		  	}else{
-		  		dbgPut(line+": line setup [[FAULT]]:"+RegExp.$1+":"+currentLine);
+console.log(line+": line setup [[FAULT]]:"+RegExp.$1+":"+currentLine);
 		  	}
 	  	}
 	  		continue;
@@ -820,17 +849,18 @@ var currentJob;//
 	  	//alert("detect Stage : "+nAme);
 	  	if(RegExp.$2.length){
   		//ステージ解除
-//			dbgPut(line+":\tステージ設定解除 :"+currentStage.getPath())
-			dbgPut(line+":\tステージ設定解除 :"+SrcData[line]);
+//			console.log(line+":\tステージ設定解除 :"+currentStage.getPath())
+console.log(line+":\tステージ設定解除 :"+SrcData[line]);
 			currentStage=undefined;
 	  	}else{
 	  	//ステージ設定
 	  		if(currentLine instanceof nas.Pm.ProductionLine)
 			currentStage=newMap.new_ProductionStage(RegExp.$1,currentLine);//xMapにメソッドで登録トライ
 			if(currentStage instanceof nas.Pm.ProductionStage){
-		  		dbgPut(line+":\tstage setup  :"+RegExp.$1+":"+currentStage.getPath());
+console.log(currentStage);
+//console.log(line+":\tstage setup  :"+RegExp.$1+":"+currentStage.getPath());
 		  	}else{
-		  		dbgPut(line+":\tstage setup [[FAULT]]:"+RegExp.$1+":"+currentStage+":"+currentLine);
+console.log(line+":\tstage setup [[FAULT]]:"+RegExp.$1+":"+currentStage+":"+currentLine);
 		  	}
 		}
 	  	continue;
@@ -840,16 +870,17 @@ var currentJob;//
 	  	//alert("detect Job : "+nAme);
 	  	if(RegExp.$3.length){
 	  		//記述終了
-//			dbgPut(line+":\t\tジョブ設定解除 :"+currentJob.getPath())
-			dbgPut(line+":\t\tジョブ設定解除 :"+SrcData[line]);
+//			console.log(line+":\t\tジョブ設定解除 :"+currentJob.getPath())
+console.log(line+":\t\tジョブ設定解除 :"+SrcData[line]);
 			currentJob=undefined;
 	  	}else{
 	  		if(currentStage instanceof nas.Pm.ProductionStage)
 	  		currentJob=newMap.new_Job(RegExp.$1,currentStage);
 		  	if(currentJob instanceof nas.Pm.ProductionJob){
-		  		dbgPut(line+":\t\tjob setup:"+RegExp.$1+":"+currentJob.getPath()+":");
+console.log(currentJob);
+console.log(line+":\t\tjob setup:"+RegExp.$1+":"+currentJob.getPath()+":");
 		  	}else{
-		  		dbgPut(line+":\t\tjob setup [[FAULT]]:"+RegExp.$1+":"+currentJob+":");
+console.log(line+":\t\tjob setup [[FAULT]]:"+RegExp.$1+":"+currentJob+":");
 		  	}
 	  	}
 	  	continue;
@@ -880,7 +911,7 @@ case	"BASE_RESOLUTION":			;//標準解像度を設定
 			break	;
 //以下は、カレントのJobプロパティ
 case	"created":
-		dbgPut(line+":\t\t\t\tjob:"+nAme+" checkout:"+vAlue);
+console.log(line+":\t\t\t\tjob:"+nAme+" checkout:"+vAlue);
 		var myContent=vAlue.split(";")[0].split("/");
 		if(currentJob instanceof nas.Pm.ProductionJob){
 			currentJob.createUser=myContent.reverse()[0];
@@ -888,7 +919,7 @@ case	"created":
 		};
 			break;
 case	"updated":
-		dbgPut(line+":\t\t\t\tjob:"+nAme+" checkin:"+vAlue);
+console.log(line+":\t\t\t\tjob:"+nAme+" checkin:"+vAlue);
 		var myContent=vAlue.split(";")[0].split("/");
 		if(currentJob instanceof nas.Pm.ProductionJob){
 			currentJob.updateUser=myContent.reverse()[0];
@@ -898,7 +929,7 @@ case	"updated":
 case	"manager":
 case	"worker":
 case	"slipNumber":
-		dbgPut(line+":\t\t\t\tjob-set:"+nAme+":"+vAlue);
+console.log(line+":\t\t\t\tjob-set:"+nAme+":"+vAlue);
 		if(currentJob instanceof nas.Pm.ProductionJob){
 			currentJob[props[nAme]]=vAlue.split(";")[0];
 		};
@@ -917,7 +948,7 @@ default:				;//直接結合プロパティ
 //データ記述が終わっていたらメモを取り込んで終了
 			if(SrcData[line].match(/\[END\]/)){
 //データ記述終了ライン控え
-//				SrcData.descriptionEnd=line;
+				SrcData.descriptionEnd=line;
 				newMap["memo"]='';
 				for(li=line+1;li<SrcData.length;li++)
 				{
@@ -929,10 +960,10 @@ default:				;//直接結合プロパティ
 //  エレメントグループを新規登録
 /*	グループはいずれかのジョブに所属する必要があるので、JobUndefinedの場合は拾った値を捨てる
 */
-//dbgPut("X--:\t"+RegExp.$1+" :"+currentJob+"/"+currentStage+"/"+currentLine)
+//console.log("X--:\t"+RegExp.$1+" :"+currentJob+"/"+currentStage+"/"+currentLine)
 		if(currentJob instanceof nas.Pm.ProductionJob){
-			dbgPut(RegExp.$1+"\tjob: "+currentJob.getPath()+":\n\t");
-			dbgPut(SrcData[line]);
+console.log(RegExp.$1+"\tjob: "+currentJob.getPath()+":\n\t");
+console.log(SrcData[line]);
 		}
 /*else{
 	//currentJob undefined or otherObject(不正状態なのでエントリ行は捨てる) 
@@ -943,7 +974,7 @@ default:				;//直接結合プロパティ
 		}else{
 //	マップエントリパーサ
 //この場では振り分けのみを行い、実際のパースは外部メソッドに委ねる
- if(currentJob instanceof nas.Pm.ProductionJob){dbgPut("group ["+currentJob.getPath()+"] addEntry :"+line+":\t\t\t:"+SrcData[line])};
+ if(currentJob instanceof nas.Pm.ProductionJob){console.log("group ["+currentJob.getPath()+"] addEntry :"+line+":\t\t\t:"+SrcData[line])};
 	
 
 		}
@@ -972,7 +1003,7 @@ xMap.prototype.toString= function()
 	var	thin_sep='\n#';
 		for(n=8;n>0;n--) thin_sep+='--------';
 //	ヘッダで初期化
-	var result='nasMAP-SHEET 1.9x';//出力変数初期化
+	var result='nasMAP-FILE 1.9x';//出力変数初期化
 //	##共通プロパティ変数設定
 	result+='\n##CREATE_USER='	+ this.create_user	;
 	result+='\n##UPDATE_USER='	+ this.update_user	;

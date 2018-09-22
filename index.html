@@ -966,14 +966,8 @@ serviceAgent.pushEntry(xUI.XPS,function(){xUI.setStored("current");sync();
 <button
 	id=ibMstw
     class='iconButton iconButton-goToTime'
-	onMouseDown='if(xUI.player.status=="stop"){xUI.player.start()}else{xUI.player.getCount=true};'
-	onMouseUp='if(xUI.player.status=="run"){xUI.player.getCount=false;};'
-> </button>
-<button
-	id=ibMstw
-    class='iconButton iconButton-stop'
-	onMouseDown='if(xUI.player.status=="run"){xUI.player.stop();}else{clearMark();};'
-> </button>
+    onClick='xUI.sWitchPanel("Timer");'
+ ></button>
 </span>
 
 
@@ -1022,7 +1016,7 @@ serviceAgent.pushEntry(xUI.XPS,function(){xUI.setStored("current");sync();
 >
 	<!-- カウンタ -->
 
-<span style="float:right;">
+<span class="floating-right">
 	<!-- スピン -->
 <input	type=text
 	name=spin_V
@@ -1268,16 +1262,6 @@ class=optionPanel id=optionPanelProductManagement
     class='pmControl pmControl-new' 
     title='新規カットを登録'
 	onclick='xUI.storeDocument();'
-<!--
-	'serviceAgent.addEntry(xUI.XPS,function(){
-    var myIdentifier = Xps.getIdentifier(xUI.XPS,false);
-    serviceAgent.currentRepository.getSCi(function(){
-        serviceAgent.currentRepository.getEntry(myIdentifier);
-    },false,myIdentifier);
-},function(){
-    alert("データ登録失敗");
-});'
--->
 >新規登録</button>
     </div>
 
@@ -2920,7 +2904,7 @@ debug console
 デバッグコンソール
 -->
 <textarea	
-	nema=msg_well
+	name=msg_well
 	id=msg_well
 	style="width:512px;height:96px"
 ></textarea><br /><input	type=button
@@ -3014,7 +2998,7 @@ debug console
 > changeLocale </button>
 <br>
 <textarea	
-	nema=cmd
+	name=cmd
 	id=cmd
 	style="width:512px;height:64px;ime-mode:inactive;"
 ></textarea></form></span><hr />
@@ -3037,9 +3021,9 @@ debug console
 	<th id=tBitems>よく使う文字</th>
 	<td colspan=3>
 		<input	type=checkbox
-			naem=single
+			name=single
 			id=single
-			checked=true
+			checked
 		><a href="javascript:void(0)" onClick='return chg("single")'>single-click</a>
 <input	type=button
 	id=skbHome
@@ -3104,14 +3088,14 @@ style="height:6em;width:7em;text-align:center;font-size:12pt"
 onClick='if(document.getElementById("single").checked) chkValue(this.id)'
 onDblClick='if (! document.getElementById("single").checked) chkValue(this.id)'
 >
-<option>X
-<option>カラ
-<option>｜
-<option>___
-<option>----
-<option>[ * ]
-<option>( * )
-<option>< * >
+<option value='☓'>X
+<option value='カラ'>カラ
+<option value='|'>｜
+<option value='___'>___
+<option value='----'>----
+<option value='[ * ]'>[ * ]
+<option value='( * )'>( * )
+<option value='< * >'>&lt; * &gt;
 </select></td>
 
 <td>
@@ -3397,9 +3381,12 @@ onchange=';SoundEdit.sync();'
 IN :
 <button id=soundInpointLock type=button class="iconButton"
 	onClick='SoundEdit.syncTCL(0);'
->🔓</button><input type=test id=soundInPoint value="0:00:00 ." class='tcInput'
+>🔓</button><input
+	type=text
+	id=soundInPoint
+	value="0:00:00 ."
+	class=tcInput
 	onMousedown="this.value=nas.FCT2Frm(this.value);nas.sliderVALUE([event,this.id,xUI.XPS.xpsTracks.duration-1,'0','0']);"
-    onchanging='return'
     onChange='this.value=nas.Frm2FCT(nas.FCT2Frm(this.value.toString()),2,0);SoundEdit.floatTC(0);'
 ><span class='subControl_SPIN'>
 <button
@@ -3418,9 +3405,12 @@ IN :
 OUT :
 <button id=soundOutpointLock type=button class="iconButton"
 	onClick='SoundEdit.syncTCL(1);'
->🔒</button><input type=test id=soundOutPoint value="0:00:00 ." class='tcInput'
+>🔒</button><input
+	type=text
+	id=soundOutPoint
+	value="0:00:00 ."
+	class=tcInput
 	onMousedown="this.value=nas.FCT2Frm(this.value);nas.sliderVALUE([event,this.id,xUI.XPS.xpsTracks.duration-1,'0','0']);"
-    onchanging='return'
     onChange='this.value=nas.Frm2FCT(nas.FCT2Frm(this.value.toString()),2,0);SoundEdit.floatTC(1);'
 ><span class='subControl_SPIN'>
 <button
@@ -3441,7 +3431,6 @@ duration :
 >🔓</button><input type=text
     id=soundDuration value="0:00:00 ." class='tcInput'
 	onMousedown="this.value=nas.FCT2Frm(this.value);nas.sliderVALUE([event,this.id,xUI.XPS.xpsTracks.duration,'1','0']);"
-    onchanging='return'
     onChange='this.value=nas.Frm2FCT(nas.FCT2Frm(this.value.toString()),2,0);SoundEdit.floatTC(2);'
 ><span class='subControl_SPIN'>
 <button
@@ -3559,6 +3548,67 @@ duration :
     <img src=./images/ui/cornerTip.png id=RefPanelCotner class=panelCorner>
 </div>
 <!-- 参照用オーバーレイウインドウ optionPanelRef > optionPanelRef-->
+
+<!-- ストップウオッチUIパネル stopwatch　-->
+<div
+	class= optionPanel
+	id = optionPanelTimer
+>
+ <button
+id=timerClose
+ title = 'hide timer'
+ onclick='xUI.sWitchPanel("Timer");return false;'
+>[☓]</button>:
+ <span id=timerDisplay></span>
+<span class=floating-right>
+<button
+	id=timerSwitchPrm
+	onMouseDown='if(xUI.player.status=="stop"){xUI.player.start()}else{if(xUI.player.markSwap){xUI.player.getCount=true}else{xUI.player.stop()}};'
+	onMouseUp='if((xUI.player.markSwap)&&(xUI.player.status=="run")){xUI.player.getCount=false};'
+>START/STOP</button>
+<button
+	id=timerSwitchSub
+	onMouseDown='if(xUI.player.status=="run"){if(xUI.player.markSwap){xUI.player.stop()}else{xUI.player.getCount=true}}else{clearMark()};'
+	onMouseUp='if(!(xUI.player.markSwap)&&(xUI.player.status=="run")){xUI.player.getCount=false};'
+	title='stopwatch test stop'
+>Mark/Reset</button>
+<button
+	onClick='if(xUI.player.status=="stop"){buildCount()};'
+	title='stopwatch test'
+	disabled
+>applyMark</button>
+<input
+	id=waitCount
+	class=spinCtl
+	type=text
+	value='10'
+	onChange='document.getElementById("timerCount").onchange();'
+><input
+	id=timerCount
+	type=checkbox
+	checked
+	onChange='xUI.player.wait=(this.checked)?document.getElementById("waitCount").value*1000:0;'
+>count
+<input
+	type=checkbox
+	onChange='xUI.player.loop=(this.checked)?true:false;'
+>loop
+<input
+	id=swapButtonAssign
+	type=checkbox
+	onChange='xUI.player.markSwap=(this.checked)?true:false;document.getElementById("timerSwitchPrm").innerHTML=(this.checked)?"START/Mark":"START/STOP";document.getElementById("timerSwitchSub").innerHTML=(this.checked)?"STOP/Reset":"Mark/Reset";'
+	title='change butonn function assignment'
+>mark
+<input
+	id=timerStandbyPositionStart
+	type=checkbox
+	onChange='xUI.player.standbyStart=(this.checked)?true:false;'
+	title='set standby-frame start'
+>standby
+</span>
+</div>
+<!-- ストップウオッチUIパネル -->
+
 <!-- メモ編集エリア　画面表示のみ　印刷時はシートヘッダ上に別表示-->
 <div id=memoArea>
    <div id=memo_header >
@@ -3642,7 +3692,8 @@ index.html ,v 1.7 2018/03/05  support@u-at.net <br />
     <textarea id="startupContent"  ></textarea>
     <textarea id="startupReference"></textarea>
   </div>
-  <div id="scrollSpaceFt" class=\"screenSpace\"><br></div>
+  <div id=scrollSpaceFt class=screenSpace><br></div>
+ </div>
   <!--
 	サーバーオンサイトの状況を真似る場合
 	この位置に　backend_variables　を置いて
