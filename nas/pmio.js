@@ -873,6 +873,7 @@ nas.Pm.WorkTitleCollection.prototype.addTitle = function(titleName,propList){
 */
 nas.Pm.workTitles = new nas.Pm.WorkTitleCollection(nas.Pm);
 
+nas.Pm.activeTitle = nas.Pm.workTitles.entry();
 //制作管理用 Opusオブジェクト　サーバ上のEpisodeに対応する
 /*
  *nas.Pm.newOpus(タイトル識別子)
@@ -1034,13 +1035,13 @@ nas.Pm.opuses= new nas.Pm.OpusCollection(nas.Pm);
 /*
 メディアDBは、入出力のメディアスペックを記述するための複合オブジェクト
 MAP内部ではワークタイトルに付属する情報として処理する
-animationField,frameRate,baseResolution等は、オブジェクトで保持
+animationField,framerate,baseResolution等は、オブジェクトで保持
 初期化時は、デフォルトの値で作成　再初期化が必用
 idは初期化時は未設定
 コレクション加入時に設定される
 DBとの連結時は連結時に再設定
 */
-nas.Pm.ProductionMedia = function(mediaName,animationField,frameRate){
+nas.Pm.ProductionMedia = function(mediaName,animationField,framerate){
     this.id             ;
     this.animationField = new nas.AnimationField(animationField);
     this.mediaName      = mediaName;//
@@ -1048,7 +1049,7 @@ nas.Pm.ProductionMedia = function(mediaName,animationField,frameRate){
     this.type           ;//mediaType drawing/video
     this.baseWidth      = this.animationField.baseWidth;
     this.frameAspect    = this.animationField.frameAspect;
-    this.frameRate      = nas.newFramerate(frameRate);
+    this.framerate      = nas.newFramerate(framerate);
     this.tcType         ;//string tradJA/SMPTE/TC/frame
     this.pegForm        = this.animationField.peg;//animationField.peg
     this.pegOffset      = this.animationField.pegOffset;
@@ -1155,7 +1156,7 @@ nas.Pm.MediaCollection.prototype.parseConfig = function(configStream){
         var configData=JSON.parse(configStream);
         for(prp in configData){
             var tempData = configData[prp];
-            var newMedia  = new nas.Pm.ProductionMedia(tempData.mediaName,tempData.animationField,tempData.frameRate);
+            var newMedia  = new nas.Pm.ProductionMedia(tempData.mediaName,tempData.animationField,tempData.framerate);
                 newMedia.id             = tempData.id;
 //              newMedia.mediaName      = tempData.mediaName;//
 //              newMedia.animationField = tempData.new nas.AnimationField(tempData.animationField);
@@ -1165,7 +1166,7 @@ nas.Pm.MediaCollection.prototype.parseConfig = function(configStream){
 //              newMedia.pegOffset      = newMedia.animationField.pegOffset;
                 newMedia.baseResolution = new nas.UnitResolution(tempData.baseResolution);//
                 newMedia.type           = tempData.type;//mediaType drawing/video
-//              newMedia.frameRate      = nas.newFramerate(tempData.frameRate);
+//              newMedia.framerate      = nas.newFramerate(tempData.framerate);
                 newMedia.tcType         = tempData.tcType;//string tradJA/SMPTE/TC/frame
                 newMedia.pixelAspect    = parseFloat(tempData.pixelAspect);//float
                 newMedia.description    = tempData.description;
@@ -1185,7 +1186,7 @@ nas.Pm.MediaCollection.prototype.parseConfig = function(configStream){
     newMedia.type           = tempData[1][3];// ;//mediaType drawing/video
 //    newMedia.baseWidth      = ;// newMedia.animationField.baseWidth;
 //    newMedia.frameAspect    = ;// newMedia.animationField.frameAspect;
-//    newMedia.frameRate      = ;// nas.newFramerate(frameRate);
+//    newMedia.framerate      = ;// nas.newFramerate(framerate);
     newMedia.tcType         = tempData[1][4];// ;//string tradJA/SMPTE/TC/frame
     newMedia.pegForm        = tempData[1][5];// newMedia.animationField.peg;//animationField.peg
 //    newMedia.pegOffset      = newMedia.animationField.pegOffset;
@@ -2219,7 +2220,7 @@ nas.Pm.newSC(カット識別子,時間指定文字列);
 識別子はMapフォーマットドキュメントを参照
 [TITLE(セパレータ)][Oo#]OPUS(セパレータ)][[Ss]SCENE(セパレータ)?[Cc]CUT
 例：
-nas.Pm.newSC("ktc#01.s-c123","3+12,OL(1+12),--(0+0)",frameRate)
+nas.Pm.newSC("ktc#01.s-c123","3+12,OL(1+12),--(0+0)",framerate)
 
 */
 /**

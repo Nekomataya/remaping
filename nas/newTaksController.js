@@ -12,15 +12,15 @@ var startupTaskController=function(){
     xUI.player.stopClick  = xUI.player.startClick;
     xUI.player.status     = 'stop';
     xUI.player.loop       = false;
-    xUI.player.standbyStart = false;
-    xUI.player.wait       = 10000;
+    xUI.player.standbyStart = true;
+    xUI.player.wait       = 0;
     xUI.player.keyboard	  = false;
     xUI.player.markSwap   = false
     xUI.player.waitCount  = 0;
     xUI.player.countStack = [];
     xUI.player.countAnimation=['■■■■#■■■■','□■■■#■■■■','□□■■#■■■■','□□□■#■■■■','□□□□#■■■■','□□□□#□■■■','□□□□#□□■■','□□□□#□□□■','□□□□#□□□□','＝＝＝＝③＝＝＝＝','＝＝＝＝②＝＝＝＝','ーーーー◆ーーーー']
     
-    xUI.player.start = function(clickClock){
+    xUI.player.start = function(withMark,clickClock){
         xUI.player.startClick = (new Date()).getTime();
         if(clickClock)xUI.player.startClick =clickClock;
 //        waitClocks = (isNaN(waitClocks))? 0:parseInt(waitClocks);
@@ -29,7 +29,14 @@ var startupTaskController=function(){
         xUI.selection();//バックアップとってクリア
         xUI.player.waitCount     = parseInt(xUI.player.wait);
         xUI.player.currentFrame  = 0 ;//処理中のフレーム
-        xUI.player.getCount      = false ;//フレーム取得フラグリセット
+        if(withMark){
+//	        xUI.player.markFrame(document.getElementById(xUI.Select.join('_')));
+	        xUI.player.markFrame(xUI.Select);
+//            xUI.player.countStack.push(xUI.Select);
+            xUI.player.getCount      = true  ;//フレーム取得フラグセット
+        }else{
+            xUI.player.getCount      = false ;//フレーム取得フラグリセット
+        }
 //        xUI.player.countStack    = [];//スタート時点の自動クリアを行わない　明示的なクリアまでマークと共に保持する
         xUI.player.status        = 'run';
     };
@@ -40,6 +47,139 @@ var startupTaskController=function(){
         xUI.selection(add(xUI.Select,xUI.selectionBackup));
         if(this.waitCount !=0 ){ this.waitCount=0;if(document.getElementById("timerDisplay").innerHTML) document.getElementById("timerDisplay").innerHTML='';}
     };
+/** ストップウオッチ機能のための補助機能
+
+*/
+/**
+ *    セルにマーカーを配置してマークをスタックする
+ */
+xUI.player.markFrame=function(element){
+    if(element instanceof Array){
+        this.countStack.push(element);
+        element=document.getElementById(element.join('_'))
+    }else{
+        this.countStack.push(element.id.split('_'));
+    }
+    element.classList.add("trackMarker");
+}
+/**
+ *    セルマーカー及びスタックをクリア
+ */
+xUI.player.clearMark=function(){
+    (function(){
+        for (var trk = 0 ;trk < xUI.XPS.xpsTracks.length ; trk++){
+            for (var frm = 0 ;frm < xUI.XPS.xpsTracks[0].length ; frm++){
+                var cell = document.getElementById([trk,frm].join('_'));
+                if(cell.classList.contains('trackMarker')) cell.classList.remove('trackMarker');
+            }
+        }
+    })();
+    xUI.player.countStack=[];
+}
+/**
+ *    
+ */
+xUI.player.buildCount=function(trackID){
+    var currentFrame = xUI.Select[1];
+    var targetTrack = xUI.XPS.xpsTracks[xUI.Select[0]];
+    var buidTarget=new Array(xUI.XPS.xpsTracks.length);
+    for (idx=0;idx < buidTarget.length;idx++){buidTarget[idx]=[];}    
+//マークをソート
+    xUI.player.countStack.sort(function(a,b){
+        if (a[0] < b[0]) return -1
+        else if (a[0] > b[0]) return 1
+        else if (a[1] < b[1]) return -1
+        else if (a[1] > b[1]) return 1
+        return 0;
+    });
+//重複マークを削除してトラック別にソート
+    var currentMark=[null,null];
+    for (var cix = 0 ; cix < xUI.player.countStack.length ;cix ++){
+        if((xUI.player.countStack[cix][0]==currentMark[0])&&(xUI.player.countStack[cix][1]==currentMark[1])) continue;
+         buidTarget[xUI.player.countStack[cix][0]].push(xUI.player.countStack[cix][1]);
+         currentMark=xUI.player.countStack[cix];
+    }
+//ターゲットトラックを区間パース
+    var buildSections=[{
+        startFrame:0,
+        duration:0,
+        value:false
+    }];
+    var currentSection = buildSections[0];
+    if(buidTarget[xUI.Select[0]].length==0){
+        currentSection.duration=targetTrack.length;
+    }else{
+        if (buidTarget[xUI.Select[0]][0] != 0){
+            currentSection.value = false;
+            currentSection.duration = buidTarget[xUI.Select[0]][0];
+            currentSection = buildSections[ buildSections.push({
+                startFrame:buidTarget[xUI.Select[0]][0],
+                duration:1,
+                value:true
+            })-1];
+        }else{
+            currentSection.value = true;
+            currentSection.duration = 1;            
+        }
+        for(var ix = 1; ix < buidTarget[xUI.Select[0]].length; ix++){
+            if(buidTarget[xUI.Select[0]][ix]==(buidTarget[xUI.Select[0]][ix-1]+1)){
+                currentSection.duration ++;
+            }else{
+                buildSections.push({
+                    startFrame:buidTarget[xUI.Select[0]][ix-1]+1,
+                    duration:buidTarget[xUI.Select[0]][ix]-buidTarget[xUI.Select[0]][ix-1]-1,
+                    value:false
+                });
+                currentSection = buildSections[buildSections.push({
+                    startFrame:buidTarget[xUI.Select[0]][ix],
+                    duration:1,
+                    value:true
+                })-1];
+            }
+        }
+        if((currentSection.startFrame + currentSection.duration) < targetTrack.length){
+            buildSections.push({
+                startFrame:currentSection.startFrame+currentSection.duration,
+                duration:targetTrack.length-currentSection.startFrame-currentSection.duration,
+                value:false
+            });        }
+    }
+    if (targetTrack.option.match(/dialog|camera|camerawork|geometry|effect|sfx|composite/)){
+        var backup=[xUI.Select.slice(),xUI.Selection.slice()];
+        for(var sx=0;sx < buildSections.length; sx ++){
+            if (buildSections[sx].value){
+                xUI.selection();
+                if(targetTrack.option=='dialog'){
+                    xUI.selectCell([xUI.Select[0],buildSections[sx].startFrame-2]);
+                    var extCount = (buildSections[sx].duration <= 4)? 0 : buildSections[sx].duration-4;
+                    xUI.put('名前,----,セ,リ,フ, ~,'+(new Array(extCount).join(','))+',----')
+                }else{
+                    xUI.selectCell([xUI.Select[0],buildSections[sx].startFrame]);
+                    var writeContent=["▽"];
+                    for(var cc=0;cc<(buildSections[sx].duration-2);cc++) writeContent.push('|');
+                    writeContent.push("△");
+                    xUI.put(writeContent.join(','));
+                }
+            }
+        }
+        xUI.selectCell(backup[0]);
+        xUI.selection(add(backup[0],backup[1]));
+    }else{
+        for(var sx=0;sx < buildSections.length; sx ++){
+            if (
+                (buildSections[sx].startFrame<=xUI.Select[1])&&
+                ((buildSections[sx].startFrame+buildSections[sx].duration)>xUI.Select[1])
+            ){
+                xUI.selectCell([xUI.Select[0],buildSections[sx].startFrame]);
+                xUI.selection([xUI.Select[0],buildSections[sx].startFrame+buildSections[sx].duration-1]);
+                return;
+            }
+        }
+        
+    }  
+
+console.log(buildSections);    
+}
     
       xUI.taskQueue = [];//タスク待ち配列
 /*
@@ -128,17 +268,17 @@ xUI.tskWatcher = function(){
         }
       }else{ 
         var currentOffset = (xUI.selectBackup[1]+frms);//再生開始後の経過フレーム
+        
         if((! xUI.player.loop)&&(currentOffset >= xUI.XPS.xpsTracks.duration)){
         	var standbyFrame=(xUI.player.standbyStart)? 0:xUI.XPS.xpsTracks.duration-1;
             xUI.player.stop();xUI.selectCell([xUI.Select[0],standbyFrame]);//終了フレーム
         }else{
             var currentFrame = currentOffset % xUI.XPS.xpsTracks.duration;
-            if(xUI.Select[1] != currentFrame) xUI.selectCell([xUI.Select[0],currentFrame]);
+            var currentTrack = (! xUI.player.loop)? xUI.Select[0]:Math.floor(currentOffset/xUI.XPS.xpsTracks.duration);            if((xUI.Select[0] != currentTrack) || (xUI.Select[1] != currentFrame))xUI.selectCell([currentTrack,currentFrame]);
             if(currentFrame != xUI.player.currentFrame){
                 xUI.player.currentFrame = currentFrame;
                 if(xUI.player.getCount){
-                     xUI.player.countStack.push([xUI.Select[0],currentFrame]);
-                     markFrame(document.getElementById([xUI.Select[0],currentFrame].join('_')));
+                     xUI.player.markFrame([currentTrack,currentFrame]);
                 }
             }
         }
@@ -159,25 +299,3 @@ setInterval(xUI.tskWatcher,10);
 }
 //  タスク監視スタートアップはこのプロシジャ全体をxUIの再初期化あとに実行する必要あり  2018 08 29
 // test
-/** ストップウオッチ機能のための補助機能
-
-*/
-markFrame=function(element){
-     element.style.backgroundColor='red';//フォーカスの通過でクリアされるのであまり意味がない?
-     element.innerHTML='<span style="color:red;">◆</span>';
-}
-clearMark=function(){
-	xUI.selectCell([xUI.Select[0],0]);
-	xUI.resetSheet();
-    xUI.player.countStack=[];
-}
-buildCount=function(trackID){
-    var buidTarget=[];
-    for (var cix = 0 ; cix < xUI.countStack.length ;cix ++){
-        if(xUI.countStack[cix][0]==trackID) buidTarget.push(xUI.countStack[cix][1])
-    }
-    for (var fix = 0 ; fix < buitdTarget.length ; fix ++){
-        var sectionStart=0;        sectionEnd=0
-    }
-    
-}

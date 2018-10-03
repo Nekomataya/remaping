@@ -32,6 +32,7 @@
 <script src=./lib/jquery.js></script>
 <script src=./lib/jquery-ui.js></script>
 <script src=./lib/ecl/ecl.js></script>
+<script src=./lib/csv/csvsimple.js></script>
 
 <script src=./config.js></script>
 <script src=./nas/lib/nas_common.js></script>
@@ -3732,7 +3733,6 @@ duration :
 <button
 	onClick='if(xUI.player.status=="stop"){buildCount()};'
 	title='stopwatch test'
-	disabled
 >applyMark</button>
 <input
 	id=waitCount
@@ -3753,12 +3753,14 @@ duration :
 	type=checkbox
 	onChange='xUI.player.markSwap=(this.checked)?true:false;document.getElementById("timerSwitchPrm").innerHTML=(this.checked)?"START/Mark":"START/STOP";document.getElementById("timerSwitchSub").innerHTML=(this.checked)?"STOP/Reset":"Mark/Reset";'
 	title='change butonn function assignment'
+	checked
 >mark
 <input
 	id=timerStandbyPositionStart
 	type=checkbox
 	onChange='xUI.player.standbyStart=(this.checked)?true:false;'
 	title='set standby-frame start'
+	checked
 >standby
 </span>
 </div>
@@ -4559,6 +4561,11 @@ index.html ,v 1.7 2018/03/05  support@u-at.net <br />
 #	ダイアログ・ト書き・等の情報も格納される
 ##[init]
 ##[[SCInfo]]
+##created=2016.01.20 18:45:36/kiyo@nekomataya.info;
+##updated=2016.01.20 19:05:00/kiyo@nekomataya.info;
+##manager=kiyo@nekomataya.info;
+##worker=おさる:mon@animal.example.com;
+##slipNumber=0001020303996;
 [timesheet	xps]
 timesheet	s-c4	"./kachi#00_s-c004.xps"
 [picture	cell]
@@ -4573,11 +4580,12 @@ description	s-c4
 	
 	バタバタとうちわであおぐ
 #----------------------------------------------------------------
-[台詞	SOUND]
+[台詞	dialog]
+台詞	姐さん
 #----------------------------------------------------------------
 姐さん（セリフ　意味不明にブツブツと続く…）「あぢあぢ　うぇあおんがごげ」
 #----------------------------------------------------------------
-[time	text]
+[timeText	text]
 timeText	s-c4	4+0
 ##[LO]
 ##[[作画打合せ]id:0]
@@ -4597,13 +4605,13 @@ timeText	s-c4	4+0
 #	[ グループID	グループカテゴリ	グループに関する幾何情報(有れば) ]
 #
 #----------------------------------------------------------------
-[LO	CELL	]
+[LO	CELL]
 LO	BG	"./sample/LO/BG.png"
 LO	A1_B	"./sample/LO/CELL.png"
 LO	ML	"./sample/LO/ML.png"
 LO	PAN	"./sample/LO/PAN.png"
 #================================================================
-[PAN	CAMERAWORK　]
+[PAN	CAMERAWORK]
 		size=252mm,142.875mm
 		position=0mm,0mm,0mm
 		offset=0mm,104.875mm
@@ -4770,8 +4778,8 @@ A	A-1	"./sample/CELL/A/A001.png",841.32,841.32	"第四フィールドにデー�
 [B	CELL	841.32,841.32]
 #----------------------------------------------------------------
 B	B-1	"./sample/CELL/B/B001.png"	"最低限のセル記述-寸法はグループの代表値を継承"
-B	B-2	"./sample/CELL/B/B002.png"	,640,483	"同グループ内で寸法の違うセルを許容します。"
-B	B-3	"./sample/CELL/B/B003.png"	,640,480,321,243.2789,-0.13d	"オフセットを同時指定可能"
+B	B-2	"./sample/CELL/B/B002.png",640,483	"同グループ内で寸法の違うセルを許容します。"
+B	B-3	"./sample/CELL/B/B003.png",640,480,321,243.2789,-0.13d	"オフセットを同時指定可能"
 B	B-4	"./sample/CELL/B/B004.png"
 B	B-5	"./sample/CELL/B/B005.png"
 B	B-6	"./sample/CELL/B/B006.png"
@@ -4816,30 +4824,22 @@ C	C-1
 
 ##[原図整理]
 ##[[原図発注]id:0]
-##created=2016.0. ::/@.example.com;
-##updated=2016.0. ::/@.example.com;
+##created=2016.02.10 12:00:12/鯖:saba@fish.example.com;
+##updated=2016.02.11 09:23:31/鯖:saba@fish.example.com;
 ##manager=kiyo@nekomataya.info;
-##worker=@.example.com;
+##worker=鯖:saba@fish.example.com;
 #--------------伝票発行を伴わないジョブには伝票番号なし。ただし発注イベントは発生する
 ##[[原図発注]]/
 ##[[原図整理]id:1]
+##created=2016.02.11 12:45:34/鯖:saba@fish.example.com;
+##updated=2016.02.11 18:24:21/鯖:saba@fish.example.com;
+##worker=鯖:saba@fish.example.com;
 ##[[原図整理]]/
 ##[[美術監督チェック]id:3]
+##created=2016.02.10 12:00:12/マグロ:maguro@fish.example.com;
+##updated=2016.02.11 09:23:31/マグロ:maguro@fish.example.com;
+##worker=マグロ:maguro@fish.example.com;
 ##[[美術監督チェック]]/
-##[原図整理]
-
-##[背景美術]
-##[[原図発注]id:0]
-##created=2016.0. ::/@.example.com;
-##updated=2016.0. ::/@.example.com;
-##manager=kiyo@nekomataya.info;
-##worker=@.example.com;
-##[[原図発注]]/
-##[[背景美術]id:2]
-##[[背景美術]]/
-##[[美術監督チェック]id:3]
-##[[美術監督チェック]]/
-TITLE/
 ##<(背景美術)>/
 ##
 [END]

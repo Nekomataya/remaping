@@ -2185,6 +2185,8 @@ nas.Pm.workTitles.parseConfig(`{
 		"inputMedia":"12in-HDTV",
 		"outputMedia":"HDTV-1080p"}
 }`);
+
+nas.Pm.activeTitle=nas.Pm.workTitles.entry();
 /*
 　* メディアDB
 

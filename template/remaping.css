@@ -1797,3 +1797,14 @@ div.documentStatusOverlay {
 	color:#22dd22;
 	background-color:#222222;
 }
+
+/*
+	タイムシートマーカー
+*/
+.trackMarker{
+/*アイコンイメージ*/
+	background-image: url(images/ui/trackMarker.png);
+	background-repeat:no-repeat;
+	background-position:50% 50%;
+	background-size:100%;
+}

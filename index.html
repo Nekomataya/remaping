@@ -3490,12 +3490,13 @@ duration :
 	onMouseDown='if(xUI.player.status=="stop"){xUI.player.start()}else{xUI.player.getCount=true};'
 	onMouseUp='if(xUI.player.status=="run"){xUI.player.getCount=false;};'
 		title="stopwatch test start/mark"
-	> Start / Mark
+	> Start / STOP
 	</button><button
 		style='height:32px;width:120px'
-	onMouseDown='if(xUI.player.status=="run"){xUI.player.stop()}else{clearMark()};'
+	onMouseDown='if(xUI.player.status=="run"){xUI.player.stop()}else{xUI.player.clearMark()};'
+	onMouseUp='if(xUI.player.status=="run"){xUI.player.getCount=false;};'
 		title="frameReset"
-	> Stop / Reset
+	> mark / Reset
 	</button>
 	<!--<button
 		class='iconButton  iconButton-goFWD'
@@ -3567,26 +3568,34 @@ id=timerClose
 	onMouseUp='if((xUI.player.markSwap)&&(xUI.player.status=="run")){xUI.player.getCount=false};'
 >START/STOP</button>
 <button
+	id=timerSwitchMark
+	title='stopwatch test mark'
+	onMouseDown='if(xUI.player.status=="stop"){xUI.player.start(true)}else{xUI.player.getCount=true};'
+	onMouseUp='if(xUI.player.status=="run"){xUI.player.getCount=false};'
+>Mark</button>
+<button
 	id=timerSwitchSub
-	onMouseDown='if(xUI.player.status=="run"){if(xUI.player.markSwap){xUI.player.stop()}else{xUI.player.getCount=true}}else{clearMark()};'
+	onMouseDown='if(xUI.player.status=="run"){if(xUI.player.markSwap){xUI.player.stop()}else{xUI.player.getCount=true}}else{xUI.player.clearMark()};'
 	onMouseUp='if(!(xUI.player.markSwap)&&(xUI.player.status=="run")){xUI.player.getCount=false};'
 	title='stopwatch test stop'
 >Mark/Reset</button>
 <button
-	onClick='if(xUI.player.status=="stop"){buildCount()};'
+	onClick='if(xUI.player.status=="stop"){xUI.selectCell(xUI.Select[0]+"_0");};'
 	title='stopwatch test'
-	disabled
+>[HOME]</button>
+<button
+	onClick='if(xUI.player.status=="stop"){xUI.player.buildCount()};'
+	title='stopwatch test'
 >applyMark</button>
 <input
 	id=waitCount
 	class=spinCtl
 	type=text
-	value='10'
+	value='3'
 	onChange='document.getElementById("timerCount").onchange();'
 ><input
 	id=timerCount
 	type=checkbox
-	checked
 	onChange='xUI.player.wait=(this.checked)?document.getElementById("waitCount").value*1000:0;'
 >count
 <input
@@ -3604,6 +3613,7 @@ id=timerClose
 	type=checkbox
 	onChange='xUI.player.standbyStart=(this.checked)?true:false;'
 	title='set standby-frame start'
+	checked
 >standby
 </span>
 </div>

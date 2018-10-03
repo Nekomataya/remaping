@@ -575,7 +575,7 @@ nas.UNITAs	=function(myUnit){return nas.decodeUnit(this.toString(),myUnit)};
 nas.UNITConvert	=function(myUnit){this.value=nas.decodeUnit(this.toString(),myUnit);this.type=myUnit;return this;};
 
 nas.ANGLEAs	=function(myUnit){
-		var targetUnit=(myUnit.match(/^(d|degrees|°|度|)$/))?"degrees":"radians";
+		var targetUnit=(myUnit.match( /^(r|rad|radians)$/i ))?"radians":"degrees";
 		if(targetUnit==this.type){
 			return this.value
 		}else{
@@ -583,7 +583,7 @@ nas.ANGLEAs	=function(myUnit){
 		}
 	};
 nas.ANGLEConvert=function(myUnit){
-		var targetUnit=(myUnit.match(/^(d|degrees|°|度|)$/))?"degrees":"radians";
+		var targetUnit=(myUnit.match( /^(r|rad|radians)$/i ))?"radians":"degrees";
 		this.value=(targetUnit=="degrees")? radiansToDegrees(this.value):degreesToRadians(this.value);
 		this.type=targetUnit;
 		return this;
@@ -602,7 +602,7 @@ nas.RESOLUTIONConvert=function(myUnit){
 		this.type=targetUnit;
 		return this;
 	};
-nas.LISTString=function(myUnit){
+nas._LISTString=function(myUnit){
 		if(typeof myUnit == "unidefined"){myUnit=false;}
 		var myResult=[];
 		for(var myDim=0;myDim<this.length;myDim++){
@@ -614,7 +614,7 @@ nas.LISTString=function(myUnit){
 		}
 		return myResult.join();//リスト文字列で
 	};
-nas.ARRAYValue	=function(myUnit){
+nas._ARRAYValue	=function(myUnit){
 		if(typeof myUnit == "unidefined"){myUnit=false;}
 		var myResult=[];
 		for(var myDim=0;myDim<this.length;myDim++){
@@ -704,11 +704,11 @@ nas.UnitValue.prototype.valueOf	=nas.UNITValue;
 	値	Number or String 単位付き数値または数値
 	単位	 String 単位文字列省略可能
 
-使用可能な値は  /^(d|degrees|°|度|)$/)
-指定値以外または単位なしで初期化された場合は radians
+使用可能な値は  /^(d|degrees|°|度|r|rad|radians)$/)
+指定値以外または単位なしで初期化された場合は degrees
 単位変換機能付き
 例:	A=new nas.UnitAngle("180 degrees","radians");//	180度相当の値がラディアンで格納される
-	A=new nas.UnitAngle(1);//1 rad
+	A=new nas.UnitAngle(1);//1 deg
 	A=new nas.UnitAngle("27.4 d");//27.4 degrees  として格納
 
 オブジェクトメソッド:
@@ -716,20 +716,25 @@ nas.UnitAngle.as("単位文字列")	指定された単位文字列に変換し�
 nas.UnitAngle.convert("単位文字列")	指定された単位文字列にオブジェクトを変換する 変換後の単位付き数値文字列を返す
 */
 nas.UnitAngle=function(myNumberString,myUnitString){
-	if(typeof myNumberString == "string"){
-		var myNumberUnit=myNumberString.replace(/[\.\s0-9]/g,'')
-	}else{
-		var myNumberUnit='';//第一引数は未指定
-		myNumberString=new String(myNumberString);
-	};
-	if(arguments.length<2){myUnitString=myNumberUnit;};
-//	if(! myUnitString){myUnitString=myNumberString.replace(/[\.\s0-9]/g,'')};
-	if(myUnitString.match(/^(d|degrees|°|度|)$/)){myUnitString='degrees'}else{myUnitString='radians'};
-	this.value=((myNumberUnit=='')||(myUnitString==myNumberUnit))?parseFloat(myNumberString):
-	(myUnitString=="degrees")?nas.radiansToDegrees(parseFloat(myNumberString)):nas.degreesToRadians(parseFloat(myNumberString));
+	var myNumberUnit='';
+	if(! myUnitString) myUnitString='';
+	if((myNumberString)&&(String(myNumberString).match(/(d|deg|degrees|°|度)|(r|rad|radians)/i))){
+		myNumberUnit = (RegExp.$2)? "radians":"degrees";
+	}
+	if((myUnitString)&&(String(myUnitString).match(/(d|deg|degrees|°|度)|(r|rad|radians)/i))){
+	    myUnitString = (RegExp.$2)? "radians":"degrees";
+	}
+	if (myUnitString == '' ){
+	    myUnitString = ( myNumberUnit == '' )? 'degrees':myNumberUnit;
+	}
+	if ( myNumberUnit == '' ) myNumberUnit = myUnitString;
+	this.type  = myUnitString;
+	this.value = (myUnitString==myNumberUnit)? parseFloat(myNumberString):(
+	    (myUnitString=="degrees")?
+	        nas.radiansToDegrees(parseFloat(myNumberString)):
+	        nas.degreesToRadians(parseFloat(myNumberString))
+	    )
 	if(isNaN(this.value)){this.value=0.000000;}
-	this.type=myUnitString;
-//	this.objName="UnitAngle";
 }
 nas.UnitAngle.prototype.as	=nas.ANGLEAs;
 nas.UnitAngle.prototype.convert	=nas.ANGLEConvert
@@ -757,26 +762,122 @@ nas.UnitResolution.convert("単位文字列")	指定された単位文字列に�
 
 */
 nas.UnitResolution=function(myNumberString,myUnitString){
-	if(typeof myNumberString == "string"){
-		var myNumberUnit=myNumberString.replace(/[\.\s0-9]/g,'')
+	var myNumberUnit='';
+	if((myNumberString)&&(String(myNumberString).match(/([dpl]p[ci])/i))){
+		myNumberUnit=RegExp.$1;
+	}
+	if((myUnitString)&&(String(myUnitString).match(/([dpl]p[ci])/i))){
+	    myUnitString = RegExp.$1;
 	}else{
-		var myNumberUnit='dpc';
-		myNumberString=new String(myNumberString);
-	};
-	if(arguments.length<2){myUnitString=myNumberUnit;};
-	if(! (myUnitString.match(/^(dpi|ppi|lpi|dpc|ppc|lpc)$/i))){myUnitString='dpc'};
-	this.value=(myUnitString==myNumberUnit)?parseFloat(myNumberString):
-	(myUnitString.indexOf('pc')<0)?parseFloat(myNumberString)*2.540:parseFloat(myNumberString)/2.540;
-//	if((isNaN(this.value))||(this.value<=0)){this.value=(myUnitString.indexOf('pc')<0)?72.:72./2.540;};
+	    myUnitString = '';
+	}
+	if (myUnitString == '' ){
+	    myUnitString = ( myNumberUnit == '' )? 'dpc':myNumberUnit;
+	}
+	if ( myNumberUnit == '' ) myNumberUnit = myUnitString;
+	this.type  = myUnitString;
+	this.value = (myUnitString==myNumberUnit)?
+	    parseFloat(myNumberString):(	    
+	    (myUnitString.indexOf('pc')<0)?
+	        parseFloat(myNumberString)*2.540:
+	        parseFloat(myNumberString)/2.540
+	    );
 	if((isNaN(this.value))||(this.value<=0)){this.value=(myUnitString.indexOf('pc')<0)?nas.RESOLUTION*2.540:nas.RESOLUTION;};
-	this.type=myUnitString;
-//	this.objName="UnitResolution";
 }
 nas.UnitResolution.prototype.as		=nas.RESOLUTIONAs;
 nas.UnitResolution.prototype.convert	=nas.RESOLUTIONConvert;
 nas.UnitResolution.prototype.toString	=nas.UNITString;
 nas.UnitResolution.prototype.valueOf	=nas.UNITValue;
 /*================================  以下は単位付き数値オブジェクトを要素に持つ複合オブジェクト===============*/
+/** 解像度トレーラ
+３次元までの解像度を保持する解像度オブジェクト
+コンストラクタ
+	new nas.Resolution(x[,y[,z]])
+引数は
+	UnitResolution	/	x,y,z-resokution
+
+
+	TimingCurve	/	timing	
+引数がない場合は単位"ppc"で 72ppi相当の 1次元のオブジェクトを初期化
+
+コンストラクタでタイミングカーブを初期化する必要は無い
+また、タイミングカーブを扱う局面は少ない。
+
+Resolution オブジェクトはUnitResolutionを中核データとしたデータ密度を扱うオブジェクト
+単一の値で初期化された場合はすべてのプロパティを同じ値で初期化する
+lunegthの値に従って文字列、配列の出力は変化するが
+個別プロパティを請求した場合は、x,y,zのそれぞれで値を得ることができる
+
+
+Resolution
+	.x(x-resolution)
+	.y(y-resolution)
+	.z(z-resolution)
+Resolution Object出力書式
+form1:
+    dim1
+        144ppi
+    dim1
+        144ppi,144dpi
+    dim1
+        144ppi,144dpi,144dpi
+form2:
+    dim1
+        resolution = 144ppi
+    dim2
+        resolution.X = 144ppi
+        resolution.Y = 144ppi
+    dim3
+        resolution.X = 144ppi
+        resolution.Y = 144ppi
+        resolution.Z = 144ppi
+*/
+nas.Resolution=function(){
+/*
+	this.props = ['x','y','z',];
+	this.x = new nas.UnitResolution('72ppi');
+	this.y = new nas.UnitResolution('72ppi');
+	this.z;
+	this.length = 1;
+	this.type="dpc";
+*/
+//---------------------------------------------------------------
+	if(arguments.length==0){
+		arguments=[new nas.UnitResolution("72 ppi","dpc")];
+	}
+	this.props=["x","y","z"];
+	this.length=arguments.length;//DimensionLength 1~3
+	this.x  =new nas.UnitResolution(arguments[0]);
+
+    this.type = this.x.type;//第一引数の単位で統一
+
+	this.y  =(arguments[1])? new nas.UnitResolution(arguments[1],this.type):this.x;
+	this.z  =(arguments[2])? new nas.UnitResolution(arguments[2],this.type):this.x;
+
+	this.toString=function(opt){
+    		var myResult=[];
+	    if(! opt){
+	        if(this.length==1) return this.x.toString();
+	    	for(var myDim=0;myDim<this.length;myDim++){
+		        myResult.push(this[this.props[myDim]].toString())
+		    }
+		    return myResult.join(",");
+		}else{
+		    if(this.length==1) return "\tresolution = "+this.x.toString();
+	    	for(var myDim=0;myDim<this.length;myDim++){
+		        myResult.push("\tresolution."+this.props[myDim] +" = "+this[this.props[myDim]].toString());
+		    }
+		    return myResult.join("\n");
+		}
+	};
+	this.valueOf=function(asUnit){
+		if(typeof asUnit == 'undefined') asUnit=this.type;
+		if(this.length==1) return this.x.as(asUnit);
+		var myResult=[];
+		for(var myDim=0;myDim<this.length;myDim++){myResult.push(this[this.props[myDim]].as(asUnit))}
+		return myResult;
+	};
+}
 /**
 	座標オブジェクト
 コンストラクタ:
@@ -831,8 +932,8 @@ nas.Point=function(x,y,z){
 	this.length = 2;
 	this.type="pt";
 }
-nas.Point.prototype.toString=nas.LISTString;
-nas.Point.prototype.valueOf =nas.ARRAYValue;
+nas.Point.prototype.toString=nas._LISTString;
+nas.Point.prototype.valueOf =nas._ARRAYValue;
 
 nas.newPoint=function(){
 //	this.props=['x','y','z'];
@@ -961,8 +1062,19 @@ nas.Position=function(x,y,z){
 */
 	this.type=this.x.type;
 }
-nas.Position.prototype.toString=nas.LISTString;
-nas.Position.prototype.valueOf =nas.ARRAYValue;
+/**
+リスト戻し  カンマ区切り 123mm,234mm
+値単独指定
+全プロパティ
+    x=123mm
+    y=234mm
+    
+*/
+nas.Position.prototype.toString=function(){
+    
+}
+nas.Position.prototype.listString=nas._LISTString;
+nas.Position.prototype.valueOf =nas._ARRAYValue;
 
 //nas.Position objectはPointオブジェクトに換装
 
@@ -971,13 +1083,38 @@ nas.Position.prototype.valueOf =nas.ARRAYValue;
 オフセットを利用するための複合オブジェクト
 positionとorientationを組み合わせたもの
 初期化の引数は位置オブジェクトと方向オブジェクトで
+
+引数なしの場合は  0,0,0d で初期化
 */
 nas.Offset=function(myPos,myOrt){
-	this.position=myPos;
-	this.orientation=myOrt;
+	this.position=(myPos)?myPos:new nas.Point();
+	this.orientation=(myOrt)?myOrt:new nas.Orientation();
 	this.x=this.position.x;
 	this.y=this.position.y;
-	this.r=this.orientation.rotationZ;
+	this.r=this.orientation.z;
+
+
+
+	this.toString=function(opt){
+    		var myResult=[];
+	    if(! opt){
+	    	for(var myDim=0;myDim<this.length;myDim++){
+		        myResult.push(this[this.props[myDim]].toString())
+		    }
+		    return myResult.join(",");
+		}else{
+	    	for(var myDim=0;myDim<this.length;myDim++){
+		        myResult.push("\toffset."+this.props[myDim] +" = "+this[this.props[myDim]].toString());
+		    }
+		    return myResult.join("\n");
+		}
+	};
+	this.valueOf=function(asUnit){
+		if(typeof asUnit == 'undefined') asUnit=this.type;
+		var myResult=[];
+		for(var myDim=0;myDim<this.length;myDim++){myResult.push(this[this.props[myDim]].as(asUnit))}
+		return myResult;
+	};
 }
 /*
 	ベクトルオブジェクト
@@ -1034,73 +1171,146 @@ nas.Vector=function(endPoint,startPoint,myUnit){
 		this.props=['origin','value'];
 	}
 }
-nas.Vector.prototype.toString=nas.LISTString;
-nas.Vector.prototype.valueOf =nas.ARRAYValue;
+nas.Vector.prototype.toString=nas._LISTString;
+nas.Vector.prototype.valueOf =nas._ARRAYValue;
 /**
 	回転オブジェクト
-	引数一つで初期化された場合は、ｚ軸回転
-	それ以上の場合は、3軸の回転となる
-	回転の解決順は z-y-x
+	次元数を保存する
+	引数が正負の数値のみ、またはbool値で指定された場合は、一次元(true,false,-1,1,0  等  0は負方向)
+	引数がなし、または  一つの角度文字列またはUnitAngleで初期化された場合は、二次元でｚ軸指定  （"10d"等）
+	それ以外の場合は三次元（3軸指定）となる
+	三次元回転の解決順は z-y-x
 コンストラクタ
+	new nas.Rotation(bool)
 	new nas.Rotation([x,y,] z)
-引数はUnitAngleまたは文字列
+引数は、bool,UnitAngleまたは文字列
 
 */
 nas.Rotation=function(){
-	if(arguments.length==0){
-		arguments[0]=new nas.UnitAngle('0 radians');//記述がない場合はz軸のみで初期化
-	}
-	this.length=arguments.length;//DimensionLength
-	this.props=["rotationZ","ritationY","rotationX"];
-	if(this.length==1){
-	  this.rotationZ=(arguments[0] instanceof nas.UnitAngle)? arguments[0]:new nas.UnitAngle(arguments[0]);
-	  this.rotationY=new nas.UnitAngle('0 radians');
-	  this.rotationX=new nas.UnitAngle('0 radians');
-	}else{
-	  for(var myDim=0;myDim<this.length;myDim++){
-	    if(arguments[myDim] instanceof nas.UnitAngle){
-	      this[this.props[myDim]]=arguments[myDim];
-	    }else{
-	      this[this.props[myDim]]=new nas.UnitAngle(arguments[myDim]);
-	    }
-	  }
-	}
+    this.name='rotation';
+    this.props=["w","x","y","z",];
+	this.dimension=(arguments.length == 0)? 2 : 
+	(arguments.length > 1)? 3 :
+    ((! arguments[0] instanceof nas.UnitAngle)||isFinite(arguments[0]))? 1 : 2 ;	 
+    switch(this.dimension){
+    case 1:
+        this.w = (arguments[0] < 0 )? -1:1;
+    break;
+    case 2:
+	    this.z=(arguments[0] instanceof nas.UnitAngle)? arguments[0]:new nas.UnitAngle(arguments[0]);
+	    this.y=new nas.UnitAngle('0 degrees');
+	    this.x=new nas.UnitAngle('0 degrees');
+	break;
+    case 3:
+	    this.x=(arguments[0] instanceof nas.UnitAngle)? arguments[0]:new nas.UnitAngle(arguments[0]);
+	    this.y=(arguments[1] instanceof nas.UnitAngle)? arguments[1]:new nas.UnitAngle(arguments[1]);
+	    this.z=(arguments[2] instanceof nas.UnitAngle)? arguments[2]:new nas.UnitAngle(arguments[2]);
+    }
 }
-nas.Rotation.prototype.toString=nas.LISTString;
-nas.Rotation.prototype.valueOf =nas.ARRAYValue;
+nas.Rotation.prototype.toString = function(exportForm){
+    if(!exportForm) return this.listString('degrees');    
+    var myResult=[];
+    var myUnit = 'degrees';
+    switch (this.dimension){
+    case 1:
+        myResult.push("\t"+this.name+".w = "+this.w);
+    break;
+    case 2:
+        myResult.push("\t"+this.name+" = "+this.z.as(myUnit));
+    break;
+    case 3:
+    default:
+        myResult.push("\t"+this.name+".x = "+this.x.as(myUnit));
+        myResult.push("\t"+this.name+".y = "+this.y.as(myUnit));
+        myResult.push("\t"+this.name+".z = "+this.z.as(myUnit));
+    }
+		return myResult.join('\n');//リスト文字列で
+}
+nas.Rotation.prototype.listString   = function(myUnit){
+	if(typeof myUnit == "unidefined"){myUnit=false;}
+	var myResult=[];
+    switch (this.dimension){
+    case 1:
+        myResult.push(this.w);
+    break;
+    case 2:
+        myResult.push(this.z.as(myUnit));
+    break;
+    case 3:
+    default:
+        myResult.push(this.x.as(myUnit));
+        myResult.push(this.y.as(myUnit));
+        myResult.push(this.z.as(myUnit));
+    }
+	return myResult.join(',');//リスト文字列で
+}
+nas.Rotation.prototype.valueOf      =nas._ARRAYValue;
 
 /*
 	方向オブジェクト
-	引数一つで初期化された場合は、ｚ軸指定
-	それ以上の場合は、3軸指定となる
-	回転の解決順は z-y-x
+	次元数を保存する
+	引数が正負の数値のみで指定された場合は、一次元
+	引数がなし、または  一つの角度文字列またはUnitAngleで初期化された場合は、二次元でｚ軸指定
+	それ以外の場合は三次元（3軸指定）となる
+	三次元回転の解決順は z-y-x
 コンストラクタ
+	new nas.Orientation(bool)
 	new nas.Orientation([x,y,] z)
-引数はUnitAngleまたは文字列
+引数は、bool,UnitAngleまたは文字列
 
 */
 nas.Orientation=function(){
-	if(arguments.length==0){
-		arguments[0]=new nas.UnitAngle('0 radians');//記述がない場合はz軸のみで初期化
-	}
-	this.length=arguments.length;//DimensionLength
-	this.props=["orientationX","orientationY","orientationZ"];
-	if(this.length==1){
-	  this.rotationZ=(arguments[0] instanceof nas.UnitAngel)? arguments[0]:new UnitAngle(arguments[0]);
-	  this.rotationY=new nas.UnitAngle('0 radians');
-	  this.rotationX=new nas.UnitAngle('0 radians');
-	}else{
-	  for(var myDim=0;myDim<this.length;myDim++){
-	    if(arguments[myDim] instanceof nas.UnitAngle){
-	      this[this.props[myDim]]=arguments[myDim];
-	    }else{
-	      this[this.props[myDim]]=new nas.UnitAngle(arguments[myDim]);
-	    }
-	  }
-	}
+    this.name='orientation';
+    this.props=["w","x","y","z",];
+	this.dimension=(arguments.length == 0)? 2 : 
+	(arguments.length > 1)? 3 :
+    ((! arguments[0] instanceof nas.UnitAngle)||isFinite(arguments[0]))? 1 : 2 ;	 
+    switch(this.dimension){
+    case 1:
+        this.w = (arguments[0] < 0 )? -1:1;
+    break;
+    case 2:
+	    this.z=(arguments[0] instanceof nas.UnitAngle)? arguments[0]:new nas.UnitAngle(arguments[0]);
+	    this.y=new nas.UnitAngle('0 degrees');
+	    this.x=new nas.UnitAngle('0 degrees');
+	break;
+    case 3:
+	    this.x=(arguments[0] instanceof nas.UnitAngle)? arguments[0]:new nas.UnitAngle(arguments[0]);
+	    this.y=(arguments[1] instanceof nas.UnitAngle)? arguments[1]:new nas.UnitAngle(arguments[1]);
+	    this.z=(arguments[2] instanceof nas.UnitAngle)? arguments[2]:new nas.UnitAngle(arguments[2]);
+    }
+};
+nas.Orientation.prototype=nas.Rotation.prototype;
+/*
+nas.Orientation=function(){
+	this.props=["w","x","y","z",];
+	this.dimension=(arguments.length == 0)? 2 : 
+	(arguments.length > 1)? 3 :
+    ((! arguments[0] instanceof nas.UnitAngle)||isFinite(arguments[0]))? 1 : 2 ;	 
+    switch(this.dimension){
+    case 1:
+        this.w = (arguments[0]);
+    break;
+    case 2:
+	    this.z=(arguments[0] instanceof nas.UnitAngle)? arguments[0]:new nas.UnitAngle(arguments[0]);
+	    this.y=new nas.UnitAngle('0 degrees');
+	    this.x=new nas.UnitAngle('0 degrees');
+	break;
+    case 3:
+	    this.x=(arguments[0] instanceof nas.UnitAngle)? arguments[0]:new nas.UnitAngle(arguments[0]);
+	    this.y=(arguments[1] instanceof nas.UnitAngle)? arguments[1]:new nas.UnitAngle(arguments[1]);
+	    this.z=(arguments[2] instanceof nas.UnitAngle)? arguments[2]:new nas.UnitAngle(arguments[2]);
+    }
 }
-nas.Orientation.prototype.toString=nas.LISTString;
-nas.Orientation.prototype.valueOf =nas.ARRAYValue;
+nas.Orientation.prototype.toString = function(exportForm){
+    if(!exportForm) return this.listString('degrees' );    
+    var myResult=[];
+    if(this.length==1){myResult.push(this.z.toString())}
+}
+
+nas.Orientation.prototype.listString=nas._LISTString;
+nas.Orientation.prototype.valueOf =nas._ARRAYValue;
+*/
 
 /*	フレームレートオブジェクト
 コンストラクタ
@@ -1117,9 +1327,9 @@ nas.Orientation.prototype.valueOf =nas.ARRAYValue;
 	第一引数が  PAL,SECAM  を含む場合は、第二引数にかかわらず 25  で初期化を行う
 	その際引数に数値  50 が含まれる場合 50 に更新する
 
-    第一引数が reteString(rate)  形式の場合は  括弧の中身を実フレームレートして処理する
+    第一引数が reteString(rate)  形式の場合は  括弧の中身を実フレームレートとして処理する
 
-	実時間とTCのズレる形のNDFはサポートしない。	
+	実時間とTCのズレが蓄積して広がるNDFはサポートしない。	
 	
 	フレームレート文字列に数値が含まれているかまたはキーワードの場合は、第二引数を省略可能（無視する）
 	不正な引数で初期化された場合は、クラスプロパティを使用する
@@ -1136,14 +1346,68 @@ nas.Orientation.prototype.valueOf =nas.ARRAYValue;
 */
 //nas.Framerate={name:"24FPS",rate:24,opt:null};
 
-nas.Framerate=function(){
+nas.Framerate=function(initString){
 	this.name = "24FPS";
 	this.rate = 24;
     this.opt  = null;
+    if(initString) this.parse(initString);
 };
 
 nas.Framerate.prototype.toString=function(form){return (form)? this.name:this.name+"("+this.rate+")";}
 nas.Framerate.prototype.valueOf=function(){return this.rate;}
+
+/**
+    フレームレートオブジェクト初期化メソッド
+    空引数で呼ばれた場合はデフォルト値のフレームレートを返す
+*/
+nas.Framerate.prototype.parse=function(rateString,rate){
+
+	if(arguments.length){
+	  //第一引数がカッコつきでフレームレート指定された文字列ならば第二引数は無効(捨てる)
+	  if(String(rateString).match(/(.*)\(([0-9]+(\.[0-9]*)?)\)/)){
+	    this.name = RegExp.$1;
+	    this.rate = parseFloat(RegExp.$2);
+	  } else if(arguments.length>1){
+	//引数が2つ設定されている
+	    this.name=rateString;
+	    this.rate=parseFloat(rate);
+	  }else if(String(rateString).length){
+	//引数が一つのみ
+	    this.name=String(rateString);
+	    this.rate=parseFloat(String(rateString).replace(/^[^-\d]+/,""));//文字列先頭の数値以外のデータを捨てて数値化
+	  }else{
+	    return this;
+	  }
+	}else{
+	//引数がない場合は、デフォルト値を返す
+	    return this;
+	}
+	//名前に特定の強制キーワードを含む
+	if(this.name.match(/PAL|SECAM/i)){
+	    if(!(this.rate)) this.rate = 25;
+	    this.rate=( this.rate < 37.5 ) ? 25.0: 50.0 ;
+	}else if(this.name.match(/SMPTE|NTSC|[^N]DF/i)){
+        this.opt='smpte';
+	    if(! isFinite(this.rate)) this.rate = 30;
+	    this.rate=(this.rate > 45 )? 59.94 : 29.97 ;
+	}
+	if(! isFinite(this.rate)){
+//  console.log (this.rate);
+	    this.name=nas.FRATE.name;this.rate=nas.FRATE.rate;this.opt=nas.FRATE.opt;
+	}
+//最終的に名前がなくなった場合はフレームレート＋"fps"を文字列としてもたせる
+	if(String(this.name).length==0) {this.name = this.rate+'fps'};
+
+	return this;
+}
+/**
+    同値判定メソッド
+    フレームレートと、ドロップの有無を比較して同じフレームレートか否かを返す
+*/
+nas.Framerate.prototype.sameAs=function(compareTarget){
+    if(! compareTarget instanceof nas.Framerate) return false;
+    return ((this.rate==compareTarget.rate)||(this.opt==compareTarget.opt));
+}
 /**
     新規フレームレート作成メソッド
     空引数で呼ばれた場合はデフォルト値のフレームレートを返す
@@ -1201,7 +1465,7 @@ var myRate=nas.newFramerate("SMPTE",60);
 myRate*2;
 
 */
-/*
+/**
 	サイズオブジェクト
 コンストラクタ
 	new nas.Size(width,height[,depth])
@@ -1405,7 +1669,7 @@ nas.AnimationPegForm.prototype.toString=function(){return this.name;}
 nas.AnimationPegForm.prototype.valueOf=function(){return nas.AnimationPegForms[this.name];}
 
 nas.GeometryOffset=function(myPoint,myRotation){
-	this.position=(myPoint)?myPoint:new nas.Point();
+	this.position=(myPoint instanceof nas.Point)? myPoint:new nas.Point();
 	this.x=this.position.x;
 	this.y=this.position.y;
 	this.rotation=(myRotation)?myRotation:new nas.Rotation();
@@ -1417,21 +1681,135 @@ nas.AnimationField Object
 クリッピングフレーム（カメラワークオブジェクト）の基底クラス
 10インチ標準フレームは、
 	new nas.AnimationField(
-		"10inSTD",
-		new nas.UnitValue("720 pt"),
-		16/9,
-		myOffset =nas.GeometryOffset(new nas.Position("0mm","105mm"),new nas.Rotation(0))
+		name = "10inSTD",
+		baseWidth=new nas.UnitValue("720 pt"),
+		frameAspect=16/9,
+		scale="100Fld",
+		peg=new nas.AnimationPegForm("ACME"),
+		pegOffset = nas.GeometryOffset(new nas.Position("0mm","105mm"),new nas.Rotation(0)),
+		type = "trad"
 	);
 
+    フィールドタイプ：trad,retas,inch-field,5000center
 */
-nas.AnimationField=function(myName,baseWidth,frameAspect,scale,peg,pegOffset){
+nas.AnimationField=function(myName,baseWidth,frameAspect,scale,peg,pegOffset,fieldType){
 	this.name=(myName)?myName:"10in-HDTV";
 	this.baseWidth=(baseWidth)?baseWidth:new nas.UnitValue("254 mm");
 	this.frameAspect=(frameAspect)?frameAspect:16/9;
-	this.scale=(scale)?scale:1.0;
+	this.frameScale=(scale)?scale:1.0;
 	this.peg=(peg)?peg:new nas.AnimationPegForm("ACME");
 	this.pegOffset=(pegOffset)?pegOffset:nas.GeometryOffset(new nas.Position("0 mm","104.775 mm"),new nas.Rotation(0));
+	this.type=(fieldType)? fieldType:"trad";
 }
+
+nas.AnimationField.prototype.toString=function(exportForm){
+    if(! exportForm){
+      var resultData= ([
+        '"'+this.name+'"'
+      ])        
+    }else{
+      var resultData= ([
+        '"'+this.name+'"',
+	    this.baseWidth,
+	    this.frameAspect,
+	    this.frameScale,
+	    this.peg,
+	    this.pegOffset,
+	    this.type
+	  ]);
+	}
+    return resultData.join(',');
+
+}
+
+
+/**
+ * nas.AnimationElementSource Object
+ * 各エレメントのソースファイルを統合して扱うオブジェクト
+ * 初期化引数:ターゲット記述テキスト
+ * .file ソースファイル object/File 又はパス文字列  初期値 null
+ * .file.additionalLocation ソースファイルのサブロケーション  文字列  結合可能
+ * .framerate ソースフレームレート 主に静止画、ムービーの際に利用  object / nas.Framerate
+ * .duration ソース継続時間 主に静止画の際に利用  int/frames
+ * .startOffset ソース継続時間に対するオフセット  int/frames
+ * .type     ソースに与えられた役割を表す型式文字列
+ 
+type属性は、静止画/動画/音声/Xpst と　ソース/プロキシ/リファレンス　の組み合わせ12種類
+に加えて作業伝票としてのXPstを扱うことができる
+xpst/still/movie/sound[-/src/prox/ref]
+
+ */
+nas.AnimationElementSource=function(targetDescription){
+    this.contentText=targetDescription;
+    this.file=null;
+    this.subLocations=[];
+	this.framerate=nas.pmdb.activeTitle.framerate;
+    this.duration;
+    this.stratOffset;
+    this.type="still-src";
+
+    this.parseContent();
+}
+/*
+    ソースの書式は以下
+    ["<file.url>[///<source-subLoacation>[,<source-subLoacation>]...///<propertyName>=<propertyValue>[,<propertyName>=<propertyValue>]...]]
+    urlは必須　サブロケーションがある場合は、ファイル記述規則に従って///三連スラッシュでurlに連続して記述
+    urlがカラで他のプロパティを登録する場合は"(空文字列)"を使用して　以降のプロパティを記述する
+    すべて単一の文字列で
+    例
+"./sample/KD/B001.png///ping///pong"
+*/
+nas.AnimationElementSource.prototype.parseContent=function(srcString){
+    if(typeof srcString == 'undefined') srcString = this.contentText;
+    var srcData=String(srcString).split('///'); 
+    this.file=(srcData[0])?srcData[0]:null;
+    this.subLocations=((srcData[0])&&(srcData[1]))? srcData[1].split(','):[];
+    if(srcData[2]){
+        var props=srcData[2].split(',');
+        for (var pidx=0 ;pidx<props.length;pidx++){
+            var prop = props[pidx].split('=');
+            this[prop[0]]=prop[1];
+        }
+    }
+    this.contentText = this.toString();
+    return this.contentText;
+}
+nas.AnimationElementSource.prototype.toString=function(exportForm){
+    if (! exportForm) {
+        return this.contentText;
+    }else{
+        var myResult=[];
+        myResult.push(this.file);
+        if(
+            (this.subLocations.length)||
+            (
+                (this.duration)||
+                (this.startOffset)||
+                (! this.framerate.sameAs(nas.pmdb.activeTitle.framerate))||
+                (this.type!="still-src")
+            )
+        ){
+            if (this.subLocations.length) {
+                myResult.push(this.subLocations.join(','));
+            }else{
+                myResult.push('');
+            }
+            var props=[];
+            if(this.duration)           props.push("dutation="+this.duration);
+            if(this.startOffset)        props.push("startOffset="+this.startOffset);
+            if(! this.framerate.sameAs(nas.pmdb.activeTitle.framerate));
+                                        props.push("framerate="+this.framerate.toString());
+            if(this.type!="still-src")  props.push("type="+this.type);
+            myResult.push(props.join(','));
+        }
+        return myResult.join('///');
+    }    
+}
+/*TEST
+var testString='./test/Folder/kachi#00[pilot]__s-c004_s-c012/KD/kachi#00[pilot]__s-c004_s-c012///KD/A/001///'
+A= new nas.AnimationElementSource(testString);
+A
+*/
 
 //区間要素群のtoString()	メソッドの仕様
 
@@ -1440,8 +1818,10 @@ nas.AnimationField=function(myName,baseWidth,frameAspect,scale,peg,pegOffset){
 	代表値を保存形式出力で
 	Obj.toString(出力キーワード) 又は  Obj.toString(1 or true)
 	先頭 \t フィールドデリミタ \n でフルスペック出力
+
 	Obj.toString([プロパティ名配列])
 	指定プロパティを先頭 \t フィールドデリミタ \n で列挙
+        
 	
 実際の使用時は以下の例のように利用
 	xMapElement.content.toString("all");
@@ -1466,16 +1846,16 @@ AnimationRreplacement.toString();
 AnimationRreplacement.toString(["size.x","size.y","size.t"]);
 
 戻値
-'	size.x=12 mm
-	size.y=36 mm
+'	size.x=120 mm
+	size.y=360 mm
 	size.t=linear
 '
 
 xMapElement.toString("all");
 戻値
 'A	A-1	"c:\myWorkshop\dataStore\work01\c001\A\0001.png"
-	size.x=12 mm
-	size.y=36 mm
+	size.x=120 mm
+	size.y=360 mm
 	size.t=linear
 '
 
@@ -1488,10 +1868,10 @@ B	B-1	"c:\\\\Users\\Me\\Desktop\\Datas\\B_00001.png",640pt,480pt,
 
 値に名前（ラベル）を与えるのは上位オブジェクトの役目なので上位オブジェクト側で、これらの値をラップした出力を得る
 	group
-[A]
-//最低限、名前のみ（これけっこう多い）
-[A	CELL	720,405]
-//標準形式、[label kind geometry]
+[A cell]
+//最低限、名前  + 値タイプ  （これが最も多い）
+[A	cell	720,405]
+//標準形式、[label type basicProp comment]
 //これ以上の情報が継承以外で保持されている場合geometryの追加情報を個別型式で出力
 
 セルグループのプロパティ
@@ -1510,14 +1890,14 @@ B	B-1	"c:\\\\Users\\Me\\Desktop\\Datas\\B_00001.png",640pt,480pt,
 
 */
 /*
-	区間の値としてのオブジェクトとMapの値を同一オブジェクトとするか否か？
-	兼用して参照渡しにするのが最良と思われる
+	区間の値としてのオブジェクトとxMapElementの値を同一オブジェクトとする
 
 	作成するオブジェクトのリスト＞＞トラックの種類だけ必要
-nas.AnimationSound	  音響
-nas.AnimationReaplacement	置きかえ（画像ーセル＊静止画と動画を双方含む）
-nas.AnimationGeometry	ジオメトリ（カメララーク）
-nas.AnimationComposite	合成（撮影効果）
+nas.AnimationDescription    単記述オブジェクト　下記を含むマルチパーパスオブジェクト
+nas.AnimationSound	        音響
+nas.AnimationReaplacement   置きかえ（画像ーセル＊静止画と動画を双方含む）
+nas.AnimationGeometry	    ジオメトリ（カメララーク）
+nas.AnimationComposite	    合成（撮影効果）
 
 システムグループのエントリは各オブジェクトをすべて含む可能性がある == システムのみグループのタイプと値のタイプが異なる
 XPSグループのエントリは時間属性を持ったリプレースメントオブジェクトとして扱う
@@ -1528,23 +1908,6 @@ TEXTグループは、タイムシート上には配置されず区間の値と�
 これでOK？
 
 */
-
-/**
- * nas.AnimationElementSource Object
- * 各エレメントのソースファイルを統合して扱うオブジェクト
- * 初期化引数:ターゲット記述テキスト
- * .file ソースファイル object/File 又はパス文字列  初期値 null
- * .framerate ソースフレームレート 主に静止画、ムービーの際に利用  object / nas.Framerate
- * .duration ソース継続時間 主に静止画の際に利用  int/frames
- * .startOffset ソース継続時間に対するオフセット  int/frames
- */
-nas.AnimationElementSource=function(targetDescription){
-    this.file;
-	this.framerate;
-    this.duration;
-    this.stratOffset;
-}
-
 
 /**
 

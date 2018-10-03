@@ -8,35 +8,53 @@
     置きかえタイムラインの（区間）値としては参照を持つ
     タイムシート上は回数未定で同じ値が再利用される
 
-このソースは、nasライブラリの基底オブジェクトを組み合わせて構成されるタイムライントラックの値となるオブジェクト群のソース
-ライブラリを分割して　libBaseValue.js　として　nas_common.jsの後　xpsio mapioの前に読み込むものとする
+このソースは、nasライブラリの基底オブジェクトを組み合わせて構成される
+タイムライントラックの値（=xMapに登録されるelementの値）となるオブジェクト群
+
+ライブラリを分割して　nas_AnimationValues.js　として　nas_common.jsの後　xpsio mapioの前に読み込むものとする
  */
 /**
- *  置きかえタイムラインの値
- *  セル
- contentTextはｘMapの記述から前置のグループ情報・エレメント名及び空白文字を取り除いたもの
+ *  置きかえ（セル）タイムラインのパース
+ *  
+ contentTextはxMapの記述の該当部分を改行区切りテキストで与える
+ 
+ データ型式は 第一、第二型式を自動判別
 
     第一型式
-elementID   
-
- データ型式は 第一、第二型式を自動判別
- レコードデリミタは"\n"
-
+^<group>\t<elementID>[\t<optionString>[\t<comment>]]$   
+エントリーの定義を兼ねる
+ 
+    第二型式
+^\t<property> = <value>$
  第二型式（プロパティ名＝値）型式の場合はそのまま使用
 
- 第二型式に当てはまらない場合は、第一型式とし最大２フィールドのタブ区切りテキストとみなす
- （最初のタブで二つに分ける）
- 第一フィールドはcsvパーサを通してプロパティに割り付けを行う
- 第二フィールドは、エレメントに対するコメントとなる
+
+ 第二型式に当てはまらない場合は、第一型式とし最大4フィールドのタブ区切りテキストとみなす
+ =冒頭から３つまでのタブで分割する
+
+
+ 第一フィールドは、グループ名パース時点のみの情報
+ 第二フィールドは、エレメント名　エレメント名にグループ記述が欠けている場合はこれを補う？
+ 第三フィールドは、オプションプロパティ URI,width,height,offsetX,offsetY,offsetR
+ 第四フィールドは、エレメントに対するコメント
  
+  csvパーサを通してプロパティに割り付けを行う
+第3フィールド以降、データ内のタブを含めすべての記述がエレメントに対するコメントプロパティとなる
+ 
+情報はすべて省略可能
+省略時は、各要素の親となるグループの持つプロパティを引き継ぐ
+
 以上、各エレメント共通
 
+
 以下種別ごとの第一型式情報並び(エレメントの配置)フォーマット
-情報はすべて省略可能
-    置きかえタイムラインエレメント
-["file","size.x","size.y","offset.x","offset.y","offset.r"]（標準のcsvパーサでも良いが専用のパーサを作ったほうが早そう）
+
+    置きかえタイムラインエレメント    
+["file","size.x","size.y","offset.x","offset.y","offset.r"]
+
     カメラワークタイムラインエレメント
 [フィールドテキスト]     フィールド記述テキストは別定義のパーサに通す　16夏改装では保留
+
     エフェクトタイムラインエレメント
 [エフェクトテキスト]     エフェクト記述テキストは別定義のパーサに通す　16夏改装では保留
 
@@ -49,42 +67,173 @@ XPSのデータをパースする場合は、データ記述からキーワー�
 xMapがない場合（暫定コード）では、仮のｘMapデータにエントリを送り以降の再利用に供する
 
  */
-nas.AnimationReplacement=function(myContent){
-    this.contentText=myContent  ;   //xMapのソースを保存する　自動で再構築が行なわれるタイミングがある
-    //  myContent undefined で初期化を行った場合の値は blank-cell
-    this.source                 ;   //string 画像データのurl　nas.FileObjectの使用は避ける　オブジェクトの整備が不十分
-    this.source.duration        ;   //ソースが時間情報を持ったデータだった場合の継続時間＊＊
-    this.source.startOffset     ;   //ソースが時間情報を持ったデータだった場合のオフセット＊＊
-    //  ファイル情報を含むソースオブジェクトにした方が良さそう＊＊　>転用が可能
-    this.source.formGeometry    ;   //ソース内のオフセット情報　nas.AnimationFieldオブジェクト
-    this.resolution             ;   //要素の解像度   nas.UnitResolution()
-    this.size                   ;   //要素のサイズ   nas.Size()
-    this.offset                 ;   //要素の原点オフセット   nas.
-    this.pegOffset              ;   //要素のペグオフセット＊　これらはオブジェクトで統合？
-    //  this.timingNotes;//値に配置されるタイミングメモ　コレクション不要　これはタイムシートのプロパティなので不用
-    this.comment                ;   //コメント文字列　エレメントの注釈プロパティ-xMap編集UIのみで確認できる
-    this.overlay                ;   //カブセの対象となるエレメントへの参照
+nas.AnimationReplacement=function(myParent,myContent){
+    this.parent = (myParent)? myParent : null     ;
+    this.contentText = (myContent)? myContent : '';//xMap上のコンテントソースを保存する　自動で再構築が行なわれるタイミングがある
+                                                   //myContent undefined で初期化を行った場合の値は blank-cell
+    this.source                                   ;//nas.AnimationElementSource
+    this.formGeometry                             ;//nas.AnimationFieldオブジェクト
+    this.resolution                               ;   //要素の解像度   nas.Resolution()
+    this.size                                     ;   //要素のサイズ   nas.Size()
+    this.offset                 ;                       //要素の原点オフセット   nas.Offset()
+    this.pegOffset              ;                       //要素のペグオフセット＊　これらはオブジェクトで統合？
+    this.comment                ;                       //コメント文字列　エレメントの注釈プロパティ-xMap編集UIのみで確認できる
+    this.overlay                ;                       //カブセの対象となるエレメントへの参照 　< elementのプロパティへ移行が必要？
+    
+    this.parseContent();
 }
-nas.AnimationReplacement.prototype.toString=function(exportForm){
-    //  引数なし　または引数が１つでfalseと判断される場合は標準保存形式出力
-    if ((arguments.length==0)||((arguments.length==1)&&(! arguments[0]))){
-        return ['"'+this.source+'"',this.size.toString()].join();
-    }
+/**
+    //  引数なし　または引数が１つで文字列'basic'またはfalseと判断される場合は標準保存形式出力
+    標準保存形式
+^<group>\t<cellDescription>\t< ここまではElementObjectの出力範囲
+<proppertyValues>\t<comment>
+    例
+"./stages/kd/kt#00[pilot]__s-c001_kd.psd///kd/A/0001+",254mm,142.875mm,127mm,71.4375mm	testOverlay
+
+proppertyValuesは、comma区切りで以下の順のデータ
+["<source>"[,size.X,size.Y[,offset.X,offset.Y[,offset.R]]]]
+末尾から順にすべて省略可能
+各エントリに登録のない場合はデフォルトの値が使用される
+
+    //  引数が 'extended'の場合は拡張保存形式で返す
+    拡張保存形式
+^\t<propname> = <proppertyValue>$\n
+    例
+	file = "./stages/kd/kt#00[pilot]__s-c001_kd.psd///kd/A/0001+"
+	
+	
     //  引数が一つ以上ある場合の処理
-    else if(arguments[0] instanceof Array){
-        var myResult="";
+
+*/
+nas.AnimationReplacement.prototype.toString=function(exportForm){
+    if(exportForm == 'extended'){
+        var resultArray=[];
+        if(this.source)   resultArray.push('\tfile = "'    + this.source.toString(true)+'"');
+        if(this.size)     resultArray.push('\tsize = '     + this.size.toString(true));
+        if(this.offset)   resultArray.push('\toffset = '   + this.offset.toString(true));
+        if(this.rotation) resultArray.push('\trotation = ' + this.rotation.toString(true));
+        if(this.comment)  resultArray.push('\tcomment = '  + this.comment);
+        return resultArray.join("\n");
+    }else if ((arguments.length==0)||((arguments.length==1)&&(! arguments[0]))){
+        var resultArray=[];
+        if(this.source) {
+            resultArray.push('"'+this.source.toString()+'"');
+        }else{
+            resultArray.push("");
+        }
+        if(this.size)     resultArray.push(this.size.toString());
+        if(this.offset)   resultArray.push(this.offset.toString());
+        if(this.rotation) resultArray.push(this.rotation.toString());
+        resultArray = [resultArray.join(",")];
+        resultArray.push(this.comment);
+        return resultArray.join("\t");
     }
-    return myResult;
 }
 //nas.AnimationReplacement.prototype.valueOf=function(){
 //    return nas.parseNumber(nas.normalizeStr(this.name).replace(/^[^0-9]*/,""))
 //valueOfの設定自体にあまり意味が無いのでやめたほうがヨサゲ　
 //}
+/**　与えられたオブジェクトとプロパティ同士を比較して　変更状態を返す
+    引数
+対照する基準値（オブジェクト）
+    戻り値
+変更状態コード
+0   変化なし    最小標準出力に対応
+1   標準変更    拡張標準出力に対応
+2   重度変更    フルダンプに対応
+*/
+nas.AnimationReplacement.prototype.compareWith= function(targetValue){
+    var igunoreProps    =['contentText','source'];
+    var basicProp       =['size','offset','comment'];
+    var extendProps     =['pegOffset',];
+}
+/** タイミングパラメータに従って指定されたフレームのキー間の補完値を返す
+
+  　置きかえタイムラインの中間値は前方値で代表されるので基本的に戻り値は自分自身
+    オプションの状態によって（時間的）中間タイミングで後方値に切り替える
+    return endValue;
+    又はブランク状態のオブジェクトを返す
+  　return new nas.newAnimationReplacement("blank");
+*/
 nas.AnimationReplacement.prototype.interpolate= function(endValue,indexCount,indexOffset,frameCount,frameOffset,props){
-    return this         ;   //置きかえタイムラインの中間値は前方値で代表されるので戻り値は必ず自分自身
-    /* オプション状態で中間タイミングで後方値に切り替える（時間で） return endValue;
-    　 又はブランク状態のオブジェクトを返す return new nas.newAnimationReplacement("blank");
-    */
+    return this;
+}
+
+/** Contentをパースして　プロパティを設定する内部メソッド
+引数でcontentを与えてオブジェクト全体の値を更新することも可能
+引数がAnimationRepalcementであった場合は、全プロパティを継承して引き写す
+ただし引数と同じジョブ内のコレクションに追加を行う場合は、失敗するので要注意
+
+xMap形式のデータをパースする　nas.AnimationXXX シリーズオブジェクトの共通メソッド
+xMapパーサから呼び出す際に共通でコールされる
+引数が与えられない場合は、現在の保持コンテンツを再パースする
+*/
+nas.AnimationReplacement.prototype.parseContent = function(myContent){
+    var blankRegex  = new RegExp("^[ｘＸxX×〆0０]$");//カラ判定　システム変数として分離予定
+    var interpRegex = new RegExp("^[\-\+=○●*・a-zア-ン]$|^\[[^\]]+\]$");//中間値補間（動画記号）サイン　同上
+    var valueRegex  = new RegExp("^[\(<]?[0-9]+[>\)]?$");//無条件有効値 同上
+
+//引数がなければ現在のコンテンツを再パース
+    if(typeof myContent == 'undefined'){
+        myContent = this.contentText;
+    }
+
+//第一形式 ^<group>\t<name>[\t<option-text>[\t<comment>]]$
+    myContent = String(myContent).split('\n');
+    for ( var line = 0 ; line < myContent.length ; line++){
+        if(myContent[line].match(/^\t(\S+)\s*=\s*(.+)\s*$/)){
+            //第二形式でプロパティ別のデータ更新を行う
+            var myProp=RegExp.$1;var valueArray=scvSimple.parse(RegExp.$2)[0];
+            switch(myProp){
+            case "file":
+                this.file = valueArray[0];
+            break;
+            case "resolution":
+                this.resolution= new nas.Resolution(valueArray.join(','));
+            break;
+            case "resolution.X":
+                this.resolution.x = new nas.UnitResolution(valueArray[0],this.resolution.type);
+            break;
+            case "resolution.Y":
+                this.resolution.y = new nas.UnitResolution(valueArray[0],this.resolution.type);
+            break;
+            case "size":
+                this.size = (valueArray.length<3)?
+                    new nas.Size(valueArray[0],valueArray[1]):new nas.Size(valueArray[0],valueArray[1],valueArray[2]);
+            break;
+            case "size.X":
+                this.size.x = valueArray[0];
+            break;
+            case "size.Y":
+                this.size.y = valueArray[0];
+            break;
+            case "offset":
+                this.offset = (valueArray.length<3)?
+                    new nas.Offset(valueArray[0],valueArray[1]):new nas.Offset(valueArray[0],valueArray[1],valueArray[2]);
+            break;
+            case "offset.X":
+                this.offset.x
+            break;
+            case "offset.Y":
+            break;
+            case "offset.R":
+            break;
+            case "pegOffset":
+            break;
+            case "pegOffset.X":
+            break;
+            case "pegOffset.Y":
+            break;
+            case "pegOffset.R":
+            break;
+          　default:
+                this[myProp]=valueString;
+            }
+        }
+        
+    }
+    this.contentText = myContent.join('\n');
+    return this;    
 }
 /**
     置きかえタイムライントラックをパースしてセクションコレクションを返す
@@ -222,23 +371,58 @@ _parseReplacementTrack=function(){
 /**
  *  ジオメトリタイムラインの（区間）値
  *  カメラワーク
+ 基本的なサイズは、トラックに設定されたデフォルト値から継承する
+ 
  */
-nas.AnimationGeometry =function(){
-//    this.source;//参照画像データのurl　nas.File ソースはオブジェクト化が必要
-//    this.duration;//ソースが時間情報を持ったデータだった場合の継続時間
-//    this.startOffset;//ソースが時間情報を持ったデータだった場合のオフセット
-//    this.formGeometry;//nas.AnimationFieldオブジェクト
-    this.size=new nas.Size();//要素のサイズ
-    this.position=new nas.Position();//要素を配置する位置
-    this.offset=new nas.GeometryOffset();//要素の原点オフセット
+nas.AnimationGeometry =function(myContent){
+    this.contnentText=(myContent)?myContent:'';   //xMapのソースを保存する　自動で再構築が行なわれるタイミングがある
+    this.source;//参照画像データソース　存在する場合は、type="still-reference"で初期化される
+    this.formGeometry;//nas.AnimationFieldオブジェクト
+    this.position;//要素を配置する位置
+    this.offset;//要素の原点オフセット
+    this.scale;//要素スケール
     this.x = this.size.x;
     this.y = this.size.y;
     this.z = this.size.z;
-    this.t = new nas.TimingCurve();
-    this.c = new nas.Curve();
+    this.t;
+    this.c;
     this.comment="";//コメント文字列
+    
+    this.parseContent(contentText);
 }
+
 nas.AnimationGeometry.prototype.constractor=nas.AnimationField.constractor
+
+
+/**
+    文字列化して返す
+    exportForm
+    basic
+source+
+    extend
+*/
+nas.AnimationGeometry.prototype.toString=function(exportForm){
+    if(exportForm=='extended'){
+        var resultData=[];
+        if(this.source)     resultData.push(this.source.toString(true));   
+        if(this.size)       resultData.push(this.size.toString(true));
+        if(this.position)   resultData.push(this.position.toString(true));
+    }else{
+    }
+    return this.contentText;
+}
+/**
+    コンテンツを与えてパースする
+    引数がない場合は自身のコンテンツデータを再パースする
+*/
+nas.AnimationGeometry.prototype.parseContent=function(myContent){
+    if(typeof myContent == 'undefined'){
+        myContent = this.contentText ;
+    }
+    this.contentText = (myContent)?String(myContent):"";
+    return this;
+}
+
 nas.AnimationGeometry.prototype.interpolate= function(endValue,indexCount,indexOffset,frameCount,frameOffset,props){
     return this;//置きかえタイムラインの中間値は前方値で代表される
     /* オプション状態で中間タイミングで後方値に切り替える（時間で） return endValue;
@@ -416,11 +600,13 @@ valueDetect==false
  *  コンポジットタイムラインの（区間）値
  *  エフェクト
  */
-nas.AnimationComposite =function(){
-//    this.source;//参照画像データのurl　nas.File
+nas.AnimationComposite =function(myContent){
+    this.contentText=(myContent)?myContent:'';   //xMapのソースを保存する　自動で再構築が行なわれるタイミングがある
+    this.source;//参照画像データのurl　nas.AnimationElementSource
 //    this.duration;//ソースが時間情報を持ったデータだった場合の継続時間
 //    this.startOffset;//ソースが時間情報を持ったデータだった場合のオフセット
 //    this.formGeometry;//ソース内のオフセット情報　nas.AnimationFieldオブジェクト
+    this.effect = '';
     this.blendingMode="normal";
     this.strength;// ? 
     this.t = new nas.TimingCurve();
@@ -432,6 +618,34 @@ nas.AnimationComposite.prototype.interpolate= function(endValue,indexCount,index
     myResult.opacity=(this.opacity+endValue.opacity)*(indexCount/indexCount);// 仮値リニア補間
     return myResult;//コンポジットタイムラインの中間値は濃度値のみ
 
+}
+/**
+    xMapデータのために文字列化して返す　予定だが
+    今はダミー
+*/
+nas.AnimationComposite.prototype.toString=function(){
+    return (this.contentText);
+    
+    var props=['effect','blendingMode','strength','t','c','comment'];
+    var myResult = '';
+    for (var pid=0;pid<props.length;pid++){
+        if(this[props[pid]]){
+            myResult += '\t'+props[pid]+' = '+this[props[pid]]
+        }
+    }
+
+}
+/**
+    コンテンツを与えてパースする
+    引数がない場合は自身のコンテンツデータを再パースする
+*/
+nas.AnimationComposite.prototype.parseContent=function(myContent){
+    if(typeof myContent == 'undefined'){
+        myContent = this.contentText ;
+    }
+    this.contentText = (myContent)?String(myContent):"";
+    this.contentText = this.toString();
+    return this;
 }
 /**
     コンポジットトラックをパースしてセクションコレクションを返す
@@ -611,14 +825,16 @@ nas.AnimationSound Object
 コメントのインデックスはbodyText内の挿入点　シート展開時は、bodyText.length+comments.length のフレームを再配置する
 */
 nas.AnimationSound=function(myContent){
-//    this.source;
+    this.contentText=(myContent)?String(myContent):"";//xMapのソースを保存する　自動で再構築が行なわれるタイミングがある
+    this.source;
 //    this.duration;    ソースは別にオブジェクト化する
 //    this.startOffset;
-    this.contentText=myContent;
     this.name="";
     this.bodyText="";
     this.attributes=[];
     this.comments=[];
+    
+    this.parseContent();//作成時に一回パースする
 }
 //
 /*
@@ -626,17 +842,18 @@ nas.AnimationSound=function(myContent){
     本来は自動実行だが、今回は必要に従ってコールする
     
 */
-nas.AnimationSound.prototype.parseContent=function(){
-    if(this.contentText.length){
-//        if(this.contentText.match(/^([^"'「]*)["'「]([^"'」]*)["'」]?\s$/) ) {;//"
-//        if(this.contentText.match(/^([^「]*)「([^」]*)」?\s$/) ) {
-if(this.contentText.match(/^([^「]*)「(.*)/)){
+nas.AnimationSound.prototype.parseContent=function(myContent){
+    if(typeof myContent == 'undefined') myContent = this.contentText;
+    if(myContent.length){
+//        if(myContent.match(/^([^"'「]*)["'「]([^"'」]*)["'」]?\s$/) ) {;//"
+//        if(myContent.match(/^([^「]*)「([^」]*)」?\s$/) ) {
+if(myContent.match(/^([^「]*)「(.*)/)){
 
             this.name=RegExp.$1;
             this.bodyText=RegExp.$2.replace(/」\s*$/,"");
         }else{
             this.name="";
-            this.bodyText=this.contentText;
+            this.bodyText=myContent;
         }
         var myAttributes=this.name.match(/\([^)]+\)/g)
         if(myAttributes){
@@ -657,11 +874,12 @@ if(this.contentText.match(/^([^「]*)「(.*)/)){
             }
             this.bodyText=this.bodyText.replace(/(<[^<>]+>|\[[^\[\]]+\]|\([^\(\)]+\))|＜[^＜]+＞|〈[^〈]+〉|（[^（]+）|［[^［]+］/g,"");
         }
-        return this.toString();
+        this.contnentText = this.toString();
+        return this
     }else{
     //内容テキストが空
         return false;
-    }    
+    }
 }
 /*
 toStringはプロパティを組み上げてMap記述用のテキストを返す
@@ -670,9 +888,16 @@ toStringはプロパティを組み上げてMap記述用のテキストを返す
 引数に正の数値でセルカウントが与えられた場合は、XPS上への展開配列ストリームで戻す。
 展開配列は　getStream() メソッドで得る
 ＊各Valueの標準形式
+
+toString メソッドの共通オプションとして
+引数
+    なし/basic    ｘMAP保存標準形式
+    extended      ｘMap保存拡張形式
+dialogオブジェクトに関しては、標準形式と拡張形式は同じものとなるので注意
+
 */
 nas.AnimationSound.prototype.toString=function(counts){
-  if(counts){
+  if((isFinite(counts))&&(counts > 0)){
 //受け渡しをJSON経由にするか否かはペンディング　JSONStringの場合はString.split厳禁 
 //    return JSON.stringify(this.getStream(counts));
     return (this.getStream(counts)).join();
@@ -879,3 +1104,43 @@ XpsTimelineTrack.prototype.parseTimelineTrack = function(){
     }
 }
 */
+/** 単純な記録が必要な場合のオブジェクト
+ *　基礎的なデータを保持
+ *  コンテの記述等はこの値で保持される
+ *  また共通に要求されるメソッドの雛形
+ *
+ *　
+ *
+ *
+ *
+ *
+ *
+ *
+ */
+nas.AnimationDescription=function(myContent){
+    this.contentText=(myContent)?String(myContent):"";//xMapのソースを保存する　自動で再構築が行なわれるタイミングがある
+    this.source;
+    this.type;  //typeString　storyBoard/
+    this.attributes=[];
+    this.comments=[];
+}
+/**
+    文字列化して返す
+*/
+nas.AnimationDescription.prototype.toString=function(counts){
+    return this.contentText;
+}
+/**
+    コンテンツを与えてパースする
+    引数がない場合は自身のコンテンツデータを再パースする
+*/
+nas.AnimationDescription.prototype.parseContent=function(myContent){
+    if(typeof myContent == 'undefined'){
+        myContent = this.contentText ;
+    }else{
+        this.contentText = myContent;
+    }
+    this.contentText = (myContent)?String(myContent):"";
+    return this;
+}
+

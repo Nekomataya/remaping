@@ -4328,7 +4328,7 @@ if((xUI.player)&&(xUI.player.keyboard)){
 		}
 		return false;
 	} else if(e.keyCode == 13){
-//[enter]='if(xUI.player.status=="run"){if(xUI.player.markSwap){xUI.player.stop()}else{xUI.player.getCount=true}}else{clearMark()};'
+//[enter]='if(xUI.player.status=="run"){if(xUI.player.markSwap){xUI.player.stop()}else{xUI.player.getCount=true}}else{xUI.player.clearMark()};'
 		if(xUI.player.status=='run'){
 			if(xUI.player.markSwap){
 				xUI.player.stop()
@@ -4337,8 +4337,15 @@ if((xUI.player)&&(xUI.player.keyboard)){
 			}
 			return false;
 		}else{
-			if(xUI.player.countStack.length){clearMark();return false;}
+			if(xUI.player.countStack.length){xUI.player.clearMark();return false;}
 		}
+	}else if (e.keyCode == 77) {
+	    if(xUI.player.status=='run'){
+	        xUI.player.getCount=true;
+	    }else{
+	        xUI.player.start('mark');	        
+	    }
+	    return false;
 	}else if((e.keyCode == 35)||(e.keyCode == 36)){
 		if(xUI.player.status=='run') return false;
 	}
@@ -4953,6 +4960,9 @@ xUI.keyUp = function (e){
 		}else{
 			if((e.keyCode == 13)&&(xUI.player.status=='run')) xUI.player.getCount=false;
 		}
+        if (e.keyCode == 77) {
+	    if(xUI.player.status=='run') xUI.player.getCount=false;
+	    }
 	}
 	key = e.keyCode;//キーコードを取得
 //      console.log(key+':up:');
