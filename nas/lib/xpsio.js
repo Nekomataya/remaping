@@ -280,7 +280,7 @@ JobStatus.prototype.toString=function(opt){
 /**
  * タイムライントラックの標準値を取得するメソッド
  *  タイムラインラベルが指定するグループがあらかじめ存在する場合は、そのグループオブジェクトが保持する値
- *  存在しない場合は、新規にグループを作成する。その際にトラックの種別ごとのValueオブジェクトを初期値して登録するのでその値を使用
+ *  存在しない場合は、新規にグループを作成する。その際にトラックの種別ごとのValueオブジェクトを初期値として登録するのでその値を使用
  *  XpsTimelineTrack.getDefeultValue()側で調整
  *  Replacementの場合、基本ブランクだが必ずしもブランクとは限らないので要注意
  *  トラック上で明示的なブランクが指定された場合は、値にfalse/null/"blank"を与える。
@@ -296,10 +296,11 @@ function _getMapDefault(myOption) {
         myGroup=this.xParent.parentXps.xMap.new_xMapElement(
         this.id,
         this.type,
-        this.xParent.parentXps.xMap.currentJob
+        this.xParent.parentXps.xMap.currentJob,
+        ""
         )
     }
-    
+console.log(myGroup);
     if (myOption == undefined) {
         return myGroup.content;
         myOption = this.type;
@@ -3272,8 +3273,9 @@ _parseSoundTrack =function(){
     var myCollection = new XpsTimelineSectionCollection(this);//自分自身を親としてセクションコレクションを新作
     //この実装では開始マーカーが０フレームにしか位置できないので必ずブランクセクションが発生する
     //継続時間０で先に作成 同時にカラのサウンドObjectを生成
+    var tempGroup = new nas.xMapGroup(null,'sound',null);//new nas.xMapGroup(myName,myOption,myLink);
     var currentSection=myCollection.addSection(null);//区間値false
-    var currentSound=new nas.AnimationSound("");//第一有値区間の値コンテンツはカラで初期化も保留
+    var currentSound=new nas.AnimationSound(tempGroup,"");//第一有値区間の値コンテンツはカラで初期化も保留
     for (var fix=0;fix<this.length;fix++){
         currentSection.duration ++;//currentセクションの継続長を加算
         //未記入データ最も多いので最初に判定しておく
@@ -3294,7 +3296,7 @@ _parseSoundTrack =function(){
                 currentSection.value.contentText=currentSound.toString();//先の有値セクションをフラッシュして
                 currentSection=myCollection.addSection(null);//新規のカラセクションを作る
                 currentSection.duration ++;//キャンセル分を後方区間に加算
-                currentSound=new nas.AnimationSound("");//サウンドを新規作成
+                currentSound=new nas.AnimationSound(tempGroup,"");//サウンドを新規作成
             }else{
 //引数をサウンドオブジェクトでなくxMapElementに変更予定
 //                nas.new_MapElement(name,Object xMapGroup,Object Job);

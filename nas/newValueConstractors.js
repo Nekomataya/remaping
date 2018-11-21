@@ -66,19 +66,27 @@ XPSのデータをパースする場合は、データ記述からキーワー�
 
 xMapがない場合（暫定コード）では、仮のｘMapデータにエントリを送り以降の再利用に供する
 
+
+以下　各値オブジェクトに共通
+
+親オブジェクト参照としてparentプロパティを置く
+基礎プロパティからの設定拡張のフラグとして extendedプロパティ
  */
 nas.AnimationReplacement=function(myParent,myContent){
     this.parent = (myParent)? myParent : null     ;
-    this.contentText = (myContent)? myContent : '';//xMap上のコンテントソースを保存する　自動で再構築が行なわれるタイミングがある
+    this.contentText = (myContent)? myContent : 'blank-cell';//xMap上のコンテントソースを保存する　自動で再構築が行なわれるタイミングがある
                                                    //myContent undefined で初期化を行った場合の値は blank-cell
+    this.name                                     ;//素材名
     this.source                                   ;//nas.AnimationElementSource
+    this.comment                                  ;//コメント文字列　エレメントの注釈プロパティ-xMap編集UIのみで確認できる
+    this.extended = false;
+
     this.formGeometry                             ;//nas.AnimationFieldオブジェクト
-    this.resolution                               ;   //要素の解像度   nas.Resolution()
-    this.size                                     ;   //要素のサイズ   nas.Size()
-    this.offset                 ;                       //要素の原点オフセット   nas.Offset()
-    this.pegOffset              ;                       //要素のペグオフセット＊　これらはオブジェクトで統合？
-    this.comment                ;                       //コメント文字列　エレメントの注釈プロパティ-xMap編集UIのみで確認できる
-    this.overlay                ;                       //カブセの対象となるエレメントへの参照 　< elementのプロパティへ移行が必要？
+    this.resolution                               ;//要素の解像度   nas.Resolution()
+    this.size                                     ;//要素のサイズ   nas.Size()
+    this.offset                             ;//要素の原点オフセット   nas.Offset()
+    this.pegOffset                          ;//要素のペグオフセット＊　これらはオブジェクトで統合？
+    this.overlay                            ;//カブセの対象となるエレメントへの参照 　< elementのプロパティへ移行が必要？
     
     this.parseContent();
 }
@@ -106,27 +114,26 @@ proppertyValuesは、comma区切りで以下の順のデータ
 
 */
 nas.AnimationReplacement.prototype.toString=function(exportForm){
-    if(exportForm == 'extended'){
+//return this.contentText;//動作確認用ダミー行
+
+    if(exportForm == 'extend'){
         var resultArray=[];
         if(this.source)   resultArray.push('\tfile = "'    + this.source.toString(true)+'"');
-        if(this.size)     resultArray.push('\tsize = '     + this.size.toString(true));
-        if(this.offset)   resultArray.push('\toffset = '   + this.offset.toString(true));
-        if(this.rotation) resultArray.push('\trotation = ' + this.rotation.toString(true));
+        if(this.size)     resultArray.push('\tsize = '     + this.size.toString());
+        if(this.offset)   resultArray.push('\toffset = '   + this.offset.toString());
+        if(this.rotation) resultArray.push('\trotation = ' + this.rotation.toString());
         if(this.comment)  resultArray.push('\tcomment = '  + this.comment);
         return resultArray.join("\n");
-    }else if ((arguments.length==0)||((arguments.length==1)&&(! arguments[0]))){
+    }else if ((arguments.length==0)||((arguments.length==1)&&(! arguments[0]))||(exportForm == 'basic')){
         var resultArray=[];
-        if(this.source) {
-            resultArray.push('"'+this.source.toString()+'"');
-        }else{
-            resultArray.push("");
-        }
+        
+        if(this.source)   resultArray.push('"'+this.source.toString()+'"');
         if(this.size)     resultArray.push(this.size.toString());
         if(this.offset)   resultArray.push(this.offset.toString());
         if(this.rotation) resultArray.push(this.rotation.toString());
         resultArray = [resultArray.join(",")];
-        resultArray.push(this.comment);
-        return resultArray.join("\t");
+        if(this.comment) resultArray.push(this.comment);
+        return ([this.parent.name,this.name,resultArray.join("\t")]).join('\t');
     }
 }
 //nas.AnimationReplacement.prototype.valueOf=function(){
@@ -176,17 +183,36 @@ nas.AnimationReplacement.prototype.parseContent = function(myContent){
 //引数がなければ現在のコンテンツを再パース
     if(typeof myContent == 'undefined'){
         myContent = this.contentText;
+    }else{
+        
+        this.contentText = myContent;
     }
+/*
+    AnimatiopnReplacementの特殊値として
+    contentText='blank-cell'を設ける
+    AnimationElementSource("")
+    サイズは不問　 シンボルとしての「カラセル」
 
-//第一形式 ^<group>\t<name>[\t<option-text>[\t<comment>]]$
+*/
+
+    var isGroup = (myContent.indexOf('[')==0)? true:false;
+//第一形式グループ ^[\<group>\t<typeName>[\t<option-text>[\t<comment>]]\]$
+//第二形式エントリ ^<group>\t<name>[\t<option-text>[\t<comment>]]$
+
     myContent = String(myContent).split('\n');
     for ( var line = 0 ; line < myContent.length ; line++){
+
+    if((isGroup)&&(myContent[line].indexOf('[')==0)) myContent[line] = myContent[line].slice(1,-1);//ブラケット削除
+
         if(myContent[line].match(/^\t(\S+)\s*=\s*(.+)\s*$/)){
-            //第二形式でプロパティ別のデータ更新を行う
-            var myProp=RegExp.$1;var valueArray=scvSimple.parse(RegExp.$2)[0];
+            //第二形式(タブ開始)でプロパティ別のデータ更新を行う
+            this.extended=true;
+
+            var myProp=RegExp.$1;var valueArray=csvSimple.parse(RegExp.$2)[0];
+
             switch(myProp){
             case "file":
-                this.file = valueArray[0];
+                this.file = new nas.AnimationElementSource(valueArray[0]);
             break;
             case "resolution":
                 this.resolution= new nas.Resolution(valueArray.join(','));
@@ -202,37 +228,87 @@ nas.AnimationReplacement.prototype.parseContent = function(myContent){
                     new nas.Size(valueArray[0],valueArray[1]):new nas.Size(valueArray[0],valueArray[1],valueArray[2]);
             break;
             case "size.X":
-                this.size.x = valueArray[0];
+                this.size.x = new nas.UnitValue(valueArray[0]);
             break;
             case "size.Y":
-                this.size.y = valueArray[0];
+                this.size.y = new nas.UnitValue(valueArray[0]);
             break;
             case "offset":
                 this.offset = (valueArray.length<3)?
                     new nas.Offset(valueArray[0],valueArray[1]):new nas.Offset(valueArray[0],valueArray[1],valueArray[2]);
             break;
             case "offset.X":
-                this.offset.x
+                this.offset.x = new nas.UnitValue(valueArray[0]);
             break;
             case "offset.Y":
+                this.offset.y = new nas.UnitValue(valueArray[0]);
             break;
             case "offset.R":
+                this.offset.r = new nas.UnitAngle(valueArray[0]);
             break;
             case "pegOffset":
+                this.offset = (valueArray.length<3)?
+                    new nas.Offset(valueArray[0],valueArray[1]):new nas.Offset(valueArray[0],valueArray[1],valueArray[2]);
             break;
             case "pegOffset.X":
+                this.offset.x=new nas.UnitValue(valueArray[0]);
             break;
             case "pegOffset.Y":
+                this.offset.y=new nas.UnitValue(valueArray[0]);
             break;
             case "pegOffset.R":
+                this.offset.r=new nas.UnitAngle(valueArray[0]);
             break;
           　default:
-                this[myProp]=valueString;
+                this[myProp]=valueArray[0];
+            }
+        } else if(myContent[line].match(/^(\S+)\t?(\S+)\t?([^\t]+)?\t?(.*)$/)){
+        //　第一形式の再パース
+console.log(myContent[line]);
+            var myGroup=RegExp.$1; //グループの再パースは行われない
+            var myName =RegExp.$2;
+            var myComment=RegExp.$4;
+            var valueArray=nas.parseDataChank(RegExp.$3);
+            var numeProps =[["size","x"],["size","y"],["offset","x"],["offset","y"]];
+console.log(myComment);console.log(valueArray);
+console.log(this);
+/*
+    フィールド文字列であった場合の判定が必要　2018 10 09
+*/
+            if(myGroup == this.parent.name){
+                if(! isGroup) this.name=([myGroup,myName.replace(new RegExp('^'+myGroup+'\-'),"")]).join('-');
+                var numCount=0;
+                for(var vix=0;vix<valueArray.length;vix++){
+                    switch(valueArray[vix].type){
+                    case "numeric":
+                    case "unitValue":
+                        if(numCount<numeProps.length){
+                            if(! this[numeProps[numCount][0]]){
+                                this[numeProps[numCount][0]] = ([numeProps[numCount][0]]=='size')? new nas.Size():new nas.Offset();
+                            }
+                            this[numeProps[numCount][0]][numeProps[numCount][1]] = new nas.UnitValue(valueArray[vix].value);
+                            numCount++;
+                        }
+                    break;
+                    case "unitAngle":
+                        if(! this.offset) this.offset = new nas.Offset();
+                        this.offset.r==new nas.UnitAngle(valueArray[vix].value);            
+                    break;
+                    case "unitResolution":
+                        this.resolution=new nas.Resolution(valueArray[vix].value);            
+                    break;
+                    case "source":
+                        this.source=new nas.AnimationElementSource(valueArray[vix].value);            
+                    break;
+                    default:
+                        continue;
+                }
+            }
+                if(myComment) this.comment = myComment;
             }
         }
-        
+
     }
-    this.contentText = myContent.join('\n');
     return this;    
 }
 /**
@@ -373,22 +449,30 @@ _parseReplacementTrack=function(){
  *  カメラワーク
  基本的なサイズは、トラックに設定されたデフォルト値から継承する
  
+ 
+要素名は[ブラケット]で囲む
+プロパティの値はブラケットを払ったもの
  */
-nas.AnimationGeometry =function(myContent){
-    this.contnentText=(myContent)?myContent:'';   //xMapのソースを保存する　自動で再構築が行なわれるタイミングがある
-    this.source;//参照画像データソース　存在する場合は、type="still-reference"で初期化される
-    this.formGeometry;//nas.AnimationFieldオブジェクト
-    this.position;//要素を配置する位置
-    this.offset;//要素の原点オフセット
-    this.scale;//要素スケール
-    this.x = this.size.x;
-    this.y = this.size.y;
-    this.z = this.size.z;
-    this.t;
-    this.c;
-    this.comment="";//コメント文字列
+nas.AnimationGeometry =function(myParent,myContent){
+    this.parent = (myParent)? myParent : null   ;
+    this.contentText=(myContent)?myContent:''   ;//xMapのソースを保存する　自動で再構築が行なわれるタイミングがある
+
+    this.name                                   ;//素材名
+    this.source                                 ;//参照画像データソース　存在する場合は、type="still-reference"で初期化される
+    this.comment=""                             ;//コメント文字列
+    this.extended = false                       ;//拡張表示フラグ
+
+    this.formGeometry = new nas.AnimationField();//nas.AnimationFieldオブジェクト
+    this.position     = new nas.Position()      ;//要素を配置する位置
+    this.offset       = new nas.Offset()        ;//要素の原点オフセット
+    this.scale        = new nas.Scale()         ;//要素スケール
+    this.t            = new nas.TimingCurve();
+    this.c            = new nas.Curve();
+    this.x = this.position.x;
+    this.y = this.position.y;
+    this.z = this.position.z;
     
-    this.parseContent(contentText);
+    this.parseContent();
 }
 
 nas.AnimationGeometry.prototype.constractor=nas.AnimationField.constractor
@@ -402,6 +486,29 @@ source+
     extend
 */
 nas.AnimationGeometry.prototype.toString=function(exportForm){
+//return this.contentText;//動作確認用ダミー行
+    if(exportForm == 'extend'){
+        var resultArray=[];
+        if(this.source)   resultArray.push('\tfile = "'    + this.source.toString(true)+'"');
+        if(this.size)     resultArray.push('\tsize = '     + this.size.toString());
+        if(this.offset)   resultArray.push(this.offset.toString());
+//        if(this.offset)   resultArray.push('\toffset = '   + this.offset.toString());
+        if(this.rotation) resultArray.push(this.rotation.toString(true));
+        if(this.comment)  resultArray.push('\tcomment = '  + this.comment);
+        return resultArray.join("\n");
+    }else if ((arguments.length==0)||((arguments.length==1)&&(! arguments[0]))||(exportForm == 'basic')){
+        var resultArray=[];
+        
+        if(this.source)   resultArray.push('"'+this.source.toString()+'"');
+        if(this.size)     resultArray.push(this.size.toString());
+        if(this.offset)   resultArray.push(this.offset.toString());
+        if(this.rotation) resultArray.push(this.rotation.toString());
+        resultArray = [resultArray.join(",")];
+        if(this.comment) resultArray.push(this.comment);
+        return ([this.parent.name,this.name,resultArray.join("\t")]).join('\t');
+    }
+
+
     if(exportForm=='extended'){
         var resultData=[];
         if(this.source)     resultData.push(this.source.toString(true));   
@@ -416,11 +523,118 @@ nas.AnimationGeometry.prototype.toString=function(exportForm){
     引数がない場合は自身のコンテンツデータを再パースする
 */
 nas.AnimationGeometry.prototype.parseContent=function(myContent){
+//引数がなければ現在のコンテンツを再パース
     if(typeof myContent == 'undefined'){
-        myContent = this.contentText ;
+        myContent = this.contentText;
+    }else{
+        this.contentText = myContent;
     }
-    this.contentText = (myContent)?String(myContent):"";
-    return this;
+
+    var isGroup = (myContent.indexOf('[')==0)? true:false;
+//第一形式グループ ^[\<group>\t<typeName>[\t<option-text>[\t<comment>]]\]$
+//第二形式エントリ ^<group>\t<name>[\t<option-text>[\t<comment>]]$
+
+    myContent = String(myContent).split('\n');
+    for ( var line = 0 ; line < myContent.length ; line++){
+
+    if((isGroup)&&(myContent[line].indexOf('[')==0)) myContent[line] = myContent[line].slice(1,-1);//ブラケット削除
+
+        if(myContent[line].match(/^\t(\S+)\s*=\s*(.+)\s*$/)){
+            //第二形式(タブ開始)でプロパティ別のデータ更新を行う
+            this.extended=true;
+
+            var myProp=RegExp.$1;var valueArray=csvSimple.parse(RegExp.$2)[0];
+
+            switch(myProp){
+            case "file":
+                this.file = new nas.AnimationElementSource(valueArray[0]);
+            break;
+            case "position":
+                this.position = new nas.Position(valueArray[0],valueArray[1]);
+            break;
+            case "position.X":
+                this.position.x = new nas.UnitValue(valueArray[0]);
+            break;
+            case "position.Y":
+                this.position.y = new nas.UnitValue(valueArray[0]);
+            break;
+            case "offset":
+                this.offset = (valueArray.length<3)?
+                    new nas.Offset(valueArray[0],valueArray[1]):new nas.Offset(valueArray[0],valueArray[1],valueArray[2]);
+            break;
+            case "offset.X":
+                this.offset.x = new nas.UnitValue(valueArray[0]);
+            break;
+            case "offset.Y":
+                this.offset.y = new nas.UnitValue(valueArray[0]);
+            break;
+            case "offset.R":
+                this.offset.r = new nas.UnitAngle(valueArray[0]);
+            break;
+            case "scale":
+                this.scale = (valueArray.length<3)?
+                    new nas.Scale(valueArray[0],valueArray[1]):new nas.Offset(valueArray[0],valueArray[1],valueArray[2]);
+            break;
+            case "scale.X":
+                this.scale.x=new nas.UnitValue(valueArray[0]);
+            break;
+            case "scale.Y":
+                this.scale.y=new nas.UnitValue(valueArray[0]);
+            break;
+            case "scale.Z":
+                this.scale.z=new nas.UnitAngle(valueArray[0]);
+            break;
+          　default:
+                this[myProp]=valueArray[0];
+            }
+        } else if(myContent[line].match(/^(\S+)\t?(\S+)\t?([^\t]+)?\t?(.*)$/)){
+        //　第一形式の再パース
+console.log(myContent[line]);
+            var myGroup=RegExp.$1; //グループの再パースは行われない
+            var myName =RegExp.$2;
+            var myComment=RegExp.$4;
+            var valueArray=nas.parseDataChank(RegExp.$3);
+            var numeProps =[["size","x"],["size","y"],["offset","x"],["offset","y"]];
+console.log(myComment);console.log(valueArray);
+console.log(this);
+/*
+    フィールド文字列であった場合の判定が必要　2018 10 09
+*/
+            if(myGroup == this.parent.name){
+                if(! isGroup) this.name=([myGroup,myName.replace(new RegExp('^'+myGroup+'\-'),"")]).join('-');
+                var numCount=0;
+                for(var vix=0;vix<valueArray.length;vix++){
+                    switch(valueArray[vix].type){
+                    case "numeric":
+                    case "unitValue":
+                        if(numCount<numeProps.length){
+                            if(! this[numeProps[numCount][0]]){
+                                this[numeProps[numCount][0]] = ([numeProps[numCount][0]]=='size')? new nas.Size():new nas.Offset();
+                            }
+                            this[numeProps[numCount][0]][numeProps[numCount][1]] = new nas.UnitValue(valueArray[vix].value);
+                            numCount++;
+                        }
+                    break;
+                    case "unitAngle":
+                        if(! this.offset) this.offset = new nas.Offset();
+                        this.offset.r==new nas.UnitAngle(valueArray[vix].value);            
+                    break;
+                    case "unitResolution":
+                        this.resolution=new nas.Resolution(valueArray[vix].value);            
+                    break;
+                    case "source":
+                        this.source=new nas.AnimationElementSource(valueArray[vix].value);            
+                    break;
+                    default:
+                        continue;
+                }
+            }
+                if(myComment) this.comment = myComment;
+            }
+        }
+
+    }
+    return this;    
 }
 
 nas.AnimationGeometry.prototype.interpolate= function(endValue,indexCount,indexOffset,frameCount,frameOffset,props){
@@ -429,6 +643,60 @@ nas.AnimationGeometry.prototype.interpolate= function(endValue,indexCount,indexO
     　 又はブランク状態のオブジェクトを返す return new nas.newAnimationReplacement("blank");
     */
 }
+/*
+
+ジオメトリ要素、コンポジット要素 では、第三フィールド内の各値は、書式による自動判定をおこなう（順序によらない）
+
+％付き数値判定（strength または　scale）
+インチフィールド文字列
+フィールド文字列
+ジオメトリデータ配列
+    単位値と単位角度の組み合わせ
+
+これらを判定して、判定から外れたデータをファイルパス（素材識別データ）とみなす
+スケール以外の単位省略は不可
+
+[PAN	camarawork	,12FLD-10]
+
+[FI-1	effect]
+[TU	camarawork]
+[透過光	effect]
+
+	field = 10FLD
+PAN	[A]	10FLD2S3W12 Quick
+
+
+[FI-A	effect	"",,,	コメントですです]
+
+
+	camerawork
+[FLDString][,"file-path"]
+	1,2
+[FLDString[,left,top[,rotation]]][,"file-path"]
+	1,2,3,4,5
+[width,height[,left,top[,rotation]]][,"file-path"]
+	1,2,3,4,5,6
+
+Target.match(/^[\d]+\.?[\d]*FLD()?$/i)
+
+
+	effect
+[strength[,blendingMode]][,file-path]
+	1,2,3
+
+(Traget).match(/^[+-]?[\d]+\.?[\d]*\%?$/);//％付き数値判定
+(new nas.BlendingMode[Traget]);//ブレンドモード判定
+上記以外はファイルパス
+50%,normal
+50%,"/path/file-name.ext"
+
+
+[WXP	effect	50%,normal	カットいっぱい]
+
+[FI	effect	0%]
+FI	<10%>	normal
+FI	<0.01>		
+*/
 /**
     カメラワークトラックをパースしてセクションコレクションを返す
     option:(camerawork|camera)
@@ -599,23 +867,40 @@ valueDetect==false
 /**
  *  コンポジットタイムラインの（区間）値
  *  エフェクト
+ 要素名は、可能な限り<>角括弧で囲む
  */
-nas.AnimationComposite =function(myContent){
-    this.contentText=(myContent)?myContent:'';   //xMapのソースを保存する　自動で再構築が行なわれるタイミングがある
-    this.source;//参照画像データのurl　nas.AnimationElementSource
-//    this.duration;//ソースが時間情報を持ったデータだった場合の継続時間
-//    this.startOffset;//ソースが時間情報を持ったデータだった場合のオフセット
-//    this.formGeometry;//ソース内のオフセット情報　nas.AnimationFieldオブジェクト
-    this.effect = '';
-    this.blendingMode="normal";
-    this.strength;// ? 
-    this.t = new nas.TimingCurve();
-    this.c = new nas.Curve();
-    this.comments;//コメントコレクション配列 これは区間のプロパティか？
+nas.AnimationComposite =function(myParent,myContent){
+    this.parent = (myParent)? myParent : null   ;
+    this.contentText=(myContent)?myContent:''   ;//xMapのソースを保存する　自動で再構築が行なわれるタイミングがある
+
+    this.name                                   ;//素材名
+    this.source                                 ;//参照画像データソース　nas.AnimationElementSource
+    this.comment=""                             ;//コメント文字列
+    this.extended = false                       ;//拡張表示フラグ
+
+    this.effect                                 ;
+    this.blendingMode                           ;
+    this.strength                               ;// ? 
+    this.t = new nas.TimingCurve()              ;
+    this.c = new nas.Curve()                    ;
+
+    this.parseContent();
 }
+/**
+    中間点取得
+自身の値とターゲット値の中間の値を求める
+
+引数
+    endValue        ターゲット値
+    indexCount      
+    indexOffset
+    frameCount
+    frameOffset
+    props    
+*/
 nas.AnimationComposite.prototype.interpolate= function(endValue,indexCount,indexOffset,frameCount,frameOffset,props){
     myResult=Object.create(this);
-    myResult.opacity=(this.opacity+endValue.opacity)*(indexCount/indexCount);// 仮値リニア補間
+    myResult.strength=(this.strength+endValue.strength)*(indexCount/indexCount);// 仮値リニア補間
     return myResult;//コンポジットタイムラインの中間値は濃度値のみ
 
 }
@@ -623,8 +908,8 @@ nas.AnimationComposite.prototype.interpolate= function(endValue,indexCount,index
     xMapデータのために文字列化して返す　予定だが
     今はダミー
 */
-nas.AnimationComposite.prototype.toString=function(){
-    return (this.contentText);
+nas.AnimationComposite.prototype.toString=function(exportForm){
+return this.contentText;//動作確認用ダミー行
     
     var props=['effect','blendingMode','strength','t','c','comment'];
     var myResult = '';
@@ -632,6 +917,32 @@ nas.AnimationComposite.prototype.toString=function(){
         if(this[props[pid]]){
             myResult += '\t'+props[pid]+' = '+this[props[pid]]
         }
+    }
+
+    if(exportForm == 'extend'){
+        var resultArray=[];
+        if(this.source)         resultArray.push('\tfile = "'    + this.source.toString(true)+'"');
+        if(this.effect)         resultArray.push('\teffect = '     + this.effect);
+        if(this.blendingMode)   resultArray.push('\tblendingMode = '   + this.blendingMode);
+        if(this.strength)       resultArray.push('\tstrength = ' + this.strength);
+        if(this.t)              resultArray.push('\tT = '  + this.t.toString(true));
+        if(this.c)              resultArray.push('\tC = '  + this.c.toString(true));
+        if(this.comment)        resultArray.push('\tcomment = '  + this.comment);
+        return resultArray.join("\n");
+    }else if ((arguments.length==0)||((arguments.length==1)&&(! arguments[0]))||(exportForm == 'basic')){
+        var resultArray=[];
+        
+        if(this.source) {
+            resultArray.push('"'+this.source.toString()+'"');
+        }else{
+            resultArray.push("");
+        }
+        if(this.size)     resultArray.push(this.size.toString());
+        if(this.offset)   resultArray.push(this.offset.toString());
+        if(this.rotation) resultArray.push(this.rotation.toString());
+        resultArray = [resultArray.join(",")];
+        if(this.comment) resultArray.push(this.comment);
+        return ([this.parent.name,this.name,resultArray.join("\t")]).join('\t');
     }
 
 }
@@ -644,6 +955,11 @@ nas.AnimationComposite.prototype.parseContent=function(myContent){
         myContent = this.contentText ;
     }
     this.contentText = (myContent)?String(myContent):"";
+    
+    
+    
+    
+    
     this.contentText = this.toString();
     return this;
 }
@@ -824,22 +1140,28 @@ nas.AnimationSound Object
 ノートコメントコレクション配列 [[3,"(SE:ポン)"],[6,"<BGM:開始>"],[9,"[光る！]"]]
 コメントのインデックスはbodyText内の挿入点　シート展開時は、bodyText.length+comments.length のフレームを再配置する
 */
-nas.AnimationSound=function(myContent){
-    this.contentText=(myContent)?String(myContent):"";//xMapのソースを保存する　自動で再構築が行なわれるタイミングがある
-    this.source;
-//    this.duration;    ソースは別にオブジェクト化する
-//    this.startOffset;
-    this.name="";
-    this.bodyText="";
-    this.attributes=[];
-    this.comments=[];
+nas.AnimationSound=function(myParent,myContent){
+    this.parent = (myParent)? myParent : null   ;
+    this.contentText=(myContent)?String(myContent):"";//xMapのソーステキストを保存する　自動で再構築が行なわれるタイミングがある
+
+    this.name                                   ;
+    this.source                                 ;//nas.AnimationElementSource
+    this.comment                                ;//
+    this.extended = false                       ;
+
+    this.bodyText=""                            ;//セリフ等の本体コメント
+    this.attributes =[]                         ;
+    this.comments   =[]                         ;
+    this.isDialog                               ;//ダイアログセクショングフラグ
     
-    this.parseContent();//作成時に一回パースする
+    this.parseContent()                         ;//作成時に一回パースする
 }
 //
 /*
     初期化時の内容テキスト（シナリオ型式）をパースしてオブジェクト化するメソッド
     本来は自動実行だが、今回は必要に従ってコールする
+    "ダブルクォーテーション",'シングルクォーテーション',「かぎかっこ」で囲まれた文字列はダイアログとして処理する
+    それ以外はサウンドノード
     
 */
 nas.AnimationSound.prototype.parseContent=function(myContent){
@@ -874,7 +1196,7 @@ if(myContent.match(/^([^「]*)「(.*)/)){
             }
             this.bodyText=this.bodyText.replace(/(<[^<>]+>|\[[^\[\]]+\]|\([^\(\)]+\))|＜[^＜]+＞|〈[^〈]+〉|（[^（]+）|［[^［]+］/g,"");
         }
-        this.contnentText = this.toString();
+        this.contentText = this.toString();
         return this
     }else{
     //内容テキストが空
@@ -893,14 +1215,15 @@ toString メソッドの共通オプションとして
 引数
     なし/basic    ｘMAP保存標準形式
     extended      ｘMap保存拡張形式
+    
 dialogオブジェクトに関しては、標準形式と拡張形式は同じものとなるので注意
 
 */
-nas.AnimationSound.prototype.toString=function(counts){
-  if((isFinite(counts))&&(counts > 0)){
+nas.AnimationSound.prototype.toString=function(exportForm){
+  if((isFinite(exportForm))&&(exportForm > 0)){
 //受け渡しをJSON経由にするか否かはペンディング　JSONStringの場合はString.split厳禁 
-//    return JSON.stringify(this.getStream(counts));
-    return (this.getStream(counts)).join();
+//    return JSON.stringify(this.getStream(exportForm));
+    return (this.getStream(exportForm)).join();
   }else{
     var myResult=this.name;
     myResult+=this.attributes.join("");
@@ -1104,6 +1427,51 @@ XpsTimelineTrack.prototype.parseTimelineTrack = function(){
     }
 }
 */
+/** Xpsに対するエージェントオブジェクト
+ *  
+ *  XpsデータをxMapに対して登録する際の代理オブジェクト
+ *
+ *　
+ *　現状ではAnimationDescriptionと同内容
+ *
+ *
+ *
+ *
+ *
+ */
+nas.XpsAgent=function(myParent,myContent){
+    this.parent = (myParent)? myParent : null     ;
+    this.contentText=(myContent)?String(myContent):"";//xMapのソースを保存する　自動で再構築が行なわれるタイミングがある
+
+    this.name                                     ;//素材名
+    this.source                                   ;//nas.AnimationElementSource
+    this.comment                                  ;//コメント文字列　エレメントの注釈プロパティ-xMap編集UIのみで確認できる
+    this.extended = false;
+
+    this.attributes=[];
+    this.comments=[];
+
+    this.prseContent(myContent)
+}
+/**
+    文字列化して返す
+*/
+nas.XpsAgent.prototype.toString=function(exportForm){
+return this.contentText;//動作確認用ダミー行
+}
+/**
+    コンテンツを与えてパースする
+    引数がない場合は自身のコンテンツデータを再パースする
+    戻り値はオブジェクト自身
+*/
+nas.XpsAgent.prototype.parseContent=function(myContent){
+    if(typeof myContent == 'undefined'){
+        myContent = this.contentText ;
+    }
+    this.contentText = (myContent)?String(myContent):"";
+    return this;
+}
+
 /** 単純な記録が必要な場合のオブジェクト
  *　基礎的なデータを保持
  *  コンテの記述等はこの値で保持される
@@ -1117,18 +1485,26 @@ XpsTimelineTrack.prototype.parseTimelineTrack = function(){
  *
  *
  */
-nas.AnimationDescription=function(myContent){
+nas.AnimationDescription=function(myParent,myContent){
+    this.parent = (myParent)? myParent : null     ;
     this.contentText=(myContent)?String(myContent):"";//xMapのソースを保存する　自動で再構築が行なわれるタイミングがある
-    this.source;
+
+    this.name                                     ;//素材名
+    this.source                                   ;//nas.AnimationElementSource
+    this.comment                                  ;//コメント文字列　エレメントの注釈プロパティ-xMap編集UIのみで確認できる
+    this.extended = false;
+
     this.type;  //typeString　storyBoard/
     this.attributes=[];
     this.comments=[];
+    
+    this.parseContent();
 }
 /**
     文字列化して返す
 */
-nas.AnimationDescription.prototype.toString=function(counts){
-    return this.contentText;
+nas.AnimationDescription.prototype.toString=function(exportForm){
+return this.contentText;//動作確認用ダミー行
 }
 /**
     コンテンツを与えてパースする
@@ -1137,8 +1513,6 @@ nas.AnimationDescription.prototype.toString=function(counts){
 nas.AnimationDescription.prototype.parseContent=function(myContent){
     if(typeof myContent == 'undefined'){
         myContent = this.contentText ;
-    }else{
-        this.contentText = myContent;
     }
     this.contentText = (myContent)?String(myContent):"";
     return this;

@@ -4489,8 +4489,8 @@ index.html ,v 1.7 2018/03/05  support@u-at.net <br />
 <!-- <form> -->
     <textarea id="startupContent"  >nasMAP-FILE 1.9x
 # 1.9xは試験用
-##CREATE_USER=kiyo
-##UPDATE_USER=kiyo
+##CREATE_USER=kiyo:kiyo@nekomataya.info
+##UPDATE_USER=bom:kim@nekomataya.info
 ##CREATE_TIME=2016/1/31 18:45:36
 ##UPDATE_TIME=2016/4/14 8:20:27
 
@@ -4546,7 +4546,7 @@ index.html ,v 1.7 2018/03/05  support@u-at.net <br />
 #------ここまでの記述はライン記述開始に先立って行なわれること
 ##<(本線)>
 ##checkIn=kiyo
-##UPDATE_USER=kiyo
+##UPDATE_USER=bom:bom@nekomataya.info
 ##CREATE_TIME=2016/1/31 18:45:36
 ##UPDATE_TIME=2016/4/14 8:20:27
 #======== SCIinfo Object Elements ===========
@@ -4569,7 +4569,7 @@ index.html ,v 1.7 2018/03/05  support@u-at.net <br />
 [timesheet	xps]
 timesheet	s-c4	"./kachi#00_s-c004.xps"
 [picture	cell]
-picture s-c4-01	"./sample/_SCI/samplePic.png"
+picture	s-c4-01	"./sample/_SCI/samplePic.png"
 
 [description	text]
 description	s-c4
@@ -4605,33 +4605,33 @@ timeText	s-c4	4+0
 #	[ グループID	グループカテゴリ	グループに関する幾何情報(有れば) ]
 #
 #----------------------------------------------------------------
-[LO	CELL]
-LO	BG	"./sample/LO/BG.png"
+[LO	CELL		"groupコメントテスト"]
+LO	BG	"./sample/LO/BG.png"	'コメントTEST'
 LO	A1_B	"./sample/LO/CELL.png"
 LO	ML	"./sample/LO/ML.png"
 LO	PAN	"./sample/LO/PAN.png"
 #================================================================
 [PAN	CAMERAWORK]
-		size=252mm,142.875mm
-		position=0mm,0mm,0mm
-		offset=0mm,104.875mm
-		rotation=0d
-		comment=10in/StanderdFrame/16:9/HDTV
+	size=252mm,142.875mm
+	position=0mm,0mm,0mm
+	offset=0mm,104.875mm
+	rotation=0d
+	comment=10in/StanderdFrame/16:9/HDTV
 # 作品データの継承があるのでこのサンプルでは本来は記述不要
 #----------------------------------------------------------------
-PAN	<START>
-		position=0mm,-71mm
-		positionTiming=0, 0, 0, 0 #リニア相当 タイミングパラメタは単位なし
+PAN	[START]
+	position = 0mm,-71mm
+	position.T = 0, 0, 0, 0	#リニア相当 タイミングパラメタは単位なし
 
-PAN	<END>
-		position=0mm,0mm
+PAN	[END]
+	position=0mm,0mm
 
 ##[[レイアウト]]/
 ##[[演出検査]id:2]
 ##created=2016.02.7 13:00:30 / dog@animalexample.com;
 ##updated=2016.02.7 17:12:45 / dog@animalexample.com;
 ##
-[LO	CELL	]
+[LO	CELL	XX	ABCD]
 LO	A1_B+	"./sample/LO/CELL+.png"
 ##[[演出検査]]/
 ##[[監督チェック]id:3]
@@ -4658,15 +4658,15 @@ LO	A1_B+	"./sample/LO/CELL+.png"
 ##created=2016.02.10 12:00:00/cat@animal.example.com;
 ##updated=2016.02.17 12:00:00/cat@animal.example.com;
 ##
-[A]
+[A	CELL	140F]
 A	A-1	"./sample/KD/A001.png"
 #
-[B]
+[B	CELL]
 B	B-1	"./sample/KD/B001.png"
 B	B-2	"./sample/KD/B002.png"
 B	B-2◯	"./sample/KD/B002◯.png"
 #
-[C]
+[C	]
 C	C-1	"./sample/KD/C001.png"
 #
 ##[[原画]]/
@@ -4719,11 +4719,11 @@ B	B-8	"./sample/AD/B/B008.png"	end
 [C	CELL	]
 #----------------------------------------------------------------
 C	C-1
-		path	=	"./sample/AD/C/C001.png"
-		size	=	841.23pt,841.23pt
-		offset	=	321pt,243.27890pt
-		rotation=	0.000d
-		comment	=	"手書きの場合はこの記法の方を推奨"
+	path	=	"./sample/AD/C/C001.png"
+	size	=	841.23pt,841.23pt
+	offset	=	321pt,243.27890pt
+	rotation=	0.000d
+	comment	=	"手書きの場合はこの記法の方を推奨"
 
 #================================================================
 ##[[動画]]/
@@ -4789,11 +4789,11 @@ B	B-8	"./sample/CELL/B/B008.png"	end
 [C	CELL	]
 #----------------------------------------------------------------
 C	C-1
-		path	=	"./sample/CELL/C/C001.png"
-		size	=	841.23pt,841.23pt
-		offset	=	420.615pt,420.615pt
-		rotation=	0.000d
-		comment	=	"手書きの場合はこの記法の方を推奨"
+	path	=	"./sample/CELL/C/C001.png"
+	size	=	841.23pt,841.23pt
+	offset	=	420.615pt,420.615pt
+	rotation=	0.000d
+	comment	=	"手書きの場合はこの記法の方を推奨"
 
 #================================================================
 ##[[彩色]]/

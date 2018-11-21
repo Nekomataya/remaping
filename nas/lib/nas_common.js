@@ -1071,7 +1071,7 @@ nas.Position=function(x,y,z){
     
 */
 nas.Position.prototype.toString=function(){
-    
+    this.point.toString(arguments)
 }
 nas.Position.prototype.listString=nas._LISTString;
 nas.Position.prototype.valueOf =nas._ARRAYValue;
@@ -1087,25 +1087,22 @@ positionとorientationを組み合わせたもの
 引数なしの場合は  0,0,0d で初期化
 */
 nas.Offset=function(myPos,myOrt){
-	this.position=(myPos)?myPos:new nas.Point();
-	this.orientation=(myOrt)?myOrt:new nas.Orientation();
+	this.position=(myPos instanceof nas.Point)?myPos:new nas.Point();
+	this.orientation=(myOrt instanceof nas.Orientation)?myOrt:new nas.Orientation();
 	this.x=this.position.x;
 	this.y=this.position.y;
 	this.r=this.orientation.z;
 
-
-
 	this.toString=function(opt){
     		var myResult=[];
 	    if(! opt){
-	    	for(var myDim=0;myDim<this.length;myDim++){
-		        myResult.push(this[this.props[myDim]].toString())
-		    }
+                myResult.push(this.position.toString());
+                myResult.push(this.orientation.toString());
 		    return myResult.join(",");
 		}else{
-	    	for(var myDim=0;myDim<this.length;myDim++){
-		        myResult.push("\toffset."+this.props[myDim] +" = "+this[this.props[myDim]].toString());
-		    }
+		        myResult.push("\toffset.x = "+this.position.x.toString());
+		        myResult.push("\toffset.x = "+this.position.x.toString());
+		        myResult.push("\toffset.r = "+this.orientation.z.toString("degrees"));
 		    return myResult.join("\n");
 		}
 	};
@@ -1311,12 +1308,68 @@ nas.Orientation.prototype.toString = function(exportForm){
 nas.Orientation.prototype.listString=nas._LISTString;
 nas.Orientation.prototype.valueOf =nas._ARRAYValue;
 */
+/** レートオブジェクト　倍数比率を単位付きまたは単位係数無しで保持するオブジェクト
+.value  倍数
+.rate   係数
 
+*/
+nas.Rate=function(myRate){
+    if(! myRate) myRate="100%"
+    this.value = 100;
+    this.rate  = 100;
+    this.parseRate(myRate);
+}
+
+nas.Rate.prototype.parseRate=function(rateString){
+    var myRate=1;
+    var myRateUnit=String(rateString).replace(/[\+\-\d\.]/g,'');
+    var myValue=parseFloat(rateString);
+    if(isNaN(myValue)) myValue=1;
+    switch(myRateUnit){
+    case  "%":
+    case "％":
+        myRate = 100;
+    break;
+    case "‰":
+        myRate = 1000;
+    break;
+    }
+    this.value = myValue/myRate;
+    this.rate  = myRate;
+    return this;
+}
+nas.Rate.prototype.valueOf=function(){return this.value;}
+nas.Rate.prototype.as=function(rate){
+    switch(rate){
+    case  "%":
+    case "％":
+    case "percent":
+        myRate = 100;
+    break;
+    case "‰":
+    case "permill":
+        myRate = 1000;
+    break;
+    default:
+        myRate = 1
+    }
+    return(myRate*this.value)
+}
+nas.Rate.prototype.toString=function(){
+    return String(this.value*this.rate)+["",null,"%","‰"][Math.log10(this.rate)];
+}
+/*  TEST
+A = nas nas.Rate("1");
+B = nas nas.Rate("96%");
+C = nas nas.Rate("1234‰");
+D = nas nas.Rate("1％");
+D = nas nas.Rate("1％");
+*/
 /*	フレームレートオブジェクト
 コンストラクタ
 	nas.newFramerate(rateString[,rate])?
 引数:
-	reteString String フレームレート文字列
+	rateString String フレームレート文字列
 	rate Number 省略可能  実フレームレート
 	フレームレート文字列は任意
 	引数が  24FPS 25fps等の  /\dFPS/i の場合はその数値を利用
@@ -1327,7 +1380,7 @@ nas.Orientation.prototype.valueOf =nas._ARRAYValue;
 	第一引数が  PAL,SECAM  を含む場合は、第二引数にかかわらず 25  で初期化を行う
 	その際引数に数値  50 が含まれる場合 50 に更新する
 
-    第一引数が reteString(rate)  形式の場合は  括弧の中身を実フレームレートとして処理する
+    第一引数が rateString(rate)  形式の場合は  括弧の中身を実フレームレートとして処理する
 
 	実時間とTCのズレが蓄積して広がるNDFはサポートしない。	
 	
@@ -1521,7 +1574,51 @@ nas.Size=function(){
 		return myResult;
 	};
 }
+/**
+    スケールオブジェクト
+Scale.length
+Scale.x
+Scale.y
+Scale.z
+Scale.type='percent'
+*/
+nas.Scale = function(){
+	if(arguments.length==0){
+		arguments=["100%"];
+	}
+	this.length=arguments.length;//DimensionLength
+	this.props=["x","y","z"];
+	for(var myDim=0;myDim<this.length;myDim++){
+		 this[this.props[myDim]]  = new nas.Rate(arguments[myDim]);
+	}
+	this.rate=this.x.rate;
 
+	this.toString=function(opt){
+    		var myResult=[];
+    		var rateString=['','','%','‰'][Math.log10(this.rate)];
+	    if(! opt){
+	    	for(var myDim=0;myDim<this.length;myDim++){
+		        myResult.push(this[this.props[myDim]].as(rateString)+rateString)
+		    }
+		    return myResult.join(",");
+		}else{
+		    if(this.length==1){
+		            myResult.push("\tscale = "+this.x.toString());
+		    }else{
+	    	    for(var myDim=0;myDim<this.length;myDim++){
+		            myResult.push("\tscale."+this.props[myDim] +" = "+this[this.props[myDim]].as(rateString)+rateString);
+		        }
+		    }
+		    return myResult.join("\n");
+		}
+	};
+	this.valueOf=function(asRate){
+		if(typeof asRate == 'undefined') asRate="";
+		var myResult=[];
+		for(var myDim=0;myDim<this.length;myDim++){myResult.push(this[this.props[myDim]].as(asRate))}
+		return myResult;
+	};    
+}
 /* 
 Position（座標）クラス
 Vectorオブジェクト
@@ -1573,7 +1670,11 @@ nas.TimingCurve=function(){
 	this.name;
 	this.push([0,0]);this.push([1,1]);//デフォルトのlinearタイミング
 }
-/*
+nas.TimingCurve.prototype =Array.prototype;
+
+/**
+デフォルトタイミングライブラリ
+
 	リニアタイミング（均等タイミング）	0	0	1	1
 	イーズ（両詰め）	0.5	0	0.5	1
 	イーズアウト（前詰め）	0.5	0	1	0.5
@@ -1584,20 +1685,99 @@ nas.TimingCurve=function(){
 	ステイ（中詰め）	0	0.5	1	0.5
 	ステイストロング(極端な中詰め)	0	1	1	0
 */
-nas.TimingCurve.keyWords={
-	"linear":    [[  0,  0],[  1,  1]],
-	"ease":      [[0.5,  0],[0.5,  1]],
-	"easeOut":   [[0.5,  0],[  1,0.5]],
-	"easeIn":    [[  0,0.5],[0.5,  1]],
-	"quick":     [[  1,  0],[  0,  1]],
-	"quickOut":  [[  1,  0],[  1,  0]],
-	"quickIn":   [[  0,  1],[  0,  1]],
-	"stay":      [[  0,0.5],[  1,0.5]],
+nas.Timing={
+	"linear"    :[[  0,  0],[  1,  1]],
+	"ease"      :[[0.5,  0],[0.5,  1]],
+	"easeOut"   :[[0.5,  0],[  1,0.5]],
+	"easeIn"    :[[  0,0.5],[0.5,  1]],
+	"quick"     :[[  1,  0],[  0,  1]],
+	"quickOut"  :[[  1,  0],[  1,  0]],
+	"quickIn"   :[[  0,  1],[  0,  1]],
+	"stay"      :[[  0,0.5],[  1,0.5]],
 	"stayStrong":[[  0,  1],[  1,  0]]
 };
 
 
-nas.TimingCurve.prototype =Array.prototype;
+/**
+    合成モードオブジェクト
+
+nas.BlendingMode.ADD
+nas.BlendingMode.ALPHA_ADD
+nas.BlendingMode.CLASSIC_COLOR_BURN
+nas.BlendingMode.CLASSIC_COLOR_DODGE
+nas.BlendingMode.CLASSIC_DIFFERENCE
+nas.BlendingMode.COLOR
+nas.BlendingMode.COLOR_BURN
+nas.BlendingMode.COLOR_DODGE
+nas.BlendingMode.DANCING_DISSOLVE
+nas.BlendingMode.DARKEN
+nas.BlendingMode.DIFFERENCE
+nas.BlendingMode.DISSOLVE
+nas.BlendingMode.EXCLUSION
+nas.BlendingMode.HARD_LIGHT
+nas.BlendingMode.HARD_MIX
+nas.BlendingMode.HUE
+nas.BlendingMode.LIGHTEN
+nas.BlendingMode.LINEAR_BURN
+nas.BlendingMode.LINEAR_DODGE
+nas.BlendingMode.LINEAR_LIGHT
+nas.BlendingMode.LUMINESCENT_PREMUL
+nas.BlendingMode.LUMINOSITY
+nas.BlendingMode.MULTIPLY
+nas.BlendingMode.NORMAL
+nas.BlendingMode.OVERLAY
+nas.BlendingMode.PIN_LIGHT
+nas.BlendingMode.SATURATION
+nas.BlendingMode.SCREEN
+nas.BlendingMode.SILHOUETE_ALPHA
+nas.BlendingMode.SILHOUETTE_LUMA
+nas.BlendingMode.SOFT_LIGHT
+nas.BlendingMode.STENCIL_ALPHA
+nas.BlendingMode.STENCIL_LUMA
+nas.BlendingMode.VIVID_LIGHT
+
+現在の実装では実際の値は問題にならない
+列挙値として仮にAE互換の整数値を与えておく　
+
+これは将来合成数式のキャリアとして再設定される…かも
+*/
+
+nas.BlendingMode ={
+	ADD:3620,
+	ALPHA_ADD:3644,
+	CLASSIC_COLOR_BURN:3619,
+	CLASSIC_COLOR_DODGE:3625,
+	CLASSIC_DIFFERENCE:3634,
+	COLOR:3638,
+	COLOR_BURN:3618,
+	COLOR_DODGE:3624,
+	DANCING_DISSOLVE:3614,
+	DARKEN:3615,
+	DIFFERENCE:3633,
+	DISSOLVE:3613,
+	EXCLUSION:3635,
+	HARD_LIGHT:3628,
+	HARD_MIX:3632,
+	HUE:3636,
+	LIGHTEN:3621,
+	LINEAR_BURN:3617,
+	LINEAR_DODGE:3623,
+	LINEAR_LIGHT:3629,
+	LUMINESCENT_PREMUL:3645,
+	LUMINOSITY:3639,
+	MULTIPLY:3616,
+	NORMAL:3612,
+	OVERLAY:3626,
+	PIN_LIGHT:3631,
+	SATURATION:3637,
+	SCREEN:3622,
+	SILHOUETE_ALPHA:3642,
+	SILHOUETTE_LUMA:3643,
+	SOFT_LIGHT:3627,
+	STENCIL_ALPHA:3640,
+	STENCIL_LUMA:3641,
+	VIVID_LIGHT:3630
+}
 /*
 nas.AnimationPeg Object
 nasペグシステムでサポートするペグオブジェクト
@@ -1672,7 +1852,7 @@ nas.GeometryOffset=function(myPoint,myRotation){
 	this.position=(myPoint instanceof nas.Point)? myPoint:new nas.Point();
 	this.x=this.position.x;
 	this.y=this.position.y;
-	this.rotation=(myRotation)?myRotation:new nas.Rotation();
+	this.rotation=(myRotation instanceof nas.Rotation)? myRotation:new nas.Rotation();
 	this.r=this.rotation.rotationZ;
 }
 /*
@@ -2010,6 +2190,109 @@ TEXTグループは、タイムシート上には配置されず区間の値と�
         .comment    申し送りコメント
 
  */
+
+/**
+	複合形式記述群をパース
+	各値は、順不同ですべて基本的に単位ポストフィックス付きの文字列（推奨｜優先）とする
+	単位ポストフィックスなしの数値はUnitValue（pt）として扱う
+長さ
+	10mm,123.5cm,in,pt,q,ft....
+角度
+	1.13rad,176d
+解像度
+	144dpi,38dpc
+強度
+	120%
+フレーム指定
+	120F,96fr
+フィールド指定
+	12FLD3N1S12C
+	
+unitValueは値の出現順に width,height,offset.X,offset.Y として解釈される
+	V
+		width	
+	V,V
+		width,height
+	V,V,V
+		width,height,X
+	V,V,V,V
+		width,height,X,Y
+Replacement
+	source,[size.x,size.y,offset.x,offset.y,offset.r,resolution(X=Y)]
+Geometry
+	source,[size.x,size.y,offset.x,offset.y,offset.r,scaleField||scale]
+	source,inchField
+	ジオメトリにインチフィールドが指定された場合は、他の指定は無視される
+Composite
+	source,strength
+	コンポジットの指定はstrengthのみが有効 最初のnumeric|percentを使用
+*/
+nas.parseDataChank =function(dataChank){
+	if((typeof dataChank=='undefined')||(String(dataChank).length==0)) return [];
+	dataChank=csvSimple.parse(dataChank)[0];
+//console.log(dataChank);
+	var dataForms=[];
+	for(var dix=0;dix<dataChank.length;dix++){
+		var dataType  ='source';
+		var target=dataChank[dix]
+		if(target.match( /^[+-]?\d+\.?\d*$/ )){
+			dataType='numeric';
+		}else if (nas.BlendingMode[target]){
+			dataType='blendingMode';
+		}else if(target.match(/^(\d+\.?\d*FLD)(\d+[NS])?(\d+[EW])?(\d+\.?\d*[CA]?)?$/i)){
+			dataType='inchField';
+		}else if(target.match(/^(\d+\.?\d*)(FR?L?)$/i)){
+			dataType='scaleField';
+		}else if(target.match(/^[+-]?\d+\.?\d*(\D+)$/)){
+			var unitString = RegExp.$1;
+			if(unitString.match(nas.UNITRegex)) dataType='unitValue';
+			else if (unitString.match(/rad|d|degrees|°/i)) dataType='unitAngle';
+			else if (unitString.match(/dpi|dpc|ppi|ppc|lpi|lpc/i )) dataType='unitResolutions';
+			else if (unitString == '%') dataType='percent';
+		}
+		dataForms.push({type:dataType,value:dataChank[dix]});
+	}
+	return(dataForms);
+}
+/*TEST
+nas.parseDataChank('"files",12FLD2S3W12C,120dpi');
+*/
+
+nas.parseField=function parseField(FieldString){
+	if(FieldString.match(/^(\d+\.?\d*FLD)(\d+[NS])?(\d+[EW])?(\d+\.?\d*[CA]?)?$/i)){
+		return ({
+			FRM:	RegExp.$1,
+			LEF:	RegExp.$2,
+			TOP:	RegExp.$3,
+			ROT:	RegExp.$4
+		});
+	}else{
+		return false;
+	}
+}
+/*TEST
+nas.parseField('12FLD3n12');
+nas.parseField('120F');
+
+*/
+nas.parseFrame=function parseFrame(FrameString){
+	if(FrameString.match(/^(\d+\.?\d*)(FR?L?)$/i)){
+		return ({
+			TYP:	(String(RegExp.$2).toUpperCase()=='FR')? "fr":"fl",
+			VLU:	parseFloat(RegExp.$1),
+		});
+	}else{
+		return false;
+	}
+}
+/*TEST
+nas.parseFrame('12FLD3n12');
+nas.parseFrame('120F');
+
+*/
+
+
+
 /**
  *    @desc nas Object base property
  */

@@ -192,18 +192,33 @@ name    "B-1"
 	エレメントクラス 各合成素材（情報）の共通部分
 	エレメントの所属するJobが未指定の場合は、登録時のカレントJobとなる
 */
-nas.xMapElement =function xMapElement(myName,myParentGroup,myLinkJob){
-//	this.text="";//テスト用コンテンツトレーラ
-	this.id;//セッション内ユニークインデックス
-	this.parent=myParentGroup;//xMapGroup/Object
-	this.link=myLinkJob;//linkPmJob/Object
-	this.type=this.parent.type;//親グループのtype以外は受け付けないので参照を記録
-	this.name=myName;// nas.AnimationReplacementの場合に限り 初期化時にCellDescription/完全　に置換される
-	this.content=Object.create(this.parent.content);//継承  親グループが正常に初期化されているのが条件 nas.AnimationXXX シリーズ
+nas.xMapElement =function xMapElement(myName,myParentGroup,myLinkJob,contentSource){
+	if(typeof myName == "undefined" )			return false;
+	if(typeof myParentGroup == "undefined" ) 	return false;
+	if(typeof myLinkJob == "undefined" ) 		return false;
+//以上省略不可
+	if(typeof contentSource == "undefined" )	contentSource = "";
+//省略可
+
+//	this.contentText="";//xMapコンテンツトレーラ
+	this.id;//セッション内ユニークインデックス(自動設定)
+	this.parent	= myParentGroup;//xMapGroup/Object
+	this.link	= myLinkJob;//linkPmJob/Object
+	this.type	= this.parent.type;//親グループのtype以外は受け付けないので参照を記録
+	this.name	= myName;// nas.AnimationReplacementの場合に限り 再初期化(this.content.parseContent())時に CellDescription/完全 に置換される
+
+	this.content = Object.create(this.parent.content);//継承  親グループが正常に初期化されているのが条件 nas.AnimationXXX シリーズ
 	this.content.extended=false;//出力時に全プロパティを出力する必要があるか否かのフラグ
-	if(this.content.type=="cell"){this.content.overlay=null;}
+	if((this.type=="cell")||(this.type=="replacement")) this.content.overlay=null;
 //	if(this.content.type=="replacement"){this.content.overlay=null;}
 	this.comment="";
+
+	if(contentSource) this.content.parseContent(contentSource);
+
+if(this.type == 'cell'){
+console.log(this);
+this.toString();
+}
 };
 nas.xMapElement.prototype.toString=function(){
 
@@ -216,11 +231,13 @@ nas.xMapElement.prototype.toString=function(){
 	}
     return myResult;
 };
+
 nas.xMapElement.prototype.setData=function(dataStream){
 //	this.text = dataStream;
 	this.content.parseContent(dataStream);
 	
 }
+
 
 /*
  *	Class xMapGroup
@@ -247,29 +264,48 @@ nas.xMapElement.prototype.setData=function(dataStream){
 	グループに対する標準でない（pmdbの記載と異なる）デフォルト値が指定された場合は、
 	ｘMap内に追加プロパティとして記載が行われる。
 	contentプロパティのサブプロパティadditionalにフラグを置く
+	グループのコメントはグループのものであり　値につけないこと
  *
  * groupのタイプストリングは、ステージごとに対照マップが必要か？
  * アセット単位でなく
  */
-nas.xMapGroup =function xMapGroup(myName,myTypeString,myLinkJob){
-	this.text="";
+nas.xMapGroup =function xMapGroup(myName,myTypeString,myLinkJob,contentText){
+	if(typeof myName == "undefined" ) return false;//
+	if(typeof myLinkJob == "undefined" ) return false;//
+//以上省略不可
+	if(typeof myTypeString == "undefined" ) myTypeString = "";
+	if(typeof contentText == "undefined" ) contentText = "";
+//省略可
+
+//	this.text=contentText;
 	this.id;//セッション内ユニークインデックス
-	this.parent=this;//xMap/Object
+	this.parent=this;// Object xMapGroup itself
 	this.link=myLinkJob;//linked PmJob/Object
-	this.type=myTypeString;//system,dialog,sound,effect,camera,cell,replacement/String
+	this.type=String(myTypeString).toLowerCase();//system,dialog,sound,effect,composite,camerawork,geometry,cell,replacement/String
 	this.name=myName;//
-	this.content=xMap.getDefaultContent(this.type,this.link.stage);//タイプストリング毎の初期化を行うことが必要
+	this.content=xMap.getDefaultContent(this,contentText);//タイプストリング毎の初期化を行うことが必要
 	this.content.additional = false;
 	this.comment="";
 	this.elements = [];//要素トレーラー配列
+
+	this.content.parseContent(contentText);
+	if(this.content.comment){
+		this.comment=String(this.content.comment);
+		this.content.comment=undefined;
+	}
 };
 nas.xMapGroup.prototype.toString=function(jobFilter){
 	var myContentBody = [];
 	myContentBody.push(this.name);
 	myContentBody.push(this.type);
 
-	var myResult ='['+([this.name,this.type]).join('\t')+']\n';
-
+	if(this.content.additional){
+		var contentResult=this.content.toString('basic').split('\t').slice(2);
+		if(this.comment) contentResult.push(this.comment);
+		var myResult='['+([this.name,this.type]).concat( contentResult ).join('\t')+']\n';
+	}else{
+		var myResult='['+([this.name,this.type]).join('\t')+']\n';
+	}
 /* これらの書式は許されるしパースも行うが、今季の出力ではサポートしない
 	[this.name,this.type,this.content.toString()];
 	[this.name,this.type,this.content.toString(),this.comment];
@@ -277,9 +313,9 @@ nas.xMapGroup.prototype.toString=function(jobFilter){
 */
 //	var myResult = [this.name,this.type,this.content.toString(),this.comment];
 //	var myResult = [this.name,this.type,this.content.toString()];
-	if(additional){
-		var addResult=this.content.toString();
-		if(addResult) myResult += '\t'+addResult+'\n';
+	if(this.content.extended){
+		var addResult=this.content.toString('extend');
+		if(addResult) myResult += addResult+'\n';
 	}
 	myResult += '#------------------------------------------------------------\n';
 	for (var eIdx=0;eIdx<this.elements.length;eIdx++){
@@ -289,7 +325,6 @@ nas.xMapGroup.prototype.toString=function(jobFilter){
 
 	return myResult;
 };
-
 
 /** タイプ別のデフォルトコンテンツオブジェクトを戻す
 正確にはタイプのみでなくgroupの所属するステージにも関連するのでそれらを引数として受け取る
@@ -305,28 +340,31 @@ nas.xMapGroup.prototype.toString=function(jobFilter){
 	xps			:null	タイムシートデータへのパス
 	text		:"" ヌルストリング
 */
-xMap.getDefaultContent=function(targetType,targetStage){
+xMap.getDefaultContent=function(targetGroup,contentString){
 	var result='';
-	switch (targetType){
+	
+	switch (targetGroup.type){
 	case	'dialog':
 	case	'sound':
-		result=new nas.AnimationSound();
+		result=new nas.AnimationSound(targetGroup,contentString);
 	break;
 	case	'cell':
 	case	'replacement':
 	case	'still':
-		result=new nas.AnimationReplacement();
+		result=new nas.AnimationReplacement(targetGroup,contentString);
 	break;
-	case	'camarawork':
-		result=new nas.AnimationGeometry();
+	case	'camerawork':
+	case	'geometry':
+		result=new nas.AnimationGeometry(targetGroup,contentString);
 	break;
+	case	'composite':
 	case	'effect':
-		result=new nas.AnimationComposite();
+		result=new nas.AnimationComposite(targetGroup,contentString);
 	break;
 	case	'xps':
 	case	'text':
 	default:
-		result= new nas.AnimationDescription();
+		result= new nas.AnimationDescription(targetGroup,contentString);
 	}
 	return result;
 }
@@ -374,19 +412,14 @@ xMap.getDefaultContent=function(targetType,targetStage){
  *	
  */
 xMap.prototype.new_xMapElement = function (myName,myOption,myLink,contentSource){
- if(typeof myName == "undefined" ) return false;//
- if(typeof myLink == "undefined" ) return false;//
- if(typeof myOption == "undefined" ) myOption = "";
- if(typeof contentSource == "undefined" ) contentSource = "";
-//ここまでは無くとも可
-
-
- if(myOption instanceof nas.xMapGroup){
-//親オブエジェクトが指定されたらエレメント作成
-	var newElement=new nas.xMapElement(myName,myOption,myLink);
+	if(! myLink instanceof nas.Pm.ProductionJob) return false;
+	if(myOption instanceof nas.xMapGroup){
+console.log(arguments);
+//親グループが指定されたらエレメント作成
+		var newElement=new nas.xMapElement(myName,myOption,myLink.contentSource);
 		myOption.elements.push(newElement);
- }else{
-//指定されない場合はグループなのでデフォルトパラメータを設定する
+ 	}else{
+//タイプ文字列指定の場合、グループなのでデフォルトパラメータを設定する
 /*
 	default params
 	xps     :xpsAgent       :Xpsの参照先パスを保持して  カット番号、時間等を返すエージェント
@@ -397,19 +430,20 @@ xMap.prototype.new_xMapElement = function (myName,myOption,myLink,contentSource)
     エレメントの削除は単独のエレメントのメソッドで行う
     ガベージコレクションはストアオブジェクトのメソッドにする
 */
-	if(!(myOption.toString().match(/(camera|cell|effect|sound|system)/))) myOption = "cell";
-	var newElement=new nas.xMapGroup(myName,myOption,myLink);
-	this.elementGroups.push(newElement);
+		if(!(String(myOption).match( /(camera|cell|effect|sound|system)/i ))) myOption = "cell";
+		var newElement=new nas.xMapGroup(myName,myOption,myLink);
+		this.elementGroups.push(newElement);
 	
-	switch(myOption){
+		switch(newElement.type){
 		case "xps":
-			newElement.content=new nas.XpsAgent();
+			newElement.content=new nas.XpsAgent(newElement,contentSource);
 		break;
 		case "text":
-			newElement.content=new nas.AnimationText();
+			newElement.content=new nas.AnimationText(newElement,contentSource);
 		break;
 		case "system":
-	newElement.content=new nas.AnimationReplacement();
+	newElement.content=new nas.AnimationReplacement(newElement,contentSource);
+/*
 	newElement.content.source=new nas.File();//ファイル  空
 	newElement.content.resolution=this.baseResolution;//作品DBの解像度
 	newElement.content.size=this.standerdFrame;//以下デフォルト値
@@ -420,29 +454,32 @@ xMap.prototype.new_xMapElement = function (myName,myOption,myLink,contentSource)
 	newElement.content.pegOffset=new nas.Offset();
 	newElement.content.pegRotation=new nas.OffsetRotation();
 	newElement.content.comments=new String("");
+*/
 		break;
 		case "sound":
 		case "dialog":
-			if( contentSource instanceof nas.AnimationSound ){
+    			newElement.content=new nas.AnimationSound(newElement,contentSource);
+/*			if( contentSource instanceof nas.AnimationSound ){
 			    newElement.content=contentSource;
 			}else{
-    			newElement.content=new nas.AnimationSound(contentSource);			    
-			}
+    			newElement.content=new nas.AnimationSound(newElement,contentSource);			    
+			}*/
 		break;
 		case "effect":
 		case "sfx":
-			if( contentSource instanceof nas.AnimationEffect ){
+    		newElement.content=new nas.AnimationEffect(newElement,contentSource);
+/*			if( contentSource instanceof nas.AnimationEffect ){
     			newElement.content=contentSource;
     		}else{
-    			newElement.content=new nas.AnimationEffect(contentSource);
-			}
+    			newElement.content=new nas.AnimationEffect(newElement,contentSource);
+			}*/
 		break;
 		case "camera":
 		case "camerawork":
 			if( contentSource instanceof nas.ClippingFrame ){
     			newElement.content=contentSource;
     		}else{
-    			newElement.content=new nas.ClippingFrame(contentSource);
+    			newElement.content=new nas.ClippingFrame(newElement,contentSource);
     		}
 		break;
 		case "cell":
@@ -451,10 +488,10 @@ xMap.prototype.new_xMapElement = function (myName,myOption,myLink,contentSource)
 			if( contentSource instanceof nas.AnimationReplacement ){
     			newElement.content=contentSource;
     		}else{
-    			newElement.content=new nas.AnimationReplacement(contentSource);
+    			newElement.content=new nas.AnimationReplacement(newElement,contentSource);
     		}
-	}	
- };
+		}	
+ 	};
 	this.elementStore.push(newElement);//エレメントとグループを総合ストアに格納
 	newElement.id=this.currentIndex;
 	this.currentIndex++;//削除してもSession内でidが不変
@@ -813,12 +850,13 @@ var props ={
 	CHECK_OUT:"checkOut",
 	CHECK_IN:"checkIn",
 	currentStatus:"currentStatus",
-		created:"",
-		updated:"",
-		manager:"",
-		worker:"",
-		currentStatus:"",
-	END:""
+		created:"created",
+		updated:"updated",
+		manager:"manager",
+		worker:"worker",
+		currentStatus:"currentStatus",
+		slipNumber:"slipNumber",
+	END:"end"
 };
 /**
 	データ走査第二パス
@@ -869,7 +907,7 @@ var currentGroup       		 ;//エレメントグループ
 var currentElement     		 ;//個別エントリー
 var elementDescription =[]   ;//個別エントリの記述バッファ　行ごとの配列
 
-	elementDescription.set=function(){
+	elementDescription.flush=function(){
 		if(this.length){
 			
 //			currentElement.text = this.join;('\n');
@@ -880,6 +918,7 @@ var elementDescription =[]   ;//個別エントリの記述バッファ　行ご
 			currentGroup.elements.add(currentElement);
 //console.log(currentElement.text);
 		}
+		this.length = 0;
 	}
 /*
 	各データは、分岐状態により複合されたモード状態を持つ
@@ -935,7 +974,7 @@ console.log(line +": detect productionLine : "+nAme +":"+RegExp.$1+":"+RegExp.$2
 	  	if(RegExp.$2.length){
 	  	//記述終了
 //console.log(line+": ライン設定解除 :"+currentLine.getPath())
-			elementDescription.set();
+			elementDescription.flush();
 console.log(line+": ライン設定解除 :"+SrcData[line]);
 			currentLine=undefined;
 				currentStage	   = undefined;
@@ -947,7 +986,7 @@ console.log(line+": ライン設定解除 :"+SrcData[line]);
 			currentLine=newMap.new_ProductionLine(RegExp.$1);//xMapにメソッドで登録
 //既に存在するラインを送った場合は追加されない  その場合はcorrentLineがfalse
 		  	if(currentLine instanceof nas.Pm.ProductionLine){
-				elementDescription.set();
+				elementDescription.flush();
 console.log(line+": line setup:"+RegExp.$1+":"+currentLine.getPath());
 				currentStage       = undefined;
 				currentJob	       = undefined;
@@ -965,7 +1004,7 @@ console.log(line+": line setup [[FAULT]]:"+RegExp.$1+":"+currentLine);
 	  	//alert("detect Stage : "+nAme);
 	  	if(RegExp.$2.length){
   		//ステージ解除
-			elementDescription.set();
+			elementDescription.flush();
 //			console.log(line+":\tステージ設定解除 :"+currentStage.getPath())
 console.log(line+":\tステージ設定解除 :"+SrcData[line]);
 			currentStage = undefined;
@@ -976,7 +1015,7 @@ console.log(line+":\tステージ設定解除 :"+SrcData[line]);
 	  	}else{
 	  	//ステージ設定
 	  		if(currentLine instanceof nas.Pm.ProductionLine)
-			elementDescription.set();
+			elementDescription.flush();
 			currentStage=newMap.new_ProductionStage(RegExp.$1,currentLine);//xMapにメソッドで登録トライ
 			if(currentStage instanceof nas.Pm.ProductionStage){
 console.log(line+': change Current Stage :'+ currentStage.name);
@@ -995,7 +1034,7 @@ console.log(line+":\tstage setup [[FAULT]]:"+RegExp.$1+":"+currentStage+":"+curr
 console.log("detect Job : "+nAme);
 	  	if(RegExp.$3.length){
 	  		//記述終了
- 			elementDescription.set();
+ 			elementDescription.flush();
 //			console.log(line+":\t\tジョブ設定解除 :"+currentJob.getPath())
 console.log(line+":\t\tジョブ設定解除 :"+SrcData[line]);
 			currentJob=undefined;
@@ -1008,7 +1047,7 @@ console.log(line+":\t\tジョブ設定解除 :"+SrcData[line]);
 	  		
 		  	if(currentJob instanceof nas.Pm.ProductionJob){
 				//グループとエレメントをリセットする前に現状データの解決が必要
-			elementDescription.set();
+			elementDescription.flush();
 console.log(line+":\t\tjob setup:"+RegExp.$1+":"+currentJob.getPath()+":");
 console.log(currentJob);
 				currentGroup       = undefined;
@@ -1049,7 +1088,7 @@ case	"created":
 console.log(line+":\t\t\t\tjob:"+nAme+" checkout:"+vAlue);
 		var myContent=vAlue.split(";")[0].split("/");
 		if(currentJob instanceof nas.Pm.ProductionJob){
-			currentJob.createUser=myContent.reverse()[0];
+			currentJob.createUser=new nas.UserInfo(myContent.reverse()[0]);
 			currentJob.createDate=new Date(myContent.slice(1,myContent.length).reverse().join("/"));
 		};
 			break;
@@ -1057,7 +1096,7 @@ case	"updated":
 console.log(line+":\t\t\t\tjob:"+nAme+" checkin:"+vAlue);
 		var myContent=vAlue.split(";")[0].split("/");
 		if(currentJob instanceof nas.Pm.ProductionJob){
-			currentJob.updateUser=myContent.reverse()[0];
+			currentJob.updateUser=new nas.UserInfo(myContent.reverse()[0]);
 			currentJob.updateDate=new Date(myContent.slice(1,myContent.length).reverse().join("/"));
 		};
 			break;
@@ -1069,6 +1108,10 @@ console.log(line+":\t\t\t\tjob-set:"+nAme+":"+vAlue);
 			currentJob[props[nAme]]=vAlue.split(";")[0];
 		};
 			break;
+case	"CREATE_USER":
+case	"UPDATE_USER":
+			newMap[props[nAme]]=new nas.UserInfo(vAlue);
+if(nAme=="UPDATE_USER"){console.log(nAme)};
 			break	;
 default:				;//直接結合プロパティ
 			newMap[props[nAme]]=vAlue;
@@ -1080,9 +1123,9 @@ default:				;//直接結合プロパティ
 
 //			エレメントグループまたは終了識別にマッチ
 		if(SrcData[line].match(/^\[([^\[]+)\]$/)){
-
+			var	innerContent = RegExp.$1;
 //データ記述が終わっていたらメモを取り込んで終了
-			if(SrcData[line].match(/\[END\]/)){
+			if(SrcData[line].indexOf("[END]")==0){
 //データ記述終了ライン控え
 				SrcData.descriptionEnd=line;
 				newMap["memo"]='';
@@ -1100,19 +1143,20 @@ default:				;//直接結合プロパティ
 	つぎのグループが定義されるか、またはグループの所属するジョブが終了するまでの間有効
 	グループの定義時にはcurrentElement.elementDescriptionが初期化される
 */
-
+console.log(innerContent);
 //console.log("X--:\t"+RegExp.$1+" :"+currentJob+"/"+currentStage+"/"+currentLine)
 				if(currentJob instanceof nas.Pm.ProductionJob){
-					elementDescription.set();
+					elementDescription.flush();
 
-					var groupDescription=String(RegExp.$1).split('\t');
+					var groupDescription= innerContent.split('\t');
 console.log(line+":detect elementGroup :"+ groupDescription.slice(0,2)+"\tjob as: "+currentJob.getPath()+"<<<end");
 					currentGroup = new nas.xMapGroup(
 						groupDescription[0],
 						(groupDescription[1])?groupDescription[1]:'cell',
-						currentJob
+						currentJob,
+						SrcData[line]
 					);
-					currentGroup.text=SrcData[line];
+					//currentGroup.text=SrcData[line];
 					newMap.elementGroups.add(currentGroup);
 
 					currentElement=undefined;
@@ -1120,6 +1164,7 @@ console.log(line+":detect elementGroup :"+ groupDescription.slice(0,2)+"\tjob as
 					if(groupDescription.length>2){
 						var additionalProperties = groupDescription.slice(2);
 console.log('追加属性 :' + groupDescription.slice(2) );
+						currentGroup.content.additional=true;
 					//グループのタイプに従って追加属性のセットアップを同時に行う
 					//グループ内のデフォルト値保持用のテンプレートコンテンツの属性として追加
 					//これ以降の追加属性の設定は、現行のエレメントがnullの場合グループの属性　エレメントが宣言された後は現行エレメントの追加属性となるXX
@@ -1151,17 +1196,15 @@ content-type=text 以外の空白行　*要注意* 空白行を認めるContent-
 //この場では振り分けのみを行い、実際のパースは外部メソッドに委ねる
  			if(currentJob instanceof nas.Pm.ProductionJob){
 				if (SrcData[line].match(/^(\S+)\t(\S+)(\t([^\t]+)(\t([^\t]+))?)?$/)){
-					if( elementDescription.length ){
-						currentElement.text=elementDescription.join('\n');
-						elementDescription.length = 0;//バッファクリア
-console.log('element description \n'+currentElement.text);
-					}
 				// xMapエレメント エントリー行 /^(<groupId>)\t(<elementId>)(\t(<elementProp>)(\t(commentString))?)?$/
 					var groupName = RegExp.$1; var entryName = RegExp.$2;
 					var props     = RegExp.$4; var comment   = RegExp.$6;
+
+					elementDescription.flush();
+
 					if(groupName == currentGroup.name){
-						currentElement = new nas.xMapElement(entryName,currentGroup,currentJob);
-console.log(line + ': detect xMapElenet :'+groupName +' : '+entryName)
+						currentElement = new nas.xMapElement(entryName,currentGroup,currentJob,SrcData[line]);
+console.log(line + ': detect xMapElement :'+groupName +' : '+entryName );
 						elementDescription.push(SrcData[line]);
 					}
 				}else{
@@ -1261,7 +1304,7 @@ for (var lidx=0;lidx<this.lines.length;lidx++){
 					}
 				}
 			result+="##[["+currentJob.name+"]]/\n";//ジョブ閉じる
-
+console.log("job closed");
 		}
 		result+="##["+currentStage.name+"]/\n";//ステージ閉じる
 	}

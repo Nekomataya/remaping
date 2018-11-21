@@ -356,7 +356,7 @@ nas.Pm._parseConfig = function(dataStream,form){
     var myMembers =[];
     // 形式が指定されない場合は、第一有効レコードで判定
     if(! form ){
-            if (dataStream.match(/\[\s*\{[^\}]+\}\s*\]/)) form='JSON';//配列JSON
+            if (dataStream.match(/\[\s*(\{[^\}]+\}\s*,\s*)+(\{[^\}]+\})?\s*\]/)) form='JSON';//配列JSON
             else if (dataStream.match(/(\n|^)\s*\[\s*.+\]($|\n)/)) form='full-dump';
             else  form='plain-text';
     }
@@ -1485,18 +1485,19 @@ nas.Pm.PmTemplateCollection.prototype.parseConfig = function(dataStream,form){
     var myMembers =[];
     // 形式が指定されない場合は、第一有効レコードで判定
     if(! form ){
-            if (dataStream.match(/\[\s*\{[^\}]+\}\s*\]/)) form='JSON';//配列JSON
+            if (dataStream.match(/\[\s*(\{[^\}]+\}\s*,\s*)+(\{[^\}]+\})?\s*\]/)) form='JSON';//配列JSON
             else if (dataStream.match(/(\n|^)\[.+\]($|\n)/)) form='full-dump';
             else  form='plain-text';
     }
     switch(form){
     case    'JSON':
         var tempObject=JSON.parse(dataStream);
+console.log(tempObject);
         for (var rix=0;rix<tempObject.length;rix++){
             var currentMember=new nas.Pm.LineTemplate(
                 this,
-                tempObject[rix][0],
-                tempObject[rix][1]
+                tempObject[rix].line,
+                tempObject[rix].stages
             );
             myMembers.push(currentMember);
         }
@@ -1542,6 +1543,7 @@ entryName
       }
       myMembers.push(currentMember);
     }
+console.log(myMembers);
     return this.addMembers(myMembers);
 }
 nas.Pm.PmTemplateCollection.prototype.dump = nas.Pm._dumpList;
@@ -1557,6 +1559,7 @@ nas.Pm.LineTemplate = function(myParent,lineName,myStages){
     if (!(myStages instanceof Array)) myStages = [myStages];
     this.parent = myParent;//親参照は不要？
     this.line   = this.parent.parent.lines.getLine(lineName);
+console.log(myStages);
     this.stages = new nas.Pm.StageCollection(this);
     for (var ix=0;ix< myStages.length;ix++){
         var stageKey= nas.Pm.searchProp(myStages[ix],this.parent.parent.stages)
@@ -1638,6 +1641,11 @@ nas.Pm.ProductionJob.prototype.toString = function(){
     myResult            += "##[["+this.name+"]"+"id:"+this.id+"]\n";
     myResult            += "##created="+this.createDate+"/"+this.createUser+";\n";
     myResult            += "##updated="+this.createDate+"/"+this.createUser+";\n";
+
+    if(this.manager)    myResult += "##manager="+this.manager+";\n";
+    if(this.worker)     myResult += "##worker="+this.worker+";\n";
+    if(this.slipNumber) myResult += "##slipNumber="+this.slipNumber+";\n";
+
     var myGroups        = new Array();
     var myMapElements   = this.stage.line.parent.elementStore;
     //エレメント総当りで ジョブに対応するグループを抽出
@@ -1656,7 +1664,7 @@ nas.Pm.ProductionJob.prototype.toString = function(){
         }
 //  myResult+="["+myGroup[gID].name+"]/\n";//グループ終了子は省略可
     }
-    myResult+="##[["+this.name+"]]/\n";
+//    myResult+="##[["+this.name+"]]/\n";//終了子をここでは出力しない　呼び出し側で処置　
     return myResult;
 };
 /**
@@ -1751,7 +1759,7 @@ nas.Pm.JobTemplateCollection.prototype.parseConfig = function(dataStream,form){
     var myMembers =[];
     // 形式が指定されない場合は、第一有効レコードで判定
     if(! form ){
-            if (dataStream.match(/\[\s*\{[^\}]+\}\s*\]/)) form='JSON';//配列JSON
+            if (dataStream.match(/\[\s*(\{[^\}]+\}\s*,\s*)+(\{[^\}]+\})?\s*\]/)) form='JSON';//配列JSON
             else if (dataStream.match(/(\n|^)\[.+\]($|\n)/)) form='full-dump';
             else  form='plain-text';
     }
@@ -3068,7 +3076,7 @@ nas.Pm.StaffCollection.prototype.sort = function(){
 エントリの問い合わせがあった場合、コレクションメンバーを検索してアクセスの可否を返す。
 コレクションのエントリ数が０の場合のみ、親オブジェクトの持つスタッフコレクションに問い合わせを行いその結果を返す。
 */
-nas.Pm.StaffCollection.prototype.getMenmber = function(staffString,type){
+nas.Pm.StaffCollection.prototype.getMember = function(staffString,type){
     var result=new nas.Pm.staffCollection(this.parent);
     var sect='';    var dut ='';    var usr ='';
 }
@@ -3101,7 +3109,7 @@ nas.Pm.StaffCollection.prototype.parseConfig = function(dataStream,form){
     var myMembers =[];
     // 形式が指定されない場合は、第一有効レコードで判定
     if(! form ){
-            if (dataStream.match(/\[\s*\{[^\}]+\}\s*\]/)) form='JSON';//配列JSON
+            if (dataStream.match(/\[\s*(\{[^\}]+\}\s*,)\s*(\{[^\}]+\})?\s*\]/)) form='JSON';//配列JSON
             else if (dataStream.match(/(\n|^)\[.+\]($|\n)/)) form='full-dump';
             else if (dataStream.match(/\*[^\*]+\*|\[[^\[\]]+\]/)) form='free-form';//]
             else  form='plain-text';

@@ -1964,6 +1964,7 @@ nas.Pm.lines.parseConfig(`{
     }
 }`);
 
+
 /**
  *   制作基準テンプレート
  *
@@ -1982,7 +1983,7 @@ nas.Pm.pmTemplates.parseConfig(`[
         "line":"背景美術",
         "stages":["美術原図整理","背景美術","美術検査"]
     }
-]`)
+]`);
 
 /**
  *  ジョブ名称テンプレート
@@ -2271,5 +2272,6 @@ nas.Pm.medias.parseConfig(`{
 		"description":"4KHDTV"
 	}
 }`);
+
 
 
