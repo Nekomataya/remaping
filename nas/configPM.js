@@ -1598,7 +1598,7 @@ nas.Pm.stages.parseConfig(`{
 		"code":"drft",
 		"shortName":"ラフ原",
 		"description":"同上",
-		"output":"drfat",
+		"output":"draft",
 		"stageName":"roughSketch"
 	},
 	"layout":{

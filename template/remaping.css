@@ -329,7 +329,7 @@ td {
 	padding:0;
 	margin:0;
 	white-space: nowrap;
-	overflow:hidden;
+	overflow:visible;
 	font-size:10px;
 	line-height:1;
 	height:16px;

@@ -1087,8 +1087,8 @@ function Xps(Layers, Length, Framerate) {
     if(isNaN(Length)){Length = nas.FCT2Frm(Length,Framerate)}
     if (!Length){
         Length = Math.ceil(Framerate.rate);//現状のレートで1秒を初期化
-console.log (Framerate);
-console.log (Length);
+//console.log (Framerate);
+//console.log (Length);
     }
     /**
      * デフォルト値がレイヤなし継続長なしだと弊害があるのでデフォルト値を変更 2009/10/12
@@ -1935,6 +1935,7 @@ Xps.prototype.readIN = function (datastream) {
  * パース成功時はオブジェクト自身を返す。
  * @param datastream
  * @returns {boolean}
+ * パーサにフラグを与えて、フレームレートが確定するまでフレーム計算を行わないように修正
  */
 Xps.prototype.parseXps = function (datastream) {
 /**
@@ -2159,7 +2160,6 @@ Xps.prototype.parseXps = function (datastream) {
                         tm = 0
                     }
                     SrcData[props[nAme]] = tm;
-
                     break;
                   /**
                    *  user_info
@@ -2191,9 +2191,7 @@ Xps.prototype.parseXps = function (datastream) {
                    *    ステータスがない場合は無視する
                    */
                 case   "CurrentStatus":;
-console.log(vAlue);
                    SrcData.currentStatus = new JobStatus(vAlue);
-console.log(SrcData.currentStatus);
                   break;
                 case   "JobAssign":;
                    if(SrcData.currentStatus) SrcData.currentStatus.assign = vAlue;
@@ -2490,6 +2488,7 @@ console.log(SrcData.currentStatus);
         alert("error :" + localize(xUI.errorMsg[xUI.errorCode]));
 //	xUI.errorCode=0;
     }
+//console.log(this.toString());
     return this;
 };
 
@@ -3412,15 +3411,20 @@ XpsTimelineTrack.prototype.parseTimelineTrack = function(){
 セクションバッファが最新でない場合は、セクションパースを実施する
 */
 XpsTimelineTrack.prototype.getSectionByFrame = function(myFrame){
-    var myResult =false;
+    var myResult = false;
+    var mySections =false;
     if(typeof myFrame == "undefined") myFrame = 0 ;
-    if(! this.sectionTrust){this.parseTimelineTrack();}
+    if(! this.sectionTrust){mySections = this.parseTimelineTrack();}
     //ここは非同期実行不可
-    for (var ix=0;ix<this.sections.length;ix ++){
-        if(myFrame < (this.sections[ix].startOffset()+this.sections[ix].duration)){
+    if(mySections){
+        for (var ix=0;ix<mySections.length;ix ++){
+            if(myFrame < (mySections[ix].startOffset()+mySections[ix].duration)){
             myResult = this.sections[ix];
             break;
+            }
         }
+    }else{
+        myResult = this.sections[0];
     }
     return myResult;
 }

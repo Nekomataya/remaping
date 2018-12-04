@@ -200,7 +200,7 @@ xUI.importBox.read = function (targetFiles,callback){
   }
       }else{
 //FileReaderが無いブラウザ(Safari等)では、お詫びしてオシマイ
-var msg = "no FileReader! :\n  このブラウザはFileReaderオブジェクトをサポートしていません。\n残念ですが、この環境ではローカルファイルは読みだし出来ません。\nThis browser does not support the FileReader object. \n Unfortunately, you can't read local files now.";
+var msg = "no FileReader! :\n  このブラウザはFileReaderオブジェクトをサポートしていません。\nこの環境ではローカルファイルは読みだし出来ません。\nThis browser does not support the FileReader object. \n you can't read local files now.";
 	alert(msg);
       };//if(window.FileReader)
     };//if(window.File)
@@ -223,7 +223,11 @@ xUI.importBox.updateTarget= function(){
         modefiedXps.scene    = '';
         modefiedXps.cut      = document.getElementById('optionPanelSCI_'+nas.Zf(tix+1,2)+'_sc').value;
     //  時間変更 短くなった場合は後方からフレームが削除される
-        modefiedXps.setDuration(nas.FCT2Frm(document.getElementById('optionPanelSCI_'+nas.Zf(tix+1,2)+'_time').value));
+        modefiedXps.setDuration(
+            nas.FCT2Frm(
+                document.getElementById('optionPanelSCI_'+nas.Zf(tix+1,2)+'_time').value)+
+                Math.ceil(modefiedXps.trin[0]+modefiedXps.trout[0]/2)
+            );
     //  変更されたXpsのステータスをFloatingに変更（暫定処理）
         modefiedXps.currentStatus.content    = 'Floating';
         xUI.importBox.selectedContents.push(modefiedXps);
@@ -2102,7 +2106,6 @@ xUI.drawSheetCell = function (myElement){
         var drawForm = false;
         var sectionDraw = false;
         var mySection = myXps.xpsTracks[tgtID[1]].getSectionByFrame(tgtID[0]);
-
 //シートセルに  graph_*クラスがあれば削除
         var myClasses=targetJQ.attr('class').split(' ');
         for (var cix=0;cix<myClasses.length;cix++){
@@ -4232,6 +4235,7 @@ xUI.syncSheetCell=function(startAddress,endAddress,isReference){
     for (r=TrackStartAddress;r<=TrackEndAddress;r++){
         for (f=FrameStartAddress;f<=FrameEndAddress;f++){
 if((r>=0)&&(r<targetXps.xpsTracks.length)&&(f>=0)&&(f<targetXps.xpsTracks.duration)){
+
 //シートデータを判別してGraphicシンボル置き換えを判定（単純置き換え）
 //        配置データが未設定ならば<br>に置き換え
 //            var td=(this.XPS.xpsTracks[r][f]=='')?"<br>" : this.trTd(this.XPS.xpsTracks[r][f]) ;
@@ -4244,7 +4248,8 @@ if((r>=0)&&(r<targetXps.xpsTracks.length)&&(f>=0)&&(f<targetXps.xpsTracks.durati
 //                if (sheetCell.innerHTML!= td){ if(dbg) console.log(sheetCell.innerHTML);sheetCell.innerHTML=td;}
             }
 //本体シート処理の際のみフットスタンプ更新
-  if(! isReference){
+  var targetElement=document.getElementById(r+"_"+f);
+  if((targetElement)&&(! isReference)){
 //変更されたデータならフットスタンプ処理
     if (this.diff[r,f]){
             lastAddress=[r,f] ;        //最終入力操作アドレス控え
@@ -4252,13 +4257,13 @@ if((r>=0)&&(r<targetXps.xpsTracks.length)&&(f>=0)&&(f<targetXps.xpsTracks.durati
             this.footstampColor:this.sheetbaseColor;//踏むぞー
             this.Select=([r,f]);
         //各ブラウザで試験して判定文字列を変更(未処置)
-            if (document.getElementById(r+"_"+f).style.backgroundColor!=footstamp)
-            document.getElementById(r+"_"+f).style.backgroundColor=footstamp; //セレクト位置を踏む！
+            if (targetElement.style.backgroundColor!=footstamp)
+            targetElement.style.backgroundColor=footstamp; //セレクト位置を踏む！
     }else{
     //否変更なので、背景色がフットスタンプならフットスタンプを消す。
         //各ブラウザで試験して判定文字列を変更(未処置)
-        if (document.getElementById(r+"_"+f).style.backgroundColor!=this.sheetbaseColor && this.footMark)
-        document.getElementById(r+"_"+f).style.backgroundColor=this.sheetbaseColor; //踏み消す
+        if (targetElement.style.backgroundColor!=this.sheetbaseColor && this.footMark)
+        targetElement.style.backgroundColor=this.sheetbaseColor; //踏み消す
     };
   }
 }
@@ -4270,7 +4275,8 @@ if((r>=0)&&(r<targetXps.xpsTracks.length)&&(f>=0)&&(f<targetXps.xpsTracks.durati
 /**
     リファレンス領域と編集領域のデータが異なっているか否かを返す関数
     標準で[トラックid,フレーム]を配列で、又は ID文字列"trc_frm"
-    それ以外はXPSのプロパティ名(id)とみなす オブジェクト渡しは禁止
+    それ以外はXPSのプロパティ名
+    (id)とみなす オブジェクト渡しは禁止
     指定IDの比較データが存在しない場合は、常にfalseを返す
 */
 xUI.diff=function(target){
@@ -7172,7 +7178,7 @@ console.log(currentXps.getIdentifier(true));
 console.log(xUI.XPS)
                     }
                     
-                    if(  startupDocument.length==0 ){
+                    if( startupDocument.length==0 ){
 console.log('detect first open no content');//初回起動を検出  コンテント未設定
 console.log(XPS)
                         xUI.XPS.line     = new XpsLine(nas.pmdb.pmTemplates.members[0]);
@@ -8590,7 +8596,7 @@ myBody+= 'onload="var nRS = setTimeout(\'nas_Prt_Startup(function(){xUI.syncShee
 myBody+='" >';//
     };//ここまでbody-only時は省力
 
-myBody+='<textarea id=" startupDocument" >';
+myBody+='<textarea id="startupDocument" >';
 myBody+= xUI.XPS.toString();
 myBody+='</textarea>';
 myBody+='<textarea id="referenceDocument">';
