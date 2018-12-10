@@ -1939,7 +1939,7 @@ nas.AnimationElementSource=function(targetDescription){
     例
 "./sample/KD/B001.png///ping///pong"
 */
-nas.AnimationElementSource.prototype.parseContent=function(srcString){
+nas.AnimationElementSource.prototype.parseContent = function(srcString){
     if(typeof srcString == 'undefined') srcString = this.contentText;
     var srcData=String(srcString).split('///'); 
     this.file=(srcData[0])?srcData[0]:null;

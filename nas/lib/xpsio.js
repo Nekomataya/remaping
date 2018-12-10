@@ -135,16 +135,24 @@ XpsStage.prototype.toString=function(){
     return "["+this.name+"][["+this.job+"]]";//?
 }
 */
-/**
+/**　Xpsに単独記録する制作管理オブジェクト
     ライン記述を与えてオブジェクトを初期化する
-    '(本線):0',1:(背景),'(背景3D-build):1:1','1-1:(背景3D-build)'
-    等
+    
+    ライン記述は　'(本線):0',1:(背景),'(背景3D-build):1:1','1-1:(背景3D-build)' 等
      識別名の(括弧)は払う
      前置型式後置型式どちらでも解釈
-     数値のみの指定の場合は、無名ステージのidとして処理
+     引数記述が数値のみ指定は許されない（初期化に失敗させる）
+    
+     ライン・ステージ・ジョブの三点を初期化後にXpsがリンクするxMapと対照を行い
+     当該のObjectに対するリンクを記録する？　⇒　常に検索が可能なので記録しない
+     
+     当該ライン・ステージ・ジョブがxMapに存在しない場合は、xMapドキュメントを初期化の際に同期
+     
+     
 */
 function XpsLine (lineString){
-    this.id   =[0]; this.name ='本線';// 又は'trunk'
+    this.id   =　[0];//
+    this.name =　'本線';// 又は'trunk'
     if(lineString){
       lineString=String(lineString);
       if(lineString.match(/^[0-9]+$/)){lineString+=':-'}
@@ -293,34 +301,46 @@ JobStatus.prototype.toString=function(opt){
 function _getMapDefault(myOption) {
     var myGroup=this.xParent.parentXps.xMap.getElementByName(this.id);
     if((typeof myGroup == "undefined")||(! myGroup)){
+//console.log("no group detect. new grou setup");
+/*
+console.log([
+        this.id,
+        this.option,
+        this.xParent.parentXps.xMap,
+        ""
+        ]);
+*/
         myGroup=this.xParent.parentXps.xMap.new_xMapElement(
         this.id,
-        this.type,
+        this.option,
         this.xParent.parentXps.xMap.currentJob,
         ""
-        )
+        );
     }
-console.log(myGroup);
     if (myOption == undefined) {
         return myGroup.content;
-        myOption = this.type;
+        myOption = myGroup.type;
     }
     switch (myOption) {
         case "dialog":
         case "sound":
-            return new XpsSound();
+            return new nas.AnimationSound(null,"");
             break;
-        case "camerawork":
         case "camera":
-            return new XpsCamerawork();
+        case "camerawork":
+        case "geometry":
+            return new nas.AnimationGeometry(null,"");
             break;
-        case "effect":
         case "composit":
-            return new XpsComposit();
+        case "effect":
+        case "sfx":
+            return new nas.AnimationComposit(null,"normal");
             break;
+        case "cell":
+        case "replacement":
         case "timing":
         default:
-            return new XpsReplacement();
+            return new nas.AnimationReplacement(null,"blank-cell");
     }
 }
 
@@ -665,7 +685,7 @@ XpsTimelineTrack.prototype.addSection = function (myValue) {
  * @param myParent as nas.XpsTimelineTrack
  */
 function XpsTimelineSectionCollection(myParent) {
-    this.parent = myParent;
+    this.parent = myParent;// Object XpsTimelineTrack
 //以下はオブジェクトメソッド（配列ベースなのでArrayオブジェクトのメソッド書き換えを防ぐためこの表記に統一）
 //オブジェクトメソッド群
 /**
@@ -681,26 +701,27 @@ function XpsTimelineSectionCollection(myParent) {
  * @returns {XpsTimelineSection}
  */
     this.addSection = function (myValue) {
-        var newSection = new XpsTimelineSection(this.parent, 0 );//親Collection、継続時間 0
+//console.log(this.parent.xParent.parentXps.xMap);
+        var newSection = new XpsTimelineSection(this, 0 );//親Collection、継続時間 0
         if(this.parent.subSections){
 //親が中間値補間セクションであった場合無条件でサブセクションを登録
-            newSection = new XpsTimelineSection(this.parent, 0 );
+            newSection = new XpsTimelineSection(this, 0 );
             newSection.mapElement;//エレメントは登録されない
             newSection.value = new nas.ValueInterpolator(newSection);
         } else if(myValue instanceof nas.xMapElement){
     //引数がxMapエレメントなのでそのまま有値セクション初期化
-            newSection = new XpsTimelineSection(this.parent, 0 );
+            newSection = new XpsTimelineSection(this, 0 );
             newSection.mapElement = myValue;
-            newSection.value = this.mapElement.content;
+            newSection.value = newSection.mapElement.content;
         } else if(myValue == "interpolation"){
     //プライマリ中間値補間セクション
-            newSection = new XpsTimelineSection(this.parent, 0, true);
+            newSection = new XpsTimelineSection(this, 0, true);
             newSection.subSections=new XpsTimelineSectionCollection(newSection);
             newSection.mapElement;
             newSection.value=null;//new nas.ValueInterpolator();   
         } else {
     //中間値補間サブセクション以外の
-            newSection = new XpsTimelineSection(this.parent, 0 );
+            newSection = new XpsTimelineSection(this, 0 );
             newSection.mapElement;//エレメントは登録されない
             newSection.value = myValue;
         }
@@ -906,17 +927,17 @@ XpsTimelineSectionCollection.prototype = Array.prototype;
  * @param isInterp
  */
 function _getSectionId () {
-    for (var idx = 0; idx < this.parent.sections.length; idx++) {
-        if (this.parent.sections[idx] === this)return idx;
+    for (var idx = 0; idx < this.parent.length; idx++) {
+        if (this.parent[idx] === this) return idx;
     }
 };
 function _getSectionStartOffset() {
     var myOffset = 0;
-    for (var idx = 0; idx < this.parent.sections.length; idx++) {
-        if (this.parent.sections[idx] === this) {
+    for (var idx = 0; idx < this.parent.length; idx++) {
+        if (this.parent[idx] === this) {
             return myOffset;
         } else {
-            myOffset += this.parent.sections[idx].duration;
+            myOffset += this.parent[idx].duration;
         }
     }
 };
@@ -933,11 +954,19 @@ function _getSectionStartOffset() {
 XpsTimelineSection.valueプロパティはnas.xMapElement
  */
 
-nas.ValueInterpolator =function ValueInterpolator(myParent){
-    this.parent=myParent;//interpolateSection
+nas.ValueInterpolator =function ValueInterpolator(parent){
+    this.parent=parent;//interpolateSection
 }
 
 nas.ValueInterpolator.prototype.valueOf=function(myProp){
+        var indexCount=parseInt(this.parent.subSections.length);//サブセクションの総数なので親の親のサブセクション
+        var indexOffset=this.parent.id()
+        var startValue=this.parent.parent.sections[currentIndex-1].value;
+        var frameCount=this.parent.duration;
+        var frameOffset=this.parent.startOffset();
+        var endValue=this.parent.parent.sections[currentIndex+1].value;
+        return startValue.interpolate(endValue,indexCount,indexOffset,frameCount,frameOffset,myProp);
+/*
         var indexCount=parseInt(this.parent.parent.subSections.length);//サブセクションの総数なので親の親のサブセクション
         var indexOffset=this.parent.id()
         var startValue=this.parent.parent.parent.sections[currentIndex-1].value;
@@ -945,6 +974,7 @@ nas.ValueInterpolator.prototype.valueOf=function(myProp){
         var frameOffset=this.parent.startOffset();
         var endValue=this.parent.parent.parent.sections[currentIndex+1].value;
         return startValue.interpolate(endValue,indexCount,indexOffset,frameCount,frameOffset,myProp);
+*/
     }    
 /**
  * タイムラインセクションは使用の都度初期化される一時オブジェクト
@@ -952,24 +982,29 @@ nas.ValueInterpolator.prototype.valueOf=function(myProp){
  * セクションオブジェクトはparentプロパティにコレクションを含むオブジェクトを持つ XpsTimelineTrack || XpsTimelineSection
  * (直接メンバーとなるコレクションではなくコレクションを保持する上位オブジェクトで)
  *
- *  parentがXpsTimelineTrackの場合は、基礎セクション(有値セクション及び中間値補間セクション)となる
+ * parent   : 親となるXpsTimelineSectionCollection または XpsTimelineSelection
+ * duration : セクションの長さ 通常０で初期化されてパーサにより更新される
+ * isInterp : 初期化時に中間値補完サブセクションとして初期化が可能
+ 
+ *  parentがXpsTimelineSelectionCollection の場合は、基礎セクション(有値セクション及び中間値補間セクション)となる
  *    有値セクションは、セクションのvalueとしてnas.xMapElementのcontentプロパティを指し かつsectionsプロパティがundefinedとなる。
  *      中間値補間セクションは、valueを持たない(undefined)かつsectionsプロパティにメンバーを持つ
  *   parentがXpsTimelineSectionの場合は、サブセクション（中間値補間サブセクション）となる
  *       中間値補間サブセクションは valueプロパティとしてValueInterpolatorオブジェクトを持ちmapElementを持たない
  */
-function XpsTimelineSection(myParent, myDuration, isInterp) {
-    this.parent = myParent;
-    this.duration = myDuration;
-        if(myParent instanceof XpsTimelineSection){
-    this.mapElement;//this.parent.
-    this.value=new nas.ValueInterpolator(this);
-    this.subSections;//サブセクションコレクションを持たない
-        }else{
-    this.mapElement;//mapElementはxMapElementへの参照
-    this.value;//valueは this.mapElement.contentへの参照又はundefined
-    this.subSections =(isInterp)? new XpsTimelineSectionCollection(this):undefined;
-        }
+function XpsTimelineSection(parent, duration, isInterp) {
+    this.parent   = parent      ;
+    this.duration = duration    ;
+//    this.content  = cellContent ;//代表コンテンツ及びすべてのセル内容は計算で引き出せるので不要
+    if(this.parent instanceof XpsTimelineSection){
+        this.mapElement;//this.parent.parent.xParent.parentXps.xMap.getElementByName(this.value.)
+        this.value=new nas.ValueInterpolator(this);
+        this.subSections;//サブセクションコレクションを持たない
+    }else{
+        this.mapElement;//mapElementはxMapElementへの参照  undefinedで初期化してパーサが値を設定する
+        this.value;//valueは this.mapElement.contentへの参照又はundefined  undefinedで初期化してパーサが値を設定する
+        this.subSections =(isInterp)? new XpsTimelineSectionCollection(this):undefined;
+    }
     this.toString = function (opt) {
         if(opt){
             if(this.value){
@@ -982,6 +1017,20 @@ function XpsTimelineSection(myParent, myDuration, isInterp) {
             return this.duration + ":" + this.value;
         }
     }
+}
+/** セクションの範囲のセルの値を配列で返す
+引数: なし
+返値: 配列
+*/
+XpsTimelineSection.prototype.getContent = function(){
+        var startframe = this.startOffset();
+        var timeline   = this.parent.parent;
+    if(this.parent.parent instanceof XpsTimelineSection){
+    //サブセクション　親セクションのオフセットを追加する
+        startframe += this.parent.parent.startOffset();
+        timeline = this.parent.parent.parent.parent;
+    }
+    return timeline.slice(startframe,startframe+this.duration);
 }
 XpsTimelineSection.prototype.id = _getSectionId;
 XpsTimelineSection.prototype.startOffset = _getSectionStartOffset;
@@ -1466,6 +1515,8 @@ SCi     "__","("が禁止される
  options:
  'full' 全ての要素を含む識別文字列で返す
         TITLE#OPUS[subtitle]__sSCENE-cCUT(time)
+ 'episode'
+        #OPUS[subtitle]
  'cut'
         #OPUS__sSCENE-cCUT
  'simple'
@@ -1503,6 +1554,10 @@ if(false){
     case 'complex':
         myResult=nas.IdfEncode(this.title,"#")+'#'+nas.IdfEncode(this.opus,"#_\[")+'['+nas.IdfEncode(this.subtitle,"\[\]_")+']__'+ nas.IdfEncode('s'+this.scene +'-c'+this.cut,"_");
     break;
+    case 'episode':
+        myResult='#'+nas.IdfEncode(this.opus,"#_\[");
+        if(this.subtitle) myResult=+'['+nas.IdfEncode(this.subtitle,"\[\]_")+']';
+    break;   
     case 'full':
     default    :
         var timeString=(this.framerate.opt=="smpte")?
@@ -2924,6 +2979,23 @@ Xps.parseSCi = function(sciString){
     console.log (Xps.parseSCi('s-cC%23%20(16)(18)'));
 */
 /**
+セル記述を整形して比較評価用に正規化された文字列を返すクラスメソッド
+戻り値は、<グループ名>-<セル番号>[-<ポストフィックス>]
+
+A_(001)_ovl  A-1-ovl
+*/
+Xps.normalizeCell = function(myString){
+    return nas.normalizeStr(myString.replace( /[-_ー＿\s]/g ,"-")).replace( /([^\d.])0+/g ,"$1");
+}
+//test
+//Xps.normalizeCell("A_００１２ー上");
+//Xps.normalizeCell("");
+//Xps.normalizeCell("");
+//Xps.normalizeCell("");
+//Xps.normalizeCell("");
+//Xps.normalizeCell("");
+//Xps.normalizeCell("");
+/**
 SCiデータ上のカット名をセパレータで分離するクラスメソッド
 この場合のカット名には時間情報・ステータス等を含まないものとする
 パースされたカット名は、カット、シーンの順の配列で戻す有効最大２要素
@@ -3153,93 +3225,6 @@ Xps.prototype.getNormarizedStream = function (layer_id) {
     return bufDataArray;
 };
 
-/**
- * 2016改装用オブジェクト追加記述2016/01/05
- * XpsReplacement オブジェクト
- * 置きかえトラックのセクションの値となるオブジェクト（現状、文字列で代用するのが良いか？）
- * 通常に値を求めた場合は、セルの値が戻値
- * グループが異なる場合はグループラベル付き原動画番号が、ブランクのケースではプランク値が戻る。
- *
- * XpsReplacement.id
- * XpsReplacement.name
- * XpsReplacement.group
- * XpsReplacement.size
- * XpsReplacement.offset
- * XpsReplacement.pegOffset
- * resolution
- *
- * @param name
- * @constructor
- */
-XpsReplacement = function (name) {
-};
-
-/**
- * XpsComposit オブジェクト？
- * エフェクト・合成トラックのセクションの値
- * 通常に値を求める場合は、比率が戻値
- * 以下の各プロパティを参照可能
- * .id
- * .
- * .T
- * .animationTiming
- * .compositMode
- *
- * XpsEffect オブジェクト
- * 下部構造としてXpsCompositeオブジェクトに展開可能な効果オブジェクト
- * エフェクト・合成トラックのセクションの値
- * 通常に値を求める場合は、比率が戻値
- * 以下の各プロパティを参照可能
- * .id
- * .
- * .T
- * .animationTiming
- * .compositMode
- *
- * XpsCamerawork オブジェクト
- * カメラワークトラック・セクションの値
- * 通常に値を求める場合XpsCameraworkオブジェクト自体が戻値
- *
- * XpsCameraworkオブジェクトは、識別子を持ち位置、オフセット、サイズ、スケール、ペグオフセット等のプロパティを持った複合オブジェクト
- * アニメーション補間可能なプロパティは多岐に渡るが、タイムシート上は単一の代表タイミングのみが表示される
- * オフセット（2D/3D）スケールの影響を受けない
- * ペグオフセット（2D/3D）スケールの影響を受ける
- * 位置（2D/3D）スケールの影響を受けない
- * サイズ（2D/3D) スケールが適用されたサイズ(=読出専用)
- * スケール（2D/3D）
- */
-
-/**
- * @desc Xpsオブジェクト定義終了
- */
-
-/**
- * MacOSでシートテキストを読みやすくする為の空白の追加 このせいでデータ量がやたら増える
- * この関数不要
- * function spcFill(string,Span)
- * {
- * var charSpan=0;
- * 
- * for(n=0;n<string.length;n++){
- * //エントリーの占有幅仮算定、すごく雑、さらにフォント確認していないのでもっと雑
- * //無いよりマシ程度だね
- * if(nas.isAdobe){
- * if (isWindows){
- * if(string.charCodeAt(n)<127){charSpan+=1;}else{charSpan+=2;}
- * }else{
- * if(string.charCodeAt(n)<127){charSpan+=2;}else{charSpan+=3;}
- * }
- * }else{
- * charSpan+=1;
- * }
- * };
- * if(charSpan>Span){charSpan=Span};
- * preSpc="";postSpc="";
- * for (p=0;p<Math.floor((Span-charSpan)/2);p++){preSpc+="\x20"}
- * for (p=0;p<Span-Math.floor((Span-charSpan)/2)-charSpan;p++){postSpc+="\x20"}
- * return preSpc+string+postSpc;
- * }
- */
 
 /*
         タイムラインをダイアログパースする
@@ -3268,55 +3253,8 @@ XpsReplacement = function (name) {
         戻り値はビルドに成功したセクション数(最低で１セクション)
         値として無音区間の音響オブジェクト（値）を作るか又は現状のままfalse(null)等で処理するかは一考
 */
-_parseSoundTrack =function(){
-    var myCollection = new XpsTimelineSectionCollection(this);//自分自身を親としてセクションコレクションを新作
-    //この実装では開始マーカーが０フレームにしか位置できないので必ずブランクセクションが発生する
-    //継続時間０で先に作成 同時にカラのサウンドObjectを生成
-    var tempGroup = new nas.xMapGroup(null,'sound',null);//new nas.xMapGroup(myName,myOption,myLink);
-    var currentSection=myCollection.addSection(null);//区間値false
-    var currentSound=new nas.AnimationSound(tempGroup,"");//第一有値区間の値コンテンツはカラで初期化も保留
-    for (var fix=0;fix<this.length;fix++){
-        currentSection.duration ++;//currentセクションの継続長を加算
-        //未記入データ最も多いので最初に判定しておく
-        if(this[fix]=="") continue;
-        //括弧でエスケープされたコメント又は属性
-        if(this[fix].match(/(^\([^\)]+\)$|^<[^>]+>$|^\[[^\]]+\]$)/)){
-            if(currentSection.value){
-                currentSound.comments.push([currentSound.bodyText.length,RegExp.$1]);
-            }else{
-                currentSound.attributes.push(RegExp.$1);
-            }
-            continue;
-        }
-        //セクションセパレータ少ない
-        if(this[fix].match(/^[-_~^〜＿ー￣]{3,4}$/)){
-            if(currentSection.value){
-                currentSection.duration --;//加算した継続長をキャンセル
-                currentSection.value.contentText=currentSound.toString();//先の有値セクションをフラッシュして
-                currentSection=myCollection.addSection(null);//新規のカラセクションを作る
-                currentSection.duration ++;//キャンセル分を後方区間に加算
-                currentSound=new nas.AnimationSound(tempGroup,"");//サウンドを新規作成
-            }else{
-//引数をサウンドオブジェクトでなくxMapElementに変更予定
-//                nas.new_MapElement(name,Object xMapGroup,Object Job);
-                currentSection=myCollection.addSection(currentSound);//新規有値セクション作成
-//                currentSection.value.
-            }
-                        continue;
-        }
-//判定を全て抜けたデータは本文又はラベルラベルは上書きで更新
-//ラベル無しの音声オブジェクトは無しのまま保存必要に従って先行オブジェクトのラベルを引継ぐ
-        if(currentSection.value){
-            if(this[fix]=="|") this[fix]="ー";
-            currentSound.bodyText+=this[fix];
-        }else{
-            currentSound.name=this[fix];
-        }
-    }
-    this.sections=myCollection;
-    return this.sections;
-}
-
+/*
+*/
 /** //test
 XpsTimelineTrack.prototype.parseSoundTrack=_parseSoundTrack;
 XPS.xpsTracks[0].parseSoundTrack();
@@ -3381,6 +3319,9 @@ XpsTimelineTrack.prototype.parseCompositeTrack=_parseCompositeTrack;//コンポ�
 */
 XpsTimelineTrack.prototype.parseTimelineTrack = function(){
     var myResult = false;
+    var defaultElementGroup = this.xParent.parentXps.xMap.getElementByName(this.id);
+    if(! defaultElementGroup) defaultElementGroup=this.xParent.parentXps.xMap.new_xMapElement(this.id,this.option,this.xParent.parentXps.xMap.currentJob);
+//    console.log(defaultElementGroup);
     switch(this.option){
         case "dialog":;
 //            myResult =  this.parseDialogTrack();
@@ -3388,6 +3329,7 @@ XpsTimelineTrack.prototype.parseTimelineTrack = function(){
         case "sound":;
             myResult =  this.parseSoundTrack();
         break;
+        case "still":;
         case "cell":;
         case "timing":;
         case "replacement":;
@@ -3395,6 +3337,7 @@ XpsTimelineTrack.prototype.parseTimelineTrack = function(){
         break;
         case "camerawork":;
         case "camera":;
+        case "geometry":;
             myResult =  this.parseCameraworkTrack();
         break;
         case "effect":;
@@ -3412,9 +3355,9 @@ XpsTimelineTrack.prototype.parseTimelineTrack = function(){
 */
 XpsTimelineTrack.prototype.getSectionByFrame = function(myFrame){
     var myResult = false;
-    var mySections =false;
+    var mySections = this.sections;
     if(typeof myFrame == "undefined") myFrame = 0 ;
-    if(! this.sectionTrust){mySections = this.parseTimelineTrack();}
+    if(!(this.sectionTrust)) mySections = this.parseTimelineTrack();
     //ここは非同期実行不可
     if(mySections){
         for (var ix=0;ix<mySections.length;ix ++){
@@ -3437,13 +3380,18 @@ XpsTimelineTrack.prototype.getSectionByFrame = function(myFrame){
  
  */
 XpsTimelineTrack.prototype.pushEntry = function (elementName,groupName){
+console.log(arguments);
     var myGroup   = this.xParent.parentXps.xMap.getElementByName(groupName);
-    var myElement = this.xParent.parentXps.xMap.getElementByName([groupName,elementName].join(""));//請求するターゲットジョブ処理は保留
+    var myElement = this.xParent.parentXps.xMap.getElementByName([groupName,elementName].join("-"));//請求するターゲットジョブ処理は保留
         if(!myElement){
+console.log('no detect Element :'+[groupName,elementName].join("-"));
         if(!myGroup){;//new_xMapElement(name,type,Object Job)
+console.log('no detect Group :'+groupName);
             myGroup = this.xParent.parentXps.xMap.new_xMapElement(groupName,this.option,this.xParent.parentXps.xMap.currentJob);
+console.log(myGroup);
         }
-        myElement = this.xParent.parentXps.xMap.new_xMapElement(elementName,myGroup,this.xParent.parentXps.xMap.currentJob);
+        myElement = this.xParent.parentXps.xMap.new_xMapElement(elementName,myGroup,this.xParent.parentXps.xMap.currentJob,[groupName,elementName].join('\t'));
     }
+console.log(myElement);
     return myElement;
 }

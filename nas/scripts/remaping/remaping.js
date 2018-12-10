@@ -112,7 +112,7 @@ function new_xUI(){
     xUI.importBox.overwriteProps    ={};
     xUI.importBox.maxSize  = 1000000;
     xUI.importBox.maxCount = 10;
-    xUI.importBox.allowExtensions=new RegExp("\.(txt|csv|xps|ard|ardj|tsh)$",'i');
+    xUI.importBox.allowExtensions=new RegExp("\.(txt|csv|xps|ard|ardj|tsh|xdts|tdts)$",'i');
 /**
     importBox リセット
     インポート操作の直前でリセットを行うこと
@@ -129,9 +129,7 @@ xUI.importBox.reset = function(){
     変換ターゲットとなるFileオブジェクト配列を引数にして以下の関数を呼び出す
     全カット変換終了時のコールバック関数を与えることが可能
 */
-        console.log("platform : "+appHost.platform);
 xUI.importBox.read = function (targetFiles,callback){
-        console.log("platform : "+appHost.platform);
     if(appHost.platform == "AIR"){
 //***AIR  用の分岐は  単ファイルのままで保留2018 0201
     // File APIを利用できるかをチェック
@@ -559,6 +557,9 @@ xUI._readIN=function(datastream){
   
 */
 xUI.init    =function(targetObj,referenceObj){
+console.log("Init xUI !");
+console.log(targetObj);
+console.log(referenceObj);
     var initializeDocument= (targetObj instanceof xUI.Document)?
     targetObj : new xUI.Document(targetObj,referenceObj);
     if(! initializeDocument.content) return false;//不正引数のため初期化失敗
@@ -606,6 +607,7 @@ xUI.init    =function(targetObj,referenceObj){
  
     }else{
         var editxMap = new xMap();
+console.log(editxMap);
         var editXpst = XPS;//暫定的にグローバルのXPSを利用
         initializeDocument = new Document(editXpst,new Xps());
     }
@@ -1446,7 +1448,8 @@ xUI.mdChg=function(myModes,opt){
 */
 //sectionManipulateOffsetは、ここでは初期化されない
 //if((this.XPS.xpsTracks[this.Select[0]].option.match(/dialog|effect|camera/))){}
-if((this.XPS.xpsTracks[this.Select[0]].option=='dialog')){
+//if((this.XPS.xpsTracks[this.Select[0]].option=='dialog')){}
+if(true){
   if(this.edmode<2){
 //      if(this.spin() > 1){this.spinBackup=this.spin();this.spin(1);};//スピン量をバックアップしてクリア ? これ実はいらない？
       this.selectBackup       = this.Select.concat();//カーソル位置バックアップ
@@ -1457,6 +1460,7 @@ if((this.XPS.xpsTracks[this.Select[0]].option=='dialog')){
       this.floatTrackBackup = this.floatTrack.duplicate();      //編集確定時のためトラック全体をバッファにとる
 
       this.floatSection     = this.floatTrackBackup.getSectionByFrame(this.Select[1]);
+
       if((this.floatTrack.option=='dialog')&&(! this.floatSection.value)){
     //操作対象セクションを選択状態にする
       this.selectCell([
@@ -1471,7 +1475,6 @@ if((this.XPS.xpsTracks[this.Select[0]].option=='dialog')){
         this.floatTrack         = null;
         this.floatTrackBackup   = null;
         this.floatSection       = null;
-//        this.spin(this.spinBackup);
         return false;
       }
       this.floatSectionId   = this.floatSection.id();
@@ -1497,7 +1500,7 @@ if((this.XPS.xpsTracks[this.Select[0]].option=='dialog')){
         this.selectionColor    =this.inputModeColor.SECTIONselection;    //選択領域の背景色
         this.selectionColorTail    = this.inputModeColor.SECTIONtail;    //選択領域の末尾
         this.Mouse.action=false;
-}
+};//セクション編集モード遷移
     break;
     case "block":    //ブロックフロートモードに遷移
     case 1:        //前モードがノーマルだった場合のみ遷移可能
@@ -2168,6 +2171,9 @@ xUI.drawSheetCell = function (myElement){
           case "camera":;
           case "camerawork":;
           case "geometry":;
+//          case "composite":;
+//          case "effect":;
+//          case "sfx":;
             if (myStr.match(/^[\|｜]$/)){
                 myStr=(this.showGraphic)?"<br>":"｜";                
                 drawForm = "line";
@@ -5059,6 +5065,19 @@ return true;
 戻値:        UI制御用
     マウス動作
 マウス処理を集中的にコントロールするファンクション
+
+関連プロパティ
+    xUI.edmode
+0 : 通常編集
+1 : ブロック編集
+2 : セクション編集
+3 : セクション編集フローティング
+モード変更はxUI.mdChg関数を介してい行う
+
+モード別テーブルセル編集操作一覧
+
+
+
  */
 xUI.Mouse=function(e){
 //    console.log(e.target.id);
@@ -5104,11 +5123,15 @@ break;
 //ページヘッダ処理終了
 //=============================================モード別処理
 if(this.edmode==3){
-    var hottrack=TargeT.id.split('_')[0];
-    var hotpoint=TargeT.id.split('_')[1];
 /*
     セクション編集フローティング
+
+    フローティング移動中
+
 */
+
+    var hottrack=TargeT.id.split('_')[0];
+    var hotpoint=TargeT.id.split('_')[1];
 switch (e.type){
 case    "dblclick"    :
 case    "mousedown"    :    
@@ -5116,7 +5139,7 @@ case    "mousedown"    :
 break;
 case    "click"    :
 case    "mouseup"    ://終了位置で解決
-//[ctrl][shift]同時押しでオプション動作？
+//[ctrl][shift]同時押しでオプション動作
     xUI.sectionUpdate();
     this.mdChg(2);
     this.Mouse.action=false;
@@ -5198,9 +5221,6 @@ case    "dblclick"    :
 //セクション操作モードを抜けて確定処理を行う
 //確定処理はmdChg メソッド内で実行
               this.mdChg("normal");
-//              this.floatTextHi();//導入処理
-//            this.selectCell(TargeT.id);
-//    this.floatDestAddress=this.Select.slice();
 break;            
 case    "mousedown"    :
     //サブモードを設定
@@ -5209,28 +5229,30 @@ case    "mousedown"    :
         Math.abs(xUI.Selection[1]/2)
         )&&(hottrack == xUI.Select[0])
     ){
-// return false;//レンジ外 処理スキップ
+//レンジ外
         if (e.shiftKey){
-    xUI.sectionManipulateOffset[1] = this.Selection[1];
-        xUI.sectionManipulateOffset[0] = 'tail'; 
+//近接端で移動
+            xUI.sectionManipulateOffset[1] = (hotpoint<xUI.Select[1])? 0:this.Selection[1];
+            xUI.sectionManipulateOffset[0] = 'body';
         }else if((e.ctrlKey)||(e.metaKey)){
-    xUI.sectionManipulateOffset[1] = 0;
-        xUI.sectionManipulateOffset[0] = 'head'; 
+//近接端で延伸
+            xUI.sectionManipulateOffset[1] = (hotpoint<xUI.Select[1])? 0:this.Selection[1];
+            xUI.sectionManipulateOffset[0] = (hotpoint<xUI.Select[1])? 'head':'tail'; 
         }else{
-//    xUI.sectionManipulateOffset[1] = Math.floor(this.Selection[1]/2);
-    xUI.sectionManipulateOffset[1] = (hotpoint<xUI.Select[1])? 0:this.Selection[1];
-        xUI.sectionManipulateOffset[0] = 'body';
+            return xUI.mdChg(0);//モード解除
         }
         this.sectionPreview(hotpoint);
         this.sectionUpdate();
-}else{    xUI.sectionManipulateOffset[1] = hotpoint-this.Select[1];
+    }else{
+//フロートモードへ遷移
+        xUI.sectionManipulateOffset[1] = hotpoint-this.Select[1];
         xUI.sectionManipulateOffset[0] = 'body';
-    if(xUI.sectionManipulateOffset[1]==xUI.Selection[1]){
-        xUI.sectionManipulateOffset[0] = 'tail';
-    } else if(xUI.sectionManipulateOffset[1]==0){
-        xUI.sectionManipulateOffset[0] = 'head';
+        if(xUI.sectionManipulateOffset[1]==xUI.Selection[1]){
+            xUI.sectionManipulateOffset[0] = 'tail';
+        } else if(xUI.sectionManipulateOffset[1]==0){
+            xUI.sectionManipulateOffset[0] = 'head';
+        }
     }
-}
     xUI.mdChg(3);    
     xUI.Mouse.action=true;
 //    console.log([xUI.edmode,hotpoint,xUI.sectionManipulateOffset,xUI.Mouse.action]);
@@ -6478,9 +6500,7 @@ function nas_Rmp_Startup(){
 //クッキー指定があれば読み込む
     if(useCookie[0]){ldCk()}; 
 //ライブラリフレームレートの設定
-console.log(myFrameRate);
     nas.FRATE=nas.newFramerate(myFrameRate);
-console.log(nas.FRATE);
 //背景カラーを置換
     SheetLooks.SheetBaseColor=SheetBaseColor;
 //シートロゴをアップデート
@@ -6494,7 +6514,6 @@ if(location.hostname.indexOf("scivone-dev")>=0){
 if(location.hostname.indexOf("remaping-stg")>=0){
     headerLogo="<img src='/images/logo/UATimesheet_staging.png' alt='Nekomataya' width=141 height=24 border=0 />"
 };
-console.log(headerLogo);
     document.getElementById("headerLogo").innerHTML=
     "<a href='"+ headerLogo_url +
     "' title='"+ headerLogo_urlComment +
@@ -6574,6 +6593,10 @@ convertXps=function(datastream,optionString,overwriteProps,streamOption){
         switch (true) {
         case    (/^nasTIME-SHEET\ 0\.[1-5]/).test(datastream):
 //    判定ルーチン内で先にXPSをチェックしておく（先抜け）
+        break;
+        case    (/^((toei|exchange)DigitalTimeSheet Save Data\n)/).test(datastream):
+            datastream =TDTS2XPS(datastream);
+            //ToeiDigitalTimeSheet / eXchangeDigitalTimeSheet
         break;
         case    (/^UTF\-8\,\ TVPaint\,\ \"CSV 1\.[01]\"/).test(datastream):
             datastream =TVP2XPS(datastream);
@@ -6760,7 +6783,16 @@ if( startupDocument.length > 0){
     if((referenceDocument)&&(referenceDocument.length)){
         referenceX.readIN(referenceDocument);
     }
+
     xUI.init(XPS,referenceX);//初回実行時にxUIにデータを与えて初期化
+
+
+/*暫定コード
+XPS内のxMapをXPSの制作管理情報とシンクロさせる
+
+*/
+if(! xUI.XPS.xMap.currentJob) xUI.XPS.xMap.syncProperties(xUI.XPS);
+
 /**
     シートのカラーデータを構築
 */
@@ -6982,6 +7014,7 @@ document.getElementById("UIheader").style.display="none";
      エレメントが存在すればon-site
  */
      if(document.getElementById('backend_variables')){
+//オンサイト
 console.log('Application server-onsite');
         if (serviceAgent.servers.length==1) {
             serviceAgent.switchService(0);
@@ -8374,7 +8407,7 @@ function nas_expdList(ListStr,rcl){
 	){
         if(ListStr.indexOf('「')>=0){
             console.log(ListStr);
-            var mySound = new nas.AnimationSound(ListStr);
+            var mySound = new nas.AnimationSound("",ListStr);
             mySound.parseContent();
             console.log(mySound)
             var sectionLength= xUI.spinValue * (mySound.bodyText.length + mySound.comments.length);
@@ -8649,8 +8682,8 @@ _w=window.open ("","xpsFile","width=1120,height=1600,scrollbars=yes,menubar=yes"
 window.addEventListener('DOMContentLoaded', function() {
 // ファイルが指定されたタイミングで、その内容を表示
   if(document.getElementById("myCurrentFile")){
-    console.log('addEventListener');
   document.getElementById("myCurrentFile").addEventListener('change', function(e){
+//console.log('addEventListener');
     xUI.importBox.read(this.files,processImport)}, true);//myCrrentFile.addEvent
   }
 });//window.addEvent
@@ -9827,6 +9860,8 @@ var form={
 html: "documentHTML",
 xmap: "documentxMap",
 xps: "documentXps",
+tdts:"documentTDTS",
+xdts:"documentXDTS",
 ard: "documentArd",
 ardj: "documentArdj",
 csv: "documentCSV",
@@ -9836,6 +9871,11 @@ tsh: "documentTSheet"
 		//ファイル保存ではなくエクスポートなので環境リセットは省略;
    if(! myExt){myExt="txt";}
    switch (myExt){
+	case "tdts":
+	case "xdts":
+		sendData=sendData.replace(/\r?\n/g,"\n");
+		myEncoding="utf8";
+	break;
 	case "tsh":
 		sendData=sendData.replace(/\r?\n/g,"\r")+"\n";
 	case "eps":
@@ -11762,7 +11802,7 @@ SoundEdit.sync = function(force){
 //台詞
     var targetTrack   = xUI.XPS.xpsTracks[xUI.Select[0]];
     var targetSection = targetTrack.sections[xUI.floatSectionId];
-    var newContent    = new nas.AnimationSound(document.getElementById('sndBody').value);newContent.parseContent();
+    var newContent    = new nas.AnimationSound(targetTrack,document.getElementById('sndBody').value);newContent.parseContent();
     var minLength     = newContent.bodyText.length+newContent.comments.length;
     if ((force)||(minLength > targetSection.duration)){
         targetSection.duration = xUI.spinValue*minLength;

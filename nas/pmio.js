@@ -2053,7 +2053,7 @@ description String ラインの説明 ユーザのために必用
 
 */
 
-nas.Pm.ProductionLine=function(lineName,){
+nas.Pm.ProductionLine=function(lineName){
     this.lineName;
     this.name;
     this.shortName;

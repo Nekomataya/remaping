@@ -12,7 +12,22 @@
 タイムライントラックの値（=xMapに登録されるelementの値）となるオブジェクト群
 
 ライブラリを分割して　nas_AnimationValues.js　として　nas_common.jsの後　xpsio mapioの前に読み込むものとする
- */
+
+            nas.Animation<Values>
+
+xMapElementの値オブジェクト
+xMapElementを介してXpsTimelineSectionの値となる
+
+nas.AnimationComposite  画像合成を記述する値オブジェクト
+nas.AnimationDesctiption    注意点や特記内容を記述するオブジェクト
+nas.AnimationGeopmetry  要素の配置を記述する値オブジェクト
+nas.AnimationReplacement    画像データを保持してその置き換えを記述するオブジェクト
+nas.AnimationSound      音響情報を記述するオブジェクト
+
+*/
+ 
+ 
+ 
 /**
  *  置きかえ（セル）タイムラインのパース
  *  
@@ -71,9 +86,19 @@ xMapがない場合（暫定コード）では、仮のｘMapデータにエン�
 
 親オブジェクト参照としてparentプロパティを置く
 基礎プロパティからの設定拡張のフラグとして extendedプロパティ
+
+一時的にセクションの値として初期化する場合は、第二引数が第一形式で与えられる
+
+    new nas.AnimationReplacement(null,"GroupID\tElementName");
+        または
+    new nas.AnimationReplacement(Object xMapElmentGroup,"GroupID\tElementName");
+
+parent　オブジェクトなしで初期化される場合があるので要注意
+その場合は　可能な限りGroupを抽出してparentを設定して不能な場合はnullのままにしておく
+
  */
 nas.AnimationReplacement=function(myParent,myContent){
-    this.parent = (myParent)? myParent : null     ;
+    this.parent = (myParent)? myParent : null     ;//xMapElementGroup or null
     this.contentText = (myContent)? myContent : 'blank-cell';//xMap上のコンテントソースを保存する　自動で再構築が行なわれるタイミングがある
                                                    //myContent undefined で初期化を行った場合の値は blank-cell
     this.name                                     ;//素材名
@@ -194,7 +219,7 @@ nas.AnimationReplacement.prototype.parseContent = function(myContent){
     サイズは不問　 シンボルとしての「カラセル」
 
 */
-
+    if(myContent == 'blank-cell') return this;
     var isGroup = (myContent.indexOf('[')==0)? true:false;
 //第一形式グループ ^[\<group>\t<typeName>[\t<option-text>[\t<comment>]]\]$
 //第二形式エントリ ^<group>\t<name>[\t<option-text>[\t<comment>]]$
@@ -270,12 +295,16 @@ console.log(myContent[line]);
             var myComment=RegExp.$4;
             var valueArray=nas.parseDataChank(RegExp.$3);
             var numeProps =[["size","x"],["size","y"],["offset","x"],["offset","y"]];
-console.log(myComment);console.log(valueArray);
+
+console.log(myComment);
+console.log(valueArray);
 console.log(this);
 /*
     フィールド文字列であった場合の判定が必要　2018 10 09
+
+case :this.parent == null
 */
-            if(myGroup == this.parent.name){
+            if((! (this.parent))||(myGroup == this.parent.name)){
                 if(! isGroup) this.name=([myGroup,myName.replace(new RegExp('^'+myGroup+'\-'),"")]).join('-');
                 var numCount=0;
                 for(var vix=0;vix<valueArray.length;vix++){
@@ -302,8 +331,8 @@ console.log(this);
                     break;
                     default:
                         continue;
+                    }
                 }
-            }
                 if(myComment) this.comment = myComment;
             }
         }
@@ -344,62 +373,99 @@ _parseReplacementTrack=function(){
     //自分自身(トラック)を親として新規セクションコレクションを作成
     var myCollectionBlank = new XpsTimelineSectionCollection(this);//ブランクベースコレクション
     var myCollection      = new XpsTimelineSectionCollection(this);//ベースコレクション
+
+    var appearance    = new nas.AnimationAppearance(null,'on');
+    var disAppearance = new nas.AnimationAppearance(null,'off');
+
     //継続時間０で値未定初期セクションを作成
     //値を持たないセクションをブランク値のオブジェクトとするか？
-    var currentSection=myCollection.addSection(null);
-    var currentSectionBlank=myCollectionBlank.addSection(null);
-
-    var currentSubSection=null;
-    var currentValue=this.getDefaultValue();
+    var currentSection=myCollection.addSection("null");
+    
+    var currentSubSection = null;
+    var currentValue      = this.getDefaultValue();
+    if(! currentValue) currentValue = new nas.AnimationReplacement('system','blank-cell');
+console.log(currentValue)
     var isInterp = false;
-    var isBlank  = ((currentValue != "blank")&&(currentValue))? false:true ;//第一フレームのブランク状態を設定
+    var isBlank  = ((! currentValue)||(currentValue.contentText == "blank-cell"))? true:false ;//デフォルトのブランク状態を取得
+
+var currentSectionBlank=(isBlank)? myCollectionBlank.addSection(disAppearance):myCollectionBlank.addSection(appearance);
+
     var valueDetect = false;
 /**
     タイムライントラックのデフォルト値は、以下の手続きで取得
     タイムラインラベルが指定するグループがあらかじめ存在する場合は、そのグループオブジェクトが保持する値
     存在しない場合は、新規にグループを作成する。その際にトラックの種別ごとのValueオブジェクトを初期値として登録するのでその値を使用
     XpsTimelineTrack.getDefeultValue()側で調整
-    Replacementの場合、基本ブランクだが必ずしもブランクとは限らないので要注意
+    Replacementの場合基本はブランクだが、必ずしもブランクとは限らないので要注意
     トラック上で明示的なブランクが指定された場合は、値にfalse/null/"blank"を与える。
 */
     for (var fix=0;fix<this.length;fix++){
-        var currentCell=Xps.sliceReplacementLabel(new String(this[fix]));//記述をラベルとエントリに分解
-        if( currentCell.length == 1 ){ currentCell.push(this.id); }
-        //グループラベル付き・なしを判定する機能が必要
+        var currentCell=Xps.sliceReplacementLabel(new String(this[fix]));//記述をラベルとエントリに分解 
+        if( currentCell.length == 1 ){ currentCell.push(this.id); }//エントリにグループ名が含まれないようならばトラックのラベルで補う
+        // ここでデータの形式は [name,groupName] となる
         currentSection.duration ++; //
-        currentSectionBlank.duration ++;     //セクション長加算        
+        currentSectionBlank.duration ++;     //セクション長加算
+        if(currentSubSection) currentSubSection.duration ++ ;
         //未記入データ　これが一番多いので最初に処理しておく(処理高速化のため)
         if(currentCell[0].match(/^([\|｜;]|\s+)$/)||currentCell.length==0) continue;
-        //ブランク判定
-        /*
-            値処理に先立ってブランク関連の処理はすべて終了する
+        /*      ブランク判定
+            値処理に先立ってブランク関連の処理をすべて終了する
             ブランク状態切り替え判定 カレントを切り替えて新規セクションを積む
         */
-        var valueDetect   = (detectedValue)? true:false;
-        var blankDetect   = (new String(currentCell[0]).match(blankRegex))?  true:false;
-        var interpDetect  = (new String(currentCell[0]).match(interpRegex))? true:false;//括弧つきの補間サインも同時検出へ
-//        console.log(fix+":"+this[fix]+" interp:"+interpDetect + "  blank: " + blankDetect);
-        var detectedValue = this.xParent.parentXps.xMap.getElementByName(currentCell);
+        var valueDetect   = false;//値検出状態初期化
+        var blankDetect   = (String(currentCell[0]).match(blankRegex))?  true:false;//値からブランク状態を検出
+        var interpDetect  = (String(currentCell[0]).match(interpRegex))? true:false;//括弧つきの補間サインも同時検出へ
+//console.log(fix+":"+this[fix]+" interp:"+interpDetect + "  blank: " + blankDetect);
         //ブランク処理判定
         if(blankDetect){
                 if(! isBlank){
+                    if(fix==0){
+                        currentSectionBlank.value=disAppearance;
+                        currentSection.value = new nas.AnimationReplacement('system','blank-cell');// *Blank-set
+                    }else{
+                        currentSectionBlank.duration --;
+                        currentSectionBlank=myCollectionBlank.addSection(disAppearance);
+                        currentSectionBlank.duration ++;
+                        currentSection.duration --;// *
+                        currentSection=myCollection.addSection(this.pushEntry('blank-cell','system'));// *
+                        currentSection.duration ++;// *
+                        if(currentSubSection){
+                            currentSubSection.duration --;
+                            currentSubSection = null;
+                        }
+                    }
                     isBlank=true;
-                    currentSectionBlank=myCollectionBlank.addSection("blank");
                 }
                 continue;
         }
+//         else if(fix==0){    currentSectionBlank.value=appearance; }
         //中間値補間サインを検出したら中間値処理モード
-        //既定値以外の補間サイン検出が必要
+        //既定値以外の補間サイン検出が必要>> 規定値のみを補完サインと定義する　他の記述はコメントとして利用
         if(interpDetect){
-              if( isBlank ){ isBlank = false;}
+              if( isBlank ){
+                 if(fix==0){
+                    currentSectionBlank.value=appearance;
+                 }else{
+                    currentSectionBlank.duration --;
+                    currentSectionBlank=myCollectionBlank.addSection(appearance);
+                    currentSectionBlank.duration ++;
+                 }
+                 isBlank = false;
+              }
               if(! isInterp ){
                 //中間値補間区間開始　カレントセクションを切り替え サブセクションを登録
                 isInterp = true;
-                currentSection=myCollection.addSection("interpolation");
-                currentSection.subSections.addSection();
+                if(fix==0){
+                    currentSection.value="interpolation";
+                }else{
+                    currentSection.duration --;
+                    currentSection=myCollection.addSection("interpolation");
+                    currentSection.duration ++;
+                }
+                currentSubSection = currentSection.subSections.addSection(new nas.AnimationReplacement(null,currentCell.join("-")));
                 //新規中間値補間セクションを立てる 以降は、モードを抜けるまでカレント固定
               }else{
-                currentSection.subSections.addSection();
+                currentSubSection = currentSection.subSections.addSection(new nas.AnimationReplacement(null,currentCell.join("-")));
                 //中間値補間モード内ではサブセクションを登録
               }
               continue;
@@ -409,24 +475,42 @@ _parseReplacementTrack=function(){
     既存エントリがない場合、エントリ文字列が条件を満たせば新規エントリとしてxMapにグループとエントリを登録して使用する
     それ以外は、無効エントリとなる
 */
-        var currentElement = this.xParent.parentXps.xMap.getElementByName(currentCell.reverse().join("-"));
+//console.log(currentCell.join("-"));
+        var currentElement = this.xParent.parentXps.xMap.getElementByName(currentCell.join("-"));
         if(currentElement) {
+//console.log("value detcted in xMap:");
             valueDetect=true;
         }else{
-            if(currentCell[0].match(valueRegex)){
+//console.log("value not detcted in xMap: push Entry "+currentCell.reverse().join("-"));
+            if(String(currentCell[0]).match(valueRegex)){
                 valueDetect = true;
-                currentElement=this.pushEntry(currentCell[0],currentCell[1])
+                currentElement=this.pushEntry(currentCell[0],currentCell[1]);
             }
         }
+//console.log(valueDetect);
+//console.log(currentElement);
         if(valueDetect){
+                currentValue = currentElement.content;
             if(isBlank){
+                if(fix==0){
+                    currentSectionBlank.value=appearance;
+                }else{
+                    currentSectionBlank.duration --;
+                    currentSectionBlank=myCollectionBlank.addSection(appearance);
+                    currentSectionBlank.duration ++;
+                }
                 isBlank = false;
-                currentSectionBlank.duration --;
             }
             if(isInterp){
                 isInterp = false;
+                currentSubSection.duration --;
+                currentSubSection = null;
+            }
+            if(fix==0){
+                currentSection.value = currentValue;
+            }else{
                 currentSection.duration --;
-                currentSection = myCollection.addSection(currentElement.value);
+                currentSection = myCollection.addSection(currentValue);
                 currentSection.duration ++;
             }
         }
@@ -434,14 +518,26 @@ _parseReplacementTrack=function(){
     }
     this.sections       = myCollection;
     this.sectionsBlank  = myCollectionBlank;
-//    console.log("sections-length:"+myCollection.length +":blank:"+myCollectionBlank.length);
+    console.log("sections-length:"+myCollection.length +":blank:"+myCollectionBlank.length);
     return this.sections;//ブランク情報の返し方を考えたほうが良いかも
 }
 
 /*test
 
+XpsTimelineTrack.prototype.parseReplacementTrack=_parseReplacementTrack;
+XPS.xpsTracks[2].parseReplacementTrack();
+XPS.xpsTracks[2].sections[1].toString();
 
+XpsTimelineTrack.prototype.parseReplacementTrack=_parseReplacementTrack;
+
+XpsTimelineTrack.prototype.parseCameraWorkTrack=_parseCameraworkTrack;
+
+XpsTimelineTrack.prototype.parseCompositeTrack=_parseCompositeTrack;//コンポジット
+
+//XpsTimelineTrack.prototype.parseTrack=_parseTrack;
+//XpsTimelineTrack.prototype.parseTrack=_parseTrack;
 */
+
 
 
 /**
@@ -454,7 +550,7 @@ _parseReplacementTrack=function(){
 プロパティの値はブラケットを払ったもの
  */
 nas.AnimationGeometry =function(myParent,myContent){
-    this.parent = (myParent)? myParent : null   ;
+    this.parent = (myParent)? myParent : null   ;//xMapElementGroup or null
     this.contentText=(myContent)?myContent:''   ;//xMapのソースを保存する　自動で再構築が行なわれるタイミングがある
 
     this.name                                   ;//素材名
@@ -870,12 +966,12 @@ valueDetect==false
  要素名は、可能な限り<>角括弧で囲む
  */
 nas.AnimationComposite =function(myParent,myContent){
-    this.parent = (myParent)? myParent : null   ;
+    this.parent = (myParent)? myParent : null   ;//xMapElementGroup or null
     this.contentText=(myContent)?myContent:''   ;//xMapのソースを保存する　自動で再構築が行なわれるタイミングがある
 
-    this.name                                   ;//素材名
+    this.name                                   ;//ｘMap素材名
     this.source                                 ;//参照画像データソース　nas.AnimationElementSource
-    this.comment=""                             ;//コメント文字列
+    this.comment=""                             ;//コメント文字列 xMap attribute
     this.extended = false                       ;//拡張表示フラグ
 
     this.effect                                 ;
@@ -1114,6 +1210,7 @@ nas.AnimationSound Object
 　外部ファイルリンクはこの際割愛
 
     現在のプロパティ
+    Property
 
     getStream(cellCount);
 タイムシート用のストリームを配列で返す（内部利用メソッド）
@@ -1141,10 +1238,10 @@ nas.AnimationSound Object
 コメントのインデックスはbodyText内の挿入点　シート展開時は、bodyText.length+comments.length のフレームを再配置する
 */
 nas.AnimationSound=function(myParent,myContent){
-    this.parent = (myParent)? myParent : null   ;
+    this.parent = (myParent)? myParent : null   ;//xMapElementGroup or null
     this.contentText=(myContent)?String(myContent):"";//xMapのソーステキストを保存する　自動で再構築が行なわれるタイミングがある
 
-    this.name                                   ;
+    this.name                                   ;//xMap素材名（=話者の名称　＊重複あり　＊空白あり）
     this.source                                 ;//nas.AnimationElementSource
     this.comment                                ;//
     this.extended = false                       ;
@@ -1337,12 +1434,14 @@ _parseSoundTrack =function(){
         //セクションセパレータ　少ない
         if(this[fix].match(/^[-_]{3,4}$/)){
             if(currentSection.value){
+//終了マーカー処理
                 currentSection.duration --;//加算した継続長をキャンセル
                 currentSection.value.contentText=currentSound.toString();//先の有値セクションをフラッシュして
                 currentSection=myCollection.addSection(null);//新規のカラセクションを作る
                 currentSection.duration ++;//キャンセル分を後方区間に加算
                 currentSound=new nas.AnimationSound("");//サウンドを新規作成
             }else{
+//開始マーカー処理
 //引数をサウンドオブジェクトでなくxMapElementに変更予定
 //                nas.new_MapElement(name,Object xMapGroup,Object Job);
                 currentSection=myCollection.addSection(currentSound);//新規有値セクション作成
@@ -1352,6 +1451,62 @@ _parseSoundTrack =function(){
         }
 //判定を全て抜けたデータは本文又はラベル　ラベルは上書きで更新
 //ラベル無しの音声オブジェクトは無しのまま保存　必要に従って先行オブジェクトのラベルを引継ぐ
+        if(currentSection.value){
+            if(this[fix]=="|") this[fix]="ー";
+            currentSound.bodyText+=this[fix];
+        }else{
+            currentSound.name=this[fix];
+        }
+    }
+    this.sections=myCollection;
+    return this.sections;
+}
+
+_parseSoundTrack =function(){
+    var myCollection = new XpsTimelineSectionCollection(this);//自分自身を親としてセクションコレクションを新作
+    //この実装では開始マーカーが０フレームにしか位置できないので必ずブランクセクションが発生する
+    //継続時間０で先に作成 同時にカラのサウンドObjectを生成
+    var groupName = this.id;
+    var myGroup = this.xParent.parentXps.xMap.getElementByName(groupName);
+    if (!myGroup) myGroup = this.xParent.parentXps.xMap.new_xMapElement(
+        this.id,
+        'dialog',
+        this.xParent.parentXps.xMap.currentJob,
+        ""
+    ) ;//nas.xMapGroup(groupName,'dialog',null);//new nas.xMapGroup(myName,myOption,myLink);
+    var currentSection=myCollection.addSection(null);//区間値false
+    var currentSound=new nas.AnimationSound(myGroup,"");//第一有値区間の値コンテンツはカラで初期化も保留
+    for (var fix=0;fix<this.length;fix++){
+        currentSection.duration ++;//currentセクションの継続長を加算
+        //未記入データ最も多いので最初に判定しておく
+        if(this[fix]=="") continue;
+        //括弧でエスケープされたコメント又は属性
+        if(this[fix].match(/(^\([^\)]+\)$|^<[^>]+>$|^\[[^\]]+\]$)/)){
+            if(currentSection.value){
+                currentSound.comments.push([currentSound.bodyText.length,RegExp.$1]);
+            }else{
+                currentSound.attributes.push(RegExp.$1);
+            }
+            continue;
+        }
+        //セクションセパレータ少ない
+        if(this[fix].match(/^[-_~^〜＿ー￣]{3,4}$/)){
+            if(currentSection.value){
+                currentSection.duration --;//加算した継続長をキャンセル
+                currentSection.value.contentText=currentSound.toString();//先の有値セクションをフラッシュして
+                currentSection=myCollection.addSection(null);//新規のカラセクションを作る
+                currentSection.duration ++;//キャンセル分を後方区間に加算
+                currentSound=new nas.AnimationSound(groupName,"");//サウンドを新規作成
+            }else{
+//引数をサウンドオブジェクトでなくxMapElementに変更予定
+//                nas.new_MapElement(name,Object xMapGroup,Object Job);
+                currentSection=myCollection.addSection(currentSound);//新規有値セクション作成
+//                currentSection.value.
+            }
+                        continue;
+        }
+//判定を全て抜けたデータは本文又はラベルラベルは上書きで更新
+//ラベル無しの音声オブジェクトは無しのまま保存必要に従って先行オブジェクトのラベルを引継ぐ
         if(currentSection.value){
             if(this[fix]=="|") this[fix]="ー";
             currentSound.bodyText+=this[fix];
@@ -1451,7 +1606,7 @@ nas.XpsAgent=function(myParent,myContent){
     this.attributes=[];
     this.comments=[];
 
-    this.prseContent(myContent)
+    this.parseContent(myContent)
 }
 /**
     文字列化して返す
@@ -1486,7 +1641,7 @@ nas.XpsAgent.prototype.parseContent=function(myContent){
  *
  */
 nas.AnimationDescription=function(myParent,myContent){
-    this.parent = (myParent)? myParent : null     ;
+    this.parent = (myParent)? myParent : null     ;//xMapElementGroup or null
     this.contentText=(myContent)?String(myContent):"";//xMapのソースを保存する　自動で再構築が行なわれるタイミングがある
 
     this.name                                     ;//素材名
@@ -1515,6 +1670,43 @@ nas.AnimationDescription.prototype.parseContent=function(myContent){
         myContent = this.contentText ;
     }
     this.contentText = (myContent)?String(myContent):"";
+    return this;
+}
+
+/** nas.AnimationAppearance
+ *  
+ *  ブランク（カラセル）管理セクションで使用されるアピアランスに特化した値
+ *　値は ON-OFF 状態をbooleanで持つ
+ *　ソース等のプロパティは持たない 一時的な値でありｘMapに記述されることはない
+ *　コンテントテキスト
+ *
+ */
+nas.AnimationAppearance=function(myParent,myContent){
+    this.parent      = (myParent)? myParent : null     ;
+    this.contentText = (myContent)? myContent : "off"       ;
+    this.appearance  = false       ;//表示状態を表す
+
+    this.parseContent();
+}
+/**
+    文字列化して返す
+*/
+nas.AnimationAppearance.prototype.toString=function(exportForm){
+return (this.appearance)?"ON":"OFF";//動作確認用ダミー行
+}
+/**
+    コンテンツを与えてパースする
+    引数がない場合は自身のコンテンツデータを再パースする
+    戻り値はオブジェクト自身
+*/
+nas.AnimationAppearance.prototype.parseContent=function(myContent){
+    var blankRegex=new RegExp("^(\\b|blank(-cell)?|off|false|"+BlankSigns.join("|")+")$","i");
+    if(typeof myContent == 'undefined'){
+        myContent = this.contentText ;
+    }
+
+    this.appearance = (this.contentText.match(blankRegex))? false : true ;
+
     return this;
 }
 

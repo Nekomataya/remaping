@@ -119,6 +119,7 @@ function xMap(titleString,targetDecription){
  * 配列をコレクションとして使用する場合の標準メソッド
  */
 /**
+    暫定メソッド　配列をトレーラの代用として利用する際にこのファンクションを利用
 	全要素を検査して同管理パスの要素があればそれをもどして終了
 	カブりがない場合は、コレクションに新規メンバーとして追加
 */
@@ -160,11 +161,26 @@ xMap.prototype.getElementById =function(idx){
  return false;
 };
 xMap.prototype.getElementByName =function(myName){
+    myName=Xps.normalizeCell(myName);
  for (var id=0;id<this.elementStore.length;id++){
- 	var parentName=(this.elementStore[id].parent)? this.elementStore[id].parent.name:"";
- 	if((parentName + this.elementStore[id].name)==myName) return this.elementStore[id];
+    var groupName = (this.elementStore[id] instanceof nas.xMapGroup)?
+    this.elementStore[id].name : this.elementStore[id].parent.name;
+    groupName = Xps.normalizeCell(groupName)
+    if(this.elementStore[id] instanceof nas.xMapGroup){
+        checkString = groupName;
+    }else{
+        checkString = Xps.normalizeCell(this.elementStore[id].name);
+        if(checkString.indexOf(groupName) != 0)
+        checkString = [groupName,checkString].join('-');
+    }
+
+ 	//var checkString=Xps.normalize(this.elementStore[id].name);
+ 	//(this.elementStore[id].parent)? this.elementStore[id].parent.name:"";
+// 	([this.elementStore[id].name,parentName].join('-')).
+// 	if((parentName + this.elementStore[id].name)==myName) return this.elementStore[id];
+ 	if(checkString == myName) return this.elementStore[id];
  }
- return false;
+ return null;
 //暫定的に  グループ名+セル名の完全一致で動作中
 //これは検索規則に合わせて調整要
 
@@ -245,21 +261,30 @@ nas.xMapElement.prototype.setData=function(dataStream){
  *	グループに属するelementのデフォルト値を持つ
  *	グループ登録時に親のプロパティの複製をとってエレメントに設定する
  contentプロパティには、グループのデフォルト値となる値を持ったインスタンスを置く
- groupのタイプはgroup登録時にユーザによって指定される
- （手書きのｘMAPでは第二フィールドに記載）
+ インスタンス内部にはcontentText(=xMapの記述)がそのまま格納される
+ groupのタイプはgroup登録時にユーザによって指定される （手書きのｘMAPでは第二フィールドに記載）
+ タイプ文字列は同タイプの値に対して複数の表記が許容されるので要注意
  パーサ上は、タイプ指定のないgroupは、自動的にcontentType-cellとなる
 
 
-	type		defaulut value	
+	option		typeString   defaulut value
+____________________________________________
     dialog
-    sound       :blank  
+    sound       :sound       :nas.AnimatiopnSound("blank")  
     cell
-    replacement :blank
+    replacement 
+    timing      :replacement :nas.AnimationReplacement("blank")
     still       :picture グループ代表スチル画像をオブジェクトで＝何も記述しなくとも値ができる
-    camarawork  :standerd frame animationField  標準カメラジオメトリ
-    effect      :normal composit 100%   ノーマルコンポジット100%
-	xps			:null	タイムシートデータへのパス
-	text		:"" ヌルストリング
+    appearance　:appearance  :nas.AnimationAppearance("off")
+    camara
+    camarawork
+    geometry    :geometry    :nas.AnimationGeometry(standerd frame animationField)  標準カメラジオメトリ
+    sfx
+    composite
+    effect      :composite   :nas.AnimationComposite('normal') normal composit 100%   ノーマルコンポジット100%
+	xps			:xps         :nas.XpsAgent(null)	タイムシートデータへのパス
+	text		:text        :nas.AnimationDescription("") ヌルストリング
+	system		:system      :nas.AnimationReplacement("") ヌルストリング
 
 	グループに対する標準でない（pmdbの記載と異なる）デフォルト値が指定された場合は、
 	ｘMap内に追加プロパティとして記載が行われる。
@@ -279,10 +304,10 @@ nas.xMapGroup =function xMapGroup(myName,myTypeString,myLinkJob,contentText){
 
 //	this.text=contentText;
 	this.id;//セッション内ユニークインデックス
-	this.parent=this;// Object xMapGroup itself
-	this.link=myLinkJob;//linked PmJob/Object
-	this.type=String(myTypeString).toLowerCase();//system,dialog,sound,effect,composite,camerawork,geometry,cell,replacement/String
-	this.name=myName;//
+	this.parent = this;// Object xMapGroup itself
+	this.link   = myLinkJob;//linked PmJob/Object
+	this.type   = String(myTypeString).toLowerCase();//system,sound,replacement,composite,geometry,effect,text/String
+	this.name   = myName;//
 	this.content=xMap.getDefaultContent(this,contentText);//タイプストリング毎の初期化を行うことが必要
 	this.content.additional = false;
 	this.comment="";
@@ -362,6 +387,8 @@ xMap.getDefaultContent=function(targetGroup,contentString){
 		result=new nas.AnimationComposite(targetGroup,contentString);
 	break;
 	case	'xps':
+		result=new nas.XpsAgent(targetGroup,contentString);
+	break;
 	case	'text':
 	default:
 		result= new nas.AnimationDescription(targetGroup,contentString);
@@ -387,9 +414,9 @@ xMap.getDefaultContent=function(targetGroup,contentString){
 
 /*
  *	エレメント作成メソッド
- *		継承セットアップ・コレクション登録処理つき
+ *		継承セットアップ・コレクション登録処理を同時に設定
  *グループ作成
- *	new_xMapElement(name,type,Object Job);//名前,タイプ文字列,リンクするジョブを引数にする
+ *	new_xMapElement(name,type,Object nas.Pm.ProductionJob);//名前,タイプ文字列,リンクするジョブを引数にする
  *戻り値：グループオブジェクト
  *
  *エレメント作成
@@ -403,34 +430,37 @@ xMap.getDefaultContent=function(targetGroup,contentString){
  	var myStage	=	myMap.new_ProductionStage("layout",myLine)//ステージを初期化
  	var myJob	=	myMap.new_Job("",myStage)//第一ジョブを初期化
  	
- var group.A	=	myMap.new_xMapElement("A"	,"cell"	,myJob);//グループ作成-連結するジョブが必要
+ var groupA	=	myMap.new_xMapElement("A"	,"cell"	,myJob);//グループ作成-連結するジョブが必要
  
- var A1		=	myMap.new_xMapElement("A-1"	,Acell	,myJob	);//B.name;
+ var A1		=	myMap.new_xMapElement("A-1"	,groupA	,myJob);//B.name;
  myMap.getElementByName("A");
  *
  *
  *	
  */
 xMap.prototype.new_xMapElement = function (myName,myOption,myLink,contentSource){
-	if(! myLink instanceof nas.Pm.ProductionJob) return false;
+	if(! (myLink instanceof nas.Pm.ProductionJob)) return false;
 	if(myOption instanceof nas.xMapGroup){
-console.log(arguments);
 //親グループが指定されたらエレメント作成
-		var newElement=new nas.xMapElement(myName,myOption,myLink.contentSource);
-		myOption.elements.push(newElement);
+console.log(arguments);
+		var newElement=new nas.xMapElement(myName,myOption,myLink,contentSource);
+console.log([myName,myOption,myLink,contentSource])
+console.log(newElement);
+console.log(myOption);
+		if(myOption.elements) myOption.elements.push(newElement);
  	}else{
-//タイプ文字列指定の場合、グループなのでデフォルトパラメータを設定する
+//タイプ文字列指定の場合、エレメントグループ作成・デフォルトパラメータを設定する
 /*
 	default params
 	xps     :xpsAgent       :Xpsの参照先パスを保持して  カット番号、時間等を返すエージェント
-	text    :AnimationText  :
+	text    :AnimationDescription  :
     system  :
         
     エレメントの作成には必ずこのルーチンを通してエレメントストアの管理を行うこと
     エレメントの削除は単独のエレメントのメソッドで行う
     ガベージコレクションはストアオブジェクトのメソッドにする
 */
-		if(!(String(myOption).match( /(camera|cell|effect|sound|system)/i ))) myOption = "cell";
+//		if(!(String(myOption).match( /(timing|replacement|cell|camera(work)?|geometry|sfx|composite|effect|sound|system|text|xps)/i ))) myOption = "cell";
 		var newElement=new nas.xMapGroup(myName,myOption,myLink);
 		this.elementGroups.push(newElement);
 	
@@ -439,10 +469,10 @@ console.log(arguments);
 			newElement.content=new nas.XpsAgent(newElement,contentSource);
 		break;
 		case "text":
-			newElement.content=new nas.AnimationText(newElement,contentSource);
+			newElement.content=new nas.AnimationDescription(newElement,contentSource);
 		break;
 		case "system":
-	newElement.content=new nas.AnimationReplacement(newElement,contentSource);
+	        newElement.content=new nas.AnimationReplacement(newElement,contentSource);
 /*
 	newElement.content.source=new nas.File();//ファイル  空
 	newElement.content.resolution=this.baseResolution;//作品DBの解像度
@@ -465,21 +495,23 @@ console.log(arguments);
     			newElement.content=new nas.AnimationSound(newElement,contentSource);			    
 			}*/
 		break;
+		case "composite":
 		case "effect":
 		case "sfx":
-    		newElement.content=new nas.AnimationEffect(newElement,contentSource);
-/*			if( contentSource instanceof nas.AnimationEffect ){
+//    		newElement.content=new nas.AnimationComposite(newElement,contentSource);
+			if( contentSource instanceof nas.AnimationComposite ){
     			newElement.content=contentSource;
     		}else{
-    			newElement.content=new nas.AnimationEffect(newElement,contentSource);
-			}*/
+    			newElement.content=new nas.AnimationComposite(newElement,contentSource);
+			}
 		break;
+		case "geometry":
 		case "camera":
 		case "camerawork":
-			if( contentSource instanceof nas.ClippingFrame ){
+			if( contentSource instanceof nas.AnimationGeometry ){
     			newElement.content=contentSource;
     		}else{
-    			newElement.content=new nas.ClippingFrame(newElement,contentSource);
+    			newElement.content=new nas.AnimationGeometry(newElement,contentSource);
     		}
 		break;
 		case "cell":
@@ -537,7 +569,7 @@ xMap.prototype.new_ProductionLine=function(myName){
 	}else{
 		newLine=Object.create(newLine);//名前からラインのテンプレートを取得する
 		newLine.stages=new Array();//ステージコレクション要るか？
-		newLine.id=new Number(this.lines.length);//親コレクション内のID(ラインコレクション登録前=Origin:0)
+		newLine.id=[new Number(this.lines.length)];//親コレクション内のID(ラインコレクション登録前=Origin:0)　配列
 		newLine.parent=this;//親xMapへの参照
 		if(this.lines.add(newLine)){
 			return newLine;
@@ -1286,6 +1318,7 @@ xMap.prototype.toString= function()
 for (var lidx=0;lidx<this.lines.length;lidx++){
 	var currentLine=this.lines[lidx];
 	result+="<("+currentLine.name+")>\n";
+	result+="<("+currentLine.name+"):"+currentLine.id.join('-')+">\n";
 //StageLoop
 	for (var sidx=0;sidx<this.lines[lidx].stages.length;sidx++){
 		var currentStage=this.lines[lidx].stages[sidx];
@@ -1324,6 +1357,41 @@ console.log("job closed");
 	if(xUI.errorCode){xUI.errorCode=0};return result;
 }
 
+/**
+xMapを暫定的にXPSに同期　（テスト用）
+
+SCi情報を転記
+test
+    var parentData = Xps.getIdentifier(xUI.XPS);//バルクダンプ
+    var result = xMap.syncProperties(Idf);一括適用
+    
+本番用に転用可能
+Xpstを単独でオープンした際には、xMapデータが空のじょうたいになるので、その際はこの手順が実行される。
+
+ｘMapを先に開きそこからXpstを開いた際、最初は　xMap > Xpst の初期化が行われ同期更新が続く
+Xpstを単独でオープンした場合は、テンポラリのxMapが初期化され情報の転記が行われる。
+テンポラリのxMapは、ｘMapドキュメントとして保存しない限り、作業終了時には失われるものとする
+
+
+*/
+xMap.prototype.syncProperties = function(myXps){
+    var values = Xps.parseIdentifier(Xps.getIdentifier(myXps,"full"));
+console.log(values); 
+    this.title = values.title;
+    this.opus  = values.opus;
+    this.subtitle = (values.subtitle == 'undefined')? undefined :values.subtitle;
+    this.scene = values.scene;
+    this.cut = values.cut;
+    this.framerate = new nas.Framerate();
+
+    var myLine  = this.new_ProductionLine(values.line.name);
+        myLine.id = values.line.id;
+    var myStage = this.new_ProductionStage(values.stage.name,myLine);
+        myStage.id = values.stage.id; 
+    var myJob   = this.new_Job(values.job.name,myStage);
+        myJob.id = values.job.id;
+console.log(this);
+}
 
 //比較関数
 /*
