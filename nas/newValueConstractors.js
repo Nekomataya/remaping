@@ -384,7 +384,7 @@ _parseReplacementTrack=function(){
     var currentSubSection = null;
     var currentValue      = this.getDefaultValue();
     if(! currentValue) currentValue = new nas.AnimationReplacement('system','blank-cell');
-console.log(currentValue)
+//console.log(currentValue)
     var isInterp = false;
     var isBlank  = ((! currentValue)||(currentValue.contentText == "blank-cell"))? true:false ;//デフォルトのブランク状態を取得
 
@@ -518,7 +518,7 @@ var currentSectionBlank=(isBlank)? myCollectionBlank.addSection(disAppearance):m
     }
     this.sections       = myCollection;
     this.sectionsBlank  = myCollectionBlank;
-    console.log("sections-length:"+myCollection.length +":blank:"+myCollectionBlank.length);
+//console.log("sections-length:"+myCollection.length +":blank:"+myCollectionBlank.length);
     return this.sections;//ブランク情報の返し方を考えたほうが良いかも
 }
 
