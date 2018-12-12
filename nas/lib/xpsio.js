@@ -339,6 +339,7 @@ console.log([
         case "cell":
         case "replacement":
         case "timing":
+        case "still":
         default:
             return new nas.AnimationReplacement(null,"blank-cell");
     }
@@ -745,7 +746,7 @@ function XpsTimelineSectionCollection(myParent) {
  *  カットの時間範囲を越えたセクションは消去または後方をカットされる（配列データとして後方へ「ブロックインサート」してフレーム単位で削除その後再パース）
 
  *      removeSection(id)
- *  指定されたidのセクションを消去、前後のセクションの値が同じ場合は結合異なる場合は別のセクションとして残置（相当部分の配列要素を削除して前方へ詰める「ブロックデリート」のほうが良いかも…）
+ *  指定されたidのセクションを消去、前後のセクションの値が同じ場合は結合　異なる場合は別のセクションとして残置（相当部分の配列要素を削除して前方へ詰める「ブロックデリート」のほうが良いかも…）
 
  *      editSection(id,startOffset,duration)
  *      manipulateSection(id,startOffset,duration)
@@ -766,132 +767,108 @@ function XpsTimelineSectionCollection(myParent) {
 戻り値は、セクションを加工したトラック全体のストリーム（xUI.put Xps.putメソッドの引数として使用可能なストリーム）
 + フォーカス位置のオフセット(0~)
 例：['1,,,3,,,4,,,7,,,8,,,9,,,0,,',0]
+
+対編集対象トラックを以下の区間に分類して処理を行う
+
+    [前方区間外新規セクション]
+特定条件で発生　このエリアが発生した場合は以下の２セクションは消滅
+    [前方残置レンジ]
+現行のトラック内容をそのまま引き継ぐ範囲 (0)~(id-2) までのセクションが含まれる可能性がある
+    [前方影響セクション]
+ストリームを再取得する必要のあるセクション
+    [編集対象セクション]
+フォーカスの存在するセクション
+    [後方影響セクション]
+ストリームを再取得する必要のあるセクション
+    [後方残置レンジ]
+現行のトラック内容をそのまま引き継ぐ範囲 (id+2)~(sections.length) までのセクションが含まれる可能性がある
+    [後方方区間外新規セクション]
+特定条件で発生　このエリアが発生した場合は上の２セクションは消滅
+
      */
     this.manipulateSection = function (id,headOffset,tailOffset) {
-        var targetSection = this[id];
-        var myResult=[];//Collectionの編集を行わず、直接トラックのセル値を組み上げる=区間のメソッドは最低限で使う
-        var resultCount=[];
-        var allowInvert = false;//現在ダイアログのみなので反転は不用
-        if(allowInvert){
-            var startOffset = headOffset;
-            var endOffset = tailOffset;
-        }else{
-            var startOffset = (tailOffset < 0)? headOffset + tailOffset  : headOffset;
-            var endOffset = Math.abs(tailOffset);
+        var targetSection  = this[id];
+        var myResult = [];//Collectionの編集を行わず、直接トラックのセル値を組み上げる=区間のメソッドは最低限で使う
+        var startFrame = (tailOffset < 0)? headOffset + tailOffset  : headOffset;
+        var endOffset  = Math.abs(tailOffset);
+console.log([id,startFrame,endOffset])
+//予め編集対象のセクションのストリームデータを取得
+        var targetSectionDuration = endOffset+1;
+console.log(targetSectionDuration)
+        var newContent  = targetSection.getStream (targetSectionDuration);//
+            startFrame -= targetSection.headMargin ;
+            endOffset   = newContent.length + targetSection.tailMargin;
+//        var targetSectionEndMargin = newContent.length+targetSection.headMargin-targetSectionDuration;
+        var targetSectionEndMargin = targetSection.tailMargin;
+console.log(targetSectionEndMargin);
+console.log(startFrame+newContent.length);
+        if((startFrame+newContent.length)>this.parent.length){
+ console.log('overflow :' + String(this.parent.length - startFrame - newContent.length))
+           startFrame = this.parent.length - newContent.length;
+//            targetSectionDuration -= (startFrame+newContent.length-this.parent.length);
+//            targetSectionDuration = this.parent.length - startFrame - targetSectionEndMargin;
+//console.log(targetSectionDuration)
+//            newContent = targetSection.getStream (targetSectionDuration);
+//            endOffset  = newContent.length - 1;
         }
-//console.log([id,startOffset,endOffset])
-/*==========================*/
+        
+/*　==========================前方区間処理　*/
 //区間外に新規 (空白)区間挿入
-        if((id==0)&&(startOffset>0)){
-//console.log('add new '+(startOffset)+' blank frames');
-            myResult=new Array(startOffset);
-            resultCount.push(startOffset);
-        }
-        var topMargin = 0;
-        var topFlow   = 0;
-        var tailFlow  = 0;
-//ターゲット前方区間を処理
-        for (var ix=0;ix<id;ix++){
-//console.log('前方区間処理 : '+ix)
-            var sectionHead = this[ix].startOffset();
-            var sectionTail = this[ix].startOffset() + this[ix].duration - 1;
-            if((sectionHead > startOffset)&&(sectionTail >= startOffset)){
-        //残存範囲外全消去
-                continue;
-            }else if((ix==(id-1))&&(sectionHead < startOffset)){
-        //前方隣接ID && ヘッドノードがスタートオフセットよりも小さい 
-                var duration =startOffset-this[ix].startOffset();
-                var newContent = (this[ix].value)? this[ix].value.toString(duration).split(','):new Array(duration);
-            }else if(sectionTail < startOffset){
-                var duration =this[ix].duration;
-                var newContent = this[ix].toString(true).split(',');            
-            }else{
-                continue;
+        if((id == 0)&&(startFrame >= 0)){
+console.log('前方処理区間なし　空白セルを補充')
+            myResult=new Array(startFrame);
+        } else if(id > 0){
+//前方影響セクションを特定
+//ターゲットセクションのIN点と開始点を比較して小さい方、その前のフレームを占位するセクション
+            var checkFrame=(startFrame<(targetSection.startOffset()-targetSection.headMargin))? startFrame:targetSection.startOffset()-targetSection.headMargin;
+            var headSection = this.parent.getSectionByFrame(checkFrame-1);
+            if ( headSection ){
+                var headSectionStream = headSection.getStream();
+                var headSectionStartOffset = headSection.startOffset()-headSection.headMargin;
+                if (headSectionStartOffset < 0) headSectionStartOffset = 0;
+//前方セクションが存在してかつその前方にフレームがあれば残置範囲を取得
+//残置範囲があればリザルトに加算
+                if(headSectionStartOffset > 0 ) myResult= this.parent.slice(0,headSectionStartOffset);
+//影響セクションの値を追加
+                var newSectionLength = startFrame-headSectionStartOffset;
+                if(newSectionLength > 0){
+                    headSectionStream = headSection.getStream(newSectionLength);
+                    if(headSectionStream.length!=newSectionLength)
+                    headSectionStream = headSection.getStream(newSectionLength-(headSectionStream.length-newSectionLength));
+                }else{
+                    headSectionStream = [];
+                    startFrame+=(-newSectionLength);
+                }
+                myResult = myResult.concat(headSectionStream);
             }
-    //Flowはダイアログのみの処理なので要注意
-            if(tailFlow) newContent.splice(0,tailFlow);//先のセクションのフロー分だけ先頭からカット
-            if(newContent.length > duration){
-                myResult.splice(-(newContent.length-duration-1));//リザルトの末尾カット
-                tailFlow=1;        
-            }else{
-                tailFlow=0;
-            };
-//console.log(newContent.length);
-//console.log(newContent.join());
-//console.log('old Length : '+myResult.length);
-            myResult = myResult.concat(newContent);
-            resultCount.push(duration);
-//console.log('new Length : '+myResult.length)
         }
 //ターゲット区間の処理
 //console.log('ターゲット区間処理')
-//console.log('current Length : '+myResult.length)
-            var newContent = (targetSection.value)?
-            targetSection.value.toString(endOffset+1).split(','):new Array(endOffset+1);
-            topMargin = myResult.length;
-            if(tailFlow) newContent.splice(0,tailFlow);
-            if(newContent.length > endOffset+1){
-                topFlow = (newContent.length-endOffset-2);
-                myResult.splice(-1*(topFlow));
-                tailFlow=1;        
-            }else{
-                tailFlow=0;
-            };
-//console.log(newContent.length);
-//console.log(newContent);
-//console.log('old Length : '+myResult.length)
             myResult=myResult.concat(newContent);
-            resultCount.push(targetSection.duration);
-//console.log('new Length : '+myResult.length)
 //ターゲット後方区間を処理
-//後方区間が存在しないケースを検出の（残フレームを空要素で埋める）必要がある
-        if((this.length-1) == id){
-console.log('後方区間処理 : blanks');//処理区間の情報取得
-            var duration   =  xUI.XPS.xpsTracks.duration-(startOffset+endOffset-1);
-/*後方区間長さが負になるケースをトラップして単純に処理をスキップ*/
-            if (duration > 0){
-                var newContent = (new Array(duration)).join();
-                myResult       = myResult.concat(newContent);
-            }
-        }else{
-        for (var ix=id+1;ix<this.length;ix++){
-//console.log('後方区間処理 : '+(ix));//処理区間の情報取得
-            var sectionHead = this[ix].startOffset();
-            var sectionTail = this[ix].startOffset() + this[ix].duration -1;
-            var outPoint = startOffset+endOffset;//編集対象区間のアウト点
-            if((sectionHead < outPoint)&&(sectionTail <= outPoint)){
-                continue;        //全消去
-            }else if((ix==(id+1)) && (sectionTail > outPoint )){
-//              var duration = (this[ix].startOffset()+this[ix].duration+1)-(startOffset+endOffset);
-                var duration = sectionTail-outPoint-1;
-                var newContent = (this[ix].value)? this[ix].value.toString(duration).split(','):new Array(duration);
-            }else if(sectionHead > outPoint){
-                var duration =this[ix].duration;
-                var newContent = this[ix].toString(true).split(',');
+        var endFrame = startFrame+newContent.length;//編集範囲の後端
+//後方区間が存在しないケースを検出(終端が編集対象範囲を越える=NOP)
+        if (endFrame <= this.parent.length){
+            tailSection = (endFrame > (targetSection.startOffset()+targetSection.duration+targetSectionEndMargin))?
+            this.parent.getSectionByFrame(endFrame+1):this[id+1];
+            if(tailSection) {
+                var tailSectionLength = (tailSection.startOffset()+tailSection.duration)-endFrame;
+                var tailSectionStream = tailSection.getStream(tailSectionLength);
+                myResult = myResult.concat(tailSectionStream);
             }else{
-                continue;
+                if(myResult.length<this.parent.length){
+                    myResult = myResult.concat(new Array(this.parent.length-myResult.length));
+                }
             }
-            if(tailFlow) newContent.slice(0,tailFlow);
-            if(newContent.length > duration){
-                myResult.splice(-(newContent.length-duration-1));
-                tailFlow=1;        
-            }else{
-                tailFlow=0;
-            };
-//console.log(newContent.length);
-//console.log(newContent);
-            myResult=myResult.concat(newContent);
-            resultCount.push(duration);
-//console.log('new Length : '+myResult.length)
+            if(myResult.length < this.parent.length){
+console.log('fill empty :' +( this.parent.length-myResult.length));
+                myResult = myResult.concat(this.parent.slice(myResult.length));
+            }
         }
+        if(myResult.length<this.parent.length){
+            myResult = myResult.concat(new Array(this.parent.length-myResult.length));
         }
-//console.log(myResult.length);
-//console.log(myResult);
-        if ((topFlow)&&(topMargin < topFlow)){
-            return [myResult.join(),topFlow-topMargin];
-        }else{
-            return [myResult.join(),0];
-        }
+        return [myResult.join(),startFrame+targetSection.headMargin];
     }
 }
 XpsTimelineSectionCollection.prototype = Array.prototype;
@@ -995,6 +972,8 @@ nas.ValueInterpolator.prototype.valueOf=function(myProp){
 function XpsTimelineSection(parent, duration, isInterp) {
     this.parent   = parent      ;
     this.duration = duration    ;
+    this.headMargin = 0;
+    this.tailMargin = 0;
 //    this.content  = cellContent ;//代表コンテンツ及びすべてのセル内容は計算で引き出せるので不要
     if(this.parent instanceof XpsTimelineSection){
         this.mapElement;//this.parent.parent.xParent.parentXps.xMap.getElementByName(this.value.)
@@ -1008,10 +987,10 @@ function XpsTimelineSection(parent, duration, isInterp) {
     this.toString = function (opt) {
         if(opt){
             if(this.value){
-                return this.value.toString(this.duration);
+                return this.value.getStream(this.duration).join(',');
                 // **値によって戻り値がdurationと異なる場合があるので要注意
             }else{
-                return new Array(this.duration).join();
+                return new Array(this.duration).join(',');
             }
         }else{
             return this.duration + ":" + this.value;
@@ -1032,6 +1011,17 @@ XpsTimelineSection.prototype.getContent = function(){
     }
     return timeline.slice(startframe,startframe+this.duration);
 }
+/** 指定の長さに従ってセクションの内容を返す
+引数: frameCount
+返値: 配列+offset
+*/
+XpsTimelineSection.prototype.getStream = function(frameCount){
+console.log(frameCount);
+    if(! frameCount) frameCount = this.duration;
+    if((this.parent.parent.option == 'dialog')&&(!(this.value))) frameCount = frameCount + this.headMargin + this.tailMargin; 
+    return (this.value)? this.value.getStream(frameCount):new Array(frameCount);  
+}
+
 XpsTimelineSection.prototype.id = _getSectionId;
 XpsTimelineSection.prototype.startOffset = _getSectionStartOffset;
 
@@ -2544,6 +2534,8 @@ Xps.prototype.parseXps = function (datastream) {
 //	xUI.errorCode=0;
     }
 //console.log(this.toString());
+//   仮設　ｘMap初期化　2018.12
+if (! (this.xMap.currentJob)) this.xMap.syncProperties(this); 
     return this;
 };
 
@@ -3329,9 +3321,9 @@ XpsTimelineTrack.prototype.parseTimelineTrack = function(){
         case "sound":;
             myResult =  this.parseSoundTrack();
         break;
-        case "still":;
         case "cell":;
         case "timing":;
+        case "still":;
         case "replacement":;
             myResult =  this.parseReplacementTrack();
         break;
@@ -3352,11 +3344,12 @@ XpsTimelineTrack.prototype.parseTimelineTrack = function(){
 /**
 フレームを指定してタイムライントラック上のセクションを返す
 セクションバッファが最新でない場合は、セクションパースを実施する
+当該のセクションが存在しない場合はnullを戻す
 */
 XpsTimelineTrack.prototype.getSectionByFrame = function(myFrame){
-    var myResult = false;
+    if((typeof myFrame == "undefined") ||(! myFrame < 0)) return null;
+    var myResult = null;
     var mySections = this.sections;
-    if(typeof myFrame == "undefined") myFrame = 0 ;
     if(!(this.sectionTrust)) mySections = this.parseTimelineTrack();
     //ここは非同期実行不可
     if(mySections){
@@ -3366,8 +3359,6 @@ XpsTimelineTrack.prototype.getSectionByFrame = function(myFrame){
             break;
             }
         }
-    }else{
-        myResult = this.sections[0];
     }
     return myResult;
 }

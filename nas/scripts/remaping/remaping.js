@@ -1584,7 +1584,16 @@ if(true){
     }
     //var bkRange=this.Selection.slice();
     this.selection(add(this.Select,this.Selection));
-    SoundEdit.init();
+    
+//    if(xUI.XPS.xpsTracks[xUI.Select[0]].option.match( /dialog|sound/ ))    SoundEdit.init();
+    switch(xUI.XPS.xpsTracks[xUI.Select[0]].option){
+    case 'dialog':
+    case 'sound' :
+        SoundEdit.init();
+    break;
+    default:
+        //NOP
+    }
     return this.edmode;
 }
 /**
@@ -1658,10 +1667,13 @@ xUI.sectionUpdate=function(){
 //対象トラックのセクションが（ダイアログ等）すべての要素を内包しない場合セレクション位置を更新する必要がある
 //セクションの先頭を取得するためにパースするか
         xUI.floatUpdateCount ++;//increment
-        xUI.selectCell([xUI.Select[0],currentFrame+trackContents[1]]);
+//        xUI.selectCell([xUI.Select[0],currentFrame+trackContents[1]]);
+        xUI.selectCell([xUI.Select[0],trackContents[1]]);
       xUI.selection([xUI.Select[0],xUI.Select[1]+currentSelection]);
     xUI.scrollStop = false;
-    if(SoundEdit)SoundEdit.getProp();
+
+    if(xUI.XPS.xpsTracks[xUI.Select[0]].option.match( /dialog|sound/ ))SoundEdit.getProp();
+
 }
 /*    xUI.floatTextHi()
 引数:なし  モード変数を確認して動作
@@ -2148,6 +2160,7 @@ xUI.drawSheetCell = function (myElement){
 	ListStr=ListStr.replace(/\。/g,"");//句点空白(null)
 */
           break;
+          case "still":;
           case "timing":;
           case "replacement":;
             if (myStr.match(/[\|｜]/)){
@@ -2213,6 +2226,7 @@ xUI.drawSheetCell = function (myElement){
             } else if (myStr.match(/^\]([^\]]+)\[$/)){
                 if(this.hideSource) myStr="<br>";
             }
+console.log(mySection);
             if((mySection.startOffset()+mySection.duration-1) == tgtID[0]){
                 var formStr = myXps.xpsTracks[tgtID[1]][mySection.startOffset()];
                 drawForm = drawForms[formStr];
@@ -8405,10 +8419,10 @@ function nas_expdList(ListStr,rcl){
 		((xUI.Select[0]<(XPS.xpsTracks.length-2))&&
 		(XPS.xpsTracks[xUI.Select[0]].option=="dialog"))
 	){
-        if(ListStr.indexOf('「')>=0){
+        if(ListStr.match(/[\"\'「]/)){
             console.log(ListStr);
-            var mySound = new nas.AnimationSound("",ListStr);
-            mySound.parseContent();
+            var mySound = new nas.AnimationSound(null,ListStr);
+//            mySound.parseContent();//パーサの起動は不要
             console.log(mySound)
             var sectionLength= xUI.spinValue * (mySound.bodyText.length + mySound.comments.length);
             ListStr= mySound.getStream(sectionLength).join(',');
@@ -11790,7 +11804,6 @@ SoundEdit.getProp = function(){
     document.getElementById('soundInPoint').value  = nas.Frm2FCT(inPoint ,2,0,xUI.XPS.framerate);
     document.getElementById('soundOutPoint').value = nas.Frm2FCT(outPoint,2,0,xUI.XPS.framerate);
     document.getElementById('soundDuration').value = nas.Frm2FCT(targetSection.duration,2,0,xUI.XPS.framerate);
-
     document.getElementById('soundLabel').value = targetSection.value.name;
     document.getElementById('soundProps').value = targetSection.value.attributes.join(",");
 }

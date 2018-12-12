@@ -460,7 +460,7 @@ console.log(myOption);
     エレメントの削除は単独のエレメントのメソッドで行う
     ガベージコレクションはストアオブジェクトのメソッドにする
 */
-//		if(!(String(myOption).match( /(timing|replacement|cell|camera(work)?|geometry|sfx|composite|effect|sound|system|text|xps)/i ))) myOption = "cell";
+//		if(!(String(myOption).match( /(timing|replacement|cell|camera(work)?|geometry|sfx|composite|effect|sound|system|text|xps|still)/i ))) myOption = "cell";
 		var newElement=new nas.xMapGroup(myName,myOption,myLink);
 		this.elementGroups.push(newElement);
 	
@@ -516,6 +516,7 @@ console.log(myOption);
 		break;
 		case "cell":
 		case "replacement":
+		case "still":
 		default:
 			if( contentSource instanceof nas.AnimationReplacement ){
     			newElement.content=contentSource;
