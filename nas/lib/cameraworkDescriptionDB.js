@@ -1,0 +1,570 @@
+﻿/*　タイムシート記述DB
+書式:
+(キーワード)
+	name:(キーワード)
+	type:String "simbol","geometry","composite" サブタイプとしてエフェクト名称を使用
+	aliases:[別名の配列]　正規表現サブセットで記述可能
+	nodeSigns:[中間値補完サイン,セクション開始サイン,セクション終了サイン]
+	description:記述の説明
+
+
+定番の抽象化された記述はある程度分類する
+
+
+    geometry(.effect)
+geometryトラックに直接展開可能な一般記述
+pan,tilt等が含まれるがそれだけにとどまらない
+通常はフレーミング情報を値として持つことができる
+
+    effect
+geometryトラックに対して展開可能な定番効果
+geometry.follow,geometry.followPan,geometry.camShake　等
+名前付けられた効果を扱うタイプ
+
+
+    composite(.effect)
+compositeトラックに直接展開可能な一般記述
+ベクトル以外の一つ以上のスカラー値を値として持つことができる
+
+    effect
+定番のエフェクト記述
+一本以上のコンポジットトラックに展開
+composite.BK,composite.WK,composite.fi,composite.fo
+黒コマ、白コマ、サブリナ FI,FO等の名付けられたエフェクトタイプ
+フィルタ類もこのタイプ
+
+    transition
+定番のtransition記述
+２素材以上のcomposite値の複合オブジェクト
+２つ以上のコンポジットに展開
+
+    simbol(.effect)
+更に複合された概念
+オプチ、パーススライド等の定義が定まらない効果も含む？
+
+演出手法
+カメラワーク
+ステージワーク
+
+*/
+nas.cameraworkDescriptions.parseConfig(`
+unknown
+	name:unknown
+	type:simbol
+	aliases:[" "]
+	nodeSigns:["|"]
+	description:不明なシンボル
+fadeIn
+	name:fadeIn
+	type:composite
+	aliases:["FI","F.I","フェード・イン","フェードイン","fade-in","▲","溶明"]
+	nodeSigns:["|","▲"]
+	description:画面が暗転状態から徐々に明るくなる演出手法
+	
+fadeOut
+	name:faseOut
+	type:composite
+	aliases:["FO","F.O","フェード・アウト","フェードアウト","fade-out","▼","溶暗"]
+	nodeSigns:["|","▼"]
+	description:画面が徐々に暗転する演出手法
+whiteIn
+	name:whiteIn
+	type:composite
+	aliases:["WI","W.I","W/in","ホワイト・イン","ホワイトイン","white-in","△"]
+	nodeSigns:["|","△"]
+	description:白画面からフェードインする演出手法
+whiteOut
+	name:whiteOut
+	type:composite
+	aliases:["WO","W.O","W/out","ホワイト・アウト","ホワイトアウト","white-out","▽"]
+	nodeSigns:["|","▽"]
+	description:白画面へフェードアウトする演出手法
+overlap
+	name:overlap
+	type:transition
+	aliases:["OL","diss","オーバー?ラップ","closs-?dissolve","]X[","][","]OL[","]diss[","]><[","]⋈["]
+	nodeSigns:["|","]><["]
+	description:経過中の画面が二重写しになる転換のための演出手法
+cameraShakeS
+	name:shake
+	type:geometry
+	aliases:["ぶれ","画面動","画ぶれ","カメラブレ"]
+	nodeSigns:["/"]
+	description:カメラを揺するような効果（弱）
+cameraShake
+	name:shake
+	type:geometry
+	aliases:["ぶれ","画面動","画ぶれ","カメラブレ"]
+	nodeSigns:["//"]
+	description:カメラを揺するような効果
+cameraShakeL
+	name:shake
+	type:geometry
+	aliases:["ぶれ(強)","画面動(強)","画ぶれ(強)"]
+	nodeSigns:["///"]
+	description:カメラを揺するような効果（強）
+trackUp
+	name:trackUp
+	type:geometry
+	aliases:["TU","T\.?U","トラックアップ"]
+	nodeSigns:["|","▽","△"]
+	description:カメラが被写体に近づいてゆく演出手法
+trackBack
+	name:trackBack
+	type:geometry
+	aliases:["TB","T\.?B","トラックバック"]
+	nodeSigns:["|","▽","△"]
+	description:カメラが被写体から遠ざかる演出手法
+zoomIn
+	name:zoomIn
+	type:geometry
+	aliases:["ZI","Z\.?I","ズームイン","","","",""]
+	nodeSigns:["|","▽","△"]
+	description:画角を調整して被写体を拡大する演出手法
+zoomOut
+	name:zoomOut
+	type:geometry
+	aliases:["ZO","Z\.?O","ズームアウト","","","",""]
+	nodeSigns:["|","▽","△"]
+	description:画角を調整して被写体を縮小する演出手法
+pan
+	name:pan
+	type:simbol
+	aliases:["PAN","パン","pnning"]
+	nodeSigns:["|","▽","△"]
+	description:カメラを主に横方向に振る演出手法
+panUp
+	name:panUp
+	type:simbol
+	aliases:["PANUP","pan.?up","パンアップ"]
+	nodeSigns:["|","▽","△"]
+	description:カメラを画面上方向に振る演出手法　チルトアップ
+panDown
+	name:panDown
+	type:geometry
+	aliases:["PANDOWN","pan.?down","パンダウン"]
+	nodeSigns:["|","▽","△"]
+	description:カメラを画面下方向に振る演出手法　チルトダウン
+tilt
+	name:tilt
+	type:geometry
+	aliases:["TILT","チルト","tilting"]
+	nodeSigns:["|","▽","△"]
+	description:カメラを画面上下方向に振る演出手法
+tiltUp
+	name:tiltUp
+	type:simbol
+	aliases:["TILT-UP","チルトアップ"]
+	nodeSigns:["|","▽","△"]
+	description:カメラを画面上方向に振る演出手法
+tiltDown
+	name:tiltDown
+	type:geometry
+	aliases:["TILT-DOWN","チルトダウン"]
+	nodeSigns:["|","▽","△"]
+	description:カメラを画面下方向に振る演出手法
+follow
+	name:follow
+	type:simbol
+	aliases:["follow","フォロー","フォロウ"]
+	nodeSigns:["|","▽","△"]
+	description:画面が被写体を追って移動する演出手法
+bigcloseUp
+	name:bigcloseUp
+	type:simbol
+	aliases:["BC","ビッグクローズアップ","大寄り"]
+	nodeSigns:["┃","┳","┻"]
+	description:特定の一部分を大写しにする演出手法
+closeUp
+	name:closeUp
+	type:simbol
+	aliases:["CU","クローズアップ","寄りアップ"]
+	nodeSigns:["┃","┳","┻"]
+	description:顔などの注目範囲を画面いっぱいに写す演出手法
+upShot
+	name:upShot
+	type:simbol
+	aliases:["US","アップショット","アップ"]
+	nodeSigns:["┃","┳","┻"]
+	description:顔などの注目範囲が主体になるように画面を構成する演出手法
+bustShot
+	name:bustShot
+	type:simbol
+	aliases:["BS","バストショット","バスト寄り"]
+	nodeSigns:["┃","┳","┻"]
+	description:人物撮影の際に胸部から上を主体に画面を構成する演出手法
+westShot
+	name:westShot
+	type:simbol
+	aliases:["WS","ウエストショット","腰高"]
+	nodeSigns:["┃","┳","┻"]
+	description:人物撮影の際に腹部から上を主体に画面を構成する演出手法
+kneeShot
+	name:kneeShot
+	type:simbol
+	aliases:["KS","ニーショット","膝上"]
+	nodeSigns:["┃","┳","┻"]
+	description:人物撮影の際に膝部から上を主体に画面を構成する演出手法
+fullFigure
+	name:fullFigure
+	type:simbol
+	aliases:["FF","フルフィギュア","全身"]
+	nodeSigns:["┃","┳","┻"]
+	description:人物撮影の際に全身像を主体に画面を構成する演出手法
+middleShot
+	name:middleShot
+	type:simbol
+	aliases:["MS","ミドルショット","やや引き"]
+	nodeSigns:["┃","┳","┻"]
+	description:人物撮影の際に全身像とその周囲の環境を主体に画面を構成する演出手法
+longShot
+	name:longShot
+	type:simbol
+	aliases:["LS","ロングショット","引き"]
+	nodeSigns:["┃","┳","┻"]
+	description:人物撮影の際に人物の周辺環境を主体として画面を構成する演出手法
+fullLong
+	name:fullLong
+	type:simbol
+	aliases:["FL","フルロング","大引き"]
+	nodeSigns:["┃","┳","┻"]
+	description:人物撮影の際にステージ全体を主体として画面を構成する演出手法
+crane
+	name:crane
+	type:simbol
+	aliases:["クレーン","クレーンショット","carne-shot"]
+	nodeSigns:["｜","┬","┴"]
+	description:クレーン先端にカメラを搭載して画像を収録する演出手法
+dolly
+	name:dolly
+	type:simbol
+	aliases:["DLY","ドリー","トロッコ","台車"]
+	nodeSigns:["｜","┬","┴"]
+	description:移動台車にカメラを搭載して画像を収録する演出手法
+multi
+	name:multi
+	type:simbol
+	aliases:["MULTI","マルチ","密着マルチ","マルチスピードスライド","多段引き","多段スライド",""]
+	nodeSigns:["｜","┬","┴"]
+	description:移動感を表すために多段の撮影指定が存在する旨の撮影指定
+multiPlain
+	name:multiPlain
+	type:simbol
+	aliases:["マルチプレーン","マルチ台"]
+	nodeSigns:["｜","┬","┴"]
+	description:立体型マルチプレーン撮影台を使用する旨の撮影指定
+fairing
+	name:fairing
+	type:simbol
+	aliases:["フェアリング","加速","減速","徐々に"]
+	nodeSigns:["‖","⇑","⇓"]
+	description:スライド等の値の切り替わりを滑らかにコントロールすること
+slide
+	name:slide
+	type:geometry
+	aliases:["SL","引き","スライド","移動"]
+	nodeSigns:["|","▽","△"]
+	description:合成素材の移動
+rotation
+	name:rotation
+	type:geometry
+	aliases:["RT","回転","ローテーション"]
+	nodeSigns:["|","▽","△"]
+	description:合成素材の回転移動
+rotatePan
+	name:rotatePan
+	type:geometry
+	aliases:["回転PAN","rtPAN","PAN(回転加味)"]
+	nodeSigns:["|","▽","△"]
+	description:カメラを試写体に対して回転を加えてPANする演出手法
+roteteSlide
+	name:roteteSlide
+	type:geometry
+	aliases:["回転スライド","rtSL","引き（回転加味）"]
+	nodeSigns:["|","▽","△"]
+	description:合成素材をスライドさせながら回転を加える撮影指定
+rotateTu
+	name:rotateTu
+	type:geometry
+	aliases:["回転TU","rtTU","TU（回転加味）"]
+	nodeSigns:["|","▽","△"]
+	description:カメラを試写体に対して回転を加えながら接近させる演出手法
+rateteTb
+	name:rateteTb
+	type:geometry
+	aliases:["回転TB","rtTB","TB（回転加味）"]
+	nodeSigns:["|","▽","△"]
+	description:カメラを試写体に対して回転を加ながら引き離す演出手法
+handyShake
+	name:handyShake
+	type:geometry
+	aliases:["ハンディブレ","手持ちカメラ風画面動"]
+	nodeSigns:["//"]
+	description:手持ちカメラのような振動を画面に与える演出手法
+kurokoma
+	name:kurokoma
+	type:composite
+	aliases:["黒コマ","BK","■"]
+	nodeSigns:["■"]
+	description:黒い画面を挿入する演出手法
+shirokoma
+	name:shirokoma
+	type:composite
+	aliases:["白コマ","WK","□"]
+	nodeSigns:["□"]
+	description:白い画面を挿入する演出手法
+sublina
+	name:sublina
+	type:composite
+	aliases:["サブリナ","SUBLINA"]
+	nodeSigns:["＜"]
+	description:一コマだけ露出オーバー、または前後に繋がりのない絵を挿入する演出手法
+backlight
+	name:backlight
+	type:composite
+	aliases:["T光","透過光","backlight","TFlash","backlight bleed","backlight glow"]
+	nodeSigns:["",""]
+	description:バックライトで撮影を行う演出手法
+highContrast
+	name:highContrast
+	type:simbol
+	aliases:["ハイコン","High\-?Con"]
+	nodeSigns:["|","┬","┴"]
+	description:ハイコントラスト状態
+rackFocus
+	name:rackFocus
+	type:simbol
+	aliases:["ピン送り","ピント送り","ラック・フォーカス","フォーカス送り"]
+	nodeSigns:["｜","┬","┴"]
+	description:実写のピント送りを模した演出手法
+overExposure
+	name:overExposure
+	type:composite
+	aliases:["露出オーバー","露光超過"]
+	nodeSigns:["｜","┬","┴"]
+	description:露出オーバーの画像を使用する演出手法
+underExposure
+	name:underExposure
+	type:composite
+	aliases:["露出アンダー","露光不足"]
+	nodeSigns:["｜","┬","┴"]
+	description:露出アンダーの画像を使用する演出手法
+perspectiveTransform
+	name:perspectiveTransform
+	type:simbol
+	aliases:["パース変形","パース引き"]
+	nodeSigns:["┃","┳","┻"]
+	description:素材の立体感を補助する変形を素材に加える撮影指定
+jumpSlide
+	name:jumpSlide
+	type:simbol
+	aliases:["ジャンプスライド","ジャンプ引き","間欠スライド"]
+	nodeSigns:["｜","┬","┴"]
+	description:
+diffusionFilter
+	name:diffusionFilter
+	type:composite
+	aliases:["DF","ディフュージョンフィルタ"]
+	nodeSigns:["｜","┬","┴"]
+	description:
+clossFilter
+	name:clossFilter
+	type:composite
+	aliases:["ClOSS","クロスフィルタ"]
+	nodeSigns:["｜","┬","┴"]
+	description:
+foggyFilter
+	name:foggyFilter
+	type:composite
+	aliases:["FOGGY","フォギーフィルタ"]
+	nodeSigns:["｜","┬","┴"]
+	description:
+bokeh
+	name:bokeh
+	type:composite
+	aliases:["BOKEH","ボケ","ピントぼかし","オフフォーカス"]
+	nodeSigns:["｜","┬","┴"]
+	description:焦点系のぼかしと言い切ってしまうには今やムリがある
+fix
+	name:fix
+	type:simbol
+	aliases:["FIX","フィックス","止め"]
+	nodeSigns:["｜","┬","┴"]
+	description:カメラを据えて画面を固定する演出手法
+panTU
+	name:panTU
+	type:simbol
+	aliases:["","","","","","",""]
+	nodeSigns:["|","▽","△"]
+	description:カメラ
+panTB
+	name:panTB
+	type:simbol
+	aliases:["","","","","","",""]
+	nodeSigns:["|","▽","△"]
+	description:
+followTracking
+	name:followTracking
+	type:simbol
+	aliases:["","","","","","",""]
+	nodeSigns:["|","▽","△"]
+	description:
+followslide
+	name:followslide
+	type:simbol
+	aliases:["","","","","","",""]
+	nodeSigns:["|","▽","△"]
+	description:
+rolling
+	name:rolling
+	type:simbol
+	aliases:["","","","","","",""]
+	nodeSigns:["|","▽","△"]
+	description:
+quickTU
+	name:quickTU
+	type:geometry
+	aliases:["","","","","","",""]
+	nodeSigns:["|","▽","△"]
+	description:
+quickTB
+	name:quickTB
+	type:geometry
+	aliases:["","","","","","",""]
+	nodeSigns:["|","▽","△"]
+	description:
+quickPAN
+	name:quickPAN
+	type:geometry
+	aliases:["","","","","","",""]
+	nodeSigns:["|","▽","△"]
+	description:
+focusIn
+	name:focusIn
+	type:composite
+	aliases:["","","","","","",""]
+	nodeSigns:["|","▲"]
+	description:
+focusOut
+	name:focusOut
+	type:composite
+	aliases:["","","","","","",""]
+	nodeSigns:["|","▼"]
+	description:
+waveGlass
+	name:waveGlass
+	type:composite
+	aliases:["波ガラス","distorted glass","","","","","",""]
+	nodeSigns:["//"]
+	description:
+wipe
+	name:wipe
+	type:transition
+	aliases:["","","","","","",""]
+	nodeSigns:["|","]><["]
+	description:
+wipeIn
+	name:wipeIn
+	type:transition
+	aliases:["","","","","","",""]
+	nodeSigns:["|","▲"]
+	description:
+wipeOut
+	name:wipeOut
+	type:transition
+	aliases:["","","","","","",""]
+	nodeSigns:["|","▼"]
+	description:
+transition
+	name:transition
+	type:transition
+	aliases:["","","","","","",""]
+	nodeSigns:["|","]><["]
+	description:
+iris
+	name:iris
+	type:transition
+	aliases:["","","","","","",""]
+	nodeSigns:["|","]><["]
+	description:
+irisIn
+	name:irisIn
+	type:transition
+	aliases:["","","","","","",""]
+	nodeSigns:["|","▲"]
+	description:
+irisOut
+	name:irisOut
+	type:transition
+	aliases:["","","","","","",""]
+	nodeSigns:["|","▼"]
+	description:
+insert
+	name:insert
+	type:simbol
+	aliases:["","","","","","",""]
+	nodeSigns:["＜"]
+	description:
+cutIn
+	name:cutIn
+	type:simbol
+	aliases:["","","","","","",""]
+	nodeSigns:["＜"]
+	description:
+blur
+	name:blur
+	type:composite
+	aliases:["ぼかし","ブラー"]
+	nodeSigns:["｜","┬","┴"]
+	description:
+bar
+	name:bar
+	type:simbol
+	aliases:["バー","‖","|","BAR","","",""]
+	nodeSigns:["‖"]
+	description:
+strobo
+	name:strobo
+	type:simbol
+	aliases:["ストロボ","Strobo"]
+	nodeSigns:["|","]S["]
+	description:
+stroboOdd
+	name:stroboOdd
+	type:simbol
+	aliases:["ストロボ1","Strobo1"]
+	nodeSigns:["|","▲"]
+	description:
+stroboEvn
+	name:stroboEvn
+	type:simbol
+	aliases:["ストロボ","Strobo2"]
+	nodeSigns:["|","▼"]
+	description:
+`)
+/**  追加予定メモ
+offFocus
+
+gondola
+*/
+/*
+    区間開始・終了ノードの予約語
+    これはコーディングしちゃったほうが良さそう
+    開始ノードを定義して終了ノードは対で使用ただし省略は可能
+    データ構造は、[開始シンボル,終了シンボル]の配列
+    終了シンボルは開始シンボル再利用固定、対応シンボル固定、またはフリー
+    常に終了シンボルは省略可能
+    フォーマットで規定してしまったほうが良さそうなのであった
+    
+
+var CamNodeSigns	=[["▽","△"],["▼","▲"],["┳","┻"],["┬","┴"],["↑","↓"],["⇑","⇓"]];//["◎"],["＊"],["○"],["●"],["□"],["■"],["◇"],["◆"],["☆"],["★"]
+//カメラノードサインは、配列で登録する  要素数１の配列は開始と終了を同じサインで行う
+var TrnNodeSigns	=["].+[","]><[","]X[","]⋈["];
+//トランジションノードサインは、開始サインと終了サインを一致させる。継続長２フレーム以下の場合は開始サインのみでOK
+var FxNodeSigns	=[").+(","△","▽","▲","▼","┳","┻","┬","┴","↑","↓","⇑","⇓","◎","＊","○","●","□","■","◇","◆","☆","★"];
+//効果ノードサインは、開始サインと終了サインを一致させる。トランジションタイプの効果はトランジションサインを使用する
+var NodeSigns =[").+(","]X[","]⋈[","[.+]","△","▽","▲","▼","┳","┻","┬","┴","↑","↓","⇑","⇓","◎","＊","○","●","□","■","◇","◆","☆","★"];
+			//範囲ノード予約記述  インターポレーションサインの機能も併せ持つ  詳細別紙
+var DialogSigns=["(*)","____","----","⁀⁀⁀⁀","‿‿‿‿"];
+			//ダイアログ（サウンド）タイムライン専用のセパレーター  詳細別紙
+*/
