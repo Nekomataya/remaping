@@ -1,4 +1,5 @@
-﻿/*　タイムシート記述DB
+﻿/*　タイムシート記述カメラワークDB
+
 書式:
 (キーワード)
 	name:(キーワード)
@@ -7,40 +8,58 @@
 	nodeSigns:[中間値補完サイン,セクション開始サイン,セクション終了サイン]
 	description:記述の説明
 
+name	ー	識別用名称
 
-定番の抽象化された記述はある程度分類する
+データベース内でユニークになるように注意
+アルファベットのみ、空白不可
+複合単語はキャメル記法で記述　"frame in"→"frameIn"
 
 
-    geometry(.effect)
+type	ー	抽象化された記述を分類する文字列
+
+
+    geometry
 geometryトラックに直接展開可能な一般記述
-pan,tilt等が含まれるがそれだけにとどまらない
+slide,rotation等が含まれるがそれだけにとどまらない
 通常はフレーミング情報を値として持つことができる
 
-    effect
-geometryトラックに対して展開可能な定番効果
-geometry.follow,geometry.followPan,geometry.camShake　等
-名前付けられた効果を扱うタイプ
 
-
-    composite(.effect)
+    composite(.effectName)
 compositeトラックに直接展開可能な一般記述
+BK,WK,fi,fo　等
 ベクトル以外の一つ以上のスカラー値を値として持つことができる
-
-    effect
-定番のエフェクト記述
-一本以上のコンポジットトラックに展開
-composite.BK,composite.WK,composite.fi,composite.fo
-黒コマ、白コマ、サブリナ FI,FO等の名付けられたエフェクトタイプ
 フィルタ類もこのタイプ
 
-    transition
-定番のtransition記述
+    transition(.effectName)
+transition記述
 ２素材以上のcomposite値の複合オブジェクト
-２つ以上のコンポジットに展開
+２つ以上のトラックに展開される効果
 
-    simbol(.effect)
-更に複合された概念
+
+    simbol(.effectName)
+複合された概念、または単純にトラックに展開できないものの記述
 オプチ、パーススライド等の定義が定まらない効果も含む？
+
+
+aliases	ー	記述の別名
+
+実際のタイムシートの記述は、この別名のうちいずれかが使用可能
+使用された記述がDB内にない場合は
+一時的にデフォルトの "unknown" が適用される。
+あとから新規登録が可能
+
+nodeSigns	ー　ノード記号配列
+
+タイムシート上でのテキスト表示用記号
+第一要素	中間値補完サイン　記述範囲を埋める記号　登録がない場合は"|(縦棒)"
+第二要素	セクション開始サイン　セクションの冒頭を示す記号　登録がない場合は第一要素を使う
+第三要素	セクション終了サイン　セクションの末尾を示す記号　登録がない場合は第二要素を使う
+
+
+description	ー	記述の簡単な説明
+
+記述内容の説明を付加
+
 
 演出手法
 カメラワーク
@@ -51,16 +70,15 @@ nas.cameraworkDescriptions.parseConfig(`
 unknown
 	name:unknown
 	type:simbol
-	aliases:[" "]
-	nodeSigns:["|"]
-	description:不明なシンボル
+	aliases:["未登録"]
+	nodeSigns:["┃","┳","┻"]
+	description:未登録シンボル(デフォルトの値)
 fadeIn
 	name:fadeIn
 	type:composite
 	aliases:["FI","F.I","フェード・イン","フェードイン","fade-in","▲","溶明"]
 	nodeSigns:["|","▲"]
 	description:画面が暗転状態から徐々に明るくなる演出手法
-	
 fadeOut
 	name:faseOut
 	type:composite
@@ -82,7 +100,7 @@ whiteOut
 overlap
 	name:overlap
 	type:transition
-	aliases:["OL","diss","オーバー?ラップ","closs-?dissolve","]X[","][","]OL[","]diss[","]><[","]⋈["]
+	aliases:["OL","diss","オーバーラップ","closs-dissolve","]X[","]OL[","]diss[","]><[","]⋈["]
 	nodeSigns:["|","]><["]
 	description:経過中の画面が二重写しになる転換のための演出手法
 cameraShakeS
@@ -106,25 +124,25 @@ cameraShakeL
 trackUp
 	name:trackUp
 	type:geometry
-	aliases:["TU","T\.?U","トラックアップ"]
+	aliases:["TU","T.U","トラックアップ"]
 	nodeSigns:["|","▽","△"]
 	description:カメラが被写体に近づいてゆく演出手法
 trackBack
 	name:trackBack
 	type:geometry
-	aliases:["TB","T\.?B","トラックバック"]
+	aliases:["TB","T.B","トラックバック"]
 	nodeSigns:["|","▽","△"]
 	description:カメラが被写体から遠ざかる演出手法
 zoomIn
 	name:zoomIn
 	type:geometry
-	aliases:["ZI","Z\.?I","ズームイン","","","",""]
+	aliases:["ZI","Z.I","ズームイン"]
 	nodeSigns:["|","▽","△"]
 	description:画角を調整して被写体を拡大する演出手法
 zoomOut
 	name:zoomOut
 	type:geometry
-	aliases:["ZO","Z\.?O","ズームアウト","","","",""]
+	aliases:["ZO","Z.O","ズームアウト"]
 	nodeSigns:["|","▽","△"]
 	description:画角を調整して被写体を縮小する演出手法
 pan
@@ -136,13 +154,13 @@ pan
 panUp
 	name:panUp
 	type:simbol
-	aliases:["PANUP","pan.?up","パンアップ"]
+	aliases:["PANUP","pan.up","パンアップ"]
 	nodeSigns:["|","▽","△"]
 	description:カメラを画面上方向に振る演出手法　チルトアップ
 panDown
 	name:panDown
 	type:geometry
-	aliases:["PANDOWN","pan.?down","パンダウン"]
+	aliases:["PANDOWN","pan.down","パンダウン"]
 	nodeSigns:["|","▽","△"]
 	description:カメラを画面下方向に振る演出手法　チルトダウン
 tilt
@@ -244,7 +262,7 @@ dolly
 multi
 	name:multi
 	type:simbol
-	aliases:["MULTI","マルチ","密着マルチ","マルチスピードスライド","多段引き","多段スライド",""]
+	aliases:["MULTI","マルチ","密着マルチ","マルチスピードスライド","多段引き","多段スライド"]
 	nodeSigns:["｜","┬","┴"]
 	description:移動感を表すために多段の撮影指定が存在する旨の撮影指定
 multiPlain
@@ -323,12 +341,12 @@ backlight
 	name:backlight
 	type:composite
 	aliases:["T光","透過光","backlight","TFlash","backlight bleed","backlight glow"]
-	nodeSigns:["",""]
+	nodeSigns:["|","┬","┴"]
 	description:バックライトで撮影を行う演出手法
 highContrast
 	name:highContrast
 	type:simbol
-	aliases:["ハイコン","High\-?Con"]
+	aliases:["ハイコン","High\-Con"]
 	nodeSigns:["|","┬","┴"]
 	description:ハイコントラスト状態
 rackFocus
@@ -354,37 +372,37 @@ perspectiveTransform
 	type:simbol
 	aliases:["パース変形","パース引き"]
 	nodeSigns:["┃","┳","┻"]
-	description:素材の立体感を補助する変形を素材に加える撮影指定
+	description:素材の立体感を補助する変形を素材に加える撮影手法
 jumpSlide
 	name:jumpSlide
 	type:simbol
 	aliases:["ジャンプスライド","ジャンプ引き","間欠スライド"]
 	nodeSigns:["｜","┬","┴"]
-	description:
+	description:一定の合成素材をグループごとに基点を与えて処理する撮影手法
 diffusionFilter
 	name:diffusionFilter
 	type:composite
 	aliases:["DF","ディフュージョンフィルタ"]
 	nodeSigns:["｜","┬","┴"]
-	description:
+	description:画像を拡散させるフィルター
 clossFilter
 	name:clossFilter
 	type:composite
 	aliases:["ClOSS","クロスフィルタ"]
 	nodeSigns:["｜","┬","┴"]
-	description:
+	description:光源から光条を発生させるフィルター
 foggyFilter
 	name:foggyFilter
 	type:composite
 	aliases:["FOGGY","フォギーフィルタ"]
 	nodeSigns:["｜","┬","┴"]
-	description:
+	description:画像を霧のように柔らかく拡散させるフィルター
 bokeh
 	name:bokeh
 	type:composite
 	aliases:["BOKEH","ボケ","ピントぼかし","オフフォーカス"]
 	nodeSigns:["｜","┬","┴"]
-	description:焦点系のぼかしと言い切ってしまうには今やムリがある
+	description:画像をぼやけさせる演出手法
 fix
 	name:fix
 	type:simbol
@@ -394,158 +412,162 @@ fix
 panTU
 	name:panTU
 	type:simbol
-	aliases:["","","","","","",""]
+	aliases:["PAN-UP","パンTU","TUpaning"]
 	nodeSigns:["|","▽","△"]
-	description:カメラ
+	description:PANとTUを併用する演出手法
 panTB
 	name:panTB
 	type:simbol
-	aliases:["","","","","","",""]
+	aliases:["PAN-TB","パンTB","TBpaning"]
 	nodeSigns:["|","▽","△"]
-	description:
+	description:PANとTBを併用する演出手法
 followTracking
 	name:followTracking
 	type:simbol
-	aliases:["","","","","","",""]
+	aliases:["つけPAN","フォローパン","フォロートラッキング"]
 	nodeSigns:["|","▽","△"]
-	description:
-followslide
-	name:followslide
-	type:simbol
-	aliases:["","","","","","",""]
+	description:カメラの移動で被写体を追従する演出手法
+followSlide
+	name:followSlide
+	type:geometry
+	aliases:["Follow","台引き","引き","台SL"]
 	nodeSigns:["|","▽","△"]
-	description:
+	description:被写体以外の合成素材をスライドすることでフォロー状態を表現する撮影手法
 rolling
 	name:rolling
 	type:simbol
-	aliases:["","","","","","",""]
+	aliases:["ローリング","roll.","↻","↺"]
 	nodeSigns:["|","▽","△"]
-	description:
+	description:合成素材の周期的なスライドで被写体のモーションを表現する撮影手法
 quickTU
 	name:quickTU
 	type:geometry
-	aliases:["","","","","","",""]
+	aliases:["Q-TU","クイックTU","QTU"]
 	nodeSigns:["|","▽","△"]
-	description:
+	description:急速なTU
 quickTB
 	name:quickTB
 	type:geometry
-	aliases:["","","","","","",""]
+	aliases:["Q-TB","クイックTB","QTB"]
 	nodeSigns:["|","▽","△"]
-	description:
+	description:急速なTB
 quickPAN
 	name:quickPAN
 	type:geometry
-	aliases:["","","","","","",""]
+	aliases:["Q-PAN","クイックPAN","QPAN"]
 	nodeSigns:["|","▽","△"]
-	description:
+	description:急速なPAN
 focusIn
 	name:focusIn
 	type:composite
-	aliases:["","","","","","",""]
+	aliases:["focus-IN","フォーカスイン"]
 	nodeSigns:["|","▲"]
-	description:
+	description:ショット内でフォーカスを合わせる演出手法
 focusOut
 	name:focusOut
 	type:composite
-	aliases:["","","","","","",""]
+	aliases:["focus-OUT","フォーカスアウト"]
 	nodeSigns:["|","▼"]
-	description:
+	description:ショット内でフォーカスをはずす演出手法
 waveGlass
 	name:waveGlass
 	type:composite
-	aliases:["波ガラス","distorted glass","","","","","",""]
+	aliases:["波ガラス","distorted glass"]
 	nodeSigns:["//"]
-	description:
+	description:波ガラスを使用して画面に歪みをもたせる撮影手法　またはその模倣
 wipe
 	name:wipe
 	type:transition
-	aliases:["","","","","","",""]
+	aliases:["wipe","]wipe[","ワイプ"]
 	nodeSigns:["|","]><["]
-	description:
+	description:トラベリングマスクを利用して行うトランジション
 wipeIn
 	name:wipeIn
 	type:transition
-	aliases:["","","","","","",""]
+	aliases:["WIPE-IN","ワイプイン"]
 	nodeSigns:["|","▲"]
-	description:
+	description:被写体がワイプで画面に現れること
 wipeOut
 	name:wipeOut
 	type:transition
-	aliases:["","","","","","",""]
+	aliases:["WIPE-OUT","ワイプアウト"]
 	nodeSigns:["|","▼"]
-	description:
+	description:被写体がワイプで画面から消えること
 transition
 	name:transition
 	type:transition
-	aliases:["","","","","","",""]
+	aliases:["トランジション","transition"]
 	nodeSigns:["|","]><["]
-	description:
+	description:２つのショットが継続時間をもって入れ替わること
 iris
 	name:iris
 	type:transition
-	aliases:["","","","","","",""]
+	aliases:["iris","アイリス","アイリスワイプ"]
 	nodeSigns:["|","]><["]
-	description:
+	description:アイリス（虹彩＝絞り）状のマスクを用いたワイプ
 irisIn
 	name:irisIn
 	type:transition
-	aliases:["","","","","","",""]
+	aliases:["IRIS-IN","アイリスイン"]
 	nodeSigns:["|","▲"]
-	description:
+	description:ショットがアイリスワイプで現れること
 irisOut
 	name:irisOut
 	type:transition
-	aliases:["","","","","","",""]
+	aliases:["IRIS-OUT","アイリスアウト"]
 	nodeSigns:["|","▼"]
-	description:
+	description:ショットがアイリスワイプで消えること
 insert
 	name:insert
 	type:simbol
-	aliases:["","","","","","",""]
+	aliases:["ins.","insert","インサート","挿入"]
 	nodeSigns:["＜"]
-	description:
+	description:場面に別場面のショットを挿入する演出手法
 cutIn
 	name:cutIn
 	type:simbol
-	aliases:["","","","","","",""]
-	nodeSigns:["＜"]
-	description:
+	aliases:["カットイン","CUTIN"]
+	nodeSigns:["＜＜"]
+	description:カットの切り替え
 blur
 	name:blur
 	type:composite
 	aliases:["ぼかし","ブラー"]
 	nodeSigns:["｜","┬","┴"]
-	description:
+	description:画面をぼやけさせる撮影手法
 bar
 	name:bar
 	type:simbol
-	aliases:["バー","‖","|","BAR","","",""]
+	aliases:["バー","BAR","縦棒"]
 	nodeSigns:["‖"]
-	description:
+	description:指定の区間を表す棒線
 strobo
 	name:strobo
 	type:simbol
 	aliases:["ストロボ","Strobo"]
 	nodeSigns:["|","]S["]
-	description:
+	description:連続した動画の置き換えにオーバーラップトランジションを使う演出手法
 stroboOdd
 	name:stroboOdd
 	type:simbol
 	aliases:["ストロボ1","Strobo1"]
-	nodeSigns:["|","▲"]
-	description:
+	nodeSigns:["|","▼▲"]
+	description:ストロボ
 stroboEvn
 	name:stroboEvn
 	type:simbol
-	aliases:["ストロボ","Strobo2"]
-	nodeSigns:["|","▼"]
-	description:
+	aliases:["ストロボ2","Strobo2"]
+	nodeSigns:["|","▲▼"]
+	description:ストロボ
 `)
 /**  追加予定メモ
 offFocus
-
+scale
+scaleUP
+scaleDown
 gondola
+
+	中OL
 */
 /*
     区間開始・終了ノードの予約語

@@ -553,7 +553,6 @@ xUI._readIN=function(datastream){
     
     オブジェクトがXpsの場合は、Xpsに関連づけられたxMapを初期化してドキュメントトレーラーを設定
     xMapが存在しない場合は、新しいxMapを初期化して使用する
-    xMapのみのオープンは許されるが、
   
 */
 xUI.init    =function(targetObj,referenceObj){
@@ -1667,13 +1666,12 @@ xUI.sectionUpdate=function(){
 //対象トラックのセクションが（ダイアログ等）すべての要素を内包しない場合セレクション位置を更新する必要がある
 //セクションの先頭を取得するためにパースするか
         xUI.floatUpdateCount ++;//increment
-//        xUI.selectCell([xUI.Select[0],currentFrame+trackContents[1]]);
+    xUI.floatSectionId = xUI.XPS.xpsTracks[xUI.Select[0]].getSectionByFrame(currentFrame).id();
         xUI.selectCell([xUI.Select[0],trackContents[1]]);
       xUI.selection([xUI.Select[0],xUI.Select[1]+currentSelection]);
     xUI.scrollStop = false;
 
     if(xUI.XPS.xpsTracks[xUI.Select[0]].option.match( /dialog|sound/ ))SoundEdit.getProp();
-
 }
 /*    xUI.floatTextHi()
 引数:なし  モード変数を確認して動作
@@ -2140,14 +2138,16 @@ xUI.drawSheetCell = function (myElement){
           case "sound":;
           case "dialog":;
             if (myStr.match(/<([^>]+)>/)){
-                myStr=xUI.trTd(target.id.split('_'));
+                myStr=xUI.trTd(myStr);
             };//trTdにセルIDを渡す
             if (myStr.match(/[-_─━~＿￣〜]{2,}?/)){
-              myStr=(this.showGraphic)?"<br>":"<hr>";
-              if((mySection.startOffset()+mySection.duration-1) == tgtID[0]){
-                drawForm =(myStr.match(/[_＿]/))? "line":"dialogOpen";
-              }else{
+//セクション開始判定
+              myStr=(this.showGraphic)?"<br>":"<hr>";//
+//              if((mySection.startOffset()+mySection.duration-1) != tgtID[0]){}
+              if(mySection.startOffset() == tgtID[0]){
                 drawForm =(myStr.match(/[_＿]/))? "line":"dialogClose";
+              }else{
+                drawForm =(myStr.match(/[_＿]/))? "line":"dialogOpen";
               }
             };//セクションパース情報を参照
 	        myStr=myStr.replace(/[-−ー─━]/g,"｜");//音引き縦棒
@@ -2173,11 +2173,11 @@ xUI.drawSheetCell = function (myElement){
                 formPostfix += (tgtID[0] % 2)? '-odd':'-evn';
             }
             else if (myStr.match(/\(([^\)]+)\)/)){
-                myStr=(this.showGraphic)?RegExp.$1:myStr;
+                myStr=(this.showGraphic)?RegExp.$1:xUI.trTd(myStr);
                 drawForm = "circle";
            }
            else if (myStr.match(/<([^>]+)>/)){
-                myStr=(this.showGraphic)?RegExp.$1:myStr;
+                myStr=(this.showGraphic)?RegExp.$1:xUI.trTd(myStr);
                 drawForm = "triangle";
             }
           break;
@@ -2191,9 +2191,8 @@ xUI.drawSheetCell = function (myElement){
                 myStr=(this.showGraphic)?"<br>":"｜";                
                 drawForm = "line";
                 formPostfix +='-cam';
-            }
-            if (myStr.match(/^([!|！|\/|／|\\|＼]+)$/)){
-                myStr=(this.showGraphic)?"<br>":myStr;                
+            } else if (myStr.match(/^([!|！|\/|／|\\|＼]+)$/)){
+                myStr=(this.showGraphic)?"<br>":xUI.trTd(myStr);                
                 drawForm = "shake";
                 formPostfix +='-cam';
                 formPostfix += (tgtID[0] % 2)? '-odd':'-evn';
@@ -2204,18 +2203,19 @@ xUI.drawSheetCell = function (myElement){
                 }else{
                     formPostfix +='_s';
                 }
-            }
-            else if (myStr.match(/^[▼▽]$/)){
-                myStr=(this.showGraphic)?"<br>":myStr;                
+            } else if (myStr.match(/^[▼▽]$/)){
+                myStr=(this.showGraphic)?"<br>":xUI.trTd(myStr);                
                 drawForm = "sectionOpen";
-           }
-            else if (myStr.match(/^[▲△]$/)){
-                myStr=(this.showGraphic)?"<br>":myStr;                
+            } else if (myStr.match(/^[▲△]$/)){
+                myStr=(this.showGraphic)?"<br>":xUI.trTd(myStr);                
                 drawForm = "sectionClose";
-           }
+            } else {
+                myStr = xUI.trTd(myStr);
+            }
           break;
           case "effect":;
           case "sfx":;
+if(myStr.match(/^</)) console.log(myStr);
             var drawForms ={"▲":"fi","▼":"fo","]><[":"transition"};//この配分は仮ルーチン  良くない
             if (myStr.match(/^[\|｜↑↓\*＊]$/)){
                 if(this.hideSource) myStr="<br>";                
@@ -2225,8 +2225,10 @@ xUI.drawSheetCell = function (myElement){
                 if(this.hideSource) myStr="<br>";                
             } else if (myStr.match(/^\]([^\]]+)\[$/)){
                 if(this.hideSource) myStr="<br>";
+            } else {
+                myStr = xUI.trTd(myStr);
             }
-console.log(mySection);
+if(! mySection) console.log(myElement);
             if((mySection.startOffset()+mySection.duration-1) == tgtID[0]){
                 var formStr = myXps.xpsTracks[tgtID[1]][mySection.startOffset()];
                 drawForm = drawForms[formStr];
@@ -2267,9 +2269,6 @@ if(typeof myID == "undefined"){return false;}
             xUI.referenceXPS.xpsTracks[myID[1]][myID[2]]:
             xUI.XPS.xpsTracks[myID[0]][myID[1]];
     }
-if(false){
-    var result=String(target).replace( />/ig, "&gt;").replace(/</ig,"&lt;");//<>
-}else{
 /** HTML表示用に実体参照に置換
 */
   var str = String(target);//明示的に文字列化
@@ -2291,7 +2290,7 @@ if(false){
     }
       result += cstr;
   }
-}
+
 //    if(this.Select[0]>0 && this.Select[0]<(this.SheetWidth-1)) target=target.toString().replace(/[\|｜]/ig,'|<br>');
 //    if(target.match(/^[:：]$/)) return ':<br>';//波線
 //    if(target.match(/[-_─━~]{2,}?/)) return "<hr>";//
@@ -3244,64 +3243,64 @@ BODY_ +='</td>';
 */
     var outputColumus=(pageNumber<-2)?xUI.dialogSpan-1:this.XPS.xpsTracks.length-2;
 for (var r=0;r<=outputColumus;r++){
-    if((r==0)||(this.XPS.xpsTracks[r].option=="dialog"))    {
+    if((r==0)||(this.XPS.xpsTracks[r].option=="dialog")){
 //ダイアログセル
-BODY_ +='<td ';
+        BODY_ +='<td ';
 //    if ((current_frame != null)&&(current_frame < this.XPS.duration())){}
-    if (! isBlankLine){
-BODY_ += 'id="';
-BODY_ +=r.toString()+'_'+ current_frame.toString();
-BODY_ +='" ';
+        if (! isBlankLine){
+            BODY_ += 'id="';
+            BODY_ +=r.toString()+'_'+ current_frame.toString();
+            BODY_ +='" ';
 //BODY_ +='onclick="return xUI.Mouse(event)" ';
-    };
-BODY_ +='class="';
-BODY_ += dL_border+cellClassExtention;
-BODY_ +=' soundbody" ';
-BODY_ +='"';
-BODY_ +='>';
+        };
+            BODY_ +='class="';
+            BODY_ += dL_border+cellClassExtention;
+            BODY_ +=' soundbody" ';
+            BODY_ +='"';
+            BODY_ +='>';
 //        if((current_frame==null)||(current_frame>=this.XPS.duration()))
         if (isBlankLine){
-    BODY_+="<br>";
+            BODY_+="<br>";
         }else{
-    this.Select=[0,current_frame];
+            this.Select=[0,current_frame];
 
 
-    if (this.XPS.xpsTracks[r][current_frame]!=""){
-        BODY_+=this.trTd([r,current_frame]);
+            if (this.XPS.xpsTracks[r][current_frame]!=""){
+                BODY_+=this.trTd([r,current_frame]);
 //        BODY_+=this.trTd(this.XPS.xpsTracks[r][current_frame]);
-    }else{
+            }else{
         BODY_ += '<BR>';
-    }    };
-
-BODY_ +='</td>';
+            }
+        };
+        BODY_ +='</td>';
     }else{
 //シートセル
 //極力インラインスタイルシートを書かないように心がける 05'2/25
-BODY_ +='<td ';
+    BODY_ +='<td ';
 //    if ((current_frame != null)&&(current_frame < this.XPS.duration())){}
     if (! isBlankLine){
-BODY_ += 'id="';
-BODY_ +=r.toString()+'_'+ current_frame.toString();
-BODY_ +='" ';
+        BODY_ += 'id="';
+        BODY_ +=r.toString()+'_'+ current_frame.toString();
+        BODY_ +='" ';
 //BODY_ +='onclick="xUI.Mouse(event)" ';
     };
-BODY_ +='class="';
-BODY_ +=sC_border+cellClassExtention +'"';
-BODY_ +='"';
-BODY_ +='>';
+    BODY_ +='class="';
+    BODY_ +=sC_border+cellClassExtention +'"';
+    BODY_ +='"';
+    BODY_ +='>';
 //        if((current_frame==null)||(current_frame>=this.XPS.duration())){}
-        if (isBlankLine){
-    BODY_+="<br>";
-        }else{
-    this.Select=[r,current_frame];
-    if ( this.XPS.xpsTracks[r][current_frame]!=""){
-        BODY_+=this.trTd([r,current_frame]);
-//        BODY_ += this.trTd(this.XPS.xpsTracks[r][current_frame]);
+    if (isBlankLine){
+        BODY_+="<br>";
     }else{
-        BODY_+='<br>';
-    };
+        this.Select=[r,current_frame];
+        if ( this.XPS.xpsTracks[r][current_frame]!=""){
+            BODY_+=this.trTd([r,current_frame]);
+//        BODY_ += this.trTd(this.XPS.xpsTracks[r][current_frame]);
+        }else{
+            BODY_+='<br>';
         };
-BODY_ +='</td>';
+    };
+    BODY_ +='</td>';
 
     };
 }
@@ -4258,7 +4257,6 @@ if((r>=0)&&(r<targetXps.xpsTracks.length)&&(f>=0)&&(f<targetXps.xpsTracks.durati
 
 //シートデータを判別してGraphicシンボル置き換えを判定（単純置き換え）
 //        配置データが未設定ならば<br>に置き換え
-//            var td=(this.XPS.xpsTracks[r][f]=='')?"<br>" : this.trTd(this.XPS.xpsTracks[r][f]) ;
             var sheetCell=(isReference)? document.getElementById(["r",r,f].join("_")):document.getElementById([r,f].join("_"));
             if(sheetCell instanceof HTMLTableCellElement){
                 if(document.getElementById(sheetCell.id)){xUI.Cgl.remove(sheetCell.id);}
@@ -8318,10 +8316,11 @@ function syncInput(entry)
 	if((xUI.noSync)||(xUI.viewOnly)) return;
 //カーソル入力同期
 //		表示更新
-	if (document.getElementById("iNputbOx").value!=entry)
-	document.getElementById("iNputbOx").value=entry;
-	if (document.getElementById(xUI.Select[0]+"_"+xUI.Select[1]).innerHTML!=entry)
-		document.getElementById(xUI.Select[0]+"_"+xUI.Select[1]).innerHTML=(entry=="")?"<br>":entry;
+	if (document.getElementById("iNputbOx").value != entry)
+	document.getElementById("iNputbOx").value = entry;
+	var htmlEntry = xUI.trTd(entry);
+	if (document.getElementById(xUI.Select[0]+"_"+xUI.Select[1]).innerHTML!= htmlEntry)
+		document.getElementById(xUI.Select[0]+"_"+xUI.Select[1]).innerHTML=(entry=="")?"<br>":htmlEntry;
 	var paintColor=(xUI.eXMode>=2)?xUI.inputModeColor.EXTENDeddt:xUI.inputModeColor.NORMALeddt;
 	if (! xUI.edchg) paintColor=xUI.selectedColor;
 	if (document.getElementById(xUI.Select[0]+"_"+xUI.Select[1]).style.backgroundColor!=paintColor)
@@ -11844,11 +11843,12 @@ SoundEdit.sync = function(force){
         (propCount != this.props.length)||
         (noteCount != this.notes.length)){this.panelInit();}
     
-    targetTrack.sections.manipulateSection(
+    var myContent = targetTrack.sections.manipulateSection(
         xUI.floatSectionId,
         nas.FCT2Frm(document.getElementById('soundInPoint').value),
         nas.FCT2Frm(document.getElementById('soundDuration').value)-1
     );
+    xUI.floatSectionId = xUI.XPS.xpsTracks[xUI.Select[0]].getSectionByFrame(myContent[1]).id();
     xUI.sectionUpdate();
 }
 /**

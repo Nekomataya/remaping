@@ -283,7 +283,7 @@ ____________________________________________
     composite
     effect      :composite   :nas.AnimationComposite('normal') normal composit 100%   ノーマルコンポジット100%
 	xps			:xps         :nas.XpsAgent(null)	タイムシートデータへのパス
-	text		:text        :nas.AnimationDescription("") ヌルストリング
+	text		:text        :nas.StoryboardDescription("") ヌルストリング
 	system		:system      :nas.AnimationReplacement("") ヌルストリング
 
 	グループに対する標準でない（pmdbの記載と異なる）デフォルト値が指定された場合は、
@@ -391,7 +391,7 @@ xMap.getDefaultContent=function(targetGroup,contentString){
 	break;
 	case	'text':
 	default:
-		result= new nas.AnimationDescription(targetGroup,contentString);
+		result= new nas.StoryboardDescription(targetGroup,contentString);
 	}
 	return result;
 }
@@ -453,7 +453,7 @@ console.log(myOption);
 /*
 	default params
 	xps     :xpsAgent       :Xpsの参照先パスを保持して  カット番号、時間等を返すエージェント
-	text    :AnimationDescription  :
+	text    :StoryboardDescription  :
     system  :
         
     エレメントの作成には必ずこのルーチンを通してエレメントストアの管理を行うこと
@@ -469,7 +469,7 @@ console.log(myOption);
 			newElement.content=new nas.XpsAgent(newElement,contentSource);
 		break;
 		case "text":
-			newElement.content=new nas.AnimationDescription(newElement,contentSource);
+			newElement.content=new nas.StoryboardDescription(newElement,contentSource);
 		break;
 		case "system":
 	        newElement.content=new nas.AnimationReplacement(newElement,contentSource);

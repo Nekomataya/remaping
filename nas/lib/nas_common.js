@@ -2073,7 +2073,7 @@ B	B-1	"c:\\\\Users\\Me\\Desktop\\Datas\\B_00001.png",640pt,480pt,
 	区間の値としてのオブジェクトとxMapElementの値を同一オブジェクトとする
 
 	作成するオブジェクトのリスト＞＞トラックの種類だけ必要
-nas.AnimationDescription    単記述オブジェクト　下記を含むマルチパーパスオブジェクト
+nas.CameraworkDescription   単記述オブジェクト　下記を含むマルチパーパスオブジェクト
 nas.AnimationSound	        音響
 nas.AnimationReaplacement   置きかえ（画像ーセル＊静止画と動画を双方含む）
 nas.AnimationGeometry	    ジオメトリ（カメララーク）
@@ -4496,11 +4496,11 @@ myDescription      主記述・シートに記述する基本的なテキスト
     特殊記述は内容で判別
 
     ブランク記述 カラセルを表す予約語
-        配列BlankSignsに登録された文字列が単独で記述されたもの
+        配列nas.CellDescription.blankSignsに登録された文字列が単独で記述されたもの
     中間値補間記述  補間（動画）記号用予約語
-        配列InterpolationSignsに登録された文字列が単独で記述されたもの
+        配列nas.CellDescription.interpolationSignsに登録された文字列が単独で記述されたもの
     省略記述 記述されたセルが直前のセルの値を継承する事を示す予約語
-        配列EllipsisSignsに登録された文字列で始まる記述、空文字列及び空白文字
+        配列nas.CellDescription.ellipsisSignsに登録された文字列で始まる記述、空文字列及び空白文字
 
     一般記述  上記の特殊記述以外の記述        
         記述が値を持つ場合は、システム上関連付けられた値を示す。
@@ -4549,6 +4549,43 @@ nas.CellDescription=function(cellDescription,cellPrefix){
   }
   
 }
+/*
+ *セル記述クラスにクラスプロパティ（マスターデータ）としてとして
+ *カラセル記号と省略記号等のデータをアタッチする
+ */
+/*    EllipsisSign
+ *    省略記号
+ *　replacement トラックのみで使用される記述省略記号
+ *　これらの記号はすべてセルの値が「未入力」として扱われる
+ *　（タイムライントラックでは、未入力セルが記述省略＝最終記入値の複製であるため）
+ */
+nas.CellDescription.ellipsisSigns   = ["\|",":",";","｜","：","；","‖","↓","↑","⇓","⇑"];
+nas.CellDescription.ellipsisRegex   = new RegExp("^["+nas.CellDescription.ellipsisSigns.join("")+"]$");
+/*    blankSign
+ *    カラセル記号
+ *　replacement トラックのみで使用されるカラセル記号
+ *　これらの記号はすべてセルの値が「カラ(blank-cell)」として扱われる
+ *　セクションパースの際にdissAppearance区間の開始を導く
+ */
+nas.CellDescription.blankSigns		= ["×","0","X","x","✕","〆","✖","☓","✗","✘"];
+nas.CellDescription.blankRegex      = new RegExp("^["+nas.CellDescription.blankSigns.join("")+"]$");
+/*    interpolationSign
+ *    中間値生成記号
+ *　replacement トラックのみで使用される中間補完値生成記号
+ *　これらの記号はすべてセルの値が「未生成のセル画像」として扱われる
+ *　セクションパースの際に中間値補完区間の開始を導く
+ *			//中間値生成予約（中割・動画）記号
+ *			//前後に他の文字列データを含まない場合のみ機能を果たす
+ *			//この他に<.+>も補間記号として働く
+ *		    //	詳細別紙
+ */
+nas.CellDescription.interpolationSigns  = ["-","=","\*","·","・","○","●","▫","▪","▴","▵","▾","▿","◈","◉","◦","◦"];
+nas.CellDescription.interpRegex         = new RegExp("^["+nas.CellDescription.interpolationSigns.join("")+"]$");
+
+/**
+    
+ */
+
 /* TEST
 console.log(new nas.CellDescription())     ;//
 console.log(new nas.CellDescription(["A","12","修","triangle"]))     ;//triangle|修 |A|12
@@ -4600,6 +4637,9 @@ nas.CellDescription.prototype.toString=function(type){
     var myResult = "";
     var brackets=([["",""],["(",")"],["<",">"],["[","]"]])[["none","circle","triangle","brackets"].indexOf(this.modifier)];
     switch(type){
+    case "body":
+        myResult =[brackets[0],this.body,brackets[1]].join("");
+    break;
     case "complete":
         myResult = [
           this.prefix,
@@ -4803,13 +4843,6 @@ console.log(A)
 "interpolation" 中間値補間記号
 */
 nas.CellDescription.type=function(desc,lbl,targetMap){
-     if(typeof interpRegex == "undefined")
-        interpRegex = new RegExp("^["+InterpolationSigns.join("")+"]$");
- 	 if(typeof blankRegex == "undefined")
- 		blankRegex = new RegExp("^["+BlankSigns.join("")+"]$");
- 	 if(typeof ellipsisRegex == "undefined")
- 		ellipsisRegex = new RegExp("^["+EllipsisSigns.join("")+"]$");
-
     if(desc instanceof nas.CellDescription){
         var label       = desc.prefix;
         var description = desc.body;
@@ -4829,13 +4862,13 @@ if(targetMap){
 }else{
  	if (
  	     (description.match(/^\s*$/)) ||
- 	     (description.match(ellipsisRegex))
+ 	     (description.match(nas.CellDescription.ellipsisRegex))
  	){
  	   type="inherit";//空白,ヌルストリングまたは明示された継承記述
- 	} else if (description.match(interpRegex)){
+ 	} else if (description.match(nas.CellDescription.interpRegex)){
  	   type="interpolation";//中間値補間記号
 
- 	} else if (description.match(blankRegex)) {
+ 	} else if (description.match(nas.CellDescription.blankRegex)) {
  	   type="blank";//カラセル
  	}
 }
@@ -4858,6 +4891,303 @@ if(targetMap){
 nas.CellDescription.parse=function(desc,lbl){
     return new nas.CellDescription(desc,lbl);
 }
+
+/*
+このシステムでは、キーフレームの概念を使用しない
+
+それにかわる「セクション」の概念で処理が行われる。
+
+    セクション
+
+タイムライントラックはセクションによって分割される
+
+セクションは、値を持つ「有値セクション」及び　有値セクション同士の間をつなぐ「中間値補完セクション」に分類される。
+
+中間値補完セクション自身は値を持たず、前方に位置する有値セクションに付属して後方のセクションへの中間値を導く役割をはたす。
+
+中間値補完セクションは、更にその区間内に更にサブセクションを持つ。
+
+有値セクションは、セクションの値として各タイムライントラックの種別ごとに固有のオブジェクトを値として持つ
+
+有値セクションの継続長が１フレームだけの場合、一般的なコンポジットソフトで実装されるキーフレームと同様のふるまいをするので相互の変換は可能である
+*/
+
+
+
+
+/*  
+    中間値補完セクション開始記述
+
+システムにより予め定義されたセクションの値を発生する記述及びタイムシートにリンクされたxMapデータ内で定義される記述以外の記述は、全て中間値発生シンボルとして機能する。
+すなわち「タイムシートになにか書いてあるフレームは基本的に何らかの値を持つフレームとなる。」
+
+
+未記入、空白の記述は、セクションを維持する
+中間値発生記述は、有値区間を終了させて中間値補完区間を開始する
+中間値補完区間内では、中間値発生記述は先行するサブセクション終了して次のサブセクションを開始する
+値指定記述、または中間値終了シンボルが記述された場合、中間値補完区間が終了して値区間が開始される
+中間値終了シンボルで中間値補完区間が終了した場合　後続区間の値は保留される
+遅延解決が行われるまでは後続区間は中間値補完区間に先行する値区間の値をもっているものと解釈される
+
+遅延解決が行われた場合、その区間の値は新しく記述されたものとなる
+
+
+グラフィックシンボル発生記述　画面表示のレイヤーで解釈されるシンボル発生記述を設ける
+
+シンボルが、演出上の仮想のカメラに対するものかまたはステージ上のオペレーションに対するものかを識別する情報が必要
+ただし（本来必須だが、これを曖昧にしたまま使用するユーザが多いので厳密にすると動作に以上をきたす可能性が高いため）必須ではない
+
+    imaginalyCamera 想定カメラ
+演出上の想定キャメラを指す
+ステージ上の素材収録用のカメラ及びクリッピング情報でなく、演出的に想定されるカメラに対する指示指定類にはこのフラグが付与される
+FI,FO,PAN,TILT,TrackIn等のカメラワークはこれを含むことが可能
+slide,
+
+
+*/
+/**
+
+例：
+var A = new nas.CameraworkDescription()
+
+*/
+
+nas.CameraworkDescription = function(name,type,aliases,nodeSigns,noteText){
+    this.name          = name       ;//識別キーワード
+    this.type          = type       ;//タイプ文字列　simbol,composite,transition,geometry,effect,modefier,zigzag?
+    this.aliases       = aliases    ;//別名配列
+    this.nodeSigns     = nodeSigns ;//[fillSimbol[,OpenNode[,CloseNode]]];//シート表記上の記号
+    this.description   = noteText   ;//オプション　簡易的な説明
+}
+/**
+引数:
+    form 
+*/
+nas.CameraworkDescription.prototype.toString = function (form){
+    var myResult = "";
+    switch(form){
+    case 'full-dump':
+    case 'full':
+    case 'dump':
+        return JSON.stringify([
+            this.name,
+            this.type,
+            this.aliases,
+            this.nodeSigns,
+            this.description
+        ]);
+    break;
+    case    'plain-text':
+    case    'plain':
+    case    'text':
+        var result=[
+            this.name,
+            "\tname:"+this.name,
+            "\ttype:"+JSON.stringify(this.type),
+            "\taliases:"+JSON.stringify(this.aliases),
+            "\tnodeSigns:"+JSON.stringify(this.nodeSigns),
+            "\tdescription:"+this.description
+        ];
+            return result.join('\n');
+    break;
+    case    'JSON':
+        return JSON.stringify(this);
+    break;
+    default:
+        if(this[form]){
+          return this[form]
+        }else{
+            return this.name;
+        }
+    }
+}
+
+/**
+    与えられたキーワードに自身が合致するか否かを返すメソッド
+引数:
+    nameString  必須 キーネーム及び別名を検索して一致した情報があった場合true
+    typeString  オプション　指定がない場合は任意のタイプとマッチ　検索順序は　simbol/composite/geometry/effect
+    imaginary   オプション  指定がない場合はすべての情報を検索
+*/
+nas.CameraworkDescription.prototype.isMatch = function (nameString,typeString){
+    if((typeString)&&(this.type != typeString)) return false;
+    if(nameString == this.name) return true;
+    var myRegex = new RegExp('^' + this.aliases.join("|").replace(/([\]\[\.])/g,'\\$1') +'$','i');
+    if(nameString.match(myRegex)) return true;
+
+    return false;    
+}
+
+/*
+DBで解釈した文字列は
+
+自由文字列の場合は<矢括弧>でシンボル記述とする
+
+FI  ⇒   <FI> ;//コンポジット系
+SL  ⇒   <SL> ;//ステージワーク系
+
+丸かっこをコメントエスケープにするか？
+
+　[start] != (start)
+
+
+nodeSigns配列には、以下の情報が格納される
+
+第一要素    String.fillSimbol   :中間値補完区間を埋めるシンボルの既定値　他の文字列を使用することも可能だが指定のない限りこの文字列を使用する
+第二要素    String.openNode     :中間値補完区間を開くシンボルの既定値　オプション　この文字列が存在しない場合は、第一要素が優先で使用される
+第三要素    String.closeNode    :中間値補完区間を閉じるシンボルの既定値　オプション　この文字列が存在しない場合は、第二要素が使用される
+
+
+カメラワークディスクリプションとしての解決を行う場合
+トランジション系のエフェクトを除いて、値区間単体または先行する値区間と中間値補完区間のセットで解決が行われる
+中間値補完区間に後続する区間は、解決に使用されない。
+*/
+
+/*  参照用カメラワーク記述コレクション
+*/
+nas.cameraworkDescriptions = {
+    members:{}
+};
+nas.cameraworkDescriptions.toString =function(){
+    return JSON.stringify(this.members);
+}
+
+nas.cameraworkDescriptions.add = function(member){
+    if(member instanceof nas.CameraworkDescription){
+        this.members[member.name]=member;//上書き
+        return this.members[member.name];
+    }
+    return false;
+}
+
+/**
+ * 指定された条件のカメラワークオブジェクトを返す
+ * 検索に失敗したらnull
+ */
+nas.cameraworkDescriptions.get = function(keyword,type){
+    for (var prp in this.members){
+        if(this.members[prp].isMatch(keyword,type)) return this.members[prp];
+    }
+    return null;
+}
+
+/**
+ * テキストダンプ
+ * 引数:
+        form ;"JSON"/"palin-text"/"full-dump"
+ */
+nas.cameraworkDescriptions.dump = function(form){
+    switch (form){
+    case "JSON":
+        return JSON.stringify(this.members);
+        break;
+    case "full-dump":
+    case "full":
+    case "dump":
+        var result="";
+            for (var prp in this.members){
+                result += '["'+prp+'",';
+                result += (this.members[prp].dump)? this.members[prp].dump('full') : this.members[prp].toString('full');
+                result += ']\n';
+            }
+        return result;
+        break;
+    case 'plain-text':
+    case 'plain':
+    case 'text':
+    default:
+        var result = new Array;
+            for (var prp in this.members){
+                result.push((this.members[prp].dump)? this.members[prp].dump(form) : this.members[prp].toString(form));
+            }
+        return result.join((form)? '\n':',');
+    }
+}
+/*設定パーサ
+*/
+nas.cameraworkDescriptions.parseConfig = function(dataStream,form){
+    if(! dataStream) return false;
+    var myMembers ={};
+    // 形式が指定されない場合は、第一有効レコードで判定
+    if(! form ){
+        form = 'plain-text';
+        if(dataStream.match(/\{[^\}]+\}/)){
+            form = 'JSON';
+        } else if(dataStream.match(/\[.+\,\[.+\]\]/)){
+            form = 'full-dump';
+        }
+    }
+console.log(form)
+    switch(form){
+    case    'JSON':
+         var tempObjects = JSON.parse(dataStream);
+         for (var prp in tempObjects){
+            myMembers[prp] = new nas.CameraworkDescription(
+                tempObjects[prp].name,
+                tempObjects[prp].type,
+                tempObjects[prp].aliases,
+                tempObjects[prp].nodeSigns,
+                tempObjects[prp].description
+            );
+         }
+    break;
+    case    'full-dump':	
+    case    'full':	
+    case    'dump':	
+        dataStream = String(dataStream).split("\n");
+        for (var rix=0;rix<dataStream.length;rix++){
+        if((dataStream[rix].indexOf('#')==0)||(dataStream[rix].length == 0)) continue;
+            var currentRecord=JSON.parse(dataStream[rix]);
+            var currentMember=new nas.CameraworkDescription(
+                currentRecord[1][0],
+                 currentRecord[1][1],
+                 currentRecord[1][2],
+                 currentRecord[1][3],
+                 currentRecord[1][4]
+            );
+            if (currentMember) myMembers[currentRecord[0]]=currentMember;
+        }
+    break;
+    case    'plain-text':
+    case    'plain':
+    case    'text':
+    default:
+        dataStream = String(dataStream).split("\n");
+      var currentMember=false;
+      for (var rix=0;rix<dataStream.length;rix++) {
+        if((dataStream[rix].indexOf('#')==0)||(dataStream[rix].length == 0)) continue;
+        var currentField=dataStream[rix];
+        if((currentMember)&&(currentField.match( /^\t([a-z]+)\:(.+)$/i ))){
+            if((RegExp.$1=='aliases')||(RegExp.$1=='nodeSigns')){
+                currentMember[RegExp.$1]=JSON.parse(RegExp.$2);
+            }else{
+        	    currentMember[RegExp.$1]=RegExp.$2;//追加プロパティ用
+        	}
+        } else if(currentField.match( /^\S+$/i )) {
+        	myMembers[currentField] = new nas.CameraworkDescription(currentField,"simbol",[],[],"");
+            currentMember=myMembers[currentField];
+        }
+      }
+    }
+    this.members = myMembers;
+    return this.members;
+}
+
+/* test
+var A = new nas.CameraworkDescription(
+    "fadeIn",
+    "composite",
+    ["FI","F.I","フェード・イン","フェードイン","fade-in","▲","溶明"],
+    ["|","▲"],
+    "暗転状態から徐々に明るくなる演出手法"
+)
+nas.cameraworkDescriptions.add(A);
+nas.cameraworkDescriptions.dump();
+
+JSON.Stringify(nas.cameraworkDescriptions.members);
+
+
+*/
 
 /** nas.ItemList Object
 拡張した配列
