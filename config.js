@@ -139,8 +139,9 @@
 	SheetCellWidth	    =42; //通常のセルの表示幅
 	SheetCellNarrow	    =4;  //折りたたみ時のセルの表示幅
 	StillCellWidth	    =12; //静止画欄の幅
+    GeometryCellWidth   =52; //ジオメトリトラック幅
 	SfxCellWidth	    =46; //効果指定欄の幅
-	CameraCellWidth     =52; //カメラワーク指定欄の幅
+	CameraCellWidth     =72; //カメラワーク指定欄の幅
 	CommentWidth        =120;//コメント欄の幅
 	ColumnSeparatorWidth=4;　//カラムセパレータの幅
 */
@@ -165,8 +166,9 @@ SheetLooks = {
 	SheetCellWidth	    :42,
 	SheetCellNarrow	    :4,
 	StillCellWidth	    :12,
+    GeometryCellWidth   :52,
 	SfxCellWidth	    :46,
-	CameraCellWidth     :52,
+	CameraCellWidth     :72,
 	CommentWidth        :120,
 	ColumnSeparatorWidth:4
 };

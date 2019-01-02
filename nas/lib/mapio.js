@@ -1530,7 +1530,8 @@ function dataCheck(str, label, bflag) {
      * ブランクキーワードならば、ブランクを返す。
      * @type {RegExp}
      */
-    var blankRegex = new RegExp("^(" + label + ")?\[?[\-_\]?[(\<]?\s?[ｘＸxX×〆0０]{1}\s?[\)\>]?\]?$");
+//    var blankRegex = new RegExp("^(" + label + ")?\[?[\-_\]?[(\<]?\s?[ｘＸxX×〆0０]{1}\s?[\)\>]?\]?$");
+    var blankRegex = nas.CellDescription.blankRegex;
     if (str.toString().match(blankRegex)) {
         if (bflag) {
             return "blank"
@@ -1542,7 +1543,8 @@ function dataCheck(str, label, bflag) {
      * 中間値生成記号の場合"interp"を返す.
      * @type {RegExp}
      */
-    var interpRegex = new RegExp("^[\-\+=○●*・]$");
+//    var interpRegex = new RegExp("^[\-\+=○●*・]$");
+    var interpRegex = nas.CellDescription.interpRegex;
     if (str.toString().match(interpRegex)) {
         return "interp"
     }

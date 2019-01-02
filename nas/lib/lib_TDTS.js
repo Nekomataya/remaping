@@ -344,82 +344,82 @@ CAMERAWORK_ITME={"29":"BL K",
 ,"",""]
 
 0:TDTS/XDTS アイテム文字列
-1:トラック種別　e:effect, g:geometry
+1:トラック種別　c: camerawork, e:effect, g:geometry
 2:UAT置き換え対照配列　[区間文字列,開始ノード,終端ノード]
 */
 TDTS.SectionItemTable = {
- 0: ["FI","e",["|","▲"]],
- 1: ["FO","e",["|","▼"]],
- 2: ["WI","e",["|","△"]],
- 3: ["WO","e",["|","▽"]],
- 4: ["OL","e",["|","]X["]],
- 5: ["CAM SHAKE S","g",["/"]],
- 6: ["CAM SHAKE M","g",["//"]],
- 7: ["CAM SHAKE L","g",["///"]],
- 8: ["TU","g",["|","▽","△"]],
- 9: ["TB","g",["|","▽","△"]],
- 10: ["ZI","g",["|","▽","△"]],
- 11: ["ZO","g",["|","▽","△"]],
- 12: ["PAN","g",["|","▽","△"]],
- 13: ["PAN UP","g",["|","▽","△"]],
- 14: ["PAN DOWN","g",["|","▽","△"]],
- 15: ["TILT","g",["|","▽","△"]],
- 16: ["FOLLOW","g",["|","▽","△"]],
- 17: ["CU","g",["|","▽","△"]],
- 18: ["CD","e",["|","▽","△"]],
- 19: ["DOLLY","g",["|","▽","△"]],
- 20: ["MULTI","g",["|","▽","△"]],
- 21: ["Fairing","e",["//"]],
- 22: ["SL","g",["|","▽","△"]],
- 23: ["Strobo","e",["|","]S["]],
- 24: ["Rotate TU","g",["|","▽","△"]],
- 25: ["Rotate TB","g",["|","▽","△"]],
- 26: ["Handy S","g",["/"]],
- 27: ["Handy M","g",["//"]],
- 28: ["Handy L","g",["///"]],
- 29: ["BL K","e",["■"]],
- 30: ["W K","e",["□"]],
- 31: ["SUBLINA","e",["□"]],
- 32: ["TFlash","e",["|"]],
- 33: ["HI CON","e",["|","▽","△"]],
- 34: ["Rack Focus","e",["|","▽","△"]],
- 35: ["OverEX","e",["|","▽","△"]],
- 36: ["UnderEX","e",["|","▽","△"]],
- 37: ["ParsSL","e",["|","▽","△"]],
- 38: ["JumpSL","g",["|","▽","△"]],
- 39: ["DF1","e",["|","▽","△"]],
- 40: ["DF2","e",["|","▽","△"]],
- 41: ["DF3","e",["|","▽","△"]],
- 42: ["Fog1","e",["|","▽","△"]],
- 43: ["Fog2","e",["|","▽","△"]],
- 44: ["Fog3","e",["|","▽","△"]],
- 45: ["BOKEH S","e",["|","<*>","△"]],
- 46: ["BOKEH M","e",["|","<*>","△"]],
- 47: ["BOKEH L","e",["|","<*>","△"]],
- 48: ["FIX","g",["|","[*]"]],
- 49: ["PAN TU","g",["|","▽","△"]],
- 50: ["PAN TB","g",["|","▽","△"]],
- 51: ["FollowPan","g",["|","▽","△"]],
- 52: ["Rolling","g",["|","▽","△"]],
- 53: ["Q TU","g",["|","▽","△"]],
- 54: ["Q TB","g",["|","▽","△"]],
- 55: ["Focus IN","e",["|","△","△"]],
- 56: ["Focus Out","e",["|","▽","▽"]],
- 57: ["WaveGlass S","e",["|","▽","▽"]],
- 58: ["WaveGlass M","e",["|","▽","▽"]],
- 59: ["WaveGlass L","e",["|","▽","▽"]],
- 60: ["Wipe","e",["|","]wipe["]],
- 61: ["IrisIN","e",["|","▲"]],
- 62: ["IrisOut","e",["|","▼"]],
- 63: ["Insert","e",["＜"]],
- 64: ["CutIN","e",["|","▽","△"]],
- 65: ["Blur1","e",["|","▽","△"]],
- 66: ["Blur2","e",["|","▽","△"]],
- 67: ["Blur3","e",["|","▽","△"]],
- 68: ["WipeIN","e",["|","▽","△"]],
- 69: ["Bar","e",["‖"]],
- 70: ["Strobo1","e",["|","▽","△"]],
- 71: ["Strobo2","e",["|","▽","△"]]
+ 0: ["FI","c",["|","▲"]],
+ 1: ["FO","c",["|","▼"]],
+ 2: ["WI","c",["|","△"]],
+ 3: ["WO","c",["|","▽"]],
+ 4: ["OL","c",["|","]OL["]],
+ 5: ["CAM SHAKE S","c",["/"]],
+ 6: ["CAM SHAKE M","c",["//"]],
+ 7: ["CAM SHAKE L","c",["///"]],
+ 8: ["TU","c",["|","▽","△"]],
+ 9: ["TB","c",["|","▽","△"]],
+ 10: ["ZI","c",["|","▽","△"]],
+ 11: ["ZO","c",["|","▽","△"]],
+ 12: ["PAN","c",["|","▽","△"]],
+ 13: ["PAN UP","c",["|","▽","△"]],
+ 14: ["PAN DOWN","c",["|","▽","△"]],
+ 15: ["TILT","c",["|","▽","△"]],
+ 16: ["FOLLOW","c",["┃","┳","┻"]],
+ 17: ["CU","c",["┃","┳","┻"]],
+ 18: ["CD","c",["｜","┬","┴"]],
+ 19: ["DOLLY","c",["｜","┬","┴"]],
+ 20: ["MULTI","c",["｜","┬","┴"]],
+ 21: ["Fairing","c",["｜","⇑","⇓"]],
+ 22: ["SL","c",["|","▽","△"]],
+ 23: ["Strobo","c",["|","]STROBO["]],
+ 24: ["Rotate TU","c",["|","▽","△"]],
+ 25: ["Rotate TB","c",["|","▽","△"]],
+ 26: ["Handy S","c",[":"]],
+ 27: ["Handy M","c",["::"]],
+ 28: ["Handy L","c",[":::"]],
+ 29: ["BL K","c",["■"]],
+ 30: ["W K","c",["□"]],
+ 31: ["SUBLINA","c",["＜SUBLINA"]],
+ 32: ["TFlash","c",["|","┬","┴"]],
+ 33: ["HI CON","c",["|","┬","┴"]],
+ 34: ["Rack Focus","c",["|","┬","┴"]],
+ 35: ["OverEX","c",["｜","┬","┴"]],
+ 36: ["UnderEX","c",["｜","┬","┴"]],
+ 37: ["ParsSL","c",["┃","┳","┻"]],
+ 38: ["JumpSL","c",["｜","┬","┴"]],
+ 39: ["DF1","c",["｜","┬","┴"]],
+ 40: ["DF2","c",["｜","┬","┴"]],
+ 41: ["DF3","c",["｜","┬","┴"]],
+ 42: ["Fog1","c",["｜","┬","┴"]],
+ 43: ["Fog2","c",["｜","┬","┴"]],
+ 44: ["Fog3","c",["｜","┬","┴"]],
+ 45: ["BOKEH S","c",["｜","┬","┴"]],
+ 46: ["BOKEH M","c",["｜","┬","┴"]],
+ 47: ["BOKEH L","c",["｜","┬","┴"]],
+ 48: ["FIX","c",["｜","┬","┴"]],
+ 49: ["PAN TU","c",["|","▽","△"]],
+ 50: ["PAN TB","c",["|","▽","△"]],
+ 51: ["FollowPan","c",["|","▽","△"]],
+ 52: ["Rolling","c",["｜","┬","┴"]],
+ 53: ["Q TU","c",["|","▽","△"]],
+ 54: ["Q TB","c",["|","▽","△"]],
+ 55: ["Focus IN","c",["|","▲"]],
+ 56: ["Focus Out","c",["|","▼"]],
+ 57: ["WaveGlass S","c",["!"]],
+ 58: ["WaveGlass M","c",["!!"]],
+ 59: ["WaveGlass L","c",["!!!"]],
+ 60: ["Wipe","c",["|","]WIPE["]],
+ 61: ["IrisIN","c",["|","]○["]],
+ 62: ["IrisOut","c",["|","]●["]],
+ 63: ["Insert","c",["＜INSERT"]],
+ 64: ["CutIN","c",["＜CUTIN"]],
+ 65: ["Blur1","c",["┃","┳","┻"]],
+ 66: ["Blur2","c",["┃","┳","┻"]],
+ 67: ["Blur3","c",["┃","┳","┻"]],
+ 68: ["WipeIN","c",["|","]▲["]],
+ 69: ["Bar","c",["‖"]],
+ 70: ["Strobo1","c",["|","▼▲"]],
+ 71: ["Strobo2","c",["|","▲▼"]]
  };
  TDTS.SectionItemTable.length = 72;
  TDTS.SectionItemTable.indexOf = function(item){
@@ -618,23 +618,23 @@ console.log(([myEntry.data[0].values[0],"「",myEntry.data[0].values[1],"」"]).
 							if(itmid >= 0){
 								var currentWork = TDTS.SectionItemTable[itmid];
 							}else {
-								var currentWork = [inputStream,"e",["┃","["+inputStream+"]","┻"]];
+								var currentWork = [inputStream,"c",["┃","┳","┻"]];//カメラワークに限定
 							}
 								var sectionStream=[];
+								var sectionSign = (currentWork[2].length > 2)?currentWork[2][1]:inputStream;
+								//if(sectionSign.indexOf('*')>=0)	sectionSign = sectionSign.replace(/\*/,currentWork[0]);
 								for (var ct = 0 ; ct < sectionLength ; ct ++){
 									if((currentWork[2].length > 1)&&(ct == 0)){
-										var sectionSign = currentWork[2][1];
-										if(sectionSign.indexOf('*')>=0){
-											sectionSign = sectionSign.replace(/\*/,currentWork[0]);
-										}
-										sectionStream.push(sectionSign);
+										sectionStream.push(currentWork[2][1]);
 									}else if(ct == (sectionLength-1)){
 										sectionStream.push(currentWork[2][currentWork[2].length-1]);
 									}else{
 										sectionStream.push(currentWork[2][0]);
 									}
 								}
+								if(currentWork[2].length > 1) sectionStream.splice((Math.floor((sectionStream.length-1)/2)),1,"<"+currentWork[0]+">");
 //							if((currentWork[1]=='e')) {myXps.xpsTracks[trackId].option = 'effect';}	
+//							if((currentWork[1]=='g')) {myXps.xpsTracks[trackId].option = 'geometry';}	
 								myXps.put([trackId,sectionStart],sectionStream.join(','));
 								inputStream = '';
 							}
@@ -645,10 +645,12 @@ console.log(myEntry);
 							inputStream = myEntry.data[0].values[0];
 							if(targetFrame == 0){
 								if(inputStream.match(/^\d+$/)){
-									if((TDTS.SectionItemTable[inputStream])&&(TDTS.SectionItemTable[inputStream][1]=='e')) myXps.xpsTracks[trackId].option = 'effect';
+									if((TDTS.SectionItemTable[inputStream])&&(TDTS.SectionItemTable[inputStream][1]=='e')) myXps.xpsTracks[trackId].option = 'composite';
+									if((TDTS.SectionItemTable[inputStream])&&(TDTS.SectionItemTable[inputStream][1]=='g')) myXps.xpsTracks[trackId].option = 'geomtry';
 								}else{
 									var itmId = TDTS.SectionItemTable.indexOf(inputStream);
 									if ((itmid >= 0)&&(TDTS.SectionItemTable[itmid][1]=='e')) myXps.xpsTracks[trackId].option = 'effect';
+									if ((itmid >= 0)&&(TDTS.SectionItemTable[itmid][1]=='g')) myXps.xpsTracks[trackId].option = 'geometry';
 								}
 								// if(inputStream.match())ここで文字列の場合の判定を入れる
 							}
@@ -661,22 +663,23 @@ console.log(myEntry);
 						var currentWork = TDTS.SectionItemTable[inputStream];
 						if(! currentWork){
 							var itmId=TDTS.SectionItemTable.indexOf(inputStream);
-							currentWork = ( itmId >= 0 )? TDTS.SectionItemTable[itmId]:[inputStream,"e",["┃","["+inputStream+"]","┻"]];
+							currentWork = ( itmId >= 0 )? TDTS.SectionItemTable[itmId]:[inputStream,"e",["┃","┳","┻"]];
+//							currentWork = ( itmId >= 0 )? TDTS.SectionItemTable[itmId]:[inputStream,"e",["┃","<"+inputStream+">","┻"]];
 						}
 						var sectionStream=[];
+						var sectionSign = (currentWork[2].length > 2)?currentWork[2][1]:inputStream;
+						//if(sectionSign.indexOf('*')>=0)	sectionSign = sectionSign.replace(/\*/,currentWork[0]);
 						for (var ct = 0 ; ct < sectionLength ; ct ++){
-							if((currentWork[2].length > 1)&&(ct == 0)){
-								var sectionSign = currentWork[2][1];
-								if(sectionSign.indexOf('*')>=0){
-									sectionSign = sectionSign.replace(/\*/,currentWork[0]);
-								}
-								sectionStream.push(sectionSign);
-							}else if(ct == (sectionLength-1)){
-								sectionStream.push(currentWork[2][currentWork[2].length-1]);
-							}else{
-								sectionStream.push(currentWork[2][0]);
-							}
+									if((currentWork[2].length > 1)&&(ct == 0)){
+										sectionStream.push(currentWork[2][1]);
+									}else if(ct == (sectionLength-1)){
+										sectionStream.push(currentWork[2][currentWork[2].length-1]);
+									}else{
+										sectionStream.push(currentWork[2][0]);
+									}
 						}
+						if(currentWork[2].length > 1) sectionStream.splice((Math.floor((sectionStream.length-1)/2)),1,"<"+currentWork[0]+">");
+
 						myXps.put([trackId,sectionStart],sectionStream.join(','));
 						inputStream = '';
 					}

@@ -151,8 +151,8 @@ XpsStage.prototype.toString=function(){
      
 */
 function XpsLine (lineString){
-    this.id   =　[0];//
-    this.name =　'本線';// 又は'trunk'
+	this.id	=	[0];//
+	this.name ='本線';//又は'trunk'
     if(lineString){
       lineString=String(lineString);
       if(lineString.match(/^[0-9]+$/)){lineString+=':-'}
@@ -772,19 +772,21 @@ function XpsTimelineSectionCollection(myParent) {
 対編集対象トラックを以下の区間に分類して処理を行う
 
     [前方区間外新規セクション]
-特定条件で発生　このエリアが発生した場合は以下の２セクションは消滅
+編集対象が第一区間である場合のみ発生　このエリアが発生した場合は新規セクションが追加され既存区間のIDがインクリメントする
     [前方残置レンジ]
 現行のトラック内容をそのまま引き継ぐ範囲 (0)~(id-2) までのセクションが含まれる可能性がある
     [前方影響セクション]
-ストリームを再取得する必要のあるセクション
+ストリームを再構築する必要のあるセクション　操作オプションとオーダ範囲に寄り対象が変わりる　単一とは限らない
+
     [編集対象セクション]
 フォーカスの存在するセクション
+
     [後方影響セクション]
-ストリームを再取得する必要のあるセクション
+ストリームを再構築する必要のあるセクション　操作オプションとオーダ範囲に寄り対象が変わりる　単一とは限らない
     [後方残置レンジ]
 現行のトラック内容をそのまま引き継ぐ範囲 (id+2)~(sections.length) までのセクションが含まれる可能性がある
     [後方方区間外新規セクション]
-特定条件で発生　このエリアが発生した場合は上の２セクションは消滅
+特定条件で発生　編集対象が最終セクションである場合のみ発生する　既存区間のIDに変更はないが新規セクションが追加される。
 
 編集中に編集対象セクションが入れ替わる現象は、仕様変更により特例処理となるので本メソッド内で処理20181227
 
@@ -796,82 +798,168 @@ function XpsTimelineSectionCollection(myParent) {
     id  編集対象の区間ID
     headOffset  編集対象区間の新規開始点
     tailOffset  開始点からの編集対象区間の終了点オブセット（= duration - 1）
-    transformOption  編集オプション 1~3
+    manipulateOption  編集オプション 整数　"near"/"far"
 */
-    this.manipulateSection = function (id,headOffset,tailOffset) {
+    this.manipulateSection = function (id,headOffset,tailOffset,manipulateOption) {
+
+        if (! manipulateOption)　manipulateOption = "near";
+
+//alert([id,headOffset,tailOffset,manipulateOption]);
+        if(headOffset < 0) headOffset = 0 ;
         var targetSection  = this[id];
         var myResult = [];//Collectionの編集を行わず、直接トラックのセル値を組み上げる=区間のメソッドは最低限で使う
         var startFrame = (tailOffset < 0)? headOffset + tailOffset  : headOffset;//逆転時に頭尾入替
         var endOffset  = Math.abs(tailOffset);
-        if((startFrame - targetSection.headMargin) < 0) startFrame = targetSection.headMargin;
-        if((startFrame + endOffset + targetSection.tailMargin) > (this.duration-1)) endOffset = this.duration - 1 - startFrame - targetSection.tailMargin;
-//予め編集対象のセクションのストリームデータを取得
-        var newContent  = targetSection.getStream (endOffset+1);//UIの指定から算出
-console.log('実効専有領域終端 start:'+(startFrame-targetSection.headMargin)+' length:'+newContent.length);
-        if((startFrame + newContent.length - targetSection.headMargin - targetSection.tailMargin + 1 )>this.parent.length){
-console.log('overflow :' + String(this.parent.length - (startFrame + newContent.length - targetSection.headMargin - targetSection.tailMargin )))
-            startFrame = this.parent.length - (newContent.length - targetSection.headMargin);
-console.log('set startframe : '+ (this.parent.length - (newContent.length - targetSection.headMargin)));
+
+console.log(["startFrame : ",startFrame,"/ endOffset :",endOffset].join(''))
+
+//トラック内のセクション最短継続長を取得       
+/*
+dialog 区間は「コンテンツの文字数」それ以外は 1 にコメント数を加えたもの。
+空白区間の最低長は前後のコンテンツによる。
+＝headMargin tailMarginの被侵入合算サイズ　または　1 コメントは許可されない（コメントのみの区間が発生する）
+
+ユーザ入力を失わないためコメントはフレームを一つ消費する。
+移動時にコメントのフレーム位置は保証されない
+*/
+        var newDurations = 0;
+        var minimumDurations = [];//区間最小値配列
+        var headLimit = 0;
+        var tailLimit = 0;
+        for (var six = 0 ; six < this.length ; six ++){
+            if(this[six].value){
+                var minimumContentLength =((this.parent.option == 'dialog')&&(this[six].value.bodyText))? this[six].value.bodyText.length+this[six].value.comments.length:1;
+            }else{
+                var minimumContentLength = -(this[six].headMargin + this[six].tailMargin);
+            }
+            if ( minimumContentLength < 1) minimumContentLength = 1;
+            minimumDurations.push(minimumContentLength)     ;//最小区間継続長配列
+            if(six < id) headLimit += minimumContentLength  ;//先行区間最小値を集計
+            if(six > id) tailLimit += minimumContentLength  ;//後方区間最小値を集計
+        }
+console.log(minimumDurations);
+console.log(["headLimit:",headLimit," / tailLimit",tailLimit].join(''));
+//指定範囲補正　入力保護のため指定位置の補正を強制的に行う
+        if(startFrame < headLimit){
+            startFrame =  headLimit;
+//            endOffset  -= headLimit;
+        }
+        if((this.parent.length-(startFrame+endOffset)) < tailLimit){
+            startFrame -= tailLimit;
+//            endOffset = this.parent.length - tailLimit - startFrame;
+        }
+console.log(["targetSection.startOffset : ",targetSection.startOffset(),"/ Offset :",targetSection.duration - 1].join(''))
+console.log(["startFrame : ",startFrame,"/ endOffset :",endOffset].join(''))
+//補正確定後に以前の状態と前後位置が等しい場合は処理スキップ
+        if((startFrame==targetSection.startOffset())&&(endOffset==targetSection.duration - 1)) return [this.parent.join(),startFrame];
+        //暫定的に元データで返す 呼び出し側で無変更をトラップするか、または戻り値の判定が必要
+//前方に新規挿入セクションが発生する場合その部分をあらかじめカラ要素で埋めておく
+        if ((id == 0)&&(startFrame > 0)) {
+            myResult = new Array(startFrame);
+console.log('前方処理既存区間なし　空白セルを補充 frames: '+(startFrame-targetSection.headMargin));
         }
 /*　==========================前方区間処理　*/
-//区間外に新規 (空白)区間挿入
-        if((id == 0)&&(startFrame >= targetSection.headMargin)){
-console.log('前方処理区間なし　空白セルを補充 frames: '+(startFrame-targetSection.headMargin));
-            myResult=new Array(startFrame-targetSection.headMargin);
-            //この処置の際idずれる
-        } else if(id > 0){
-//前方影響セクションを特定
-//ターゲットセクションのIN点と開始点を比較して小さい方、その前のフレームを占位するセクション
-            var checkFrame=((startFrame-targetSection.headMargin)<(targetSection.startOffset()-targetSection.headMargin))? startFrame-targetSection.headMargin:targetSection.startOffset()-targetSection.headMargin;
-            var headSection = this.parent.getSectionByFrame(checkFrame-1);
-            if ( headSection ){
-                var headSectionStream = headSection.getStream();
-                var headSectionStartOffset = headSection.startOffset();//セクションIN位置;
-//このケースは基本的に無い…ハズ
-                if (headSectionStartOffset < headSection.headMargin) {
-                    headSectionStream.splice (0,-headSectionStartOffset-headSection.headMargin);
-                    headSectionStartOffset = headSection.headMargin;
+        if((startFrame > 0)&&(id > 0)){
+            var changeLength = startFrame - targetSection.startOffset();
+console.log('前方区間伸縮パラメタ' + changeLength);
+            if(changeLength == 0){
+//変更なし現在のタイムラインをコピー
+                myResult = myResult.concat(this.parent.slice(0,startFrame-targetSection.headMargin));
+console.log('前方区間複製' + myResult.toString());
+            }else{
+                var restMargin = startFrame - headLimit;
+                var newDurations = [];
+                for (var ix = 0 ; ix < id ;ix ++){
+                    var tix = (manipulateOption=='near')? ix : id - ix - 1;
+                    if(changeLength > 0){
+//延長時対象端区間で差分を吸収
+                        if(
+                            ((manipulateOption =='far')  && (tix == 0))||
+                            ((manipulateOption =='near') && (tix == (id-1)))
+                        ){
+                            newDurations.push(this[tix].duration+changeLength);
+                        }else{
+                            newDurations.push(this[tix].duration);
+                        }
+                    }else{        
+//短縮時前方空白区間と最短区間合算を比較して一致するまで区間長をスタックする
+                        if(restMargin == 0){
+                            newDurations.push(minimumDurations[tix]);
+                        }else if((restMargin + minimumDurations[tix]) >= this[tix].duration){
+                            newDurations.push(this[tix].duration);
+                            restMargin -= (this[tix].duration - minimumDurations[tix]);
+                        } else if(restMargin > 0){
+                            newDurations.push(restMargin + minimumDurations[tix]);
+                            restMargin = 0;
+                        }
+                    }
                 }
-//前方セクションが存在してかつその前方にフレームがあれば残置範囲を取得
-//残置範囲があればリザルトに加算
-                if(headSectionStartOffset > headSection.headMargin ) myResult= this.parent.slice(0,headSectionStartOffset-headSection.headMargin);
-//影響セクションの値を追加
-                var newSectionLength = startFrame - headSectionStartOffset ;
-                if(newSectionLength > 0){
-                    headSectionStream = headSection.getStream(newSectionLength);
+                if (manipulateOption == 'far') newDurations.reverse();
+//alert(newDurations.join());
+                for (var ix = 0 ; ix < id ;ix ++){
+                    myResult = myResult.concat(this[ix].getStream(newDurations[ix]));
+                }
+            }
+}
+//==========================ターゲット区間
+    myResult = myResult.concat(targetSection.getStream (endOffset+1));
+//alert(myResult);
+/*==========================後続区間処理　*/
+    var endFrame = startFrame+endOffset;
+if(((endFrame) < (this.parent.length-1))&&(id < (this.length-1))){
+    changeLength = (targetSection.startOffset()+targetSection.duration-1)-(startFrame+endOffset);
+console.log('後続区間伸縮パラメタ' + changeLength);
+    if(changeLength==0){
+//変更なしなので現在のタイムラインをコピーして終了
+        myResult = myResult.concat(this.parent.slice(startFrame+endOffset+1+targetSection.tailMargin));
+console.log('後続区間複製' + this.parent.slice(startFrame+endOffset+1+targetSection.tailMargin));
+    }else{
+//後続空白区間と最短区間合算を比較して一致するまで区間を拡張する
+        var restMargin = this.parent.length - 1 - endFrame - tailLimit;
+        var newDurations = [];
+        for (var ix = id+1 ; ix < this.length ;ix ++){
+            var tix = (manipulateOption=='near')? this.length - (ix-id) : ix;
+            if(changeLength > 0){
+//延長時対象端区間で差分を吸収
+                if(
+                    ((manipulateOption =='far')  && (tix == (this.length-1)))||
+                    ((manipulateOption =='near') && (tix == (id+1)))
+                ){
+                    newDurations.push(this[tix].duration+changeLength);
                 }else{
-                    headSectionStream = [];
+                    newDurations.push(this[tix].duration);
                 }
-console.log('add Stream :' + headSectionStream.toString() +headSectionStream.length)
-                myResult = myResult.concat(headSectionStream);
+            }else{
+//短縮時後続空白区間と最短区間合算を比較して一致するまで区間長をスタックする
+                if(restMargin == 0){
+                    newDurations.push(minimumDurations[tix]);
+                }else if((restMargin + minimumDurations[tix]) >= this[tix].duration){
+                    newDurations.push(this[tix].duration);
+                    restMargin -= (this[tix].duration - minimumDurations[tix]);
+                } else if(restMargin > 0){
+                    newDurations.push(restMargin + minimumDurations[tix]);
+                    restMargin = 0;
+                }
             }
         }
-//ターゲット区間の処理
-//console.log('ターゲット区間処理')
-        myResult=myResult.concat(newContent);
-//ターゲット後方区間を処理
-        var endFrame = startFrame+newContent.length-targetSection.tailMargin;//編集範囲論理的後端
-//後方区間が存在しないケースを検出(終端が編集対象範囲を越える=NOP)
-        if (endFrame < this.parent.length){
-            tailSection = (endFrame > (targetSection.startOffset()+targetSection.duration+targetSection.tailMargin))?
-            this.parent.getSectionByFrame(endFrame+1):this[id+1];
-            if(tailSection) {
-console.log('detect tailSection')
-                var tailSectionStream = tailSection.getStream(tailSection.startOffset() + tailSection.duration - endFrame);
-                myResult = myResult.concat(tailSectionStream);
-                if (tailSection.id() < (this.length-1)){
-console.log('fill current datas to end from frames:'+myResult.length)
-                    myResult = myResult.concat(this.parent.slice(myResult.length));                    
-                }
-            };
+        if (manipulateOption == 'near') newDurations.reverse();
+//alert(newDurations.join());
+        for (var ix = 0 ; ix < newDurations.length ;ix ++){
+            myResult = myResult.concat(this[id+1+ix].getStream(newDurations[ix]));
         }
-console.log('fill empty :' +( this.parent.length-myResult.length));
-console.log([this.parent.length,myResult.length]);
-        if(myResult.length < this.parent.length){
-            myResult = myResult.concat(new Array(this.parent.length-myResult.length));
-        }
-        return [myResult.join(),startFrame];
     }
+}
+//リザルトがトラック長に満たない場合はカラ要素で埋める
+    if(myResult.length < this.parent.length){
+console.log('fill empty :' +( this.parent.length-myResult.length));
+        myResult = myResult.concat(new Array(this.parent.length-myResult.length));
+    }
+//リターン
+console.log([myResult.join(),startFrame]);
+    return [myResult.join(),startFrame];
+}
+
+
 }
 XpsTimelineSectionCollection.prototype = Array.prototype;
 /*
@@ -987,7 +1075,6 @@ function XpsTimelineSection(parent, duration, isInterp) {
     this.duration = duration    ;
     this.headMargin = 0;
     this.tailMargin = 0;
-//    this.content  = cellContent ;//代表コンテンツ及びすべてのセル内容は計算で引き出せるので不要
     if(this.parent instanceof XpsTimelineSection){
         this.mapElement;//this.parent.parent.xParent.parentXps.xMap.getElementByName(this.value.)
         this.value=new nas.ValueInterpolator(this);
@@ -1025,12 +1112,14 @@ XpsTimelineSection.prototype.getContent = function(){
     return timeline.slice(startframe,startframe+this.duration);
 }
 /** 指定の長さに従ってセクションの内容を返す
+指定長が、コンテンツの最小長を割る場合は、value自身が（ユーザ入力を失わないために）指定を無視して最小の長さのストリームを返す。
+そのため　リザルトが引数のと一致しない場合がある
 引数: frameCount
 返値: 配列+offset
 
 セクションがサブセクションを持つ場合は、現在のサブセクションの構造を保って伸縮するように試みる。
 指定された継続長が現在よりも短ければ内容をカット
-長い場合は最後のサブセクションを繰り返す
+長い場合は最初のサブセクションを繰り返す
 */
 XpsTimelineSection.prototype.getStream = function(frameCount){
 console.log(frameCount);
@@ -1039,20 +1128,22 @@ console.log(frameCount);
         if (frameCount < this.dutarion){
             return this.getContent().slice(0,frameCount);
         }else{
-            var newContent = [];
-            var idx = 0;
+            var newContent = this.getContent();//オリジナルを展開
+            var sourceSection = this.subSections[0];
+//            for (var idx = 0;idx< this.subSections.length;idx ++){}
+//            var idv = 0;
             while (newContent.length < frameCount){
-               newContent = newContent.concat(this.subSections[idx].getStream());
-                if (idx < (this.subSections.length-1)) idx++ ;
-                if (newContent.length >100) break;
+               newContent = newContent.concat(sourceSection.getStream());
+//                if (idx < (this.subSections.length-1)) idx++ ;
+                if (newContent.length > frameCount) break;
             }
             return newContent.slice(0,frameCount);
         }
     }else{
-        if((this.parent.parent.option == 'dialog')&&(!(this.value)))
-            frameCount = frameCount + this.headMargin + this.tailMargin;
-        var myResult = new Array(frameCount);;
-        if (this.value) myResult= this.value.getStream(frameCount);
+//        if((this.parent.parent.option == 'dialog')&&(!(this.value)))
+        if(!(this.value)) frameCount = frameCount + this.headMargin + this.tailMargin;
+        if(frameCount < 0) frameCount = 0; 
+        var myResult=(this.value)? this.value.getStream(frameCount): new Array(frameCount);
         // return (this.value)? this.value.getStream(frameCount) : new Array(frameCount);
         return myResult
     }

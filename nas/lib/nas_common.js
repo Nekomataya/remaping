@@ -4954,9 +4954,9 @@ var A = new nas.CameraworkDescription()
 
 nas.CameraworkDescription = function(name,type,aliases,nodeSigns,noteText){
     this.name          = name       ;//識別キーワード
-    this.type          = type       ;//タイプ文字列　simbol,composite,transition,geometry,effect,modefier,zigzag?
+    this.type          = type       ;//タイプ文字列　symbol,composite,transition,geometry,effect,modefier,zigzag?
     this.aliases       = aliases    ;//別名配列
-    this.nodeSigns     = nodeSigns ;//[fillSimbol[,OpenNode[,CloseNode]]];//シート表記上の記号
+    this.nodeSigns     = nodeSigns ;//[fillSymbol[,OpenNode[,CloseNode]]];//シート表記上の記号
     this.description   = noteText   ;//オプション　簡易的な説明
 }
 /**
@@ -5006,13 +5006,14 @@ nas.CameraworkDescription.prototype.toString = function (form){
     与えられたキーワードに自身が合致するか否かを返すメソッド
 引数:
     nameString  必須 キーネーム及び別名を検索して一致した情報があった場合true
-    typeString  オプション　指定がない場合は任意のタイプとマッチ　検索順序は　simbol/composite/geometry/effect
+    typeString  オプション　指定がない場合は任意のタイプとマッチ　検索順序は　symbol/composite/geometry/effect
     imaginary   オプション  指定がない場合はすべての情報を検索
 */
 nas.CameraworkDescription.prototype.isMatch = function (nameString,typeString){
     if((typeString)&&(this.type != typeString)) return false;
     if(nameString == this.name) return true;
-    var myRegex = new RegExp('^' + this.aliases.join("|").replace(/([\]\[\.])/g,'\\$1') +'$','i');
+    var myRegex = new RegExp('^(' +this.name +'|'+ this.aliases.join("|").replace(/([\]\[\.])/g,'\\$1') +')$','i');
+//    var myRegex = new RegExp('^' + this.aliases.join("|")+'$','i');
     if(nameString.match(myRegex)) return true;
 
     return false;    
@@ -5033,7 +5034,7 @@ SL  ⇒   <SL> ;//ステージワーク系
 
 nodeSigns配列には、以下の情報が格納される
 
-第一要素    String.fillSimbol   :中間値補完区間を埋めるシンボルの既定値　他の文字列を使用することも可能だが指定のない限りこの文字列を使用する
+第一要素    String.fillSymbol   :中間値補完区間を埋めるシンボルの既定値　他の文字列を使用することも可能だが指定のない限りこの文字列を使用する
 第二要素    String.openNode     :中間値補完区間を開くシンボルの既定値　オプション　この文字列が存在しない場合は、第一要素が優先で使用される
 第三要素    String.closeNode    :中間値補完区間を閉じるシンボルの既定値　オプション　この文字列が存在しない場合は、第二要素が使用される
 
@@ -5046,7 +5047,9 @@ nodeSigns配列には、以下の情報が格納される
 /*  参照用カメラワーク記述コレクション
 */
 nas.cameraworkDescriptions = {
-    members:{}
+    members:{},
+    singleRegex:new RegExp('‖'),
+    barRegex   :new RegExp('|')
 };
 nas.cameraworkDescriptions.toString =function(){
     return JSON.stringify(this.members);
@@ -5108,6 +5111,9 @@ nas.cameraworkDescriptions.dump = function(form){
 nas.cameraworkDescriptions.parseConfig = function(dataStream,form){
     if(! dataStream) return false;
     var myMembers ={};
+    var barSigns    = [];
+    var singleNodes = [];
+    var doubleNodes = {};
     // 形式が指定されない場合は、第一有効レコードで判定
     if(! form ){
         form = 'plain-text';
@@ -5129,6 +5135,11 @@ console.log(form)
                 tempObjects[prp].nodeSigns,
                 tempObjects[prp].description
             );
+            if(tempObjects[prp].nodeSigns.length==1){
+                singleNodes.add(tempObjects[prp].nodeSigns[0]);
+            }else{
+                barSigns.add(tempObjects[prp].nodeSigns[0]);
+            }
          }
     break;
     case    'full-dump':	
@@ -5146,6 +5157,11 @@ console.log(form)
                  currentRecord[1][4]
             );
             if (currentMember) myMembers[currentRecord[0]]=currentMember;
+            if(currentRecord[1][3].length==1){
+                singleNodes.add(currentRecord[1][3][0]);
+            } else {
+                barSigns.add(currentRecord[1][3][0]);
+            }
         }
     break;
     case    'plain-text':
@@ -5164,12 +5180,20 @@ console.log(form)
         	    currentMember[RegExp.$1]=RegExp.$2;//追加プロパティ用
         	}
         } else if(currentField.match( /^\S+$/i )) {
-        	myMembers[currentField] = new nas.CameraworkDescription(currentField,"simbol",[],[],"");
+        	myMembers[currentField] = new nas.CameraworkDescription(currentField,"symbol",[],[],"");
             currentMember=myMembers[currentField];
+        }
+        if (currentMember.nodeSigns.length == 1 ) {
+            singleNodes.add(currentMember.nodeSigns[0]);
+        }else {
+            barSigns.add(currentMember.nodeSigns[0]);
         }
       }
     }
     this.members = myMembers;
+//alert(singleNodes);
+    this.singleRegex = new RegExp("^("+singleNodes.join("|").replace(/[\[\]]/g,'\\$&')+")$");
+    this.barRegex = new RegExp("^["+barSigns.join("").replace(/[\|\.-]]/g,'\\$&')+"]$");
     return this.members;
 }
 

@@ -1430,12 +1430,14 @@ xUI.mdChg=function(myModes,opt){
 // emode==2以外ではこの状態に入れない
     if((this.edmode==2)&&(! this.viewOnly)){
        this.edmode=3;
-        this.floatSourceAddress=this.Select.slice();    //移動ソースアドレスを退避
-        this.selectedColor    =this.inputModeColor.FLOAT;    //選択セルの背景色
-        this.spinAreaColor    =this.inputModeColor.FLOATspin;    //非選択スピン背景色
-        this.spinAreaColorSelect    =this.inputModeColor.FLOATspinselected;    //選択スピン背景色
-        this.selectionColor    =this.inputModeColor.FLOATselection;    //選択領域の背景色
-        this.selectionColorTail    =this.inputModeColor.FLOAT;    //
+        this.floatSourceAddress     = this.Select.slice();    //移動ソースアドレスを退避
+        this.selectedColor          = this.inputModeColor.FLOAT;    //選択セルの背景色
+//        this.spinAreaColor          = this.inputModeColor.FLOATspin;    //非選択スピン背景色
+//        this.spinAreaColorSelect    = this.inputModeColor.FLOATspinselected;    //選択スピン背景色
+        this.spinAreaColor          = this.inputModeColor.FLOATselection;    //非選択スピン背景色
+        this.spinAreaColorSelect    = this.inputModeColor.FLOATselection;    //選択スピン背景色
+        this.selectionColor         = this.inputModeColor.FLOATselection;    //選択領域の背景色
+        this.selectionColorTail     = this.inputModeColor.FLOAT;    //
     };
     break;
     case "section":
@@ -1451,16 +1453,15 @@ xUI.mdChg=function(myModes,opt){
 if(true){
   if(this.edmode<2){
 //      if(this.spin() > 1){this.spinBackup=this.spin();this.spin(1);};//スピン量をバックアップしてクリア ? これ実はいらない？
-      this.selectBackup       = this.Select.concat();//カーソル位置バックアップ
-      this.selectionBackup    = this.Selection.concat();//選択範囲バックアップ
-      this.floatSourceAddress = this.Select.concat();    //移動元ソースアドレスを退避
-      
-      this.floatTrack       = this.XPS.xpsTracks[this.Select[0]];//編集破棄の際に復帰するためモード変更時のトラック全体を記録
-      this.floatTrackBackup = this.floatTrack.duplicate();      //編集確定時のためトラック全体をバッファにとる
+      this.selectBackup         = this.Select.concat()      ;       //カーソル位置バックアップ
+      this.selectionBackup      = this.Selection.concat()   ;       //選択範囲バックアップ
+      this.floatSourceAddress   = this.Select.concat()      ;       //移動元ソースアドレスを退避
+      this.floatTrack           = this.XPS.xpsTracks[this.Select[0]];//編集破棄の際に復帰するためモード変更時のトラック全体を記録
+      this.floatTrackBackup     = this.floatTrack.duplicate()       ;//編集確定時のためトラック全体をバッファにとる
 
-      this.floatSection     = this.floatTrackBackup.getSectionByFrame(this.Select[1]);
+      this.floatSection         = this.floatTrackBackup.getSectionByFrame(this.Select[1]);
 
-      if((this.floatTrack.option=='dialog')&&(! this.floatSection.value)){
+      if((this.floatTrack.option =='dialog')&&(! this.floatSection.value)){
     //操作対象セクションを選択状態にする
       this.selectCell([
 	    this.Select[0],
@@ -1493,11 +1494,11 @@ if(true){
      
       //未確定編集はxUI.put でなくxUI.XPS.putで更新する。
       //範囲確定はここで行う？
-        this.selectedColor    =this.inputModeColor.SECTION;        //選択セルの背景色
-        this.spinAreaColor    =this.inputModeColor.SECTIONselection;    //非選択スピン背景色
-        this.spinAreaColorSelect    =this.inputModeColor.SECTIONselection;    //選択スピン背景色
-        this.selectionColor    =this.inputModeColor.SECTIONselection;    //選択領域の背景色
-        this.selectionColorTail    = this.inputModeColor.SECTIONtail;    //選択領域の末尾
+        this.selectedColor          = this.inputModeColor.SECTION           ;    //選択セルの背景色
+        this.spinAreaColor          = this.inputModeColor.SECTIONselection  ;    //非選択スピン背景色
+        this.spinAreaColorSelect    = this.inputModeColor.SECTIONselection  ;    //選択スピン背景色
+        this.selectionColor         = this.inputModeColor.SECTIONselection  ;    //選択領域の背景色
+        this.selectionColorTail     = this.inputModeColor.SECTIONtail       ;    //選択領域の末尾
         this.Mouse.action=false;
 };//セクション編集モード遷移
     break;
@@ -1666,9 +1667,9 @@ xUI.sectionUpdate=function(){
 //対象トラックのセクションが（ダイアログ等）すべての要素を内包しない場合セレクション位置を更新する必要がある
 //セクションの先頭を取得するためにパースするか
         xUI.floatUpdateCount ++;//increment
-    xUI.floatSectionId = xUI.XPS.xpsTracks[xUI.Select[0]].getSectionByFrame(currentFrame).id();
+    xUI.floatSectionId = xUI.XPS.xpsTracks[xUI.Select[0]].getSectionByFrame(trackContents[1]).id();
         xUI.selectCell([xUI.Select[0],trackContents[1]]);
-      xUI.selection([xUI.Select[0],xUI.Select[1]+currentSelection]);
+      xUI.selection([xUI.Select[0],xUI.Select[1]+Math.abs(currentSelection)]);
     xUI.scrollStop = false;
 
     if(xUI.XPS.xpsTracks[xUI.Select[0]].option.match( /dialog|sound/ ))SoundEdit.getProp();
@@ -2183,18 +2184,88 @@ xUI.drawSheetCell = function (myElement){
           break;
           case "camera":;
           case "camerawork":;
+        if(! mySection.value) break;
+        if(mySection.value.type[0]=='geometry'){
+            if (myStr.match(/^[\|｜]$/)){
+                myStr=(this.showGraphic)?"<br>":"｜";                
+                drawForm = "line";
+                formPostfix +='-gom';
+            } else if (myStr.match(/^([!|！|\/|／|\\|＼]+)$/)){
+                myStr=(this.showGraphic)?"<br>":xUI.trTd(myStr);                
+                drawForm = "shake";
+                formPostfix +='-gom';
+                formPostfix += (tgtID[0] % 2)? '-odd':'-evn';
+                if (RegExp.$1.length > 2){
+                    formPostfix +='_l';
+                }else if(RegExp.$1.length == 2){
+                    formPostfix +='_m';
+                }else{
+                    formPostfix +='_s';
+                }
+            } else if (myStr.match(/^([:：]+)$/)){
+                myStr=(this.showGraphic)?"<br>":xUI.trTd(myStr);                
+                drawForm = "wave";
+                formPostfix +='-gom';
+                formPostfix += (tgtID[0] % 2)? '-odd':'-evn';
+                if (RegExp.$1.length > 2){
+                    formPostfix +='_l';
+                }else if(RegExp.$1.length == 2){
+                    formPostfix +='_m';
+                }else{
+                    formPostfix +='_s';
+                }
+            } else if (myStr.match(/^[▼▽]$/)){
+                myStr=(this.showGraphic)?"<br>":xUI.trTd(myStr);                
+                drawForm = "sectionOpen";
+            } else if (myStr.match(/^[▲△]$/)){
+                myStr=(this.showGraphic)?"<br>":xUI.trTd(myStr);                
+                drawForm = "sectionClose";
+            } else {
+                myStr = xUI.trTd(myStr);
+            }
+        }else if(mySection.value.type[0]=='composite'){
+            var drawForms ={"▲":"fi","▼":"fo","△":"fi","▽":"fo"};//この配分は仮ルーチン  良くない
+if(myStr.match(/^</)) console.log(myStr);
+            var drawForms ={"▲":"fi","▼":"fo","△":"fi","▽":"fo","]><[":"transition"};//この配分は仮ルーチン  良くない
+            if (myStr.match(/^[\|｜↑↓\*＊]$/)){
+                if(this.hideSource) myStr="<br>";                
+            } else if (myStr.match(/^[▼▽]$/)){
+                if(this.hideSource) myStr="<br>";                
+            } else if (myStr.match(/^[▲△]$/)){
+                if(this.hideSource) myStr="<br>";                
+            } else if (myStr.match(/^\]([^\]]+)\[$/)){
+                if(this.hideSource) myStr="<br>";
+            } else {
+                myStr = xUI.trTd(myStr);
+            }
+if(! mySection) console.log(myElement);
+            if((mySection.startOffset()+mySection.duration-1) == tgtID[0]){
+                var formStr = myXps.xpsTracks[tgtID[1]][mySection.startOffset()];
+                drawForm = drawForms[formStr];
+                sectionDraw = true;
+            }
+        }else if(mySection.value.type[0]=='transition'){
+            if((mySection.startOffset()+mySection.duration-1) == tgtID[0]){
+                var formStr = myXps.xpsTracks[tgtID[1]][mySection.startOffset()];
+                drawForm = 'transition';
+                sectionDraw = true;
+            }
+        } else {
+                myStr = xUI.trTd(myStr);
+            }
+
+          break;
           case "geometry":;
-//          case "composite":;
 //          case "effect":;
 //          case "sfx":;
             if (myStr.match(/^[\|｜]$/)){
                 myStr=(this.showGraphic)?"<br>":"｜";                
                 drawForm = "line";
-                formPostfix +='-cam';
+                formPostfix +='-gom';
             } else if (myStr.match(/^([!|！|\/|／|\\|＼]+)$/)){
                 myStr=(this.showGraphic)?"<br>":xUI.trTd(myStr);                
                 drawForm = "shake";
-                formPostfix +='-cam';
+                formPostfix +='-gom';
                 formPostfix += (tgtID[0] % 2)? '-odd':'-evn';
                 if (RegExp.$1.length > 2){
                     formPostfix +='_l';
@@ -2213,6 +2284,7 @@ xUI.drawSheetCell = function (myElement){
                 myStr = xUI.trTd(myStr);
             }
           break;
+          case "composite":;
           case "effect":;
           case "sfx":;
 if(myStr.match(/^</)) console.log(myStr);
@@ -2444,8 +2516,7 @@ if(!(ID instanceof Array))ID=ID.split("_");
         モード遷移毎にカラーを変更するのはモードチェンジメソッドで集中処理
         
 */
-xUI.selectionHi    =function(Method)
-{
+xUI.selectionHi    =function(Method){
 switch (Method) {
 case    "hilite"    :
                 var paintColor=this.selectionColor;break;
@@ -2468,7 +2539,7 @@ try{
 //    当座のバグ回避とデバッグ C.Lが操作範囲外だったときの処置 値を表示
 //                dbgPut(range.toString());
             }else{
-                if (!(this.Select[0]==C && ( this.Select[1]+this.spinValue > L && this.Select[1] <= L)))
+                if (!(this.Select[0] == C && ( ((this.edmode>0)? 1:this.spinValue)+this.Select[1] > L && this.Select[1] <= L)))
                 {
                     if(Method=="hilite")
                     {
@@ -2502,42 +2573,38 @@ try{
         xUI.spinHi(メソッド)
         メソッドは["clear"]またはそれ以外
 */
-xUI.spinHi = function(Method)
-{
+xUI.spinHi = function(Method){
 //選択ポイントのハイライトおよびスピン範囲のハイライト
-//    必ず
-if(! document.getElementById(this.getid("Select"))){if(dbg) dbgPut(this.getid("Select")) ;return;};
-if(Method == "clear") {
-//    if(dbg) console.log('foooooooot');
-//    if(dbg) console.log(this.getid("Select"));
-    document.getElementById(this.getid("Select")).style.backgroundColor=this.footstampColor;
-}else{
-    document.getElementById(this.getid("Select")).style.backgroundColor=this.selectedColor;
-};
+    if(! document.getElementById(this.getid("Select"))){if(dbg) dbgPut(this.getid("Select")) ;return;};
+    if(Method == "clear") {
+        document.getElementById(this.getid("Select")).style.backgroundColor=this.footstampColor;
+    }else{
+        document.getElementById(this.getid("Select")).style.backgroundColor=this.selectedColor;
+    };
 
 //    スピン 1 以上を処理 選択範囲内外で色分け
-    for(L=this.Select[1]+1;L<this.spinValue+this.Select[1];L++){
+
+    for(L=this.Select[1]+1;L<((this.edmode > 0)? 1:this.spinValue)+this.Select[1];L++){
         if(L > 0 && L < this.XPS.xpsTracks[0].length){
-            if(Method=="clear"){
-//if(XPS.xpsTracks[this.Select[0]][L]!="" && this.footMark){}
-if(this.diff([this.Select[0],L]) && this.footMark){
-        document.getElementById(this.Select[0]+"_"+L).style.backgroundColor=this.footstampColor;//スピンエリア表示解除
-}else{
-if(document.getElementById(this.Select[0]+"_"+L).style.backgroundColor)
-    document.getElementById(this.Select[0]+"_"+L).style.backgroundColor=this.sheetbaseColor;//スピンエリア表示解除
-};
+            if((Method=="clear")){
+                if(this.diff([this.Select[0],L]) && this.footMark){
+                    document.getElementById(this.Select[0]+"_"+L).style.backgroundColor=this.footstampColor;//スピンエリア表示解除
+                }else{
+                    if(document.getElementById(this.Select[0]+"_"+L).style.backgroundColor)
+                        document.getElementById(this.Select[0]+"_"+L).style.backgroundColor=this.sheetbaseColor;//スピンエリア表示解除
+                };
             }else{
-if(L>(this.Selection[1]+this.Select[1]))
-{
-if(nas.colorAry2Str(nas.colorStr2Ary(document.getElementById(this.Select[0]+"_"+L).style.backgroundColor))!=this.spinAreaColor)
-        document.getElementById(this.Select[0]+"_"+L).style.backgroundColor=this.spinAreaColor;//スピンエリア表示
-}else{
-if(nas.colorAry2Str(nas.colorStr2Ary(document.getElementById(this.Select[0]+"_"+L).style.backgroundColor))!=this.spinAreaColorSelect)
-        document.getElementById(this.Select[0]+"_"+L).style.backgroundColor=this.spinAreaColorSelect;//スピンエリア表示
-};
+                if(L>(this.Selection[1]+this.Select[1])){
+                    if(nas.colorAry2Str(nas.colorStr2Ary(document.getElementById(this.Select[0]+"_"+L).style.backgroundColor))!=this.spinAreaColor)
+                        document.getElementById(this.Select[0]+"_"+L).style.backgroundColor=this.spinAreaColor;//スピンエリア表示
+                }else{
+                    if(nas.colorAry2Str(nas.colorStr2Ary(document.getElementById(this.Select[0]+"_"+L).style.backgroundColor))!=this.spinAreaColorSelect)
+                        document.getElementById(this.Select[0]+"_"+L).style.backgroundColor=this.spinAreaColorSelect;//スピンエリア表示
+                };
             };
         };
     };
+
 //スピン表示が現状と異なっていた場合更新
     if ( document.getElementById("spin_V").value != xUI.spinValue){
          document.getElementById("spin_V").value  = xUI.spinValue;
@@ -6064,7 +6131,9 @@ case "wave-ref-odd":;		//wave-line 偶数フレーム
 case "wave-ref-evn":;		//wave-line 奇数フレーム
 */
     if(typeof xUI.Cgl.formCashe[myForm] == 'undefined'){
-		var waveSpan  =7.5;		var lineWidth  =3;
+		var waveSpan  =(arguments[2])? element.width*arguments[2]/2:element.width/4;
+		//var waveSpan  =7.5;
+		var lineWidth  =3;
 		ctx.strokeStyle='rgb('+xUI.Cgl.baseColorArray.join(',')+')';
 		ctx.strokeWidth=lineWidth;
 		ctx.moveTo(element.width*0.5, 0);
@@ -11795,7 +11864,8 @@ SoundEdit.floatTC = function(changeID){
 SoundEdit.getProp = function(){
     if(xUI.edmode<2) return;//NOP
     var targetTrack   = xUI.XPS.xpsTracks[xUI.Select[0]];
-    var targetSection = targetTrack.sections[xUI.floatSectionId]
+    var targetSection = targetTrack.sections[xUI.floatSectionId];
+//if(!(targetSection.value)){console.log(xUI);alert('break');}
 //ターゲットセクションの値を取得して表示同期
     var inPoint  = targetSection.startOffset();
     var outPoint = inPoint + targetSection.duration - 1;

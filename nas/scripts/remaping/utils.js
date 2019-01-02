@@ -1152,7 +1152,7 @@ interpSign()
 その区間にSPIN指定の間隔で補完サインを配置する。基点は選択範囲の最も上のシートセル
 */
 interpSign=function(){
-	var interpRegex=new RegExp("["+InterpolationSigns.join("")+"]");
+	var interpRegex=nas.CellDescription.interpRegex
 	var myValue = XPS.xpsTracks[xUI.Select[0]][xUI.Select[1]];
   if(xUI.Selection.join(",")=="0,0"){
 	if(myValue.match(interpRegex)){
@@ -1202,11 +1202,11 @@ xUI.XPS.xpsTracks[tid].
 addCircle=function(kwd){
 	if(! kwd) kwd="circle";
      if(typeof interpRegex == "undefined")
-        interpRegex = new RegExp("^["+InterpolationSigns.join("")+"]$");
+        interpRegex = nas.CellDescription.interpRegex;
  	 if(typeof blankRegex == "undefined")
- 		blankRegex = new RegExp("^["+BlankSigns.join("")+"]$");
+ 		blankRegex = nas.CellDescription.blankRegex;
  	 if(typeof ellipsisRegex == "undefined")
- 		ellipsisRegex = new RegExp("^["+EllipsisSigns.join("")+"]$");
+ 		ellipsisRegex = nas.CellDescription.ellipsisRegex;
 
 //コレは基礎オブジェクトに移行 …というか、総合判定メソッドが必要（ケースで判断が変わる）
 //後で置き換え
