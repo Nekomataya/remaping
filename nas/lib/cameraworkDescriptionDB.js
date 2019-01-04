@@ -208,13 +208,13 @@ fairing
 highContrast
 	name:highContrast
 	type:symbol
-	aliases:["ハイコン","High-Con"]
+	aliases:["ハイコン","High-Con","HI CON"]
 	nodeSigns:["|","┬","┴"]
 	description:ハイコントラスト状態
 rackFocus
 	name:rackFocus
 	type:symbol
-	aliases:["ピン送り","ピント送り","ラック・フォーカス","フォーカス送り"]
+	aliases:["ピン送り","ピント送り","ラック・フォーカス","フォーカス送り","Rack Focus"]
 	nodeSigns:["｜","┬","┴"]
 	description:実写のピント送りを模した演出手法
 overExposure
@@ -278,19 +278,19 @@ rolling
 	nodeSigns:["｜","┬","┴"]
 	description:合成素材の周期的なスライドで被写体のモーションを表現する撮影手法
 cameraShakeS
-	name:shakeS
+	name:cameraShakeS
 	type:geometry
 	aliases:["ぶれ(弱)","画面動(弱)","画ぶれ(弱)","カメラブレ(弱)","/"]
 	nodeSigns:["/"]
 	description:カメラを揺するような効果（弱）
 cameraShake
-	name:shake
+	name:cameraShake
 	type:geometry
 	aliases:["ぶれ","画面動","画ぶれ","カメラブレ","//"]
 	nodeSigns:["//"]
 	description:カメラを揺するような効果
 cameraShakeL
-	name:shakeL
+	name:cameraShakeL
 	type:geometry
 	aliases:["ぶれ(強)","画面動(強)","画ぶれ(強)","///"]
 	nodeSigns:["///"]
@@ -337,6 +337,18 @@ panDown
 	aliases:["PANDOWN","pan down","パンダウン"]
 	nodeSigns:["|","▽","△"]
 	description:カメラを画面下方向に振る演出手法　チルトダウン
+panTU
+	name:panTU
+	type:geometry
+	aliases:["PAN-UP","パンTU","PAN TU","TUpaning"]
+	nodeSigns:["|","▽","△"]
+	description:PANとTUを併用する演出手法
+panTB
+	name:panTB
+	type:geometry
+	aliases:["PAN-TB","パンTB","PAN TB","TBpaning"]
+	nodeSigns:["|","▽","△"]
+	description:PANとTBを併用する演出手法
 tilt
 	name:tilt
 	type:geometry
@@ -379,48 +391,36 @@ roteteSlide
 	aliases:["回転スライド","rtSL","rotate SLIDE","rotate SL","引き（回転加味）"]
 	nodeSigns:["|","▽","△"]
 	description:合成素材をスライドさせながら回転を加える撮影指定
-rotateTu
-	name:rotateTu
+rotateTU
+	name:rotateTU
 	type:geometry
 	aliases:["回転TU","rtTU","Rotate TU","TU（回転加味）"]
 	nodeSigns:["|","▽","△"]
 	description:カメラを試写体に対して回転を加えながら接近させる演出手法
-rateteTb
-	name:rateteTb
+rateteTB
+	name:rateteTB
 	type:geometry
 	aliases:["回転TB","rtTB","Rotate TB","TB（回転加味）"]
 	nodeSigns:["|","▽","△"]
 	description:カメラを試写体に対して回転を加ながら引き離す演出手法
-handyShakeS
-	name:handyShakeS
+handShakeS
+	name:handShakeS
 	type:geometry
 	aliases:["ハンディブレ小","手持ちカメラ風画面動",":"]
 	nodeSigns:[":"]
 	description:手持ちカメラのような振動を画面に与える演出手法
-handyShake
-	name:handyShake
+handShake
+	name:handShake
 	type:geometry
 	aliases:["ハンディブレ","手持ちカメラ風画面動","::"]
 	nodeSigns:["::"]
 	description:手持ちカメラのような振動を画面に与える演出手法
-handyShakeL
-	name:handyShakeL
+handShakeL
+	name:handShakeL
 	type:geometry
 	aliases:["ハンディブレ大","手持ちカメラ風画面動",":::"]
 	nodeSigns:[":::"]
 	description:手持ちカメラのような振動を画面に与える演出手法
-panTU
-	name:panTU
-	type:geometry
-	aliases:["PAN-UP","パンTU","PAN TU","TUpaning"]
-	nodeSigns:["|","▽","△"]
-	description:PANとTUを併用する演出手法
-panTB
-	name:panTB
-	type:geometry
-	aliases:["PAN-TB","パンTB","PAN TB","TBpaning"]
-	nodeSigns:["|","▽","△"]
-	description:PANとTBを併用する演出手法
 followTracking
 	name:followTracking
 	type:geometry

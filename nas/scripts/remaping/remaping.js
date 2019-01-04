@@ -2250,6 +2250,7 @@ if(! mySection) console.log(myElement);
                 drawForm = 'transition';
                 sectionDraw = true;
             }
+            myStr = xUI.trTd(myStr);
         } else {
                 myStr = xUI.trTd(myStr);
             }
@@ -9942,8 +9943,8 @@ var form={
 html: "documentHTML",
 xmap: "documentxMap",
 xps: "documentXps",
-tdts:"documentTDTS",
-xdts:"documentXDTS",
+tdts:"documentTdts",
+xdts:"documentXdts",
 ard: "documentArd",
 ardj: "documentArdj",
 csv: "documentCSV",

@@ -1909,10 +1909,10 @@ onclick='nas.incrFCTonHTMLInput(document.getElementById("editTC"),"-(1)")'
 	onClick='xUI.data_well.value=XPS.toString();if(document.getElementById("exportCheck").checked){callEchoExport("xps")};return false;'
 ><input type=button
     id=exporterTdts value="Tdts" style="width:10%"
-	onClick='xUI.data_well.value=XPS2TDTS(xUI.XPS);if(document.getElementById("exportCheck").checked){callEchoExport("tdts")};return false;'
+	onClick='xUI.data_well.value=XPS2TDTS(xUI.XPS,"tdts");if(document.getElementById("exportCheck").checked){callEchoExport("tdts")};return false;'
 ><input type=button
     id=exporterXdts value="Xdts" style="width:10%"
-	onClick='xUI.data_well.value=XPS2XDTS(xUI.XPS);if(document.getElementById("exportCheck").checked){callEchoExport("xdts")};return false;'
+	onClick='xUI.data_well.value=XPS2XDTS(xUI.XPS,"xdts");if(document.getElementById("exportCheck").checked){callEchoExport("xdts")};return false;'
 ><input type=button
     id=exporterEPS value="EPS" style="width:10%"
 	onClick='exportEps();return false;'

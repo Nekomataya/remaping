@@ -598,11 +598,10 @@ _parseCameraworkTrack= function(){
 //    var currentNodeSign    = false;//否で初期化(確認用)
 //    var valueDetect        = false;//否で初期化(確認用)
 
-    var startNodeRegex=new RegExp("^[▼▽↑⇑●◯◎◆◇★☆┳┬]$");
+    var startNodeRegex=new RegExp("^[▼▽⇑●◯◎◆◇★☆┳┬]$");
     var endNodes={
         "▼":"▲",
         "▽":"△",
-        "↑":"↓",
         "⇑":"⇓",
         "●":"●",
         "○":"◯",
@@ -621,13 +620,7 @@ _parseCameraworkTrack= function(){
     for (var fix=0;fix<this.length;fix++){
         var isBlank = (String(this[fix]).match(/^\s*$/))? true :false ;
         if (String(this[fix]).match(/^\[[^\[]+\]$/)){ lastBracketsId = fix; isBlank = true;}
-
         currentSection.duration ++;//currentセクションの継続長を加算
-if(endNode){
-console.log("track/frame :"+[fix,this.index]);
-console.log("currentEndNode :"+ endNode);
-console.log(currentSection.value.name);
-}
 
 //未記入セル カレントが空白セクションならば継続それ以外の場合は、セクション更新して継続
 //[値]セルは未記入セル扱いにする
@@ -641,8 +634,6 @@ console.log(currentSection.value.name);
                     }
                     currentSection.value.attributes.push([currentSection.value.prefix,currentSection.value.postfix].join('-'));
                     if(currentSection.prefix)  currentSection.headMargin = 1;
-//                    if(currentSection.postfix) currentSection.tailMargin = 1;
-
                 }
                 currentSection = myCollection.addSection(null);//changeCurrentNull
                  if (fix == lastBracketsId) currentSection.headMargin = -1;
@@ -659,7 +650,7 @@ console.log(currentSection.value.name);
             if(!(currentSection.value)){
                 currentSection.duration --;
                 if(currentSection.duration < 1) myCollection.pop();
-                currentSection = myCollection.addSection(new nas.AnimationCamerawork(null,"unknown"));//changeCurrent unknown
+                currentSection = myCollection.addSection(new nas.AnimationCamerawork(null,false));//changeCurrent unknown
                 currentSection.duration = 1;
                 startNodeId = fix;
                 // イレギュラー開始なので endNode を設定しない
@@ -672,115 +663,51 @@ console.log(currentSection.value.name);
     記述継続の場合のみ先行でセクションを切り替える
     後続セルが空白セル||[値]セルならばNOP
     
+    endNode検知
+    フレーム内容がstartNodeに対応するendNodeでかつ後続フレームが値エントリでない場合のみセクションを閉じる
     最終フレーム処理では　startNodeId==durationとなるが、以降の判定はないので放置
+
 */
        if((endNode)&&(this[fix] == endNode)){
-console.log("********* track/frame :"+this[fix]);
         if(fix == (this.length-1)){
             var nextBlank = true;
         }else{
             var nextBlank = (String(this[fix+1]).match(/^\s*$/))? true :false ;
             if (String(this[fix+1]).match(/^\[[^\[]+\]$/)){ nextBlank = true;}
         }
-console.log("================== track/frame :"+[fix,this.index]);
-console.log("detectEndNode :"+ endNode);
-console.log(currentSymbol);
-console.log(currentSection);
                 if(! nextBlank ){
-                    mySymbol = nas.cameraworkDescriptions.get(this[fix+1]);
-                    if(! mySymbol) mySymbol = nas.cameraworkDescriptions.get('unknown');
-                    currentSection = myCollection.addSection(new nas.AnimationCamerawork(null,mySymbol.name));//changeCurrent unknown
+                    var mySymbol = nas.cameraworkDescriptions.get(this[fix+1]);
+                    var detectedName = false;
+                    if((this[fix+1]).match(/^<([\>]+)>$/)){
+                        detectedName = RegExp.$1;
+                    }else if(mySymbol){
+                        detectedName = mySymbol.name;
+                    }
+// mySymbol = nas.cameraworkDescriptions.get('unknown');(this[fix+1]).match(/^\][^\[]+\[$/);(this[fix+1]).match(nas.cameraworkDescriptions.singleRegex)
+
+                    if(currentSection.duration < 1) myCollection.pop();
+                    currentSection = myCollection.addSection(new nas.AnimationCamerawork(null,detectedName));//changeCurrent unknown
+
                     startNodeId   = fix + 1;
                     endNode       = undefined ;//終了ノードクリア
                     currentSymbol = null;//シンボルクリア 判定保留
-            //スタートノードに対応するエンドノードが予約語内にあればそちらを優先 次にスタートノードの判定が来るので　スタートノードとエンドノードが一致する場合問題が発生するためここは設定を行わない
-//            if (endNodes[this[startNodeId]]){
-//                endNode = endNodes[this[startNodeId]];
-//            } else if(mySymbol.nodeSigns.length > 1){
-//                endNode = mySymbol.nodeSigns[mySymbol.nodeSigns.length-1]
-//            } else {
-//                endNode = this[startNodeId];
-//            }
-console.log(currentSection);
                 }
                 continue;
         }
-        
-        
-//endNode検知　フレーム内容がstartNodeに対応するendNodeでかつ後続フレームが値エントリでない場合のみセクションを閉じる
-//        if(       ((fix<(this.length-1))&&( String(this[fix+1]).match(/\[[^\]+]\]/)))         ){}
-/**if(false){
-//中間値補間セクション終了ノード(対で処理する方)
-        if(this[fix]==currentNodeSign){
-            currentNodeSign=false;//区間終了ノードクリア
-            currentSection=myCollection.addSection(null); // 新規値セクション追加
-            continue;
-        } else if(this[fix].match(startNodeRegex)){
-            
-
-    予約開始ノードサイン検出
-予約語の開始ノードサインを検出したので対応する終了ノードをセットする
-第一区間が補間区間であった場合、トラックのデフォルト値を先行区間の値とする。
-第一区間は、値区間　補間区間のいずれでも良いので初期区間の値は保留されている
-検出したサインがカレントノードサインと一致していたら補間区間終了それ以外は副補間区間のエントリ初期化
-セクションノードサイン
-カメラワークデータベースの内容をスキャンして作成
-    /^[▼▽↑●○◎◆◇★☆]$/
-    特殊ノードとして中間値補間区間を開き、同じサインで当該の区間を閉じる
-    予約語以外の中間値指定ノードには閉鎖機能がない
-    値指定ノード以外は基本的にすべて中間値指定ノードとする
-    空白エントリ・予約語以外の記述は値を指定するノードか否かを判定する。
-    明示的に値を生成するノードを切り分け　残るエントリはｘMapに問い合わせを行い値を持たないエントリを中間値発生ノードとして扱う
-
-                if(currentNodeSign==false){
-                    currentNodeSign=endNodes[this[fix]];//予約語で開いたので終了ノードを設定する
-                }
-            }
-        }
-*/
-//[値]エントリ ===============================================================================
-if (false){
-        if (lastBracketsId == fix){
-            
-            if((currentSection.value)&&(currentSection.value.prefix)){
-//      カレントが[値]区間だった場合は閉じて空白区間を開始
+//開始ノード（予約語）を検知　強制的に新しい区間を開始
+       if( String(this[fix]).match(startNodeRegex)){
+//区間の開始
+            if(fix != 0){
+                startNodeId = fix;//シート入力をスタートノードに設定
+                endNode = endNodes[this[startNodeId]];//頭尾は
                 currentSection.duration --;
-                currentSection.value.postfix = String(this[fix]);
-                currentSection.value.attributes.push([currentSection.value.prefix,currentSection.value.postfix].join('-'));
-                currentSection.value.parseContent();
-                currentSection.tailMargin = 1;
-//console.log('add null section start : '+fix)
-                //currentSection = myCollection.addSection(null);//changeCurrent
-                //currentSection.duration = 1;
-                //currentSection.headMargin = -1;
-                //currentSymbol = null;
-                //startNodeId= undefined;
-                //endNode = undefined;
-/*
-//      直後のセルが空白以外の場合は連続した新規[値]区間開始
-                if(((fix+1) < this.length)&&(!(String(this[fix+1]).match(/^\s*$/)))){
-                    currentSection.tailMargin = -1;
-                    currentSection = myCollection.addSection(new nas.AnimationCamerawork(null,["SL",this[fix]].join(' ')));//changeCurrent
-                    currentSection.headMargin = 1;
-                    currentSection.value.prefix = String(this[fix]);                                    
-                }
-*/
-            }else{
-//カレントが空白なので仮値として"Sl"を設定した新規のジオメトリック区間を開始
-                currentSection.tailMargin = -1;
-                currentSection = myCollection.addSection(new nas.AnimationCamerawork(null,["SL",this[fix]].join(' ')));//changeCurrent
-                currentSection.headMargin = 1;
-                currentSection.value.prefix = String(this[fix]);                
-                currentSymbol = nas.cameraworkDescriptions.get("SL");
-                startNodeId  = fix+1;
-                endNode     = currentSymbol.nodeSigns[2];
+                if(currentSection.duration < 1) myCollection.pop();
+                currentSection = myCollection.addSection(new nas.AnimationCamerawork(null,false));//changeCurrent
+                currentSection.duration = 1;
+                continue;
             }
-            continue;
-        }// */
-}//====================================================================================
-//        if((currentSection.value)&&(currentSection.value.prefix)) continue;
-
- //].*[トランジションエントリ()
+        };
+//].*[トランジションエントリ()
         if( String(this[fix]).match(/\^][^\[]+\[$/) ){
             var mySymbol = nas.cameraworkDescriptions.get(this[fix]);
             if(
@@ -788,14 +715,12 @@ if (false){
                 (!(currentSection.value))
             ){
 //]transition[区間の開始
-                startNodeId= this[fix];//シート入力をスタートノードに設定
+                startNodeId = fix;//シート入力をスタートノードに設定
                 endNode = this[startNodeId];//トランジションの頭尾は一致
                 if(fix==0){
-console.log('current frame is 0 : set transition section current : ');
                     currentSection.value=new nas.AnimationCamerawork(null,(mySymbol)?mySombol.name:this[startNodeId]);//change Value;
                     continue;
                 }else{
-console.log('add transition section start : '+(fix));
                     currentSection.duration --;
                     if(currentSection.duration < 1) myCollection.pop();
                     currentSection = myCollection.addSection(new nas.AnimationCamerawork(null,(mySymbol)?mySombol.name:this[startNodeId]));//changeCurrent
@@ -803,7 +728,7 @@ console.log('add transition section start : '+(fix));
                 }
             }
             continue;
-        } // */
+        }
 //第一エントリで区間タイプが判別可能な区間の判定
         if(
             String(this[fix]).match(nas.cameraworkDescriptions.singleRegex)
@@ -813,11 +738,9 @@ if(! mySymbol) console.log(this[fix]);
             if((!(currentSection.value))||(currentSection.value.type[1]!=mySymbol.name)){
 //Symbol区間の開始
                 if(fix==0){
-console.log('current frame is 0 : set transition section current : ');
                     currentSection.value=new nas.AnimationCamerawork(null,mySymbol.name);//change Value;
                     continue;
                 }else{
-console.log('add section start : '+mySymbol.name + String(fix));
                     currentSection.duration --;
                     if(currentSection.duration < 1) myCollection.pop();
                     currentSection = myCollection.addSection(new nas.AnimationCamerawork(null,mySymbol.name));//changeCurrent
@@ -828,11 +751,13 @@ console.log('add section start : '+mySymbol.name + String(fix));
             ){
                 currentSection.value.parseContent();
                 if(String(this[fix+1]).match(/^\s*$/)){
+                    if(currentSection.duration < 1) myCollection.pop();
                     currentSection = myCollection.addSection(null);//changeCurrentNull
                     endNode     = undefined;
                     currnetSymbol = null;
                 }else{
-                    currentSection = myCollection.addSection(new nas.AnimationCamerawork(null,'unknown'));//changeCurrent
+                    if(currentSection.duration < 1) myCollection.pop();
+                    currentSection = myCollection.addSection(new nas.AnimationCamerawork(null,false));//changeCurrent
                     startNodeId = fix+1;//シート入力をスタートノードに設定
                     if ((!(endNode)) && (endNodes[this[startNodeId]])) endNode = endNodes[this[startNodeId]] ;
                     currnetSymbol = mySymbol;
@@ -849,12 +774,15 @@ console.log('add section start : '+mySymbol.name + String(fix));
             startNodeId = fix;
             if(! currentSymbol) currentSymbol = nas.cameraworkDescriptions.get(this[startNodeId]);
             if(! currentSymbol) currentSymbol = nas.cameraworkDescriptions.get('unknown');
+            var detectName = false;
+            if(currentSymbol.name != 'unknown') detectName = currentSymbol.name;
             if(fix==0){
-                currentSection.value=new nas.AnimationCamerawork(null,currentSymbol.name);//setValueToCurrentSection;
+                currentSection.value=new nas.AnimationCamerawork(null,detectName);//setValueToCurrentSection;
             }else{
                 currentSection.duration --;
                 if(lastBracketsId == (fix-1)) currentSection.tailMargin -- ; 
-                currentSection = myCollection.addSection(new nas.AnimationCamerawork(null,currentSymbol.name));//changeCurrent
+                if(currentSection.duration < 1) myCollection.pop();
+                currentSection = myCollection.addSection(new nas.AnimationCamerawork(null,detectName));//changeCurrent
                 currentSection.duration = 1;
 //先行セクションが[値]セルであった場合のみ
                 if(lastBracketsId == (fix-1)){
@@ -864,7 +792,6 @@ console.log('add section start : '+mySymbol.name + String(fix));
                     }
                     currentSection.value.prefix = this[lastBracketsId];
                     currentSection.headMargin = 1;
-console.log(currentSection);
                 }
             }
             //スタートノードに対応するエンドノードが予約語内にあればそちらを優先
@@ -875,7 +802,6 @@ console.log(currentSection);
             } else {
                 endNode = this[startNodeId];
             }
-console.log(currentSymbol);
             continue;
         }else if(startNodeId == fix){
 //セルエントリが開始ノードであった場合のみ終了ノードだけを設定する            
@@ -887,33 +813,43 @@ console.log(currentSymbol);
             }
         }
 //<name>エントリまたはタイプ識別可能エントリ
-console.log(fix+" : "+this[fix])
+//          当該エントリの前に//セクションが閉じているか否か//セクションが確定しているか否か//の判定が必要
+        
         var ckSymbol = nas.cameraworkDescriptions.get(this[fix]);
         if(
             (String(this[fix]).match(/^<([^>]+)>$/))||(ckSymbol)
         ){
-            currentSection.value.name = ( ckSymbol )? this[fix] : RegExp.$1;
-console.log('detect Symbol :'+currentSection.value.name);
-console.log(currentSymbol);
-console.log(ckSymbol);
-console.log(endNode);
-
-            currentSymbol = ( ckSymbol )? ckSymbol : nas.cameraworkDescriptions.get(currentSection.value.name);
-            if(!currentSymbol){ currentSymbol = nas.cameraworkDescriptions.get('unknown')}
+            var detectedName = ( ckSymbol )? this[fix] : RegExp.$1;
+            if((currentSection.value)&&((currentSection.value.name=="")||(currentSection.value.type[0]=="transition")||(currentSection.value.name==this[startNodeId]))){
+                currentSection.value.name = detectedName;
+                currentSymbol = ( ckSymbol )? ckSymbol : nas.cameraworkDescriptions.get(currentSection.value.name);
+                if(!currentSymbol){ currentSymbol = nas.cameraworkDescriptions.get('unknown')}
             
-            currentSection.value.type=[currentSymbol.type,currentSymbol.name];
-console.log(currentSymbol);
-           if(!(endNode)){
+                currentSection.value.type=[currentSymbol.type,currentSymbol.name];
+            }else{
+                
+                currentSection.duration --;
+                if(lastBracketsId == (fix-1)) currentSection.tailMargin -- ; 
+                if(currentSection.duration < 1) myCollection.pop();
+                currentSection = myCollection.addSection(new nas.AnimationCamerawork(null,detectedName));//changeCurrent
+                currentSection.duration = 1;
+                currentSymbol = ( ckSymbol )? ckSymbol : nas.cameraworkDescriptions.get(currentSection.value.name);
+                if(!currentSymbol){ currentSymbol = nas.cameraworkDescriptions.get('unknown')}
+//先行セクションが[値]セルであった場合
+                if(lastBracketsId == (fix-1)){
+                    currentSection.value.prefix = this[lastBracketsId];
+                    currentSection.headMargin = 1;
+                };// */
+            
+            }
+            if(!(endNode)){
                 endNode = (currentSymbol.nodeSigns.length>2)?currentSymbol.nodeSigns[2]:currentSymbol.nodeSigns[1];
             }else if(
                 (currentSymbol.nodeSigns.length > 1)&&
                 (this[startNodeId]==currentSymbol.nodeSigns[1])
             ){
-console.log('change endNode with Symbol prop :' + currentSymbol.nodeSigns[currentSymbol.nodeSigns.length-1]);
                 endNode = currentSymbol.nodeSigns[currentSymbol.nodeSigns.length-1];
             }
-console.log(this[startNodeId]);
-console.log(endNode);
             continue;           
         }
 //コメントエントリ
@@ -1234,11 +1170,10 @@ _parseGeometryTrack= function(){
     var currentEffect   = new nas.AnimationGeometry("");//コンテンツはカラで初期化も保留
     var currentNodeSign = false;//否で初期化(確認用)
     var valueDetect     = false;//否で初期化(確認用)
-    var startNodeRegex=new RegExp("^[▼▽↑●◯◎◆◇★☆]$");
+    var startNodeRegex=new RegExp("^[▼▽●◯◎◆◇★☆]$");
     var endNodes={
         "▼":"▲",
         "▽":"△",
-        "↑":"↓",
         "●":"●",
         "○":"◯",
         "◎":"◎",
@@ -2215,21 +2150,24 @@ nas.AnimationCamerawork.prototype.parseContent=function(myContent){
         for( var cix=0;cix<myContents.length;cix++){
             if(nas.cameraworkDescriptions.get(myContents[cix])){
                 myName = myContents[cix];
+                myContents.splice(cix,1);
                 break;
             }
         }        
         if(! myName){
             myName = myContents[0];
+            myContents.splice(0,1);
+
         }
     }
     this.name = myName;
+//    this.contentText = myContents.join('\t');
 //検出したシンボルからタイプをだす
     var mySymbol = nas.cameraworkDescriptions.get(this.name);
     if (! mySymbol) mySymbol = nas.cameraworkDescriptions.get('unknown')
     this.type = [mySymbol.type,mySymbol.name];
 /*symbol検出時はユーザ指定を促すか？*/
-    if(myContents[0].indexOf(',') > 0){
-//        this.targets = csvSimple.parse(myContents[0]);
+    if((myContents[0])&&(myContents[0].indexOf(',') > 0)){
         this.targets = myContents[0].split(',');
     }
 //タイプ別に残りの属性値を判別

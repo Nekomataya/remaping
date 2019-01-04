@@ -4579,7 +4579,7 @@ nas.CellDescription.blankRegex      = new RegExp("^["+nas.CellDescription.blankS
  *			//この他に<.+>も補間記号として働く
  *		    //	詳細別紙
  */
-nas.CellDescription.interpolationSigns  = ["-","=","\*","·","・","○","●","▫","▪","▴","▵","▾","▿","◈","◉","◦","◦"];
+nas.CellDescription.interpolationSigns  = ["-","=","\*","·","・","○","●","▫","▪","▴","▵","▾","▿","◈","◉","◦","◦"];// "-","·","・","○"
 nas.CellDescription.interpRegex         = new RegExp("^["+nas.CellDescription.interpolationSigns.join("")+"]$");
 
 /**
@@ -5278,7 +5278,7 @@ nas.IdfEscape('ASSDFGERtyusadhjgalll','AS','&');
 /**
     特定文字の%エンコーダ
 引数文字列の指定された文字を部分的にURIエンコード(%文字コード)して返す関数
-第一引数が与えられない場合は、エラー
+第一引数が与えられない場合は、空文字列として扱う（空文字列を返す）
 第二引数が与えられない場合は、encodeURIComponentの値を返す
 
     要素の文字列は識別子をファイル名等に利用する場合、ファイルシステムで使用できない文字が禁止されるが、この文字も併せて部分エンコードの対象となる。
@@ -5292,7 +5292,7 @@ result:
 デコードはdecodeURIもしくはdecodeURIComponent関数を使用
 */
 nas.IdfEncode = function(sourceString,strings){
-    if(typeof sourceString == 'undefined'){return false};
+    if(typeof sourceString == 'undefined'){return ""};
     if(typeof strings == 'undefined'){return encodeURIComponent(sourceString)};
     strings = strings + "\¥\\\\\\\/:\\\*\\\?\"<>|\\\.%";
     if ((String(sourceString).length == 0)||(strings.length < 1)) return encodeURIComponent(sourceString);

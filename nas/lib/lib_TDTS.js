@@ -6,6 +6,7 @@
  *        XDTSフォーマットはTDTSフォーマットのサブセットであり、現在XDTSを扱うメインのアプリケーションである
  *        CLIP STUDIO PAINTがXDTSの範囲を超えたデータを受け取っても問題なく動作するためXDTSとTDTSの扱いの差異は
  *        ヘッダ文字列のみで処理される
+ ＊＊　暫定版コンバータ　手書きメモ等画像オブジェクトは現在両方向にコンバート不可
  */
 /*
 タイムシートドキュメントオブジェクト
@@ -22,7 +23,7 @@ var TDTS = {};//ClassObject
 
 function Tdts(){
 	this.header = new TDTS.DocumentHeader()
-	this.timeTables = [];
+	this.timeTables = [];//[Array of TimeTable]
 	this.version = 5 ;
 }
 /*
@@ -96,8 +97,72 @@ Object TimeTableField{
 */
 	TDTS.TimeTableField = function(fieldId){
 		this.fieldId = fieldId ;//Number fieldID,
-		this.tracks	           ;//[Array of String field name]
+		this.tracks	 = []      ;//[Array of Object TimeTableTrack]
 	}
+
+/*
+Object TimeTableTrack{
+	frames	:[Array of Object framaData]
+	trackNo	:Number trackID
+}
+*/
+	TDTS.TimeTableTrack = function(trackNo){
+		this.frames = []  		;//[Array of Object FramaEntry]
+		this.trackNo = trackNo	;//Number trackID,
+	}
+/*
+トラックエントリオブジェクト
+	データ（プロパティ）を保持して
+	エントリポイントのフレームを与えるレイヤ
+	
+Object TimeTableFrameEntry{
+	data	:[Array of Object FramaData]
+	frame	:Number of frame
+}
+*/
+	TDTS.TimeTableFrameEntry = function(frame){
+		this.data 				;//[Array of Object FramaData]
+		this.texts              ;//[Array of "String bookName"],
+		this.frame = frame	    ;//Number of frame
+	}
+/*
+トラックデータオブジェクト
+	attention　 注意喚起フラグ　falseの際はエントリの出力不要　true にするとコマの背景色が注意喚起色でハイライトされる
+	cellReplace 「セル置き換え」フラグ falseの際はエントリの出力不要 true　にすると指定フレーム終端で当該トラックの上から下への置き換え指示線が表示される。トラック内で１回のみ記述が許されている…らしい
+	memoは手書きメモがアタッチされている場合のみ存在するプロパティ
+	values　は配列だが　通常は要素一つのみでトラックに記載されている値テキストまたはプリセット文字列（列挙子？）
+
+Object TimeTableFrameData{
+	id			:Number 
+	attention	:boolean
+	cellReplace	:boolean
+	memo		:Object FrameMemo
+	values		:[Array of Text frameValue]
+}
+*/
+	TDTS.TimeTableFrameData = function(valueString){
+		this.id				= 0				;//Number of DataID 0 fix 
+		this.attention						;//boolean
+		this.cellReplace					;//boolean
+		this.memo							;//Object FrameMemo
+		this.values =(typeof valueString == 'undefined')?[]:[valueString];//[Array of Text frameValue]
+	}
+
+/*
+Object TimeTableFrameMemo{
+	"color"		:Number colorID 
+	"imageData"	: String of BASE64 encoded PNG image
+	"offsetX"	: Number memoImage offsetX
+	"offsetY"	: Number memoImege offsetY
+                      }
+*/
+	TDTS.TimeTableFrameMemo = function(col,imgSrring,offsetArray){
+		this.color = col				;//Number colorID 
+		this.imageData = imgSrring		;//String of BASE64 encoded PNG image
+		this.offsetX = offsetArray[0]	;//Number memoImage offsetX
+		this.offsetY = offsetArray[1]	;//Number memoImege offsetY
+	}
+
 /*
 タイムテーブルヘッダ
 	フィールドラベルを保持するオブジェクト
@@ -108,7 +173,7 @@ Object TimeTableHeader{
 */
 	TDTS.TimeTableHeader = function(fieldId){
 		this.fieldId = fieldId ;//Number fieldID,
-		this.names	           ;//[Array of String field name]
+		this.names	 = []      ;//[Array of String field name]
 	}
 /*
 タイムライントラックは二種作るべきかもしれない
@@ -127,43 +192,8 @@ Object TimelineTrack{
 		this.texts             ;//[Array of "String bookName"],
 		this.trackNo = trackNo ;//Number trackID
 	}
-/*
-トラックエントリオブジェクト
-	データ（プロパティ）を保持して
-	エントリポイントのフレームを与えるレイヤ
 
-Object TrackEntry{
-	data         :[Array of Object TarckData],
-	frame        :Number startFrame
-}
-*/
-	TDTS.TrackEntry = function(){
-		this.data         ;//[Array of Object TarckData],
-		this.frame        ;//Number startFrame
-	}
 
-/*
-トラックデータオブジェクト
-	attention　 注意喚起フラグ　falseの際はエントリの出力不要　true にするとコマの背景色が注意喚起色でハイライトされる
-	cellReplace 「セル置き換え」フラグ falseの際はエントリの出力不要 true　にすると指定フレーム終端で当該トラックの上から下への置き換え指示線が表示される。トラック内で１回のみ記述が許されている…らしい
-	memoは手書きメモがアタッチされている場合のみ存在するプロパティ
-	values　は配列だが　通常は要素一つのみでトラックに記載されている値テキストまたはプリセット文字列（列挙子？）
-
-Object TrackData{
-	attention   : Boolean,
-	cellReplace : Boolean,
-	id          : Number Idf,
-	memo        : Object MemoGraphic,
-	values      : [Array of TimelineValue]
-}
-*/
-	TDTS.TrackData = function(idf){
-		this.attention   ;// Boolean,
-		this.cellReplace ;// Boolean,
-		this.id  = idf   ;// Number Idf,
-		this.memo        ;// Object MemoGraphic,
-		this.values      ;// [Array of TimelineValue]
-	}
 /*
 トラックデータにアタッチするイメージデータオブジェクト
 	color     シートセルの背景色で、セルに登録された画像メモが存在することを示している。　attentionカラーと混色	
@@ -346,85 +376,87 @@ CAMERAWORK_ITME={"29":"BL K",
 0:TDTS/XDTS アイテム文字列
 1:トラック種別　c: camerawork, e:effect, g:geometry
 2:UAT置き換え対照配列　[区間文字列,開始ノード,終端ノード]
+3:UAT対応アイテムID
 */
 TDTS.SectionItemTable = {
- 0: ["FI","c",["|","▲"]],
- 1: ["FO","c",["|","▼"]],
- 2: ["WI","c",["|","△"]],
- 3: ["WO","c",["|","▽"]],
- 4: ["OL","c",["|","]OL["]],
- 5: ["CAM SHAKE S","c",["/"]],
- 6: ["CAM SHAKE M","c",["//"]],
- 7: ["CAM SHAKE L","c",["///"]],
- 8: ["TU","c",["|","▽","△"]],
- 9: ["TB","c",["|","▽","△"]],
- 10: ["ZI","c",["|","▽","△"]],
- 11: ["ZO","c",["|","▽","△"]],
- 12: ["PAN","c",["|","▽","△"]],
- 13: ["PAN UP","c",["|","▽","△"]],
- 14: ["PAN DOWN","c",["|","▽","△"]],
- 15: ["TILT","c",["|","▽","△"]],
- 16: ["FOLLOW","c",["┃","┳","┻"]],
- 17: ["CU","c",["┃","┳","┻"]],
- 18: ["CD","c",["｜","┬","┴"]],
- 19: ["DOLLY","c",["｜","┬","┴"]],
- 20: ["MULTI","c",["｜","┬","┴"]],
- 21: ["Fairing","c",["｜","⇑","⇓"]],
- 22: ["SL","c",["|","▽","△"]],
- 23: ["Strobo","c",["|","]STROBO["]],
- 24: ["Rotate TU","c",["|","▽","△"]],
- 25: ["Rotate TB","c",["|","▽","△"]],
- 26: ["Handy S","c",[":"]],
- 27: ["Handy M","c",["::"]],
- 28: ["Handy L","c",[":::"]],
- 29: ["BL K","c",["■"]],
- 30: ["W K","c",["□"]],
- 31: ["SUBLINA","c",["＜SUBLINA"]],
- 32: ["TFlash","c",["|","┬","┴"]],
- 33: ["HI CON","c",["|","┬","┴"]],
- 34: ["Rack Focus","c",["|","┬","┴"]],
- 35: ["OverEX","c",["｜","┬","┴"]],
- 36: ["UnderEX","c",["｜","┬","┴"]],
- 37: ["ParsSL","c",["┃","┳","┻"]],
- 38: ["JumpSL","c",["｜","┬","┴"]],
- 39: ["DF1","c",["｜","┬","┴"]],
- 40: ["DF2","c",["｜","┬","┴"]],
- 41: ["DF3","c",["｜","┬","┴"]],
- 42: ["Fog1","c",["｜","┬","┴"]],
- 43: ["Fog2","c",["｜","┬","┴"]],
- 44: ["Fog3","c",["｜","┬","┴"]],
- 45: ["BOKEH S","c",["｜","┬","┴"]],
- 46: ["BOKEH M","c",["｜","┬","┴"]],
- 47: ["BOKEH L","c",["｜","┬","┴"]],
- 48: ["FIX","c",["｜","┬","┴"]],
- 49: ["PAN TU","c",["|","▽","△"]],
- 50: ["PAN TB","c",["|","▽","△"]],
- 51: ["FollowPan","c",["|","▽","△"]],
- 52: ["Rolling","c",["｜","┬","┴"]],
- 53: ["Q TU","c",["|","▽","△"]],
- 54: ["Q TB","c",["|","▽","△"]],
- 55: ["Focus IN","c",["|","▲"]],
- 56: ["Focus Out","c",["|","▼"]],
- 57: ["WaveGlass S","c",["!"]],
- 58: ["WaveGlass M","c",["!!"]],
- 59: ["WaveGlass L","c",["!!!"]],
- 60: ["Wipe","c",["|","]WIPE["]],
- 61: ["IrisIN","c",["|","]○["]],
- 62: ["IrisOut","c",["|","]●["]],
- 63: ["Insert","c",["＜INSERT"]],
- 64: ["CutIN","c",["＜CUTIN"]],
- 65: ["Blur1","c",["┃","┳","┻"]],
- 66: ["Blur2","c",["┃","┳","┻"]],
- 67: ["Blur3","c",["┃","┳","┻"]],
- 68: ["WipeIN","c",["|","]▲["]],
- 69: ["Bar","c",["‖"]],
- 70: ["Strobo1","c",["|","▼▲"]],
- 71: ["Strobo2","c",["|","▲▼"]]
+ 0: ["FI","c",["|","▲"],"fadeIn"],
+ 1: ["FO","c",["|","▼"],"fadeOut"],
+ 2: ["WI","c",["|","△"],"whiteIn"],
+ 3: ["WO","c",["|","▽"],"whiteOut"],
+ 4: ["OL","c",["|","]OL["],"overlap"],
+ 5: ["CAM SHAKE S","c",["/"],"cameraShakeS"],
+ 6: ["CAM SHAKE M","c",["//"],"cameraShake"],
+ 7: ["CAM SHAKE L","c",["///"],"cameraShakeL"],
+ 8: ["TU","c",["|","▽","△"],"trackUp"],
+ 9: ["TB","c",["|","▽","△"],"trackBack"],
+ 10: ["ZI","c",["|","▽","△"],"zoomIn"],
+ 11: ["ZO","c",["|","▽","△"],"zoomOut"],
+ 12: ["PAN","c",["|","▽","△"],"pan"],
+ 13: ["PAN UP","c",["|","▽","△"],"panUp"],
+ 14: ["PAN DOWN","c",["|","▽","△"],"panDown"],
+ 15: ["TILT","c",["|","▽","△"],"tilt"],
+ 16: ["FOLLOW","c",["┃","┳","┻"],"followSlide"],
+ 17: ["CU","c",["┃","┳","┻"],"closeUp"],
+ 18: ["CD","c",["｜","┬","┴"],null],
+ 19: ["DOLLY","c",["｜","┬","┴"],"dolly"],
+ 20: ["MULTI","c",["｜","┬","┴"],"multi"],
+ 21: ["Fairing","c",["｜","⇑","⇓"],"fairing"],
+ 22: ["SL","c",["|","▽","△"],"slide"],
+ 23: ["Strobo","c",["|","]STROBO["],"strobo"],
+ 24: ["Rotate TU","c",["|","▽","△"],"rotateTU"],
+ 25: ["Rotate TB","c",["|","▽","△"],"rotateTB"],
+ 26: ["Handy S","c",[":"],"handShakeS"],
+ 27: ["Handy M","c",["::"],"handShake"],
+ 28: ["Handy L","c",[":::"],"handShakeL"],
+ 29: ["BL K","c",["■"],"kurokoma"],
+ 30: ["W K","c",["□"],"shirokoma"],
+ 31: ["SUBLINA","c",["＜SUBLINA"],"sublina"],
+ 32: ["TFlash","c",["|","┬","┴"],"backlight"],
+ 33: ["HI CON","c",["|","┬","┴"],"highContrast"],
+ 34: ["Rack Focus","c",["|","┬","┴"],"rackFocus"],
+ 35: ["OverEX","c",["｜","┬","┴"],"overExposure"],
+ 36: ["UnderEX","c",["｜","┬","┴"],"underExposure"],
+ 37: ["ParsSL","c",["┃","┳","┻"],"perspectiveTransform"],
+ 38: ["JumpSL","c",["｜","┬","┴"],"jumpSlide"],
+ 39: ["DF1","c",["｜","┬","┴"],"diffusionFilter"],
+ 40: ["DF2","c",["｜","┬","┴"],"diffusionFilter"],
+ 41: ["DF3","c",["｜","┬","┴"],"diffusionFilter"],
+ 42: ["Fog1","c",["｜","┬","┴"],"foggyFilter"],
+ 43: ["Fog2","c",["｜","┬","┴"],"foggyFilter"],
+ 44: ["Fog3","c",["｜","┬","┴"],"foggyFilter"],
+ 45: ["BOKEH S","c",["｜","┬","┴"],"bokeh"],
+ 46: ["BOKEH M","c",["｜","┬","┴"],"bokeh"],
+ 47: ["BOKEH L","c",["｜","┬","┴"],"bokeh"],
+ 48: ["FIX","c",["｜","┬","┴"],"fix"],
+ 49: ["PAN TU","c",["|","▽","△"],"panTU"],
+ 50: ["PAN TB","c",["|","▽","△"],"panTB"],
+ 51: ["FollowPan","c",["|","▽","△"],"followTracking"],
+ 52: ["Rolling","c",["｜","┬","┴"],"rolling"],
+ 53: ["Q TU","c",["|","▽","△"],"quickTU"],
+ 54: ["Q TB","c",["|","▽","△"],"quickTB"],
+ 55: ["Focus IN","c",["|","▲"],"focusIn"],
+ 56: ["Focus Out","c",["|","▼"],"focusOut"],
+ 57: ["WaveGlass S","c",["!"],"waveGlassS"],
+ 58: ["WaveGlass M","c",["!!"],"waveGlass"],
+ 59: ["WaveGlass L","c",["!!!"],"waveGlassL"],
+ 60: ["Wipe","c",["|","]WIPE["],"wipe"],
+ 61: ["IrisIN","c",["|","]○["],"irisIn"],
+ 62: ["IrisOut","c",["|","]●["],"irisOut"],
+ 63: ["Insert","c",["＜INSERT"],"insert"],
+ 64: ["CutIN","c",["＜CUTIN"],"cutIn"],
+ 65: ["Blur1","c",["┃","┳","┻"],"blur"],
+ 66: ["Blur2","c",["┃","┳","┻"],"blur"],
+ 67: ["Blur3","c",["┃","┳","┻"],"blur"],
+ 68: ["WipeIN","c",["|","]▲["],"wipeIn"],
+ 69: ["Bar","c",["‖"],"bar"],
+ 70: ["Strobo1","c",["|","▼▲"],"strobo1"],
+ 71: ["Strobo2","c",["|","▲▼"],"strobo2"]
  };
  TDTS.SectionItemTable.length = 72;
  TDTS.SectionItemTable.indexOf = function(item){
  	for (var ix = 0;ix < this.length; ix ++){
  		if(this[ix][0] == item) return ix;
+ 		if(this[ix][3] == item) return ix;
  	}
  	return -1;
  }
@@ -482,7 +514,7 @@ console.log(myTDTS);
 	if (myTDTS.timeTables[sheetID].books){
 		stillTracks = myTDTS.timeTables[sheetID].books[0].tracks;
 
-/*	コンバート対照のシートからプロパティを転記
+/*	コンバート対象のシートからプロパティを転記
 	timeTable.name タイムシート名　該当するプロパティなし　強いてあげるならステージ・ジョブ識別子に相当
 	opratorName	 > upadeUser
 */
@@ -588,9 +620,11 @@ console.log(trackOffset+ix);
 					if(! myEntry.data[0].values) continue;
 					var inputValue = myEntry.data[0].values[0];
 					if (fieldKind == 0){ ;//replacement
+console.log(myEntry.data[0].values[0])
 						if(myEntry.data[0].values[0].match(/^SYMBOL_/)){
 							inputValue = TDTS.dataSymbol[myEntry.data[0].values[0]]
 						}
+console.log({'setAddress':[trackId,targetFrame],'inputValue':inputValue});
 						myXps.put([trackId,targetFrame],inputValue);
 						continue;
 					} else if (fieldKind == 3){ ;//sound
@@ -599,6 +633,7 @@ console.log(trackOffset+ix);
 							continue;
 						}else{
 							myXps.put([trackId,sectionStart],inputStream.toString(sectionLength));
+alert([trackId,sectionStart,inputStream.toString(sectionLength)].join());
 //遅延解決 して次のセクションの値をオブジェクトでセット（ビルドは遅延解決）
 							sectionStart  = targetFrame;
 							sectionLength = 1;
@@ -679,12 +714,14 @@ console.log(myEntry);
 									}
 						}
 						if(currentWork[2].length > 1) sectionStream.splice((Math.floor((sectionStream.length-1)/2)),1,"<"+currentWork[0]+">");
-
+console.log({ID:[trackId,sectionStart],data:sectionStream.join(',')});
 						myXps.put([trackId,sectionStart],sectionStream.join(','));
 						inputStream = '';
 					}
 				}else if(fieldKind == 3){
-					myXps.put([trackId,sectionStart],inputStream.toString(sectionLength));
+console.log(inputStream);
+					var headMargin =((inputStream.name)? 1 : 0) + inputStream.attributes.length + 1;
+					myXps.put([trackId,sectionStart-headMargin],inputStream.getStream(sectionLength));
 				}
 			}
 		}
@@ -738,10 +775,10 @@ TDTS.parseTdts = function(dataStream){
         255
       ]
     ],
-    "cut": "",
     "direction": "",
     "episode": "",
-    "scene": ""
+    "scene": "",
+    "cut": ""
   },
   "timeTables": [
     {
@@ -796,37 +833,57 @@ TDTS.parseTdts = function(dataStream){
     }
   ],
   "version": 5
-}`);
+}
+`);
 
 	}
 }
 
-/*
-
-XPSオブジェクトを引数にしてTDTSフォーマットで出力
+/**
+XPSオブジェクトを引数にしてXDTS/TDTSフォーマットで出力
 暫定的にXDTSと互換のある　1ドキュメント/1タイムシートの形式でコンバート
+オプション指定で xdts/tdts を切り替え
+デフォルトは xdts
+拡張時マルチドキュメントに対応
 
+引数:
+	myXps			Object Xps
+	targetFormat 	String tdts/xtds dafault xdts
+	career			Object TDTS
 */
-XPS2TDTS=function(myXps,career){
+XPS2TDTS=function(myXps,targetFormat,career){
+	if((typeof targetFormat == "undefined")||(targetFormat != 'tdts')) targetFormat = 'xdts';
 	if(typeof career != Object) career = TDTS.parseTdts(career);
-	var headerString = "toeiDigitalTimeSheet Save Data";
+console.log(career);
+
+	var headerString = (targetFormat == 'tdts')? 'toeiDigitalTimeSheet Save Data':'exchangeDigitalTimeSheet Save Data';
+
 //キャリアオブジェクトにXps情報を転記
-	if ((myXps.opus)||(myXps.subtitle)) career.episode = myXps.getIdentifier('episode');
-	if (myXps.scene) career.scene = myXps.scene;
-	if (myXps.cut) career.cut = myXps.cut;
-	career.timeTables[0].opratorName = myXps.update_user.handle;
-	career.direction = myXps.xpsTracks.noteText;
+	if ((myXps.opus)||(myXps.subtitle))
+		career.header.episode = myXps.getIdentifier('episode');
+	if (myXps.scene)
+		career.header.scene = myXps.scene;
+	if (myXps.cut)
+		career.header.cut = myXps.cut;
+	if (myXps.xpsTracks.noteText)
+		career.header.direction = myXps.xpsTracks.noteText;
+	if (myXps.update_user)
+		career.timeTables[0].opratorName = myXps.update_user.handle;
+
 //Xpsトラックに合わせて	TDTSのトラックを編集
-	career.timeTables[0].duration = myXps.xpsTarcks.duration;
+	career.timeTables[0].duration = myXps.xpsTracks.duration;
 //	xpsTracksを順にサーチして、振り分け
-	var bookTrack    =[];
+	var bookTrackNames   =[];
+	var bookIdx		    ;
 	var soundTracks  =[];
 	var timingTracks =[];
 	var cameraTracks =[];
-	for (var tx = 0 ;tx < myXps.xpsTarcks.length;tx ++ ){
+	for (var tx = 0 ;tx < myXps.xpsTracks.length;tx ++ ){
 		switch (myXps.xpsTracks[tx].option){
 		case "still":
-			bookTracks.push(myXps.xpsTracks[tx]);
+			bookIdx = timingTracks.length;
+			if(!(bookTrackNames[bookIdx])) bookTrackNames[bookIdx]=[];
+			bookTrackNames[bookIdx].push(myXps.xpsTracks[tx].id);
 		break;
 		case "dialog":
 		case "sound":
@@ -839,47 +896,155 @@ XPS2TDTS=function(myXps,career){
 		break;
 		case "camera":
 		case "camerawork":
+			cameraTracks.push(myXps.xpsTracks[tx]);
+		break;
 		case "geometry":
 		case "composite":
 		case "effect":
 		case "sfx":
-			cameraTracks.push(myXps.xpsTracks[tx]);
-		break;
 		default :
+			;//NOP 詳細情報トラックは　コンバート不可
 			continue;
 		}
 	}
 //振り分けたトラックを処理
+//置き換え（セル）トラック
 	career.timeTables[0].timeTableHeaders[0] = new TDTS.TimeTableHeader(0);
-	career.timeTables[0].fields[0] = new TDTS.TimeTableField(0);
+	career.timeTables[0].fields = [ new TDTS.TimeTableField(0) ];
 	for (var tx=0;tx<timingTracks.length;tx++){
+//トラック名を転記
 		career.timeTables[0].timeTableHeaders[0].names.push(timingTracks[tx].id);
+//セクションごとにデータを転記
+		var currentTrack = new TDTS.TimeTableTrack(tx);		
+		for (var six=0;six<timingTracks[tx].sections.length;six++){
+			if(timingTracks[tx].sections[six].subSections){
+//			補完区間
+				for(var ssx = 0 ; ssx < timingTracks[tx].sections[six].subSections.length ; ssx ++){
+					var valueString = (timingTracks[tx].sections[six].subSections[ssx].value)?
+						timingTracks[tx].sections[six].subSections[ssx].getStream(1)[0] : "○";
+					valueString = (valueString.match( /^[\-·・○]$/ ))? "SYMBOL_TICK_1" : "SYMBOL_TICK_2";//二種にふりわけ
+					var currentFrameEntry  =  new TDTS.TimeTableFrameEntry(
+						timingTracks[tx].sections[six].startOffset()+timingTracks[tx].sections[six].subSections[ssx].startOffset()
+					);
+					currentFrameEntry.data = [];
+					currentFrameEntry.data.push(new TDTS.TimeTableFrameData( valueString ));
+					if(false) currentFrameEntry.data[0].attention = false;
+					if(false) currentFrameEntry.data[0].cellReplace = false;
+					if(false) currentFrameEntry.data[0].memo = new TDTS.TimeTableFrameMemo()
+					currentTrack.frames.push(currentFrameEntry);
+				}
+				continue;	
+			}
+			var valueString = (timingTracks[tx].sections[six].value)? timingTracks[tx].sections[six].value.name : "×";
+			if((! valueString)||( valueString == "×")||(valueString == "blank-cell")) valueString = "SYMBOL_NULL_CELL";
+			var currentFrameEntry  =  new TDTS.TimeTableFrameEntry(timingTracks[tx].sections[six].startOffset());
+			currentFrameEntry.data = [];
+			currentFrameEntry.data.push(new TDTS.TimeTableFrameData( valueString ));
+			if(false) currentFrameEntry.data[0].attention = false;
+			if(false) currentFrameEntry.data[0].cellReplace = false;
+			if(false) currentFrameEntry.data[0].memo = new TDTS.TimeTableFrameMemo()
+			currentTrack.frames.push(currentFrameEntry);
+		}
+		career.timeTables[0].fields[0].tracks.push(currentTrack);
 	}
-	
-	
+		
+//音響（セリフ）トラック
 	career.timeTables[0].timeTableHeaders[3] = new TDTS.TimeTableHeader(3);
 	career.timeTables[0].fields[1] = new TDTS.TimeTableField(3);
 	for (var tx=0;tx<soundTracks.length;tx++){
+//トラック名を転記
 		career.timeTables[0].timeTableHeaders[3].names.push(soundTracks[tx].id);
+//セクションごとにデータを転記
+		var currentTrack = new TDTS.TimeTableTrack(tx);		
+		for (var six=0;six<soundTracks[tx].sections.length;six++){
+			if(!(soundTracks[tx].sections[six].value)) continue;
+			var startFrame = soundTracks[tx].sections[six].startOffset();
+			var currentFrameEntry  =  new TDTS.TimeTableFrameEntry(startFrame);
+			currentFrameEntry.data = [];
+			currentFrameEntry.data.push(new TDTS.TimeTableFrameData());
+			if(false) currentFrameEntry.data[0].attention = false;
+			if(false) currentFrameEntry.data[0].cellReplace = false;
+			if(false) currentFrameEntry.data[0].memo = new TDTS.TimeTableFrameMemo()
+console.log(soundTracks[tx].sections[six]);
+console.log([
+					([soundTracks[tx].sections[six].value.name]).concat(soundTracks[tx].sections[six].value.attributes).join('\\n'),
+					soundTracks[tx].sections[six].value.bodyText
+			]);
+			currentFrameEntry.data[0].values = [
+					([soundTracks[tx].sections[six].value.name]).concat(soundTracks[tx].sections[six].value.attributes).join('\\n'),
+					soundTracks[tx].sections[six].value.bodyText
+			];
+			currentTrack.frames.push(currentFrameEntry);
+			for(var frms = 1 ; frms < soundTracks[tx].sections[six].duration; frms++){
+				var currentHyphexEntry  = new TDTS.TimeTableFrameEntry(startFrame+frms);
+				currentHyphexEntry.data = [];
+				currentHyphexEntry.data.push(new TDTS.TimeTableFrameData("SYMBOL_HYPHEN"));
+				if(false) currentHyphexEntry.data[0].attention = false;
+				if(false) currentHyphexEntry.data[0].cellReplace = false;
+				if(false) currentHyphexEntry.data[0].memo = new TDTS.TimeTableFrameMemo()
+				currentTrack.frames.push(currentHyphexEntry);
+			}
+		}
+		career.timeTables[0].fields[1].tracks.push(currentTrack);
 	}
 
+//論理的撮影指定（カメラワーク）トラック
 	career.timeTables[0].timeTableHeaders[5] = new TDTS.TimeTableHeader(5);
 	career.timeTables[0].fields[2] = new TDTS.TimeTableField(5);
 	for (var tx=0;tx<cameraTracks.length;tx++){
+//トラック名を転記
 		career.timeTables[0].timeTableHeaders[5].names.push(cameraTracks[tx].id);
+//セクションごとにデータを転記
+		var currentTrack = new TDTS.TimeTableTrack(tx);		
+		for (var six=0;six<cameraTracks[tx].sections.length;six++){
+			if(!(cameraTracks[tx].sections[six].value)) continue;
+			var startFrame = cameraTracks[tx].sections[six].startOffset();
+			var cameraWorkID = TDTS.SectionItemTable.indexOf(cameraTracks[tx].sections[six].value.type[1]);
+			if (cameraWorkID < 0) continue;//スキップ
+			var cameraString = TDTS.SectionItemTable[cameraWorkID][0];
+			var currentFrameEntry  =  new TDTS.TimeTableFrameEntry(startFrame);
+			currentFrameEntry.data = [];
+			if( targetFormat == 'xdts'){
+				currentFrameEntry.data.push(new TDTS.TimeTableFrameData(cameraString));
+			}else{
+				currentFrameEntry.data.push(new TDTS.TimeTableFrameData(String(cameraWorkID)));
+			}
+			if(false) currentFrameEntry.data[0].attention = false;
+			if(false) currentFrameEntry.data[0].cellReplace = false;
+			if(false) currentFrameEntry.data[0].memo = new TDTS.TimeTableFrameMemo()
+			currentTrack.frames.push(currentFrameEntry);
+			for(var frms = 1 ; frms < cameraTracks[tx].sections[six].duration; frms++){
+				var currentHyphexEntry  = new TDTS.TimeTableFrameEntry(startFrame+frms);
+				currentHyphexEntry.data = [];
+				currentHyphexEntry.data.push(new TDTS.TimeTableFrameData("SYMBOL_HYPHEN"));
+				if(false) currentHyphexEntry.data[0].attention = false;
+				if(false) currentHyphexEntry.data[0].cellReplace = false;
+				if(false) currentHyphexEntry.data[0].memo = new TDTS.TimeTableFrameMemo()
+				currentTrack.frames.push(currentHyphexEntry);
+			}
+		}
+		career.timeTables[0].fields[2].tracks.push(currentTrack);
 	}
 	
-	if(bookTrack.length >0){
-		
+//静止画（BOOK）トラック
+/*
+	TDTSは挿入点指定のみしか扱わないので注意
+	ターゲットがTDTSの場合のみ処理
+*/
+
+	if((bookTrackNames.length > 0)&&(targetFormat=='tdts')){
+		career.timeTables[0].books = [ new TDTS.TimeTableField(0) ];
+		for (var tx=0;tx<bookTrackNames.length;tx++){
+			if((!(bookTrackNames[tx]))||(bookTrackNames[tx].length==0)) continue;
+			var currentTrack=new TDTS.TimeTableTrack(tx);
+			currentTrack.texts=bookTrackNames[tx];
+			career.timeTables[0].books[0].tracks.push(currentTrack);
+		}
 	}
-	
-	return headerString+JSON.stringify(career);
+console.log(career);
+	return headerString+'\n'+JSON.stringify(career);
 }
 /*
 XPSオブジェクトを引数にしてXDTSフォーマットで出力
 */
-XPS2XDTS=function(myXps){
-	var headerString = "exchangeDigitalTimeSheet Save Data";
-	return myXps.toString();
-}
-
+XPS2XDTS = XPS2TDTS;

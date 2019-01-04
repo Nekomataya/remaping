@@ -8,6 +8,8 @@
 #	即席CGIなのにいまさら拡張
 #	xps/html/sbd/xml をMIMEタイプに指定可能に (拡張子で判断)
 #	2008/04/17	kiyo/Nekomataya
+#	tdts/xtds をMIMEタイプに指定可能に (拡張子で判断)
+#	2019/01/04	kiyo/Nekomataya
 # 呼ばれた時間を成形だぁ
 
 	@Date=localtime(time());
@@ -77,6 +79,8 @@ if ($QUERY{"encode"} eq "utf8") {
 # ファイル拡張子からMIMEタイプを設定 サポート外のデータはすべて"text/plainで"
 	$myMIME ="text/plain";
 	if($myFilename =~ /.*\.xps$/i){$myMIME = "application/xps";};
+	if($myFilename =~ /.*\.xdts$/i){$myMIME = "application/xdts";};
+	if($myFilename =~ /.*\.tdts$/i){$myMIME = "application/tdts";};
 	if($myFilename =~ /.*\.ard$/i){$myMIME = "application/ard";};
 	if($myFilename =~ /.*\.tsh$/i){$myMIME = "application/tsh";};
 	if($myFilename =~ /.*\.ardj$/i){$myMIME = "application/ardj";};

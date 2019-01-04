@@ -1673,7 +1673,7 @@ if(false){
     break;
     case 'episode':
         myResult='#'+nas.IdfEncode(this.opus,"#_\[");
-        if(this.subtitle) myResult=+'['+nas.IdfEncode(this.subtitle,"\[\]_")+']';
+        if(this.subtitle) myResult = myResult +'['+nas.IdfEncode(this.subtitle,"\[\]_")+']';
     break;   
     case 'full':
     default    :
