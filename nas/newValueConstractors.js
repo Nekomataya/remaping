@@ -619,8 +619,11 @@ _parseCameraworkTrack= function(){
     
     for (var fix=0;fix<this.length;fix++){
         var isBlank = (String(this[fix]).match(/^\s*$/))? true :false ;
-        if (String(this[fix]).match(/^\[[^\[]+\]$/)){ lastBracketsId = fix; isBlank = true;}
+        if (String(this[fix]).match(/^\[[^\[]+\]$/)){ lastBracketsId = fix;isBlank = true;}
         currentSection.duration ++;//currentセクションの継続長を加算
+
+         if((lastBracketsId == fix)&&(!(currentSection.value))) currentSection.tailMargin -- ;
+          
 
 //未記入セル カレントが空白セクションならば継続それ以外の場合は、セクション更新して継続
 //[値]セルは未記入セル扱いにする
@@ -655,6 +658,11 @@ _parseCameraworkTrack= function(){
                 startNodeId = fix;
                 // イレギュラー開始なので endNode を設定しない
                 currentSymbol = nas.cameraworkDescriptions.get('unknown');
+//先行セクションが[値]セルであった場合
+                if(lastBracketsId == (fix-1)){
+                    currentSection.value.prefix = this[lastBracketsId];
+                    currentSection.headMargin = 1;
+                };// */
             }
             continue;
         }
@@ -687,10 +695,14 @@ _parseCameraworkTrack= function(){
 
                     if(currentSection.duration < 1) myCollection.pop();
                     currentSection = myCollection.addSection(new nas.AnimationCamerawork(null,detectedName));//changeCurrent unknown
-
                     startNodeId   = fix + 1;
                     endNode       = undefined ;//終了ノードクリア
                     currentSymbol = null;//シンボルクリア 判定保留
+//先行セクションが[値]セルであった場合
+                if(lastBracketsId == (fix-1)){
+                    currentSection.value.prefix = this[lastBracketsId];
+                    currentSection.headMargin = 1;
+                };// */
                 }
                 continue;
         }
@@ -701,9 +713,14 @@ _parseCameraworkTrack= function(){
                 startNodeId = fix;//シート入力をスタートノードに設定
                 endNode = endNodes[this[startNodeId]];//頭尾は
                 currentSection.duration --;
-                if(currentSection.duration < 1) myCollection.pop();
+                if((currentSection.duration < 1)&&(lastBracketsId!=(fix-1))) myCollection.pop();
                 currentSection = myCollection.addSection(new nas.AnimationCamerawork(null,false));//changeCurrent
                 currentSection.duration = 1;
+//先行セクションが[値]セルであった場合
+                if(lastBracketsId == (fix-1)){
+                    currentSection.value.prefix = this[lastBracketsId];
+                    currentSection.headMargin = 1;
+                };// */
                 continue;
             }
         };
@@ -745,6 +762,11 @@ if(! mySymbol) console.log(this[fix]);
                     if(currentSection.duration < 1) myCollection.pop();
                     currentSection = myCollection.addSection(new nas.AnimationCamerawork(null,mySymbol.name));//changeCurrent
                     currentSection.duration = 1;
+//先行セクションが[値]セルであった場合
+                    if(lastBracketsId == (fix-1)){
+                        currentSection.value.prefix = this[lastBracketsId];
+                        currentSection.headMargin = 1;
+                    };// */
                 }
             } else if(
                 (fix<(this.length-1))&&(this[fix+1]!=this[fix])
@@ -762,6 +784,11 @@ if(! mySymbol) console.log(this[fix]);
                     if ((!(endNode)) && (endNodes[this[startNodeId]])) endNode = endNodes[this[startNodeId]] ;
                     currnetSymbol = mySymbol;
                }
+//先行セクションが[値]セルであった場合
+                if(lastBracketsId == (fix-1)){
+                    currentSection.value.prefix = this[lastBracketsId];
+                    currentSection.headMargin = 1;
+                };// */
             }
             continue;
         }
@@ -780,12 +807,12 @@ if(! mySymbol) console.log(this[fix]);
                 currentSection.value=new nas.AnimationCamerawork(null,detectName);//setValueToCurrentSection;
             }else{
                 currentSection.duration --;
-                if(lastBracketsId == (fix-1)) currentSection.tailMargin -- ; 
+//                if(lastBracketsId == (fix-1)) currentSection.tailMargin -- ; 
                 if(currentSection.duration < 1) myCollection.pop();
                 currentSection = myCollection.addSection(new nas.AnimationCamerawork(null,detectName));//changeCurrent
                 currentSection.duration = 1;
 //先行セクションが[値]セルであった場合のみ
-                if(lastBracketsId == (fix-1)){
+                if((lastBracketsId == (fix-1))&&(currentSymbol.type != "composite")&&(currentSymbol.type != "transition")){
                     if(currentSymbol.type != "geometry"){
                         currentSymbol = nas.cameraworkDescriptions.get('SL');
                         currentSection.value=new nas.AnimationCamerawork(null,currentSymbol.name);
@@ -820,16 +847,21 @@ if(! mySymbol) console.log(this[fix]);
             (String(this[fix]).match(/^<([^>]+)>$/))||(ckSymbol)
         ){
             var detectedName = ( ckSymbol )? this[fix] : RegExp.$1;
-            if((currentSection.value)&&((currentSection.value.name=="")||(currentSection.value.type[0]=="transition")||(currentSection.value.name==this[startNodeId]))){
+            if(
+                (currentSection.value)&&((currentSection.value.name=="")||
+                (currentSection.value.type[0]=="transition")||
+                (currentSection.value.type[1]=="fadeIn")||
+                (currentSection.value.name==this[startNodeId]))||
+                ((ckSymbol) && (ckSymbol.type == currentSection.value.type[0]) && (ckSymbol.name == currentSection.value.type[1]))
+            ){
                 currentSection.value.name = detectedName;
                 currentSymbol = ( ckSymbol )? ckSymbol : nas.cameraworkDescriptions.get(currentSection.value.name);
                 if(!currentSymbol){ currentSymbol = nas.cameraworkDescriptions.get('unknown')}
             
                 currentSection.value.type=[currentSymbol.type,currentSymbol.name];
             }else{
-                
                 currentSection.duration --;
-                if(lastBracketsId == (fix-1)) currentSection.tailMargin -- ; 
+//                if(lastBracketsId == (fix-1)) currentSection.tailMargin -- ; 
                 if(currentSection.duration < 1) myCollection.pop();
                 currentSection = myCollection.addSection(new nas.AnimationCamerawork(null,detectedName));//changeCurrent
                 currentSection.duration = 1;
@@ -1115,8 +1147,8 @@ Target.match(/^[\d]+\.?[\d]*FLD()?$/i)
 [strength[,blendingMode]][,file-path]
 	1,2,3
 
-(Traget).match(/^[+-]?[\d]+\.?[\d]*\%?$/);//％付き数値判定
-(new nas.BlendingMode[Traget]);//ブレンドモード判定
+(Target).match(/^[+-]?[\d]+\.?[\d]*\%?$/);//％付き数値判定
+(new nas.BlendingMode[Target]);//ブレンドモード判定
 上記以外はファイルパス
 50%,normal
 50%,"/path/file-name.ext"
@@ -2141,82 +2173,130 @@ nas.AnimationCamerawork.prototype.parseContent=function(myContent){
     if(typeof myContent == 'undefined'){
         myContent = this.contentText ;
     }
+    myContent = nas.normalizeStr(myContent);
+    
+    this.comments   = [];
+    this.attributes = [];
+    this.prefix     = undefined;
+    this.postfix    = undefined;
 //value検出 正規表現で検出できなかった場合は、分かち書きを分解してDBを総当たり
     var myContents = (myContent.replace(/\s+/g,'\t')).split('\t');
     var myName = '';
-    if (String(myContent).match(/<([^<]+)>/)){
+    if (myContent.match(/<([^<]+)>/)){
         myName = RegExp.$1;
     } else if(myContents.length){
-        for( var cix=0;cix<myContents.length;cix++){
+        var myWord = '';
+        for( var cix = 0; cix < myContents.length ; cix ++){
+            //書式上カメラワーク指定外のエントリをスキップ
+            if(myContents[cix].match(/^\[|^\(|(cell|セル|BG.*|BOOK.*)$|\)$|,/i)) continue;
+            if(! myWord) myWord = myContents[cix];//最初の候補単語を控える
             if(nas.cameraworkDescriptions.get(myContents[cix])){
                 myName = myContents[cix];
                 myContents.splice(cix,1);
                 break;
             }
         }        
-        if(! myName){
-            myName = myContents[0];
-            myContents.splice(0,1);
-
-        }
+        if(! myName) myName = (myWord)? myWord : "";//！注意点！
+/*  カメラワークの名称を取得できなかった場合は、遅延解決のため必ず""(空文字列)に設定のこと　*/
     }
     this.name = myName;
-//    this.contentText = myContents.join('\t');
-//検出したシンボルからタイプをだす
+//検出したシンボルからタイプ
     var mySymbol = nas.cameraworkDescriptions.get(this.name);
     if (! mySymbol) mySymbol = nas.cameraworkDescriptions.get('unknown')
     this.type = [mySymbol.type,mySymbol.name];
 /*symbol検出時はユーザ指定を促すか？*/
-    if((myContents[0])&&(myContents[0].indexOf(',') > 0)){
-        this.targets = myContents[0].split(',');
-    }
-//タイプ別に残りの属性値を判別
-    for( var cix=0;cix<myContents.length;cix++){
-//シンボル名スキップ
-        if((cix < 2)&&(myContents[cix].indexOf(this.name))) continue;
-//ターゲット検出
-        if((cix == 0)&&(myContents[0].indexOf(',') > 0)){
-            this.targets = myContents.slpit(',');
-            continue;
+
+    var myTargets  =    [];
+    var myProps    =    [];
+    var bracketValues = [];
+//コメント検出
+    var commentsGet = myContent.match(/\(([^\)]+)\)/g);
+//コメントリダクション
+    if(commentsGet) {
+        for (var cix = 0 ;cix < commentsGet.length;cix ++){
+            commentsGet[cix] = commentsGet[cix].replace(/^\(\s*|\s*\)$/gi,'');
+            if(! commentsGet[cix]) continue;
+            this.comments.push(commentsGet[cix]);
         }
-//コメント取得
-        if( myContents[cix].match(/\(([^\)]+)\)/)){
-            this.comments.push(RegExp.$1);
-            continue
+    }
+
+//タイプ別に残りの属性値を判別
+    for(var cix = 0 ; cix < myContents.length ; cix++){
+//コメント取得済みなのでスキップ
+        if(myContents[cix].match(/^\(|\)$/i)) continue;
+//カメラワーク名スキップ（存在すれば大文字小文字を含めて一致する）
+        if(myContents[cix].indexOf(this.name) == 0) continue;
+//ターゲット検出
+//この時点ではポストフィックスと空エントリが含まれる
+        if(myContents[cix].match(/(cell|セル)$|(BG.*|BOOK.*)$|,/i)){
+            if((myContents[cix].indexOf(',') > 0)){
+                myTargets = myTargets.concat(myContents[cix].split(','));
+                continue;
+            }else{
+                myTargets.push(myContents[cix]);
+            }
+            continue;
         }
 //残りはすべてアトリビュート
 //[ブラケット]
         if( myContents[cix].match(/^(\[[^\]]+\][-ー→]?)+/)){
-            var bracketValues = myContents[cix].replace(/[-ー→]/g,",").split(',');
-            this.attributes=this.attributes.concat(bracketValues);
-//パース時にブラケット属性が３つ以上あった場合はセクションの分割が発生する　それはセクションパース側で処理
-            this.prefix  = bracketValues[0];
-            if(bracketValues.length > 1) this.postfix = bracketValues[bracketValues.length-1];
+            bracketValues  = bracketValues.concat(myContents[cix].replace(/[-ー→]/g,",").split(','));
             continue
         }
 //]><[ transition
-        if( myContents[cix].match(/\[^\[]+(\][^\[]+\[)[^\]]+/)){
-            this.attributes.push(myContents[cix].split(RegExp.$1));
+/*
+    "c12]wipe[c13","A1]中OL[A2"　等のトランジション記述を前後で分割
+*/
+        if( myContents[cix].match(/[^\[]+(\][^\[]+\[)[^\]]+/)){
+            myProps.push(myContents[cix].split(RegExp.$1));
             continue
         }
         switch (this.type[0]){
         case "geometry":
         break;
         case "composite":
-            if((mySymbol.nodeSigns.length > 2)&&(mySymbol.nodeSigns)&&(this.attributes.indexOf(mySymbol.nodeSigns[1]) < 0)){
-                this.attributes.push(mySymbol.nodeSigns[2]);
+            if((mySymbol.nodeSigns)&&(mySymbol.nodeSigns.length > 2)&&(myProps.indexOf(mySymbol.nodeSigns[1]) < 0)){
+                myProps.push(mySymbol.nodeSigns[2]);
             }
         break;
         case "transition":
         break;
         case "symbol":
         default:
+            myProps.push(myContents[cix]);
         }    
-        this.attributes.push(myContents[cix]);
     }
+//myTargetsリダクション
+    for (var tix = 0 ;tix < myTargets.length;tix ++){
+        if(! myTargets[tix]) continue;
+        this.targets.push(myTargets[tix].replace(/(cell|セル)$/gi,''));
+    }
+//bracketValuesリダクション
+    for (var bix = 0 ;bix < bracketValues.length;bix ++){
+        if(! bracketValues[bix]) continue;
+        this.attributes.push(bracketValues[bix]);
+        if(! this.prefix)                   this.prefix  = bracketValues[bix];
+    }
+    if((this.prefix)&&(! this.postfix)) this.postfix = this.attributes[this.attributes.length - 1];
+//myPropsリダクション
+    for (var pix = 0 ;pix < myProps.length;pix ++){
+        if(! myProps[pix]) continue;
+        this.attributes.push(myProps[pix]);
+    }
+
     this.contentText = this.toString();//(myContent)?String(myContent):"";
     return this;
 }
+/* TEST
+new nas.AnimationCamerawork(null,"A,B,Cセル BG BOOK2 BOOK3 SL　[A]-[B] (じんわり)");
+
+new nas.AnimationCamerawork(null,"slide");
+new nas.AnimationCamerawork(null,"BOOK3 FI ()");
+new nas.AnimationCamerawork(null,"クロコマ");
+
+*/
+
+
 /**
 
 ストリームの構造

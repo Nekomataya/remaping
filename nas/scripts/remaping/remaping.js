@@ -8480,13 +8480,32 @@ function nas_expdList(ListStr,rcl){
 	}
 //(スキップ量はスピン-１)この値はグローバルの値を参照
 	var SepChar="\.";
-//	台詞トラックの場合、カギ括弧の中をすべてセパレートして戻す
+
+//カメラワークトラックの値を展開
+	if (
+		((xUI.Select[0]<(xUI.XPS.xpsTracks.length-1))&&
+		(xUI.XPS.xpsTracks[xUI.Select[0]].option=="camera"))
+	){
+        if(ListStr.match(/^\\(.+)$/)){
+            ListStr = RegExp.$1;
+            console.log(ListStr);
+            var myWork = new nas.AnimationCamerawork(null,ListStr);
+            console.log(myWork)
+            var minimumLength = myWork.getStream(1).length;
+            var sectionLength= (xUI.Selection[1])? (xUI.Selection[1]+1):minimumLength * xUI.spinValue;
+            if(sectionLength < minimumLength) sectionLength = minimumLength;
+            ListStr= myWork.getStream(sectionLength).join(',');
+            return ListStr;
+        }
+	}
+	
+//	台詞トラックの場合、カギ括弧・引用符の中をすべてセパレートして戻す
 //  ダイアログトラックは固定ではなくなったので判定を変更
-//  コメントトラックを排除する必要あり
+//  コメントトラックを排除する必要あり	
 //この判定をxUIに依存すると汎用性がなくなるので、コール側で引数渡しに変更する必要あり？
 	if (
-		((xUI.Select[0]<(XPS.xpsTracks.length-2))&&
-		(XPS.xpsTracks[xUI.Select[0]].option=="dialog"))
+		((xUI.Select[0]<(xUI.XPS.xpsTracks.length-1))&&
+		(xUI.XPS.xpsTracks[xUI.Select[0]].option=="dialog"))
 	){
         if(ListStr.match(/[\"\'「]/)){
             console.log(ListStr);

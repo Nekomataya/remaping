@@ -1015,7 +1015,9 @@ writeNewSection=function(myOpt){
       		myLength--};//終了フレームが最終の場合は一コマカット
 	myBody.push("[A]");
 	myBody.push("▽");
-	for(var idx=1;idx<myLength;idx++){myBody.push("|");}
+	for(var idx=1;idx<myLength;idx++){
+		myBody.push((idx==Math.floor((myLength-1)/2))?"<"+myOpt+">":"|");
+	}
 	myBody.push("△");
 	myBody.push("[B]");
       break;
@@ -1026,12 +1028,16 @@ writeNewSection=function(myOpt){
       break;
       case "FI":
 	myBody.push("▲");
-	for(var idx=1;idx<myLength;idx++){myBody.push("|");}
+	for(var idx=1;idx<myLength;idx++){
+		myBody.push((idx==Math.floor((myLength-1)/2))?"<"+myOpt+">":"|");
+	}
 	myBody.push("▲");
 	break;
       case "FO":
 	myBody.push("▼");
-	for(var idx=1;idx<myLength;idx++){myBody.push("|");}
+	for(var idx=1;idx<myLength;idx++){
+		myBody.push((idx==Math.floor((myLength-1)/2))?"<"+myOpt+">":"|");
+	}
 	myBody.push("▼");
 	break;
       case "transition":

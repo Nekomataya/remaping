@@ -633,7 +633,6 @@ console.log({'setAddress':[trackId,targetFrame],'inputValue':inputValue});
 							continue;
 						}else{
 							myXps.put([trackId,sectionStart],inputStream.toString(sectionLength));
-alert([trackId,sectionStart,inputStream.toString(sectionLength)].join());
 //遅延解決 して次のセクションの値をオブジェクトでセット（ビルドは遅延解決）
 							sectionStart  = targetFrame;
 							sectionLength = 1;
