@@ -7297,7 +7297,8 @@ console.log(xUI.XPS)
 console.log('detect first open no content');//初回起動を検出  コンテント未設定
 console.log(XPS)
                         xUI.XPS.line     = new XpsLine(nas.pmdb.pmTemplates.members[0]);
-                        xUI.XPS.stage    = new XpsStage((xUI.XPS.line.stages).split(',')[0]);
+                        xUI.XPS.stage    = new XpsStage(nas.Pm.pmTemplates.members[0].stages.members[0]);
+                        //xUI.XPS.stage    = new XpsStage((xUI.XPS.line.stages).split(',')[0]);
                         xUI.XPS.job      = new XpsStage(nas.pmdb.jobNames.getTemplate(xUI.XPS.stage,"init")[0]);
                         xUI.XPS.currentStatus   = new JobStatus("Startup");     
                         xUI.XPS.create_user=xUI.currentUser;

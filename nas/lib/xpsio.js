@@ -2347,11 +2347,11 @@ Xps.prototype.parseXps = function (datastream) {
                      */
                 case   "Line":;
                    SrcData[props[nAme]] = (vAlue)?
-                       new XpsLine(vAlue):new XpsLine("0:"+nas.Pm.pmTemplate[0].line);
+                       new XpsLine(vAlue):new XpsLine("0:"+nas.pmdb.pmTemplates.members[0].line);
                   break;
                 case   "Stage":;
                    SrcData[props[nAme]] = (vAlue)?
-                       new XpsStage(vAlue):new XpsStage("0:"+nas.Pm.pmTemplate[0].stages[0]);
+                       new XpsStage(vAlue):new XpsStage("0:"+nas.pmdb.pmTemplates.members[0].stages.members[0]);
                   break;
                 case   "Job":;
                    SrcData[props[nAme]] = (vAlue)?
