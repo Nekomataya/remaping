@@ -43,6 +43,11 @@ a:focus		{color:#880000;background-color:snow}
 	position:fixed;
 	z-index:3;
 }
+.loginPanel	{
+	width:100%;
+	text-align:right;
+	padding:0 0 0 0;
+	}
 /* スクロール領域*/
 #UIheaderScrollV {
 	display:inline;
@@ -245,6 +250,15 @@ th.timingSpan {
 	width:3em;
 }
 th.timinglabel {
+	text-align:center;
+	border-style:solid;
+	border-width:3px 1px 3px 0;
+}
+/* geometry/stagework */
+th.geometrySpan {
+	width:3em;
+}
+th.geometrylabel {
 	text-align:center;
 	border-style:solid;
 	border-width:3px 1px 3px 0;
@@ -569,7 +583,7 @@ button.iconButton:disabled {
 */
 .iconButton-addStillTL { background-position: 0 -216px; }
 .iconButton-addReplacementTL { background-position: -27px -216px; }
-.iconButton-addCameraworkTL { background-position: -54px -216px; }
+.iconButton-addStageworkTL { background-position: -54px -216px; }
 .iconButton-addEffectsTL { background-position: -81px -216px; }
 .iconButton-addSoundTL { background-position: -108px -216px; }
 .iconButton-addTransitionTL { background-position: -135px -216px; }

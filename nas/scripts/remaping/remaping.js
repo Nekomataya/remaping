@@ -701,6 +701,7 @@ console.log(editxMap);
     this.dialogCount    = 1;    // 音声トラックの総数
     this.stillCount     = 0;    // 静止画トラックの総数
     this.timingCount    = 4;    // 置換トラックの総数
+    this.stageworkCount     = 0;    // ステージワークトラックの総数
     this.sfxCount       = 0;    // 効果トラックの総数
     this.cameraCount    = 0;    // カメラトラックの総数
     this.dialogSpan     = 1;    // シート左にある音声トラックの連続数
@@ -837,7 +838,7 @@ console.log(xUI.yankBuf);
     どちらか単独更新の場合でも画面全体を再描画する必要があるので、このルーチンは等しく実行される
 */
 xUI._checkProp=function(){
-    this.dialogCount=0;this.stillCount=0;this.timingCount=0;this.sfxCount=0;this.cameraCount=0;
+    this.dialogCount=0;this.stillCount=0;this.timingCount=0;this.stageworkCount=0;this.sfxCount=0;this.cameraCount=0;
     this.dialogSpan=0;this.cameraSpan=0;
     for(var idx=0;idx<(this.XPS.xpsTracks.length-1);idx++){
         this.XPS.xpsTracks[idx].sectionTrust=false;
@@ -848,6 +849,8 @@ xUI._checkProp=function(){
             case "still" : this.stillCount++ ;break;
             case "effect": ;
             case "sfx"   : this.sfxCount++   ;break;
+            case "stagework" :
+            case "geometry": this.stageworkCount++   ;break;
             case "camerawork":;
             case "camera": this.cameraCount++;break;
             case "cell": ;
@@ -857,8 +860,8 @@ xUI._checkProp=function(){
         };
 //表示域左側で連続した音声トラックの数を控える（最初に出てきたsound/dialog以外のトラックの位置で判定 ）
         if((this.XPS.xpsTracks[idx].option!="dialog")&&(! this.dialogSpan)){this.dialogSpan=this.dialogCount};
-//フレームコメントの左側の連続したcamera/sfxトラックの数を控える(最後のcamera/sfx/effect以外のトラックの位置から計算)
-        if((this.XPS.xpsTracks[idx].option != "camera")&&(this.XPS.xpsTracks[idx].option!="sfx")&&(this.XPS.xpsTracks[idx].option!="effect")){this.cameraSpan=this.XPS.xpsTracks.length-idx-2};
+//フレームコメントの左側の連続したcamera/sfxトラックの数を控える(最後のcamera/sfx/effect/geometry以外のトラックの位置から計算)
+        if((this.XPS.xpsTracks[idx].option != "camera")&&(this.XPS.xpsTracks[idx].option!="geometry")&&(this.XPS.xpsTracks[idx].option!="sfx")&&(this.XPS.xpsTracks[idx].option!="effect")){this.cameraSpan=this.XPS.xpsTracks.length-idx-2};
 //カウントする、ただしこのルーチンはこの後プロパティに変換してレイヤ数が変わるたびにプロパティとして変更するように変更されるべき。
     }
 //
@@ -899,6 +902,7 @@ SheetLooks = {
 	SheetCellWidth	    :42,
 	SheetCellNarrow	    :4,
 	StillCellWidth	    :12,
+    GeometryCellWidth   :52,
 	SfxCellWidth	    :46,
 	CameraCellWidth     :52,
 	CommentWidth        :120,
@@ -1081,6 +1085,7 @@ var mySections=[
     ["th.editSpan"      ,"width" ,(sheetLooks.SheetCellWidth        + sheetLooks.CellWidthUnit)],
     ["th.timingSpan"    ,"width" ,(sheetLooks.SheetCellWidth        + sheetLooks.CellWidthUnit)],
     ["th.stillSpan"     ,"width" ,(sheetLooks.StillCellWidth        + sheetLooks.CellWidthUnit)],
+    ["th.geometrySpan"   ,"width" ,(sheetLooks.GeometryCellWidth     + sheetLooks.CellWidthUnit)],
     ["th.sfxSpan"       ,"width" ,(sheetLooks.SfxCellWidth          + sheetLooks.CellWidthUnit)],
     ["th.cameraSpan"    ,"width" ,(sheetLooks.CameraCellWidth       + sheetLooks.CellWidthUnit)]
 ]
@@ -1977,6 +1982,32 @@ break;
     }
 }
 }
+
+/** 操作スクリーンを加算シフトさせる
+引数:
+    x,y 加算px
+右揃えのアイテムをシフトした分だけ左に寄せて画面内に収める処理つき
+現在の値に引数を加える。戻りは想定されないので注意
+
+*/
+xUI.shiftScreen = function(x,y){
+//　body '(top),right,bottom,(left)'
+    var currentBox = ($('body').css('padding')).split(' ');
+console.log(currentBox)
+    currentBox.forEach(function(itm,idx,itself){itself[idx]=parseInt(itm);});
+// 
+    var currentFr = parseInt($('.floating-right').css('padding-right'));
+    var currentAb = parseInt($('#account_box').css('padding-right'));
+    var currentLp = parseInt($('#loginPanel').css('padding-right'));
+    $('body').css('padding',[currentBox[0]+x,currentBox[1],currentBox[2],currentBox[3]+y].join('px ')+'px');
+    $('.floating-right').css('padding-right',(currentFr+x)+'px');
+    $('#account_box').css('padding-right'   ,(currentAb+x)+'px');
+    $('#loginPanel').css('padding-right'    ,(currentLp+x)+'px');
+    xUI.adjustSpacer();
+}
+/*  TEST
+xUI.shiftScreen(50,50);
+*/
 
 /*    画面サイズの変更時等にシートボディのスクロールスペーサーを調整する
     固定ヘッダとフッタの高さをスクロールスペーサーと一致させる
@@ -2878,6 +2909,7 @@ var tableColumnWidth=(
     tableFixWidth+
     this.sheetLooks.DialogWidth*xUI.dialogCount +
     this.sheetLooks.StillCellWidth*xUI.stillCount +
+    this.sheetLooks.GeometryCellWidth*xUI.stageworkCount +
     this.sheetLooks.SfxCellWidth*xUI.sfxCount +
     this.sheetLooks.CameraCellWidth*xUI.cameraCount +
     this.sheetLooks.SheetCellWidth*xUI.timingCount +
@@ -2926,6 +2958,7 @@ UI設定に基づいて段組
     this.sheetLooks.ActionWidth*this.referenceLabels.length +
     this.sheetLooks.DialogWidth*xUI.dialogCount +
     this.sheetLooks.StillCellWidth*xUI.stillCount +
+    this.sheetLooks.GeometryCellWidth*xUI.stageworkCount +
     this.sheetLooks.SfxCellWidth*xUI.sfxCount +
     this.sheetLooks.CameraCellWidth*xUI.cameraCount +
     this.sheetLooks.SheetCellWidth*xUI.timingCount +
@@ -2943,6 +2976,7 @@ UI設定に基づいて段組
     ダイアログ幅+
     stillレイヤ数*stillセル幅+
     timingレイヤ数*timingセル幅+
+    stageworkレイヤ数*geometryセル幅+
     sfxレイヤ数*sfxセル幅+
     cameraレイヤ数*cameraセル幅+
     コメント欄幅
@@ -3045,6 +3079,7 @@ default:
 case "dialog":BODY_ +='<th class="dialogSpan tlhead" ';break;
 case "still":BODY_ +='<th class="stillSpan tlhead" ';break;
 case "sfx":BODY_ +='<th class="sfxSpan tlhead" ';break;
+case "geometry":BODY_ +='<th class="geometrySpan tlhead" ';break;
 case "camera":BODY_ +='<th class="cameraSpan tlhead" ';break;
 case "timing":
 default:BODY_ +='<th class="timingSpan tlhead" ';
@@ -3154,6 +3189,8 @@ var lbString=(currentRefLabel.length<3)?
 BODY_ +='<th id="' + currentElementId ;
  switch (this.XPS.xpsTracks[r].option){
 case "still" :BODY_ +='" class="stilllabel annotationText" ' ;break;
+case "stagework":
+case "geometry":BODY_ +='" class="geometrylabel annotationText" ';break;
 case "effect":
 case "sfx"   :BODY_ +='" class="sfxlabel annotationText" '   ;break;
 case "camerawork":
@@ -6392,8 +6429,9 @@ xUI.resetSheet=function(editXps,referenceXps){
         this.sheetLooks.DialogWidth * this.dialogCount + 
         this.sheetLooks.SheetCellWidth * this.timingCount +
         this.sheetLooks.StillCellWidth * this.stillCount +
-        this.sheetLooks.CameraCellWidth * this.cameraCount +
         this.sheetLooks.SfxCellWidth * this.sfxCount +
+        this.sheetLooks.GeometryCellWidth*this.stageworkCount +
+        this.sheetLooks.CameraCellWidth * this.cameraCount +
         this.sheetLooks.CommentWidth
     );//タイムシートの基礎トラック専有幅を算出
     var tableColumnWidth=this.sheetLooks.TimeGuideWidth + tableRefereneceWidth + tableEditWidth;
@@ -7105,11 +7143,22 @@ console.log('Application server-onsite');
         }
         xUI.onSite = serviceAgent.currentServer.url.split('/').slice(0,3).join('/');
          serviceAgent.currentStatus='online';
+
 //  ドキュメント表示更新
          document.getElementById('loginstatus_button').innerHTML = '=ONLINE=';
          document.getElementById('loginstatus_button').disabled  = true;
          document.getElementById('loginuser').innerHTML = xUI.currentUser.handle;
          document.getElementById('serverurl').innerHTML = serviceAgent.currentServer.url;
+/*
+オンサイト時にiFrame表示を行う場合
+以下のエレメントを非表示にする
+スクリーンをメニュー幅シフトする
+*/
+    $('#headerLogo').hide();
+    $('#headerRepository').hide();
+    $('#account_box').hide();
+    xUI.shiftScreen(50,50);
+
 //  サーバ指定のフレームレートが存在する場合は最優先で取得してデフォルト値を設定する
         var frtString=$("#backend_variables").attr("data-frame_rate");
         if(String(frtString).length){
@@ -8948,6 +8997,7 @@ spanWord=({
 	sound:"DialogCellWidth",
 	timing:"CellWidth",
 	replacement:"CellWidth",
+	geometry:"GeometryCellWidth",
 	sfx:"SfxCellWidth",
 	effect:"SfxCellWidth",
 	camera:"CameraCellWidth"
@@ -9311,6 +9361,7 @@ myCookie[0]=pageAttributes;
     SoundColumns = (useCookie.XPSAttrib)?xUI.dialogCount:null;
 	SheetLayers	= (useCookie.XPSAttrib)?xUI.timingCount:null;
     CameraworkColumns = (useCookie.XPSAttrib)?xUI.cameraCount:null;
+    StageworkColumns = (useCookie.XPSAttrib)?xUI.stageworkCount:null;
     SfxColumns = (useCookie.XPSAttrib)?xUI.sfxCount:null;
 
 myCookie[1]=[myTitle,mySubTitle,myOpus,myFrameRate,Sheet,SoundColumns,SheetLayers,CameraworkColumns,SfxColumns];

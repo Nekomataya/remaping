@@ -1202,7 +1202,7 @@ XPS2AEK = function (myXps, layer_id) {
     var bflag = (blank_pos) ? false : true;//ブランク処理フラグ
 
     var AE_version = xUI.aeVersion;
-    var compFramerate = myXps.framerate;
+    var compFramerate = (myXps.framerate.rate)? myXps.framerate.rate:myXps.framerate;
     var footageFramerate = xUI.fpsF;
     if (isNaN(footageFramerate)) {
         footageFramerate = compFramerate

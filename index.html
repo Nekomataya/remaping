@@ -682,7 +682,7 @@ serviceAgent.pushEntry(xUI.XPS,function(){xUI.setStored("current");sync();
 </ul>
 </div>
 <!-- dropdown menu for browser ブラウザ用ドロップダウンメニュー　-->
-<div id=account_box>
+<div id=account_box style='padding-right:16px'>
     <div class=server-info
         id = server-info
         client_id='b115aead773388942473e77c1e014f4d7d38e4d4829ae4fd1fa0e48e1347b4cd'
@@ -727,8 +727,9 @@ serviceAgent.pushEntry(xUI.XPS,function(){xUI.setStored("current");sync();
     </div>
 </div>
 <!--	ログインパネル	-->
-<div class=loginPanel id=optionPanelLogin style="text-align:right;">
-<hr>	<select id=serverSelector
+<div class='loginPanel' id=optionPanelLogin >
+    <hr>
+    <span class= 'floating-right'>	<select id=serverSelector
 				class=debug
 		onChange="serviceAgent.switchService(this.value)"
 	>
@@ -738,7 +739,8 @@ serviceAgent.pushEntry(xUI.XPS,function(){xUI.setStored("current");sync();
 	userID (or mail-address) : <input id='current_user_id' type='text' autocomplete='on' list='recentUsers' size=32 value='' onchange ='this.value=(new nas.UserInfo(this.value)).email;'>
 	<datalist id='recentUsers'></datalist>
 	password : <input id='current_user_password' type=password size=32 value='password'>
-	<button class='sign' id='login_button' onclick='serviceAgent.authorize();'>SIGNIN / signout</button><hr>
+	    <button class='sign' id='login_button' onclick='serviceAgent.authorize();'>SIGNIN / signout</button>
+	</span>
 </div>
 <!--	ログインパネル	-->
 
@@ -976,7 +978,7 @@ serviceAgent.pushEntry(xUI.XPS,function(){xUI.setStored("current");sync();
 
 <!--	ツールバーボタン/toolIcons	-->
 	<!-- logo -->
-<span id=headerLogo style="float:right">
+<span id=headerLogo class='floating-right'>
 <b>りまぴん</b>
 </span>
 	<!-- logo -->
@@ -1492,6 +1494,12 @@ class=optionPanel id=optionPanelProductManagement
 	onclick="addTimeline('camera');"
 >
 </button><button
+    id=ibMaddGeometryTL
+    class='iconButton  iconButton-addStageworkTL'
+	title="ステージワーク追加"
+	onclick="addTimeline('geometry');"
+>
+</button><button
     id=ibMaddSfxTL
     class='iconButton  iconButton-addEffectsTL'
 	title="エフェクト追加"
@@ -1617,7 +1625,9 @@ class=optionPanel id=optionPanelProductManagement
     <button onclick="inputButtonText(this.innerHTML);">MLTU</button
 ><button onclick="inputButtonText(this.innerHTML);">MLTB</button
 ><button onclick="inputButtonText(this.innerHTML);">MLSL</button>
-<button onclick="inputButtonText(this.innerHTML);">画面動</button><button onclick="inputButtonText(this.innerHTML);">ハンディブレ</button><button onclick="inputButtonText(this.innerHTML);">ブレ</button>
+<button onclick="inputButtonText(this.innerHTML);">画面動</button>
+<button onclick="inputButtonText(this.innerHTML);">ハンディブレ</button>
+<button onclick="inputButtonText(this.innerHTML);">ブレ</button>
 <hr>
 </div>
 <div id=FXLabelTemplate>

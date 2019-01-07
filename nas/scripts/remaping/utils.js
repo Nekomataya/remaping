@@ -832,7 +832,11 @@ reNameLabel=function(TimelineId) {
 		  	msg.push(document.getElementById("CLLabelTemplate").innerHTML);
 		  break;
 		  case "camera":
+		  case "camerawork":
+		  	msg.push(document.getElementById("CWLabelTemplate").innerHTML);
+		  case "geometry":
 		  case "peg":
+		  case "stagework":
 		  	msg.push(document.getElementById("CWLabelTemplate").innerHTML);
 		  break;
 		  case "effect":

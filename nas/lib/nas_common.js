@@ -2333,7 +2333,8 @@ nas.FRATE = nas.newFramerate(nas.RATE);
  * サンプル解像度ppc(dpc)
  * @type {number}
  */
-nas.RESOLUTION = 144. / 2.540;//nas.RESOLUTION = new nas.UnitResolution("144 dpc");
+//nas.RESOLUTION = 144. / 2.540;//dpc
+nas.RESOLUTION = new nas.UnitResolution("144dpi",'dpc');//nas関数が変動ユニットに未対応なので現在は'dpc'を指定のこと2019.01
 /**
  * サンプル基準寸法(mm)
  * @type {number}
