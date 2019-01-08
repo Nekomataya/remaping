@@ -96,7 +96,7 @@ if(! EXFlag){
 簡易オブジェクトで実装
 エレメントのラップもしない
 
-nas.AnimationSound Object
+nas.AnimationDialog Object
 　同名のオブジェクトとの互換はあまり考えない
 　名前が同じだけと思うが吉
 　タイムシートサウンドトラックの値となる
@@ -109,7 +109,7 @@ bodyText;	String	台詞本体のテキスト　"ぽん！ぽこ！りん！"
 attributes;	Array	オブジェクト属性配列 ["(off)"] 
 comments;	Array	ノートコメントコレクション配列 [[3,"(SE:ポン)"],[6,"<BGM:開始>"],[9,"[光る！]"]]
 */
-nas.AnimationSound=function(myContent){
+nas.AnimationDialog=function(myContent){
 //	this.source;
 //	this.duration;
 //	this.startOffset;
@@ -124,7 +124,7 @@ nas.AnimationSound=function(myContent){
 	初期化時の内容テキスト（シナリオ型式）をパースしてオブジェクト化するメソッド
 	本来は自動実行だが、今回は必要に従ってコールする
 */
-nas.AnimationSound.prototype.parseContent=function(){
+nas.AnimationDialog.prototype.parseContent=function(){
 	if(this.contentText.length){
 		if(this.contentText.match(/^([^"'「]*)["'「]([^"'」]*)["'」]?$/)){ ;//"
 			this.name=RegExp.$1;
@@ -158,7 +158,7 @@ nas.AnimationSound.prototype.parseContent=function(){
 /*
 プロパティを組み上げてシナリオ型式のテキストを返す
 */
-nas.AnimationSound.prototype.toString=function(){
+nas.AnimationDialog.prototype.toString=function(){
 	var myResult=this.name;
 	myResult+=this.attributes.join("");
 	myResult+="「";
@@ -174,7 +174,7 @@ if(startPt<this.bodyText.length){myResult+=this.bodyText.slice(startPt)};
  return myResult;
 }
 //	test
-//A=new  nas.AnimationSound("たぬきさん(off)「ぽん！(SE:ポン)ぽこ！<BGM:開始>りん！[光る！]とうりゃぁー！！」");
+//A=new  nas.AnimationDialog("たぬきさん(off)「ぽん！(SE:ポン)ぽこ！<BGM:開始>りん！[光る！]とうりゃぁー！！」");
 //A.parseContent();
 //A
 
@@ -202,7 +202,7 @@ parseSoundTrack =function(myStream){
 	//この実装では開始マーカーが０フレームにしか位置できないので必ずブランクセクションが発生する
 	//継続時間０で先に作成 同時にカラのサウンドObjectを生成
 	var currentSection=myResultTL.addSection(false);
-	var currentSound=new nas.AnimationSound("");//コンテンツはカラで初期化も保留
+	var currentSound=new nas.AnimationDialog("");//コンテンツはカラで初期化も保留
 	for (var fix=0;fix<myStream.length;fix++){
 		currentSection.duration ++;//currentセクションの継続長を加算
 		//未記入データ　これが一番多いので最初に処理しておく
@@ -225,7 +225,7 @@ parseSoundTrack =function(myStream){
 				currentSection.value.contentText=currentSound.toString();//先の有値セクションをフラッシュして
 				currentSection=myResultTL.addSection(false);//新規のカラセクションを作る
 				currentSection.duration ++;//キャンセル分を後方区間に加算
-				currentSound=new nas.AnimationSound("");//サウンドを新規作成
+				currentSound=new nas.AnimationDialog("");//サウンドを新規作成
 			}else{
 				currentSection=myResultTL.addSection(currentSound);//新規有値セクション作成
 			}

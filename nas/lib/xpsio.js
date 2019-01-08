@@ -324,7 +324,7 @@ console.log([
     switch (myOption) {
         case "dialog":
         case "sound":
-            return new nas.AnimationSound(null,"");
+            return new nas.AnimationDialog(null,"");
             break;
         case "camera":
         case "camerawork":

@@ -2074,7 +2074,7 @@ B	B-1	"c:\\\\Users\\Me\\Desktop\\Datas\\B_00001.png",640pt,480pt,
 
 	作成するオブジェクトのリスト＞＞トラックの種類だけ必要
 nas.CameraworkDescription   単記述オブジェクト　下記を含むマルチパーパスオブジェクト
-nas.AnimationSound	        音響
+nas.AnimationDialog	        音響
 nas.AnimationReaplacement   置きかえ（画像ーセル＊静止画と動画を双方含む）
 nas.AnimationGeometry	    ジオメトリ（カメララーク）
 nas.AnimationComposite	    合成（撮影効果）
@@ -2083,7 +2083,7 @@ nas.AnimationComposite	    合成（撮影効果）
 XPSグループのエントリは時間属性を持ったリプレースメントオブジェクトとして扱う
 
 TEXTグループは、タイムシート上には配置されず区間の値となることは無い…と思う
-字幕等 の  AnimationSoundに準ずるAnimationTextオブジェクトは、そのうち必要かも  
+字幕等 の  AnimationDialogに準ずるAnimationTextオブジェクトは、そのうち必要かも  
 
 これでOK？
 

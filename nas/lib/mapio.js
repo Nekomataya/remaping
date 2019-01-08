@@ -371,7 +371,7 @@ xMap.getDefaultContent=function(targetGroup,contentString){
 	switch (targetGroup.type){
 	case	'dialog':
 	case	'sound':
-		result=new nas.AnimationSound(targetGroup,contentString);
+		result=new nas.AnimationDialog(targetGroup,contentString);
 	break;
 	case	'cell':
 	case	'replacement':
@@ -488,11 +488,11 @@ console.log(myOption);
 		break;
 		case "sound":
 		case "dialog":
-    			newElement.content=new nas.AnimationSound(newElement,contentSource);
-/*			if( contentSource instanceof nas.AnimationSound ){
+    			newElement.content=new nas.AnimationDialog(newElement,contentSource);
+/*			if( contentSource instanceof nas.AnimationDialog ){
 			    newElement.content=contentSource;
 			}else{
-    			newElement.content=new nas.AnimationSound(newElement,contentSource);			    
+    			newElement.content=new nas.AnimationDialog(newElement,contentSource);			    
 			}*/
 		break;
 		case "composite":

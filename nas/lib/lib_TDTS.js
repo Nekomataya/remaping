@@ -636,7 +636,7 @@ console.log({'setAddress':[trackId,targetFrame],'inputValue':inputValue});
 //遅延解決 して次のセクションの値をオブジェクトでセット（ビルドは遅延解決）
 							sectionStart  = targetFrame;
 							sectionLength = 1;
-							inputStream = new nas.AnimationSound();
+							inputStream = new nas.AnimationDialog();
 console.log(([myEntry.data[0].values[0],"「",myEntry.data[0].values[1],"」"]).join(''));
 							inputStream.parseContent(([myEntry.data[0].values[0],"「",myEntry.data[0].values[1],"」"]).join(''));
 							continue;

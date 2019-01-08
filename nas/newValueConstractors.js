@@ -18,11 +18,13 @@
 xMapElementの値オブジェクト
 xMapElementを介してXpsTimelineSectionの値となる
 
-nas.AnimationComposite  画像合成を記述する値オブジェクト
+nas.AnimationCamerawork     抽象化された撮影指示を記述する値オブジェクト
+nas.AnimationComposite      画像合成を記述する値オブジェクト
 nas.AnimationDesctiption    注意点や特記内容を記述するオブジェクト
-nas.AnimationGeopmetry  要素の配置を記述する値オブジェクト
+nas.AnimationGeopmetry      要素の配置を記述する値オブジェクト
 nas.AnimationReplacement    画像データを保持してその置き換えを記述するオブジェクト
-nas.AnimationSound      音響情報を記述するオブジェクト
+nas.AnimationSound          音響情報を記述するオブジェクト
+nas.AnimationDialog         セリフ情報を記述するオブジェクト
 
 */
  
@@ -1576,7 +1578,7 @@ valueDetect==false
 簡易オブジェクトで実装
 エレメントのラップもしない
 
-nas.AnimationSound Object
+nas.AnimationDialog Object
 　同名のオブジェクトとの互換はあまり考えない
 　名前が同じだけと思うが吉
 　タイムシートサウンドトラックの値となる
@@ -1610,7 +1612,7 @@ nas.AnimationSound Object
 ノートコメントコレクション配列 [[3,"(SE:ポン)"],[6,"<BGM:開始>"],[9,"[光る！]"]]
 コメントのインデックスはbodyText内の挿入点　シート展開時は、bodyText.length+comments.length のフレームを再配置する
 */
-nas.AnimationSound=function(myParent,myContent){
+nas.AnimationDialog=function(myParent,myContent){
     this.parent = (myParent)? myParent : null   ;//xMapElementGroup or null
     this.contentText=(myContent)?String(myContent):"";//xMapのソーステキストを保存する　自動で再構築が行なわれるタイミングがある
 
@@ -1634,7 +1636,7 @@ nas.AnimationSound=function(myParent,myContent){
     それ以外はサウンドノード
     
 */
-nas.AnimationSound.prototype.parseContent=function(myContent){
+nas.AnimationDialog.prototype.parseContent=function(myContent){
     if(typeof myContent == 'undefined') myContent = this.contentText;
     if(myContent.length){
 //        if(myContent.match(/^([^"'「]*)["'「]([^"'」]*)["'」]?\s$/) ) {};//"
@@ -1693,7 +1695,7 @@ toString メソッドの共通オプションとして
 dialogオブジェクトに関しては、標準形式と拡張形式は同じものとなるので注意
 
 */
-nas.AnimationSound.prototype.toString=function(exportForm){
+nas.AnimationDialog.prototype.toString=function(exportForm){
 //  if((isFinite(exportForm))&&(exportForm > 0)){
 //受け渡しをJSON経由にするか否かはペンディング　JSONStringの場合はString.split厳禁 
 //    return JSON.stringify(this.getStream(exportForm));
@@ -1715,7 +1717,7 @@ nas.AnimationSound.prototype.toString=function(exportForm){
 
 }
 /*    test
-A=new  nas.AnimationSound("たぬきさん(off)「ぽん！(SE:ポン)ぽこ！<BGM:開始>りん！[光る！]とうりゃぁー！！」");
+A=new  nas.AnimationDialog("たぬきさん(off)「ぽん！(SE:ポン)ぽこ！<BGM:開始>りん！[光る！]とうりゃぁー！！」");
 A.parseContent();
 console.log(A)
 
@@ -1729,7 +1731,7 @@ cellCountが与えられることが前提で配列を組む
 ダイアログに限り指定の継続フレーム数より要素数が増える
 これをstartOffsetとして配列のプロパティに追加して戻す
 */
-nas.AnimationSound.prototype.getStream=function(cellCounts){
+nas.AnimationDialog.prototype.getStream=function(cellCounts){
     if(isNaN(cellCounts)) cellCounts = (this.contents.length+this.comments.length+this.attributes.length+3);
     if(cellCounts<0)cellCounts=Math.abs(cellCounts);
   if(cellCounts){
@@ -1797,7 +1799,7 @@ _parseSoundTrack =function(){
     //この実装では開始マーカーが０フレームにしか位置できないので必ずブランクセクションが発生する
     //継続時間０で先に作成 同時にカラのサウンドObjectを生成
     var currentSection=myCollection.addSection(null);//区間値false
-    var currentSound=new nas.AnimationSound("");//第一有値区間の値　コンテンツはカラで初期化も保留
+    var currentSound=new nas.AnimationDialog("");//第一有値区間の値　コンテンツはカラで初期化も保留
     for (var fix=0;fix<this.length;fix++){
         currentSection.duration ++;//currentセクションの継続長を加算
         //未記入データ　最も多いので最初に判定しておく
@@ -1819,7 +1821,7 @@ _parseSoundTrack =function(){
                 currentSection.value.contentText=currentSound.toString();//先の有値セクションをフラッシュして
                 currentSection=myCollection.addSection(null);//新規のカラセクションを作る
                 currentSection.duration ++;//キャンセル分を後方区間に加算
-                currentSound=new nas.AnimationSound("");//サウンドを新規作成
+                currentSound=new nas.AnimationDialog("");//サウンドを新規作成
             }else{
 //開始マーカー処理
 //引数をサウンドオブジェクトでなくxMapElementに変更予定
@@ -1855,7 +1857,7 @@ _parseSoundTrack =function(){
         ""
     ) ;//nas.xMapGroup(groupName,'dialog',null);//new nas.xMapGroup(myName,myOption,myLink);
     var currentSection=myCollection.addSection(null);//区間値false
-    var currentSound=new nas.AnimationSound(myGroup,"");//第一有値区間の値コンテンツはカラで初期化も保留
+    var currentSound=new nas.AnimationDialog(myGroup,"");//第一有値区間の値コンテンツはカラで初期化も保留
     for (var fix=0;fix<this.length;fix++){
         currentSection.duration ++;//currentセクションの継続長を加算
         //未記入データ最も多いので最初に判定しておく
@@ -1878,7 +1880,7 @@ _parseSoundTrack =function(){
                 currentSection=myCollection.addSection(null);//新規のブランクセクションを作る
                 currentSection.headMargin = -1;
                 currentSection.duration ++;//キャンセル分を後方区間に加算
-                currentSound=new nas.AnimationSound(groupName,null);//サウンドを新規作成
+                currentSound=new nas.AnimationDialog(groupName,null);//サウンドを新規作成
             }else{
 //引数をサウンドオブジェクトでなくxMapElementに変更予定
 //                nas.new_MapElement(name,Object xMapGroup,Object Job);
@@ -2519,7 +2521,7 @@ _parseStillTrack =function(){
                 currentSection.value.contentText=currentSound.toString();//先の有値セクションをフラッシュして
                 currentSection=myCollection.addSection(null);//新規のカラセクションを作る
                 currentSection.duration ++;//キャンセル分を後方区間に加算
-                currentSound=new nas.AnimationSound(groupName,"");//サウンドを新規作成
+                currentSound=new nas.AnimationDialog(groupName,"");//サウンドを新規作成
             }else{
 //引数をサウンドオブジェクトでなくxMapElementに変更予定
 //                nas.new_MapElement(name,Object xMapGroup,Object Job);

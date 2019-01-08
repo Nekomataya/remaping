@@ -172,7 +172,7 @@ xUI.importBox.read = function (targetFiles,callback){
         var output = reader.result;//
         xUI.data_well.value = reader.result;//最後に読み込んだ内容で上書きされるので注意  20180220
 
-        var myXps = convertXps(reader.result,divideExtension(reader.name)[1],xUI.importBox.overwriteProps);// 指定オプション無しで一旦変換する
+        var myXps = xUI.convertXps(reader.result,divideExtension(reader.name)[1],xUI.importBox.overwriteProps);// 指定オプション無しで一旦変換する
         if(!myXps){
             alert(reader.name+' is not supported format');
         }
@@ -341,6 +341,176 @@ xUI.importBox.checkValue = function(itm){
     }
     document.getElementById('resetSCiTarget').disabled = false;
 }
+ /*
+    xUI.convertXps(datastream,optionString,overiteProps,streamOption)
+引数:
+    datestream
+        コンバート対象のデータ
+        基本的にテキストデータ
+        バイナリデータの場合は1bite/8bit単位の数値配列として扱う（現在未実装）
+    optionString
+        コンバート対象のデータがXPSのプロパティ全てを持たない場合があるので
+        最低限のプロパティ不足を補うための指定文字列
+        URIencodedIdentifier または TextIdentifierを指定
+        通常はこのデータがファイル名の形式で与えられるのでファイル名をセットする
+        空白がセットされた場合は、カット番号その他が空白となる
+    overwriteProps
+        コンバータ側で上書きするプロパティをプロパティトレーラーオブジェクトで与える
+        インポーター側へ移設予定
+    streamOption
+        ストリームスイッチフラグがあればストリームで返す（旧コンバータ互換のため）
+
+    複数データ用コンバート関数
+    内部でparseXpsメソッドを呼んでリザルトを返す
+    以下形式のオブジェクトで  overwriteProps を与えると固定プロパティの指定が可能
+    {
+        "title":"タイトル文字列",
+        "epispde":"エピソード文字列",
+        "description":" エピソードサブタイトル文字列",
+        "cut":"カット番号文字列",
+        "time":"カット尺文字列  フレーム数またはTC"
+    }
+    いずれのプロパテイも省略可能
+    指定されたプロパティは、その値でダイアログを上書きして編集が固定される
+    全て指定した場合は、ユーザの編集ができなくなるので注意
+    単独ファイルの場合は、固定に問題は無いが
+    複数ファイル処理の場合に問題が発生する
+    
+    固定プロパティ強制のケースでは複数のドキュメントに同一のカット番号をもたせることはできないので
+    カット番号のロックは行われない
+    不正データ等の入力でコンバートに失敗した場合はfalseを戻す
+    旧来の戻り値と同じ形式が必要な場合は  xUI.convertXps(datastream,"",{},true) と指定する事
+戻値:  Object Xps or XpsStream or false
+    
+*/
+xUI.convertXps=function(datastream,optionString,overwriteProps,streamOption){
+    if(! String(datastream).length ){
+        return false;
+    }else{
+// streamOption
+    if(!streamOption){streamOption=false;}
+// オプションで識別子文字列を受け取る  （ファイル名を利用）
+// 識別子はXps.parseIdentifierでパースして利用
+    if(! optionString){optionString = ''};//'=TITLE=#=EP=[=subtitle=]//s-c=CUTNo.=';}
+// optionStringが空文字列の場合は置換処理を行わない
+    if(optionString.length){
+//ファイル名等でsciセパレータが'__'だった場合'//'に置換
+        if(optionString.indexOf('__')>=0){optionString=optionString.replace(/__/g,'//');}
+// 文字列がsciセパレータ'//'を含まない場合、冒頭に'//'を補って文字列全体をカット番号にする
+        if(optionString.indexOf('//') < 0 ){optionString='//' + optionString;}
+        var optionTrailer=Xps.parseIdentifier(optionString);
+    }else{
+        var optionTrailer=false;
+    }
+// 上書きプロパティ指定がない場合は空オブジェクトで初期化
+    if(! overwriteProps){overwriteProps={};}
+//データが存在したら、種別判定して、コンバート可能なデータはコンバータに送ってXPS互換ストリームに変換する
+//Xpxデータが与えられた場合は素通し
+//この分岐処理は、互換性維持のための分岐
+        switch (true) {
+        case    (/^nasTIME-SHEET\ 0\.[1-5]/).test(datastream):
+//    判定ルーチン内で先にXPSをチェックしておく（先抜け）
+        break;
+        case    (/^((toei|exchange)DigitalTimeSheet Save Data\n)/).test(datastream):
+            datastream =TDTS2XPS(datastream);
+            //ToeiDigitalTimeSheet / eXchangeDigitalTimeSheet
+        break;
+        case    (/^UTF\-8\,\ TVPaint\,\ \"CSV 1\.[01]\"/).test(datastream):
+            datastream =TVP2XPS(datastream);
+            //TVPaint csv
+        break;
+        case    (/^\"Frame\",/).test(datastream):
+            datastream =StylosCSV2XPS(datastream);//ボタン動作を自動判定にする 2015/09/12 引数は使用せず
+        break;
+        case    (/^\{[^\}]*\}/).test(datastream):;
+            try{datastream =ARDJ2XPS(datastream);console.log(datastream);}catch(err){console.log(err);return false;};
+        break;
+        case    (/^#TimeSheetGrid\x20SheetData/).test(datastream):
+            try{datastream = ARD2XPS(datastream);console.log(datastream);}catch(err){console.log(err);return false;};
+        break;
+        case    (/^\x22([^\x09]*\x09){25}[^\x09]*/).test(datastream):
+            try{datastream =TSH2XPS(datastream);}catch(err){return false}
+        break;
+        case    (/^Adobe\ After\ Effects\x20([456]\.[05])\ Keyframe\ Data/).test(datastream):
+            try{datastream=AEK2XDS(datastream)}catch(err){alert(err);return false}
+            //AEKey のみトラック情報がないので  ダミーXpsを先に作成してそのトラックにデータをputする
+            var myXps=new Xps();
+            myXps.put(datastream);
+            datastream=myXps.toString();
+        break;
+        default :
+/*
+    元の判定ルーチンと同じくデータ内容での判別がほぼ不可能なので、
+    拡張オプションがあってかつ他の判定をすべてすり抜けたデータを暫定的にTSXデータとみなす
+ */
+            if(TSXEx){
+                try{datastream=TSX2XPS(datastream)}catch(err){alert(err);return false;}
+            }
+      }
+        if(! datastream){return false}
+    }
+
+  if(datastream){
+    var convertedXps=new Xps();
+    convertedXps.parseXps(datastream);
+//ここでセリフトラックのチェックを行って、シナリオ形式のエントリを検知したら展開を行う
+    for(var tix=0;tix<convertedXps.xpsTracks.length;tix++){
+        var targetTrack=convertedXps.xpsTracks[tix]
+        if(targetTrack.option=='dialog'){
+            var convertQueue=[];//トラックごとにキューを置く
+            var currentEnd =false;//探索中の終了フレーム
+            
+            for(var fix=0;fix<targetTrack.length;fix++){
+                var entryText=String(targetTrack[fix]);
+//末尾検索中
+                if((convertQueue.length>0)&&(currentEnd)){
+//キューエントリが存在してかつブランクを検知、次のエントリの開始または、トラック末尾に達した場合はキューの値を更新
+//トラック末尾の場合のみ検出ポイントが異なるので注意
+                    if((nas.CellDescription.type(entryText)=='blank')||
+                       ((entryText.length>1)&&(entryText.indexOf('「')>=0))||
+                       (fix==(targetTrack.length-1))){
+                        var endOffset = (fix==(targetTrack.length-1))? 2:1;  
+                        convertQueue[convertQueue.length-1][2]=currentEnd+endOffset;
+                        currentEnd=false;
+                    }else{
+                        currentEnd=fix;
+                    }
+                }
+//開きカッコを持ったテキスト長１以上のエントリがあったらオブジェクトを作成してキューに入れ
+//終了点探索に入る
+                if((entryText.length>1)&&
+                   (entryText.indexOf('「')>=0)){
+                    var dialogValue=new nas.AnimationDialog(targetTrack[fix]);
+                    dialogValue.parseContent();//
+                    convertQueue.push([dialogValue,fix,0]);// [値,開始フレーム,終了フレーム(未定義)]
+                    currentEnd = fix;
+                }
+            }
+//キューにあるダイアログを一括して処理
+            for(var qix=0;qix<convertQueue.length;qix++){
+                var dialogOffset = (String(convertQueue[qix][0].name).length)? 2:1;
+                    dialogOffset += convertQueue[qix][0].attributes.length;
+                var dialogDuration = convertQueue[qix][2]-convertQueue[qix][1]; 
+                var startAddress =[tix,(convertQueue[qix][1] - dialogOffset)];
+                var dialogStream =(convertQueue[qix][0].getStream(dialogDuration)).join(',');
+                convertedXps.put(startAddress,dialogStream);
+            }
+        }
+    }
+//オプション指定文字列の反映（抽出データを一旦全て反映）
+    if(optionTrailer){
+        if ((optionTrailer.title).length)    convertedXps.title     = optionTrailer.title;
+        if ((optionTrailer.opus).length)     convertedXps.opus      = optionTrailer.opus;
+        if ((optionTrailer.subtitle).length) convertedXps.subtitle  = optionTrailer.subtitle;
+        if ((optionTrailer.scene).length)    convertedXps.scene     = optionTrailer.scene;
+        if ((optionTrailer.cut).length)      convertedXps.cut       = optionTrailer.cut;
+    }
+//リザルトを返す
+    return (streamOption)?convertedXps.toString():convertedXps;
+  }else{
+    return false;    
+  }
+}
 //そのほか  コレはAE用の旧バージョン変数なので要注意
     xUI.keyMethod        = KEYMethod;    //キー変換方式
     xUI.aeVersion        = AEVersion;    //キーにつけるバージョン番号
@@ -453,7 +623,7 @@ xUI._readIN=function(datastream){
     カット尺を保護する場合は、リファレンスに読み込んで部分コピーを行う
 */
         var isImport=((xUI.sessionRetrace==0)&&(xUI.uiMode=='production'))? true:false;
-        var newXps = convertXps(datastream);
+        var newXps = xUI.convertXps(datastream);
 /*
 読み込まれたデータ内にシナリオ形式のダイアログ記述が存在する可能性があるので、これを探して展開する
 現在は処理をハードコーディングしてあるが、この展開処理はトラックを引数にして処理メソッドに渡す形に変更する予定
@@ -485,7 +655,7 @@ xUI._readIN=function(datastream){
 //終了点探索に入る
                 if((entryText.length>1)&&
                    (entryText.indexOf('「')>=0)){
-                    var dialogValue=new nas.AnimationSound(targetTrack[fix]);
+                    var dialogValue=new nas.AnimationDialog(targetTrack[fix]);
                     dialogValue.parseContent();//
                     convertQueue.push([dialogValue,fix,0]);// [値,開始フレーム,終了フレーム(未定義)]
                     currentEnd = fix;
@@ -641,8 +811,8 @@ console.log(editxMap);
     XPS内のステージストアにある現行ステージの前段のステージを利用する
     セットアップのタイミングはUIの初期化以降に保留される
 */
-    if ((typeof referenceXps != "undefined") && (referenceXps instanceof Xps)){
-        this.referenceXPS=referenceXps;
+    if ((typeof referenceObj != "undefined") && (referenceObj instanceof Xps)){
+        this.referenceXPS=referenceObj;
     };
 /**
     参照Xpsのうち表示させる種別をプロパティ名の配列で与える  
@@ -1999,7 +2169,7 @@ console.log(currentBox)
     var currentFr = parseInt($('.floating-right').css('padding-right'));
     var currentAb = parseInt($('#account_box').css('padding-right'));
     var currentLp = parseInt($('#loginPanel').css('padding-right'));
-    $('body').css('padding',[currentBox[0]+x,currentBox[1],currentBox[2],currentBox[3]+y].join('px ')+'px');
+    $('body').css('padding',[currentBox[0]+y,currentBox[1],currentBox[2],currentBox[3]+x].join('px ')+'px');
     $('.floating-right').css('padding-right',(currentFr+x)+'px');
     $('#account_box').css('padding-right'   ,(currentAb+x)+'px');
     $('#loginPanel').css('padding-right'    ,(currentLp+x)+'px');
@@ -2394,10 +2564,6 @@ if(typeof myID == "undefined"){return false;}
     }
       result += cstr;
   }
-
-//    if(this.Select[0]>0 && this.Select[0]<(this.SheetWidth-1)) target=target.toString().replace(/[\|｜]/ig,'|<br>');
-//    if(target.match(/^[:：]$/)) return ':<br>';//波線
-//    if(target.match(/[-_─━~]{2,}?/)) return "<hr>";//
     return result;
 
 };
@@ -3031,7 +3197,7 @@ if((this.viewMode!="Compact")&&(pageNumber<=-2)){break;
 /*********** Action Ref *************/
 //=====================参照エリア
         for (r=0;r<this.referenceLabels.length;r++){
-BODY_ +='<th class="referenceSpan tlhead" ';
+BODY_ +='<th class="referenceSpan tlhead ref" ';
 BODY_ +='> </th>';
         };
 
@@ -3111,7 +3277,7 @@ BODY_ +='<th rowspan=2 class="tclabel annotationText" ';
 //BODY_ +='style=" width:'+this.sheetLooks.TimeGuideWidth+CellWidthUnit+'"';
 BODY_ +=' ><span class=timeguide> TIME </span></th>';
 /*********** Action Ref *************/
-BODY_ +='<th colspan="'+this.referenceLabels.length+ '" id="rnArea" class="rnArea annotationText" ondblclick=sync("referenceLabel") title=""';
+BODY_ +='<th colspan="'+this.referenceLabels.length+ '" id="rnArea" class="rnArea annotationText ref" ondblclick=sync("referenceLabel") title=""';
 //  ここは参照シートの識別名に置き換え 
 BODY_ +=' >Reference</th>';
 /*********** Dialog Area*************/
@@ -3163,7 +3329,7 @@ BODY_ += pageNumber;
 BODY_ += '_';
 BODY_ += cols.toString();
 
-BODY_ +='" class="layerlabelR annotationText"';
+BODY_ +='" class="layerlabelR annotationText ref"';
 BODY_ +=' >';
 
 var currentRefLabel=this.referenceXPS.xpsTracks[this.referenceLabels[r]].id;
@@ -3360,7 +3526,7 @@ for (var r=0;r<=outputColumus;r++){
         };
             BODY_ +='class="';
             BODY_ += dL_border+cellClassExtention;
-            BODY_ +=' soundbody" ';
+            BODY_ +=' soundbody';
             BODY_ +='"';
             BODY_ +='>';
 //        if((current_frame==null)||(current_frame>=this.XPS.duration()))
@@ -3390,7 +3556,7 @@ for (var r=0;r<=outputColumus;r++){
 //BODY_ +='onclick="xUI.Mouse(event)" ';
     };
     BODY_ +='class="';
-    BODY_ +=sC_border+cellClassExtention +'"';
+    BODY_ +=sC_border+cellClassExtention;
     BODY_ +='"';
     BODY_ +='>';
 //        if((current_frame==null)||(current_frame>=this.XPS.duration())){}
@@ -3484,8 +3650,11 @@ xUI.replaceEndMarker = function(endPoint,markerOffset){
 
     if(!(endPoint instanceof Array)) {endPoint=[1,endPoint]};
     if(endPoint.length>2) markerOffset = endPoint[2];
-    var endCellLeft  = document.getElementById('0_'+String(endPoint[1]-1));
-    var endCellRight = document.getElementById(String(endPoint[0]-1)+'_'+String(endPoint[1]-1));
+    var endCellLeft  = document.getElementById([0,endPoint[1]-1].join('_'));
+    var endCellRight = document.getElementById([endPoint[0]-1,endPoint[1]-1].join('_'));
+console.log(endPoint);
+console.log([0,endPoint[1]-1].join('_'));
+console.log([endPoint[0]-1,endPoint[1]-1].join('_'));
     var parentSheet  = document.getElementById('endMarker').parentNode;
     var endCellLeftRect  = endCellLeft.getBoundingClientRect();
     var endCellRightRect = endCellRight.getBoundingClientRect();
@@ -3529,6 +3698,10 @@ var PageCount=(this.viewMode=="Compact")?1:Math.ceil(this.XPS.duration()/this.Pa
 };
 
 //参照シートの表示を折り畳む(トグル)
+/*
+tableColumnWidth
+$('.ref').each(function(index,elem){$(elem).show/hide()});組み合わせ処理が必要
+*/
 xUI.packRefColumns=function()
 {
 var PageCols=(this.viewMode=="Compact")?1:this.PageCols;
@@ -6644,176 +6817,6 @@ if(location.hostname.indexOf("remaping-stg")>=0){
        グローバルの XPSを実際のXpsオブジェクトとして再初期化する
 */
     XPS=new Xps([SoundColumns,SheetLayers,CameraworkColumns,SfxColumns],MaxFrames,myFrameRate);
- /*
-    convertXps(datastream,optionString,overiteProps,streamOption)
-引数:
-    datestream
-        コンバート対象のデータ
-        基本的にテキストデータ
-        バイナリデータの場合は1bite/8bit単位の数値配列として扱う（現在未実装）
-    optionString
-        コンバート対象のデータがXPSのプロパティ全てを持たない場合があるので
-        最低限のプロパティ不足を補うための指定文字列
-        URIencodedIdentifier または TextIdentifierを指定
-        通常はこのデータがファイル名の形式で与えられるのでファイル名をセットする
-        空白がセットされた場合は、カット番号その他が空白となる
-    overwriteProps
-        コンバータ側で上書きするプロパティをプロパティトレーラーオブジェクトで与える
-        インポーター側へ移設予定
-    streamOption
-        ストリームスイッチフラグがあればストリームで返す（旧コンバータ互換のため）
-
-    複数データ用コンバート関数
-    内部でparseXpsメソッドを呼んでリザルトを返す
-    以下形式のオブジェクトで  overwriteProps を与えると固定プロパティの指定が可能
-    {
-        "title":"タイトル文字列",
-        "epispde":"エピソード文字列",
-        "description":" エピソードサブタイトル文字列",
-        "cut":"カット番号文字列",
-        "time":"カット尺文字列  フレーム数またはTC"
-    }
-    いずれのプロパテイも省略可能
-    指定されたプロパティは、その値でダイアログを上書きして編集が固定される
-    全て指定した場合は、ユーザの編集ができなくなるので注意
-    単独ファイルの場合は、固定に問題は無いが
-    複数ファイル処理の場合に問題が発生する
-    
-    固定プロパティ強制のケースでは複数のドキュメントに同一のカット番号をもたせることはできないので
-    カット番号のロックは行われない
-    不正データ等の入力でコンバートに失敗した場合はfalseを戻す
-    旧来の戻り値と同じ形式が必要な場合は  convertXps(datastream,"",{},true) と指定する事
-戻値:  Object Xps or XpsStream or false
-    
-*/
-convertXps=function(datastream,optionString,overwriteProps,streamOption){
-    if(! String(datastream).length ){
-        return false;
-    }else{
-// streamOption
-    if(!streamOption){streamOption=false;}
-// オプションで識別子文字列を受け取る  （ファイル名を利用）
-// 識別子はXps.parseIdentifierでパースして利用
-    if(! optionString){optionString = ''};//'=TITLE=#=EP=[=subtitle=]//s-c=CUTNo.=';}
-// optionStringが空文字列の場合は置換処理を行わない
-    if(optionString.length){
-//ファイル名等でsciセパレータが'__'だった場合'//'に置換
-        if(optionString.indexOf('__')>=0){optionString=optionString.replace(/__/g,'//');}
-// 文字列がsciセパレータ'//'を含まない場合、冒頭に'//'を補って文字列全体をカット番号にする
-        if(optionString.indexOf('//') < 0 ){optionString='//' + optionString;}
-        var optionTrailer=Xps.parseIdentifier(optionString);
-    }else{
-        var optionTrailer=false;
-    }
-// 上書きプロパティ指定がない場合は空オブジェクトで初期化
-    if(! overwriteProps){overwriteProps={};}
-//データが存在したら、種別判定して、コンバート可能なデータはコンバータに送ってXPS互換ストリームに変換する
-//Xpxデータが与えられた場合は素通し
-//この分岐処理は、互換性維持のための分岐
-        switch (true) {
-        case    (/^nasTIME-SHEET\ 0\.[1-5]/).test(datastream):
-//    判定ルーチン内で先にXPSをチェックしておく（先抜け）
-        break;
-        case    (/^((toei|exchange)DigitalTimeSheet Save Data\n)/).test(datastream):
-            datastream =TDTS2XPS(datastream);
-            //ToeiDigitalTimeSheet / eXchangeDigitalTimeSheet
-        break;
-        case    (/^UTF\-8\,\ TVPaint\,\ \"CSV 1\.[01]\"/).test(datastream):
-            datastream =TVP2XPS(datastream);
-            //TVPaint csv
-        break;
-        case    (/^\"Frame\",/).test(datastream):
-            datastream =StylosCSV2XPS(datastream);//ボタン動作を自動判定にする 2015/09/12 引数は使用せず
-        break;
-        case    (/^\{[^\}]*\}/).test(datastream):;
-            try{datastream =ARDJ2XPS(datastream);console.log(datastream);}catch(err){console.log(err);return false;};
-        break;
-        case    (/^#TimeSheetGrid\x20SheetData/).test(datastream):
-            try{datastream = ARD2XPS(datastream);console.log(datastream);}catch(err){console.log(err);return false;};
-        break;
-        case    (/^\x22([^\x09]*\x09){25}[^\x09]*/).test(datastream):
-            try{datastream =TSH2XPS(datastream);}catch(err){return false}
-        break;
-        case    (/^Adobe\ After\ Effects\x20([456]\.[05])\ Keyframe\ Data/).test(datastream):
-            try{datastream=AEK2XDS(datastream)}catch(err){alert(err);return false}
-            //AEKey のみトラック情報がないので  ダミーXpsを先に作成してそのトラックにデータをputする
-            var myXps=new Xps();
-            myXps.put(datastream);
-            datastream=myXps.toString();
-        break;
-        default :
-/*
-    元の判定ルーチンと同じくデータ内容での判別がほぼ不可能なので、
-    拡張オプションがあってかつ他の判定をすべてすり抜けたデータを暫定的にTSXデータとみなす
- */
-            if(TSXEx){
-                try{datastream=TSX2XPS(datastream)}catch(err){alert(err);return false;}
-            }
-      }
-        if(! datastream){return false}
-    }
-
-  if(datastream){
-    var convertedXps=new Xps();
-    convertedXps.parseXps(datastream);
-//ここでセリフトラックのチェックを行って、シナリオ形式のエントリを検知したら展開を行う
-    for(var tix=0;tix<convertedXps.xpsTracks.length;tix++){
-        var targetTrack=convertedXps.xpsTracks[tix]
-        if(targetTrack.option=='dialog'){
-            var convertQueue=[];//トラックごとにキューを置く
-            var currentEnd =false;//探索中の終了フレーム
-            
-            for(var fix=0;fix<targetTrack.length;fix++){
-                var entryText=String(targetTrack[fix]);
-//末尾検索中
-                if((convertQueue.length>0)&&(currentEnd)){
-//キューエントリが存在してかつブランクを検知、次のエントリの開始または、トラック末尾に達した場合はキューの値を更新
-//トラック末尾の場合のみ検出ポイントが異なるので注意
-                    if((nas.CellDescription.type(entryText)=='blank')||
-                       ((entryText.length>1)&&(entryText.indexOf('「')>=0))||
-                       (fix==(targetTrack.length-1))){
-                        var endOffset = (fix==(targetTrack.length-1))? 2:1;  
-                        convertQueue[convertQueue.length-1][2]=currentEnd+endOffset;
-                        currentEnd=false;
-                    }else{
-                        currentEnd=fix;
-                    }
-                }
-//開きカッコを持ったテキスト長１以上のエントリがあったらオブジェクトを作成してキューに入れ
-//終了点探索に入る
-                if((entryText.length>1)&&
-                   (entryText.indexOf('「')>=0)){
-                    var dialogValue=new nas.AnimationSound(targetTrack[fix]);
-                    dialogValue.parseContent();//
-                    convertQueue.push([dialogValue,fix,0]);// [値,開始フレーム,終了フレーム(未定義)]
-                    currentEnd = fix;
-                }
-            }
-//キューにあるダイアログを一括して処理
-            for(var qix=0;qix<convertQueue.length;qix++){
-                var dialogOffset = (String(convertQueue[qix][0].name).length)? 2:1;
-                    dialogOffset += convertQueue[qix][0].attributes.length;
-                var dialogDuration = convertQueue[qix][2]-convertQueue[qix][1]; 
-                var startAddress =[tix,(convertQueue[qix][1] - dialogOffset)];
-                var dialogStream =(convertQueue[qix][0].getStream(dialogDuration)).join(',');
-                convertedXps.put(startAddress,dialogStream);
-            }
-        }
-    }
-//オプション指定文字列の反映（抽出データを一旦全て反映）
-    if(optionTrailer){
-        if ((optionTrailer.title).length)    convertedXps.title     = optionTrailer.title;
-        if ((optionTrailer.opus).length)     convertedXps.opus      = optionTrailer.opus;
-        if ((optionTrailer.subtitle).length) convertedXps.subtitle  = optionTrailer.subtitle;
-        if ((optionTrailer.scene).length)    convertedXps.scene     = optionTrailer.scene;
-        if ((optionTrailer.cut).length)      convertedXps.cut       = optionTrailer.cut;
-    }
-//リザルトを返す
-    return (streamOption)?convertedXps.toString():convertedXps;
-  }else{
-    return false;    
-  }
-}
 /*
     Mapオブジェクトの改装を始めるので、いったん動作安定のため切り離しを行う
     デバッグモードでのみ接続
@@ -6824,10 +6827,10 @@ if(dbg)    XPS.getMap(MAP);
  *  最優先・レンダリング時にドキュメント内にスタートアップデータが埋め込まれている
  *  読み取ったスタートアップデータを判別して
  */
-//    ドキュメント内にスタートアップデータがあれば読み出し  startupDocument >startupDocument
+//    ドキュメント内にスタートアップデータがあれば読み出し  startupContent >startupDocument
 
 if(document.getElementById( "startupContent" )){
-         startupDocument=document.getElementById("startupContent").innerHTML;
+         startupDocument=$("#startupContent").text();
         var dataStart= startupDocument.indexOf("nasMAP-FILE");
 //        var dataStart= startupDocument.indexOf("nasTIME-SHEET");
         if(dataStart<0){
@@ -6839,10 +6842,10 @@ if(document.getElementById( "startupContent" )){
         if( startupDocument.indexOf("&lt;")>=0){ startupDocument= startupDocument.replace(/&lt;/g,"<");}
         if( startupDocument.indexOf("&gt;")>=0){ startupDocument= startupDocument.replace(/&gt;/g,">");}
 }
-//    同ドキュメント内にスタートアップ用参照データがあれば読み出し referenceXPS > referenceDocument
+//    同ドキュメント内にスタートアップ用参照データがあれば読み出し startupReference > referenceDocument
 
 if(document.getElementById( "startupReference" ) && document.getElementById( "startupReference" ).innerHTML.length){
-        referenceDocument=document.getElementById("startupReference").innerHTML;
+        referenceDocument=$("#startupReference").text();
         if(referenceDocument.indexOf("&amp;")>=0){referenceDocument=referenceDocument.replace(/&amp;/g,"&");}
         if(referenceDocument.indexOf("&lt;")>=0){referenceDocument=referenceDocument.replace(/&lt;/g,"<");}
         if(referenceDocument.indexOf("&gt;")>=0){referenceDocument=referenceDocument.replace(/&gt;/g,">");}
@@ -7000,12 +7003,13 @@ function nas_Prt_Startup(callback){
 //    ドキュメント内スタートアップデータを読み出し
 
 if(document.getElementById( "startupContent" )){
-         startupDocument=document.getElementById("startupContent").innerHTML;
+         startupDocument=$("#startupContent").text();
 }
+
 //    同ドキュメント内にスタートアップ用参照データがあれば読み出し
 
 if(document.getElementById( "startupReference" ) && document.getElementById( "startupReference" ).innerHTML.length){
-        referenceDocument=document.getElementById("startupReference").innerHTML;
+        referenceDocument=$("#startupReference").text();
 }
 //    UI生成
     xUI=new_xUI();
@@ -7013,11 +7017,11 @@ if(document.getElementById( "startupReference" ) && document.getElementById( "st
     XPS.readIN=xUI._readIN;
 //    *** xUI オブジェクトは実際のコール前に必ずXPSを与えての再初期化が必要  要注意
 
-if( startupDocument.length > 0){ XPS.readIN( startupDocument) }
+if( startupDocument.length > 0){ XPS.readIN(startupDocument) }
 //リファレンスシートデータがあればオブジェクト化して引数を作成
         var referenceX=new Xps(5,nas.SheetLength+':00.');
     if((referenceDocument)&&(referenceDocument.length)){
-        referenceX.readIN(referenceDocument);
+        referenceX.parseXps(referenceDocument);
     }
 //    xUI.init(XPS,referenceX);//初回実行時にxUIにグローバルのXPSを渡して初期化
       xUI.init(XPS,referenceX);
@@ -7029,13 +7033,9 @@ if( startupDocument.length > 0){ XPS.readIN( startupDocument) }
     var baseHeight = 1580;//
     var xScale = baseWidth/tableRect.width;
     var yScale = (baseHeight-headerRect.height)/tableRect.height;
-    console.log(pgRect);
-    console.log(headerRect);
-    console.log(tableRect);
-    console.log([xScale,yScale]);
     $(".sheet").css({"transform":"scale("+[xScale,yScale].join()+")","transform-origin":"0 0"});
     $(".printPage").css({"height":baseHeight,"width":baseWidth});
-    xUI.replaceEndMarker(undefined,4);//編集HTML用のみ
+    xUI.replaceEndMarker([xUI.XPS.xpsTracks.length,xUI.XPS.xpsTracks.duration],4);//編集HTML用のみ
 
     //スケーリング終了後のアイテム座標でマーカーを配置
     if(callback instanceof Function) callback();
@@ -7625,6 +7625,7 @@ case    "AIR":
 break;
 case "CEP":
 //    window.parent.psHtmlDispatch();
+    xUI.shiftScreen(50,56);
 case    "CSX":
 //tableメニュー表記
         $("tr#airMenu").each(function(){$(this).hide()});
@@ -8559,7 +8560,7 @@ function nas_expdList(ListStr,rcl){
 	){
         if(ListStr.match(/[\"\'「]/)){
             console.log(ListStr);
-            var mySound = new nas.AnimationSound(null,ListStr);
+            var mySound = new nas.AnimationDialog(null,ListStr);
 //            mySound.parseContent();//パーサの起動は不要
             console.log(mySound)
             var sectionLength= xUI.spinValue * (mySound.bodyText.length + mySound.comments.length);
@@ -8719,11 +8720,28 @@ function writeXPS(obj)
 
 /**
 	XPSデータを印刷および閲覧用htmlに変換
-引数：動作モード
+引数：
+    mode    動作モード
 true時はhtmlをそのまま文字列でリザルトするがfalseの際は別ウィンドウを開いて書き出す
 "body-only"  で<body>タグ内のHTML本体のみを返す
+    form    出力前加工　"action"で、アクションシート相当の加工を施す
 */
-function printHTML(mode){
+function printHTML(mode,form){
+if(! form) form = '';
+
+if(form == 'action'){
+    var backupPoint = xUI.activeDocument.undoBuffer.undoPt;
+    var mainXps = new Xps();
+    var backupXps = new Xps();
+    var backupRef  = new Xps();
+    mainXps.parseXps(xUI.XPS.toString());
+    backupXps.parseXps(xUI.XPS.toString());
+    backupRef.parseXps(xUI.referenceXPS.toString());
+    for (var tr = 0 ; tr < mainXps.xpsTracks.length ; tr++){
+        if(mainXps.xpsTracks[tr].option.match( /cell|timing|replacement/ )) mainXps.put([tr,0],new Array(mainXps.xpsTracks.duration));
+    }
+    xUI.resetSheet(mainXps,backupXps);  
+}
 /*
     画像パーツの転送を行うかまたは、自分自身でレンダリングできるようにする必要あり
     エンドマーカーの配置も必要 0814
@@ -8768,6 +8786,7 @@ myBody+='<script src="'+libOffset+'nas/configPM.js"></script>';
 myBody+='<script src="'+libOffset+'nas/lib/mapio.js"></script>';
 myBody+='<script src="'+libOffset+'nas/lib/xpsio.js"></script>';
 myBody+='<script src="'+libOffset+'nas/scripts/remaping/airUI.js"></script>';
+myBody+='<script src="'+libOffset+'nas/lib/cameraworkDescriptionDB.js"></script>';
 myBody+='<script src="'+libOffset+'nas/scripts/remaping/remaping.js"></script>';
 
 
@@ -8781,10 +8800,10 @@ myBody+= 'onload="var nRS = setTimeout(\'nas_Prt_Startup(function(){xUI.syncShee
 myBody+='" >';//
     };//ここまでbody-only時は省力
 
-myBody+='<textarea id="startupDocument" >';
+myBody+='<textarea id="startupContent" >';
 myBody+= xUI.XPS.toString();
 myBody+='</textarea>';
-myBody+='<textarea id="referenceDocument">';
+myBody+='<textarea id="startupReference">';
 myBody+= xUI.referenceXPS.toString();
 myBody+='</textarea>';
 myBody+='<div id="sheet_body">';//
@@ -8816,6 +8835,9 @@ _w=window.open ("","xpsFile","width=1120,height=1600,scrollbars=yes,menubar=yes"
 	_w.document.close();
 
 	_w.window.focus();//書き直したらフォーカス入れておく 保存扱いにはしない
+//アクション処理の際はバックアップを復帰・本体はUNDOバッファで戻す
+    if(form == 'action')    xUI.resetSheet(backupXps,backupRef);  
+
 	return false;//リンクのアクションを抑制するためにfalseを返す
 }
 
@@ -11956,7 +11978,7 @@ SoundEdit.sync = function(force){
 //台詞
     var targetTrack   = xUI.XPS.xpsTracks[xUI.Select[0]];
     var targetSection = targetTrack.sections[xUI.floatSectionId];
-    var newContent    = new nas.AnimationSound(targetTrack,document.getElementById('sndBody').value);newContent.parseContent();
+    var newContent    = new nas.AnimationDialog(targetTrack,document.getElementById('sndBody').value);newContent.parseContent();
     var minLength     = newContent.bodyText.length+newContent.comments.length;
     if ((force)||(minLength > targetSection.duration)){
         targetSection.duration = xUI.spinValue*minLength;

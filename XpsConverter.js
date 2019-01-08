@@ -439,7 +439,7 @@ convertXps=function(datastream,optionString,overwriteProps,streamOption){
 //終了点探索に入る
                 if((entryText.length>1)&&
                    (entryText.indexOf('「')>=0)){
-                    var dialogValue=new nas.AnimationSound(targetTrack[fix]);
+                    var dialogValue=new nas.AnimationDialog(targetTrack[fix]);
                     dialogValue.parseContent();//
                     convertQueue.push([dialogValue,fix,0]);// [値,開始フレーム,終了フレーム(未定義)]
                     currentEnd = fix;
