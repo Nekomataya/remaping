@@ -166,9 +166,11 @@ th.pageLabel{width:8em;}
 	display:none;
 */
 .tlhead {
+	overflow:visible;
 	height:1px;
 	border-style:none;
 	border-width:0;
+	vertical-align:bottom;
 }
 /*
 xMap Design-TEST 
@@ -1805,6 +1807,31 @@ div.documentStatusOverlay {
 	right:16px;	
 }
 /*
+	CONTEXT-MENU
+ */
+#contextMenu {
+    display:none;
+    position:absolute;
+	top:450px;
+	left:450px;
+  z-index:7;
+  background-color:#efefef;
+  border-style:solid;
+  border-width:1px;
+  border-color:#d0d0d0;
+  margin:0;
+  padding:4px 8px 4px 8px;
+  width:180px;
+  /* 角丸 */
+    -moz-border-radius: 6px ;
+    -webkit-border-radius: 6px;
+    border-radius: 6px;
+}
+	
+.contextMenu {
+	
+}
+/*
 	ストップウオッチバー
 */
 #optionPanelTimer {
@@ -1821,4 +1848,43 @@ div.documentStatusOverlay {
 	background-repeat:no-repeat;
 	background-position:50% 50%;
 	background-size:100%;
+}
+
+.noteOverlay{
+	float:right;
+	bottom:0px;
+	position:relative;
+	z-index:4;
+ 	border-style:solid;
+  	border-width:0px 1px 0px 0px;
+  	margin:0;
+}
+.note1 {
+	height:22px;
+}
+.note2 {
+	height:44px;
+}
+.note3 {
+	height:66px;
+}
+.note4 {
+	height:88px;
+}
+.note5 {
+	height:110px;
+}
+.overlayLabel{
+  	background-color:#efefef;
+  	border-style:solid;
+  	border-width:1px;
+  	border-color:#d0d0d0;
+  	padding:4px 2px 4px 2px;
+  	height:24px;
+  	white-space:nowrap;
+  /* 角丸 */
+    -moz-border-radius: 3px ;
+    -webkit-border-radius: 3px;
+    border-radius: 3px;
+	
 }

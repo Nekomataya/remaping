@@ -60,7 +60,7 @@ xUI.player.markFrame=function(element){
     }else{
         this.countStack.push(element.id.split('_'));
     }
-    element.classList.add("trackMarker");
+    nas.HTML.addClass(element,"trackMarker");
 }
 /**
  *    セルマーカー及びスタックをクリア
@@ -70,7 +70,8 @@ xUI.player.clearMark=function(){
         for (var trk = 0 ;trk < xUI.XPS.xpsTracks.length ; trk++){
             for (var frm = 0 ;frm < xUI.XPS.xpsTracks[0].length ; frm++){
                 var cell = document.getElementById([trk,frm].join('_'));
-                if(cell.classList.contains('trackMarker')) cell.classList.remove('trackMarker');
+                nas.HTML.removeClass(cell,"trackMarker");
+//                if(cell.classList.contains('trackMarker')) cell.classList.remove('trackMarker');
             }
         }
     })();

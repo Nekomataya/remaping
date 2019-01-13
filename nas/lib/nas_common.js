@@ -5069,6 +5069,7 @@ nas.cameraworkDescriptions.add = function(member){
  * 検索に失敗したらnull
  */
 nas.cameraworkDescriptions.get = function(keyword,type){
+//    if(keyword.match(/^<([^\>]+)>$/)) keyword = RegExp.$1;
     for (var prp in this.members){
         if(this.members[prp].isMatch(keyword,type)) return this.members[prp];
     }
@@ -5114,6 +5115,8 @@ nas.cameraworkDescriptions.parseConfig = function(dataStream,form){
     var myMembers ={};
     var barSigns    = [];
     var singleNodes = [];
+    var compSigns   = [];
+    var geomSigns   = [];
     var doubleNodes = {};
     // 形式が指定されない場合は、第一有効レコードで判定
     if(! form ){
@@ -5124,7 +5127,6 @@ nas.cameraworkDescriptions.parseConfig = function(dataStream,form){
             form = 'full-dump';
         }
     }
-console.log(form)
     switch(form){
     case    'JSON':
          var tempObjects = JSON.parse(dataStream);
@@ -5140,6 +5142,12 @@ console.log(form)
                 singleNodes.add(tempObjects[prp].nodeSigns[0]);
             }else{
                 barSigns.add(tempObjects[prp].nodeSigns[0]);
+                switch(tempObjects[prp].type){
+                case 'composite': compSigns.add(tempObjects[prp].nodeSigns[1]);
+                break;
+                case 'geometry' : geomSigns.add(tempObjects[prp].nodeSigns[1]);
+                break;
+                }
             }
          }
     break;
@@ -5162,6 +5170,12 @@ console.log(form)
                 singleNodes.add(currentRecord[1][3][0]);
             } else {
                 barSigns.add(currentRecord[1][3][0]);
+                switch(currentRecord[1][1]){
+                case 'composite': compSigns.add(currentRecord[1][3][1]);
+                break;
+                case 'geometry' : geomSigns.add(currentRecord[1][3][1]);
+                break;
+                }
             }
         }
     break;
@@ -5188,13 +5202,23 @@ console.log(form)
             singleNodes.add(currentMember.nodeSigns[0]);
         }else {
             barSigns.add(currentMember.nodeSigns[0]);
+            switch(currentMember.type){
+            case 'composite': compSigns.add(currentMember.nodeSigns[1]);
+            break;
+            case 'geometry' : geomSigns.add(currentMember.nodeSigns[1]);
+            break;
+            }
         }
       }
     }
     this.members = myMembers;
 //alert(singleNodes);
-    this.singleRegex = new RegExp("^("+singleNodes.join("|").replace(/[\[\]]/g,'\\$&')+")$");
-    this.barRegex = new RegExp("^["+barSigns.join("").replace(/[\|\.-]]/g,'\\$&')+"]$");
+    this.singleRegex    = new RegExp("^("+singleNodes.join("|").replace(/[\[\]]/g,'\\$&')+")$");
+    this.barRegex       = new RegExp("^["+barSigns.join("").replace(/[\|\.-]]/g,'\\$&')+"]$");
+//composite/geometry signs
+    this.compositeRegex = new RegExp("^("+compSigns.join("|").replace(/[\|\.-]]/g,'\\$&')+")$");
+    this.geometryRegex  = new RegExp("^("+geomSigns.join("|").replace(/[\|\.-]]/g,'\\$&')+")$");
+
     return this.members;
 }
 

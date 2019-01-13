@@ -458,6 +458,10 @@ nas.uiMsg.dmRemoveThisMessage = {
 en:"Thereafter, do not display this message.",
 ja:"以後、このメッセージを表示しない。"
 };
+nas.uiMsg.dmTLtrackNoteEdit = {
+	en:"Edit the note text of the track.",
+	ja:"トラックの注釈を編集します。"
+};
 
 
 /*

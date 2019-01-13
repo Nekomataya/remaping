@@ -926,4 +926,38 @@ nas.clipTC=function(myValue,max,min,TCtype){
 //お道具箱汎用データ操作関数群オワリ
 } catch(err){alert(err.toString());}
 
+/*
+    nas.HTMLトレーラーオブジェクト
+    順次HTML関連のコードをこちらへ移動
+*/
+nas.HTML={};
+/*
+    クラスリストにアイテムを追加
+    classListのない古い環境のためのコード
+    
+*/
+nas.HTML.addClass = function (element,className){
+    if(element.classList){
+        element.classList.add(className);
+    }else{
+        var classList = (element.className).split(' ');
+        classList.add(className);
+        element.className = classList.join(' ');
+    }
+}
+/*
+    クラスリストからアイテムを削除
+    classListのない古い環境のためのコード
+    
+*/
+nas.HTML.removeClass = function (element,className){
+    if(element.classList){
+        if(element.classList.contains(className)) element.classList.remove(className);
+    }else{
+        var classList = (element.className).split(' ');
+        var ix = classList.indexOf(className);
+        if(ix >= 0) classList.splice(ix,1);
+        element.className = classList.join(' ');        
+    }
+}
 

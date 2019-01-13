@@ -1492,7 +1492,6 @@ nas.Pm.PmTemplateCollection.prototype.parseConfig = function(dataStream,form){
     switch(form){
     case    'JSON':
         var tempObject=JSON.parse(dataStream);
-console.log(tempObject);
         for (var rix=0;rix<tempObject.length;rix++){
             var currentMember=new nas.Pm.LineTemplate(
                 this,
@@ -1543,7 +1542,6 @@ entryName
       }
       myMembers.push(currentMember);
     }
-console.log(myMembers);
     return this.addMembers(myMembers);
 }
 nas.Pm.PmTemplateCollection.prototype.dump = nas.Pm._dumpList;
@@ -1559,7 +1557,6 @@ nas.Pm.LineTemplate = function(myParent,lineName,myStages){
     if (!(myStages instanceof Array)) myStages = [myStages];
     this.parent = myParent;//親参照は不要？
     this.line   = this.parent.parent.lines.getLine(lineName);
-console.log(myStages);
     this.stages = new nas.Pm.StageCollection(this);
     for (var ix=0;ix< myStages.length;ix++){
         var stageKey= nas.Pm.searchProp(myStages[ix],this.parent.parent.stages)
@@ -3013,7 +3010,6 @@ toStringは、二種の出力フォーマットを持つ
 
 nas.Pm.StaffCollection.prototype.toString = function(form){
     var result="";
-console.log(form)
     switch (form){
     case "full":
             for (var ix =0 ; ix<this.members.length;ix++){

@@ -208,12 +208,13 @@ console.log(myStylosCSV)
 
 
     if (dialogTarget.length == 0) {
-        var myDialogRegex = new RegExp("(N\\.?|セリフ|せりふ|台詞|dialog|sound)", "i");
+        var myDialogRegex = new RegExp("(N\\.?|セリフ|せりふ|台詞|dialog|sound|S1)", "i");
         /**
          * 指定がないので自動検索でテーブルを作る
          */
         for (var fidx = 0; fidx < myStylosCSV.folders.length; fidx++) {
             if (myStylosCSV.folders[fidx].name.match(myDialogRegex)) {
+console.log(myStylosCSV.folders[fidx].name);
                 for (var tidx = 0; tidx < myStylosCSV.folders[fidx].length; tidx++) {
                     myStylosCSV.convertTable.push(myStylosCSV.folders[fidx][tidx]);
                     myStylosCSV.dialogCount++;

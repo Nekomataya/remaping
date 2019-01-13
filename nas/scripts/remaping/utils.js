@@ -60,9 +60,9 @@ clearTL=function(flg){
 	var bkPos=xUI.Select.join("_");//現在のカーソルを記録
 //フラグによる指定があった場合タイムラインの選択状態を調整する
 switch(flg){
-case	"all"	:xUI.selectCell("0_"+xUI.Select[1]);xUI.selection((XPS.xpsTracks.length-1)+"_"+xUI.Select[1]);break;
+case	"all"	:xUI.selectCell("0_"+xUI.Select[1]);xUI.selection((xUI.XPS.xpsTracks.length-1)+"_"+xUI.Select[1]);break;
 case	"left"	:xUI.selection("0_"+xUI.Select[1]);break;
-case	"right"	:xUI.selection((XPS.xpsTracks.length-1)+"_"+xUI.Select[1]);break;
+case	"right"	:xUI.selection((xUI.XPS.xpsTracks.length-1)+"_"+xUI.Select[1]);break;
 };
 //消去対象を選択状態から取得
 	var minID=(xUI.Selection[0]<0)?xUI.Select[0]+xUI.Selection[0] : xUI.Select[0];
@@ -70,7 +70,7 @@ case	"right"	:xUI.selection((XPS.xpsTracks.length-1)+"_"+xUI.Select[1]);break;
 
 	for(tId=minID;tId<maxID;tId++){
 		xUI.selectCell(tId+"_0");//冒頭データに移動
-		xUI.selection(tId+"_"+(XPS.duration()-1));//タイムライン末尾を選択
+		xUI.selection(tId+"_"+(xUI.XPS.duration()-1));//タイムライン末尾を選択
 		xUI.cut();	//削除
 //		if (xUI.edchg){xUI.put(this.eddt);}//更新
 		if(xUI.getid("Selection")!="0_0") {xUI.selection();xUI.spinHi();};
@@ -169,7 +169,7 @@ reformatTimeline=function(flg){
 function reformatTLC(id,range){
 //===camerawork===
 //ターゲットタイムライン
-	var myTargetBody=XPS.xpsTracks[id];//指定タイムラインのデータを配列参照
+	var myTargetBody=xUI.XPS.xpsTracks[id];//指定タイムラインのデータを配列参照
 	var myDestTLBody=new Array();//編集用カラ配列
 	var bufNoChange=new Array(); var bufModified=new Array();//編集バッファ
 	var fix=true;//値固定（中間値生成ではない）区間か否かのフラグ 生成区間の未記入セルに中間値生成記号を補間する？
@@ -259,15 +259,15 @@ function reformatTL(id,range){
 	レンジでクリップしてリザルトを返す
 */
 //引数 rangeは配列[開始フレーム,終了フレーム]  指定がない場合は全尺
-	if(typeof range == "undefined") range=[0,XPS.xpsTracks[0].length];
+	if(typeof range == "undefined") range=[0,xUI.XPS.xpsTracks[0].length];
 //ターゲットタイムライン
-	var myTargetBody=XPS.xpsTracks[id];//指定タイムラインのバルクデータを配列で参照
+	var myTargetBody=xUI.XPS.xpsTracks[id];//指定タイムラインのバルクデータを配列で参照
 	var myDestTLBody=new Array();//編集用カラ配列
 	var bufNoChange=new Array(); var bufModified=new Array();//編集バッファ
 	var sVC=0;//同値カウンタ
 	var myLimit=5;//5kまでは縦線省略 6kから(暫定措置)これはプリファレンスへ移動か？
 //第一フレームが有効記述か否か確認(id=0は、事前チェックで入らないはず)
-	var referenceValue=(dataCheck(myTargetBody[0],XPS.xpsTracks[id].id)==null)?"blank":dataCheck(myTargetBody[0],XPS.xpsTracks[id].id);
+	var referenceValue=(dataCheck(myTargetBody[0],xUI.XPS.xpsTracks[id].id)==null)?"blank":dataCheck(myTargetBody[0],xUI.XPS.xpsTracks[id].id);
 
 	if(referenceValue=="blank"){
 		myDestTLBody.push("X");
@@ -279,7 +279,7 @@ function reformatTL(id,range){
 //第二フレームからデータループ
 	for(var fidx=1;fidx<myTargetBody.length;fidx++){
 //	評価値取得
-		var evValue=(dataCheck(myTargetBody[fidx],XPS.xpsTracks[id].id)==null)?referenceValue:dataCheck(myTargetBody[fidx],XPS.xpsTracks[id].id);
+		var evValue=(dataCheck(myTargetBody[fidx],xUI.XPS.xpsTracks[id].id)==null)?referenceValue:dataCheck(myTargetBody[fidx],xUI.XPS.xpsTracks[id].id);
 
 		if(myTargetBody[fidx]=="1"){myTargetBody[fidx]="(1)"};//これは一括調整がほしい
 
@@ -340,10 +340,10 @@ function reformatTL(id,range){
 
 if(flg=="all"){
 //全シート指定
-	for(var idx=0;idx<(XPS.xpsTracks.length-1);idx++){
+	for(var idx=0;idx<(xUI.XPS.xpsTracks.length-1);idx++){
 
 		xUI.selectCell((idx)+"_0")//カーソルを当該タイムラインの第一フレームへ
-	 var myOpt=(idx==0)? "dialog":XPS.xpsTracks[idx].option;
+	 var myOpt=(idx==0)? "dialog":xUI.XPS.xpsTracks[idx].option;
 	 switch(myOpt){
 	 case "dialog": ;break;
 	 case "still": ;break;
@@ -359,9 +359,9 @@ if(flg=="all"){
 }else{
 //セレクションがない場合は当該タイムラインを1列処理
   if(xUI.Selection.join()=="0,0"){
-	if((! flg) && (xUI.Select[0]>=1 && xUI.Select[0]<(XPS.xpsTracks.length-1))){
+	if((! flg) && (xUI.Select[0]>=1 && xUI.Select[0]<(xUI.XPS.xpsTracks.length-1))){
 		xUI.selectCell(xUI.Select[0]+"_0")//カーソルを当該タイムラインの第一フレームへ
-	if(xUI.Select[0]>0){var myOpt=XPS.xpsTracks[xUI.Select[0]].option}else{var myOpt="dialog"};
+	if(xUI.Select[0]>0){var myOpt=xUI.XPS.xpsTracks[xUI.Select[0]].option}else{var myOpt="dialog"};
 	 switch(myOpt){
 	 case "dialog": ;break;
 	 case "still": ;break;
@@ -378,14 +378,14 @@ if(flg=="all"){
 	var myRange=xUI.actionRange();//
 	var myStream=[];
 	for(var ix=myRange[0][0];ix<=myRange[1][0];ix++){
-			if(ix>=XPS.xpsTracks.length-1) break;	
-			if(ix>0){var myOpt=XPS.xpsTracks[ix].option}else{var myOpt="dialog"};
+			if(ix>=xUI.XPS.xpsTracks.length-1) break;	
+			if(ix>0){var myOpt=xUI.XPS.xpsTracks[ix].option}else{var myOpt="dialog"};
 			switch(myOpt){
 				case "dialog":
 				case "still":
 				case "sfx":
 				case "camera":
-					myStream.push(XPS.xpsTracks[ix].slice(myRange[0][1],myRange[1][1]));
+					myStream.push(xUI.XPS.xpsTracks[ix].slice(myRange[0][1],myRange[1][1]));
 				break;
 				case "timing":
 				default:
@@ -417,13 +417,13 @@ function simplifyTL(id,range){
 //===timing===
 //単純化を行うのは現在はタイミング（置きかえ）タイムライントラックのみ
 //ターゲットタイムライン
-	var myTargetBody=XPS.xpsTracks[id];//指定タイムラインのバルクデータを配列で参照
-	if(typeof range=="undefined")range=[0,XPS.xpsTracks[id].length];
+	var myTargetBody=xUI.XPS.xpsTracks[id];//指定タイムラインのバルクデータを配列で参照
+	if(typeof range=="undefined")range=[0,xUI.XPS.xpsTracks[id].length];
 	var myDestTLBody=new Array();//編集用カラ配列
 //全フレームデータループ
 	for(var fidx=range[0];fidx<=range[1];fidx++){
 //	評価値取得
-		var evValue=dataCheck(myTargetBody[fidx],XPS.xpsTracks[id].id);
+		var evValue=dataCheck(myTargetBody[fidx],xUI.XPS.xpsTracks[id].id);
 
 		switch(evValue){
 		case "blank":
@@ -450,14 +450,14 @@ if(flg=="all"){
 	var currentSelection=add(xUI.Select,xUI.Selection);
 	xUI.selection();
 //全シート指定(メモトラックは処理しない)
-	for(var idx=0;idx<(XPS.xpsTracks.length-1);idx++){
-	 var myOpt=(idx==0)? "dialog":XPS.xpsTracks[idx].option;
+	for(var idx=0;idx<(xUI.XPS.xpsTracks.length-1);idx++){
+	 var myOpt=(idx==0)? "dialog":xUI.XPS.xpsTracks[idx].option;
 	 switch(myOpt){
 	 case "dialog":
 	 case "still":
 	 case "sfx":
 	 case "camera":
-	 	myStream.push(XPS.xpsTracks[idx].join());
+	 	myStream.push(xUI.XPS.xpsTracks[idx].join());
 	 break;
 	 case "timing":
 	 default:
@@ -475,9 +475,9 @@ if(flg=="all"){
 //範囲指定がなければ現在のタイムラインを処理 あれば範囲内を処理＝入替えストリームをビルドしてput
 	if(xUI.Selection.join()=="0,0"){
 		xUI.selection();//範囲クリア
-		if((! flg) && (xUI.Select[0]>=1 && xUI.Select[0]<(XPS.xpsTracks.length-1))){
+		if((! flg) && (xUI.Select[0]>=1 && xUI.Select[0]<(xUI.XPS.xpsTracks.length-1))){
 			xUI.selectCell(xUI.Select[0]+"_0")//カーソルを当該タイムラインの第一フレームへ
-			if(xUI.Select[0]>0){var myOpt=XPS.xpsTracks[xUI.Select[0]].option}else{var myOpt="dialog"};
+			if(xUI.Select[0]>0){var myOpt=xUI.XPS.xpsTracks[xUI.Select[0]].option}else{var myOpt="dialog"};
 		 	switch(myOpt){
 		  		case "dialog":
 		  		case "still":
@@ -493,14 +493,14 @@ if(flg=="all"){
 	}else{
 		var myRange=xUI.actionRange();//
 		for(var ix=myRange[0][0];ix<=myRange[1][0];ix++){
-			if(ix>=XPS.xpsTracks.length-1) {break;}	
-			if(ix>0){var myOpt=XPS.xpsTracks[ix].option}else{var myOpt="dialog"};
+			if(ix>=xUI.XPS.xpsTracks.length-1) {break;}	
+			if(ix>0){var myOpt=xUI.XPS.xpsTracks[ix].option}else{var myOpt="dialog"};
 			switch(myOpt){
 				case "dialog":
 				case "still":
 				case "sfx":
 				case "camera":
-					myStream.push(XPS.xpsTracks[ix].slice(myRange[0][1],myRange[1][1]));
+					myStream.push(xUI.XPS.xpsTracks[ix].slice(myRange[0][1],myRange[1][1]));
 				break;
 				case "timing":
 				default:
@@ -541,50 +541,44 @@ addTimeline(kind,label)
 	カメラ/エフェクト	挿入後のタイムラインID 3番タイムラインでの指定時には必ず"04"
 */
 addTimeline=function(myOpt,myName){
-	if(xUI.Select[0]>XPS.xpsTracks.length-2){return false;};//コメントの右側へは挿入不可
+	var trackPrefix = {'dialog':'N','still':'BOOK','camera':'CAM','effect':'FX','stage':'PEG','sound':'S'}
+	if(xUI.Select[0]>xUI.XPS.xpsTracks.length-2){return false;};//コメントの右側へは挿入不可
 	var insertPoint=[xUI.Select[0]+1,xUI.Select[1]];//挿入ポイントを作成
 	if(!myOpt){myOpt="timing"};
 	if(!myName){
 		switch(myOpt){
-case	"dialog":
-		//ダイアログラベルの数を数えて数値でラベル名を作成
-		var countDialog=1;//デフォルト1
-		for (var pIdx = 0; pIdx < XPS.xpsTracks.length;pIdx++){if (XPS.xpsTracks[pIdx].option=="dialog") countDialog++;}
-		myName= "N"+(countDialog +1);
-break;
 case	"timing":
-		var countTiming=0;//カレントよりも右側のタイミングタイムラインを数える
-		for (var pIdx=xUI.Select[0];pIdx<XPS.xpsTracks.length;pIdx++){if(XPS.xpsTracks[pIdx].option=="timing")countTiming++;}
-//		alert(countTiming);//
-		if(countTiming<=0){
-		 var currentLabels=[]
+			var currentLabels=[];
 		//タイミングラベルの最大を検出して次の文字をピックアップ 
-		for (var pIdx = 0; pIdx < XPS.xpsTracks.length;pIdx++){if (XPS.xpsTracks[pIdx].option=="timing")currentLabels.push(XPS.xpsTracks[pIdx].id.charAt(0));}
-		currentName=currentLabels.sort()[currentLabels.length-1];
-		myName= ("ABCDEFGHIJKLMNOPQRSTUVWXYZ").charAt((("ABCDEFGHIJKLMNOPQRSTUVWXYZ").indexOf(currentName)+1)%26);
+			for (var pIdx = 0; pIdx < xUI.XPS.xpsTracks.length;pIdx++){
+				if (xUI.XPS.xpsTracks[pIdx].option == "timing") currentLabels.push(xUI.XPS.xpsTracks[pIdx].id.charAt(0));
+			}
+			currentName=currentLabels.sort()[currentLabels.length-1];
+			myName= ("ABCDEFGHIJKLMNOPQRSTUVWXYZ").charAt((("ABCDEFGHIJKLMNOPQRSTUVWXYZ").indexOf(currentName)+1)%26);
 break;
-		}
+case	"dialog":
+case	"stage":
 case	"still":
 case	"camera":
-case	"effect":
+case	"effect":		//トラックを数えて数値でラベル名を作成
+		var countTrack = 0;
+		for (var pIdx = 0; pIdx < xUI.XPS.xpsTracks.length;pIdx++){if (xUI.XPS.xpsTracks[pIdx].option==myOpt) countTrack++;}
+		myName= trackPrefix[myOpt]+(countTrack +1);
+break;
 default	:	myName=nas.Zf(insertPoint[0],2).toString();//挿入点のID 二桁文字列
 		
 		}
 	}
-
-//現在のXPSの複製を作り
-//新しいタイムラインを作成して挿入位置に挿入
-//putメソッドでドキュメントを入れ替える
+console.log(myName);
 /*
-	この一連の処理は書き直しが必要？
-	
-*/
+	現在のXPSの複製を作り新しいタイムラインを作成して挿入位置に挿入
+	putメソッドでドキュメントを入れ替える
+ */
 	var newXPS= new Xps();
-	newXPS.readIN(XPS.toString());
+	newXPS.readIN(xUI.XPS.toString());
 	var currentDuration=newXPS.duration();
-//	newXPS.insertTL(insertPoint[0],new XpsLayer(myName,myOpt));
+//console.log([insertPoint[0],new XpsTimelineTrack(myName,myOpt,newXPS.xpsTracks,currentDuration)]);
 	newXPS.insertTL(insertPoint[0],new XpsTimelineTrack(myName,myOpt,newXPS.xpsTracks,currentDuration));
-//	nas_Rmp_Init();//リフレッシュ
 	xUI.put(newXPS);
 	xUI.selectCell(insertPoint.join("_"));
 }
@@ -630,7 +624,7 @@ if(newNames!=null){
 	var bkPt=xUI.Select;//カーソル元位置控
 
 	var newXPS=new Xps();
-	newXPS.readIN(XPS.toString());
+	newXPS.readIN(xUI.XPS.toString());
 	newXPS.insertTL(insertPoint[0],newNames);//配列渡し
 	xUI.put(newXPS);
 //	nas_Rmp_Init();//リフレッシュ put側で実行される
@@ -653,10 +647,10 @@ if(newNames!=null){
 	0番タイムライン及びフレームコメントは削除不可
  */
 deleteColumns=function(newNames){
-	if(xUI.Select[0]==0||xUI.Select[0]+xUI.Selection[0]<=0||xUI.Select[0]+xUI.Selection[0]>=(XPS.xpsTracks.length-1)||xUI.Select[0]==(XPS.xpsTracks.length-1))
+	if(xUI.Select[0]==0||xUI.Select[0]+xUI.Selection[0]<=0||xUI.Select[0]+xUI.Selection[0]>=(xUI.XPS.xpsTracks.length-1)||xUI.Select[0]==(xUI.XPS.xpsTracks.length-1))
 	{return false;};
 	var deleteLength=Math.abs(xUI.Selection[0])+1;//削除列数を算出
-	if(deleteLength>=(XPS.xpsTracks.length-2)){return false;};
+	if(deleteLength>=(xUI.XPS.xpsTracks.length-2)){return false;};
 	var deletePoint=(xUI.Selection[0]<0)?[xUI.Select[0]+xUI.Selection[0],0]:[xUI.Select[0],0];//削除ポイントを記録
 
 if(newNames==undefined){
@@ -664,8 +658,8 @@ if(newNames==undefined){
 
 	var restNames=new Array();//削除後のラベル名格納配列
 //新規ラベルセット
-	for(var Lidx=1; Lidx<XPS.xpsTracks.length - 1 ;Lidx++){
-		if((Lidx<deletePoint[0]) || (Lidx >(deletePoint[0]+deleteLength-1)) ){restNames.push(XPS.xpsTracks[Lidx].id)};
+	for(var Lidx=1; Lidx<xUI.XPS.xpsTracks.length - 1 ;Lidx++){
+		if((Lidx<deletePoint[0]) || (Lidx >(deletePoint[0]+deleteLength-1)) ){restNames.push(xUI.XPS.xpsTracks[Lidx].id)};
 	};
 
 //	警告
@@ -685,12 +679,12 @@ if(newNames!=null){
 	for (var ix=0;ix<deleteLength;ix++){removeIdx.push(ix+deletePoint[0]);}
 
 	var newXPS=new Xps();
-	newXPS.readIN(XPS.toString());
+	newXPS.readIN(xUI.XPS.toString());
 	newXPS.deleteTL(removeIdx); 
 	xUI.put(newXPS);
 
 	// タイムライン削除後にラベルの指定があれば書きなおし(ダイアログ拡張が考慮されていないでの後で修正)
-//	for(var Lidx=0;Lidx<restNames.length;Lidx++){		if(XPS.xpsTracks[Lidx+1].id != restNames[Lidx]){XPS.xpsTracks[Lidx+1].id=restNames[Lidx]}	};
+//	for(var Lidx=0;Lidx<restNames.length;Lidx++){		if(xUI.XPS.xpsTracks[Lidx+1].id != restNames[Lidx]){xUI.XPS.xpsTracks[Lidx+1].id=restNames[Lidx]}	};
 
 		sync("lbl");
 //	nas_Rmp_Init();//リフレッシュ
@@ -721,7 +715,7 @@ insertBlock=function(myStream){
 	;//選択範囲はクリアする
 	xUI.selection();//クリア
 	var myRight=origPoint[0]+myInsert.length-1;
-	xUI.selection([(myRight<XPS.layers.length+1)?myRight:XPS.layers.length+1,XPS.duration()-1].join("_"));//末尾まで選択
+	xUI.selection([(myRight<xUI.XPS.layers.length+1)?myRight:xUI.XPS.layers.length+1,xUI.XPS.duration()-1].join("_"));//末尾まで選択
 	//ヤンクバッファを使わずにレンジ内のデータを取得する
 	var myBuf=xUI.getRange().split('\n');
 	//バッファ内のストリームを整形して上書き用のデータを作る
@@ -746,7 +740,7 @@ insertBlank=function(){
 var myLeft=(myRange[0]<0)?origPoint[0]+myRange[0]:origPoint[0];
 var myTop=(myRange[1]<0)?origPoint[1]+myRange[1]:origPoint[1];
 	xUI.selectCell([myLeft,myTop].join("_"));//選択範囲左上方
-	xUI.selection([myLeft+Math.abs(myRange[0]),XPS.duration()-1].join("_"));//末尾まで選択
+	xUI.selection([myLeft+Math.abs(myRange[0]),xUI.XPS.duration()-1].join("_"));//末尾まで選択
 	//ヤンクバッファを使わずにレンジ内のデータを取得する
 	var myBuf=xUI.getRange().split('\n');
 	//挿入分の空白データを作成
@@ -772,9 +766,9 @@ deleteBlank=function(){
 var myLeft=(myRange[0]<0)?origPoint[0]+myRange[0]:origPoint[0];
 var myTop=(myRange[1]<0)?origPoint[1]+myRange[1]:origPoint[1];
 
-	if(Math.abs(myRange[1])+myTop<XPS.duration()){
+	if(Math.abs(myRange[1])+myTop<xUI.XPS.duration()){
 		xUI.selectCell(add([myLeft,myTop],[0,Math.abs(myRange[1])+1]).join("_"));//新しいポイントへ移動
-		xUI.selection([myLeft+Math.abs(myRange[0]),XPS.duration()-1].join("_"));//末尾まで選択
+		xUI.selection([myLeft+Math.abs(myRange[0]),xUI.XPS.duration()-1].join("_"));//末尾まで選択
 	//ヤンクバッファを使わずにレンジ内のデータを取得する
 		var myBuf=xUI.getRange().split('\n');
 	//レンジ分の空白データを作成
@@ -810,14 +804,14 @@ reNameLabel=function(TimelineId) {
 	var msg=localize(nas.uiMsg.dmTLlabelRename);//タイムラインラベルを変更します
 	if(!TimelineId){
 		//全タイムラインのラベルを取得して仮セット
-		for (var Tidx=0;Tidx<XPS.xpsTracks.length-1;Tidx++){
-			newNames.push(XPS.xpsTracks[Tidx].id);
+		for (var Tidx=0;Tidx<xUI.XPS.xpsTracks.length-1;Tidx++){
+			newNames.push(xUI.XPS.xpsTracks[Tidx].id);
 		};
 
 		msg+="\n"+localize(nas.uiMsg.dmRenameLabels);//新しいラベル名セットを指定してください
 	}else{
-		var kind=XPS.xpsTracks[TimelineId].option;
-		newNames.push(XPS.xpsTracks[TimelineId].id);
+		var kind=xUI.XPS.xpsTracks[TimelineId].option;
+		newNames.push(xUI.XPS.xpsTracks[TimelineId].id);
 		msg+="\n"+localize(nas.uiMsg.dmRenameLabel)+"\n"+kind+":";//新しいラベルを指定してください
 		msg=[msg];
 		switch (kind){
@@ -853,7 +847,7 @@ reNameLabel=function(TimelineId) {
 		newNames=newNames.split(",");
 		if(! this.TimelineId){
 			for (var Lidx=0;Lidx<newNames.length;Lidx++){
-				if((Lidx<XPS.xpsTracks.length)&&(XPS.xpsTracks[Lidx].id!=newNames[Lidx])){
+				if((Lidx<xUI.XPS.xpsTracks.length)&&(xUI.XPS.xpsTracks[Lidx].id!=newNames[Lidx])){
 					xUI.put([["id",Lidx].join("."),newNames[Lidx]]);
 				};
 			};
@@ -867,6 +861,33 @@ reNameLabel=function(TimelineId) {
 	myFunc.TimelineId=TimelineId;
 	newNames=nas.showModalDialog("prompt",msg,localize(nas.uiMsg.timelineRename),newNames.join(","),myFunc);
 };
+/*
+	トラックコメントの編集
+	タイムラインIDが与えられた場合は、そのタイムライン
+	引数なしの場合は、現在フォーカスのあるタイムライン
+
+*/
+editTrackNote=function(TimelineId) {
+	if(xUI.viewOnly){return false;};
+	if(! TimelineId) TimelineId = xUI.Select[0];
+	var newName='';
+	var msg=localize(nas.uiMsg.dmTLtrackNoteEdit);//タイムライントラックノート
+
+		newName = xUI.XPS.xpsTracks[TimelineId].trackNote;
+		msg+="\n"+localize(nas.uiMsg.dmRenameLabel)+"\n";//新しいラベルを指定してください
+
+	var myFunc=function(){
+	  if(! TimelineId){this.TimelineId=null}else{this.TimelineId=TimelineId};
+		if((this.startValue==this.value)||(this.status >= 1)){return;};
+	    var newName=this.value;
+		xUI.put([["trackNote",this.TimelineId].join("."),newName]);
+		sync("lbl");
+	return;
+	}
+	myFunc.TimelineId=TimelineId;
+	newName=nas.showModalDialog("prompt",msg,localize(nas.uiMsg.timelineRename),newName,myFunc);
+};
+
 //タイムラインラベル変更用ボタンメソッド
 inputButtonText=function(myText){
 	document.getElementById("nas_modalInput").value=myText;nas.showModalDialog("result",0);
@@ -881,7 +902,7 @@ putReference=function()
 	//xUIに範囲設定があれば、その範囲を、無ければすべてのシートを操作対象にする
 	if((xUI.Selection[0]==0)&&(xUI.Selection[1]==0)){
 		documentDepot.currentReference=new Xps();
-		documentDepot.currentReference.readIN(XPS.toString());//選択範囲指定がない場合は、すべてコピー
+		documentDepot.currentReference.readIN(xUI.XPS.toString());//選択範囲指定がない場合は、すべてコピー
 		xUI.resetSheet(undefined,documentDepot.currentReference);
 	}else{
 	//return false;
@@ -962,7 +983,7 @@ incrementCell=function(myShift){
 	var myStream=[];
 for(var idy=0;idy<=myDepth;idy++){  
   var myBody=[];
-  var currentContent=XPS.xpsTracks[xUI.Select[0]].slice(startFrm,startFrm+myLength+1);
+  var currentContent=xUI.XPS.xpsTracks[xUI.Select[0]].slice(startFrm,startFrm+myLength+1);
 for(var idx=0;idx<currentContent.length;idx++){
 	if(currentContent[idx].match(/^(\[?)([A-Z])(\]?)$/)){
 		myBody.push(RegExp.$1+names.charAt((names.indexOf(RegExp.$2)+myShift+26)%26)+RegExp.$3);
@@ -1005,7 +1026,7 @@ writeNewSection=function(myOpt){
   var myLength=xUI.Selection[1];
   var myBody=[];
  if(! myOpt){
- 	myOpt=(xUI.Select[0]==0)?"dialog":(xUI.Select[0]<=XPS.xpsTracks.length-1)?XPS.xpsTracks[xUI.Select[0]].option:"comment";
+ 	myOpt=(xUI.Select[0]==0)?"dialog":(xUI.Select[0]<=xUI.XPS.xpsTracks.length-1)?xUI.XPS.xpsTracks[xUI.Select[0]].option:"comment";
  }
     switch(myOpt){
       case "camera":
@@ -1092,8 +1113,8 @@ putSectionLine=function(myTarget){
   var startFrm=xUI.Select[1];
   var myLength=xUI.Selection[1];
   var myBody=[];
-  var myOpt=(xUI.Select[0]==0)?"dialog":(xUI.Select[0]<=XPS.xpsTracks.length-1)?XPS.xpsTracks[xUI.Select[0]].option:"comment";
-  var currentContent=XPS.xpsTracks[xUI.Select[0]].slice(startFrm,startFrm+myLength+1);
+  var myOpt=(xUI.Select[0]==0)?"dialog":(xUI.Select[0]<=xUI.XPS.xpsTracks.length-1)?xUI.XPS.xpsTracks[xUI.Select[0]].option:"comment";
+  var currentContent=xUI.XPS.xpsTracks[xUI.Select[0]].slice(startFrm,startFrm+myLength+1);
   
     switch(myOpt){
       case "dialog":     	return;
@@ -1163,7 +1184,7 @@ interpSign()
 */
 interpSign=function(){
 	var interpRegex=nas.CellDescription.interpRegex
-	var myValue = XPS.xpsTracks[xUI.Select[0]][xUI.Select[1]];
+	var myValue = xUI.XPS.xpsTracks[xUI.Select[0]][xUI.Select[1]];
   if(xUI.Selection.join(",")=="0,0"){
 	if(myValue.match(interpRegex)){
 		var newValue=InterpolationSigns[((InterpolationSigns.indexOf(myValue))+1) % InterpolationSigns.length];
@@ -1271,7 +1292,7 @@ addCircle=function(kwd){
 	xUI.selection([currentColumn,myRange[1][1]]);
 //ターゲット収集 最低数は０
 	for(var f=myRange[0][1];f<=myRange[1][1];f++){
-		var myDesc = new nas.CellDescription(XPS.xpsTracks[currentColumn][f]);
+		var myDesc = new nas.CellDescription(xUI.XPS.xpsTracks[currentColumn][f]);
 
 //この判定はxMAP完成後に有効記述であるか否かを判定する評価関数に置きかえ予定
 
@@ -1359,7 +1380,7 @@ buildActionSheet =function(){
 	putReference();
 	var bkPos=xUI.Select.join("_");//現在のカーソルを記録
 
-	for (var lix=1;lix<XPS.xpsTracks.length-1;lix++){
+	for (var lix=1;lix<xUI.XPS.xpsTracks.length-1;lix++){
 		if(xUI.XPS.xpsTracks[lix].option=="timing"){
 			console.log('clear :'+xUI.XPS.xpsTracks[lix].id)
 			xUI.selectCell(String(lix)+"_0");

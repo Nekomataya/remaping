@@ -20,7 +20,8 @@
 <fileTypes> 
     <fileType> 
         <name>nekomataya.TimeSheetFile</name> 
-        <extension>xps</extension> 
+        <extension>xps</extension>
+        <extension>xpst</extension> 
         <description>Nekomataya AnimationTimeSheet File</description> 
         <contentType>application/xps.nekomataya.atsfile</contentType> 
         <icon> 
@@ -59,6 +60,30 @@
         <extension>tsh</extension> 
         <description>aToolsAnimationTimeSheetFile</description> 
         <contentType>application/tsh.nekomataya.atsfile</contentType> 
+        <icon> 
+            <image16x16>icons/AIRApp_16.png</image16x16>       
+            <image32x32>icons/AIRApp_32.png</image32x32>       
+            <image48x48>icons/AIRApp_48.png</image48x48>      
+            <image128x128>icons/AIRApp_128.png</image128x128> 
+        </icon> 
+    </fileType> 
+   <fileType> 
+        <name>toeiAnimation.TimeSheetFile</name> 
+        <extension>tdts</extension> 
+        <description>toeiAnimationDigitalTimeSheetFile</description> 
+        <contentType>application/tdts.nekomataya.atsfile</contentType> 
+        <icon> 
+            <image16x16>icons/AIRApp_16.png</image16x16>       
+            <image32x32>icons/AIRApp_32.png</image32x32>       
+            <image48x48>icons/AIRApp_48.png</image48x48>      
+            <image128x128>icons/AIRApp_128.png</image128x128> 
+        </icon> 
+    </fileType> 
+   <fileType> 
+        <name>toeiAnimationExchange.TimeSheetFile</name> 
+        <extension>xdts</extension> 
+        <description>toeiAnimationDigitalTimeSheetFile</description> 
+        <contentType>application/xdts.nekomataya.atsfile</contentType> 
         <icon> 
             <image16x16>icons/AIRApp_16.png</image16x16>       
             <image32x32>icons/AIRApp_32.png</image32x32>       

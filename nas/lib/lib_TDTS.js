@@ -673,6 +673,7 @@ console.log(([myEntry.data[0].values[0],"「",myEntry.data[0].values[1],"」"]).
 								inputStream = '';
 							}
 //遅延解決して次のセクションの値を設定（未オブジェクト化）
+console.log("myEntry");
 console.log(myEntry);
 							sectionStart  = targetFrame;
 							sectionLength = 1;
@@ -754,87 +755,7 @@ TDTS.parseTdts = function(dataStream){
 	if((typeof dataStream != 'undefined') || (String(dataStream).match(/^((toei|exchange)DigitalTimeSheet Save Data\n)/))){
 		return JSON.parse(dataStream.slice((RegExp.$1).length));
 	} else {
-		return JSON.parse(`
-{
-  "header": {
-    "colors": [
-      [
-        255,
-        255,
-        255
-      ],
-      [
-        255,
-        255,
-        255
-      ],
-      [
-        255,
-        255,
-        255
-      ]
-    ],
-    "direction": "",
-    "episode": "",
-    "scene": "",
-    "cut": ""
-  },
-  "timeTables": [
-    {
-      "color": 0,
-      "duration": 144,
-      "name": "sheet1",
-      "operatorName": "",
-      "timeTableHeaders": [
-        {
-          "fieldId": 0,
-          "names": [
-            "A",
-            "B",
-            "C",
-            "D",
-            "E",
-            "F",
-            "G"
-          ]
-        },
-        {
-          "fieldId": 1,
-          "names": [
-            ""
-          ]
-        },
-        {
-          "fieldId": 2,
-          "names": [
-            ""
-          ]
-        },
-        {
-          "fieldId": 3,
-          "names": [
-            "S1",
-            "S2"
-          ]
-        },
-        {
-          "fieldId": 4,
-          "names": []
-        },
-        {
-          "fieldId": 5,
-          "names": [
-            "1",
-            "2"
-          ]
-        }
-      ]
-    }
-  ],
-  "version": 5
-}
-`);
-
+		return JSON.parse('{"header":{"colors":[[255,255,255],[255,255,255],[255,255,255]],"direction":"","episode":"","scene":"","cut":""},"timeTables":[{"color":0,"duration":144,"name":"sheet1","operatorName":"","timeTableHeaders":[{"fieldId":0,"names":["A","B","C","D","E","F","G"]},{"fieldId":1,"names":[""]},{"fieldId":2,"names":[""]},{"fieldId":3,"names":["S1","S2"]},{"fieldId":4,"names":[]},{"fieldId":5,"names":["1","2"]}]}],"version":5}');
 	}
 }
 

@@ -167,7 +167,7 @@ return;
 				{
 					fileChooser = fileBox.defaultDir;
 				}
-				var txtFilter = new air.FileFilter("TimeSheetFile(*.xps *.tsh *.ard *.ardj *.csv *.txt)", "*.xps;*.tsh;*.ard;*.ardj;*.csv;*.txt");
+				var txtFilter = new air.FileFilter("TimeSheetFile(*.xps *.xpst *.xdts *.tdts *.tsh *.ard *.ardj *.csv *.txt)", "*.xps;*.xpst;*.xdts;*.tdts;*.tsh;*.ard;*.ardj;*.csv;*.txt");
 				fileChooser.browseForOpen("Open",[txtFilter]);
 				fileChooser.addEventListener(air.Event.SELECT, fileBox.openFile);
 			}
@@ -194,7 +194,7 @@ return;
 					fileBox.contentText="";//データバッファテキストクリア
 					var tmpBuff="";//一時バッファ確保
 					this.stream.open(fileBox.currentFile, air.FileMode.READ);//ファイルストリーム開く(同期)
-				  if(fileBox.currentFile.extension.match(/(xps|te?xt|ardj|json)/)){
+				  if(fileBox.currentFile.extension.match(/(xps|te?xt|ardj|json|[tx]dts)/)){
 					var str = this.stream.readUTFBytes(this.stream.bytesAvailable);//UTFテキストとして読み込み
 				  }else{
 					var str = this.stream.readMultiByte(this.stream.bytesAvailable,"shift_jis");//s-JISテキストとして読み込み
@@ -205,7 +205,7 @@ return;
 				}
 				catch(error)
 				{
-					ioErrorHandler();
+					ioErrorHandler(error);
 				}
 			}
 
@@ -219,7 +219,7 @@ return;
 					fileBox.contentText="";//データバッファテキストクリア
 					var tmpBuff="";//一時バッファ確保
 					this.stream.open(fileBox.currentFile, air.FileMode.READ);//ファイルストリーム開く(同期)
-				  if(fileBox.currentFile.extension.match(/(xps|te?xt|ardj)/)){
+				  if(fileBox.currentFile.extension.match(/(xps|te?xt|ardj|json|[tx]dts)/)){
 					var str = this.stream.readUTFBytes(this.stream.bytesAvailable);//UTFテキストとして読み込み
 				  }else{
 					var str = this.stream.readMultiByte(this.stream.bytesAvailable,"shift_jis");//s-JISテキストとして読み込み
@@ -231,7 +231,7 @@ return;
 //xUI初期化のタイミングだけ認識してそれ以前なら以下のルーチンは実行しない
 //開始時点でxUI空オブジェクトで初期化されるのでxUI.initを判定
 			if(xUI.init){
-				var myResult= XPS.readIN(fileBox.contentText);
+				var myResult= xUI.XPS.readIN(fileBox.contentText);
 			}else{
 				var myResult=false;
 			}
@@ -248,7 +248,7 @@ return;
 				}
 				catch(error)
 				{
-					ioErrorHandler();
+					ioErrorHandler(error);
 				}
 			}
 			/**
@@ -298,7 +298,7 @@ return;
 						this.stream.writeUTFBytes(fileBox.contentText);
 						this.stream.close();
 					} catch(error) {
-						ioErrorHandler();
+						ioErrorHandler(error);
 					}
 				}		
 	}
@@ -322,7 +322,7 @@ return;
 						this.stream = new air.FileStream();
 						this.stream.open(fileBox.currentFile, air.FileMode.WRITE);
 
-						var outData = XPS.toString();
+						var outData = xUI.XPS.toString();
 //						outData = outData.replace(/\n/g, air.File.lineEnding);
 						this.stream.writeUTFBytes(outData);
 						this.stream.close();
@@ -348,7 +348,7 @@ return;
 					} 
 					catch(error) 
 					{
-						ioErrorHandler();
+						ioErrorHandler(error);
 					}
 				}
 			}
@@ -389,7 +389,7 @@ if(true){
 		this.stream.writeUTFBytes(outData);
 		this.stream.close();
 	} catch(error) {
-		ioErrorHandler();
+		ioErrorHandler(error);
 	}
 	storeCount++;
 }else{alert("filename : "+myFile.url)}
@@ -411,15 +411,16 @@ if(true){
 		this.stream.writeUTFBytes(outData);
 		this.stream.close();
 	} catch(error) {
-		ioErrorHandler();
+		ioErrorHandler(error);
 	}
 
 	}
 			/**
 			 * Error message for file I/O errors. 
 			 */
-			function ioErrorHandler() {
-				alert("Error reading or writing the file.");
+			function ioErrorHandler(error) {
+				console.log(error);
+				alert("Error reading or writing the file.\n"+error);
 			}
 /*
 アプリケーションがINVOKEイベントの処理が出来るようにする
@@ -842,7 +843,7 @@ function selectCommand(event) {
 	break;
 	case "copyFromRef":getReference();
 	break;
-	case "clearReference":xUI.resetSheet(undefined,new Xps(XPS.xpsTracks.length-2,XPS.duration()));
+	case "clearReference":xUI.resetSheet(undefined,new Xps(xUI.XPS.xpsTracks.length-2,xUI.XPS.duration()));
 	break;
 	case "dataPanel":xUI.sWitchPanel("Data");
 	break;
@@ -1033,7 +1034,7 @@ nas.File.relativePath(currentDir)	カレントディレクトリを与えて相�
 			fileBox.openFileDB=function() {
 			var myAction=xUI.checkStored("saveAndOpen");
 
-		var txtFilter = "TimeSheetFile:*.xps;*.tsh;*.ard;*.ardj;*.csv;*.txt";
+		var txtFilter = "TimeSheetFile:*.xps *.xpst *.xdts *.tdts *.tsh *.ard *.ardj *.csv *.txt";
 		var myEx="";
 				var fileChooser;
 				if(fileBox.currentFile instanceof String)
@@ -1117,7 +1118,7 @@ if(appHost.platform=="CSX"){}
 				}
 				catch(error)
 				{
-					ioErrorHandler();
+					ioErrorHandler(error);
 				}
 			}
 
@@ -1151,7 +1152,7 @@ if(appHost.platform=="CSX"){
 //xUI初期化のタイミングだけ認識してそれ以前なら以下のルーチンは実行しない
 //開始時点でxUI空オブジェクトで初期化されるのでxUI.initを判定
 			if(xUI.init){
-				var myResult= XPS.readIN(fileBox.contentText);
+				var myResult= xUI.XPS.readIN(fileBox.contentText);
 			}else{
 				var myResult=false;
 			}
@@ -1176,7 +1177,7 @@ if(appHost.platform=="CSX"){
 //xUI初期化のタイミングだけ認識してそれ以前なら以下のルーチンは実行しない
 //開始時点でxUI空オブジェクトで初期化されるのでxUI.initを判定
 			if(xUI.init){
-				var myResult= XPS.readIN(fileBox.contentText);
+				var myResult= xUI.XPS.readIN(fileBox.contentText);
 			}else{
 				var myResult=false;
 			}
@@ -1283,7 +1284,7 @@ if(appHost.platform =="CSX"){
 		}else{
 			myEx +=	"myOpenfile.encoding='CP932';";
 		}
-						var outData = XPS.toString();
+						var outData = xUI.XPS.toString();
 //						var outData = fileBox.contentText;
 
 			myEx += "var tempText = decodeURI('"+ encodeURI(outData) +"');";
@@ -1429,8 +1430,9 @@ if(appHost.platform=="CSX"){
 			/**
 			 * Error message for file I/O errors. 
 			 */
-			function ioErrorHandler() {
-				alert("Error reading or writing the file.");
+			function ioErrorHandler(error) {
+				console.log(error);
+				alert("Error reading or writing the file.\n");
 			}
 fileBox.init();
 break;

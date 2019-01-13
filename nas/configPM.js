@@ -45,7 +45,8 @@
  *    }
  *}
  */
-nas.Pm.organizations.parseConfig(`{
+nas.Pm.organizations.parseConfig('{"nekomataya":{"name":"nekomataya","fullName":"ねこまたや","code":"nkmt","id":"0001","serviceUrl":"localRepository:info.nekomataya.pmdb","shortName":"(ね)","contact":"ねこまたや:kiyo@nekomataya.info","description":"ねこまたや:kiyo@nekomataya.info"},"sampleTeam":{"name":"sampleTeam","fullName":"SmapleDataRepository K.K","code":"smpl","id":"0003","serviceUrl":"https://u-at.net/~","shortName":"spl","contact":"contact:contact@sample.example.com","description":"contact:contact@sample.example.com"},"sampleTeam2":{"name":"sampleTeam2","fullName":"Smaple2DataRepository K.K","code":"spl2","id":"0004","serviceUrl":"https://u-at.net/x~","shortName":"sample2","contact":"contact:contact@sample.example.com","description":"contact:contact@sample.example.com"}}');
+/*`{
     "nekomataya":{
         "name":"nekomataya",
         "fullName":"ねこまたや",
@@ -76,7 +77,7 @@ nas.Pm.organizations.parseConfig(`{
         "contact":"contact:contact@sample.example.com",
         "description":"contact:contact@sample.example.com"
     }
-}`);
+}`*/
 /**
  * 共有ユーザ一覧
  *   組織に属する全ユーザのリスト
@@ -91,7 +92,8 @@ nas.Pm.organizations.parseConfig(`{
  *   リポジトリ（チーム）ごとにユーザリスト作成が必用
  *   ローカルインストールされたアプリケーションでは、通常はオーナーユーザのみのリストを使用する
  */
-nas.Pm.users.parseConfig(`[{
+nas.Pm.users.parseConfig('[{"handle":"ねずみ","email":"mouse@animals.example.com","token":"1234566"},{"handle":"うし","email":"cow@animals.example.com"},{"handle":"とら","email":"tiger@animals.example.com"},{"handle":"うさぎ","email":"rabbit@animals.example.com"},{"handle":"たつ","email":"dragon@legend.example.com"},{"handle":"へび","email":"snake@animals.example.com"},{"handle":"うま","email":"horse@animals.example.com"},{"handle":"ひつじ","email":"sheep@animals.example.com"},{"handle":"さる","email":"monkey@animals.example.com"},{"handle":"とり","email":"bird@animals.example.com"},{"handle":"犬丸","email":"dog@animals.example.com"},{"handle":"いのしし","email":"boar@animals.example.com"},{"handle":"たぬきスタジオ","email":"tanuki-st@animal.example.com"},{"handle":"たぬき","email":"tanuki.tanuki-st@animal.example.com"},{"handle":"ムジナ","email":"mjina.tanuki-st@animal.example.com"},{"handle":"穴熊","email":"anaguma.tanuki-st@animal.example.com"},{"handle":"アイナメ","email":"ainame@fish.example.com"},{"handle":"イワシ","email":"iwashi@fish.example.com"},{"handle":"エソ","email":"eso@fish.example.com"},{"handle":"オコゼ","email":"okoze@fish.example.com"},{"handle":"カサゴ","email":"kasago@fish.example.com"},{"handle":"キス","email":"kisu@fish.example.com"},{"handle":"クロダイ","email":"kurodai@fish.example.com"},{"handle":"ケショウフグ","email":"kesyoufugu@fish.example.com"},{"handle":"コノシロ","email":"konoshiro@fish.example.com"},{"handle":"サバ","email":"saba@fish.example.com"},{"handle":"シラウオ","email":"shirauo@fish.example.com"},{"handle":"スズキ","email":"suzuki@fish.example.com"},{"handle":"ソメワケベラ","email":"somewake@fish.example.com"},{"handle":"セトダイ","email":"setodai@fish.example.com"},{"handle":"タナゴ","email":"tanago@fish.example.com"},{"handle":"チヌ","email":"chinu@fish.example.com"},{"handle":"ツボダイ","email":"tsubodai@fish.example.com"},{"handle":"テッポウウオ","email":"teppouuo@fish.example.com"},{"handle":"トラフグ","email":"torafugu@fish.example.com"},{"handle":"ナマズ","email":"namazu@fish.example.com"},{"handle":"ニシキゴイ","email":"nishikigoi@fish.example.com"},{"handle":"ヌタウナギ","email":"nutaunagi@fish.example.com"},{"handle":"ネコザメ","email":"nekozame@fish.example.com"},{"handle":"ハゼ","email":"haze@fish.example.com"},{"handle":"ヒラメ","email":"hirame@fish.example.com"},{"handle":"フグ","email":"fugu@fish.example.com"},{"handle":"ノドグロ","email":"nodoguro@fish.example.com"},{"handle":"ヘラ","email":"hera@fish.example.com"},{"handle":"ホッケ","email":"hokke@fish.example.com"},{"handle":"マグロ","email":"maguro@fish.example.com"},{"handle":"ミゾレフグ","email":"mizorefugu@fish.example.com"},{"handle":"ムツゴロウ","email":"mutsugoro@fish.example.com"},{"handle":"メゴチ","email":"megochi@fish.example.com"},{"handle":"モンガラカワハギ","email":"monngarakawahagi@fish.example.com"},{"handle":"ヤツメウナギ","email":"yatsumeunagi@fish.exapmle.com"},{"handle":"ユメカサゴ","email":"yumekasago@fish.example.com"},{"handle":"ヨシキリザメ","email":"yoshikirizame@fish.example.com"},{"handle":"ライギョ","email":"raigyo@fish.example.com"},{"handle":"リュウグウノツカイ","email":"ryuuguunotsukai@fish.example.com"},{"handle":"絶滅寸前","email":"ztm@fish.example.com"},{"handle":"ウナギ","email":"unagi.ztm@fish.example.com"},{"handle":"ねこ","email":"cat@animal.example.com"},{"handle":"こねこ","email":"kitty@animal.example.com"},{"handle":"いぬ","email":"dog@animal.example.com"},{"handle":"こいぬ","email":"puppy@animal.example.com"},{"handle":"かもめ","email":"gull@bird.example.com"},{"handle":"回遊館","email":"kaiyu@fish.example.com"},{"handle":"海洋工房","email":"st-sea@fish.example.com"},{"handle":"マグロ","email":"mgr.st-sea@fish.example.com"},{"handle":"スジクロギンポ","email":"sjk.st-sea@fish.example.com"},{"handle":"ワカサギ","email":"wakasagi.st-sea@fish.example.com"},{"handle":"サバ","email":"saba.st-sea@fish.example.com"},{"handle":"レモンスズメダイ","email":"remonnsuzumedai.st-sea@fish.example.com"},{"handle":"ロウソクギンポ","email":"rousokuginnpo.st-sea@fish.example.com"},{"handle":"ルリハタ","email":"rurihata.st-sea@fish.example.com"},{"handle":"ツバメ","email":"swallow@bird.example.com"},{"handle":"スタジオ鳥類","email":"st-bird@bird.example.com"},{"handle":"ハト","email":"pigeon@bird.example.com"},{"handle":"スズメ","email":"sparrow@bird.example.com"},{"handle":"オウム","email":"parrot@bird.example.com"},{"handle":"シジュウカラ","email":"tits@bird.example.com"},{"handle":"ワシ","email":"eagle@bird.example.com"},{"handle":"アイガモ","email":"duck.aigamo@bird.example.com"}]');
+/*`[{
         "handle":"ねずみ",
         "email":"mouse@animals.example.com",
         "token":"1234566"
@@ -408,7 +410,7 @@ nas.Pm.users.parseConfig(`[{
 		"handle":"アイガモ",
 		"email":"duck.aigamo@bird.example.com"
 	}
-]`);
+]`*/
 /**
  * スタッフ登録
  * タブ区切りテキストでスタッフリストの形式で
@@ -423,7 +425,8 @@ nas.Pm.users.parseConfig(`[{
  *		"section":    <String.部門名　または　null>
  *	},
  */
-nas.Pm.staff.parseConfig(`[
+nas.Pm.staff.parseConfig('[{"acsess":true,"type":null,"alias":"","user":null,"duty":null,"section":null},{"acsess":true,"type":"user","alias":"","user":"acsess:true,","duty":null,"section":null},{"acsess":true,"type":"user","alias":"","user":"type:section,","duty":null,"section":null},{"acsess":true,"type":"user","alias":"","user":"alias:,","duty":null,"section":null},{"acsess":true,"type":"user","alias":"","user":"user:null,","duty":null,"section":null},{"acsess":true,"type":"user","alias":"","user":"duty:null,","duty":null,"section":null},{"acsess":true,"type":"user","alias":"","user":"section:制作管理","duty":null,"section":null},{"acsess":true,"type":"user","alias":"","user":"type:duty,","duty":null,"section":null},{"acsess":true,"type":"user","alias":"","user":"duty:プロデューサ,","duty":null,"section":null},{"acsess":true,"type":"user","alias":"","user":"type:user,","duty":null,"section":null},{"acsess":true,"type":"user","alias":"","user":"user:ねずみ","duty":null,"section":null},{"acsess":true,"type":"user","alias":"","user":"duty:統括デスク,","duty":null,"section":null},{"acsess":true,"type":"user","alias":"","user":"user:うし","duty":null,"section":null},{"acsess":true,"type":"user","alias":"","user":"duty:デスク,","duty":null,"section":null},{"acsess":true,"type":"user","alias":"","user":"user:とら","duty":null,"section":null},{"acsess":true,"type":"user","alias":"","user":"duty:制作進行,","duty":null,"section":null},{"acsess":true,"type":"user","alias":"","user":"user:とり","duty":null,"section":null},{"acsess":true,"type":"user","alias":"","user":"user:たつ","duty":null,"section":null},{"acsess":true,"type":"user","alias":"","user":"user:うま","duty":null,"section":null},{"acsess":true,"type":"user","alias":"","user":"user:ひつじ","duty":null,"section":null},{"acsess":true,"type":"user","alias":"","user":"section:演出","duty":null,"section":null},{"acsess":true,"type":"user","alias":"","user":"duty:監督,","duty":null,"section":null},{"acsess":true,"type":"user","alias":"","user":"user:犬丸","duty":null,"section":null},{"acsess":true,"type":"user","alias":"","user":"duty:演出,","duty":null,"section":null},{"acsess":true,"type":"user","alias":"","user":"duty:演出助手,","duty":null,"section":null},{"acsess":true,"type":"user","alias":"","user":"user:いのしし","duty":null,"section":null},{"acsess":true,"type":"user","alias":"","user":"section:文芸","duty":null,"section":null},{"acsess":true,"type":"user","alias":"","user":"duty:脚本,","duty":null,"section":null},{"acsess":true,"type":"user","alias":"","user":"user:ウナギ","duty":null,"section":null},{"acsess":true,"type":"user","alias":"","user":"duty:設定制作,","duty":null,"section":null},{"acsess":true,"type":"user","alias":"","user":"user:へび","duty":null,"section":null},{"acsess":true,"type":"user","alias":"","user":"duty:デザイナー,","duty":null,"section":null},{"acsess":true,"type":"user","alias":"","user":"user:アイナメ","duty":null,"section":null},{"acsess":true,"type":"user","alias":"","user":"duty:キャラ設定,","duty":null,"section":null},{"acsess":true,"type":"user","alias":"","user":"user:いわし","duty":null,"section":null},{"acsess":true,"type":"user","alias":"","user":"duty:美術設定,","duty":null,"section":null},{"acsess":true,"type":"user","alias":"","user":"user:ワカサギ","duty":null,"section":null},{"acsess":true,"type":"user","alias":"","user":"duty:小物設定,","duty":null,"section":null},{"acsess":true,"type":"user","alias":"","user":"user:クロダイ","duty":null,"section":null},{"acsess":true,"type":"user","alias":"","user":"duty:色彩設計,","duty":null,"section":null},{"acsess":true,"type":"user","alias":"","user":"user:ツバメ","duty":null,"section":null},{"acsess":true,"type":"user","alias":"","user":"section:作画","duty":null,"section":null},{"acsess":true,"type":"user","alias":"","user":"duty:総作画監督,","duty":null,"section":null},{"acsess":true,"type":"user","alias":"","user":"duty:作画監督,","duty":null,"section":null},{"acsess":true,"type":"user","alias":"","user":"duty:作画監督補,","duty":null,"section":null},{"acsess":true,"type":"user","alias":"","user":"duty:メカ作画監督,","duty":null,"section":null},{"acsess":true,"type":"user","alias":"","user":"duty:メカ作画監督補,","duty":null,"section":null},{"acsess":true,"type":"user","alias":"","user":"duty:原画,","duty":null,"section":null},{"acsess":true,"type":"user","alias":"","user":"user:ねこ","duty":null,"section":null},{"acsess":true,"type":"user","alias":"","user":"user:こねこ","duty":null,"section":null},{"acsess":true,"type":"user","alias":"","user":"user:いぬ","duty":null,"section":null},{"acsess":true,"type":"user","alias":"","user":"user:こいぬ","duty":null,"section":null},{"acsess":true,"type":"user","alias":"","user":"user:オコゼ","duty":null,"section":null},{"acsess":true,"type":"user","alias":"","user":"user:カサゴ","duty":null,"section":null},{"acsess":true,"type":"user","alias":"","user":"user:キス","duty":null,"section":null},{"acsess":true,"type":"user","alias":"","user":"duty:第一原画,","duty":null,"section":null},{"acsess":true,"type":"user","alias":"","user":"duty:第二原画,","duty":null,"section":null},{"acsess":true,"type":"user","alias":"","user":"user:かもめ","duty":null,"section":null},{"acsess":true,"type":"user","alias":"","user":"duty:動画検査,","duty":null,"section":null},{"acsess":true,"type":"user","alias":"","user":"user:サバ","duty":null,"section":null},{"acsess":true,"type":"user","alias":"","user":"duty:動画監督,","duty":null,"section":null},{"acsess":true,"type":"user","alias":"","user":"duty:動画,","duty":null,"section":null},{"acsess":true,"type":"user","alias":"","user":"user:スズキ","duty":null,"section":null},{"acsess":true,"type":"user","alias":"","user":"user:ソメワケベラ","duty":null,"section":null},{"acsess":true,"type":"user","alias":"","user":"user:セトダイ","duty":null,"section":null},{"acsess":true,"type":"user","alias":"","user":"user:タナゴ","duty":null,"section":null},{"acsess":true,"type":"user","alias":"","user":"user:チヌ","duty":null,"section":null},{"acsess":true,"type":"user","alias":"","user":"user:たぬきスタジオ","duty":null,"section":null},{"acsess":true,"type":"user","alias":"","user":"user:たぬき","duty":null,"section":null},{"acsess":true,"type":"user","alias":"","user":"user:ムジナ","duty":null,"section":null},{"acsess":true,"type":"user","alias":"","user":"user:穴熊","duty":null,"section":null},{"acsess":true,"type":"user","alias":"","user":"user:回遊館","duty":null,"section":null},{"acsess":true,"type":"user","alias":"","user":"section:美術","duty":null,"section":null},{"acsess":true,"type":"user","alias":"","user":"duty:美術監督,","duty":null,"section":null},{"acsess":true,"type":"user","alias":"","user":"user:マグロ","duty":null,"section":null},{"acsess":true,"type":"user","alias":"","user":"duty:美術監督補佐,","duty":null,"section":null},{"acsess":true,"type":"user","alias":"","user":"user:スジクロギンポ","duty":null,"section":null},{"acsess":true,"type":"user","alias":"","user":"duty:原図整理,","duty":null,"section":null},{"acsess":true,"type":"user","alias":"","user":"duty:背景,","duty":null,"section":null},{"acsess":true,"type":"user","alias":"","user":"user:海洋工房","duty":null,"section":null},{"acsess":true,"type":"user","alias":"","user":"user:レモンスズメダイ","duty":null,"section":null},{"acsess":true,"type":"user","alias":"","user":"user:ロウソクギンポ","duty":null,"section":null},{"acsess":true,"type":"user","alias":"","user":"user:ルリハタ","duty":null,"section":null},{"acsess":true,"type":"user","alias":"","user":"section:仕上","duty":null,"section":null},{"acsess":true,"type":"user","alias":"","user":"duty:色指定,","duty":null,"section":null},{"acsess":true,"type":"user","alias":"","user":"duty:トレース,","duty":null,"section":null},{"acsess":true,"type":"user","alias":"","user":"user:アイガモ","duty":null,"section":null},{"acsess":true,"type":"user","alias":"","user":"duty:ペイント,","duty":null,"section":null},{"acsess":true,"type":"user","alias":"","user":"user:スズメ","duty":null,"section":null},{"acsess":true,"type":"user","alias":"","user":"user:オウム","duty":null,"section":null},{"acsess":true,"type":"user","alias":"","user":"user:シジュウカラ","duty":null,"section":null},{"acsess":true,"type":"user","alias":"","user":"user:ワシ","duty":null,"section":null},{"acsess":true,"type":"user","alias":"","user":"duty:特殊効果,","duty":null,"section":null},{"acsess":true,"type":"user","alias":"","user":"section:撮影","duty":null,"section":null},{"acsess":true,"type":"user","alias":"","user":"duty:撮影監督,","duty":null,"section":null},{"acsess":true,"type":"user","alias":"","user":"さる:mnk@animal.example.com,","duty":null,"section":null},{"acsess":true,"type":"user","alias":"","user":"duty:撮影,","duty":null,"section":null},{"acsess":true,"type":"user","alias":"","user":"user:猿山撮影所","duty":null,"section":null},{"acsess":true,"type":"user","alias":"","user":"user:さる","duty":null,"section":null},{"acsess":true,"type":"user","alias":"","user":"user:ごりら","duty":null,"section":null},{"acsess":true,"type":"user","alias":"","user":"user:オランウータン","duty":null,"section":null},{"acsess":true,"type":"user","alias":"","user":"user:チンパンジー","duty":null,"section":null},{"acsess":true,"type":"user","alias":"","user":"user:ニホンザル","duty":null,"section":null},{"acsess":true,"type":"user","alias":"","user":"duty:撮影助手,","duty":null,"section":null},{"acsess":true,"type":"user","alias":"","user":"section:3D","duty":null,"section":null},{"acsess":true,"type":"user","alias":"","user":"section:無所属","duty":null,"section":null},{"acsess":true,"type":"user","alias":"","user":"duty:＊,","duty":null,"section":null},{"acsess":true,"type":"user","alias":"","user":"section:オブザーバ","duty":null,"section":null},{"acsess":true,"type":"user","alias":"","user":"duty:オブザーバ,","duty":null,"section":null},{"acsess":true,"type":"user","alias":"","user":"duty:時代考証,","duty":null,"section":null},{"acsess":true,"type":"user","alias":"","user":"user:ガンモドキ","duty":null,"section":null}]');
+/*`[
     {
 		"acsess":true,
 		"type":"section",
@@ -1328,7 +1331,7 @@ nas.Pm.staff.parseConfig(`[
 		"duty":"時代考証",
 		"section":"オブザーバ"
 	}
-]`);
+]`*/
 
 /**
  * アセット分類
@@ -1346,7 +1349,8 @@ nas.Pm.staff.parseConfig(`[
  *
 */
 
-nas.Pm.assets.parseConfig(`{
+nas.Pm.assets.parseConfig('{"SCInfo":{"name":"コンテチップ","hasXPS":"true","code":"SCI","shortName":"コンテ","endNode":"false","callStage":["leica","animatic","roughSketch","layout","1stKeydrawing"]},"leica":{"name":"プリビズ","hasXPS":"true","code":"prev","shortName":"プリビズ","endNode":"false","callStage":["leica","animatic","roughSketch","layout","1stKeydrawing"]},"draft":{"name":"ラフスケッチ","hasXPS":"true","code":"DRFT","shortName":"ラフ","endNode":"false","callStage":["leica","animatic","roughSketch","layout","1stKeydrawing"]},"layout":{"name":"レイアウト","hasXPS":"true","code":"__LO","shortName":"LO","endNode":"false","callStage":["leica","animatic","roughSketch","layout","1stKeydrawing","layoutProof","layoutA-D","keydrawing","2ndKeydrawing"]},"keyAnimation":{"name":"原画","hasXPS":"true","code":"__KD","shortName":"原","endNode":"false","callStage":["KDA-D","2ndKdA-D","checkKD","preProofAD","AD"]},"AnimationDrawing":{"name":"動画","hasXPS":"true","code":"__AD","shortName":"動","endNode":"false","callStage":["ADA-D","proofAD","A-D","ADscan","ADcleanUp","HMechanicalTrace"]},"cell":{"name":"セル","hasXPS":"true","code":"CELL","shortName":"仕","endNode":"true","callStage":["AdcleanUp","paint","proofPaint","retouchCell"]},"characterDesign":{"name":"キャラクター設定","hasXPS":"false","code":"chrD","shortName":"キャラ","endNode":"true","callStage":["undefined"]},"propDesign":{"name":"プロップ設定","hasXPS":"false","code":"crpD","shortName":"プロップ","endNode":"true"},"BGDesign":{"name":"美術設定","hasXPS":"false","code":"bgaD","shortName":"美設","endNode":"true"},"referenceSheet":{"name":"参考設定","hasXPS":"false","code":"refD","shortName":"参考","endNode":"true"},"colorDesign":{"name":"色彩設計","hasXPS":"false","code":"colD","shortName":"色設","endNode":"true"},"colorCoordiante":{"name":"色指定","hasXPS":"true","code":"colC","shortName":"指定","endNode":"true"},"backgroundArt":{"name":"背景","hasXPS":"true","code":"_BGA","shortName":"背景","endNode":"true"},"cast3D":{"name":"3Dアニメーション","hasXPS":"true","code":"3DCC","shortName":"3D","endNode":"true"},"EXTRA":{"name":"（空アセット）","hasXPS":"false","code":"NULL","shortName":"EXTRA","endNode":"true"},"ALL":{"name":"（全アセット）","hasXPS":"true","code":"_ALL","shortName":"ALL","endNode":"false"}}');
+/*`{
     "SCInfo":{
 		"name":"コンテチップ",
 		"hasXPS":"true",
@@ -1474,7 +1478,7 @@ nas.Pm.assets.parseConfig(`{
 		"shortName":"ALL",
 		"descripion":"null",
 		"endNode":"false"}
-}`);
+}`*/
 
 /**
  * ステージ分類
@@ -1488,7 +1492,8 @@ nas.Pm.assets.parseConfig(`{
  *      output:         <String.ステージの出力するアセット種別>
  *}
  */
-nas.Pm.stages.parseConfig(`{
+nas.Pm.stages.parseConfig('{"undefined":{"name":"未定義","code":"(undef)","shortName":"(undefined)","description":"未定義ステージ 制作預りとして扱う。基本的にアセットストアへの編入を指す","output":"SCInfo","stageName":"undefined"},"init":{"name":"初期化","code":"init","shortName":"開始","description":"初期化ステージ 制作預りとして扱う。制作開始前処理","output":"SCInfo","stageName":"init"},"characterDesign":{"name":"キャラクターデザイン","code":"chrD","shortName":"キャラデ","description":"プロダクション管理デザイン（各話発注デザイン）＊メインデザインは別管理","output":"characterDesign","stageName":"characterDesign"},"propDesign":{"name":"プロップデザイン","code":"prpD","shortName":"プロップ","description":"プロダクション管理デザイン（各話発注デザイン）","output":"propDesign","stageName":"propDesign"},"colorDesign":{"name":"色彩設計","code":"CD","shortName":"色彩設計","description":"カラーデザイン（基本色彩設計）","output":"colorDesign","stageName":"colorDesign"},"colorModel":{"name":"色彩設計カラーモデル","code":"coMD","shortName":"色彩設計M","description":"カラーモデル（パレット）型基本色彩設計(animo toonz等)","output":"colorDesign","stageName":"colorModel"},"colorCoordination":{"name":"色指定","code":"CC","shortName":"色指定","description":"カット別彩色指定データ","output":"colorDesign","stageName":"colorCoordination"},"coordinationModel":{"name":"色指定カラーモデル","code":"_ccM","shortName":"色指定M","description":"カラーモデル（パレット）型カット別彩色指定データ(animo toonz等)","output":"colorDesign","stageName":"coordinationModel"},"bgDesign":{"name":"美術設定","code":"artD","shortName":"美設","description":"プロダクション内デザインワーク","output":"BGDsign","stageName":"bgDesign"},"SCInfo":{"name":"コンテチップ","code":"_SCI","shortName":"コンテチップ","description":"絵コンテを分解してシーンをプロジェクトデータ化したものイニシャルデータなのでこれを出力する同名ステージは無い","output":"SCInfo","stageName":"SCInfo"},"leica":{"name":"ライカ","code":"leica","shortName":"ライカ","description":"タイミングを構成したモーションラフ","output":"draft","stageName":"leica"},"contChip":{"name":"絵コンテ撮","code":"cntC","shortName":"コンテ撮","description":"コンテチップを構成したモーションラフ","output":"draft","stageName":"contChip"},"animatic":{"name":"プリビジュアライゼーション","code":"__pv","shortName":"PV","description":"同上","output":"layout","stageName":"animatic"},"roughSketch":{"name":"ラフ原画","code":"drft","shortName":"ラフ原","description":"同上","output":"draft","stageName":"roughSketch"},"layout":{"name":"レイアウト","code":"LO","shortName":"LO","description":"レイアウト上がり(原図あり)","output":"layout","stageName":"layout"},"LayoutAD":{"name":"LOスキャン","code":"LO-D","shortName":"レイアウトA/D","description":"layout to Data レイアウトをデータ化したもの","output":"layout","stageName":"LayoutAD"},"fstKeydrawing":{"name":"第一原画","code":"1G","shortName":"一原","description":"レイアウトを含むラフ原画シート付き","output":"layout","stageName":"fstKeydrawing"},"fstKdAD":{"name":"第一原画A/D","code":"1G-D","shortName":"一原A/D","stageName":"fstKdAD"},"keydrawing":{"name":"原画","code":"KD","shortName":"原","description":"原画上がり作画監督修正含む keyDrawing","output":"keyAnimation","stageName":"keydrawing"},"KDAD":{"name":"原画A/D","code":"KD-D","shortName":"原画A/D","description":"keyAnimation to Data 原画をデータ化したもの","output":"keyAnimation","stageName":"KDAD"},"sndKeydrawing":{"name":"第二原画","code":"2G","shortName":"二原","description":"第一原画を原画としてフィニッシュしたもの","output":"keyAnimation","stageName":"sndKeydrawing"},"sndKdAD":{"name":"第二原画A/D","code":"2G-D","shortName":"二原A/D","description":"第二原画は原画相当","output":"keyAnimation","stageName":"sndKdAD"},"checkKD":{"name":"原画作監修正","code":"KD+","shortName":"作監","description":"上がりは原画として扱う","output":"keyAnimation","stageName":"checkKD"},"preProofAD":{"name":"発注前動画検査","code":"2G+","shortName":"前動検","description":"実質上の第三原画又は第二原画修正","output":"keyAnimation","stageName":"preProofAD"},"BGOrderMeeting":{"name":"BG打合せ","code":"BGOM","shortName":"BG打ち","description":"グロス発注のための打合せステージ。素材の変更なし","output":"layout","stageName":"BGOrderMeeting"},"layoutProof":{"name":"美術原図整理","code":"BGLP","shortName":"原図整理","description":"レイアウト原図を整理加筆してFIXしたもの","output":"backgroundArt","stageName":"layoutProof"},"layoutAD":{"name":"背景原図スキャン","code":"LP-D","shortName":"原図スキャン","stageName":"layoutAD"},"bgArt":{"name":"背景美術","code":"BG","shortName":"背景","description":"完成背景美術","output":"backgroundArt","stageName":"bgArt"},"chaeckBgArt":{"name":"美術検査","code":"BG+","shortName":"美監検査","stageName":"chaeckBgArt"},"BgArtAD":{"name":"美術A/D","code":"BG-D","shortName":"背景スキャン","stageName":"BgArtAD"},"AD":{"name":"動画","code":"AD","shortName":"動","description":"動画上がり animationDrawing","output":"AnimationDrawing","stageName":"AD"},"ADAD":{"name":"動画A/D","code":"AD/D","shortName":"動画A/D","description":"animation to Data 動画をデータ化したもの","output":"AnimationDrawing","stageName":"ADAD"},"proofAD":{"name":"動画検査","code":"AD+","shortName":"動検","description":"上がりは動画 動画検査をステージ扱いする場合に使用","output":"AnimationDrawing","stageName":"proofAD"},"ADscan":{"name":"スキャン","code":"AD-D","shortName":"スキャン","description":"彩色データ作成のためのデジタイズ処理・半製品ペイントデータ","output":"cell","stageName":"ADscan"},"ADcleanUp":{"name":"動画クリンアップ","code":"ADCL","shortName":"Adcleanup","description":"デジタイズされた動画をクリンアップする作業(これをトレースと呼ぶソフトもある)","output":"cell","stageName":"ADcleanUp"},"paint":{"name":"彩色","code":"PT","shortName":"PAINT","description":"ソフトウェア作業によるセル彩色","output":"cell","stageName":"paint"},"proofPaint":{"name":"彩色検査","code":"PT+","shortName":"セル検","description":"彩色済みデータ","output":"cell","stageName":"proofPaint"},"retouchCell":{"name":"セル特効","code":"PTfx","shortName":"特効","description":"加工済みデータ","output":"cell","stageName":"retouchCell"},"HMechanicalTrace":{"name":"マシントレース","code":"H-mt","shortName":"M-trace","description":"動画をセルに機械転写したもの(古い形式のデータを記述するためのエントリ)","output":"cell","stageName":"HMechanicalTrace"},"HcolorTrace":{"name":"色トレス","code":"H-ct","shortName":"色T","description":"セル時代の作業を記録するためのエントリ","output":"cell","stageName":"HcolorTrace"},"HretouchCell":{"name":"エアブラシ特効","code":"H-fx","shortName":"エアブラシ","description":"セル時代の作業を記録するためのエントリ","output":"cell","stageName":"HretouchCell"},"composite":{"name":"コンポジット","code":"COMP","shortName":"撮影","description":"コンポジット工程をプロダクションに入れるべきか否かは結構悩む 制作工程上終端なので出力は無し 終了シンボルを作るか？","output":"ALL","stageName":"composite"},"preCompositCheck":{"name":"撮出し検査","code":"PCCk","shortName":"撮出し","description":"撮影前全検査(古い工程を記述するためのエントリ)","output":"ALL","stageName":"preCompositCheck"},"generalDirectorCheck":{"name":"監督チェック","code":"GDCk","shortName":"監督チェック","description":"監督による作業検査","output":"ALL","stageName":"generalDirectorCheck"},"directorCheck":{"name":"演出チェック","code":"DcCk","shortName":"演出チェック","description":"担当演出による作業検査","output":"ALL","stageName":"directorCheck"},"TP":{"name":"仕上","code":"T&P","shortName":"仕上","description":"仕上げ一括(複合)","output":"cell","stageName":"TP"},"ATP":{"name":"動仕","code":"AT&P","shortName":"動画仕上","description":"動画仕上一括(複合)","output":"cell","stageName":"ATP"},"KATP":{"name":"原動仕","code":"KAT&P","shortName":"原動仕","description":"原画動画仕上一括(複合)","output":"cell","stageName":"KATP"},"sKATP":{"name":"二原動仕","code":"sKAT&P","shortName":"二原動仕","description":"二原動画仕上一括(複合)","output":"cell","stageName":"sKATP"}}');
+/*`{
     "undefined":{
 		"name":"未定義",
 		"code":"(undef)",
@@ -1872,7 +1877,7 @@ nas.Pm.stages.parseConfig(`{
 		"description":"二原動画仕上一括(複合)",
 		"output":"cell",
 		"stageName":"sKATP"}
-}`);
+}`*/
 /**
  * ライン
  *   <ライン名>:{
@@ -1884,7 +1889,8 @@ nas.Pm.stages.parseConfig(`{
  *    }
  * *
  */
-nas.Pm.lines.parseConfig(`{
+nas.Pm.lines.parseConfig('{"trunk":{"name":"本線","shortName":"本線","initAsset":"コンテチップ","code":"cell","description":"管理本線となるセルライン"},"backgroundArt":{"name":"背景美術","shortName":"背景","initAsset":"レイアウト","code":"bg__","description":"美術作業"},"cast3D":{"name":"3Dアニメーション","shortName":"3D","initAsset":"コンテチップ","code":"__3D","description":"3Dアニメーションキャスト"},"characterDesign":{"name":"キャラクター設定","shortName":"キャラ設","initAsset":"（空アセット）","code":"cd","description":"キャラクター設定"},"propDesign":{"name":"プロップ設定","shortName":"プロップ","initAsset":"（空アセット）","code":"_prp","description":"プロップ設定"},"BGDesign":{"name":"美術設定","shortName":"美設","initAsset":"（空アセット）","code":"_bga","description":"美術設定作業"},"colorDesign":{"name":"色彩設計","shortName":"色設計","initAsset":"（空アセット）","code":"colD","description":"色彩設計"},"colorCoordiante":{"name":"色指定","shortName":"指定","initAsset":"コンテチップ","code":"__cc","description":"色指定"},"composite":{"name":"コンポジット","shortName":"撮影","initAsset":"（全アセット）","code":"comp","description":"撮影"},"ALL":{"name":"(全素材)","shortName":"全","initAsset":"（全アセット）","code":"_all","description":"カット情報を持って一時的に集積されるライン"},"null":{"name":"(未設定)","shortName":"(未)","initAsset":"（空アセット）","code":"null","description":"初期化前のオブジェクトに設定するダミーライン"}}');
+/* `{
     "trunk":{
         "name":"本線",
         "shortName":"本線",
@@ -1962,7 +1968,7 @@ nas.Pm.lines.parseConfig(`{
         "code":"null",
         "description":"初期化前のオブジェクトに設定するダミーライン"
     }
-}`);
+}`);*/
 
 
 /**
@@ -1974,7 +1980,8 @@ nas.Pm.lines.parseConfig(`{
  *   }
  *
  */
-nas.Pm.pmTemplates.parseConfig(`[
+nas.Pm.pmTemplates.parseConfig('[{"line":"本線","stages":["絵コンテ撮","レイアウト","原画","第一原画","第二原画","発注前動画検査","動画","色指定","スキャン","色トレス","セル特効","撮出し検査","コンポジット"]},{"line":"背景美術","stages":["美術原図整理","背景美術","美術検査"]}]');
+/*`[
     {
         "line":"本線",
         "stages":["絵コンテ撮","レイアウト","原画","第一原画","第二原画","発注前動画検査","動画","色指定","スキャン","色トレス","セル特効","撮出し検査","コンポジット"]
@@ -1983,7 +1990,7 @@ nas.Pm.pmTemplates.parseConfig(`[
         "line":"背景美術",
         "stages":["美術原図整理","背景美術","美術検査"]
     }
-]`);
+]`*/
 
 /**
  *  ジョブ名称テンプレート
@@ -1995,7 +2002,8 @@ nas.Pm.pmTemplates.parseConfig(`[
  *  },
  *
  */
-nas.Pm.jobNames.parseConfig(`[
+nas.Pm.jobNames.parseConfig('[{"jobName":"作業開始","targetStage":"*","jobType":"init"},{"jobName":"初期化","targetStage":"*","jobType":"init"},{"jobName":"作打済","targetStage":"*","jobType":"init"},{"jobName":"準備","targetStage":"*","jobType":"init"},{"jobName":"*打合せ","targetStage":"*","jobType":"init"},{"jobName":"*発注","targetStage":"*","jobType":"init"},{"jobName":"作画打合せ","targetStage":"LO","jobType":"init"},{"jobName":"作画打合せ","targetStage":"KD","jobType":"init"},{"jobName":"作画打合せ","targetStage":"1G","jobType":"init"},{"jobName":"作画打合せ","targetStage":"2G","jobType":"init"},{"jobName":"*","targetStage":"*","jobType":"primary"},{"jobName":"*作業","targetStage":"*","jobType":"primary"},{"jobName":"演出チェック","targetStage":"*","jobType":"check"},{"jobName":"監督チェック","targetStage":"*","jobType":"check"},{"jobName":"作監チェック","targetStage":"*","jobType":"check"},{"jobName":"総作監チェック","targetStage":"*","jobType":"check"},{"jobName":"メカ作監チェック","targetStage":"*","jobType":"check"},{"jobName":"美監チェック","targetStage":"bgArt","jobType":"check"},{"jobName":"動画検査","targetStage":"AD","jobType":"check"},{"jobName":"動画検査","targetStage":"ADAD","jobType":"check"},{"jobName":"セル検査","targetStage":"H-pt","jobType":"check"},{"jobName":"彩色検査","targetStage":"PT","jobType":"check"},{"jobName":"トレース検査","targetStage":"H-tr","jobType":"check"},{"jobName":"トレース検査","targetStage":"ADscan","jobType":"check"},{"jobName":"クリンアップ検査","targetStage":"ADcleanup","jobType":"check"}]');
+/*`[
     {
         "jobName":"作業開始",
 		"targetStage":"*",
@@ -2121,8 +2129,7 @@ nas.Pm.jobNames.parseConfig(`[
 		"targetStage":"ADcleanup",
 		"jobType":"check"
 	}
-]`);
-    
+]`*/    
 
 /**
  * タイトルDB
@@ -2141,7 +2148,8 @@ nas.Pm.jobNames.parseConfig(`[
  *
  *        
  */
-nas.Pm.workTitles.parseConfig(`{
+nas.Pm.workTitles.parseConfig('{"TVshowSample":{"projectName":"TVshowSample","id":"0000","fullName":"名称未設定","shortName":"未定","code":"_UN","framerate":"24FPS","format":"21:00:00 .","inputMedia":"10in-HDTV","outputMedia":"HDTV-720p"},"kachi":{"projectName":"kachi","id":"0001","fullName":"かちかちやま","shortName":"か","code":"_KT","framerate":"24FPS","format":"20:12:00 .","inputMedia":"10in-HDTV","outputMedia":"HDTV-720p"},"Momotaro":{"projectName":"Momotaro","id":"0002","fullName":"ももたろう","shortName":"も","code":"_MT","framerate":"24FPS","format":"19:21:00 .","inputMedia":"10in-HDTV","outputMedia":"HDTV-720p"},"Urashima":{"projectName":"Urashima","id":"0003","fullName":"うらしまたろう","shortName":"う","code":"_UR","framerate":"24FPS","format":"24:08:12 .","inputMedia":"12in-HDTV","outputMedia":"HDTV-1080p"}}');
+/*`{
     "TVshowSample":{
         "projectName":"TVshowSample",
         "id":"0000",
@@ -2185,7 +2193,7 @@ nas.Pm.workTitles.parseConfig(`{
 		"format":"24:08:12 .",
 		"inputMedia":"12in-HDTV",
 		"outputMedia":"HDTV-1080p"}
-}`);
+}`*/
 
 nas.Pm.activeTitle=nas.Pm.workTitles.entry();
 /*
@@ -2204,7 +2212,9 @@ pixelAspect:             <String.ピクセル縦横比　縦方向を１とし�
 description:             <String.コメントテキスト>
 }
  */
-nas.Pm.medias.parseConfig(`{
+nas.Pm.medias.parseConfig('{"作画フレーム300ppi":{"mediaName":"作画フレーム300ppi","id":"0000","animationField":"12in-HDTV","baseResolution":"300 dpi","tcType":"SMPTE","pegForm":"ACME","pixelAspect":1,"description":"参考用作画フレーム"},"作画フレーム200dpi":{"mediaName":"作画フレーム200dpi","id":"0001","animationField":"10in-HDTV","baseResolution":"200 dpi","tcType":"trad-JA","pegForm":"ACME","pixelAspect":1,"description":"参考用作画フレーム"},"作画フレーム192dpi":{"mediaName":"作画フレーム192dpi","id":"0002","animationField":"10in-HDTV","baseResolution":"192 dpi","tcType":"trad-JA","pegForm":"ACME","pixelAspect":1,"description":"参考用作画フレーム"},"HDTV-720p":{"mediaName":"HDTV-720p","id":"0003","animationField":"HDTV","baseResolution":"72 dpi","tcType":"SMPTE-drop","pegForm":"ACME","pixelAspect":1,"description":"HDTV省力原版"},"HDTV-1080p":{"mediaName":"HDTV-1080p","id":"0004","animationField":"HDTV2K","baseResolution":"108 dpi","tcType":"SMPTE","pegForm":"ACME","pixelAspect":1,"description":"HDTV"},"HDTV-2160p":{"mediaName":"HDTV-2160p","id":"0005","animationField":"HDTV4K","baseResolution":"216 dpi","tcType":"SMPTE","pegForm":"ACME","pixelAspect":1,"description":"4KHDTV"}}');
+/*
+`{
     "作画フレーム300ppi":{
 		"mediaName":"作画フレーム300ppi",
 		"id":"0000",
@@ -2271,7 +2281,8 @@ nas.Pm.medias.parseConfig(`{
 		"pixelAspect":"1",
 		"description":"4KHDTV"
 	}
-}`);
+}`
+*/
 
 
 

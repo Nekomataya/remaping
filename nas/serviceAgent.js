@@ -2227,10 +2227,10 @@ APIの情報は、識別子と一致しているはずだが　照合の上異�
                 var myCutToken = myCut.token;
                 var myCutLine  = (myCut.line_id)?
                     myCut.line_id:
-                    (new XpsLine(nas.pmdb.pmTemplate.members[0].line.toString())).toString(true);
+                    (new XpsLine(nas.pmdb.pmTemplates.members[0].line.toString())).toString(true);
                 var myCutStage = (myCut.stage_id)?
                     myCut.stage_id:
-                    (new XpsStage(nas.pmdb.pmTemplate.members[0].stages.getStage())).toString(true);
+                    (new XpsStage(nas.pmdb.pmTemplates.members[0].stages.getStage())).toString(true);
                 var myCutJob   = (myCut.job_id)?
                     myCut.job_id:
                     (new XpsStage(nas.pmdb.jobNames.members[0].toString())).toString(true);
@@ -3824,7 +3824,7 @@ serviceAgent.init= function(){
       var myServers={
         UAT: {name:'U-AT',url:'https://u-at.net'},
         Srage:{name:'Stage',url:'https://remaping-stg.u-at.net'},
-        devFront:{name:'devFront',url:'http://remaping.scivone-dev.com'}
+        devFront:{name:'devFront',url:'https://remaping.scivone-dev.com'}
       };
       for(svs in myServers){this.servers.push(new ServiceNode(myServers[svs].name,myServers[svs].url));}
     }

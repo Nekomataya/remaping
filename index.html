@@ -13,7 +13,9 @@
 
 <!-- 以下　AIR動作時のライブラリ-->
 
-<!--
+<!--		<script type="text/javascript" src="./lib/AIR/AIRLocalizer.js"></script>
+		<script type="text/javascript" src="./lib/AIR/AIRMenuBuilder.js"></script>
+ -->
 <script src="./lib/AIR/servicemonitor.swf" type="application/x-shockwave-flash"></script>
 <script src="./lib/AIR/aircore.swf" type="application/x-shockwave-flash"></script>
 <script src="./lib/AIR/applicationupdater_ui.swf" type="application/x-shockwave-flash"></script>
@@ -21,14 +23,12 @@
 <script src="./lib/AIR/HTMLHostLibrary.swf" type="application/x-shockwave-flash"></script>
 
 <script type="text/javascript" src="./lib/AIR/AIRAliases.js"></script>
-		<script type="text/javascript" src="./lib/AIR/AIRLocalizer.js"></script>
-		<script type="text/javascript" src="./lib/AIR/AIRMenuBuilder.js"></script>
- -->
+
 <!-- 以下　AIR動作時のデバッグライブラリ -->
-<!--
+<!-- -->
  		<script type="text/javascript" src="./lib/AIR/AIRIntrospector.js"></script>
 		<script type="text/javascript" src="./lib/AIR/AIRSourceViewer.js"></script>
- -->
+
 <script src=./lib/jquery.js></script>
 <script src=./lib/jquery-ui.js></script>
 <script src=./lib/ecl/ecl.js></script>
@@ -93,6 +93,7 @@
 	onSelectStart="return false;"
 	onScroll="xUI.onScroll();"
     onKeyDown="return xUI.keyDown(event);"
+	onMouseDown = "return xUI.flipContextMenu(event);"
 >
 <!--	onKeyDown='if(document.getElementById("iNputbOx")!==document.activeElement){document.getElementById("iNputbOx").focus();};xUI.keyDwon(event)' -->
 <div id=overlayHeadline >
@@ -239,7 +240,7 @@ serviceAgent.pushEntry(xUI.XPS,function(){xUI.setStored("current");sync();
 	onclick="if(fileBox.saveFile){fileBox.saveFile();}"
 	title="保存（ファイル）"
 >Save</A></li>
-<li id=dMair><<span id=pMexportFS-d class='pM pM-alt'>Save As</span><A	id=pMexportFS
+<li id=dMair><span id=pMexportFS-d class='pM pM-alt'>Save As</span><A	id=pMexportFS
 	href="javascript:void(0);"
 	onclick="if(fileBox.saveAs){fileBox.saveAs();}else{alert('現在ファイルの操作ができません')};return false;"
 	title="別名で保存（ファイル）"
@@ -397,6 +398,11 @@ serviceAgent.pushEntry(xUI.XPS,function(){xUI.setStored("current");sync();
 	onclick='addTimeline("camera");return false;'
 	title="カメラを追加"
 >addCameraTL</A></li>
+<li><span id=pMaddGeometryTL-d class='pM pM-alt'></span><A	id=pMaddGeometryTL
+	HREF='javascript:void(0);'
+	onclick='addTimeline("geometry");return false;'
+	title="ステージワークを追加"
+>addStageworkTL</A></li>
 <li><span id=pMaddSfxTL-d class='pM pM-alt'></span><A	id=pMaddSfxTL
 	HREF='javascript:void(0);'
 	onclick='addTimeline("effect");return false;'
@@ -480,7 +486,7 @@ serviceAgent.pushEntry(xUI.XPS,function(){xUI.setStored("current");sync();
 <hr>
 <li><span id=pMbuildActionSheet-d class='pM pM-alt'></span><A	id=pMbuildActionSheet
 	HREF='javascript:void(0);'
-	onclick='buildActionSheet()'
+	onclick='printHTML(false,"action");'
 	title="原画アクションシートを作成"
 >原画アクションシート</A></li>
 <hr>
@@ -653,6 +659,11 @@ serviceAgent.pushEntry(xUI.XPS,function(){xUI.setStored("current");sync();
 	onClick="xUI.sWitchPanel('memoArea')"
 	title="memo_header"
 >memo</A></li>
+<li><span id=pMreference-d class='pM pM-alt'></span><A id=pMreference
+	HREF='javascript:void(0);'
+	onClick="xUI.flipRefColumns();"
+	title="reference"
+>references</A></li>
 <li id=debug> <hr>
 <span id=pMdbgCons-d class='pM pM-alt'></span><A	id=pMdbgCons
 	HREF='javascript:void(0);'
@@ -1101,6 +1112,16 @@ serviceAgent.pushEntry(xUI.XPS,function(){xUI.setStored("current");sync();
 <div id=pmui>
 <!-- 管理IDコントロール UI-->
     <div id =pmcui class=pmcui>
+
+    <span id=pmfui>
+<button
+	id=pmfui-new
+    class='pmControl pmControl-new' 
+    title='新規カットを登録'
+	onclick='xUI.storeDocument();'
+>新規登録</button>
+    </span>
+
 <button
 	id=pmcui-checkin
 		class='jobControl jobControl-checkin'
@@ -1262,15 +1283,6 @@ class=optionPanel id=optionPanelProductManagement
 <!-- ドキュメントコントロール(floating)メニュー
 class=optionPanel id=optionPanelProductManagement
 -->
-    <div id=pmfui>
-<button
-	id=pmfui-new
-    class='pmControl pmControl-new' 
-    title='新規カットを登録'
-	onclick='xUI.storeDocument();'
->新規登録</button>
-    </div>
-
 <hr><hr>
 <!--
 
@@ -1495,7 +1507,7 @@ class=optionPanel id=optionPanelProductManagement
 	title="カメラワーク追加"
 	onclick="addTimeline('camera');"
 >
-</button><button
+</button><!-- <button
     id=ibMaddGeometryTL
     class='iconButton  iconButton-addStageworkTL'
 	title="ステージワーク追加"
@@ -1507,7 +1519,7 @@ class=optionPanel id=optionPanelProductManagement
 	title="エフェクト追加"
 	onclick="addTimeline('effect');"
 >
-</button><button
+</button>--> <button
     id=ibMinsertTL
     class='iconButton  iconButton-insertTL'
 	title="タイムラインを挿入します"
@@ -1607,6 +1619,25 @@ class=optionPanel id=optionPanelProductManagement
 </button>
 <!--     コマンドツールバーここまで          -->
 <hr></div>
+<!--    コンテキストメニューUI        -->
+<div id ="contextMenu" class ="contextMenu optionPanelFloat">
+    
+    
+    <menu id="testMenu" class ="contextMenu">
+  <command label="rotate" icon="edit" onclick="alert('rotate')">
+  <command label="resize" onclick="alert('resize')"> 
+    <command label="twitter" onclick="alert('twitter')">
+    <hr> 
+    <command label="facebook" onclick="alert('facebook')">
+  </menu>
+</menu>
+
+
+TEST-CONTEXT-MENU<br><hr>
+TEST-CONTEXT-MENU<br><hr>
+TEST-CONTEXT-MENU<br><hr>
+    </div>
+<!--    コンテキストメニューUI        -->
 <!--	ユーティリティーパネル	-->
 <!--    トラックラベルセレクタ  -->
 <div class=optionPanel id=optionPanelTrackLabel >
@@ -1830,7 +1861,7 @@ onclick='nas.incrFCTonHTMLInput(document.getElementById("editTC"),"-(1)")'
 <hr>
 <div><form name=cgiSample id=cgiSample><a
     id=exportXPSwindow
-    href="javascript:void(0);" onclick="return writeXPS(XPS)"
+    href="javascript:void(0);" onclick="return writeXPS(xUI.XPS)"
     title="保存用に書き出し"
 >別ウィンドウに書き出し</a> <a
     id=exportHTMLwindow
@@ -1918,7 +1949,7 @@ onclick='nas.incrFCTonHTMLInput(document.getElementById("editTC"),"-(1)")'
 ></textarea><br><strong> (Export) </strong>
 <input type=button
     id=exporterXps value="Xps" style="width:10%"
-	onClick='xUI.data_well.value=XPS.toString();if(document.getElementById("exportCheck").checked){callEchoExport("xps")};return false;'
+	onClick='xUI.data_well.value=xUI.XPS.toString();if(document.getElementById("exportCheck").checked){callEchoExport("xps")};return false;'
 ><input type=button
     id=exporterTdts value="Tdts" style="width:10%"
 	onClick='xUI.data_well.value=XPS2TDTS(xUI.XPS,"tdts");if(document.getElementById("exportCheck").checked){callEchoExport("tdts")};return false;'
@@ -1930,16 +1961,16 @@ onclick='nas.incrFCTonHTMLInput(document.getElementById("editTC"),"-(1)")'
 	onClick='exportEps();return false;'
 ><input type=button
     id=exporterARD value="ARD" style="width:10%"
-	onClick='xUI.data_well.value=XPS2ARD(XPS);if(document.getElementById("exportCheck").checked){callEchoExport("ard")};return false;'
+	onClick='xUI.data_well.value=XPS2ARD(xUI.XPS);if(document.getElementById("exportCheck").checked){callEchoExport("ard")};return false;'
 ><input type=button
     id=exporterTSheet value="TSheet" style="width:10%"
-	onClick='xUI.data_well.value=XPS2TSH(XPS);if(document.getElementById("exportCheck").checked){callEchoExport("tsh")};return false;'
+	onClick='xUI.data_well.value=XPS2TSH(xUI.XPS);if(document.getElementById("exportCheck").checked){callEchoExport("tsh")};return false;'
 ><input type=button
     id=expoterARDJ value="ARDJ" style="width:10%"
-	onClick='xUI.data_well.value=XPS2ARDJ(XPS);if(document.getElementById("exportCheck").checked){callEchoExport("ardj")};return false;'
+	onClick='xUI.data_well.value=XPS2ARDJ(xUI.XPS);if(document.getElementById("exportCheck").checked){callEchoExport("ardj")};return false;'
 ><input type=button
     id=exporterStylosCSV value="Stylos-csv" style="width:10%"
-	onClick='xUI.data_well.value=XPS2StylosCSV(XPS,xUI.referenceXPS);if(document.getElementById("exportCheck").checked){callEchoExport("csv")};return false;'
+	onClick='xUI.data_well.value=XPS2StylosCSV(xUI.XPS,xUI.referenceXPS);if(document.getElementById("exportCheck").checked){callEchoExport("csv")};return false;'
 > <a href="javascript:void(0);"
     id='exporterDLcheck'
     onClick='return chkValue("exportCheck");'>ダウンロード</a>: <input type=checkbox id=exportCheck name=exCk >
@@ -2333,8 +2364,8 @@ Execute with [store SCi] button
 S:<input type=text style="width:64px" value='###'>-C:<input type=text style="width:64px" value='###'>
 TIME:(<input type=text style="width:64px" value='##+##'>)
 <br>
--->
 </span>
+-->
 </div>
 <!-- optionPanelSCI -->
 
@@ -3674,13 +3705,13 @@ id=timerClose
 	onClick='document.getElementById("rEsult").insert("\n");' /><br>
 <input type=button
     id=memoPnlReset class=toolTip value="リセット"
-	onClick='document.getElementById("rEsult").value=XPS.xpsTracks.noteText;' /><br>
+	onClick='document.getElementById("rEsult").value=xUI.XPS.xpsTracks.noteText;' /><br>
 <input type=button
     id=memoPnlPut class=toolTip value="更新"
-	onClick='XPS.xpsTracks.noteText=document.getElementById("rEsult").value;xUI.setStored("force");sync("memo");' /><br>
+	onClick='xUI.XPS.xpsTracks.noteText=document.getElementById("rEsult").value;xUI.setStored("force");sync("memo");' /><br>
 <input type=button
     id=memoPnlClose class=toolTip value="閉じる"
-	onClick='if(XPS.xpsTracks.noteText!=document.getElementById("rEsult").value){if(confirm("内容が変更されています。\n更新しますか?")){XPS.xpsTracks.noteText=document.getElementById("rEsult").value;xUI.setStored("force");sync("memo");}};xUI.sWitchPanel("memo");' /><br>
+	onClick='if(xUI.XPS.xpsTracks.noteText!=document.getElementById("rEsult").value){if(confirm("内容が変更されています。\n更新しますか?")){xUI.XPS.xpsTracks.noteText=document.getElementById("rEsult").value;xUI.setStored("force");sync("memo");}};xUI.sWitchPanel("memo");' /><br>
 </td>
 <td ><span id=memoPnlCaption>タイムシートコメントを編集します</span><br>
 <textarea name=rEsult id=rEsult cols=96 rows=8 >
@@ -3705,7 +3736,6 @@ id=timerClose
   <div id="scrollSpaceHd" class="screenSpace"></div>
 </div>
 <!-- ここまで印刷時に非表示　-->
-
 <!--   以降シート本体     -->
     <div id=sheet_body
 	onMouseDown = " return xUI.Mouse(event)"

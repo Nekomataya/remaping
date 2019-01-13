@@ -469,6 +469,7 @@ var currentSectionBlank=(isBlank)? myCollectionBlank.addSection(disAppearance):m
                 isInterp = true;
                 if(fix==0){
                     currentSection.value="interpolation";
+                        currentSection.subSections=new XpsTimelineSectionCollection(currentSection);
                 }else{
                     currentSection.duration --;
                     currentSection=myCollection.addSection("interpolation");
@@ -624,22 +625,23 @@ _parseCameraworkTrack= function(){
         if (String(this[fix]).match(/^\[[^\[]+\]$/)){ lastBracketsId = fix;isBlank = true;}
         currentSection.duration ++;//currentセクションの継続長を加算
 
-         if((lastBracketsId == fix)&&(!(currentSection.value))) currentSection.tailMargin -- ;
-          
+         if((lastBracketsId == fix)&&(!(currentSection.value))) currentSection.tailMargin = -1 ;
 
 //未記入セル カレントが空白セクションならば継続それ以外の場合は、セクション更新して継続
 //[値]セルは未記入セル扱いにする
+
         if(isBlank){
             if( currentSection.value ){
+console.log(currentSection.value)
                 currentSection.duration --;
-                if((currentSection.value.type[0]=='geometry')){
-                    if (fix == lastBracketsId){
-                        currentSection.value.postfix = this[fix];
-                        currentSection.tailMargin = 1;
-                    }
-                    currentSection.value.attributes.push([currentSection.value.prefix,currentSection.value.postfix].join('-'));
-                    if(currentSection.prefix)  currentSection.headMargin = 1;
+                if (fix == lastBracketsId){
+                    currentSection.value.postfix = this[fix];
+                    currentSection.tailMargin = 1;
+console.log(currentSection.value.type.join(':'));
                 }
+                currentSection.value.attributes.push([currentSection.value.prefix,currentSection.value.postfix].join('-'));
+                if(currentSection.value.prefix)  currentSection.headMargin = 1;
+//                currentSection.value.parseContent();
                 currentSection = myCollection.addSection(null);//changeCurrentNull
                  if (fix == lastBracketsId) currentSection.headMargin = -1;
                 currentSection.duration = 1;
@@ -693,9 +695,8 @@ _parseCameraworkTrack= function(){
                     }else if(mySymbol){
                         detectedName = mySymbol.name;
                     }
-// mySymbol = nas.cameraworkDescriptions.get('unknown');(this[fix+1]).match(/^\][^\[]+\[$/);(this[fix+1]).match(nas.cameraworkDescriptions.singleRegex)
-
                     if(currentSection.duration < 1) myCollection.pop();
+                    //if(currentSection.value) currentSection.value.parseContent();
                     currentSection = myCollection.addSection(new nas.AnimationCamerawork(null,detectedName));//changeCurrent unknown
                     startNodeId   = fix + 1;
                     endNode       = undefined ;//終了ノードクリア
@@ -706,6 +707,7 @@ _parseCameraworkTrack= function(){
                     currentSection.headMargin = 1;
                 };// */
                 }
+console.log(currentSection.value.type.join(':'))
                 continue;
         }
 //開始ノード（予約語）を検知　強制的に新しい区間を開始
@@ -716,6 +718,10 @@ _parseCameraworkTrack= function(){
                 endNode = endNodes[this[startNodeId]];//頭尾は
                 currentSection.duration --;
                 if((currentSection.duration < 1)&&(lastBracketsId!=(fix-1))) myCollection.pop();
+                if(lastBracketsId == (fix-1)){
+                    currentSection.tailMargin = -1;                    
+                }
+//                if(currentSection.value) currentSection.value.parseContent();
                 currentSection = myCollection.addSection(new nas.AnimationCamerawork(null,false));//changeCurrent
                 currentSection.duration = 1;
 //先行セクションが[値]セルであった場合
@@ -723,6 +729,7 @@ _parseCameraworkTrack= function(){
                     currentSection.value.prefix = this[lastBracketsId];
                     currentSection.headMargin = 1;
                 };// */
+console.log(currentSection.value.type.join(':'))
                 continue;
             }
         };
@@ -742,10 +749,12 @@ _parseCameraworkTrack= function(){
                 }else{
                     currentSection.duration --;
                     if(currentSection.duration < 1) myCollection.pop();
+                    //if(currentSection.value) currentSection.value.parseContent();
                     currentSection = myCollection.addSection(new nas.AnimationCamerawork(null,(mySymbol)?mySombol.name:this[startNodeId]));//changeCurrent
                     currentSection.duration = 1;
                 }
             }
+console.log(currentSection.value.type.join(':'))
             continue;
         }
 //第一エントリで区間タイプが判別可能な区間の判定
@@ -758,10 +767,12 @@ if(! mySymbol) console.log(this[fix]);
 //Symbol区間の開始
                 if(fix==0){
                     currentSection.value=new nas.AnimationCamerawork(null,mySymbol.name);//change Value;
+console.log(currentSection.value.type.join(':'))
                     continue;
                 }else{
                     currentSection.duration --;
                     if(currentSection.duration < 1) myCollection.pop();
+                    //if(currentSection.value) currentSection.value.parseContent();
                     currentSection = myCollection.addSection(new nas.AnimationCamerawork(null,mySymbol.name));//changeCurrent
                     currentSection.duration = 1;
 //先行セクションが[値]セルであった場合
@@ -773,14 +784,13 @@ if(! mySymbol) console.log(this[fix]);
             } else if(
                 (fix<(this.length-1))&&(this[fix+1]!=this[fix])
             ){
-                currentSection.value.parseContent();
+                if(currentSection.duration < 1) myCollection.pop();
+                //if(currentSection.value) currentSection.value.parseContent();
                 if(String(this[fix+1]).match(/^\s*$/)){
-                    if(currentSection.duration < 1) myCollection.pop();
                     currentSection = myCollection.addSection(null);//changeCurrentNull
                     endNode     = undefined;
                     currnetSymbol = null;
                 }else{
-                    if(currentSection.duration < 1) myCollection.pop();
                     currentSection = myCollection.addSection(new nas.AnimationCamerawork(null,false));//changeCurrent
                     startNodeId = fix+1;//シート入力をスタートノードに設定
                     if ((!(endNode)) && (endNodes[this[startNodeId]])) endNode = endNodes[this[startNodeId]] ;
@@ -792,6 +802,7 @@ if(! mySymbol) console.log(this[fix]);
                     currentSection.headMargin = 1;
                 };// */
             }
+console.log(currentSection.value.type.join(':'))
             continue;
         }
 /*==================================================================*/
@@ -809,16 +820,18 @@ if(! mySymbol) console.log(this[fix]);
                 currentSection.value=new nas.AnimationCamerawork(null,detectName);//setValueToCurrentSection;
             }else{
                 currentSection.duration --;
-//                if(lastBracketsId == (fix-1)) currentSection.tailMargin -- ; 
+                if(lastBracketsId == (fix-1)) currentSection.tailMargin = -1; 
                 if(currentSection.duration < 1) myCollection.pop();
+                //if(currentSection.value) currentSection.value.parseContent();
                 currentSection = myCollection.addSection(new nas.AnimationCamerawork(null,detectName));//changeCurrent
                 currentSection.duration = 1;
 //先行セクションが[値]セルであった場合のみ
-                if((lastBracketsId == (fix-1))&&(currentSymbol.type != "composite")&&(currentSymbol.type != "transition")){
-                    if(currentSymbol.type != "geometry"){
-                        currentSymbol = nas.cameraworkDescriptions.get('SL');
-                        currentSection.value=new nas.AnimationCamerawork(null,currentSymbol.name);
-                    }
+//                if((lastBracketsId == (fix-1))&&(currentSymbol.type != "composite")&&(currentSymbol.type != "transition")){}
+                if(lastBracketsId == (fix-1)){
+                    //if(currentSymbol.type != "geometry"){
+                    //    currentSymbol = nas.cameraworkDescriptions.get('SL');
+                    //    currentSection.value=new nas.AnimationCamerawork(null,currentSymbol.name);
+                    //}
                     currentSection.value.prefix = this[lastBracketsId];
                     currentSection.headMargin = 1;
                 }
@@ -831,7 +844,8 @@ if(! mySymbol) console.log(this[fix]);
             } else {
                 endNode = this[startNodeId];
             }
-            continue;
+console.log(currentSection.value.type.join(':'))
+//            continue;
         }else if(startNodeId == fix){
 //セルエントリが開始ノードであった場合のみ終了ノードだけを設定する            
             //スタートノードに対応するエンドノードが予約語内にあればそちらを優先
@@ -849,51 +863,67 @@ if(! mySymbol) console.log(this[fix]);
             (String(this[fix]).match(/^<([^>]+)>$/))||(ckSymbol)
         ){
             var detectedName = ( ckSymbol )? this[fix] : RegExp.$1;
-            if(
-                (currentSection.value)&&((currentSection.value.name=="")||
+            if(! ckSymbol){
+                  ckSymbol = nas.cameraworkDescriptions.get(detectedName); 
+            }
+console.log(fix + ' : '+ this[fix]);
+console.log(ckSymbol);
+console.log(this[startNodeId]);
+/*
                 (currentSection.value.type[0]=="transition")||
                 (currentSection.value.type[1]=="fadeIn")||
+*/
+            if(
+                (currentSection.value)&&((currentSection.value.name=="")||
                 (currentSection.value.name==this[startNodeId]))||
-                ((ckSymbol) && (ckSymbol.type == currentSection.value.type[0]) && (ckSymbol.name == currentSection.value.type[1]))
+                ((ckSymbol) && (
+                    ((ckSymbol.type == currentSection.value.type[0]) && (ckSymbol.name == currentSection.value.type[1]))||
+                    ((ckSymbol.nodeSigns.length>1) && (ckSymbol.nodeSigns[1]==this[startNodeId]))
+                ))
             ){
                 currentSection.value.name = detectedName;
                 currentSymbol = ( ckSymbol )? ckSymbol : nas.cameraworkDescriptions.get(currentSection.value.name);
                 if(!currentSymbol){ currentSymbol = nas.cameraworkDescriptions.get('unknown')}
-            
                 currentSection.value.type=[currentSymbol.type,currentSymbol.name];
+console.log(fix +': set section value');
             }else{
                 currentSection.duration --;
-//                if(lastBracketsId == (fix-1)) currentSection.tailMargin -- ; 
+                if(lastBracketsId == (fix-1)) currentSection.tailMargin = -1 ; 
                 if(currentSection.duration < 1) myCollection.pop();
+                //if(currentSection.value) currentSection.value.parseContent();
                 currentSection = myCollection.addSection(new nas.AnimationCamerawork(null,detectedName));//changeCurrent
                 currentSection.duration = 1;
                 currentSymbol = ( ckSymbol )? ckSymbol : nas.cameraworkDescriptions.get(currentSection.value.name);
                 if(!currentSymbol){ currentSymbol = nas.cameraworkDescriptions.get('unknown')}
+console.log(fix +': start section');
+            }
 //先行セクションが[値]セルであった場合
                 if(lastBracketsId == (fix-1)){
                     currentSection.value.prefix = this[lastBracketsId];
                     currentSection.headMargin = 1;
-                };// */
-            
-            }
+                };
             if(!(endNode)){
                 endNode = (currentSymbol.nodeSigns.length>2)?currentSymbol.nodeSigns[2]:currentSymbol.nodeSigns[1];
+//&&(this[startNodeId]==currentSymbol.nodeSigns[1])
             }else if(
-                (currentSymbol.nodeSigns.length > 1)&&
-                (this[startNodeId]==currentSymbol.nodeSigns[1])
+                (currentSymbol.nodeSigns.length > 1)
             ){
                 endNode = currentSymbol.nodeSigns[currentSymbol.nodeSigns.length-1];
             }
+console.log(currentSection.value.type.join(':'))
+console.log(currentSymbol)
+console.log(endNode);
             continue;           
         }
 //コメントエントリ
-        if( String(this[fix]).match(/^\(([^\)])+\)$/) ){
-            currentSection.comments.push(RegExp.$1);
+        if( String(this[fix]).match(/^\(([^\)]+)\)$/) ){
+            currentSection.value.comments.push(RegExp.$1);
         }
 //interp,start,end以外のエントリーはattributesに積む
     }
 
     this.sections=myCollection;
+console.log(this.sections)
     return this.sections;
 }
 
@@ -1331,7 +1361,19 @@ valueDetect==false
 /**
  *  コンポジットタイムラインの（区間）値
  *  エフェクト
- 要素名は、可能な限り<>角括弧で囲む
+ 要素名は、可能な限り[name]角括弧で囲む 囲まれていた場合括弧は払って記録する
+要素名が数値　または　　%つき数値であった場合は strength の値として使用する
+1.0                 基数1 浮動小数点値
+100%    100/100     100分率値
+1000‰  1000/1000   1000分率値
+
+要素名が指定されない場合は、[START],[01],[02]…[END]を自動で割り付ける
+
+例
+[WXP    composite   50%]
+WXP [75%]   
+
+
  */
 nas.AnimationComposite =function(myParent,myContent){
     this.parent = (myParent)? myParent : null   ;//xMapElementGroup or null
@@ -1413,12 +1455,15 @@ return this.contentText;//動作確認用ダミー行
 /**
     コンテンツを与えてパースする
     引数がない場合は自身のコンテンツデータを再パースする
+[FI COMPOSITE]
+FI  100%    
+
 */
 nas.AnimationComposite.prototype.parseContent=function(myContent){
     if(typeof myContent == 'undefined'){
         myContent = this.contentText ;
     }
-    this.contentText = (myContent)?String(myContent):"";
+    this.contentText = (myContent)? String(myContent):"";
     
     
     
@@ -1427,10 +1472,11 @@ nas.AnimationComposite.prototype.parseContent=function(myContent){
     this.contentText = this.toString();
     return this;
 }
-nas.AnimationGeometry.prototype.getStream=function(cellCounts){
+nas.AnimationComposite.prototype.getStream=function(cellCounts){
     var myResult=new Array(cellCounts);
+    myResult[0] = this.name;
 
-
+    if (myResult.length > 6 )myResult[myResult.length-1] = this.name
 
     return myResult;
 }
@@ -1462,9 +1508,9 @@ _parseCompositeTrack=function(){
     var myCollection    = new XpsTimelineSectionCollection(this);//自分自身を親としてセクションコレクションを新作
     var currentSection  = myCollection.addSection(false);//開始セクションを作成　継続時間０　値は保留
     var currentSubSection  = null;//操作サブセクションへの参照　値はカラ 処理中は操作対象オブジェクトへの参照
-    var currentEffect   = new nas.AnimationComposite("");//コンテンツはカラで初期化も保留
-    var currentNodeSign = false;//否で初期化(確認用)
-    var valueDetect     = false;//否で初期化(確認用)
+    var currentComposite   = new nas.AnimationComposite(null);//コンテンツはカラで初期化も保留
+    var currentNodeSign    = false;//否で初期化(確認用)
+    var valueDetect        = false;//否で初期化(確認用)
     
     for (var fix=0;fix<this.length;fix++){
         currentSection.duration ++;//currentセクションの継続長を加算
@@ -1521,7 +1567,7 @@ currentNodeSignがfalseであった場合はセクション開始
 //予約ノードサイン外
 /**
 valueDetect = fale;
-値指定ノード<[^>]+>を検出した場合、セルエントリー矢括弧を払って評価値を得る　かつ　フラグを立てる　(valueDetect = true)
+値指定ノード[値]を検出した場合、セルエントリーからBracketsを払って評価値を得る　かつ　フラグを立てる　(valueDetect = true)
 それ以外はセルエントリーを評価値とする
     xMapで評価値をエントリ検索
     マップエントリがない場合でかつ　valueDetect == true なら　エントリを作成してそれを値として使用
@@ -1537,7 +1583,7 @@ valueDetect==false
     トラック内無効記述（コメント）は現在許可されない。
 */
     valueDetect = false;
-    if(this[fix].match(/^<([^>]+)>$/)){
+    if(this[fix].match(/^\[([^\]]+)\]$/)){
         var checkValue=RegExp.$1;
         valueDetect=true;
     }else{
@@ -1556,6 +1602,7 @@ valueDetect==false
                     currentSection.duration--;//閉鎖ノード無しで前セクションを閉じるので加算したdurationをキャンセル
                     currentNodeSign = false;//補間区間終了ノードクリア
                     currentSection = myCollection.addSection(currentEntry);//新規セクション追加
+                    currentSection = myCollection.addSection(new nas.AnimationComposite(null,currentEntry));//新規セクション追加
                 } else {
                     if (currentSection.value){
                         currentSection.duration--;//閉鎖ノード無しで前セクションを閉じるので加算したdurationをキャンセル
@@ -2113,7 +2160,7 @@ nas.AnimationCamerawork.prototype.toString=function(exportForm){
         myResult.push(this.targets.join(','));
     }
 //warkName
-    myResult.push('<'+this.name+'>');//文字列は<矢括弧>でセパレートする
+    if(String(this.name).length) myResult.push('<'+this.name+'>');//文字列は<矢括弧>でセパレートする
 //attribute
     switch(this.type[0]){
     case "geometry":
@@ -2333,9 +2380,15 @@ nas.AnimationCamerawork.prototype.getStream=function(cellCounts){
         var myName = (mySymbol.nodeSigns.length == 1) ?mySymbol.nodeSigns[0]:'<'+this.name+'>';
         var myResult = new Array(cellCounts);
         for (var ix = 0 ; ix < cellCounts ;ix ++){
-            if(ix == Math.floor((cellCounts-1)/2)){
+            if(ix == Math.floor((cellCounts-(1+this.comments.length))/2)){
                 myResult[ix] = myName;
-                continue;
+                if(this.comments.length){
+                    for (var cx = 0 ;cx<this.comments.length;cx++){
+                        myResult[ix+cx+1] = '('+this.comments[cx]+')';
+                    }
+                    ix += this.comments.length;
+                }
+               continue;
             }
             if ((ix == 0)&&(mySymbol.nodeSigns[1])){
                 myResult[ix] = mySymbol.nodeSigns[1];
@@ -2343,8 +2396,8 @@ nas.AnimationCamerawork.prototype.getStream=function(cellCounts){
             }
             if ((ix == (cellCounts-1))&&(mySymbol.nodeSigns[1])){
                 myResult[ix] = (mySymbol.nodeSigns[2])?mySymbol.nodeSigns[2]:mySymbol.nodeSigns[1];
-                continue;
-            } 
+                break;
+            }
             myResult[ix] = mySymbol.nodeSigns[0];
         }
         if(this.prefix)  myResult = [this.prefix].concat(myResult);

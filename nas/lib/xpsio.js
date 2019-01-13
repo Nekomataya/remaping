@@ -536,10 +536,12 @@ function XpsTimelineTrack(myLabel, myType, myParent, myLength) {
     this.lot = "=AUTO=";//旧オブジェクト互換
     this.blmtd = "file";//旧オブジェクト互換
     this.blpos = "end";//旧オブジェクト互換
+    this.trackNote =(this.option=='still')? this.id:'';
     this.link = ".";
     this.parent = ".";//
     this.sections = new XpsTimelineSectionCollection(this);
     this.sectionTrust = false;//セクションコレクションが最新の場合のみtrueとなるインジケータ変数
+
 //以下はオブジェクトメソッド（配列ベースなのでArrayオブジェクトのメソッド書き換えを防ぐためこの表記に統一）
 //オブジェクトメソッド群
 /**
@@ -726,6 +728,7 @@ function XpsTimelineSectionCollection(myParent) {
             newSection.mapElement;//エレメントは登録されない
             newSection.value = myValue;
         }
+//        if(newSection.value) newSection.value.parseContent();
         this.push(newSection);
         return newSection;
     };
@@ -801,10 +804,7 @@ function XpsTimelineSectionCollection(myParent) {
     manipulateOption  編集オプション 整数　"near"/"far"
 */
     this.manipulateSection = function (id,headOffset,tailOffset,manipulateOption) {
-
         if (! manipulateOption)　manipulateOption = "near";
-
-//alert([id,headOffset,tailOffset,manipulateOption]);
         if(headOffset < 0) headOffset = 0 ;
         var targetSection  = this[id];
         var myResult = [];//Collectionの編集を行わず、直接トラックのセル値を組み上げる=区間のメソッドは最低限で使う
@@ -816,8 +816,9 @@ console.log(["startFrame : ",startFrame,"/ endOffset :",endOffset].join(''))
 //トラック内のセクション最短継続長を取得       
 /*
 dialog 区間は「コンテンツの文字数」それ以外は 1 にコメント数を加えたもの。
-空白区間の最低長は前後のコンテンツによる。
-＝headMargin tailMarginの被侵入合算サイズ　または　1 コメントは許可されない（コメントのみの区間が発生する）
+空白区間の最低長は前後のコンテンツによる。＝headMargin tailMarginの被侵入合算サイズ
+＊＊負数になるケースがあるので注意
+空白区間にコメントは許可されない（値無しでコメントのみの区間が発生するため）
 
 ユーザ入力を失わないためコメントはフレームを一つ消費する。
 移動時にコメントのフレーム位置は保証されない
@@ -827,31 +828,38 @@ dialog 区間は「コンテンツの文字数」それ以外は 1 にコメン�
         var headLimit = 0;
         var tailLimit = 0;
         for (var six = 0 ; six < this.length ; six ++){
+            var minimumContentLength = 1;
+
             if(this[six].value){
-                var minimumContentLength =((this.parent.option == 'dialog')&&(this[six].value.bodyText))? this[six].value.bodyText.length+this[six].value.comments.length:1;
+                    if((this.parent.option == 'dialog')&&(this[six].value.bodyText)) minimumContentLength = this[six].value.bodyText.length;
+                    if(this[six].value.comments.length) minimumContentLength += this[six].value.comments.length;
             }else{
-                var minimumContentLength = -(this[six].headMargin + this[six].tailMargin);
-            }
-            if ( minimumContentLength < 1) minimumContentLength = 1;
-            minimumDurations.push(minimumContentLength)     ;//最小区間継続長配列
+                minimumContentLength = -(this[six].headMargin + this[six].tailMargin);
+                if((this.parent.option.match(/^(camera|camerawork)$/))&&(minimumContentLength > 1)){
+                    var currentContent = this[six].getContent();
+                    if(currentContent[0] == currentContent[currentContent.length-1]) minimumContentLength -- ;
+                }
+           }
             if(six < id) headLimit += minimumContentLength  ;//先行区間最小値を集計
             if(six > id) tailLimit += minimumContentLength  ;//後方区間最小値を集計
+            minimumDurations.push(minimumContentLength)     ;//最小区間継続長配列
         }
 console.log(minimumDurations);
 console.log(["headLimit:",headLimit," / tailLimit",tailLimit].join(''));
 //指定範囲補正　入力保護のため指定位置の補正を強制的に行う
+        if(endOffset < minimumDurations[id]){
+            endOffset = minimumDurations[id]-1;
+        }
         if(startFrame < headLimit){
             startFrame =  headLimit;
-//            endOffset  -= headLimit;
         }
         if((this.parent.length-(startFrame+endOffset)) < tailLimit){
             startFrame -= tailLimit;
-//            endOffset = this.parent.length - tailLimit - startFrame;
         }
 console.log(["targetSection.startOffset : ",targetSection.startOffset(),"/ Offset :",targetSection.duration - 1].join(''))
 console.log(["startFrame : ",startFrame,"/ endOffset :",endOffset].join(''))
 //補正確定後に以前の状態と前後位置が等しい場合は処理スキップ
-        if((startFrame==targetSection.startOffset())&&(endOffset==targetSection.duration - 1)) return [this.parent.join(),startFrame];
+        if((startFrame==targetSection.startOffset())&&(endOffset==targetSection.duration - 1)) return [this.parent.join(),startFrame,endOffset];
         //暫定的に元データで返す 呼び出し側で無変更をトラップするか、または戻り値の判定が必要
 //前方に新規挿入セクションが発生する場合その部分をあらかじめカラ要素で埋めておく
         if ((id == 0)&&(startFrame > 0)) {
@@ -895,15 +903,19 @@ console.log('前方区間複製' + myResult.toString());
                     }
                 }
                 if (manipulateOption == 'far') newDurations.reverse();
-//alert(newDurations.join());
+console.log(newDurations);
                 for (var ix = 0 ; ix < id ;ix ++){
-                    myResult = myResult.concat(this[ix].getStream(newDurations[ix]));
+                        myResult = myResult.concat(this[ix].getStream(newDurations[ix]));
+                    if((newDurations[ix]+this[ix].headMargin+this[ix].tailMargin) < 0){
+console.log(newDurations[ix]+this[ix].headMargin+this[ix].tailMargin);
+                        myResult.splice(newDurations[ix]+this[ix].headMargin+this[ix].tailMargin);
+                    }
                 }
             }
 }
 //==========================ターゲット区間
+console.log(id);
     myResult = myResult.concat(targetSection.getStream (endOffset+1));
-//alert(myResult);
 /*==========================後続区間処理　*/
     var endFrame = startFrame+endOffset;
 if(((endFrame) < (this.parent.length-1))&&(id < (this.length-1))){
@@ -946,6 +958,10 @@ console.log('後続区間複製' + this.parent.slice(startFrame+endOffset+1+targ
 //alert(newDurations.join());
         for (var ix = 0 ; ix < newDurations.length ;ix ++){
             myResult = myResult.concat(this[id+1+ix].getStream(newDurations[ix]));
+console.log([newDurations[ix],this[id+1+ix].headMargin,this[id+1+ix].tailMargin]);
+            if((newDurations[ix]+this[id+1+ix].headMargin+this[id+1+ix].tailMargin) < 0){
+                myResult.splice(newDurations[ix]+this[id+1+ix].headMargin+this[id+1+ix].tailMargin);
+            }
         }
     }
 }
@@ -955,8 +971,8 @@ console.log('fill empty :' +( this.parent.length-myResult.length));
         myResult = myResult.concat(new Array(this.parent.length-myResult.length));
     }
 //リターン
-console.log([myResult.join(),startFrame]);
-    return [myResult.join(),startFrame];
+console.log([myResult.join(),startFrame,endOffset]);
+    return [myResult.join(),startFrame,endOffset];
 }
 
 
@@ -1120,31 +1136,33 @@ XpsTimelineSection.prototype.getContent = function(){
 セクションがサブセクションを持つ場合は、現在のサブセクションの構造を保って伸縮するように試みる。
 指定された継続長が現在よりも短ければ内容をカット
 長い場合は最初のサブセクションを繰り返す
+負数が指定された場合は空配列を戻す（duration==0）
+特殊条件
+((frameCount ==  1)&&(headMargin == -1)&&(tailMargin == -1))
+
+
+(this.getContent)
 */
 XpsTimelineSection.prototype.getStream = function(frameCount){
 console.log(frameCount);
-    if(! frameCount) frameCount = this.duration;
+    if( frameCount < 0 ) return [];
+    if(! frameCount ) frameCount = this.duration;
     if(this.subSections){
         if (frameCount < this.dutarion){
             return this.getContent().slice(0,frameCount);
         }else{
             var newContent = this.getContent();//オリジナルを展開
             var sourceSection = this.subSections[0];
-//            for (var idx = 0;idx< this.subSections.length;idx ++){}
-//            var idv = 0;
             while (newContent.length < frameCount){
                newContent = newContent.concat(sourceSection.getStream());
-//                if (idx < (this.subSections.length-1)) idx++ ;
                 if (newContent.length > frameCount) break;
             }
             return newContent.slice(0,frameCount);
         }
     }else{
-//        if((this.parent.parent.option == 'dialog')&&(!(this.value)))
         if(!(this.value)) frameCount = frameCount + this.headMargin + this.tailMargin;
         if(frameCount < 0) frameCount = 0; 
         var myResult=(this.value)? this.value.getStream(frameCount): new Array(frameCount);
-        // return (this.value)? this.value.getStream(frameCount) : new Array(frameCount);
         return myResult
     }
 }
@@ -2721,7 +2739,7 @@ if((this.currentStatus.message)&&(this.currentStatus.message.length))
      * レイヤ別プロパティをストリームに追加
      * @type {string[]}
      */
-    var Lprops = ["sizeX", "sizeY", "aspect", "lot", "blmtd", "blpos", "option", "link", "id"];
+    var Lprops = ["sizeX", "sizeY", "aspect", "lot", "blmtd", "blpos", "option", "link", "trackNote", "id"];
 //	var Lprops=["sizeX","sizeY","aspect","lot","blmtd","blpos","option","link","CELL"];
     for (var prop = 0; prop < Lprops.length; prop++) {
         var propName = Lprops[prop];

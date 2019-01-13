@@ -1338,7 +1338,6 @@ for (var lidx=0;lidx<this.lines.length;lidx++){
 					}
 				}
 			result+="##[["+currentJob.name+"]]/\n";//ジョブ閉じる
-console.log("job closed");
 		}
 		result+="##["+currentStage.name+"]/\n";//ステージ閉じる
 	}

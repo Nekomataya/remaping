@@ -38,6 +38,7 @@ function new_xUI(){
 ];//    -localized
 
 //------- UIオブジェクト初期化前の未定義参照エラーを回避するためのダミーメソッド
+    xUI.flipContextMenu=function(evt){return true;};
     xUI.Mouse=function(evt){return true;};
 //	初期化前にバックアップデータの処理が発生するので暫定的に初期化しておく
     xUI.backupStore    ="0123456789";    //作業バックアップ
@@ -733,7 +734,7 @@ console.log(referenceObj);
     targetObj : new xUI.Document(targetObj,referenceObj);
     if(! initializeDocument.content) return false;//不正引数のため初期化失敗
 
-
+xUI.contextMenu = $('#contextMenu');
 
     if(initializeDocument.type == "xpst"){
 /*Xpst
@@ -1475,6 +1476,7 @@ xUI.setUImode = function (myMode){
               xUI.viewOnly = false;//メニュー切替
     $('#ddp-man').hide();
 	$('#pmaui').hide();
+	$('#pmcui').hide();
 	$('#pmfui').show();
 	$('span.subControl_TC').each(function(){$(this).show()})
     $("li#auiMenu").each(function(){$(this).show()});
@@ -1843,8 +1845,13 @@ xUI.sectionUpdate=function(){
 //セクションの先頭を取得するためにパースするか
         xUI.floatUpdateCount ++;//increment
     xUI.floatSectionId = xUI.XPS.xpsTracks[xUI.Select[0]].getSectionByFrame(trackContents[1]).id();
-        xUI.selectCell([xUI.Select[0],trackContents[1]]);
-      xUI.selection([xUI.Select[0],xUI.Select[1]+Math.abs(currentSelection)]);
+         xUI.selectCell([xUI.Select[0],trackContents[1]]);
+//      xUI.selection([xUI.Select[0],xUI.Select[1]+Math.abs(currentSelection)]);
+//        this.selection([
+//	        this.Select[0],
+//	        trackContents[1]+this.floatSection.duration-1
+//        ]);
+      xUI.selection([xUI.Select[0],trackContents[1]+trackContents[2]]);
     xUI.scrollStop = false;
 
     if(xUI.XPS.xpsTracks[xUI.Select[0]].option.match( /dialog|sound/ ))SoundEdit.getProp();
@@ -2368,6 +2375,10 @@ xUI.drawSheetCell = function (myElement){
             if (myStr.match(/[\|｜]/)){
                 myStr=(this.showGraphic)?"<br>":"｜";                
                 drawForm = "line";
+            }
+            else if (myStr.match(nas.CellDescription.blankRegex)){
+                myStr=(this.showGraphic)?"<br>":"×";                
+                drawForm = "blankCloss";
             }
             else if (myStr.match(/[:：]/)){
                 myStr=(this.showGraphic)?"<br>":":";                
@@ -3034,6 +3045,7 @@ var hasEndMarker=false;// 継続時間終了時のエンドマーカー配置判
 (2017/07/21)
  ページ内に最終フレームが含まれるか否かを判定してカット記述終了マーカーを配置する拡張
 (2018/03/10)
+ トラック注釈を引き出し線付きで表示する機能増設
 */
 //ページ番号が現存のページ外だった場合丸める
     if (pageNumber >=Pages){
@@ -3238,21 +3250,33 @@ default:
 /*第一、第四象限用処理*/
 /*********** Edit Area *************/
 //=====================編集セル本体をタイムライン種別に合わせて配置(ラベル部分)
+        var noteStep = 1;  
         for (r=0;r<this.XPS.xpsTracks.length-1;r++){
-            //末尾レコードはコメント固定なので判定せず（レコード長から1減算）  
+            //末尾レコードはコメント固定なので判定せず（レコード長から1減算）
  switch (this.XPS.xpsTracks[r].option)
  {
-case "dialog":BODY_ +='<th class="dialogSpan tlhead" ';break;
-case "still":BODY_ +='<th class="stillSpan tlhead" ';break;
-case "sfx":BODY_ +='<th class="sfxSpan tlhead" ';break;
+case "sound" :
+case "dialog":  BODY_ +='<th class="dialogSpan tlhead" ';break;
+case "still" :  BODY_ +='<th class="stillSpan tlhead" ';break;
+case "sfx"   :  BODY_ +='<th class="sfxSpan tlhead" ';break;
 case "geometry":BODY_ +='<th class="geometrySpan tlhead" ';break;
-case "camera":BODY_ +='<th class="cameraSpan tlhead" ';break;
+case "camera":  BODY_ +='<th class="cameraSpan tlhead" ';break;
 case "timing":
-default:BODY_ +='<th class="timingSpan tlhead" ';
+default:        BODY_ +='<th class="timingSpan tlhead" ';
  }
-
 BODY_ +=' id="TL'+(r+1)+'"';
 BODY_ +=' > ';
+    if(r > 0) noteStep = (this.XPS.xpsTracks[r-1].trackNote)? (noteStep % 5)+1 : 1 ;
+if(this.XPS.xpsTracks[r].trackNote){
+    var  trackId = ['p',pageNumber,'c',cols,'t',r].join('');
+    BODY_ += '<span id="';
+    BODY_ += trackId;
+    BODY_ += '" class="noteOverlay'
+    BODY_ += ' note'+noteStep;
+    BODY_ += '"><span id="'
+    BODY_ += trackId;
+    BODY_ += '_L" class=overlayLabel>'+this.XPS.xpsTracks[r].trackNote+'</span></span>'
+}
 BODY_ +='</th>';
         };
 /*********** FrameNote Area *************/
@@ -3719,6 +3743,28 @@ var PageCount=(this.viewMode=="Compact")?1:Math.ceil(this.XPS.duration()/this.Pa
         };
     };
    }
+};
+//参照シートの非表示/表示
+/*
+tableColumnWidth
+$('.ref').each(function(index,elem){$(elem).show/hide()});組み合わせ処理が必要
+*/
+xUI.flipRefColumns=function(action){
+        var status=$('#rnArea').isVisible();
+    if(action){
+        action = (action == 'hide')? false:true;
+        if(action ==  status) return;
+    }else{
+        action = !(status);
+    }
+    var flipSpan = (this.sheetLooks.ActionWidth*this.referenceLabels.length)*this.PageCols;
+    if(action){
+        $('.ref').show();
+        $('.sheet').width($('.sheet').width()+flipSpan);
+    }else{
+        $('.ref').hide();
+        $('.sheet').width($('.sheet').width()-flipSpan);
+    }
 };
 
 /**  UI関連メソッド
@@ -4361,6 +4407,7 @@ xpsTimelineTrackオブジェクトのプロパティ
     noteText    ;//編集対象
     
     id      ;//識別用タイムラインラベル  編集対象
+    trackNote;//トラック補助情報　編集対象
     sizeX   ;//デフォルト幅 point    編集対象（編集価値低）
     sizeY   ;//デフォルト高 point    編集対象（編集価値低）
     aspect  ;//デフォルトのpixelAspect  編集対象（編集価値低）
@@ -4381,6 +4428,9 @@ xpsTimelineTrackオブジェクトのプロパティ
 //        UNDO[2]=[入力ターゲット複製,現在値];
         UNDO[2]=[datastream[0],targetXps.xpsTracks[myTarget[1]][myTarget[0]]];
         targetXps.xpsTracks[myTarget[1]][myTarget[0]]=datastream[1];//入力値を設定
+        if((targetXps.xpsTracks[myTarget[1]].option == 'still')&&(myTarget[0] == 'id')){
+            targetXps.xpsTracks[myTarget[1]]["trackNote"]=datastream[1];//
+        }
         if(myTarget[0] =="option"){targetXps.xpsTracks[myTarget[1]].sectionTrust = false;}
     }else{
 //単独プロパティ変更
@@ -5350,6 +5400,22 @@ return true;
 //
 //xUI.keyUp    =    keyUp_    ;
 //
+/** コンテキストメニュー表示
+*/
+xUI.flipContextMenu=function(e){
+    if((e.button == 2 )&&(e.type == 'mousedown')){
+        xUI.contextMenu.css('top',e.clientY);
+        xUI.contextMenu.css('left',e.clientX);
+        xUI.contextMenu.show();
+console.log(e);
+        return false;
+    }
+    if((xUI.contextMenu.isVisible())&&(e.type == 'mousedown')){
+        xUI.contextMenu.hide();
+        return false;
+    }
+    return true;
+}
 /*    xUI.Mouse(e)
 引数:    e    マウスイベント
 戻値:        UI制御用
@@ -6316,7 +6382,19 @@ if(appHost.platform != "AIR"){
 	    var ctx = element.getContext("2d");
 
 switch(targetShape){
-case "line":	    //vertical-line
+case "blankCloss":;		//transition
+/*
+    ブランク用ばつ印
+    セルいっぱいに描く
+*/		var lineWidth  =4;
+		ctx.strokeStyle='rgb('+xUI.Cgl.baseColorArray.join(',')+')';
+		ctx.strokeWidth=lineWidth;
+		ctx.moveTo(element.width, 0);//
+		ctx.lineTo(0,element.height);
+		ctx.moveTo(0, 0);//
+		ctx.lineTo(element.width,element.height);
+		ctx.stroke();
+break;case "line":	    //vertical-line
 /*
 case "line-ref":	    //vertical-line
 case "line-cam":	    //vertical-line
@@ -7556,7 +7634,7 @@ $("#optionPanelSnd").dialog({
         var localFileLoader = $("#data_well");
         // File API が使用できない場合は諦めます.
         if(!window.FileReader) {
-          alert("File API がサポートされていません。:"+new Date());
+        console.log("File API がサポートされていません。:"+new Date());
           return false;
         }
         // イベントをキャンセルするハンドラです.
