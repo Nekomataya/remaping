@@ -26,10 +26,11 @@
  -->
 
 <!-- 以下　AIR動作時のデバッグライブラリ -->
+<!--
  		<script type="text/javascript" src="./lib/AIR/AIRIntrospector.js"></script>
 		<script type="text/javascript" src="./lib/AIR/AIRSourceViewer.js"></script>
 
-<!-- -->
+ -->
 <script src=./lib/jquery.js></script>
 <script src=./lib/jquery-ui.js></script>
 <script src=./lib/ecl/ecl.js></script>
@@ -357,6 +358,11 @@ serviceAgent.pushEntry(xUI.XPS,function(){xUI.setStored("current");sync();
 	onclick='reNameLabel(xUI.Select[0]);return false;'
 	title="ラベル変更"
 >renameTL</A></li>
+<li><hr><span id=pMeditTN-d class='pM pM-alt'></span><A	id=pMeditTN
+	HREF='javascript:void(0);'
+	onclick='editTrackNote();return false;'
+	title="タグ編集"
+>editTrackTag</A></li>
 <li><span id=pMclearTL-d class='pM pM-alt'></span><A	id=pMclearTL
 	HREF='javascript:void(0);'
 	onclick='clearTL();return false;'
@@ -1479,10 +1485,10 @@ class=optionPanel id=optionPanelProductManagement
 	onclick='xUI.footstampClear();'
 >
 </button><button
-    id=ibMrenameTL
+    id=ibMeditTN
     class='iconButton  iconButton-layerName'
-	title="タイムライン名前変更"
-	onclick="reNameLabel(xUI.Select[0]);"
+	title="トラックタグ編集"
+	onclick="editTrackNote(xUI.Select[0]);"
 >
 </button><button
     id=ibMaddSoundTrack

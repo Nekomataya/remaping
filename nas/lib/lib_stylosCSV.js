@@ -208,7 +208,7 @@ console.log(myStylosCSV)
 
 
     if (dialogTarget.length == 0) {
-        var myDialogRegex = new RegExp("(N\\.?|セリフ|せりふ|台詞|dialog|sound|S1)", "i");
+        var myDialogRegex = new RegExp("(N\\.?|セリフ|せりふ|台詞|dialog|sound|S\d+)", "i");
         /**
          * 指定がないので自動検索でテーブルを作る
          */

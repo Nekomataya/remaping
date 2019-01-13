@@ -637,8 +637,11 @@ console.log({'setAddress':[trackId,targetFrame],'inputValue':inputValue});
 							sectionStart  = targetFrame;
 							sectionLength = 1;
 							inputStream = new nas.AnimationDialog();
-console.log(([myEntry.data[0].values[0],"「",myEntry.data[0].values[1],"」"]).join(''));
-							inputStream.parseContent(([myEntry.data[0].values[0],"「",myEntry.data[0].values[1],"」"]).join(''));
+							var dialogString = (myEntry.data[0].values[1].match(/.*「[^」]*」/)) ?
+								myEntry.data[0].values.join(''):
+								([myEntry.data[0].values[0],"「",myEntry.data[0].values[1],"」"]).join('');
+console.log(dialogString)
+							inputStream.parseContent(dialogString);
 							continue;
 						}
 					} else if (fieldKind == 5){ ;//camerawork
@@ -673,8 +676,6 @@ console.log(([myEntry.data[0].values[0],"「",myEntry.data[0].values[1],"」"]).
 								inputStream = '';
 							}
 //遅延解決して次のセクションの値を設定（未オブジェクト化）
-console.log("myEntry");
-console.log(myEntry);
 							sectionStart  = targetFrame;
 							sectionLength = 1;
 							inputStream = myEntry.data[0].values[0];
@@ -714,14 +715,15 @@ console.log(myEntry);
 									}
 						}
 						if(currentWork[2].length > 1) sectionStream.splice((Math.floor((sectionStream.length-1)/2)),1,"<"+currentWork[0]+">");
-console.log({ID:[trackId,sectionStart],data:sectionStream.join(',')});
+//console.log({ID:[trackId,sectionStart],data:sectionStream.join(',')});
 						myXps.put([trackId,sectionStart],sectionStream.join(','));
 						inputStream = '';
 					}
 				}else if(fieldKind == 3){
-console.log(inputStream);
-					var headMargin =((inputStream.name)? 1 : 0) + inputStream.attributes.length + 1;
-					myXps.put([trackId,sectionStart-headMargin],inputStream.getStream(sectionLength));
+					if(inputStream){
+						var headMargin =((inputStream.name)? 1 : 0) + inputStream.attributes.length + 1;
+						myXps.put([trackId,sectionStart-headMargin],inputStream.getStream(sectionLength));
+					}
 				}
 			}
 		}
