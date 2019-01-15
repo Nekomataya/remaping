@@ -885,7 +885,7 @@ editTrackNote=function(TimelineId) {
 	return;
 	}
 	myFunc.TimelineId=TimelineId;
-	newName=nas.showModalDialog("prompt",msg,localize(nas.uiMsg.timelineRename),newName,myFunc);
+	newName=nas.showModalDialog("prompt",msg,localize(nas.uiMsg.trackNoteEdit),newName,myFunc);
 };
 
 //タイムラインラベル変更用ボタンメソッド

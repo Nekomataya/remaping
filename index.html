@@ -262,17 +262,29 @@ serviceAgent.pushEntry(xUI.XPS,function(){xUI.setStored("current");sync();
 	onclick="if(fileBox.saveAs){fileBox.saveAs();}else{alert('現在ファイルの操作ができません')};return false;"
 	title="別名で保存（ファイル）"
 >Save As</A></li>
-<li id=dMcgi><span id=pMcallEcho-d class='pM pM-alt'>Save via CGI</span><A	id=pMcallEcho
+<li id=dMcgi><span id=pMdownloadXps-d class='pM pM-alt'>Export As Xps</span><A	id=pMdownloadXps
+    download=''
 	href="javascript:void(0);"
-	onclick="callEcho();return false;"
-	title="CGI経由でローカルに保存（要CGI設定）"
->Save via CGI</A></li>
+	onclick='xUI.data_well.value=xUI.XPS.toString();callEcho();return false;'
+	title="ダウンロード保存（XPS）"
+>Export As Xps</A></li>
+<!--	onclick="return nas.HTML.download(new Blob([xUI.XPS.toString()],{type:'application/xps'}),xUI.XPS.getIdentifier('simple'));" -->
+<li id=dMcgi><span id=pMdownloadTdts-d class='pM pM-alt'>Export As Tdts</span><A	id=pMdownloadTdts
+	href="javascript:void(0);"
+	onclick='xUI.data_well.value=XPS2TDTS(xUI.XPS,"tdts");callEchoExport("xdts");return false;'
+	title="ダウンロード保存（TDTS）"
+>Export As Tdts</A></li>
+<li id=dMcgi><span id=pMdownloadXdts-d class='pM pM-alt'>Export As Tdts</span><A	id=pMdownloadXdts
+	href="javascript:void(0);"
+	onclick='xUI.data_well.value=XPS2XDTS(xUI.XPS,"xdts");callEchoExport("xdts");return false;'
+	title="ダウンロード保存（XDTS）"
+>Export As Xdts</A></li>
 <li><span id=pMimportexport-d class='pM pM-alt'>Import/Export</span><a	id=pMimportexport
 	href="javascript:void(0);"
 	onclick="xUI.sWitchPanel('Data');return false;"
 	title="読み込み書き出しパネルを開く"
 >Import/Export</a></li>
-<li><span id=pMdocInfo-d class='pM pM-alt'></span><A	id=pMdocInfo
+<li><span id=pMdocInfo-d class='pM pM-alt'>DocumentInfo</span><A	id=pMdocInfo
 	href='javascript:void(0)'
 	onclick='myScenePref.open("edit");return false;'
 	title="シート情報"
@@ -282,6 +294,18 @@ serviceAgent.pushEntry(xUI.XPS,function(){xUI.setStored("current");sync();
 	onclick='if(fileBox.storeOtherExtensionFile){fileBox.storeOtherExtensionFile(printHTML(true),"html")}else{alert("現在ファイルの操作ができません")};return false;'
 	title="表示用HTMLで書出し"
 >Export as html</A></li>
+<li id=dMcgi><span id=pMprintHTML class='pM pM-alt'>Print html</span><A	id=pMprintHTML
+	href='javascript:void(0)'
+	onclick='printHTML();return false;'
+	title="印刷"
+>Print HTML</A></li>
+<li><span id=pMbuildActionSheet-d class='pM pM-alt'></span><A	id=pMbuildActionSheet
+	HREF='javascript:void(0);'
+	onclick='printHTML(false,"action");'
+	title="原画アクションシートを作成"
+>原画アクションシート</A></li>
+<!--
+
 <li id=dMair><span id=pMexportEPSair-d class='pM pM-alt'>Export as eps</span><A	id=pMexportEPSair
 	href='javascript:void(0)'
 	onclick='var prevChack=document.getElementById("exportCheck").checked;document.getElementById("exportCheck").checked=true;if(exportEps()){document.getElementById("exportCheck").checked=prevChack;};return false;'
@@ -302,16 +326,13 @@ serviceAgent.pushEntry(xUI.XPS,function(){xUI.setStored("current");sync();
 	onclick='if(xUI.data_well.value=XPS.toString("html")){callEchoHTML()};return false;'
 	title="表示用HTMLをダウンロード"
 >Export as html</A></li>
-<li id=dMcgi><span id=pMprintHTML class='pM pM-alt'>Print html</span><A	id=pMprintHTML
-	href='javascript:void(0)'
-	onclick='printHTML();return false;'
-	title="印刷"
->Print HTML</A></li>
 <li id=dMcgi><span id=pMexportEPS-d class='pM pM-alt'>Export as eps</span><A	id=pMexportEPS
 	href='javascript:void(0)'
 	onclick='var prevChack=document.getElementById("exportCheck").checked;document.getElementById("exportCheck").checked=true;if(exportEps()){document.getElementById("exportCheck").checked=prevChack;};return false;'
 	title="eps画像ダウンロード"
 >Export as eps</A></li>
+
+-->
 
 <li id=dMsvc><hr><span id=pMauthPnl-d class='pM pM-alt'>認証パネル</span><a id=pMauthPnl
 	href="javascript:void(0);"
@@ -491,11 +512,11 @@ serviceAgent.pushEntry(xUI.XPS,function(){xUI.setStored("current");sync();
 	title="参照エリア消去"
 >clear Ref</A></li>
 <hr>
-<li><span id=pMbuildActionSheet-d class='pM pM-alt'></span><A	id=pMbuildActionSheet
+<!--<li><span id=pMbuildActionSheet-d class='pM pM-alt'></span><A	id=pMbuildActionSheet
 	HREF='javascript:void(0);'
 	onclick='printHTML(false,"action");'
 	title="原画アクションシートを作成"
->原画アクションシート</A></li>
+>原画アクションシート</A></li>-->
 <hr>
 </ul>
 </li>
@@ -2155,14 +2176,14 @@ onclick='nas.incrFCTonHTMLInput(document.getElementById("editTC"),"-(1)")'
 				width:8em
 ">
 <OPTION VALUE=0 >=CUSTOM=
-<OPTION VALUE=8 >FX24(23.976)
-<OPTION VALUE=1 >FILM(24)
-<OPTION VALUE=2 >NDF(30)
-<OPTION VALUE=3 >SMPTE(29.97)
-<OPTION VALUE=4 >SMPTE(59.96)
-<OPTION VALUE=5 >PAL(25)
-<OPTION VALUE=6 >PAL(50)
-<OPTION VALUE=7 >WEB(15)
+<OPTION VALUE=1 >FX24(23.976)
+<OPTION VALUE=2 >FILM(24)
+<OPTION VALUE=3 >NDF(30)
+<OPTION VALUE=4 >SMPTE(29.97)
+<OPTION VALUE=5 >SMPTE(59.96)
+<OPTION VALUE=6 >PAL(25)
+<OPTION VALUE=7 >PAL(50)
+<OPTION VALUE=8 >WEB(15)
 <OPTION VALUE=9 >FR48(48)
 <OPTION VALUE=10 >FR60(60)
 
@@ -3541,9 +3562,9 @@ duration :
 	onClick='xUI.sWitchPanel("Snd");'
 ><br>-->
 <!-- playbackControll -->
-<!--|< [start/stpo]     -->
+<!--
 	<div style='height:36px;'>
-<!--	onMouseDown='if(xUI.player.status=="stop"){xUI.player.start(3000)}else{xUI.put("----")};' -->
+	onMouseDown='if(xUI.player.status=="stop"){xUI.player.start(3000)}else{xUI.put("----")};'
 	<button
 		style='height:32px;width:120px'
 	onMouseDown='if(xUI.player.status=="stop"){xUI.player.start()}else{xUI.player.getCount=true};'
@@ -3556,9 +3577,9 @@ duration :
 	onMouseUp='if(xUI.player.status=="run"){xUI.player.getCount=false;};'
 		title="frameReset"
 	> mark / Reset
-	</button>
+	</button>|< [start/stpo]     -->
 	<!--<button
-		class='iconButton  iconButton-goFWD'
+		class='iconButton  iconButton-goFWD'en
 		onclick=""
 		title=""
 	>

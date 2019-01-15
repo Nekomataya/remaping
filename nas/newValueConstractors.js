@@ -1663,7 +1663,7 @@ nas.AnimationDialog=function(myParent,myContent){
     this.parent = (myParent)? myParent : null   ;//xMapElementGroup or null
     this.contentText=(myContent)?String(myContent):"";//xMapのソーステキストを保存する　自動で再構築が行なわれるタイミングがある
 
-    this.name                                   ;//xMap素材名（=話者の名称　＊重複あり　＊空白あり）
+    this.name =''                                  ;//xMap素材名（=話者の名称　＊重複あり　＊空白あり）
     this.source                                 ;//nas.AnimationElementSource
     this.comment                                ;//
     this.extended = false                       ;

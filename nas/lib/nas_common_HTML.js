@@ -961,3 +961,42 @@ nas.HTML.removeClass = function (element,className){
     }
 }
 
+/**
+    ダウンロード
+    プログラム内で生成したデータをダウンロードする
+*/
+nas.HTML.download = function download(blob, filename) {
+  const objectURL = window.URL.createObjectURL(blob),
+      a = document.createElement('a'),
+      e = document.createEvent('MouseEvent');
+
+  //a要素のdownload属性にファイル名を設定
+    a.setAttribute('download', filename||'noname');
+    a.href = objectURL;
+
+  //clickイベントを着火
+  e.initEvent("click", true, true, window, 1, 0, 0, 0, 0, false, false, false, false, 0, null);
+  a.dispatchEvent(e);
+
+/*
+
+    var fileSelect = document.createElement('input');
+    fileSelect.type = 'file';
+    fileSelect.name = filename;
+fileSelect.addEventListener("change", function(evt){
+  var file = evt.target.files;
+  console.log(file[0]);
+
+
+},false);
+    
+    e = document.createEvent('MouseEvent');
+    e.initEvent("click", true, true, window, 1, 0, 0, 0, 0, false, false, false, false, 0, null);
+    fileSelect.dispatchEvent(e);
+*/    
+    return false;
+}
+
+/*TEST
+nas.HTML.download(new Blob([xUI.XPS.toString()], {type : 'application/xps'}), 'test');
+*/

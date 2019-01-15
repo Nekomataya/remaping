@@ -75,6 +75,18 @@ nas.LangPack.ja=[
     ["pMcallEcho-d","innerHTML","ダウンロード保存"],
     ["pMcallEcho","innerHTML","ダウンロード保存"],
     ["pMcallEcho","title","CGI経由でローカルに保存（要CGI設定）"],
+    
+    ["pMdownloadXps-d","innerHTML","ダウンロード保存"],
+    ["pMdownloadXps","innerHTML","ダウンロード保存"],
+    ["pMdownloadXps","title","ローカルに保存（XPS）"],
+
+    ["pMdownloadTdts-d","innerHTML","ダウンロード保存(TDTS)"],
+    ["pMdownloadTdts","innerHTML","ダウンロード保存(TDTS)"],
+    ["pMdownloadTdts","title","ローカルに保存（TDTS）"],
+    ["pMdownloadXdts-d","innerHTML","ダウンロード保存(XDTS)"],
+    ["pMdownloadXdts","innerHTML","ダウンロード保存(XDTS)"],
+    ["pMdownloadXdts","title","ローカルに保存（XTDS）"],
+    
     ["pMimportexport-d","innerHTML","読込/書出"],
     ["pMimportexport","innerHTML","読込/書出"],
     ["pMimportexport","title","読み込み書き出しパネルを開く"],
@@ -544,6 +556,18 @@ nas.LangPack.en=[
     ["pMcallEcho-d","innerHTML","Save via CGI"],
     ["pMcallEcho","innerHTML","Save via CGI"],
     ["pMcallEcho","title","download exported data"],
+
+    ["pMdownloadXps-d","innerHTML","download Xps"],
+    ["pMdownloadXps","innerHTML","download Xps"],
+    ["pMdownloadXps","title","download exported data(XPS)"],
+
+    ["pMdownloadTdts-d","innerHTML","download Tdts"],
+    ["pMdownloadTdts","innerHTML","download Tdts"],
+    ["pMdownloadTdts","title","download exported data(TDTS)"],
+    ["pMdownloadXdts-d","innerHTML","download Xtds"],
+    ["pMdownloadXdts","innerHTML","download Xtds"],
+    ["pMdownloadXdts","title","download exported data(XTDS)）"],
+
     ["pMimportexport-d","innerHTML","Import/Export"],
     ["pMimportexport","innerHTML","Import/Export"],
     ["pMimportexport","title","open date Import/Export panel"],

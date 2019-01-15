@@ -1886,7 +1886,8 @@ var range=[this.floatSourceAddress,add(this.floatSourceAddress,this.Selection)];
 */
 xUI.getFileName=function(myFileName){
 //    myResult=(typeof myFileName=="undefined")?"$TITLE$OPUSs$SCENEc$CUT($TC)":myFileName;
-    myResult=(typeof myFileName=="undefined")?"$TITLE$#$OPUS$[$SUBTITLE$]__s$SCENE$-c$CUT$($TC$)":myFileName;
+//    myResult=(typeof myFileName=="undefined")?"$TITLE$#$OPUS$[$SUBTITLE$]__s$SCENE$-c$CUT$($TC$)":myFileName;
+    myResult=(typeof myFileName=="undefined")?"$TITLE$#$OPUS$__s$SCENE$-c$CUT$":myFileName;
     myResult=myResult.replace(/\$TITLE\$/g,this.XPS.title);
     myResult=myResult.replace(/\$SUBTITLE\$/g,this.XPS.subtitle);
     myResult=myResult.replace(/\$OPUS\$/g,this.XPS.opus);
@@ -2160,9 +2161,9 @@ break;
 }
 }
 
-/** 操作スクリーンを加算シフトさせる
+/** 操作スクリーンを加算シフトさせる(オフセットを設定)
 引数:
-    x,y 加算px
+    x,y px
 右揃えのアイテムをシフトした分だけ左に寄せて画面内に収める処理つき
 現在の値に引数を加える。戻りは想定されないので注意
 
@@ -2172,11 +2173,17 @@ xUI.shiftScreen = function(x,y){
     var currentBox = ($('body').css('padding')).split(' ');
 console.log(currentBox)
     currentBox.forEach(function(itm,idx,itself){itself[idx]=parseInt(itm);});
-// 
     var currentFr = parseInt($('.floating-right').css('padding-right'));
     var currentAb = parseInt($('#account_box').css('padding-right'));
     var currentLp = parseInt($('#loginPanel').css('padding-right'));
-    $('body').css('padding',[currentBox[0]+y,currentBox[1],currentBox[2],currentBox[3]+x].join('px ')+'px');
+//left,raightをリセット
+    if(currentBox[3]){
+        $('.floating-right').css('padding-right',(currentFr-currentBox[3])+'px');
+        $('#account_box').css('padding-right'   ,(currentAb-currentBox[3])+'px');
+        $('#loginPanel').css('padding-right'    ,(currentLp-currentBox[3])+'px');        
+    }
+//    $('body').css('padding',[currentBox[0]+y,currentBox[1],currentBox[2],currentBox[3]+x].join('px ')+'px');
+    $('body').css('padding',[y,currentBox[1],currentBox[2],x].join('px ')+'px');
     $('.floating-right').css('padding-right',(currentFr+x)+'px');
     $('#account_box').css('padding-right'   ,(currentAb+x)+'px');
     $('#loginPanel').css('padding-right'    ,(currentLp+x)+'px');
@@ -7994,8 +8001,8 @@ var PropLists = new Object();
 	PropLists["AEver"]=["8.0","10.0"];
 //	PropLists["AEver"]=["4.0","5.0"];
 	PropLists["KEYmtd"]=["min","opt","max"];
-	PropLists["framerate"]=["custom","24","30","29.97","25","15","23.976","48","60"];
-	PropLists["framerate"+"_name"]=["=CUSTOM=","FILM","NTSC","NTSC-DF","PAL","WEB","DF24","FR48","FR60"];
+	PropLists["framerate"]=["custom","23.976","24","30","29.97","59.96","25","50","15","48","60"];
+	PropLists["framerate_name"]=["=CUSTOM=","23.98","FILM","NTSC","SMPTE","SMPTE-60","PAL","PAL-50","WEB","FR48","FR60"];
 	PropLists["SIZEs"]=["custom",
 "640,480,1","720,480,0.9","720,486,0.9","720,540,1",
 "1440,1024,1","2880,2048,1","1772,1329,1","1276,957,1",
@@ -8049,7 +8056,8 @@ time	;//時間
 trin	;//トランジション時間1
 trout	;//トランジション時間2
 memo	;//メモ欄
-lbl	;//タイムラインラベル
+tag     ;//タイムラインタグ
+lbl	    ;//タイムラインラベル
 info_	;//セット変更 シート上書き
 tool_	;//セット変更 ツールボックス
 pref_	;//セット変更 設定パネル
@@ -8427,8 +8435,10 @@ case	"memo":
 	document.getElementById(prop).innerHTML=memoText;
 	if(document.getElementById("memo_prt")){document.getElementById("memo_prt").innerHTML=memoText;}
 	break;
+case	"tag":	;
 case	"lbl":	;
-//NOP 
+//ラベルとタグは　UNDOの対処だが…
+    xUI.resetSheet(); 
     break;
 /*
 //UIモード増加に伴って切り分けが発生  コンパクトモード時はラベル書き換えを分岐
@@ -10834,8 +10844,8 @@ function ScenePref(){
 	this.Lists["AEver"]=["8.0","10.0"];
 	this.Lists["KEYmtd"]=["min","opt","max"];
 
-	this.Lists["framerate"]=["custom","24","30","29.97","25","15","23.976","48","60"];
-	this.Lists["framerate"+"_name"]=["=CUSTOM=","FILM","NTSC","NTSC-DF","PAL","WEB","23.98","FR48","FR60"];
+	this.Lists["framerate"]=["custom","23.976","24","30","29.97","59.96","25","50","15","48","60"];
+	this.Lists["framerate_name"]=["=CUSTOM=","23.98","FILM","NTSC","SMPTE","SMPTE-60","PAL","PAL-50","WEB","FR48","FR60"];
 	this.Lists["SIZEs"]=[	"custom",
 							"640,480,1","720,480,0.9","720,486,0.9","720,540,1",
 							"1440,1024,1","2880,2048,1","1772,1329,1","1276,957,1",
@@ -11104,17 +11114,17 @@ for (i=0;i<lot;i++){	body_+='<td>'+ String(i)+'</td>'}
 
 /*
 var labelOptions=[
-	"option","link","label","lot","blmtd","blpos",
+	"option","link","trackNote","label","lot","blmtd","blpos",
 	"size","sizeX","sizeY","aspect"
 ];
 */
 var labelOptions=[
-	"種別","リンク","親","ラベル",
+	"種別","リンク","親","タグ","ラベル",
 	"セル枚数","カラセル","配置",
 	"プリセット",
 	"sizeX","sizeY","aspect"
 ];
-var Labels=["Lopt_","Llnk_","Lpnt_","Llbl_","Llot_","Lbmd_","Lbps_","LszT_","LszX_","LszY_","LszA_"
+var Labels=["Lopt_","Llnk_","Lpnt_","Ltag_","Llbl_","Llot_","Lbmd_","Lbps_","LszT_","LszX_","LszY_","LszA_"
 ];
 	for (var opt=0;opt<labelOptions.length;opt++)
 	{
@@ -11137,21 +11147,23 @@ case	"Llnk_":	body_+='<input type=text id="scnLlnk_';	//リンクパス:1
 		break;
 case	"Lpnt_":	body_+='<input type=text id="scnLpnt_';	//Parentパス:2
 		break;
-case	"Llbl_":	body_+='<input type=text id="scnLlbl_';	//ラベル:3
+case	"Ltag_":	body_+='<input type=text id="scnLtag_';	//タグ:3
 		break;
-case	"Llot_":	body_+='<input type=text id="scnLlot_';	//ロット:4
+case	"Llbl_":	body_+='<input type=text id="scnLlbl_';	//ラベル:4
 		break;
-case	"Lbmd_":	body_+='<SELECT id="scnLbmd_';	//カラセルメソッド:5
+case	"Llot_":	body_+='<input type=text id="scnLlot_';	//ロット:5
 		break;
-case	"Lbps_":	body_+='<SELECT id="scnLbps_';	//カラセル位置:6
+case	"Lbmd_":	body_+='<SELECT id="scnLbmd_';	//カラセルメソッド:6
 		break;
-case	"LszT_":	body_+='<SELECT id="scnLszT_';	//サイズまとめ:7
+case	"Lbps_":	body_+='<SELECT id="scnLbps_';	//カラセル位置:7
 		break;
-case	"LszX_":	body_+='<input type=text id="scnLszX_';	//サイズX:8
+case	"LszT_":	body_+='<SELECT id="scnLszT_';	//サイズまとめ:8
 		break;
-case	"LszY_":	body_+='<input type=text id="scnLszY_';	//サイズY:9
+case	"LszX_":	body_+='<input type=text id="scnLszX_';	//サイズX:9
 		break;
-case	"LszA_":	body_+='<input type=text id="scnLszA_';	//アスペクト:10
+case	"LszY_":	body_+='<input type=text id="scnLszY_';	//サイズY:10
+		break;
+case	"LszA_":	body_+='<input type=text id="scnLszA_';	//アスペクト:11
 		break;
 default	:alert(opt);
 }
@@ -11161,7 +11173,7 @@ default	:alert(opt);
 
 body_+='" onChange="myScenePref.chgProp(this.id)"';//共通
 body_+=' style="text-align:center;width:100px"';//共通
-	if (opt==1||opt==2||opt==3||opt==4||opt>7)
+	if (opt==1||opt==2||opt==3||opt==4||opt==5||opt>8)
 	{
 body_+=' value=""'	;//text値はアトデ
 body_+='>';
@@ -11178,10 +11190,11 @@ body_+='<OPTION VALUE=timing >timing';//
 body_+='<OPTION VALUE=dialog >dialog';//
 body_+='<OPTION VALUE=sound >sound';//
 body_+='<OPTION VALUE=camera >camera';//
+body_+='<OPTION VALUE=sfx >geometry';//
 body_+='<OPTION VALUE=sfx >effects';//
 break;
 
-case	"5":
+case	"6":
 //オプション別/セレクタもの	カラセルメソッド
 body_+='<OPTION VALUE=file > ファイル ';//
 body_+='<OPTION VALUE=opacity > 不透明度 ';//
@@ -11190,7 +11203,7 @@ body_+='<OPTION VALUE=channelShift > チャンネルシフト';//
 body_+='<OPTION VALUE=expression1 > 動画番号トラック';//
 break;
 
-case	"6":
+case	"7":
 //オプション別/セレクタもの	カラセル位置
 body_+='<OPTION VALUE=build >--------';//
 body_+='<OPTION VALUE=first >最初の絵を使う';//
@@ -11198,7 +11211,7 @@ body_+='<OPTION VALUE=end >最後の絵を使う';//
 body_+='<OPTION VALUE=none >カラセルなし';//
 break;
 
-case	"7":
+case	"8":
 //オプション別/セレクタもの	サイズまとめ
 body_+='<OPTION VALUE=0 >=CUSTOM=';//
 body_+='<OPTION VALUE=1 >VGA(640x480,1.0)';//
@@ -11370,9 +11383,11 @@ this.getLayerProp =function (){
 			currentTrack["parent"];//ペアレント  現在固定
 			document.getElementById("scnLpnt_"+i).disabled=true;
 
+			document.getElementById("scnLtag_"+i).value=
+			currentTrack["trackNote"];//tag
 			document.getElementById("scnLlbl_"+i).value=
 			currentTrack["id"];//ラベル
-
+			
 			document.getElementById("scnLlot_"+i).value=
 			currentTrack["lot"];//数量
 			document.getElementById("scnLlot_"+i).disabled=(currentTrack.option=="timing")?false:true;;
@@ -11409,6 +11424,8 @@ this.getLayerProp =function (){
 			".";
 //			document.getElementById("scnLpnt_"+i).disabled=true;
 
+			document.getElementById("scnLtag_"+i).value=
+			'';
 			document.getElementById("scnLlbl_"+i).value=myLabels[i];
 
 			document.getElementById("scnLlot_"+i).value=
@@ -11689,6 +11706,7 @@ this.putLayerProp =function ()
 		}else{
 			xUI.XPS["xpsTracks"][i]["option"]= document.getElementById("scnLopt_"+i).value;
 			xUI.XPS["xpsTracks"][i]["link"]= document.getElementById("scnLlnk_"+i).value;
+			xUI.XPS["xpsTracks"][i]["trackNote"]= document.getElementById("scnLtag_"+i).value;
 			xUI.XPS["xpsTracks"][i]["id"]= document.getElementById("scnLlbl_"+i).value;
 			xUI.XPS["xpsTracks"][i]["lot"]= document.getElementById("scnLlot_"+i).value;
 			xUI.XPS["xpsTracks"][i]["sizeX"]= document.getElementById("scnLszX_"+i).value;
