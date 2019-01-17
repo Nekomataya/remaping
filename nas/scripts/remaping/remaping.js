@@ -1450,6 +1450,7 @@ xUI.setUImode = function (myMode){
               xUI.viewOnly = false;//メニュー切替
     $('#ddp-man').hide();
 	$('#pmaui').hide();
+	$('#pmcui').show();
 	$('#pmfui').hide();
 	$('span.subControl_TC').each(function(){$(this).hide()})
     $("li#auiMenu").each(function(){$(this).hide()});
@@ -1476,7 +1477,7 @@ xUI.setUImode = function (myMode){
               xUI.viewOnly = false;//メニュー切替
     $('#ddp-man').hide();
 	$('#pmaui').hide();
-	$('#pmcui').hide();
+	$('#pmcui').show();
 	$('#pmfui').show();
 	$('span.subControl_TC').each(function(){$(this).show()})
     $("li#auiMenu").each(function(){$(this).show()});
@@ -1498,6 +1499,7 @@ xUI.setUImode = function (myMode){
               xUI.viewOnly =  true;
     $('#ddp-man').show();
 	$('#pmaui').show();
+	$('#pmcui').show();
 	$('#pmfui').hide();
 	$('span.subControl_TC').each(function(){$(this).show()})
     $("li#auiMenu").each(function(){$(this).show()});
@@ -1516,6 +1518,7 @@ xUI.setUImode = function (myMode){
               xUI.viewOnly = true;
     $('#ddp-man').hide();
 	$('#pmaui').hide();
+	$('#pmcui').show();
 	$('#pmfui').hide();
 	$('span.subControl_TC').each(function(){$(this).hide()})
     $("li#auiMenu").each(function(){$(this).hide()});
@@ -2175,18 +2178,20 @@ console.log(currentBox)
     currentBox.forEach(function(itm,idx,itself){itself[idx]=parseInt(itm);});
     var currentFr = parseInt($('.floating-right').css('padding-right'));
     var currentAb = parseInt($('#account_box').css('padding-right'));
-    var currentLp = parseInt($('#loginPanel').css('padding-right'));
+    var currentLp = parseInt($('#optionPanelLogin').css('padding-right'));
 //left,raightをリセット
-    if(currentBox[3]){
-        $('.floating-right').css('padding-right',(currentFr-currentBox[3])+'px');
-        $('#account_box').css('padding-right'   ,(currentAb-currentBox[3])+'px');
-        $('#loginPanel').css('padding-right'    ,(currentLp-currentBox[3])+'px');        
+console.log([currentBox[3],currentFr,currentAb,currentLp])
+    if(currentBox[3]>0){
+       currentFr -= currentBox[3];
+       currentAb -= currentBox[3];
+       currentLp -= currentBox[3];        
     }
+console.log([currentBox[3],currentFr,currentAb,currentLp])
 //    $('body').css('padding',[currentBox[0]+y,currentBox[1],currentBox[2],currentBox[3]+x].join('px ')+'px');
     $('body').css('padding',[y,currentBox[1],currentBox[2],x].join('px ')+'px');
     $('.floating-right').css('padding-right',(currentFr+x)+'px');
     $('#account_box').css('padding-right'   ,(currentAb+x)+'px');
-    $('#loginPanel').css('padding-right'    ,(currentLp+x)+'px');
+    $('#optionPanelLogin').css('padding-right'    ,(currentLp+x)+'px');
     xUI.adjustSpacer();
 }
 /*  TEST
@@ -3017,6 +3022,12 @@ var hasEndMarker=true;// 継続時間終了時のエンドマーカー配置判�
 var Pages=Math.ceil((this.XPS.duration()/this.XPS.framerate)/this.SheetLength);//総尺をページ秒数で割って切り上げ
 var SheetRows=Math.ceil(this.SheetLength/this.PageCols)*Math.ceil(this.XPS.framerate);
 var hasEndMarker=false;// 継続時間終了時のエンドマーカー配置判定(初期値)
+//コンパクトモード用の固定表示が残っている場合消去する
+if((document.getElementById('qdr3'))&&(document.getElementById('qdr3').innerHTML)){
+    document.getElementById('qdr1').innerHTML='';
+    document.getElementById('qdr2').innerHTML='';
+    document.getElementById('qdr3').innerHTML='';
+}
 }
 /*
 (2010/11/06)
@@ -3671,35 +3682,24 @@ xUI.replaceEndMarker = function(endPoint,markerOffset){
     if(! document.getElementById('endMarker')) return;
     if (typeof endPoint == 'undefined'){
    try{
-//    var endPoint = JSON.parse(document.getElementById('endMarker').innerHTML);
     var endPoint = [xUI.XPS.xpsTracks.length, xUI.XPS.xpsTracks.duration];
    }catch(er){return;}
     }
     if (typeof markerOffset == 'undefined'){
         markerOffset = 0;
     }
-
     if(!(endPoint instanceof Array)) {endPoint=[1,endPoint]};
     if(endPoint.length>2) markerOffset = endPoint[2];
-    var endCellLeft  = document.getElementById([0,endPoint[1]-1].join('_'));
-    var endCellRight = document.getElementById([endPoint[0]-1,endPoint[1]-1].join('_'));
-console.log(endPoint);
-console.log([0,endPoint[1]-1].join('_'));
-console.log([endPoint[0]-1,endPoint[1]-1].join('_'));
-    var parentSheet  = document.getElementById('endMarker').parentNode;
-    var endCellLeftRect  = endCellLeft.getBoundingClientRect();
-    var endCellRightRect = endCellRight.getBoundingClientRect();
-    var parentRect   = parentSheet.getBoundingClientRect();
-    var markerRect   = document.getElementById('endMarker').getBoundingClientRect();
-    var markerWidth  = String(endCellRightRect.right-endCellLeftRect.left)+'px';
-    var markerTop    = String(endCellLeftRect.bottom - markerRect.top + markerOffset)+ 'px' ;
-//    var markerTop    = String(endCellLeftRect.bottom - parentRect.bottom + (markerRect.height * 2.3))+ 'px' ;
-    var markerLeft   = String(endCellLeftRect.left-parentRect.left)+'px'; 
+    var endCellLeft  = $('#'+[0,endPoint[1]-1].join('_'));
+    var endCellRight = $('#'+[endPoint[0]-1,endPoint[1]-1].join('_'));
+    var parentSheet  = $(document.getElementById('endMarker').parentNode);
+    var endCellLeftOffset  = endCellLeft.offset();
+    var endCellRightOffset = endCellRight.offset();
+    var parentOffset   = parentSheet.position();
+    var markerTop    = endCellLeftOffset.top + endCellLeft.height() - parentOffset.top + markerOffset ;
+    var markerLeft   = endCellLeftOffset.left - parentOffset.left;
+    var markerWidth  = endCellRightOffset.left + endCellRight.width() - endCellLeftOffset.left;
    $("#endMarker").css({'top':markerTop,'left':markerLeft,'width':markerWidth });//ここでjQery使ってる
-//   document.getElementById("endMarker").style.left  = markerLeft;
-//   document.getElementById("endMarker").style.top   = markerTop;
-//   document.getElementById("endMarker").style.width = markerWidth;
-         //必要があればここで、endMarkerのテキストを書換
    document.getElementById("endMarker").innerHTML = ':: end ::';
 }
 //
@@ -6738,12 +6738,6 @@ xUI.resetSheet=function(editXps,referenceXps){
         xUI.selection(add(restorePoint,restoreSelection));
     },0);
     this.bkup([XPS.xpsTracks[1][0]]);
-//表示内容の同期
-    sync("tool_");
-    sync("info_");
-/* ヘッダ高さの初期調整*/
-    this.adjustSpacer();
-
 //画像部品の表示前のカーソル位置描画,'width':markerWidth
     this.selectCell(restorePoint);
     this.selection(restoreSelection);
@@ -6756,6 +6750,12 @@ xUI.resetSheet=function(editXps,referenceXps){
 xUI.replaceEndMarker([トラック数,フレーム数],上下オフセットpx);
  */
     xUI.replaceEndMarker([xUI.XPS.xpsTracks.length,xUI.XPS.xpsTracks.duration],4);
+//表示内容の同期
+    sync("tool_");
+    sync("info_");
+/* ヘッダ高さの初期調整*/
+    this.adjustSpacer();
+
     return ;
 };
 
@@ -7120,7 +7120,7 @@ if( startupDocument.length > 0){ XPS.readIN(startupDocument) }
     var yScale = (baseHeight-headerRect.height)/tableRect.height;
     $(".sheet").css({"transform":"scale("+[xScale,yScale].join()+")","transform-origin":"0 0"});
     $(".printPage").css({"height":baseHeight,"width":baseWidth});
-    xUI.replaceEndMarker([xUI.XPS.xpsTracks.length,xUI.XPS.xpsTracks.duration],4);//編集HTML用のみ
+    xUI.replaceEndMarker([xUI.XPS.xpsTracks.length,xUI.XPS.xpsTracks.duration],6);//編集HTML用のみ
 
     //スケーリング終了後のアイテム座標でマーカーを配置
     if(callback instanceof Function) callback();
@@ -7710,7 +7710,7 @@ case    "AIR":
 break;
 case "CEP":
 //    window.parent.psHtmlDispatch();
-    xUI.shiftScreen(50,56);
+    xUI.shiftScreen(50,50);
 case    "CSX":
 //tableメニュー表記
         $("tr#airMenu").each(function(){$(this).hide()});
@@ -11934,6 +11934,7 @@ SoundEdit.setLabel = function(myName){
     var targetSection = targetTrack.sections[xUI.floatSectionId]
     targetSection.value.name = myName;
     document.getElementById('sndBody').value=targetSection.value.toString();
+    targetTrack.sectionTrust=false;
     xUI.sectionUpdate();
 }
 /*  編集対象のダイアログの属性を入れ替える
@@ -11955,6 +11956,7 @@ SoundEdit.setProp = function(myProp){
     }
     document.getElementById('sndBody').value=targetSection.value.toString();
     console.log(targetSection.value.toString());
+    targetTrack.sectionTrust=false;
     xUI.sectionUpdate();
 }
 /** 編集対象のパネルの値をセットする
@@ -12109,6 +12111,7 @@ SoundEdit.sync = function(force){
         nas.FCT2Frm(document.getElementById('soundDuration').value)-1
     );
     xUI.floatSectionId = xUI.XPS.xpsTracks[xUI.Select[0]].getSectionByFrame(myContent[1]).id();
+    targetTrack.sectionTrust=false;
     xUI.sectionUpdate();
 }
 /**

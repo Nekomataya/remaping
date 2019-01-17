@@ -877,7 +877,7 @@ editTrackNote=function(TimelineId) {
 		msg+="\n"+localize(nas.uiMsg.dmRenameLabel)+"\n";//新しいラベルを指定してください
 
 	var myFunc=function(){
-	  if(! TimelineId){this.TimelineId=null}else{this.TimelineId=TimelineId};
+	  if(isNaN(TimelineId)){return false;}else{this.TimelineId=TimelineId};
 		if((this.startValue==this.value)||(this.status >= 1)){return;};
 	    var newName=this.value;
 		xUI.put([["trackNote",this.TimelineId].join("."),newName]);

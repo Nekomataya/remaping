@@ -374,14 +374,15 @@ serviceAgent.pushEntry(xUI.XPS,function(){xUI.setStored("current");sync();
 	onclick='chkValue("paste");return false;'
 	title=""
 >Paste [ctr]-[v]</A></li>
+
 <li><hr><span id=pMrenameTL-d class='pM pM-alt'></span><A	id=pMrenameTL
 	HREF='javascript:void(0);'
 	onclick='reNameLabel(xUI.Select[0]);return false;'
 	title="ラベル変更"
 >renameTL</A></li>
-<li><hr><span id=pMeditTN-d class='pM pM-alt'></span><A	id=pMeditTN
+<li><span id=pMeditTN-d class='pM pM-alt'></span><A	id=pMeditTN
 	HREF='javascript:void(0);'
-	onclick='editTrackNote();return false;'
+	onclick='editTrackNote(xUI.Select[0]);return false;'
 	title="タグ編集"
 >editTrackTag</A></li>
 <li><span id=pMclearTL-d class='pM pM-alt'></span><A	id=pMclearTL
@@ -3561,7 +3562,7 @@ duration :
 	type=button id=soundPnlClose value="閉じる" style="width:10%"
 	onClick='xUI.sWitchPanel("Snd");'
 ><br>-->
-<!-- playbackControll -->
+<!-- playbackControll
 
 	<div style='height:36px;'>
 	onMouseDown='if(xUI.player.status=="stop"){xUI.player.start(3000)}else{xUI.put("----")};'
@@ -3577,7 +3578,7 @@ duration :
 	onMouseUp='if(xUI.player.status=="run"){xUI.player.getCount=false;};'
 		title="frameReset"
 	> mark / Reset
-	</button>|< [start/stpo]     
+	</button>|< [start/stpo]    -->  
 	<!--<button		class='iconButton  iconButton-goFWD'en
 		onclick=""
 		title=""
@@ -3594,8 +3595,8 @@ duration :
 	>
 	</button>-->
 
-<!-- -->
-	</div>
+<!-- </div>-->
+<hr>
 <button
     id=soundPanelApply
     style='width:96px;'

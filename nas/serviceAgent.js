@@ -87,7 +87,7 @@ Repository.users    アクセスの可能性がある全ユーザのリスト
 Repository.productsData.staff    アクセス可否情報　リポジトリに対するユーザとその所属・役職のDB
     　Repository.productsData[px].staff    アクセス可否情報　リポジトリに対するユーザとその所属・役職のDB
     　   Repository.productsData[px].episodes[ex].staff    アクセス可否情報　リポジトリに対するユーザとその所属・役職のDB
-    　       Repository.productsData[px].episodes[ex].cuts[cx].staff    アクセス可否情報　リポジトリに対するユーザとその所属・役職のDBる
+    　       Repository.productsData[px].episodes[ex].cuts[cx].staff    アクセス可否情報　リポジトリに対するユーザとその所属・役職のDB
         　
 エントリごとにスタッフに対して以下の権利を設定することができる
 
@@ -4495,6 +4495,7 @@ serviceAgent.addEntry=function(myXps,callback,callback2){
                 myXps.createUser = xUI.currentUser;
                 myXps.updateUser = xUI.currentUser;
                 myXps.currentStatus =  new JobStatus();
+        var productIdf = Xps.getIdentifier(myXps,'product');
 //新規エントリを判定
         if((String(myXps.cut).length==0)||(serviceAgent.currentRepository.entry(myIdentifier))){
             var msg = "";
@@ -4545,7 +4546,7 @@ serviceAgent.addEntry=function(myXps,callback,callback2){
             　       en:"The specified episode #%1[%2] is not registered in this sharing.\nwould you like to create a new episode #%1[%2]?\nTo change sharing please cancel once and try the procedure again.",
             　       ja:"この共有には指定の制作話数 #%1[%2] が登録されていません。\n新規に制作話数 #%1[%2] を登録しますか？\n共有を変更する場合は一旦キャンセルして手続をやり直してください。"},myXps.opus,myXps.subtitle);
             　   if(confirm(msg))
-            　   serviceAgent.currentRepository.addOpus(myIdentifier,hasProd,function(){
+            　   serviceAgent.currentRepository.addOpus(myIdentifier,productIdf,function(){
             　       serviceAgent.pushEntry(myXps,callback,callback2);
             　   });
             　 }else if((! hasTitle)&&(! hasOpus)){

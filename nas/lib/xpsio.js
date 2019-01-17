@@ -832,7 +832,7 @@ dialog 区間は「コンテンツの文字数」それ以外は 1 にコメン�
 
             if(this[six].value){
                     if((this.parent.option == 'dialog')&&(this[six].value.bodyText)) minimumContentLength = this[six].value.bodyText.length;
-                    if(this[six].value.comments.length) minimumContentLength += this[six].value.comments.length;
+                    if((this[six].value.comments)&&(this[six].value.comments.length)) minimumContentLength += this[six].value.comments.length;
             }else{
                 minimumContentLength = -(this[six].headMargin + this[six].tailMargin);
                 if((this.parent.option.match(/^(camera|camerawork)$/))&&(minimumContentLength > 1)){
@@ -859,7 +859,12 @@ console.log(["headLimit:",headLimit," / tailLimit",tailLimit].join(''));
 console.log(["targetSection.startOffset : ",targetSection.startOffset(),"/ Offset :",targetSection.duration - 1].join(''))
 console.log(["startFrame : ",startFrame,"/ endOffset :",endOffset].join(''))
 //補正確定後に以前の状態と前後位置が等しい場合は処理スキップ
-        if((startFrame==targetSection.startOffset())&&(endOffset==targetSection.duration - 1)) return [this.parent.join(),startFrame,endOffset];
+/*
+    区間長は同じだが、内容が変化するケースがあるので、ここに内容判別が必要
+    sectionTrustを参照して現在のセクション内容がは信頼可能な場合のみスキップする
+    セクション内容を改める外部プロシジャはこのあらかじめこのフラグを下ろす必要がある。
+*/
+        if((this.parent.sectionTrust)&&(startFrame==targetSection.startOffset())&&(endOffset==targetSection.duration - 1)) return [this.parent.join(),startFrame,endOffset];
         //暫定的に元データで返す 呼び出し側で無変更をトラップするか、または戻り値の判定が必要
 //前方に新規挿入セクションが発生する場合その部分をあらかじめカラ要素で埋めておく
         if ((id == 0)&&(startFrame > 0)) {
@@ -1161,7 +1166,8 @@ console.log(frameCount);
         }
     }else{
         if(!(this.value)) frameCount = frameCount + this.headMargin + this.tailMargin;
-        if(frameCount < 0) frameCount = 0; 
+        if(frameCount < 0) frameCount = 0;
+console.log(this);
         var myResult=(this.value)? this.value.getStream(frameCount): new Array(frameCount);
         return myResult
     }
@@ -2959,10 +2965,18 @@ Xps.sliceReplacementLabel = function (myStr){
     タイトルのフレームレートと異なる場合のみ、識別子にフレームレートを埋め込む。
 
     このコーディングは、pmdb実装後に行われる。2018.07.16
+
+引数  opt
+"title"#"opus"//"s-c"("time")//"line"//"stage"//"job"//"status"
+'episode'(or 'product')//'cut'//'statsu'
+
+デフォルトでは制作管理情報が付加されたフルフォーマットの識別子が戻る
+
 */
+
 Xps.getIdentifier=function(myXps,opt){
 //この識別子作成は実験コードです2016.11.14
-    if(typeof opt=='undefined') opt=true;
+    if(typeof opt=='undefined') opt ='status';
     var myIdentifier=[
             encodeURIComponent(myXps.title)+
         "#"+encodeURIComponent(myXps.opus)+
@@ -2970,17 +2984,34 @@ Xps.getIdentifier=function(myXps,opt){
             encodeURIComponent(
                 "s" + ((myXps.scene)? myXps.scene : "-" )+
                 "c" + myXps.cut) +
-                "(" + myXps.time() +")"
-            ];
-
-    if (opt) myIdentifier =myIdentifier.concat([
+                "(" + myXps.time() +")",
             encodeURIComponent(myXps.line.toString(true)),
             encodeURIComponent(myXps.stage.toString(true)),
             encodeURIComponent(myXps.job.toString(true)),
             myXps.currentStatus.toString(true)
-    ]);
-//識別子を作成してネットワークリポジトリに送信する正常に追加・更新ができた場合はローカルリストの更新を行う（コールバックで）
-    return myIdentifier.join("//");;
+        ];
+    var order = 2;     
+    switch(opt){
+    case 'title':
+    case 'opus':
+    case 'episode':
+    case 'product':
+        order = 1;break;
+    case 'cut':
+        order = 2;break;
+    case 'line':
+        order = 3;break;
+    case 'stage':
+        order = 4;break;
+    case 'job':
+        order = 5;break;
+    case 'status':
+    case 'full':
+    default:
+        order = 6;break;
+    }
+//識別子をネットワークリポジトリに送信後正常に追加・更新ができた場合は（コールバックで）ローカルリストの更新を行うこと
+    return myIdentifier.slice(0,order).join("//");;
 }
 
 
@@ -3467,12 +3498,6 @@ XpsTimelineTrack.prototype.parseTimelineTrack = function(){
         case "sound":;
             myResult =  this.parseSoundTrack();
         break;
-        case "cell":;
-        case "timing":;
-        case "still":;
-        case "replacement":;
-            myResult =  this.parseReplacementTrack();
-        break;
         case "camerawork":;
         case "camera":;
         case "geometry":;
@@ -3483,6 +3508,12 @@ XpsTimelineTrack.prototype.parseTimelineTrack = function(){
         case "composit":;
             myResult =  this.parseCompositeTrack();
         break;
+        case "cell":;
+        case "timing":;
+        case "still":;
+        case "replacement":;
+        default:
+            myResult =  this.parseReplacementTrack();
     }
     if (myResult){this.sectionTrust=true;}
     return myResult;

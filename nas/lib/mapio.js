@@ -1375,6 +1375,7 @@ Xpstを単独でオープンした場合は、テンポラリのxMapが初期化
 
 */
 xMap.prototype.syncProperties = function(myXps){
+console.log(Xps.getIdentifier(myXps,'full'));
     var values = Xps.parseIdentifier(Xps.getIdentifier(myXps,"full"));
 console.log(values); 
     this.title = values.title;
