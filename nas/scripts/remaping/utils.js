@@ -985,13 +985,13 @@ for(var idy=0;idy<=myDepth;idy++){
   var myBody=[];
   var currentContent=xUI.XPS.xpsTracks[xUI.Select[0]].slice(startFrm,startFrm+myLength+1);
 for(var idx=0;idx<currentContent.length;idx++){
-	if(currentContent[idx].match(/^(\[?)([A-Z])(\]?)$/)){
+	if(currentContent[idx].match(/^([\[\<\(]?)([A-Z])([\)\>\]]?)$/)){
 		myBody.push(RegExp.$1+names.charAt((names.indexOf(RegExp.$2)+myShift+26)%26)+RegExp.$3);
 	}else{
-		if(currentContent[0].match(/\d/)){
-			myBody.push(nas.incrStr(currentContent[idx],myShift));
+		if(currentContent[idx].match(/^([\[\<\(]?)(\d+)([\)\>\]]?)$/)){
+			myBody.push(nas.incrStr(currentContent[idx],myShift,true));
 		}else{
-			myBody.push(currentContent[idx]);		
+			myBody.push(currentContent[idx]);
 		}
 	}
 }

@@ -298,7 +298,7 @@ div.printPage {
 */
 .endMarker {
 	display:inline-block;
-	position:relative;
+	position:absolute;
 	width:378px;
 	height:15px;
 	margin:0;

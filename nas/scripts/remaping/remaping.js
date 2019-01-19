@@ -1453,7 +1453,9 @@ xUI.setUImode = function (myMode){
 	$('#pmcui').show();
 	$('#pmfui').hide();
 	$('span.subControl_TC').each(function(){$(this).hide()})
-    $("li#auiMenu").each(function(){$(this).hide()});
+    $("li.auiMenu").each(function(){$(this).hide()});
+    $("li.cuiMenu").each(function(){$(this).show()});
+    $("li.fuiMenu").each(function(){$(this).hide()});
     document.getElementById('cutList').multiple = false;
 
             //作業中のドキュメントステータスは、必ずActiveなので以下のボタン状態
@@ -1480,7 +1482,9 @@ xUI.setUImode = function (myMode){
 	$('#pmcui').show();
 	$('#pmfui').show();
 	$('span.subControl_TC').each(function(){$(this).show()})
-    $("li#auiMenu").each(function(){$(this).show()});
+    $("li.auiMenu").each(function(){$(this).hide()});
+    $("li.cuiMenu").each(function(){$(this).hide()});
+    $("li.fuiMenu").each(function(){$(this).show()});
     document.getElementById('cutList').multiple = true;
             document.getElementById('pmcui-checkin').disabled    =true;//すべてのボタンを無効
             document.getElementById('pmcui-update').disabled     =true;
@@ -1502,7 +1506,9 @@ xUI.setUImode = function (myMode){
 	$('#pmcui').show();
 	$('#pmfui').hide();
 	$('span.subControl_TC').each(function(){$(this).show()})
-    $("li#auiMenu").each(function(){$(this).show()});
+    $("li.auiMenu").each(function(){$(this).show()});
+    $("li.cuiMenu").each(function(){$(this).hide()});
+    $("li.fuiMenu").each(function(){$(this).hide()});
     document.getElementById('cutList').multiple = true;
             document.getElementById('pmcui-checkin').disabled    =true;//すべてのボタンを無効
             document.getElementById('pmcui-update').disabled     =true;
@@ -1521,7 +1527,9 @@ xUI.setUImode = function (myMode){
 	$('#pmcui').show();
 	$('#pmfui').hide();
 	$('span.subControl_TC').each(function(){$(this).hide()})
-    $("li#auiMenu").each(function(){$(this).hide()});
+    $("li.auiMenu").each(function(){$(this).hide()});
+    $("li.cuiMenu").each(function(){$(this).hide()});
+    $("li.fuiMenu").each(function(){$(this).hide()});
     document.getElementById('cutList').multiple = false;
             document.getElementById('pmcui-checkin').disabled    = ((xUI.sessionRetrace==0)&&((xUI.XPS.currentStatus.content =='Startup')||(xUI.XPS.currentStatus.content =='Fixed')))? false:true;                
             document.getElementById('pmcui-update').disabled     =true;
@@ -3675,28 +3683,23 @@ BODY_ +='';
     '#'+String(this.XPS.xpsTracks.length-1)+'_'+String(this.XPS.xpsTracks.duration-1);
     自動化のため参照エレメントの情報をendMakerのinnerHTML内に埋め込む
     [this.XPS.xpsTracks.length-1,this.XPS.xpsTracks.duration-1]
-    この形式によって位置計算にjQueryを利用しないでマーカーの再配置を行う
     以下のメソッドは  単独の関数としても利用可能
  */
-xUI.replaceEndMarker = function(endPoint,markerOffset){
+xUI.replaceEndMarker = function(endPoint){
     if(! document.getElementById('endMarker')) return;
     if (typeof endPoint == 'undefined'){
    try{
     var endPoint = [xUI.XPS.xpsTracks.length, xUI.XPS.xpsTracks.duration];
    }catch(er){return;}
     }
-    if (typeof markerOffset == 'undefined'){
-        markerOffset = 0;
-    }
-    if(!(endPoint instanceof Array)) {endPoint=[1,endPoint]};
-    if(endPoint.length>2) markerOffset = endPoint[2];
+    if(!(endPoint instanceof Array)) {endPoint=[xUI.XPS.xpsTracks.length,endPoint]};
     var endCellLeft  = $('#'+[0,endPoint[1]-1].join('_'));
-    var endCellRight = $('#'+[endPoint[0]-1,endPoint[1]-1].join('_'));
-    var parentSheet  = $(document.getElementById('endMarker').parentNode);
+    var endCellRight = $('#'+[endPoint[0]-1,endPoint[1]-1].join('_'));    var parentSheet  = $(document.getElementById('endMarker').parentNode);
+    var topMargin  = $(document.getElementById('fixedHeader')).height();
     var endCellLeftOffset  = endCellLeft.offset();
     var endCellRightOffset = endCellRight.offset();
     var parentOffset   = parentSheet.position();
-    var markerTop    = endCellLeftOffset.top + endCellLeft.height() - parentOffset.top + markerOffset ;
+    var markerTop    = endCellLeftOffset.top + endCellLeft.height() -topMargin;
     var markerLeft   = endCellLeftOffset.left - parentOffset.left;
     var markerWidth  = endCellRightOffset.left + endCellRight.width() - endCellLeftOffset.left;
    $("#endMarker").css({'top':markerTop,'left':markerLeft,'width':markerWidth });//ここでjQery使ってる
@@ -3704,17 +3707,10 @@ xUI.replaceEndMarker = function(endPoint,markerOffset){
 }
 //
 //本体シートの表示を折り畳む（トグル）
-xUI.packColumn=function(ID)
-{
-//    id((ID<0)||(ID>this.SheetWidth)){return;};
+xUI.packColumn=function(ID){
 var Target=ID;
 var PageCols=(this.viewMode=="Compact")?1:this.PageCols;
 var PageCount=(this.viewMode=="Compact")?1:Math.ceil(this.XPS.duration()/this.PageLength);
-//    switch(ID)
-//    {
-//case    0:myTarget=0;break;
-//case    this.SheetWidth:myTarget="memo";break;
-//    };
     for (Page=0 ;Page < PageCount;Page++)
     {
 //レイヤラベルのID "L[レイヤID]_[ページID]_[カラムID]"
@@ -3729,10 +3725,6 @@ var PageCount=(this.viewMode=="Compact")?1:Math.ceil(this.XPS.duration()/this.Pa
 };
 
 //参照シートの表示を折り畳む(トグル)
-/*
-tableColumnWidth
-$('.ref').each(function(index,elem){$(elem).show/hide()});組み合わせ処理が必要
-*/
 xUI.packRefColumns=function()
 {
 var PageCols=(this.viewMode=="Compact")?1:this.PageCols;
@@ -3949,6 +3941,7 @@ xUI.copy    =function(){
 現在の操作対象範囲をヤンクバッファに退避して、範囲内を空データで埋める
 選択範囲があれば解除してフォーカスを左上にセット
 
+セクション選択の場合(xUI.emode==2)　ヤンクバッファにはセクションオブジェクトが入る
  */
 xUI.cut    =function()
 {
@@ -4988,7 +4981,11 @@ case	89 :		;	//[ctrl]+[Y]/redo
 	break;
 case	90 :		;	//[ctrl]+[Z]/undo
 	if ((e.ctrlKey)||(e.metaKey))	{
-		this.undo();
+		if(e.shiftKey){
+		    this.redo();
+		}else{
+		    this.undo();
+		}
 		return false;}else{return true}
 	break;
 //case	61 :		;
@@ -5410,15 +5407,137 @@ return true;
 /** コンテキストメニュー表示
 */
 xUI.flipContextMenu=function(e){
-    if((e.button == 2 )&&(e.type == 'mousedown')){
+    if((xUI.contextMenu.isVisible())&&(e.type == 'mousedown')){
+console.log(e.srcElement);      
+        if(e.srcElement.onclick){
+console.log(e.srcElement.onclick);
+            e.srcElement.onclick();
+        }
+        xUI.contextMenu.hide();
+        return false;
+    }else if((e.button == 2 )&&(e.type == 'mousedown')){
         xUI.contextMenu.css('top',e.clientY);
         xUI.contextMenu.css('left',e.clientX);
+        var onHeadline=false;
+        var onTrackLabel=false;
+        var onTimelineTrack=false;
+        var onReference=false;
+        var onTimeguide=false;
+        var onReferenceHeader=false;
+        var onTimelineTrackHeader=false;
+        var outer = true;
+    if(e.clientY<=document.getElementById('fixedHeader').clientHeight){
+        onHeadline=true;outer = false;
+    }else{
+        if(e.srcElement.id.match(/^\d+_\d+$/)){
+            onTimelineTrack = true;outer = false;
+        }else if(e.srcElement.id.match(/^r_\d+_\d+$/)){
+            onReference  = true;outer = false;
+        }else if(e.srcElement.id.match(/^tc.+$/)){
+            onTimeguide  = true;outer = false;
+        }else if(e.srcElement.className.match(/^.+ref$/)){
+            onReferenceHeader  = true;outer = false;
+        }else if(e.srcElement.className.match(/^camArea|editArea|^framenotelabel|^dialoglabel/)){
+            onTimelineTrackHeader  = true;outer = false;
+        }else if(e.srcElement.id.match(/^L\d+_\d+_\d+$/)){
+            onTrackLabel  = true;outer = false;
+        }
+    }
+    if(onHeadline){
+        $('ul.cMonHeadline').each(function(){$(this).show();});
+        if($('#pMenu').isVisible()){
+            $('.noDm').each(function(){$(this).hide();});
+        }else{
+            $('.noDm').each(function(){$(this).show();});
+        }
+        if($('#pmui').isVisible()){
+            $('.noPm').each(function(){$(this).hide();});
+        }else{
+            $('.noPm').each(function(){$(this).show();});
+        }
+    }else{
+        $('ul.cMonHeadline').each(function(){$(this).hide();});    
+    }
+    if(onTrackLabel){
+        $('.cMonTrackLabel').each(function(){$(this).show();});
+    }else{
+        $('.cMonTrackLabel').each(function(){$(this).hide();});    
+    }
+    if(onTimelineTrack){
+console.log('onTrack')
+        $('.cMonTrack').each(function(){$(this).show();});
+        switch(xUI.XPS.xpsTracks[xUI.Select[0]].option){
+        case 'dialog':
+            $('.onDialog').each(function(){$(this).show();});
+            $('.onTiming').each(function(){$(this).hide();});
+            $('.onCamera').each(function(){$(this).hide();});
+        break;
+        case 'timing':
+            $('.onDialog').each(function(){$(this).hide();});
+            $('.onTiming').each(function(){$(this).show();});
+            $('.onCamera').each(function(){$(this).hide();});
+        break;
+        case 'camera':
+            $('.onDialog').each(function(){$(this).hide();});
+            $('.onTiming').each(function(){$(this).hide();});
+            $('.onCamera').each(function(){$(this).show();});
+        break;
+        default:
+        }
+    }else{
+        $('.cMonTrack').each(function(){$(this).hide();});    
+    }
+    if(onTimelineTrackHeader){
+        $('.cMonTrackHeader').each(function(){$(this).show();});
+    }else{
+        $('.cMonTrackHeader').each(function(){$(this).hide();});    
+    }
+    if(onReference){
+        $('.cMonReference').each(function(){$(this).show();});
+    }else{
+        $('.cMonReference').each(function(){$(this).hide();});    
+    }
+    if(onReferenceHeader){
+        $('.cMonReferenceHeader').each(function(){$(this).show();});
+    }else{
+        $('.cMonReferenceHeader').each(function(){$(this).hide();});    
+    }
+    if(outer){
+        $('.cMouter').each(function(){$(this).show();});
+    }else{
+        $('.cMouter').each(function(){$(this).hide();});
+    }
+/*    
+    if(xUI.edmode==0){
+        $('.emode0').each(function(){$(this).show();});
+    }else{
+        $('.emode0').each(function(){$(this).hide();});
+    }
+    if(xUI.uiMode=='management'){
+        $('.pmad').each(function(){$(this).show();});
+    }else{
+        $('.pmad').each(function(){$(this).hide();});
+    }
+*/
+
+/*
+xUI.contextMenu.html([
+('#'+e.srcElement.id+':'+e.srcElement.className)+'<hr>',
+'onHeadline           :'+onHeadline,
+'onTimelineTrack      :'+onTimelineTrack,
+'onReferenece         :'+onReferenece,
+'onTimeguide          :'+onTimeguide,
+'onReferenceHeader     :'+onReferenceHeader,
+'onTimelineTrackHeader:'+onTimelineTrackHeader,
+'Select     :'+xUI.Select,
+'Selection  :'+xUI.Selection,
+'edmode     :'+xUI.edmode,
+'viewOnly   :'+xUI.viewOnly,
+'viewMode   :'+xUI.viewMode
+].join('<br>\n'));
+*/
         xUI.contextMenu.show();
 console.log(e);
-        return false;
-    }
-    if((xUI.contextMenu.isVisible())&&(e.type == 'mousedown')){
-        xUI.contextMenu.hide();
         return false;
     }
     return true;
@@ -6183,7 +6302,7 @@ case	"AEKey":	;//キー表示
 		myTarget.hide();
 	};
 	break;
-case	"memu":	;//ドロップダウンメニューバー  消す時に操作性が阻害されるケースがあるので警告を入れる
+case	"menu":	;//ドロップダウンメニューバー  消す時に操作性が阻害されるケースがあるので警告を入れる
 	if($("#pMenu").is(":visible")){
 		if(appHost.platform!="AIR"){
 		    var msg=localize(nas.uiMsg.dmConfirmClosepMenu);//
@@ -6205,6 +6324,11 @@ case	"SheetHdr": ;//固定UIシートヘッダ
 //	xUI.adjustSpacer();
 break;
 
+case	"headerTool":	;//ヘッダツール
+case	"account_box":	;//アカウント表示ボックス
+case	"pmui":	;//固定ツールバー
+	if($("#"+status).is(":visible")){$("#"+status).hide()}else{$("#"+status).show()};
+break;
 //case	"clear":	break;//表示クリアは、最初に分岐してパラメータを見ない仕様に変更
 default:	;//	デフォルトアクションはクリアと同値
 	for(var idx=0;idx<myPanels.length;idx++){
@@ -6744,18 +6868,18 @@ xUI.resetSheet=function(editXps,referenceXps){
 //セクション編集状態であれば解除
     if(this.edmode>0){this.mdChg('normal');}
 
-/* エンドマーカー位置調整  endMarker
-//印字用endマーカーは  印刷cssを参照して誤差を反映させること  フレームのピッチを計算すること
-印刷画面は印刷画面出力時に再度同メソッドで調整  トラック間の
-xUI.replaceEndMarker([トラック数,フレーム数],上下オフセットpx);
- */
-    xUI.replaceEndMarker([xUI.XPS.xpsTracks.length,xUI.XPS.xpsTracks.duration],4);
+
 //表示内容の同期
     sync("tool_");
     sync("info_");
 /* ヘッダ高さの初期調整*/
     this.adjustSpacer();
-
+/* エンドマーカー位置調整  endMarker
+//印字用endマーカーは  印刷cssを参照して誤差を反映させること  フレームのピッチを計算すること
+印刷画面は印刷画面出力時に再度同メソッドで調整  トラック間の
+xUI.replaceEndMarker([トラック数,フレーム数],上下オフセットpx);
+ */
+    xUI.replaceEndMarker(xUI.XPS.xpsTracks.duration);
     return ;
 };
 
@@ -7120,7 +7244,7 @@ if( startupDocument.length > 0){ XPS.readIN(startupDocument) }
     var yScale = (baseHeight-headerRect.height)/tableRect.height;
     $(".sheet").css({"transform":"scale("+[xScale,yScale].join()+")","transform-origin":"0 0"});
     $(".printPage").css({"height":baseHeight,"width":baseWidth});
-    xUI.replaceEndMarker([xUI.XPS.xpsTracks.length,xUI.XPS.xpsTracks.duration],6);//編集HTML用のみ
+    xUI.replaceEndMarker([xUI.XPS.xpsTracks.length,xUI.XPS.xpsTracks.duration]);//編集HTML用のみ
 
     //スケーリング終了後のアイテム座標でマーカーを配置
     if(callback instanceof Function) callback();
@@ -7671,12 +7795,12 @@ $("#optionPanelSnd").dialog({
 //デバッグ関連メニューの表示
     if(dbg){
         $("button.debug").each(function(){$(this).show()});
-        $("li#debug").each(function(){$(this).show()});
-        if(appHost.platform=="AIR"){$("li#airDbg").each(function(){$(this).show()})};
+        $("li.debug").each(function(){$(this).show()});
+        if(appHost.platform=="AIR"){$("li.airDbg").each(function(){$(this).show()})};
     }else{
         $("button.debug").each(function(){$(this).hide()});
-        $("li#debug").each(function(){$(this).hide()});
-        $("li#airDbg").each(function(){$(this).hide()});
+        $("li.debug").each(function(){$(this).hide()});
+        $("li.airDbg").each(function(){$(this).hide()});
     }
 //AIRを認識した場合cgiUIとairUIを切り換え
 switch (appHost.platform){
@@ -7694,8 +7818,11 @@ case    "AIR":
 //ドロップダウンメニュー用表記切り替え
         $("li").each(function(){
                 switch(this.id){
+                case "cMair":
                 case "dMair":$(this).show();break;
-                case "dMps":$(this).hide();break;
+                case "cMps":
+                case "dMps":
+                case "cMcgi":
                 case "dMcgi":$(this).hide();break;
                 }
             });
@@ -7723,8 +7850,11 @@ case    "CSX":
 //ドロップダウンメニュー用表記切り替え
         $("li").each(function(){
                 switch(this.id){
-                case "dMair":$(this).hide();break;
+                case "cMps":
                 case "dMps":$(this).show();break;
+                case "cMair":
+                case "dMair":
+                case "cMcgi":
                 case "dMcgi":$(this).hide();break;
                 }
             });
@@ -7745,9 +7875,12 @@ default:
 //ドロップダウンメニュー用表記切り替え
         $("li").each(function(){
                 switch(this.id){
-                case "dMair":$(this).hide();break;
-                case "dMps":$(this).hide();break;
+                case "cMcgi":
                 case "dMcgi":$(this).show();break;
+                case "cMair":
+                case "dMair":
+                case "cMps":
+                case "dMps":$(this).hide();break;
                 }
             });
 //ブラウザ用ドロップダウンメニュー表示

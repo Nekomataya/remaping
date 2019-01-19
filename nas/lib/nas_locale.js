@@ -152,6 +152,9 @@ nas.LanguagePack = function () {
 
 /**
  * @param myLocale
+ コマンドメニュー用の切り替えルーチンを追加
+ "_M"で開始するリソースは、pM/cM/ibMで兼用リソースとして扱われる
+ また"_M","innerHTML"に関しては接尾詞"-d"をカバー範囲にする
  */
 nas.LanguagePack.prototype.chgLocale = function (myLocale) {
     if (!myLocale) {
@@ -162,11 +165,25 @@ nas.LanguagePack.prototype.chgLocale = function (myLocale) {
         var eType = nas.LangPack[myLocale][idx][1];
         var value = nas.LangPack[myLocale][idx][2];
         try {
-            if (document.getElementById(eId)) {
-                document.getElementById(eId)[eType] = value;
+            if(eId.indexOf('pM')==0){
+                var menuSet = ['pM','cM','ibM']
+                for(pfx = 0 ; pfx < menuSet.length; pfx ++){
+                    if((pfx == 2)&&(eType=="innerHTML")) continue;
+                    var xeId = eId.replace(/^pM/,menuSet[pfx]);
+                    if (document.getElementById(xeId)) {
+                        document.getElementById(xeId)[eType] = value;
+                        if((eType=="innerHTML")&&(document.getElementById(xeId+'_d'))) {
+                            document.getElementById(xeId+'_d')['innerHTML'] = value;                        
+                        }
+                    }
+                }
+            }else{
+                if (document.getElementById(eId)) {
+                    document.getElementById(eId)[eType] = value;
+                }
             }
         } catch (err) {
-            alert(err);
+            console.log(err);
         }
     }
 };

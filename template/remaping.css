@@ -310,17 +310,6 @@ div.printPage {
 }
 /*
 	タイムシート記述終了マーカー
-.endMarker-print {
-	display:inline-block;
-	position:relative;
-	width:240px;
-	margin:0;
-	height:8px;
-	text-align:center;
-	border-top-style:double;
-	border-width:4px 0 0 0;
-	z-index:3;
-}
 */
 .endMarker {
 	display:inline-block;
@@ -332,6 +321,7 @@ div.printPage {
 	border-top-style:double;
 	border-width:4px 0 0 0;
 	z-index:3;
+	margin-top:8px;
 }
 
 /*		テーブルデータ基本
@@ -1635,6 +1625,7 @@ hr.dialog_border {
 	coror:AAA;
 	display:none;
 }
+
 /**
 モーダルダイアログ内のフォーム
 */
@@ -1839,8 +1830,17 @@ div.documentStatusOverlay {
 }
 	
 .contextMenu {
-	
+	overflow:hidden;
 }
+.cM {
+	color: #666;
+}
+
+.cM-alt {
+	coror:AAA;
+	display:none;
+}
+
 /*
 	ストップウオッチバー
 */
