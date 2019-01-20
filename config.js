@@ -379,13 +379,16 @@ var ViewMode="WordProp"	;	//UIモード  コンパクトCompat/ シートワー�
 */
 var UIViewIdList = [
     "pMenu",
+    "account_box",
     "optionPanelLogin",
     "toolbarHeader",
-    "pmcui",
+    "pmui",
+    "headerTool",
     "sheetHeaderTable",
     "optionPanelUtl",
     "optionPanelTbx",
-    "optionPanelDbg"
+    "optionPanelDbg",
+    "memoArea"
 ];
 var ToolView='10111100';
 

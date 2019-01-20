@@ -15,20 +15,20 @@
 
 <!--		<script type="text/javascript" src="./lib/AIR/AIRLocalizer.js"></script>
 		<script type="text/javascript" src="./lib/AIR/AIRMenuBuilder.js"></script>
-
- -->
 <script src="./lib/AIR/servicemonitor.swf" type="application/x-shockwave-flash"></script>
 <script src="./lib/AIR/aircore.swf" type="application/x-shockwave-flash"></script>
 <script src="./lib/AIR/applicationupdater_ui.swf" type="application/x-shockwave-flash"></script>
 <script src="./lib/AIR/applicationupdater.swf" type="application/x-shockwave-flash"></script>
 <script src="./lib/AIR/HTMLHostLibrary.swf" type="application/x-shockwave-flash"></script>
 
+ -->
+
 <script type="text/javascript" src="./lib/AIR/AIRAliases.js"></script>
 
 <!-- 以下　AIR動作時のデバッグライブラリ -->
+<!--
  		<script type="text/javascript" src="./lib/AIR/AIRIntrospector.js"></script>
 		<script type="text/javascript" src="./lib/AIR/AIRSourceViewer.js"></script>
-<!--
 
  -->
 <script src=./lib/jquery.js></script>
@@ -229,7 +229,7 @@ serviceAgent.pushEntry(xUI.XPS,function(){xUI.setStored("current");sync();
 <!-- 旧ドキュメントメニュー -->
 <li id=dMcgi><span id=pMimportDatas-d class='pM pM-alt'>Open</span><A id=pMimportDatas
 	href="javascript:void(0);"
-	onclick="if(document.getElementById('optionPanelData').style.display!='inline'){xUI.sWitchPanel('Data')};document.getElementById('loadShortcut').value='true';document.getElementById('myCurrentFile').click();return false;"
+	onclick="document.getElementById('loadShortcut').value='body';document.getElementById('myCurrentFile').click();return false;"
 	title="ローカルドキュメントを開く"
 >Open</A></li>
 <li id=dMair><span id=pMopenFS-d class='pM pM-alt'>Open</span><A id=pMopenFS
@@ -294,7 +294,7 @@ serviceAgent.pushEntry(xUI.XPS,function(){xUI.setStored("current");sync();
 	onclick='if(fileBox.storeOtherExtensionFile){fileBox.storeOtherExtensionFile(printHTML(true),"html")}else{alert("現在ファイルの操作ができません")};return false;'
 	title="表示用HTMLで書出し"
 >Export as html</A></li>
-<li id=dMcgi><span id=pMprintHTML class='pM pM-alt'>Print html</span><A	id=pMprintHTML
+<li id=dMcgi><span id=pMprintHTML-d class='pM pM-alt'>Print html</span><A	id=pMprintHTML
 	href='javascript:void(0)'
 	onclick='printHTML();return false;'
 	title="印刷"
@@ -401,7 +401,7 @@ serviceAgent.pushEntry(xUI.XPS,function(){xUI.setStored("current");sync();
 	onclick='insertBlank();return false;'
 	title="選択範囲にカラコマを挿入"
 >InsertBlank</A></li>
-<li><span id=pMbrockRemove-d class='pM pM-alt'></span><A	id=pMbrockRemove
+<li><span id=pMblockRemove-d class='pM pM-alt'></span><A	id=pMblockRemove
 	HREF='javascript:void(0);'
 	onclick='deleteBlank();return false;'
 	title="ブロックで削除"
@@ -651,19 +651,19 @@ serviceAgent.pushEntry(xUI.XPS,function(){xUI.setStored("current");sync();
 <li><span id=pMaccountBox-d class='pM pM-alt'></span><A	id=pMaccountBox
 	HREF='javascript:void(0);'
 	onclick='xUI.sWitchPanel("account_box");return false'
-	title="account box show/hide"
+	title="service account show/hide"
 >accountBox</A></li>
 <li><span id=pMtoolbar-d class='pM pM-alt'></span><A	id=pMtoolbar
 	HREF='javascript:void(0);'
 	onClick="document.getElementById('toolbarHeader').style.display=(document.getElementById('toolbarHeader').style.display=='none')?'inline':'none';xUI.adjustSpacer();"
 	title="toolbarHeader"
 >toolbarHeader</A></li>
-<li><span id=pMheaderTools-d class='pM pM-alt'></span><A	id=pMheaderTools
+<li><span id=pMtcControl-d class='pM pM-alt'></span><A	id=pMtcControl
 	HREF='javascript:void(0);'
 	onclick='xUI.sWitchPanel("headerTool");return false'
 	title="header tools show/hide"
 >headerTools</A></li>
-<li><span id=pMpmui-d class='pM pM-alt'></span><A	id=pMpmui
+<li><span id=pMpmControl-d class='pM pM-alt'></span><A	id=pMpmControl
 	HREF='javascript:void(0);'
 	onclick='xUI.sWitchPanel("pmui");return false'
 	title="制作管理メニュー"
@@ -688,7 +688,7 @@ serviceAgent.pushEntry(xUI.XPS,function(){xUI.setStored("current");sync();
 	onClick="xUI.sWitchPanel('memoArea')"
 	title="memo_header"
 >memo</A></li>
-<li><span id=pMreference-d class='pM pM-alt'></span><A id=pMreference
+<li><span id=pMreferenceArea-d class='pM pM-alt'></span><A id=pMreferenceArea
 	HREF='javascript:void(0);'
 	onClick="xUI.flipRefColumns();"
 	title="reference"
@@ -856,7 +856,7 @@ serviceAgent.pushEntry(xUI.XPS,function(){xUI.setStored("current");sync();
     <button
 	id=ibMimportDatas
 		class='iconButton  iconButton-imp'
-		onclick="if(document.getElementById('optionPanelData').style.display!='inline'){xUI.sWitchPanel('Data')};document.getElementById('loadShortcut').value='body';document.getElementById('myCurrentFile').click();"
+		onclick="document.getElementById('loadShortcut').value='body';document.getElementById('myCurrentFile').click();"
 		title="file Open"
 	>
 	</button><button
@@ -926,10 +926,10 @@ serviceAgent.pushEntry(xUI.XPS,function(){xUI.setStored("current");sync();
 	title="ユーティリティ　ツールバー"
 >
 </button><button
-	id=ibMtoolbox
+	id=ibMskb
 	class='iconButton  iconButton-skb'
 	onclick='xUI.sWitchPanel("Tbx");'
-	title="ツールボックス"
+	title="ソフトウェアキーボード"
 >
 </button><button
 	id=ibMdialog
@@ -990,18 +990,18 @@ serviceAgent.pushEntry(xUI.XPS,function(){xUI.setStored("current");sync();
 > </button>
 
 <button
-	id=ibMpmn
+	id=ibMmanagementMode
     class='iconButton iconButton-management'
 	onclick="xUI.setUImode('next');sync('productStatus');"
 	onDblClick='xUI.viewOnly=(xUI.viewOnly)?false:true;sync("productStatus");'
 	title='モード切替'
 > </button><button
-	id=ibMvol
+	id=ibMviewOnly
     class='iconButton iconButton-pen_1 debug'
 	onClick='xUI.viewOnly=(xUI.viewOnly)?false:true;sync("productStatus");'
 	title='書き込み禁止/許可　'
 > </button><button
-	id=ibMprt
+	id=ibMprintHTML
     class='iconButton iconButton-printer'
 	onClick='printHTML();'
 	title='印刷（テスト）'
@@ -1011,6 +1011,7 @@ serviceAgent.pushEntry(xUI.XPS,function(){xUI.setStored("current");sync();
 	id=ibMstw
     class='iconButton iconButton-goToTime'
     onClick='xUI.sWitchPanel("Timer");'
+    title='staop watch'
  ></button>
 </span>
 
@@ -1060,7 +1061,7 @@ serviceAgent.pushEntry(xUI.XPS,function(){xUI.setStored("current");sync();
 >
 	<!-- カウンタ -->
 
-<span class="floating-right">
+<span id=inputControl class="floating-right">
 	<!-- スピン -->
 <input	type=text
 	name=spin_V
@@ -1554,7 +1555,7 @@ class=optionPanel id=optionPanelProductManagement
 	onclick="insertColumns();"
 >
 </button><button
-    id=ibMseleteTL
+    id=ibMdeleteTL
     class='iconButton  iconButton-removeTL'
 	title="タイムラインを削除します"
 	onclick="deleteColumns();"
@@ -1764,7 +1765,7 @@ serviceAgent.pushEntry(xUI.XPS,function(){xUI.setStored("current");sync();
     <ul class='cMonHeadline'>
 <li id=cMcgi><span id=cMimportDatas-d class='cM cM-alt'>Open</span><A id=cMimportDatas
 	href="javascript:void(0);"
-	onclick="if(document.getElementById('optionPanelData').style.display!='inline'){xUI.sWitchPanel('Data')};document.getElementById('loadShortcut').value='true';document.getElementById('myCurrentFile').click();return false;"
+	onclick="document.getElementById('loadShortcut').value='body';document.getElementById('myCurrentFile').click();return false;"
 	title="ローカルドキュメントを開く"
 >Open</A></li>
 <li id=cMair><span id=cMopenFS-d class='cM cM-alt'>Open</span><A id=cMopenFS
@@ -1816,7 +1817,7 @@ serviceAgent.pushEntry(xUI.XPS,function(){xUI.setStored("current");sync();
 >Export As Xdts</A></li>
 <li><span id=cMimportexport-d class='cM cM-alt'>Import/Export</span><a	id=cMimportexport
 	href="javascript:void(0);"
-	onclick="xUI.sWitchPanel('Data');return false;"
+	onclick="if(! $('#optionPanelData').isVisible()) xUI.sWitchPanel('Data');return false;"
 	title="読み込み書き出しパネルを開く"
 >Import/Export</a></li>
 <li><span id=cMdocInfo-d class='cM cM-alt'>DocumentInfo</span><A	id=cMdocInfo
@@ -1829,7 +1830,7 @@ serviceAgent.pushEntry(xUI.XPS,function(){xUI.setStored("current");sync();
 	onclick='if(fileBox.storeOtherExtensionFile){fileBox.storeOtherExtensionFile(printHTML(true),"html")}else{alert("現在ファイルの操作ができません")};return false;'
 	title="表示用HTMLで書出し"
 >Export as html</A></li>
-<li id=cMcgi><span id=cMprintHTML class='cM cM-alt'>Print html</span><A	id=cMprintHTML
+<li id=cMcgi><span id=cMprintHTML-d class='cM cM-alt'>Print html</span><A	id=cMprintHTML
 	href='javascript:void(0)'
 	onclick='printHTML();return false;'
 	title="印刷"
@@ -1943,7 +1944,7 @@ serviceAgent.pushEntry(xUI.XPS,function(){xUI.setStored("current");sync();
 	onclick='xUI.sWitchPanel("headerTool");return false'
 	title="header tools show/hide"
 >headerTools</A></li>
-<li><span id=cMpmui-d class='pM pM-alt'></span><A	id=cMpmui
+<li><span id=cMpmControl-d class='pM pM-alt'></span><A	id=cMpmControl
 	HREF='javascript:void(0);'
 	onclick='xUI.sWitchPanel("pmui");return false'
 	title="制作管理メニュー"
@@ -1998,20 +1999,20 @@ serviceAgent.pushEntry(xUI.XPS,function(){xUI.setStored("current");sync();
 
     </ul>
 <!-- 編集エリア用ステージ切り替えリスト -->
-    <ul id=cMstageList class='cMonTrackHeader'>
+    <!-- ul id=cMstageList class='cMonTrackHeader'>
 <li><span class=cM>----</span></li>
-    </ul>
+    </ul -->
     <ul class='cMonTrackHeader'>
 <hr>
-<li><span id=cMimport class='cM cM-alt'></span><A	id=cMimport
+<li><span id=cMimport-d class='cM cM-alt'></span><A id=cMimport
 	HREF='javascript:void(0);'
-	onclick=';return false;'
+	onclick='xUI.sWitchPanel("File");return false;'
 	title="データ読み出し"
 >readout</A></li>
     </ul>
 <!-- トラック編集メニュー onTrackLabel(常時)-->
     <ul class='cMonTrackLabel'>
-<li><span id=cMrenameTL-d class='cM cM-alt'></span><A	id=cMrenameTL
+<li><span id=cMrenameTL-d class='cM cM-alt'></span><A id=cMrenameTL
 	HREF='javascript:void(0);'
 	onclick='reNameLabel(xUI.Select[0]);return false;'
 	title="ラベル変更"
@@ -2024,22 +2025,22 @@ serviceAgent.pushEntry(xUI.XPS,function(){xUI.setStored("current");sync();
     </ul> 
 <!--        reformat     onTrack onTiming -->
     <ul class='cMonTrack onTiming'>
-<li><span id=cMaddCircle-d class='cM cM-alt'>◯かこみ</span><A	id=cMaddCircle
+<li><span id=cMaddCircle-d class='cM cM-alt'>◯かこみ</span><A id=cMaddCircle
 	HREF='javascript:void(0);'
 	onclick='addCircle("circle");return false;'
 	title="丸囲い"
 >◯かこみ</A></li>
-<li><span id=cMaddAngles-d class='cM cM-alt'>△かこみ</span><A	id=cMaddAngles
+<li><span id=cMaddAngles-d class='cM cM-alt'>△かこみ</span><A id=cMaddAngles
 	HREF='javascript:void(0);'
 	onclick='addCircle("triangle");return false;'
 	title="三角囲い"
 >△かこみ</A></li>
-<li><span id=cMformatTL-d class='cM cM-alt'></span><A	id=cMformatTL
+<li><span id=cMformatTL-d class='cM cM-alt'></span><A id=cMformatTL
 	HREF='javascript:void(0);'
 	onclick='reformatTimeline();return false;'
 	title="タイムライン整形"
 >FormatTL</A></li>
-<li><span id=cMformatSheet-d class='cM cM-alt'></span><A	id=cMformatSheet
+<li><span id=cMformatSheet-d class='cM cM-alt'></span><A id=cMformatSheet
 	HREF='javascript:void(0);'
 	onclick='reformatTimeline("all");return false;'
 	title="シートを整形"
@@ -2057,7 +2058,7 @@ serviceAgent.pushEntry(xUI.XPS,function(){xUI.setStored("current");sync();
 <hr>
     </ul>
     <ul class='cMonTrack onCamera'>
-<li><span id=cMaddBrackets-d class='cM cM-alt'>□かこみ</span><A	id=cMaddBrackets
+<li><span id=cMaddBrackets-d class='cM cM-alt'>□かこみ</span><A id=cMaddBrackets
 	HREF='javascript:void(0);'
 	onclick='addCircle("brackets");return false;'
 	title="四角囲い"
@@ -2079,6 +2080,17 @@ serviceAgent.pushEntry(xUI.XPS,function(){xUI.setStored("current");sync();
     </ul>
 <!-- 編集メニュー onTrack (常時?)-->
     <ul class='cMonTrack'>
+<li><span id=cMincrementNum-d class='cM cM-alt'>＋＋</span><A	id=cMincrementNum
+	HREF='javascript:void(0);'
+	onclick='incrementCell(1);return false;'
+	title="セルを繰り上げる"
+>[＋＋]</A></li>
+<li><span id=cMdecrementNum-d class='cM cM-alt'>ーー</span><A	id=cMdecrementNum
+	HREF='javascript:void(0);'
+	onclick='incrementCell(-1);return false;'
+	title="セルを繰り下げる"
+>[ーー]</A></li>
+<hr>
 <li><span id=cMselectAll-d class='cM cM-alt'>selectAll</span><A	id=cMselectAll
 	HREF='javascript:void(0);'
 	onclick='chkValue("selall");return false;'
@@ -2100,16 +2112,6 @@ serviceAgent.pushEntry(xUI.XPS,function(){xUI.setStored("current");sync();
 	title=""
 >Paste [ctr]-[v]</A></li>
 <hr>
-<li><span id=cMincrementNum-d class='cM cM-alt'>＋＋</span><A	id=cMincrementNum
-	HREF='javascript:void(0);'
-	onclick='incrementCell(1);return false;'
-	title="セルを繰り上げる"
->＋＋</A></li>
-<li><span id=cMdecrementNum-d class='cM cM-alt'>ーー</span><A	id=cMdecrementNum
-	HREF='javascript:void(0);'
-	onclick='incrementCell(-1);return false;'
-	title="セルを繰り下げる"
->ーー</A></li>
     </ul>
 <!-- トラック編集メニュー onTrack(emode0)-->
     <ul class='cMonTrack'>
@@ -2129,7 +2131,7 @@ serviceAgent.pushEntry(xUI.XPS,function(){xUI.setStored("current");sync();
 	onclick='insertBlank();return false;'
 	title="選択範囲にカラコマを挿入"
 >InsertBlank</A></li>
-<li class=cMSelection><span id=cMbrockRemove-d class='cM cM-alt'></span><A	id=cMbrockRemove
+<li class=cMSelection><span id=cMblockRemove-d class='cM cM-alt'></span><A	id=cMblockRemove
 	HREF='javascript:void(0);'
 	onclick='deleteBlank();return false;'
 	title="ブロックで削除"
@@ -2178,9 +2180,9 @@ serviceAgent.pushEntry(xUI.XPS,function(){xUI.setStored("current");sync();
     </ul>
 
 <!--    referenece  onReference (emode0)  -->
-    <ul id=cMjobList class='cMonReferenceHeader'>
+    <!-- ul id=cMjobList class='cMonReferenceHeader'>
 <li><span class=cM>----</span></li>
-    </ul>
+    </ul -->
     <ul class='cMonReferenceHeader'>
 <li id=cMcgi><span id=cMimportReference-d class='cM cM-alt'></span><A	id=cMimportReference
 	HREF='javascript:void(0);'
@@ -2506,7 +2508,7 @@ onclick='nas.incrFCTonHTMLInput(document.getElementById("editTC"),"-(1)")'
 */
 
 -->
-<input type=hidden id=loadShortcut value=false>
+<input type=hidden id=loadShortcut    value=false>
 <div style="text-align:center;">
 <span id=localFileLoader>
 <form id="dataLoader" name="dataLoader" method="post" action="javascript:void(0);" enctype="multipart/form-data">
@@ -2524,7 +2526,7 @@ onclick='nas.incrFCTonHTMLInput(document.getElementById("editTC"),"-(1)")'
 	title="ファイルの内容のみを編集エリアに取り込む"
 ><input type=button
     id=dataLoaderRef value="参照取込" style="width:10%"
-	onClick='if(xUI.referenceXPS.parseXps(convertXps(xUI.data_well.value,"",{},true))){xUI.resetSheet();}'
+	onClick='if(xUI.referenceXPS.parseXps(xUI.convertXps(xUI.data_well.value,"",{},true))){xUI.resetSheet();}'
 	title="データを参照エリアへ読み込む"
 ><input type=button
     id=dataLoaderGet value="取込" style="width:10%"
@@ -2942,14 +2944,14 @@ Execute with [store SCi] button
  
  </button><br>
 <button id=resetSCiTarget
- onclick ='xUI.importBox.resetTarget(xUI.importBox.targetContents);'
+ onclick ='xUI.importBox.resetTarget(xUI.importBox.targetContents);if($("#optionPanelData").isVisible())xUI.sWitchPanel("Data");'
  style='width:198px'
  title='元に戻す' 
  > リセット
  
   </button>
 <button id=closeSCiDialog
- onclick ='$("#optionPanelSCI").dialog("close");'
+ onclick ='if(! $("#optionPanelData").isVisible())xUI.sWitchPanel("Data");$("#optionPanelSCI").dialog("close");'
  style='width:198px'
  title='手動で変換'
  title='キャンセルしてダイアログを閉じる'

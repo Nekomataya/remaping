@@ -172,8 +172,8 @@ nas.LanguagePack.prototype.chgLocale = function (myLocale) {
                     var xeId = eId.replace(/^pM/,menuSet[pfx]);
                     if (document.getElementById(xeId)) {
                         document.getElementById(xeId)[eType] = value;
-                        if((eType=="innerHTML")&&(document.getElementById(xeId+'_d'))) {
-                            document.getElementById(xeId+'_d')['innerHTML'] = value;                        
+                        if((eType=="innerHTML")&&(document.getElementById(xeId+'-d'))) {
+                            document.getElementById(xeId+'-d')['innerHTML'] = value;                        
                         }
                     }
                 }

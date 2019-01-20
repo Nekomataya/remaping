@@ -1262,7 +1262,14 @@ div.application_status {
     height:165px;
     background-color:#efefef;
     padding:0;
-    border-style:double;
+    border-style:solid;
+    border-width:1px;
+    border-color:#808080;
+    z-index:7;
+  /* 角丸 */
+    -moz-border-radius: 4px ;
+    -webkit-border-radius: 4px;
+    border-radius: 4px;
 }
 #optionPanelTbx a.minimize{
     position:absolute;
@@ -1355,9 +1362,15 @@ div.application_status {
     left:120px;
 	width:640px;
     padding:0;
-    border-style:none;
+    border-style:solid;
+    border-width:1px;
+    border-color:#808080;
     z-index:7;
 	overflow:hidden;
+  /* 角丸 */
+    -moz-border-radius: 4px ;
+    -webkit-border-radius: 4px;
+    border-radius: 4px;
 }
 /**
 	参照用画像オーバーレイ

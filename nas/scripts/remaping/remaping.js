@@ -1,4 +1,4 @@
-﻿ /**
+ /**
  * Remaping本体スクリプト
  *     XPSオブジェクトとMAPオブジェクトについては、
  *     以下のドキュメントを参照のこと
@@ -111,9 +111,11 @@ function new_xUI(){
 */
     xUI.importBox={};//インポート情報トレーラー初期化
     xUI.importBox.overwriteProps    ={};
+    xUI.importBox.importTarget  = false;
     xUI.importBox.maxSize  = 1000000;
     xUI.importBox.maxCount = 10;
     xUI.importBox.allowExtensions=new RegExp("\.(txt|csv|xps|ard|ardj|tsh|xdts|tdts)$",'i');
+
 /**
     importBox リセット
     インポート操作の直前でリセットを行うこと
@@ -121,6 +123,12 @@ function new_xUI(){
 xUI.importBox.reset = function(){
     this.targetContents    =[];
     this.selectedContents  =[];
+    this.importTarget  = false;
+    if(document.getElementById('loadShortcut').value=='ref'){
+        this.importTarget=xUI.referenceXPS;
+    }else if(document.getElementById('loadShortcut').value){
+        this.importTarget=xUI.XPS;
+    }
     this.importCount= 0;
     this.callback = undefined;
 //console.log('importBox reset')
@@ -162,6 +170,27 @@ xUI.importBox.read = function (targetFiles,callback){
       // 指定されたファイルを取得してインポーターのプロパティとして記録
   for(var ix=0;ix<targetQueue.length;ix++){
     var input = targetQueue[ix];
+//最初のファイルをターゲットに読込
+    if(this.importTarget){
+	var myEncode=(input.name.match(/\.(ard|csv|tsh)$/))?"Shift-JIS":"UTF-8";
+      // ファイルリーダーオブジェクト初期化(Chrome/Firefoxのみ)
+      var reader = new FileReader();
+      reader.name=input.name;
+      // ファイルの読み込みに成功したら、その内容をxUI.data_wellに反映
+      reader.addEventListener('load', function(e) {
+        var output = reader.result;//
+        xUI.data_well.value = reader.result;//最後に読み込んだ内容で上書きされるので注意
+        var myXps = xUI.convertXps(reader.result,divideExtension(reader.name)[1],xUI.importBox.overwriteProps);// 指定オプション無しで一旦変換する
+        if(!myXps){
+            alert(reader.name+' is not supported format');
+        }
+        xUI.importBox.importTarget.parseXps(myXps.toString());
+        xUI.resetSheet();
+      }, true);
+      // ファイルの内容をテキストとして取得
+        reader.readAsText(input, myEncode);
+        break;
+    }
 //非同期で実行
 (function(){
 	var myEncode=(input.name.match(/\.(ard|csv|tsh)$/))?"Shift-JIS":"UTF-8";
@@ -172,7 +201,6 @@ xUI.importBox.read = function (targetFiles,callback){
       reader.addEventListener('load', function(e) {
         var output = reader.result;//
         xUI.data_well.value = reader.result;//最後に読み込んだ内容で上書きされるので注意  20180220
-
         var myXps = xUI.convertXps(reader.result,divideExtension(reader.name)[1],xUI.importBox.overwriteProps);// 指定オプション無しで一旦変換する
         if(!myXps){
             alert(reader.name+' is not supported format');
@@ -195,7 +223,7 @@ xUI.importBox.read = function (targetFiles,callback){
       }, true);
       // ファイルの内容をテキストとして取得
       reader.readAsText(input, myEncode);
-})();
+})();//キューの各エントリを処理
   }
       }else{
 //FileReaderが無いブラウザ(Safari等)では、お詫びしてオシマイ
@@ -2195,7 +2223,6 @@ console.log([currentBox[3],currentFr,currentAb,currentLp])
        currentLp -= currentBox[3];        
     }
 console.log([currentBox[3],currentFr,currentAb,currentLp])
-//    $('body').css('padding',[currentBox[0]+y,currentBox[1],currentBox[2],currentBox[3]+x].join('px ')+'px');
     $('body').css('padding',[y,currentBox[1],currentBox[2],x].join('px ')+'px');
     $('.floating-right').css('padding-right',(currentFr+x)+'px');
     $('#account_box').css('padding-right'   ,(currentAb+x)+'px');
@@ -2212,17 +2239,15 @@ xUI.shiftScreen(50,50);
     引数なし
  */
 xUI.adjustSpacer=function(){
-// ////////////alert("start adjust : "+$("#app_status").offset().top +":"+document.getElementById("fixedHeader").clientHeight );
     var headHeight=(this.viewMode=="Compact")? $("#app_status").offset().top-$("#pMenu").offset().top:document.getElementById("fixedHeader").clientHeight;
- var myOffset=(this.viewMode=="Compact")? $("#app_status").offset().top-headHeight:0;
+    var myOffset=(this.viewMode=="Compact")? $("#app_status").offset().top-headHeight:0;
 //一時コード  あとで調整  20180916
-if(document.getElementById("scrollSpaceHd"))
-    document.getElementById("scrollSpaceHd").style.height=(headHeight-myOffset)+"px";
-if(document.getElementById("xpstScrollSpaceHd"))
-    document.getElementById("xpstScrollSpaceHd").style.height=(headHeight-myOffset)+"px";
-if(document.getElementById("xmapScrollSpaceHd"))
-    document.getElementById("xmapScrollSpaceHd").style.height=(headHeight-myOffset)+"px";
-
+    if(document.getElementById("scrollSpaceHd"))
+        document.getElementById("scrollSpaceHd").style.height=(headHeight-myOffset)+"px";
+    if(document.getElementById("xpstScrollSpaceHd"))
+        document.getElementById("xpstScrollSpaceHd").style.height=(headHeight-myOffset)+"px";
+    if(document.getElementById("xmapScrollSpaceHd"))
+        document.getElementById("xmapScrollSpaceHd").style.height=(headHeight-myOffset)+"px";
     document.getElementById("UIheaderScrollH").style.top=(headHeight+$("#app_status").height())+"px";
     document.getElementById("UIheaderFix").style.top=(headHeight+$("#app_status").height())+"px";
     document.getElementById("UIheaderScrollV").style.top=(headHeight+$("#app_status").height())+"px";
@@ -3021,6 +3046,7 @@ xUI.pageView =function(pageNumber)
 {
     var restoreValue=this.Select;
     var BODY_ = '';
+    var headlineHeight=36;
 //ページ数//プロパティに変更せよ
 if(this.viewMode=="Compact"){
 var Pages=1;//コンパクトモードでは固定
@@ -3072,6 +3098,8 @@ if((document.getElementById('qdr3'))&&(document.getElementById('qdr3').innerHTML
  ページ内に最終フレームが含まれるか否かを判定してカット記述終了マーカーを配置する拡張
 (2018/03/10)
  トラック注釈を引き出し線付きで表示する機能増設
+(2019/01/20)
+ 固定オーバーレイが参照非表示の際に表示乱れするのを抑制（高さ）
 */
 //ページ番号が現存のページ外だった場合丸める
     if (pageNumber >=Pages){
@@ -3324,6 +3352,7 @@ BODY_ +='<tr>';
     for (cols=0;cols < PageCols;cols ++){
 /*********** timeguide ********************/
 BODY_ +='<th rowspan=2 class="tclabel annotationText" ';
+BODY_ +='style="height:'+headlineHeight+'px" ';
 //BODY_ +='style=" width:'+this.sheetLooks.TimeGuideWidth+CellWidthUnit+'"';
 BODY_ +=' ><span class=timeguide> TIME </span></th>';
 /*********** Action Ref *************/
@@ -3696,14 +3725,15 @@ xUI.replaceEndMarker = function(endPoint){
     var endCellLeft  = $('#'+[0,endPoint[1]-1].join('_'));
     var endCellRight = $('#'+[endPoint[0]-1,endPoint[1]-1].join('_'));    var parentSheet  = $(document.getElementById('endMarker').parentNode);
     var topMargin  = $(document.getElementById('fixedHeader')).height();
+    if(xUI.viewMode=='Compact') topMargin -= document.getElementById("app_status").clientHeight;
     var endCellLeftOffset  = endCellLeft.offset();
     var endCellRightOffset = endCellRight.offset();
     var parentOffset   = parentSheet.position();
-    var markerTop    = endCellLeftOffset.top + endCellLeft.height() -topMargin;
+    var markerTop    = endCellRightOffset.top + endCellRight.height() - topMargin;
     var markerLeft   = endCellLeftOffset.left - parentOffset.left;
     var markerWidth  = endCellRightOffset.left + endCellRight.width() - endCellLeftOffset.left;
-   $("#endMarker").css({'top':markerTop,'left':markerLeft,'width':markerWidth });//ここでjQery使ってる
-   document.getElementById("endMarker").innerHTML = ':: end ::';
+    $("#endMarker").css({'top':markerTop,'left':markerLeft,'width':markerWidth });
+    document.getElementById("endMarker").innerHTML = ':: end ::';
 }
 //
 //本体シートの表示を折り畳む（トグル）
@@ -3747,6 +3777,7 @@ var PageCount=(this.viewMode=="Compact")?1:Math.ceil(this.XPS.duration()/this.Pa
 /*
 tableColumnWidth
 $('.ref').each(function(index,elem){$(elem).show/hide()});組み合わせ処理が必要
+表示状態を他のメソッドから参照する必要あり（重要）
 */
 xUI.flipRefColumns=function(action){
         var status=$('#rnArea').isVisible();
@@ -3756,14 +3787,25 @@ xUI.flipRefColumns=function(action){
     }else{
         action = !(status);
     }
-    var flipSpan = (this.sheetLooks.ActionWidth*this.referenceLabels.length)*this.PageCols;
+    var flipSpan = (this.sheetLooks.ActionWidth*this.referenceLabels.length)*((this.viewMode=="Compact")?1:this.PageCols);
     if(action){
         $('.ref').show();
-        $('.sheet').width($('.sheet').width()+flipSpan);
+        $('#qdr4.sheet').width($('#qdr4.sheet').width()+flipSpan);
+        if(this.viewMode=="Compact"){
+            $('#qdr3.sheet').width($('#qdr3.sheet').width()-flipSpan);
+            $('#qdr2.sheet').width($('#qdr2.sheet').width()-flipSpan);
+            $('#qdr1.sheet').width($('#qdr1.sheet').width()+flipSpan);
+        }
     }else{
         $('.ref').hide();
-        $('.sheet').width($('.sheet').width()-flipSpan);
+        $('#qdr4.sheet').width($('#qdr4.sheet').width()-flipSpan);
+        if(this.viewMode=="Compact"){
+            $('#qdr3.sheet').width($('#qdr3.sheet').width()-flipSpan);
+            $('#qdr2.sheet').width($('#qdr2.sheet').width()-flipSpan);
+            $('#qdr1.sheet').width($('#qdr1.sheet').width()-flipSpan);
+        }
     }
+    xUI.replaceEndMarker(xUI.XPS.xpsTracks.duration);
 };
 
 /**  UI関連メソッド
@@ -6766,6 +6808,10 @@ xUI.resetSheet=function(editXps,referenceXps){
     var restoreSelection=this.Selection.concat();
     var reWriteXPS = false;
     var reWriteREF = false;
+
+    var Refstatus = (document.getElementById('rnArea'))? $('#rnArea').isVisible():true;
+
+    if(! Refstatus) xUI.flipRefColumns('show');
 /*
     引数にeditXPSが与えられなかった場合は、現在のXPSのまま処理を続行（画面のrefreshのみを行う）
  */
@@ -6874,12 +6920,14 @@ xUI.resetSheet=function(editXps,referenceXps){
     sync("info_");
 /* ヘッダ高さの初期調整*/
     this.adjustSpacer();
-/* エンドマーカー位置調整  endMarker
+/* エンドマーカー位置調整 はadjustSpacerに内包
 //印字用endマーカーは  印刷cssを参照して誤差を反映させること  フレームのピッチを計算すること
 印刷画面は印刷画面出力時に再度同メソッドで調整  トラック間の
 xUI.replaceEndMarker([トラック数,フレーム数],上下オフセットpx);
  */
     xUI.replaceEndMarker(xUI.XPS.xpsTracks.duration);
+if(! Refstatus) xUI.flipRefColumns('hide');
+
     return ;
 };
 
@@ -7763,30 +7811,30 @@ $("#optionPanelSnd").dialog({
 //インポート用ファイルドラッガ初期化
  $(function() {
         var localFileLoader = $("#data_well");
-        // File API が使用できない場合は諦めます.
+        // File API が使用できない場合は諦め
         if(!window.FileReader) {
         console.log("File API がサポートされていません。:"+new Date());
           return false;
         }
-        // イベントをキャンセルするハンドラです.
+        // イベントをキャンセルするハンドラ
         var cancelEvent = function(event) {
             event.preventDefault();
             event.stopPropagation();
             return false;
         }
-        // dragenter, dragover イベントのデフォルト処理をキャンセルします.
+        // dragenter, dragover イベントのデフォルト処理をキャンセル
         localFileLoader.bind("dragenter", cancelEvent);
         localFileLoader.bind("dragover", cancelEvent);
         // ドロップ時のイベントハンドラを設定します.
         var handleDroppedFile = function(event) {
-          // ドロップされたファイル配列を取得してファイルセレクタへ送る
+          // ドロップされたファイル配列を取得してファイルセレクタへ
           // 同時にonChangeを打つ
           document.getElementById('myCurrentFile').files = event.originalEvent.dataTransfer.files;
-          // デフォルトの処理をキャンセルします.
+          // デフォルトの処理をキャンセル
           cancelEvent(event);
           return false;
         }
-        // ドロップ時のイベントハンドラを設定します.
+        // ドロップ時のイベントハンドラを設定
         localFileLoader.bind("drop", handleDroppedFile);
 });
 
@@ -9011,7 +9059,7 @@ myBody+='<script src="'+libOffset+'nas/lib/cameraworkDescriptionDB.js"></script>
 myBody+='<script src="'+libOffset+'nas/scripts/remaping/remaping.js"></script>';
 
 
-myBody += '<script>replaceEndMarker=function (){var endPoint = JSON.parse(document.getElementById("endMarker").innerHTML);    if(!(endPoint instanceof Array)) {endPoint=[1,endPoint]};    var endCellLeft  = document.getElementById("0_"+String(endPoint[1]-1));    var endCellRight = document.getElementById(String(endPoint[0]-1)+"_"+String(endPoint[1]-1));    var parentSheet  = document.getElementById("endMarker").parentNode;    var endCellLeftRect  = endCellLeft.getBoundingClientRect();    var endCellRightRect = endCellRight.getBoundingClientRect();    var parentRect   = parentSheet.getBoundingClientRect();    var markerRect   = document.getElementById("endMarker").getBoundingClientRect();    console.log (markerRect);    var markerWidth  = String(endCellRightRect.right-endCellLeftRect.left)+"px";var markerTop    = String(endCellLeftRect.bottom - parentRect.bottom + (markerRect.height))+ "px" ;    var markerLeft   = String(endCellLeftRect.left-parentRect.left)+"px";document.getElementById("endMarker").style.left  = markerLeft;   document.getElementById("endMarker").style.top   = markerTop;   document.getElementById("endMarker").style.width = markerWidth; document.getElementById("endMarker").innerHTML = ":: end ::";};resizePage2Paper=function(){var areaHeight = 1250;xUI.adjustScale([1,1]); var pgRect=document.getElementById("printPg1").getBoundingClientRect(); xUI.adjustScale([1,areaHeight/pgRect.height]);};</script>';
+myBody += '<script>replaceEndMarker=function (){{if(! document.getElementById("endMarker")) return;    if (typeof endPoint == "undefined"){   try{    var endPoint = [xUI.XPS.xpsTracks.length, xUI.XPS.xpsTracks.duration];   }catch(er){return;}    }    if(!(endPoint instanceof Array)) {endPoint=[xUI.XPS.xpsTracks.length,endPoint]};    var endCellLeft  = $("#"+[0,endPoint[1]-1].join("_"));    var endCellRight = $("#"+[endPoint[0]-1,endPoint[1]-1].join("_"));    var parentSheet  = $(document.getElementById("endMarker").parentNode);    var topMargin  = $(document.getElementById("fixedHeader")).height();    var endCellLeftOffset  = endCellLeft.offset();    var endCellRightOffset = endCellRight.offset();    var parentOffset   = parentSheet.position();    var markerTop    = endCellLeftOffset.top + endCellLeft.height() -topMargin;    var markerLeft   = endCellLeftOffset.left - parentOffset.left;    var markerWidth  = endCellRightOffset.left + endCellRight.width() - endCellLeftOffset.left;   $("#endMarker").css({"top":markerTop,"left":markerLeft,"width":markerWidth });document.getElementById("endMarker").innerHTML = ":: end ::";};resizePage2Paper=function(){var areaHeight = 1250;xUI.adjustScale([1,1]); var pgRect=document.getElementById("printPg1").getBoundingClientRect(); xUI.adjustScale([1,areaHeight/pgRect.height]);};</script>';
 //myBody+='</title><link REL=stylesheet TYPE="text/css" HREF="./template/printout.css">';
 myBody+='<style type="text/css"> * { margin: 0; padding: 0;} #fixed {position: fixed;} #sheet_view {  margin:0; }</style></head>';//
 
@@ -9076,11 +9124,12 @@ _w=window.open ("","xpsFile","width=1120,height=1600,scrollbars=yes,menubar=yes"
 */
 window.addEventListener('DOMContentLoaded', function() {
 // ファイルが指定されたタイミングで、その内容を表示
-  if(document.getElementById("myCurrentFile")){
-  document.getElementById("myCurrentFile").addEventListener('change', function(e){
-//console.log('addEventListener');
-    xUI.importBox.read(this.files,processImport)}, true);//myCrrentFile.addEvent
-  }
+    if(document.getElementById("myCurrentFile")){
+        document.getElementById("myCurrentFile").addEventListener('change', function(e){
+            xUI.importBox.read(this.files,processImport)},
+            true
+        );//myCrrentFile.addEvent
+    }
 });//window.addEvent
 
 /**
@@ -9109,23 +9158,33 @@ var processImport=function(autoBuffer){
             console.log(xUI.importBox.selectedContents[dix].toString());
         }
     }else{
-        if((xUI.uiMode=='production')&&(xUI.sessionRetrace == 0)){
+        if((document.getElementById('loadShortcut')!='ref')&&(xUI.uiMode=='production')&&(xUI.sessionRetrace == 0)){
 //インポート時 undoが必要なケースでは xUI.putに渡す
             xUI.put(xUI.importBox.selectedContents[0]);
         }else{
 //undoリセットが望ましい場合はxUI.resetSheetに渡してリセットする
-            xUI.resetSheet(xUI.importBox.selectedContents[0]);
+            if(document.getElementById('loadShortcut')=='ref'){
+                xUI.resetSheet(false,xUI.importBox.selectedContents[0]);
+            }else{
+                xUI.resetSheet(xUI.importBox.selectedContents[0]);
+            }
         }
     }
   }else{
-    if(xUI.XPS.readIN(xUI.data_well.value)){
+     var loading=false;
+    if(document.getElementById('loadShortcut')=='ref'){
+        loading=xUI.XPS.readIN(xUI.data_well.value);
+    }else{
+        loading=xUI.referenceXPS.readIN(xUI.data_well.value);
+    }
+    if(loading){
         xUI.resetSheet();
     }else{
         return false;
     }
   }
       if(xUI.uiMode=='browsing') {xUI.setUImode('floating')};
-      xUI.sWitchPanel('Data');
+//      xUI.sWitchPanel('Data');
 
 }
 
