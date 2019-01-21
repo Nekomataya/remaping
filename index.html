@@ -1817,7 +1817,7 @@ serviceAgent.pushEntry(xUI.XPS,function(){xUI.setStored("current");sync();
 >Export As Xdts</A></li>
 <li><span id=cMimportexport-d class='cM cM-alt'>Import/Export</span><a	id=cMimportexport
 	href="javascript:void(0);"
-	onclick="if(! $('#optionPanelData').isVisible()) xUI.sWitchPanel('Data');return false;"
+	onclick="xUI.sWitchPanel('Data');return false;"
 	title="読み込み書き出しパネルを開く"
 >Import/Export</a></li>
 <li><span id=cMdocInfo-d class='cM cM-alt'>DocumentInfo</span><A	id=cMdocInfo
@@ -1944,7 +1944,7 @@ serviceAgent.pushEntry(xUI.XPS,function(){xUI.setStored("current");sync();
 	onclick='xUI.sWitchPanel("headerTool");return false'
 	title="header tools show/hide"
 >headerTools</A></li>
-<li><span id=cMpmControl-d class='pM pM-alt'></span><A	id=cMpmControl
+<li><span id=cMpmui-d class='pM pM-alt'></span><A	id=cMpmui
 	HREF='javascript:void(0);'
 	onclick='xUI.sWitchPanel("pmui");return false'
 	title="制作管理メニュー"
@@ -1998,21 +1998,20 @@ serviceAgent.pushEntry(xUI.XPS,function(){xUI.setStored("current");sync();
 >ソース</A></li>
 
     </ul>
-<!-- 編集エリア用ステージ切り替えリスト -->
-    <!-- ul id=cMstageList class='cMonTrackHeader'>
+<!-- 編集エリア用ステージ切り替えリスト
+    <ul id=cMstageList class='cMonTrackHeader'>
 <li><span class=cM>----</span></li>
-    </ul -->
+    </ul> -->
     <ul class='cMonTrackHeader'>
-<hr>
-<li><span id=cMimport-d class='cM cM-alt'></span><A id=cMimport
+<li><span id=cMimport-d class='cM cM-alt'></span><A	id=cMimport
 	HREF='javascript:void(0);'
-	onclick='xUI.sWitchPanel("File");return false;'
+	onclick="document.getElementById('loadShortcut').value='body';document.getElementById('myCurrentFile').click();return false;"
 	title="データ読み出し"
 >readout</A></li>
     </ul>
 <!-- トラック編集メニュー onTrackLabel(常時)-->
     <ul class='cMonTrackLabel'>
-<li><span id=cMrenameTL-d class='cM cM-alt'></span><A id=cMrenameTL
+<li><span id=cMrenameTL-d class='cM cM-alt'></span><A	id=cMrenameTL
 	HREF='javascript:void(0);'
 	onclick='reNameLabel(xUI.Select[0]);return false;'
 	title="ラベル変更"
@@ -2025,22 +2024,22 @@ serviceAgent.pushEntry(xUI.XPS,function(){xUI.setStored("current");sync();
     </ul> 
 <!--        reformat     onTrack onTiming -->
     <ul class='cMonTrack onTiming'>
-<li><span id=cMaddCircle-d class='cM cM-alt'>◯かこみ</span><A id=cMaddCircle
+<li><span id=cMaddCircle-d class='cM cM-alt'>◯かこみ</span><A	id=cMaddCircle
 	HREF='javascript:void(0);'
 	onclick='addCircle("circle");return false;'
 	title="丸囲い"
 >◯かこみ</A></li>
-<li><span id=cMaddAngles-d class='cM cM-alt'>△かこみ</span><A id=cMaddAngles
+<li><span id=cMaddAngles-d class='cM cM-alt'>△かこみ</span><A	id=cMaddAngles
 	HREF='javascript:void(0);'
 	onclick='addCircle("triangle");return false;'
 	title="三角囲い"
 >△かこみ</A></li>
-<li><span id=cMformatTL-d class='cM cM-alt'></span><A id=cMformatTL
+<li><span id=cMformatTL-d class='cM cM-alt'></span><A	id=cMformatTL
 	HREF='javascript:void(0);'
 	onclick='reformatTimeline();return false;'
 	title="タイムライン整形"
 >FormatTL</A></li>
-<li><span id=cMformatSheet-d class='cM cM-alt'></span><A id=cMformatSheet
+<li><span id=cMformatSheet-d class='cM cM-alt'></span><A	id=cMformatSheet
 	HREF='javascript:void(0);'
 	onclick='reformatTimeline("all");return false;'
 	title="シートを整形"
@@ -2058,7 +2057,7 @@ serviceAgent.pushEntry(xUI.XPS,function(){xUI.setStored("current");sync();
 <hr>
     </ul>
     <ul class='cMonTrack onCamera'>
-<li><span id=cMaddBrackets-d class='cM cM-alt'>□かこみ</span><A id=cMaddBrackets
+<li><span id=cMaddBrackets-d class='cM cM-alt'>□かこみ</span><A	id=cMaddBrackets
 	HREF='javascript:void(0);'
 	onclick='addCircle("brackets");return false;'
 	title="四角囲い"
@@ -2080,17 +2079,6 @@ serviceAgent.pushEntry(xUI.XPS,function(){xUI.setStored("current");sync();
     </ul>
 <!-- 編集メニュー onTrack (常時?)-->
     <ul class='cMonTrack'>
-<li><span id=cMincrementNum-d class='cM cM-alt'>＋＋</span><A	id=cMincrementNum
-	HREF='javascript:void(0);'
-	onclick='incrementCell(1);return false;'
-	title="セルを繰り上げる"
->[＋＋]</A></li>
-<li><span id=cMdecrementNum-d class='cM cM-alt'>ーー</span><A	id=cMdecrementNum
-	HREF='javascript:void(0);'
-	onclick='incrementCell(-1);return false;'
-	title="セルを繰り下げる"
->[ーー]</A></li>
-<hr>
 <li><span id=cMselectAll-d class='cM cM-alt'>selectAll</span><A	id=cMselectAll
 	HREF='javascript:void(0);'
 	onclick='chkValue("selall");return false;'
@@ -2112,6 +2100,16 @@ serviceAgent.pushEntry(xUI.XPS,function(){xUI.setStored("current");sync();
 	title=""
 >Paste [ctr]-[v]</A></li>
 <hr>
+<li><span id=cMincrementNum-d class='cM cM-alt'>[＋＋]</span><A	id=cMincrementNum
+	HREF='javascript:void(0);'
+	onclick='incrementCell(1);return false;'
+	title="セルを繰り上げる"
+>[＋＋]</A></li>
+<li><span id=cMdecrementNum-d class='cM cM-alt'>[ーー]</span><A	id=cMdecrementNum
+	HREF='javascript:void(0);'
+	onclick='incrementCell(-1);return false;'
+	title="セルを繰り下げる"
+>[ーー]</A></li>
     </ul>
 <!-- トラック編集メニュー onTrack(emode0)-->
     <ul class='cMonTrack'>
@@ -2131,7 +2129,7 @@ serviceAgent.pushEntry(xUI.XPS,function(){xUI.setStored("current");sync();
 	onclick='insertBlank();return false;'
 	title="選択範囲にカラコマを挿入"
 >InsertBlank</A></li>
-<li class=cMSelection><span id=cMblockRemove-d class='cM cM-alt'></span><A	id=cMblockRemove
+<li class=cMSelection><span id=cMbrockRemove-d class='cM cM-alt'></span><A	id=cMbrockRemove
 	HREF='javascript:void(0);'
 	onclick='deleteBlank();return false;'
 	title="ブロックで削除"
@@ -2179,10 +2177,10 @@ serviceAgent.pushEntry(xUI.XPS,function(){xUI.setStored("current");sync();
 >DeleteTL</A></li>
     </ul>
 
-<!--    referenece  onReference (emode0)  -->
-    <!-- ul id=cMjobList class='cMonReferenceHeader'>
+<!--    referenece  onReference (emode0) 
+    <ul id=cMjobList class='cMonReferenceHeader'>
 <li><span class=cM>----</span></li>
-    </ul -->
+    </ul> -->
     <ul class='cMonReferenceHeader'>
 <li id=cMcgi><span id=cMimportReference-d class='cM cM-alt'></span><A	id=cMimportReference
 	HREF='javascript:void(0);'
@@ -2214,7 +2212,7 @@ serviceAgent.pushEntry(xUI.XPS,function(){xUI.setStored("current");sync();
 
     </ul>
 <!--        backup     offTrack (emode0) -->
-    <ul class='cMouter'>
+    <ul class='cMonReference'>
 <li><span id=cMpushBackup-d class='cM cM-alt'></span><A	id=cMpushBackup
 	HREF='javascript:void(0);'
 	onclick='xUI.setBackup();return false;'
@@ -2232,7 +2230,13 @@ serviceAgent.pushEntry(xUI.XPS,function(){xUI.setStored("current");sync();
 >clearBackup</A></li>
     </ul>
 
-
+   <ul class='cMouter'>
+<li><span id=cMstw-d class='cM cM-alt'></span><A	id=cMstw
+	HREF='javascript:void(0);'
+	onclick='xUI.sWitchPanel("Timer");return false;'
+	title="ストップウオッチ機能切り替え"
+>stopWatch</A></li>
+	</ul>
 <!-- コンテキストメニュー　-->
 </div>
 <!--    コンテキストメニューUI        -->
