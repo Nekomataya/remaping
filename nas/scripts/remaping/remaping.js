@@ -2207,6 +2207,7 @@ break;
 現在の値に引数を加える。戻りは想定されないので注意
 
 */
+xUI.screenShift = [0,0];
 xUI.shiftScreen = function(x,y){
 //　body '(top),right,bottom,(left)'
     var currentBox = ($('body').css('padding')).split(' ');
@@ -2227,6 +2228,7 @@ console.log([currentBox[3],currentFr,currentAb,currentLp])
     $('.floating-right').css('padding-right',(currentFr+x)+'px');
     $('#account_box').css('padding-right'   ,(currentAb+x)+'px');
     $('#optionPanelLogin').css('padding-right'    ,(currentLp+x)+'px');
+    xUI.screenShift = [x,y];
     xUI.adjustSpacer();
 }
 /*  TEST
@@ -5458,8 +5460,8 @@ console.log(e.srcElement.onclick);
         xUI.contextMenu.hide();
         return false;
     }else if((e.button == 2 )&&(e.type == 'mousedown')){
-        xUI.contextMenu.css('top',e.clientY);
-        xUI.contextMenu.css('left',e.clientX);
+        xUI.contextMenu.css('top',e.clientY-xUI.screenShift[1]);
+        xUI.contextMenu.css('left',e.clientX-xUI.screenShift[0]);
         var onHeadline=false;
         var onTrackLabel=false;
         var onTimelineTrack=false;
@@ -6227,6 +6229,10 @@ var myPanels=["#optionPanelMemo",
 	"#optionPanelSnd",
 	"#optionPanelRef",
 	"#optionPanelRol",
+	"#optionPanelCam",
+	"#optionPanelStg",
+	"#optionPanelSfx",
+	"#optionPanelDraw",
 	"#optionPanelTimer"
 ];
 /*
@@ -6285,16 +6291,14 @@ case	"Dbg":	;//デバッグパネル
 		this.sWitchPanel("clear");
 		if(myStatus){myTarget.hide()}else{myTarget.show()};
 	break;
+case	"Cam":	    ;//カメラワークパネル
+case	"Ref":	    ;//情報参照パネル(fixed)
+case	"Sfx":	    ;//コンポジットパネル
+case	"Snd":	    ;//音声編集パネル(fixed)
+case	"Stg":	    ;//ステージワークパネル
+case	"Tbx":	    ;//ツールボックス
+case	"Draw":     ;//手描き編集パネル
 case	"TimeUI":	;//ツールボックス
-		if(myTarget.is(':visible')){myTarget.hide()}else{myTarget.show()};
-	break;
-case	"Tbx":	;//ツールボックス
-		if(myTarget.is(':visible')){myTarget.hide()}else{myTarget.show()};
-	break;
-case	"Snd":	;//音声編集パネル(fixed)
-		if(myTarget.is(':visible')){myTarget.hide()}else{myTarget.show()};
-	break;
-case	"Ref":	;//情報参照パネル(fixed)
 		if(myTarget.is(':visible')){myTarget.hide()}else{myTarget.show()};
 	break;
 case	"Utl":	;//ユーティリテーメニューパネル
@@ -9487,13 +9491,12 @@ default:url="./template/timeSheet_eps.txt";
 
 //htmlUIなのでここじゃないんだけどパネル関連ということで暫定的にこちら
 /*
-	試験的にjQueryでフローティングウインドウ
+	jQueryでフローティングウインドウを初期化
+*/
+/*
+OptionPanelTbx
 */
 jQuery(function(){
-    jQuery("a.openTbx").click(function(){
-        jQuery("#optionPanelTbx").show();
-        return false;
-    })
     jQuery("#optionPanelTbx a.close").click(function(){
         jQuery("#optionPanelTbx").hide();
         return false;
@@ -9511,12 +9514,13 @@ jQuery(function(){
     jQuery("#optionPanelTbx dl dt").mousedown(function(e){
         jQuery("#optionPanelTbx")
             .data("clickPointX" , e.pageX - jQuery("#optionPanelTbx").offset().left)
-            .data("clickPointY" , e.pageY - jQuery("#optionPanelTbx").offset().top);
+            .data("clickPointY" , e.pageY - jQuery("#optionPanelTbx").offset().top );
         jQuery(document).mousemove(function(e){
 var myOffset=document.body.getBoundingClientRect();
+
             jQuery("#optionPanelTbx").css({
-                top:e.pageY  - jQuery("#optionPanelTbx").data("clickPointY")+myOffset.top+"px",
-                left:e.pageX - jQuery("#optionPanelTbx").data("clickPointX")+myOffset.left+"px"
+                top:e.pageY  - jQuery("#optionPanelTbx").data("clickPointY") + myOffset.top - xUI.screenShift[1] +"px",
+                left:e.pageX - jQuery("#optionPanelTbx").data("clickPointX") + myOffset.left- xUI.screenShift[0] +"px"
             })
         })
     }).mouseup(function(){
@@ -9528,11 +9532,6 @@ OptionPanelSnd
   パネル上で全体のonfocusイベントに対するiNputbOxへのフォーカス遷移を抑制することが必要
 */
 jQuery(function(){
-//    jQuery("#optionPanelSnd").unbind("mouseover");
-    jQuery("a.openSnd").click(function(){
-        jQuery("#optionPanelSnd").show();
-        return false;
-    })
     jQuery("#optionPanelSnd a.close").click(function(){
         jQuery("#optionPanelSnd").hide();
         return false;
@@ -9543,7 +9542,7 @@ jQuery(function(){
            jQuery("#optionPanelSnd").height(24);
 	}else{
            jQuery("#formSnd").show();
-           jQuery("#optionPanelSnd").height(276);
+           jQuery("#optionPanelSnd").height(248);
 	}
         return false;
     })
@@ -9554,8 +9553,162 @@ jQuery(function(){
         jQuery(document).mousemove(function(e){
 var myOffset=document.body.getBoundingClientRect();
             jQuery("#optionPanelSnd").css({
-                top:e.pageY  - jQuery("#optionPanelSnd").data("clickPointY")+myOffset.top+"px",
-                left:e.pageX - jQuery("#optionPanelSnd").data("clickPointX")+myOffset.left+"px"
+                top:e.pageY  - jQuery("#optionPanelSnd").data("clickPointY") + myOffset.top - xUI.screenShift[1] +"px",
+                left:e.pageX - jQuery("#optionPanelSnd").data("clickPointX") + myOffset.left- xUI.screenShift[0] +"px"
+            })
+        })
+    }).mouseup(function(){
+        jQuery(document).unbind("mousemove")
+    })
+});
+/*
+OptionPanelCam
+*/
+jQuery(function(){
+    jQuery("#optionPanelCam a.close").click(function(){
+        jQuery("#optionPanelCam").hide();
+        return false;
+    })
+    jQuery("#optionPanelCam a.minimize").click(function(){
+        if(jQuery("#optionPanelCam").height()>100){
+           jQuery("#formCam").hide();
+           jQuery("#optionPanelCam").height(24);
+	}else{
+           jQuery("#formCam").show();
+           jQuery("#optionPanelCam").height(165);
+	}
+        return false;
+    })
+    jQuery("#optionPanelCam dl dt").mousedown(function(e){
+        jQuery("#optionPanelCam")
+            .data("clickPointX" , e.pageX - jQuery("#optionPanelCam").offset().left)
+            .data("clickPointY" , e.pageY - jQuery("#optionPanelCam").offset().top);
+        jQuery(document).mousemove(function(e){
+var myOffset=document.body.getBoundingClientRect();
+            jQuery("#optionPanelCam").css({
+                top:e.pageY  - jQuery("#optionPanelCam").data("clickPointY") + myOffset.top - xUI.screenShift[1] +"px",
+                left:e.pageX - jQuery("#optionPanelCam").data("clickPointX") + myOffset.left- xUI.screenShift[0] +"px"
+            })
+        })
+    }).mouseup(function(){
+        jQuery(document).unbind("mousemove")
+    })
+});
+/*
+OptionPanelStg
+*/
+jQuery(function(){
+//close
+    jQuery("#optionPanelStg a.close").click(function(){
+        jQuery("#optionPanelStg").hide();
+        return false;
+    })
+//minimaize/maxinaiz
+    jQuery("#optionPanelStg a.minimize").click(function(){
+        if(jQuery("#optionPanelStg").height()>100){
+           jQuery("#formStg").hide();
+           jQuery("#optionPanelStg").height(24);
+	}else{
+           jQuery("#formStg").show();
+           jQuery("#optionPanelStg").height(165);
+	}
+        return false;
+    })
+//move
+    jQuery("#optionPanelStg dl dt").mousedown(function(e){
+        jQuery("#optionPanelStg")
+            .data("clickPointX" , e.pageX - jQuery("#optionPanelStg").offset().left)
+            .data("clickPointY" , e.pageY - jQuery("#optionPanelStg").offset().top);
+        jQuery(document).mousemove(function(e){
+var myOffset=document.body.getBoundingClientRect();
+            jQuery("#optionPanelStg").css({
+                top:e.pageY  - jQuery("#optionPanelStg").data("clickPointY") + myOffset.top - xUI.screenShift[1] +"px",
+                left:e.pageX - jQuery("#optionPanelStg").data("clickPointX") + myOffset.left- xUI.screenShift[0] +"px"
+            })
+        })
+    }).mouseup(function(){
+        jQuery(document).unbind("mousemove")
+    })
+//resize
+    jQuery("#StgPanelCorner").mousedown(function(e){
+        jQuery("#StgPanelCorner")
+            .data("cornerPointX" , e.pageX - jQuery("#StgPanelCorner").offset().left)
+            .data("cornerPointY" , e.pageY - jQuery("#StgPanelCorner").offset().top );
+        jQuery(document).mousemove(function(e){
+var myOffset=document.body.getBoundingClientRect();
+ console.log({
+                 width: e.pageX - jQuery("#StgPanelCorner").data("cornerPointX")+16+myOffset.left - xUI.screenShift[1]-jQuery("#optionPanelStg").offset().left,
+                height:e.pageY - jQuery("#StgPanelCorner").data("cornerPointY")+16+myOffset.top  - xUI.screenShift[0]-jQuery("#optionPanelStg").offset().top   
+
+ });
+           jQuery("#optionPanelStg").css({
+                width: e.pageX - jQuery("#StgPanelCorner").data("cornerPointX")+16+myOffset.left - xUI.screenShift[1]-jQuery("#optionPanelStg").offset().left,
+                height:e.pageY - jQuery("#StgPanelCorner").data("cornerPointY")+16+myOffset.top  - xUI.screenShift[0]-jQuery("#optionPanelStg").offset().top   
+            }) 
+        })
+    }).mouseup(function(){
+        jQuery(document).unbind("mousemove")
+    })});
+/*
+OptionPanelSfx
+*/
+jQuery(function(){
+    jQuery("#optionPanelSfx a.close").click(function(){
+        jQuery("#optionPanelSfx").hide();
+        return false;
+    })
+    jQuery("#optionPanelSfx a.minimize").click(function(){
+        if(jQuery("#optionPanelSfx").height()>100){
+           jQuery("#formSfx").hide();
+           jQuery("#optionPanelSfx").height(24);
+	}else{
+           jQuery("#formSfx").show();
+           jQuery("#optionPanelSfx").height(165);
+	}
+        return false;
+    })
+    jQuery("#optionPanelSfx dl dt").mousedown(function(e){
+        jQuery("#optionPanelSfx")
+            .data("clickPointX" , e.pageX - jQuery("#optionPanelSfx").offset().left)
+            .data("clickPointY" , e.pageY - jQuery("#optionPanelSfx").offset().top);
+        jQuery(document).mousemove(function(e){
+var myOffset=document.body.getBoundingClientRect();
+            jQuery("#optionPanelSfx").css({
+                top:e.pageY  - jQuery("#optionPanelSfx").data("clickPointY") + myOffset.top - xUI.screenShift[1] +"px",
+                left:e.pageX - jQuery("#optionPanelSfx").data("clickPointX") + myOffset.left- xUI.screenShift[0] +"px"
+            })
+        })
+    }).mouseup(function(){
+        jQuery(document).unbind("mousemove")
+    })
+});
+/*
+OptionPanelDraw
+*/
+jQuery(function(){
+    jQuery("#optionPanelDraw a.close").click(function(){
+        jQuery("#optionPanelDraw").hide();
+        return false;
+    })
+    jQuery("#optionPanelDraw a.minimize").click(function(){
+        if(jQuery("#optionPanelDraw").height()>100){
+           jQuery("#formDraw").hide();
+           jQuery("#optionPanelDraw").height(24);
+	}else{
+           jQuery("#formDraw").show();
+           jQuery("#optionPanelDraw").height(165);
+	}
+        return false;
+    })
+    jQuery("#optionPanelDraw dl dt").mousedown(function(e){
+        jQuery("#optionPanelDraw")
+            .data("clickPointX" , e.pageX - jQuery("#optionPanelDraw").offset().left)
+            .data("clickPointY" , e.pageY - jQuery("#optionPanelDraw").offset().top);
+        jQuery(document).mousemove(function(e){
+var myOffset=document.body.getBoundingClientRect();
+            jQuery("#optionPanelDraw").css({
+                top:e.pageY  - jQuery("#optionPanelDraw").data("clickPointY") + myOffset.top - xUI.screenShift[1] +"px",
+                left:e.pageX - jQuery("#optionPanelDraw").data("clickPointX") + myOffset.left- xUI.screenShift[0] +"px"
             })
         })
     }).mouseup(function(){
@@ -9564,12 +9717,6 @@ var myOffset=document.body.getBoundingClientRect();
 });
 // 画像ウインドウ
 jQuery(function(){
-//    jQuery("#optionPanelRef").unbind("mouseover");
-//show/hide
-    jQuery("a.openSnd").click(function(){
-        jQuery("#optionPanelRef").show();
-        return false;
-    })
     jQuery("#optionPanelRef a.close").click(function(){
         jQuery("#optionPanelRef").hide();
         return false;
@@ -9593,8 +9740,8 @@ jQuery(function(){
         jQuery(document).mousemove(function(e){
 var myOffset=document.body.getBoundingClientRect();
             jQuery("#optionPanelRef").css({
-                top:e.pageY  - jQuery("#optionPanelRef").data("clickPointY")+myOffset.top+"px",
-                left:e.pageX - jQuery("#optionPanelRef").data("clickPointX")+myOffset.left+"px"
+                top:e.pageY  - jQuery("#optionPanelRef").data("clickPointY") + myOffset.top - xUI.screenShift[1] +"px",
+                left:e.pageX - jQuery("#optionPanelRef").data("clickPointX") + myOffset.left- xUI.screenShift[0] +"px"
             })
         })
     }).mouseup(function(){

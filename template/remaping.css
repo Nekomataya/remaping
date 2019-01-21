@@ -28,6 +28,12 @@ body {
 	line-height:1.5;
 	font-family: '游ゴシック体', 'Yu Gothic', 'YuGothic','ヒラギノ角ゴシック', 'Hiragino Sans', 'ヒラギノ角ゴ ProN W3', 'Hiragino Kaku Gothic ProN', 'メイリオ', 'Meiryo', 'ＭＳ Ｐゴシック', 'MS PGothic', 'sans-serif';
 }
+/*
+	background-image:url(images/logo/logo_UAT.png);
+ 	background-repeat: no-repeat;
+  	background-attachment: fixed;
+    background-position:100% 100%;
+*/
 /*========== リンク ============*/
 a:link		{color:#000066}
 a:visited	{color:green}
@@ -1019,20 +1025,6 @@ input.toolTip	{
 	height:15pt;
 	width:100%;
 }
-/*		UI.表示プロパティ
-
-*/
-div.optionPanel{
-	display:none;
-	padding:0 0 0 8px;
-	backgroung-color:snow;
-}
-div.optionPanelModal{
-	display:none;
-}
-div.optionPanelFloat{
-	display:none;
-}
 /*	タイムシートの罫線
 	タイムシートセルは以下の分類でスタイルを設定している
 	Sep	＝セパレータ
@@ -1250,108 +1242,125 @@ div.application_status {
 /*
 	オプションパネル
 */
+div.optionPanel{
+	display:none;
+	padding:0 0 0 8px;
+	backgroung-color:snow;
+}
+div.optionPanelModal{
+	display:none;
+}
+div.optionPanelFloat{
+	display:none;
+    position:absolute;
+    background-color:#efefef;
+    padding:0;
+    border-style:solid;
+    border-width:1px;
+    border-color:#808080;
+    z-index:7;
+  /* 角丸 */
+    -moz-border-radius: 4px ;
+    -webkit-border-radius: 4px;
+    border-radius: 4px;
+}
+a.minimize{
+    position:absolute;
+    right:32px;
+    top:1px;
+}
+a.minimize img{
+    border:none;
+}
+a.close{
+    position:absolute;
+    right:8px;
+    top:1px;
+}
+a.close img{
+    border:none;
+}
+.optionPanelFloat dl dt {
+    height:25px;
+    line-height:25px;
+    text-indent:1em;
+    font-weight:bold;
+    cursor:move;
+}
+.optionPanelFloat dl dd {
+    margin:0;
+    padding:2em;
+    line-height:1.5;
+    text-indent:1em;
+}
+/*ログインパネル*/
 #optionPanelLogin{
     display:none;
 }
+/*ソフトウェアキーボード*/
 #optionPanelTbx {
     display:none;
-    position:absolute;
     top:64px;
     left:120px;
     width:660px;
     height:165px;
-    background-color:#efefef;
-    padding:0;
-    border-style:solid;
-    border-width:1px;
-    border-color:#808080;
-    z-index:7;
-  /* 角丸 */
-    -moz-border-radius: 4px ;
-    -webkit-border-radius: 4px;
-    border-radius: 4px;
 }
-#optionPanelTbx a.minimize{
-    position:absolute;
-    right:32px;
-    top:1px;
-}
-#optionPanelTbx a.close{
-    position:absolute;
-    right:8px;
-    top:1px;
-}
-#optionPanelTbx a.minimize img{
-    border:none;
-}
-#optionPanelTbx a.close img{
-    border:none;
-}
-#optionPanelTbx dl dt{
-    height:25px;
-    line-height:25px;
-    text-indent:1em;
-    font-weight:bold;
-    cursor:move;
-}
-#optionPanelTbx dl dd{
-    margin:0;
-    padding:2em;
-    line-height:1.5;
-    text-indent:1em;
+#formTbx {
+	padding-left:8px;
 }
 /*音響フローティングパネル*/
 #optionPanelSnd {
-    display:none;
-    position:absolute;
-    top:64px;
-    left:120px;
+    top:32px;
+    left:0px;
     width:660px;
     height:248px;
-    background-color:#efefef;
-    padding:0;
-    border-style:solid;
-    border-width:1px;
-    border-color:#808080;
-    z-index:7;
-  /* 角丸 */
-    -moz-border-radius: 4px ;
-    -webkit-border-radius: 4px;
-    border-radius: 4px;
-	
 }
-
+#formSnd {
+	padding-left:12px;
+}
 #dialogEdit {
     border-style:none;
 }
-#optionPanelSnd a.minimize {
-    position:absolute;
+
+/*カメラワークパネル*/
+#optionPanelCam {
+    top:128px;
     right:32px;
-    top:1px;
+    width:256px;
+    height:256px;
 }
-#optionPanelSnd a.close {
-    position:absolute;
-    right:8px;
-    top:1px;
+#formCam {
+	padding-left:12px;
 }
-#optionPanelSnd a.minimize img{
-    border:none;
+/*ステージワークパネル*/
+#optionPanelStg {
+    top:96px;
+    right:64px;
+    width:640px;
+    height:480px;
 }
-#optionPanelSnd a.close img{
-    border:none;
+#formStg {
+	padding-left:12px;
 }
-#optionPanelSnd dl dt{
-    height:25px;
-    line-height:25px;
-    text-indent:1em;
-    font-weight:bold;
-    cursor:move;
+/*コンポジットワークパネル*/
+#optionPanelSfx {
+    top:64px;
+    right:96px;
+    width:640px;
+    height:480px;
 }
-#optionPanelSnd dl dd{
-    margin:0;
-    padding:2em;
-    line-height:1.5;
-    text-indent:1em;
+#formSfx {
+	padding-left:12px;
+}
+/*手描きメモパネル*/
+#optionPanelDraw {
+    top:32px;
+    right:0px;
+    width:128px;
+    height:256px;
+}
+#formDraw {
+	padding-left:8px;
 }
 
 /*画像フローティングパネル*/
@@ -1373,10 +1382,23 @@ div.application_status {
     border-radius: 4px;
 }
 /**
+	背景表示アンダーレイ
+ */
+div#underlay {
+	opacity:.125;
+	float:right;
+	right:0px;
+	bottom:0px;
+	background-blend-mode: normal; 
+	overflow:hidden;
+    position:fixed;
+	
+}
+/**
 	参照用画像オーバーレイ
 */
 div.imageOverlay {
-	opacity:.75;
+	opacity:.25;
 	background-blend-mode: normal; 
 	overflow:hidden;
     position:relative;
@@ -1859,7 +1881,24 @@ div.documentStatusOverlay {
 */
 #optionPanelTimer {
 	color:#22dd22;
-	background-color:#222222;
+	background-color:#444444;
+}
+.timerButton {
+	color :#222222;
+	background-color:#888888;
+	border-style:solid;
+	border-width:0;
+	height:16px;
+  /* 角丸 */
+    -moz-border-radius: 3px ;
+    -webkit-border-radius: 3px;
+    border-radius: 3px;
+}
+.timerButton-sq {
+	width:16px;
+}
+.timerButton-wide {
+	width:96px;
 }
 
 /*
@@ -1909,5 +1948,4 @@ div.documentStatusOverlay {
     -moz-border-radius: 3px ;
     -webkit-border-radius: 3px;
     border-radius: 3px;
-	
 }

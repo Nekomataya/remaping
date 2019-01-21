@@ -3982,7 +3982,7 @@ onDblClick='if (! document.getElementById("single").checked) chkValue(this.id)'
 <!-- <span id=soundPnl class=SoundPanel>音声編集</span>
 <hr>-->
 <dl><dt style="background-color:#888888;"><span id=soundPnl class=SoundPanel>音声編集</span><a href="" class=minimize ><img src=images/ui/minimize.png alt="＿"></a><a href="" class=close ><img src=images/ui/close.png alt="×"></a></dt></dl>
-<div id=formSnd style="margin-left:12px;"><fieldset id='dialogEdit'>
+<div id=formSnd><fieldset id='dialogEdit'>
 label:
 <input type='text' autocomplete='on' list='sndCasts' id='soundLabel'
     onChange="SoundEdit.setLabel(this.value);"
@@ -4187,10 +4187,40 @@ duration :
 </div>
 </div>
 <!--	ラベル付き音響編集パネル	-->
+<!--	カメラワーク入力UI	-->
+<div class=optionPanelFloat id=optionPanelCam >
+<dl><dt style="background-color:#888888;">camerawork<a href="" class=minimize ><img src=images/ui/minimize.png alt="＿"></a><a href="" class=close ><img src=images/ui/close.png alt="×"></a></dt></dl>
+<div id=formCam>
 
+*Camerawork*
+</div></div>
+<!--	カメラワーク入力UI	-->
+<!--	ステージワーク編集UI	-->
+<div class=optionPanelFloat id=optionPanelStg >
+<dl><dt style="background-color:#888888;">stagework<a href="" class=minimize ><img src=images/ui/minimize.png alt="＿"></a><a href="" class=close ><img src=images/ui/close.png alt="×"></a></dt></dl>
+<div id=formStg>
+*Stagework*
+</div><img src=./images/ui/cornerTip.png id=StgPanelCorner class=panelCorner onDragStart='return false;'></div>
+<!--	ステージワーク編集UI	-->
+<!--	コンポジットワーク編集UI	-->
+<div class=optionPanelFloat id=optionPanelSfx >
+<dl><dt style="background-color:#888888;">composite<a href="" class=minimize ><img src=images/ui/minimize.png alt="＿"></a><a href="" class=close ><img src=images/ui/close.png alt="×"></a></dt></dl>
+<div id=formSfx>
 
+*Compositework*
+</div></div>
+<!--	コンポジットワーク編集UI	-->
+<!--	手描きメモ編集UI	-->
+<div class=optionPanelFloat id=optionPanelDraw >
+<dl><dt style="background-color:#888888;">drawing manu<a href="" class=minimize ><img src=images/ui/minimize.png alt="＿"></a><a href="" class=close ><img src=images/ui/close.png alt="×"></a></dt></dl>
+<div id=formDraw>
 
-<!-- 参照用オーバーレイ画像ビュアウインドウ optionPanelRef > optionPanelRef<div class='optionPanelFloat' id =optionPanelRef >
+*hendDrawing*
+</div></div>
+<!--	手描きメモ編集UI	-->
+
+<!-- 参照用オーバーレイ画像ビュアウインドウ optionPanelRef > optionPanelRef
+<div class='optionPanelFloat' id =optionPanelRef >
 <dl>
 <dt style="background-color:#888888;"><span id=soundPnl class=SoundPanel>画像</span><a href="" class=minimize ><img src=images/ui/minimize.png alt="＿"></a><a href="" class=close ><img src=images/ui/close.png alt="×"></a></dt>
 <dt style="background-color:#aaaaaa;">[+][-][100%] [URL]  　[-----◆---------]</dt></dl>
@@ -4198,9 +4228,8 @@ duration :
     <iframe id ='referencePanelWindow' src="http://www.nekomataya.info/test/references/" title="iframe example" width="640" height="480" style='opcity:0.75'>
   <p>Your browser does not support iframes.</p>
     </iframe></div>
-    <img src=./images/ui/cornerTip.png id=RefPanelCotner class=panelCorner>
+    <img src=./images/ui/cornerTip.png id=RefPanelCorner class=panelCorner>
 </div>-->
-
 <!-- 参照用オーバーレイ画像ビュアウインドウ optionPanelRef > optionPanelRef-->
 
 
@@ -4211,65 +4240,76 @@ duration :
 	id = optionPanelTimer
 >
  <button
-id=timerClose
- title = 'hide timer'
- onclick='xUI.sWitchPanel("Timer");return false;'
->[☓]</button>:
+    id=timerClose
+    class='timerButton timerButton-sq'
+    title = 'hide timer'
+    onclick='xUI.sWitchPanel("Timer");return false;'
+>×</button>:
  <span id=timerDisplay></span>
 <span class=floating-right>
 <button
 	id=timerSwitchPrm
+    class='timerButton timerButton-wide'
 	onMouseDown='if(xUI.player.status=="stop"){xUI.player.start()}else{if(xUI.player.markSwap){xUI.player.getCount=true}else{xUI.player.stop()}};'
 	onMouseUp='if((xUI.player.markSwap)&&(xUI.player.status=="run")){xUI.player.getCount=false};'
 >START/STOP</button>
 <button
 	id=timerSwitchMark
 	title='stopwatch test mark'
+    class='timerButton timerButton-wide'
 	onMouseDown='if(xUI.player.status=="stop"){xUI.player.start(true)}else{xUI.player.getCount=true};'
 	onMouseUp='if(xUI.player.status=="run"){xUI.player.getCount=false};'
 >Mark</button>
 <button
 	id=timerSwitchSub
+    class='timerButton timerButton-wide'
 	onMouseDown='if(xUI.player.status=="run"){if(xUI.player.markSwap){xUI.player.stop()}else{xUI.player.getCount=true}}else{xUI.player.clearMark()};'
 	onMouseUp='if(!(xUI.player.markSwap)&&(xUI.player.status=="run")){xUI.player.getCount=false};'
 	title='stopwatch test stop'
 >Mark/Reset</button>
 <button
 	onClick='if(xUI.player.status=="stop"){xUI.selectCell(xUI.Select[0]+"_0");};'
+    class='timerButton timerButton-wide'
 	title='stopwatch test'
->[HOME]</button>
+>HOME</button>
 <button
 	onClick='if(xUI.player.status=="stop"){xUI.player.buildCount()};'
+    class='timerButton timerButton-wide'
 	title='stopwatch test'
 >applyMark</button>
 <input
 	id=waitCount
 	class=spinCtl
+    class=timerButton
 	type=text
 	value='3'
 	onChange='document.getElementById("timerCount").onchange();'
 ><input
 	id=timerCount
+    class='timerButton box'
 	type=checkbox
 	onChange='xUI.player.wait=(this.checked)?document.getElementById("waitCount").value*1000:0;'
->count
+>countreader
 <input
 	type=checkbox
+    class=timerButton
 	onChange='xUI.player.loop=(this.checked)?true:false;'
 >loop
 <input
 	id=swapButtonAssign
 	type=checkbox
+    class=timerButton
 	onChange='xUI.player.markSwap=(this.checked)?true:false;document.getElementById("timerSwitchPrm").innerHTML=(this.checked)?"START/Mark":"START/STOP";document.getElementById("timerSwitchSub").innerHTML=(this.checked)?"STOP/Reset":"Mark/Reset";'
 	title='change butonn function assignment'
->mark
-<input
+>key assign
+<!-- input
 	id=timerStandbyPositionStart
 	type=checkbox
+    class=timerButton
 	onChange='xUI.player.standbyStart=(this.checked)?true:false;'
 	title='set standby-frame start'
 	checked
->standby
+>standby -->
 </span>
 </div>
 <!-- ストップウオッチUIパネル -->
@@ -4367,4 +4407,5 @@ index.html ,v 1.7 2018/03/05  support@u-at.net <br />
     data-server_url='http://u-at.net'
     アドレスはサーバーのルートを使用　2017.04.13
 -->
+<div id=underlay><img src=template/images/logo/logo_UAT.png><div>
 </body></html>

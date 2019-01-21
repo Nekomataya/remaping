@@ -390,7 +390,7 @@ var UIViewIdList = [
     "optionPanelDbg",
     "memoArea"
 ];
-var ToolView='10111100';
+var ToolView='11011111001';
 
 //--
 /*
