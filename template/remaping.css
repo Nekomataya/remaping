@@ -1392,7 +1392,7 @@ div#underlay {
 	background-blend-mode: normal; 
 	overflow:hidden;
     position:fixed;
-	
+	pointer-events: none;	
 }
 /**
 	参照用画像オーバーレイ
