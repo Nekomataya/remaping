@@ -867,25 +867,25 @@ reNameLabel=function(TimelineId) {
 	引数なしの場合は、現在フォーカスのあるタイムライン
 
 */
-editTrackNote=function(TimelineId) {
+editTrackTag=function(TimelineId) {
 	if(xUI.viewOnly){return false;};
 	if(! TimelineId) TimelineId = xUI.Select[0];
 	var newName='';
-	var msg=localize(nas.uiMsg.dmTLtrackNoteEdit);//タイムライントラックノート
+	var msg=localize(nas.uiMsg.dmTLtagEdit);//タイムライントラックノート
 
-		newName = xUI.XPS.xpsTracks[TimelineId].trackNote;
+		newName = xUI.XPS.xpsTracks[TimelineId].tag;
 		msg+="\n"+localize(nas.uiMsg.dmRenameLabel)+"\n";//新しいラベルを指定してください
 
 	var myFunc=function(){
 	  if(isNaN(TimelineId)){return false;}else{this.TimelineId=TimelineId};
 		if((this.startValue==this.value)||(this.status >= 1)){return;};
 	    var newName=this.value;
-		xUI.put([["trackNote",this.TimelineId].join("."),newName]);
+		xUI.put([["tag",this.TimelineId].join("."),newName]);
 		sync("lbl");
 	return;
 	}
 	myFunc.TimelineId=TimelineId;
-	newName=nas.showModalDialog("prompt",msg,localize(nas.uiMsg.trackNoteEdit),newName,myFunc);
+	newName=nas.showModalDialog("prompt",msg,localize(nas.uiMsg.tagEdit),newName,myFunc);
 };
 
 //タイムラインラベル変更用ボタンメソッド

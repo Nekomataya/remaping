@@ -367,14 +367,16 @@ var ViewMode="WordProp"	;	//UIモード  コンパクトCompat/ シートワー�
     最初から順に　
 
     "pMenu"             ドロップダウンメニュー
+    "account_box"       ユーザアカウント切り替え
     "optionPanelLogin"  認証パネル
     "toolbarHeader"     ツールバー
     "pmcui"             作業メニュー
+    "headerTool"        ヘッダー入力コントロール
     "sheetHeaderTable"  タイムシートヘッダ
     "optionPanelUtl"　  コマンドバー
     "optionPanelTbx"    ソフトウェアキーボード
     "optionPanelDbg"    デバッグコンソール
-
+    "memoArea"          メモ表示域
     一般表示メニューの順と一致　メニューが変わると変更あり
 */
 var UIViewIdList = [

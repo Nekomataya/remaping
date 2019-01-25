@@ -15,15 +15,15 @@
 
 <!--		<script type="text/javascript" src="./lib/AIR/AIRLocalizer.js"></script>
 		<script type="text/javascript" src="./lib/AIR/AIRMenuBuilder.js"></script>
+
 <script src="./lib/AIR/servicemonitor.swf" type="application/x-shockwave-flash"></script>
 <script src="./lib/AIR/aircore.swf" type="application/x-shockwave-flash"></script>
 <script src="./lib/AIR/applicationupdater_ui.swf" type="application/x-shockwave-flash"></script>
 <script src="./lib/AIR/applicationupdater.swf" type="application/x-shockwave-flash"></script>
 <script src="./lib/AIR/HTMLHostLibrary.swf" type="application/x-shockwave-flash"></script>
 
- -->
-
 <script type="text/javascript" src="./lib/AIR/AIRAliases.js"></script>
+ -->
 
 <!-- 以下　AIR動作時のデバッグライブラリ -->
 <!--
@@ -229,7 +229,7 @@ serviceAgent.pushEntry(xUI.XPS,function(){xUI.setStored("current");sync();
 <!-- 旧ドキュメントメニュー -->
 <li id=dMcgi><span id=pMimportDatas-d class='pM pM-alt'>Open</span><A id=pMimportDatas
 	href="javascript:void(0);"
-	onclick="document.getElementById('loadShortcut').value='body';document.getElementById('myCurrentFile').click();return false;"
+	onclick="xUI.openDocument('body');return false;"
 	title="ローカルドキュメントを開く"
 >Open</A></li>
 <li id=dMair><span id=pMopenFS-d class='pM pM-alt'>Open</span><A id=pMopenFS
@@ -382,7 +382,7 @@ serviceAgent.pushEntry(xUI.XPS,function(){xUI.setStored("current");sync();
 >renameTL</A></li>
 <li><span id=pMeditTN-d class='pM pM-alt'></span><A	id=pMeditTN
 	HREF='javascript:void(0);'
-	onclick='editTrackNote(xUI.Select[0]);return false;'
+	onclick='editTrackTag(xUI.Select[0]);return false;'
 	title="タグ編集"
 >editTrackTag</A></li>
 <li><span id=pMclearTL-d class='pM pM-alt'></span><A	id=pMclearTL
@@ -492,7 +492,7 @@ serviceAgent.pushEntry(xUI.XPS,function(){xUI.setStored("current");sync();
 <hr>
 <li id=dMcgi><span id=pMimportReference-d class='pM pM-alt'></span><A	id=pMimportReference
 	HREF='javascript:void(0);'
-	onclick='document.getElementById("loadShortcut").value="ref";document.getElementById("myCurrentFile").click();return false;'
+	onclick='xUI.importDocument("ref");return false;'
 	title="参照エリア読み込み"
 >import</A></li>
 <li id=dMair><span id=pMimportReferenceAir-d class='pM pM-alt'></span><A	id=pMimportReferenceAir
@@ -856,7 +856,7 @@ serviceAgent.pushEntry(xUI.XPS,function(){xUI.setStored("current");sync();
     <button
 	id=ibMimportDatas
 		class='iconButton  iconButton-imp'
-		onclick="document.getElementById('loadShortcut').value='body';document.getElementById('myCurrentFile').click();"
+		onclick="xUI.importDocument('body');"
 		title="file Open"
 	>
 	</button><button
@@ -1034,8 +1034,11 @@ serviceAgent.pushEntry(xUI.XPS,function(){xUI.setStored("current");sync();
 
 
 <!-- 固定ヘッダ 最上段　印刷時非表示　id="fixed"-->
-<div class=headerTool id=headerTool>
+<div class=headerTool id=headerTool >
 <br>	<!-- カウンタ -->
+<button id=edchg
+disabled
+>EXTEST</button>
 <input	type=button
 	id=activeLvl
 	name=activeLvl
@@ -1384,18 +1387,28 @@ class=optionPanel id=optionPanelProductManagement
 <!-- ドキュメント ステータス　オーバレイ　-->
 <!-- シートヘッダテーブル　編集機能あり縮小UIの際は非表示または縮小表示に -->
 <div id=sheetHeaderTable>
-<!-- コンパクトビューの時は　インジケータ　カット番号　時間　を残して非表示-->
-<table class=info border=0 >
-<tr>
+<!-- コンパクトビューの時は　インジケータ　カット番号　時間　を残して非表示
      <td id=edchg>
 	編集中
-     </td><th class='opusLabel annotationText' id="opusL">
+     </td>
+-->
+<div
+    style='text-align:right;'
+><span id=title>title-string</span>#<span id=opus>opus</span>[<span id=subtitle>subtitle</span>]//
+
+<select name=jobSelector id=jobSelector onChange='if(xUI.XPS.currentStatus.content=="Active"){serviceAgent.getEntry(this.value,true)}else{serviceAgent.getEntry(this.value)};' 
+
+					<option>----</option>
+				</select>
+</div><table class=info border=0 >
+<tr>
+<!--     <th class='opusLabel annotationText' id="opusL">
 	No
      </th><th class='titleLabel annotationText' id="titleL">
 	TITLE
      </th><th class='subtitleLabel annotationText' id="subtitleL">
 	subTITLE
-     </th><th class='scenecutLabel  annotationText'>
+     </th>--><th class='scenecutLabel  annotationText'>
 	S-C
      </th><th colspan=3 class='timeLabel annotationText'>
 	TIME
@@ -1404,15 +1417,10 @@ class=optionPanel id=optionPanelProductManagement
      </th>
 </tr>
 <tr onDblClick ="return rewriteValueByEvt(event)" >
-<td rowspan=2>
-
-<select name=jobSelector id=jobSelector onChange='if(xUI.XPS.currentStatus.content=="Active"){serviceAgent.getEntry(this.value,true)}else{serviceAgent.getEntry(this.value)};'  style="width:100%;margin:0;padding:0;text-align:center;">
-<!--Jobセレクタの動作をもうすこしインテリジェントに変更
+<!--<td rowspan=2>
+Jobセレクタの動作をもうすこしインテリジェントに変更
 編集時はリファレンスエリアの書き換え
 閲覧時は全体の変更にケース分けして処理
-
--->					<option>----</option>
-				</select>
 
 </td><td id=opus lock="yes" >
 	#00
@@ -1420,7 +1428,7 @@ class=optionPanel id=optionPanelProductManagement
 	TITLE-TEXT
 </td><td id=subtitle lock="yes" >
 	subTITLE
-</td><td id=scene_cut lock="yes">
+</td>--><td id=scene_cut lock="yes">
 	S-C
 </td><td id=time >
 	(00+00)
@@ -1510,7 +1518,7 @@ class=optionPanel id=optionPanelProductManagement
     id=ibMeditTN
     class='iconButton  iconButton-layerName'
 	title="トラックタグ編集"
-	onclick="editTrackNote(xUI.Select[0]);"
+	onclick="editTrackTag(xUI.Select[0]);"
 >
 </button><button
     id=ibMaddSoundTrack
@@ -1765,7 +1773,7 @@ serviceAgent.pushEntry(xUI.XPS,function(){xUI.setStored("current");sync();
     <ul class='cMonHeadline'>
 <li id=cMcgi><span id=cMimportDatas-d class='cM cM-alt'>Open</span><A id=cMimportDatas
 	href="javascript:void(0);"
-	onclick="document.getElementById('loadShortcut').value='body';document.getElementById('myCurrentFile').click();return false;"
+	onclick="xUI.importDocument('body');return false;"
 	title="ローカルドキュメントを開く"
 >Open</A></li>
 <li id=cMair><span id=cMopenFS-d class='cM cM-alt'>Open</span><A id=cMopenFS
@@ -2005,7 +2013,7 @@ serviceAgent.pushEntry(xUI.XPS,function(){xUI.setStored("current");sync();
     <ul class='cMonTrackHeader'>
 <li><span id=cMimport-d class='cM cM-alt'></span><A	id=cMimport
 	HREF='javascript:void(0);'
-	onclick="document.getElementById('loadShortcut').value='body';document.getElementById('myCurrentFile').click();return false;"
+	onclick="xUI.importDocument('body');return false;"
 	title="データ読み出し"
 >readout</A></li>
     </ul>
@@ -2018,7 +2026,7 @@ serviceAgent.pushEntry(xUI.XPS,function(){xUI.setStored("current");sync();
 >renameTL</A></li>
 <li><span id=cMeditTN-d class='cM cM-alt'></span><A	id=cMeditTN
 	HREF='javascript:void(0);'
-	onclick='editTrackNote(xUI.Select[0]);return false;'
+	onclick='editTrackTag(xUI.Select[0]);return false;'
 	title="タグ編集"
 >editTrackTag</A></li>
     </ul> 
@@ -2184,7 +2192,7 @@ serviceAgent.pushEntry(xUI.XPS,function(){xUI.setStored("current");sync();
     <ul class='cMonReferenceHeader'>
 <li id=cMcgi><span id=cMimportReference-d class='cM cM-alt'></span><A	id=cMimportReference
 	HREF='javascript:void(0);'
-	onclick='document.getElementById("loadShortcut").value="ref";document.getElementById("myCurrentFile").click();return false;'
+	onclick='xUI.importDocument("ref");return false;'
 	title="参照エリア読み込み"
 >import</A></li>
 <li id=cMair><span id=cMimportReferenceAir-d class='cM cM-alt'></span><A	id=cMimportReferenceAir
@@ -2526,7 +2534,7 @@ onclick='nas.incrFCTonHTMLInput(document.getElementById("editTC"),"-(1)")'
 <form name=exportXps action="void(0);">
 <strong> (Import) </strong><input type=button
     id=dataLoaderImport value="読込＋取込" style="width:10%"
-	onClick="document.getElementById('loadShortcut').value='body';document.getElementById('myCurrentFile').click();"
+	onClick="xUI.importDocument('body');"
 	title="ファイルの内容のみを編集エリアに取り込む"
 ><input type=button
     id=dataLoaderRef value="参照取込" style="width:10%"

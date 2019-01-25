@@ -857,7 +857,8 @@ console.log(career);
 				}
 				continue;	
 			}
-			var valueString = (timingTracks[tx].sections[six].value)? timingTracks[tx].sections[six].value.name : "×";
+//			var valueString = (timingTracks[tx].sections[six].value)? timingTracks[tx].sections[six].value.name : "×";
+			var valueString = (timingTracks[tx].sections[six].value)? timingTracks[tx].sections[six].getContent()[0]: "×";
 			if((! valueString)||( valueString == "×")||(valueString == "blank-cell")) valueString = "SYMBOL_NULL_CELL";
 			var currentFrameEntry  =  new TDTS.TimeTableFrameEntry(timingTracks[tx].sections[six].startOffset());
 			currentFrameEntry.data = [];

@@ -536,7 +536,7 @@ function XpsTimelineTrack(myLabel, myType, myParent, myLength) {
     this.lot = "=AUTO=";//旧オブジェクト互換
     this.blmtd = "file";//旧オブジェクト互換
     this.blpos = "end";//旧オブジェクト互換
-    this.trackNote =(this.option=='still')? this.id:'';
+    this.tag =(this.option=='still')? this.id:'';
     this.link = ".";
     this.parent = ".";//
     this.sections = new XpsTimelineSectionCollection(this);
@@ -2318,13 +2318,14 @@ Xps.prototype.parseXps = function (datastream) {
         /**
          *  シートプロパティにマッチ
          */
-        if (SrcData[line].match(/^\#\#([A-Z].*)=(.*)$/)) {
+        if (SrcData[line].match(/^\#\#([A-Z].*)=(.*)$/i)) {
             nAme = RegExp.$1;
             vAlue = RegExp.$2;
             /**
              * 時間関連プロパティを先行して評価。
              * 読み取ったフレーム数と指定時間の長いほうでシートを初期化する。
              */
+console.log(nAme);
             switch (nAme) {
                 case    "FRAME_RATE":
                     //フレームレートは第一パスで取得
@@ -2398,6 +2399,9 @@ Xps.prototype.parseXps = function (datastream) {
                                 //申し送りメッセージ取得フラグを立てて次のループに入る
                      readMessage=true;continue;
                   break;
+                case    "additionalData":;
+                    console.log(vAlue);
+                break;
                 default:
                     /**
                      * 時間関連以外
@@ -2745,7 +2749,7 @@ if((this.currentStatus.message)&&(this.currentStatus.message.length))
      * レイヤ別プロパティをストリームに追加
      * @type {string[]}
      */
-    var Lprops = ["sizeX", "sizeY", "aspect", "lot", "blmtd", "blpos", "option", "link", "trackNote", "id"];
+    var Lprops = ["sizeX", "sizeY", "aspect", "lot", "blmtd", "blpos", "option", "link", "tag", "id"];
 //	var Lprops=["sizeX","sizeY","aspect","lot","blmtd","blpos","option","link","CELL"];
     for (var prop = 0; prop < Lprops.length; prop++) {
         var propName = Lprops[prop];
@@ -3106,9 +3110,9 @@ Xps.parseProduct = function(productString){
     var dataArray = String(productString).replace( /[\[\]]/g ,'#').split('#');
 //     if((dataArray.length==0)||(String(dataArray[0]).length==0)){ return false};
     return {
-        title     :   (dataArray[0]=='undefined')? "":decodeURIComponent(dataArray[0]),
-        opus      :   (dataArray[1]=='undefined')? "":decodeURIComponent(dataArray[1]),
-        subtitle  :   (dataArray[2]=='undefined')? "":decodeURIComponent(dataArray[2])
+        title     :   ((typeof dataArray[0]=='undfined')||(String(dataArray[0])=='undefined'))? "":decodeURIComponent(dataArray[0]),
+        opus      :   ((typeof dataArray[1]=='undfined')||(String(dataArray[1])=='undefined'))? "":decodeURIComponent(dataArray[1]),
+        subtitle  :   ((typeof dataArray[2]=='undfined')||(String(dataArray[2])=='undefined'))? "":decodeURIComponent(dataArray[2])
     };
 }
 /** test

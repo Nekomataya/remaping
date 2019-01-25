@@ -52,6 +52,9 @@ nas.LangPack.ja=[
 
     ["pMmerge","innerHTML","ライン検収"],
 
+    ["pMheaderTools","innerHTML","ヘッダツール"],
+    ["pMheaderTools","title","ヘッドラインコントロールON/OFF"],
+
     ["pMimportDatas","innerHTML","読込"],
     ["pMimportDatas","title","ローカルドキュメントを開く"],
 
@@ -538,6 +541,9 @@ nas.LangPack.en=[
 
     ["pMmerge","innerHTML","merge"],
     ["pMmerge","title","merge"],
+
+    ["pMheaderTools","innerHTML","header tools"],
+    ["pMheaderTools","title","headline controls show/hide"],
 
     ["pMimportDatas","innerHTML","import"],
     ["pMimportDatas","title","import data"],

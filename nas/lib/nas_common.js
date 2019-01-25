@@ -4446,6 +4446,7 @@ console.log (nas.normalizeStr("安全ｶｸﾆﾝＢＡＮＤ（12３④５）")
  * ＞小数点以下は後置部となる
  */
 nas.parseNumber=function(str){
+    if(typeof str == 'undefined') str = '';
 	if(! str.replace){str=str.toString();}
 	return parseInt((this.normalizeStr(str)).replace(/^[^0-9]*/,""),10) 
 }

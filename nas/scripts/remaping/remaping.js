@@ -70,7 +70,7 @@ function new_xUI(){
     xUI.hoverColor       ;//リンクホーバー色
     xUI.activeColor      ;//リンクアクティブ色
 //メニュー関連
-    ;//
+    xUI.toolView        ;//ツールパネル表示状態(cookieの値)
     ;//
     ;//
     ;//
@@ -124,9 +124,10 @@ xUI.importBox.reset = function(){
     this.targetContents    =[];
     this.selectedContents  =[];
     this.importTarget  = false;
-    if(document.getElementById('loadShortcut').value=='ref'){
+//    if((document.getElementById('loadShortcut').value=='ref')){}
+    if((document.getElementById('loadShortcut'))&&(document.getElementById('loadShortcut').value=='ref')){
         this.importTarget=xUI.referenceXPS;
-    }else if(document.getElementById('loadShortcut').value){
+    } else {
         this.importTarget=xUI.XPS;
     }
     this.importCount= 0;
@@ -862,6 +863,8 @@ console.log(editxMap);
 /** 
     以下UI動作制御変数
     viewMode    ページ単位表示か又は全体を1ページ1カラムで表示させるかのフラグ
+        Compact (by scroll)
+        WordProp (by page)
     uiMode      編集/管理/閲覧モードのフラグ
         browsing
             サーバ上のデータを開いて内容をブラウズしている状態
@@ -1344,6 +1347,47 @@ for(var idx=0;idx<mySeps.length;idx++){
 //初期化の一環で一度実行？
 
 // xUI.setSheetLook(SheetLooks);
+
+/**
+    setToolView
+    ツール群の一括ループ切り替え
+    クッキーと同じ形式
+    引数がない場合は
+    (ユーザ設定)＞全表示＞最少表示＞推奨表示＞推奨コンパクト＞(ユーザ設定)
+    各ツールの個別切り替えを行うとその時点の表示がユーザ設定と置き換わるので注意
+*/
+xUI.setToolView = function(toolView){
+	var currentView = [];
+	for (var ix=0;ix<UIViewIdList.length;ix++){
+		currentView.push(($('#'+UIViewIdList[ix]).css('display')=='none')? 0:1);				
+	};
+	currentView=currentView.join("");
+    if(typeof this.toolView =='undefined') this.toolView = currentView;
+    if(String(toolView).match(/^[01]+$/)){
+        this.toolView = toolView;
+    }else{
+        var viewSet = [
+            '00000000000',
+            '01000010000',
+            '11011111001',
+            '11111111001',
+            this.toolView
+        ];
+        toolView = viewSet[(viewSet.indexOf(currentView)+1)%viewSet.length];
+    }
+    if(toolView != currentView){
+//UI表示状態のレストア
+    for (var ix=0;ix<UIViewIdList.length;ix++){
+        var myTgt=$("#"+UIViewIdList[ix]);
+        if(String(toolView).charAt(ix)=="0"){myTgt.hide()}else{myTgt.show()} 
+    }
+    }
+    xUI.adjustSpacer();
+    return toolView;
+}
+/* TEST
+xUI.setToolView()
+*/
 
 /**
     xUI.setDocumentStatus(myCommnad)
@@ -2332,7 +2376,8 @@ xUI.reInitBody=function(newTimelines,newDuration){
 if(dbg) console.log(newXPS.toString());
     this.put(newXPS);
 };
-
+/*
+*/
 xUI.switchStage=function(){
     alert(localize(nas.uiMsg.dmUnimplemented));//未実装
 };
@@ -3252,7 +3297,10 @@ BODY_ +='<tbody>';
     第一行目
     UI上は、イベント受信を担当するのは最も上に表示されるエレメント
 */
-BODY_ +='<tr class=tlhead>';
+BODY_ +='<tr class=tlhead ';
+    if(this.viewMode=="Compact") BODY_ +='id=tlhead';
+    if(pageNumber==0) BODY_ +='Parent';
+BODY_ +='>';
 //*==============================ページカラムループ処理
     for (cols=0;cols < PageCols;cols ++){
 /*********** timeguide ********************/
@@ -3322,8 +3370,8 @@ default:        BODY_ +='<th class="timingSpan tlhead" ';
  }
 BODY_ +=' id="TL'+(r+1)+'"';
 BODY_ +=' > ';
-    if(r > 0) noteStep = (this.XPS.xpsTracks[r-1].trackNote)? (noteStep % 5)+1 : 1 ;
-if(this.XPS.xpsTracks[r].trackNote){
+    if(r > 0) noteStep = (this.XPS.xpsTracks[r-1].tag)? (noteStep % 5)+1 : 1 ;
+if(this.XPS.xpsTracks[r].tag){
     var  trackId = ['p',pageNumber,'c',cols,'t',r].join('');
     BODY_ += '<span id="';
     BODY_ += trackId;
@@ -3331,7 +3379,7 @@ if(this.XPS.xpsTracks[r].trackNote){
     BODY_ += ' note'+noteStep;
     BODY_ += '"><span id="'
     BODY_ += trackId;
-    BODY_ += '_L" class=overlayLabel>'+this.XPS.xpsTracks[r].trackNote+'</span></span>'
+    BODY_ += '_L" class=overlayLabel>'+this.XPS.xpsTracks[r].tag+'</span></span>'
 }
 BODY_ +='</th>';
         };
@@ -4451,7 +4499,7 @@ xpsTimelineTrackオブジェクトのプロパティ
     noteText    ;//編集対象
     
     id      ;//識別用タイムラインラベル  編集対象
-    trackNote;//トラック補助情報　編集対象
+    tag;//トラック補助情報　編集対象
     sizeX   ;//デフォルト幅 point    編集対象（編集価値低）
     sizeY   ;//デフォルト高 point    編集対象（編集価値低）
     aspect  ;//デフォルトのpixelAspect  編集対象（編集価値低）
@@ -4473,7 +4521,7 @@ xpsTimelineTrackオブジェクトのプロパティ
         UNDO[2]=[datastream[0],targetXps.xpsTracks[myTarget[1]][myTarget[0]]];
         targetXps.xpsTracks[myTarget[1]][myTarget[0]]=datastream[1];//入力値を設定
         if((targetXps.xpsTracks[myTarget[1]].option == 'still')&&(myTarget[0] == 'id')){
-            targetXps.xpsTracks[myTarget[1]]["trackNote"]=datastream[1];//
+            targetXps.xpsTracks[myTarget[1]]["tag"]=datastream[1];//
         }
         if(myTarget[0] =="option"){targetXps.xpsTracks[myTarget[1]].sectionTrust = false;}
     }else{
@@ -5483,7 +5531,7 @@ console.log(e.srcElement.onclick);
             onReferenceHeader  = true;outer = false;
         }else if(e.srcElement.className.match(/^camArea|editArea|^framenotelabel|^dialoglabel/)){
             onTimelineTrackHeader  = true;outer = false;
-        }else if(e.srcElement.id.match(/^L\d+_\d+_\d+$/)){
+        }else if(e.srcElement.id.match(/^L\d+_\-?\d+_\d+$/)){
             onTrackLabel  = true;outer = false;
         }
     }
@@ -5986,19 +6034,36 @@ default    :    return true;
 */
 xUI.openDocument=function(mode){
     if(xUI.uiMode=='production') {mode='localFile';}
+    document.getElementById('loadShortcut').value='true';
     if(mode=='localFile'){
         if(fileBox.openFileDB){
             fileBox.openFileDB();
         }else{
 //        this.sWitchPanel("Data");//インポート・エクスポートパネルを呼び出す必要はなくなったので削除
             if(document.getElementById('optionPanelData').style.display!='inline'){xUI.sWitchPanel('Data')};
-            document.getElementById('loadShortcut').value='true';
+            document.getElementById('myCurrentFile').value = '';
             document.getElementById('myCurrentFile').click();
         }
     }else{
         xUI.sWitchPanel("File");   
     }
 }
+/**
+りまぴん-WEB-用　ローカルファイルインポートコマンド
+loadShortcut 変数の設定とファイルセレクタのクリアを同時に行い
+クリックイベントを送出する
+*/
+xUI.importDocument =function(targetArea){
+    if(! targetArea) targetArea = '';
+    document.getElementById('loadShortcut').value = targetArea;
+    if(fileBox.openFileDB){
+        fileBox.openFileDB();
+    }else{
+        document.getElementById('myCurrentFile').value = '';//これをカラにしないとchangeイベントが発火しないケースがある。
+        document.getElementById('myCurrentFile').click();
+    }
+}
+
 /** ドキュメントを保存
 
     現在のドキュメントをしかるべきロケーションに上書き保存する。
@@ -6799,6 +6864,9 @@ xUI.setRetrace = function(){
     }
     return xUI.sessionRetrace;
 }
+/*
+
+*/
 /**
  *  xUIにターゲットオブジェクトを与えてシートをリセットする関数
  *  初期化手順を用いていた部分の置換え用途で作成
@@ -6917,13 +6985,71 @@ xUI.resetSheet=function(editXps,referenceXps){
     this.selection(restoreSelection);
 //セクション編集状態であれば解除
     if(this.edmode>0){this.mdChg('normal');}
-
-
 //表示内容の同期
     sync("tool_");
     sync("info_");
+/*
+    viewMode設定
+*/
+//コンパクトモードが有効
+    if(xUI.viewMode=="Compact"){
+//ロゴ
+    $("#logoTable").hide();
+//第二カウンタ
+    $("#fct1").hide();
+//ツールバーボタン
+    $("#ok").hide();
+    $("#ng").hide();
+//シートヘッダ
+//    $("#opusL").hide();
+//    $("#titleL").hide();
+//    $("#subtitleL").hide();
+    $("#nameL").hide();
+//    $("#opus").hide();
+//    $("#title").hide();
+//    $("#subtitle").hide();
+    $("#update_user").hide();
+//メモエリア
+    $("#memoArea").hide();
+//タイムラインヘッダ
+    $("#UIheader").show();
+    if(document.getElementById("UIheaderScrollV").innerHTML==""){document.getElementById("UIheaderScrollV").innerHTML=xUI.pageView(-2);};
+//    $("#UIheaderFix").show();
+//    $("#UIheaderScroll").show();
+/*　タグ表示域高さ調整*/
+    $('.tlhead').each(function(){$(this).height($('#tlheadParent').height())});
+    }else{
+//ロゴ
+    $("#logoTable").show();
+//    $("#headerLogo").show();
+//第二カウンタ
+    $("#fct1").show();
+//ツールバーボタン
+    $("#ok").show();
+    $("#ng").show();
+
+//シートヘッダ
+//    $("#opusL").show();
+//    $("#titleL").show();
+//    $("#subtitleL").show();
+    $("#nameL").show();
+//    $("#opus").show();
+//    $("#title").show();
+//    $("#subtitle").show();
+    $("#update_user").show();
+//メモエリア
+    $("#memoArea").show();
+//タイムラインヘッダ
+    $("#UIheader").hide();
+    $("#UIheaderScrollV").html("");
+    
+//    $("#UIheaderFix").hide();
+//    $("#UIheaderScroll").hide();
+    }
+
 /* ヘッダ高さの初期調整*/
     this.adjustSpacer();
+
 /* エンドマーカー位置調整 はadjustSpacerに内包
 //印字用endマーカーは  印刷cssを参照して誤差を反映させること  フレームのピッチを計算すること
 印刷画面は印刷画面出力時に再度同メソッドで調整  トラック間の
@@ -7942,61 +8068,6 @@ default:
             $(this).children('ul').show();
         }, function() {$(this).children('ul').hide();});
 }
-//コンパクトメニューが有効ならばコンパクトモードへ遷移
-    if(xUI.viewMode=="Compact"){
-//ロゴ
-//    $("#headerLogo").hide();
-    $("#logoTable").hide();
-//第二カウンタ
-    $("#fct1").hide();
-//ツールバーボタン
-    $("#ok").hide();
-    $("#ng").hide();
-
-//シートヘッダ
-    $("#opusL").hide();
-    $("#titleL").hide();
-    $("#subtitleL").hide();
-    $("#nameL").hide();
-    $("#opus").hide();
-    $("#title").hide();
-    $("#subtitle").hide();
-    $("#update_user").hide();
-//メモエリア
-    $("#memoArea").hide();
-//タイムラインヘッダ
-    $("#UIheader").show();
-    if(document.getElementById("UIheaderScrollV").innerHTML==""){document.getElementById("UIheaderScrollV").innerHTML=xUI.paveView(-2);};
-//    $("#UIheaderFix").show();
-//    $("#UIheaderScroll").show();
-    }else{
-//ロゴ
-    $("#logoTable").show();
-//    $("#headerLogo").show();
-//第二カウンタ
-    $("#fct1").show();
-//ツールバーボタン
-    $("#ok").show();
-    $("#ng").show();
-
-//シートヘッダ
-    $("#opusL").show();
-    $("#titleL").show();
-    $("#subtitleL").show();
-    $("#nameL").show();
-    $("#opus").show();
-    $("#title").show();
-    $("#subtitle").show();
-    $("#update_user").show();
-//メモエリア
-    $("#memoArea").show();
-//タイムラインヘッダ
-    $("#UIheader").hide();
-    $("#UIheaderScrollV").html("");
-    
-//    $("#UIheaderFix").hide();
-//    $("#UIheaderScroll").hide();
-    }
 
 //オンサイト時の最終調整はこちらで？
     if(xUI.onSite){
@@ -8023,7 +8094,7 @@ default:
 //UI表示状態のレストア
     for (var ix=0;ix<UIViewIdList.length;ix++){
         var myTgt=$("#"+UIViewIdList[ix]);
-        if(ToolView.toString().charAt(ix)=="0"){myTgt.hide()}else{myTgt.show()} 
+        if(String(ToolView).charAt(ix)=="0"){myTgt.hide()}else{myTgt.show()} 
     }
 //暫定  プラットホームを判定して保存関連のボタンを無効化したほうが良い  後でする
 
@@ -8515,11 +8586,11 @@ case 1:		;//画像なしリンクあり
 	var titleString="<a href=\""+linkURL+"\" title=\""+titleText+"\" target=_new>"+XPS["title"]+" </a>";
 	break;
 default:
-	var titleString=(XPS["title"])? XPS["title"] : "<br />";
+	var titleString=(XPS["title"])? XPS["title"] : "";
 }
 
 	}else{
-	var titleString=(XPS["title"])? XPS["title"] : "<br />";
+	var titleString=(XPS["title"])? XPS["title"] : "";
 	}
 //
 
@@ -8530,12 +8601,12 @@ if(xUI.viewMode != "Compact"){
 }
 	}
 	break;
+case	"opus":	;
 case	"subtitle":	;
 	document.getElementById(prop).innerHTML=
-	(XPS[prop])? XPS[prop] : "<br />";
+	(XPS[prop])? XPS[prop] : "";
 	sync("title");
 	break;
-case	"opus":	;
 case	"create_time":	;
 case	"update_time":	;//?これは要らない
 	document.getElementById(prop).innerHTML=
@@ -9162,7 +9233,7 @@ var processImport=function(autoBuffer){
             console.log(xUI.importBox.selectedContents[dix].toString());
         }
     }else{
-        if((document.getElementById('loadShortcut')!='ref')&&(xUI.uiMode=='production')&&(xUI.sessionRetrace == 0)){
+        if((document.getElementById('loadShortcut').value != 'ref')&&(xUI.uiMode=='production')&&(xUI.sessionRetrace == 0)){
 //インポート時 undoが必要なケースでは xUI.putに渡す
             xUI.put(xUI.importBox.selectedContents[0]);
         }else{
@@ -9863,8 +9934,6 @@ myCookie[6]=[SLoop,CLoop,AutoScroll,TabSpin,ViewMode];
 if(useCookie.UIView){
 	ToolView=[];
 	for (var ix=0;ix<UIViewIdList.length;ix++){
-//		ToolView.push(($('#'+UIViewIdList[ix]).is(':visible'))?1:0);				
-//		ToolView.push(($('#'+UIViewIdList[ix]).isVisible())?1:0);				
 		ToolView.push(($('#'+UIViewIdList[ix]).css('display')=='none')? 0:1);				
 	};
 	ToolView=ToolView.join("");
@@ -11453,7 +11522,7 @@ for (i=0;i<lot;i++){	body_+='<td>'+ String(i)+'</td>'}
 
 /*
 var labelOptions=[
-	"option","link","trackNote","label","lot","blmtd","blpos",
+	"option","link","tag","label","lot","blmtd","blpos",
 	"size","sizeX","sizeY","aspect"
 ];
 */
@@ -11723,7 +11792,7 @@ this.getLayerProp =function (){
 			document.getElementById("scnLpnt_"+i).disabled=true;
 
 			document.getElementById("scnLtag_"+i).value=
-			currentTrack["trackNote"];//tag
+			currentTrack["tag"];//tag
 			document.getElementById("scnLlbl_"+i).value=
 			currentTrack["id"];//ラベル
 			
@@ -12045,7 +12114,7 @@ this.putLayerProp =function ()
 		}else{
 			xUI.XPS["xpsTracks"][i]["option"]= document.getElementById("scnLopt_"+i).value;
 			xUI.XPS["xpsTracks"][i]["link"]= document.getElementById("scnLlnk_"+i).value;
-			xUI.XPS["xpsTracks"][i]["trackNote"]= document.getElementById("scnLtag_"+i).value;
+			xUI.XPS["xpsTracks"][i]["tag"]= document.getElementById("scnLtag_"+i).value;
 			xUI.XPS["xpsTracks"][i]["id"]= document.getElementById("scnLlbl_"+i).value;
 			xUI.XPS["xpsTracks"][i]["lot"]= document.getElementById("scnLlot_"+i).value;
 			xUI.XPS["xpsTracks"][i]["sizeX"]= document.getElementById("scnLszX_"+i).value;

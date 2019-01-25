@@ -103,7 +103,7 @@ nas.AnimationReplacement=function(myParent,myContent){
     this.parent = (myParent)? myParent : null     ;//xMapElementGroup or null
     this.contentText = (myContent)? myContent : 'blank-cell';//xMap上のコンテントソースを保存する　自動で再構築が行なわれるタイミングがある
                                                    //myContent undefined で初期化を行った場合の値は blank-cell
-    this.name                                     ;//素材名（グループ名があればパース時に除く）
+    this.name                                     ;//素材名（グループ名はあっても除かない）
     this.source                                   ;//nas.AnimationElementSource
     this.comment                                  ;//コメント文字列　エレメントの注釈プロパティ-xMap編集UIのみで確認できる
     this.extended = false;
@@ -204,8 +204,9 @@ xMapパーサから呼び出す際に共通でコールされる
 */
 nas.AnimationReplacement.prototype.parseContent = function(myContent){
 //    var blankRegex  = new RegExp("^[ｘＸxX×〆0０]$");//カラ判定　システム変数として分離予定
-    var interpRegex = new RegExp("^[\-\+=○●*・a-zア-ン]$|^\[[^\]]+\]$");//中間値補間（動画記号）サイン　同上
-    var valueRegex  = new RegExp("^[\(<]?[0-9]+[>\)]?$");//無条件有効値 同上
+    var interpRegex = new RegExp("^[\-\+=○●・a-zア-ン]$|^\[[^\]]+\]$");//中間値補間（動画記号）サイン　同上
+    var valueRegex  = new RegExp("^[\(<]?([A-Z][\-_\.]?)?[0-9].+[>\)]?$");//無条件有効値 同上
+//    var valueRegex  = new RegExp("^[\(<]?[0-9]+[>\)]?$");//無条件有効値 同上
 
 //引数がなければ現在のコンテンツを再パース
     if(typeof myContent == 'undefined'){
@@ -291,23 +292,25 @@ nas.AnimationReplacement.prototype.parseContent = function(myContent){
             }
         } else if(myContent[line].match(/^(\S+)\t?(\S+)\t?([^\t]+)?\t?(.*)$/)){
         //　第一形式の再パース
-console.log(myContent[line]);
+//console.log(myContent[line]);
             var myGroup=RegExp.$1; //グループの再パースは行われない
             var myName =RegExp.$2;
             var myComment=RegExp.$4;
             var valueArray=nas.parseDataChank(RegExp.$3);
             var numeProps =[["size","x"],["size","y"],["offset","x"],["offset","y"]];
 
-console.log(myComment);
-console.log(valueArray);
-console.log(this);
+//console.log(myComment);
+//console.log(myName);
+//console.log(valueArray);
+//console.log(this);
 /*
     フィールド文字列であった場合の判定が必要　2018 10 09
 
 case :this.parent == null
 */
             if((! (this.parent))||(myGroup == this.parent.name)){
-                if(! isGroup) this.name = myName.replace(new RegExp('^'+myGroup+'\-'),"");
+//                if(! isGroup) this.name = myName.replace(new RegExp('^'+myGroup+'\-'),"");
+                if(! isGroup) this.name = myName;
                 var numCount=0;
                 for(var vix=0;vix<valueArray.length;vix++){
                     switch(valueArray[vix].type){
@@ -349,7 +352,7 @@ case :this.parent == null
 nas.AnimationReplacement.prototype.getStream=function(cellCounts){
     var myResult=new Array(cellCounts);
     myResult[0]=(this.name)? this.name:"";
-    if (myResult[0].match(/blank(-cell)?/)) myResult[0]="X";
+    if (myResult[0].match(/blank(-cell)?/)) myResult[0]="×";
     return myResult;
 }
 /**
@@ -380,8 +383,8 @@ nas.AnimationReplacement.prototype.getStream=function(cellCounts){
 　*/
 _parseReplacementTrack=function(){
 //    var blankRegex  = new RegExp("^[ｘＸxX×〆0０]$");//カラ判定　システム変数として分離予定
-    var interpRegex = new RegExp("^[\-\+=○◯●*・a-zア-ン]$|^\[[^\]]+\]$");//中間値補間（動画記号）サイン　同上
-    var valueRegex  = new RegExp("^[\(<]?[0-9]+[>\)]?$");//無条件有効値 同上
+    var interpRegex = new RegExp("^[\-\+=○◯●・a-zア-ン]$|^\[[^\]]+\]$");//中間値補間（動画記号）サイン　同上
+    var valueRegex  = new RegExp("^[\(<]?([A-Z][\-_\.]?)?[0-9].+[>\)]?$");//無条件有効値 同上
     //自分自身(トラック)を親として新規セクションコレクションを作成
     var myCollectionBlank = new XpsTimelineSectionCollection(this);//ブランクベースコレクション
     var myCollection      = new XpsTimelineSectionCollection(this);//ベースコレクション
@@ -412,7 +415,7 @@ var currentSectionBlank=(isBlank)? myCollectionBlank.addSection(disAppearance):m
     トラック上で明示的なブランクが指定された場合は、値にfalse/null/"blank"を与える。
 */
     for (var fix=0;fix<this.length;fix++){
-        var currentCell=Xps.sliceReplacementLabel(new String(this[fix]));//記述をラベルとエントリに分解 
+        var currentCell=Xps.sliceReplacementLabel(new String(this[fix]));//記述をラベルとエントリに分解
         if( currentCell.length == 1 ){ currentCell.push(this.id); }//エントリにグループ名が含まれないようならばトラックのラベルで補う
         // ここでデータの形式は [name,groupName] となる
         currentSection.duration ++; //
@@ -491,7 +494,6 @@ var currentSectionBlank=(isBlank)? myCollectionBlank.addSection(disAppearance):m
     既存エントリがない場合、エントリ文字列が条件を満たせば新規エントリとしてxMapにグループとエントリを登録して使用する
     それ以外は、無効エントリとなる
 */
-//console.log(currentCell.join("-"));
         var currentElement = this.xParent.parentXps.xMap.getElementByName(currentCell.join("-"));
         if(currentElement) {
 //console.log("value detcted in xMap:");
@@ -501,6 +503,7 @@ var currentSectionBlank=(isBlank)? myCollectionBlank.addSection(disAppearance):m
             if(String(currentCell[0]).match(valueRegex)){
                 valueDetect = true;
                 currentElement=this.pushEntry(currentCell[0],currentCell[1]);
+                currentElement=this.pushEntry(this[fix],currentCell[1]);
             }
         }
 //console.log(valueDetect);

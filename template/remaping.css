@@ -130,7 +130,7 @@ table.UItable{
 }
 
 table.info	{
-	width:1058px;
+	width:100%;
 	height:10px;
 	border-width:0;
 	table-layout:fixed;
@@ -157,13 +157,26 @@ th {
 /*
 	シートヘッダビュー設定
 */
-td#edchg {width:6em;}
+#edchg {
+	display:inline-block;
+	width:6em;
+	height:20px;
+	text-align:center;
+	vertical-align:middle;
+	border-style:solid;
+	margin: 4px 10px 4px 0px;
+	border-width:1px;
+   /* 角丸 */
+    -moz-border-radius: 4px;
+    -webkit-border-radius: 4px;
+    border-radius: 4px;	
+}
 th.opusLabel{width:4em;}
 th.titleLabel{width:18em;}
-th.scenecutLabel{width:8em;}
+/*th.scenecutLabel{}*/
 th.subtitleLabel{width:8em;}
-th.timeLabel{width:12em;}
-th.nameLabel{width:8em;}
+th.timeLabel{width:24em;}
+th.nameLabel{width:12em;}
 th.pageLabel{width:8em;}
 
 /*

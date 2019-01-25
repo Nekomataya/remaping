@@ -150,7 +150,7 @@ nas.uiMsg.title                 = {en: "title", ja: "題名"};
 nas.uiMsg.transition            = {en: "transition", ja: "トランジション"};
 nas.uiMsg.timelineTrack         = {en: "timeline track", ja: "タイムライントラック"};
 nas.uiMsg.timelineRename        = {en: "timeline rename", ja: "タイムライン名変更"};
-nas.uiMsg.trackNoteEdit         = {en: "timeline tag edit", ja: "タイムラインタグ編集"};
+nas.uiMsg.tagEdit         = {en: "timeline tag edit", ja: "タイムラインタグ編集"};
 nas.uiMsg.uninstall             = {en: "uninstall", ja: "削除"};
 nas.uiMsg.Update                = {en: "Update", ja: "更新"};
 nas.uiMsg.userInfo              = {en:"userInfo",ja:"作業者の情報"};
@@ -459,7 +459,7 @@ nas.uiMsg.dmRemoveThisMessage = {
 en:"Thereafter, do not display this message.",
 ja:"以後、このメッセージを表示しない。"
 };
-nas.uiMsg.dmTLtrackNoteEdit = {
+nas.uiMsg.dmTLtagEdit = {
 	en:"Edit the note text of the track.",
 	ja:"トラックの注釈を編集します。"
 };
