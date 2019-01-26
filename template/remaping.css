@@ -175,7 +175,7 @@ th.opusLabel{width:4em;}
 th.titleLabel{width:18em;}
 /*th.scenecutLabel{}*/
 th.subtitleLabel{width:8em;}
-th.timeLabel{width:24em;}
+th.timeLabel{width:18em;}
 th.nameLabel{width:12em;}
 th.pageLabel{width:8em;}
 
@@ -1249,7 +1249,7 @@ div.application_status {
 	z-index:88;
 	border-style:solid;
 	border-color:snow;
-	border-width:0 0 1px 0;
+	border-width:0 ;
 	padding:0 0 0 16px 
 }
 /*
@@ -1306,8 +1306,16 @@ a.close img{
     line-height:1.5;
     text-indent:1em;
 }
+/*アカウントパネル*/
+#account_box	{
+    position:absolute;
+    top:0;
+	right:0px;
+	padding-right:16px;
+}
 /*ログインパネル*/
 #optionPanelLogin{
+	width:100%;
     display:none;
 }
 /*ソフトウェアキーボード*/
@@ -1741,6 +1749,11 @@ transform-origin: 0 0;transform:scale(1,1);
  /**
 	.pmcui
 */
+#pmui	{
+	padding:0 0 0 0px;
+	float:left;
+	width:100%;
+}
 .pmcui	{
 	margin-top:8px;
 	background-color:#bbbbdd;

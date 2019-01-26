@@ -86,7 +86,7 @@
 <script src=./nas/scripts/remaping/messages.js></script>
 
 <!-- ライブラリインストール -->
-
+<!--document.onkeydown=function(){return xUI.keyDown(event);}-->
 </head>
 <body 
 	onload="startupTooltip();var nRS = setTimeout('nas_Rmp_Startup()',10);nas.LangPack.chgLocale('ja');serviceAgent.init();SoundEdit.panelInit();"
@@ -94,7 +94,8 @@
 	onContextMenu	=" return false;"
 	onSelectStart="return false;"
 	onScroll="xUI.onScroll();"
-    onKeyDown="return xUI.keyDown(event);"
+    onKeydown= "return xUI.keyDown(event);"
+    onKeyup= "return xUI.keyUp(event);"
 	onMouseDown = "return xUI.flipContextMenu(event);"
 >
 <!--	onKeyDown='if(document.getElementById("iNputbOx")!==document.activeElement){document.getElementById("iNputbOx").focus();};xUI.keyDwon(event)' -->
@@ -658,16 +659,26 @@ serviceAgent.pushEntry(xUI.XPS,function(){xUI.setStored("current");sync();
 	onClick="document.getElementById('toolbarHeader').style.display=(document.getElementById('toolbarHeader').style.display=='none')?'inline':'none';xUI.adjustSpacer();"
 	title="toolbarHeader"
 >toolbarHeader</A></li>
-<li><span id=pMtcControl-d class='pM pM-alt'></span><A	id=pMtcControl
+<li><span id=pMcommandbar-d class='pM pM-alt'></span><A	id=pMcommandbar
 	HREF='javascript:void(0);'
-	onclick='xUI.sWitchPanel("headerTool");return false'
-	title="header tools show/hide"
->headerTools</A></li>
+	onclick='xUI.sWitchPanel("Utl");return false;'
+	title="ユーティリテーメニュー"
+>commandBar</A></li>
 <li><span id=pMpmControl-d class='pM pM-alt'></span><A	id=pMpmControl
 	HREF='javascript:void(0);'
 	onclick='xUI.sWitchPanel("pmui");return false'
 	title="制作管理メニュー"
 >進捗管理バー</A></li>
+<li><span id=pMtcControl-d class='pM pM-alt'></span><A	id=pMtcControl
+	HREF='javascript:void(0);'
+	onclick='xUI.sWitchPanel("headerTool");return false'
+	title="header tools show/hide"
+>headerTools</A></li>
+<li><span id=pMinputControl-d class='pM pM-alt'></span><A	id=pMinputControl
+	HREF='javascript:void(0);'
+	onclick='xUI.sWitchPanel("inputControl");return false'
+	title="input box show/hide"
+>入力ボックス</A></li>
 <li style="display:none;"><span id=pMairMenu-d class='pM pM-alt'></span><A	id=pMairMenu
 	HREF='javascript:void(0);'
 	onClick="document.getElementById('airMenu').style.display=(document.getElementById('airMenu').style.display=='none')?'inline':'none';"
@@ -678,11 +689,6 @@ serviceAgent.pushEntry(xUI.XPS,function(){xUI.setStored("current");sync();
 	onClick="document.getElementById('sheetHeaderTable').style.display=(document.getElementById('sheetHeaderTable').style.display=='none')?'inline':'none';xUI.adjustSpacer();"
 	title="sheetHeaderTable"
 >sheetHeaderTable</A></li>
-<li><span id=pMcommandbar-d class='pM pM-alt'></span><A	id=pMcommandbar
-	HREF='javascript:void(0);'
-	onclick='xUI.sWitchPanel("Utl");return false;'
-	title="ユーティリテーメニュー"
->commandBar</A></li>
 <li><span id=pMmemoArea-d class='pM pM-alt'></span><A id=pMmemoArea
 	HREF='javascript:void(0);'
 	onClick="xUI.sWitchPanel('memoArea')"
@@ -719,9 +725,9 @@ serviceAgent.pushEntry(xUI.XPS,function(){xUI.setStored("current");sync();
 </li>
 
 </ul>
-</div>
+</div><br>
 <!-- dropdown menu for browser ブラウザ用ドロップダウンメニュー　-->
-<div id=account_box style='padding-right:16px'>
+<div id=account_box>
     <div class=server-info
         id = server-info
         client_id='b115aead773388942473e77c1e014f4d7d38e4d4829ae4fd1fa0e48e1347b4cd'
@@ -767,7 +773,6 @@ serviceAgent.pushEntry(xUI.XPS,function(){xUI.setStored("current");sync();
 </div>
 <!--	ログインパネル	-->
 <div class='loginPanel' id=optionPanelLogin >
-    <hr>
     <span class= 'floating-right'>	<select id=serverSelector
 				class=debug
 		onChange="serviceAgent.switchService(this.value)"
@@ -952,7 +957,7 @@ serviceAgent.pushEntry(xUI.XPS,function(){xUI.setStored("current");sync();
 	title="一列選択"
 >
 </button><button
-    id=ibMcopy
+	id=ibMcopy
 	class='iconButton iconButton-copy'
 	onclick='chkValue("copy");'
 	title="複写"
@@ -964,7 +969,7 @@ serviceAgent.pushEntry(xUI.XPS,function(){xUI.setStored("current");sync();
 	title="切り取り"
 >
 </button><button
-    id=ibMpaste
+	id=ibMpaste
 	class='iconButton  iconButton-paste'
 	onclick='chkValue("paste");'
 	title="貼り付け"
@@ -1019,7 +1024,7 @@ serviceAgent.pushEntry(xUI.XPS,function(){xUI.setStored("current");sync();
 <!--	ツールバーボタン/toolIcons	-->
 	<!-- logo -->
 <span id=headerLogo class='floating-right'>
-<b>りまぴん</b>
+<b>user-logo</b>
 </span>
 	<!-- logo -->
     <!--リポジトリ Repository/Team-->
@@ -1030,422 +1035,8 @@ serviceAgent.pushEntry(xUI.XPS,function(){xUI.setStored("current");sync();
 
 </div>
 <!--	/ツールバー/toolbarHeade	-->
-
-
-
-<!-- 固定ヘッダ 最上段　印刷時非表示　id="fixed"-->
-<div class=headerTool id=headerTool >
-<br>	<!-- カウンタ -->
-<button id=edchg
-disabled
->EXTEST</button>
-<input	type=button
-	id=activeLvl
-	name=activeLvl
-	class=aekConvert
-	value=A
-	onclick="chkValue(this.id);"
-	title="AEキー変換"
->
-<input	type=text
-	id=fct0
-	name=fct0
-	class=fct
-	value='00:00:00+00_'
-	onChange='chkValue(this.id);'
-	title="変更するとジャンプ"
-><input	type=text
-	id=fct1
-	name=fct1
-	class=fct
-	value='p00 / 000+00_'
-	onChange='chkValue(this.id);'
-	title="数字だけはコマ数"
->
-	<!-- カウンタ -->
-
-<span id=inputControl class="floating-right">
-	<!-- スピン -->
-<input	type=text
-	name=spin_V
-	id=spin_V
-	class=spinCtl
-	value=3
-	onMousedown="nas.sliderVALUE([event,this.id,'24','1','0']);"
-	onChange="chkValue(this.id);"
-	title="スピン値"
->
-<span style="position:relative;height:16px;width:24px;">
-<button
-	name=spin_Vup
-	id=v_up
-	class="subControl subControl-incr spinCtl spinCtl-top"
-	onclick="chkValue(this.id);"
-	title="SPIN増"
-> </button><button
-	name=spin_Vdn
-	id=v_dn
-	class="subControl subControl-decr spinCtl spinCtl-bottom"
-	onclick="chkValue(this.id);"
-	title="SPIN減"
-> </button></span>
-<a
-	id=spinCkLb
-	href="javascript:void(0);"
-	onClick='return chg("spinCk");'
-	title="選択範囲をスピン指定にする"
-
-> Spin </a><input type=checkbox
-	name=spinCk
-	id=spinCk
-	onChange="chkValue(this.id);"
-	title="選択範囲をスピン指定にする"
->
- 
-	<!-- スピン -->
-
-<input	name=iNputbOx
-	id=iNputbOx
-	class=iNputbOx
-	type=text
-	size=24
-	onKeyPress="return xUI.keyPress(event);"
-	onKeyUp   ="return xUI.keyUp(event);"
-	title="シートにデータを入力します。"
-> 
-<!--
-	onKeyDown ="return xUI.keyDown(event);"
-	onBlur='xUI.put(this.value);'
-	onKeyPress="console.log(xUI.keyPress(event));return true;"
--->
-<button
-	name=ok
-	id=ok
-	style="width:36px;position:relative;top:4px;"
-	onclick="chkValue(this.id);"
-	title="確定[Enter]"
->
-		<img src=./images/ui/ok.png height=16>
-<!--		    <span class='ui-icon ui-icon-radio-off'>
--->
-</button><button
-	name=ng
-	id=ng
-	style="width:20px;position:relative;top:4px;"
-	onclick="chkValue(this.id);"
-	title="取り消し[esc]"
->
-		<img src=./images/ui/ng.png height=16> 
-<!--    <span class='ui-icon ui-icon-close'>
--->
-</button>
-</span>
-</div>
-<div id=pmui>
-<!-- 管理IDコントロール UI-->
-    <div id =pmcui class=pmcui>
-
-    <span id=pmfui>
-<button
-	id=pmfui-new
-    class='pmControl pmControl-new' 
-    title='新規カットを登録'
-	onclick='xUI.storeDocument();'
->新規登録</button>
-    </span>
-
-<button
-	id=pmcui-checkin
-		class='jobControl jobControl-checkin'
-		onclick="serviceAgent.checkinEntry();"
-		title="チェックイン"
-	>作業開始
-	</button>
-	         <button
-	id=pmcui-update
-		class='jobControl  jobControl-save'
-		onclick='serviceAgent.pushEntry(xUI.XPS,function(){xUI.setStored("current");sync();
-},function(){alert("error :"+this.id)});'
-		title="保存"
-	>作業保存
-	</button><button
-	id=pmcui-checkout
-		class='jobControl  jobControl-checkout'
-		onclick="serviceAgent.checkoutEntry();"
-		title="チェックアウト"
-	>作業終了
-	</button><button
-	id=pmcui-deactivate
-		class='jobControl  jobControl-deactivate'
-		onclick="serviceAgent.deactivateEntry();"
-		title="作業保留"
-	>作業保留
-	</button><button
-	id=pmcui-activate
-		class='jobControl  jobControl-activate'
-		onclick="serviceAgent.activateEntry();"
-		title="作業再開"
-	>作業再開
-	</button>
- :  <span id=pmcui_line class=pmcui_> 0:(本線) </span>
-// <span id=pmcui_stage class=pmcui_> 2:原画 </span> 
-// <span id=pmcui_job class=pmcui_> 1:(原画) </span>
-// <span id=pmcui_status class=pmcui_> Active </span>
-// <span id=pmcui_documentWriteable class=pmcui_> [保存不可] </span>
-<!-- 管理IDコントロール UI-->
-
-<!-- ドキュメントコントロール(制作管理)メニュー
-class=optionPanel id=optionPanelProductManagement
--->
-    <div id=pmaui>
-<button
-	id=pmaui-new
-    class='pmControl pmControl-new' 
-    title='新規カットを登録'
-	onclick='xUI.sWitchPanel("File");'
->新規登録</button>
-
-<button
-	id=pmaui-receipt
-    class='pmControl pmControl-receipt'
-    title='作業終了した工程を閉じて次の工程を開始'
-	onclick="serviceAgent.receiptEntry();"
->作業検収</button><button
-	id=pmaui-checkout
-    class='pmControl pmControl-checkout'
-    disabled = true
-    title='作業中のカットを強制的に終了（回収）'
->作業終了</button><button
-	id=pmaui-abort
-    class='pmControl pmControl-adort'
-    disabled = true
-    title='カットの全工程を停止（カット削除）'
->制作中断</button>
-
-<button
-	id=pmaui-branch
-    class='pmControl pmControl-branch'
-    disabled = true
-    title='新規ラインを立ち上げる'
->ライン分岐</button><button
-	id=pmaui-merge
-    class='pmControl pmControl-merge'
-    disabled = true
-    title='分岐したラインを収束'
->ラインマージ</button>
-
-    </div>
-<!--
-<span class='pmLabel'>
-    ライン :
-</span>
-<span class='pmId'>
-0:
-</span>
-<select class='pmControl' id=linSelect>
-    <option value='本線'>本線</option>
-</select>
-<span class='pmLabel'>
-　新規ライン :
-</span>
-<span class='pmId'>
-1-2-1:
-</span>
-<input type=text class=pmSelector list=line_list>
-<datalist id=line_list>
-    <option value='trunk'>trunk</option>
-    <option value='本線'>本線</option>
-    <option value='background art'>background art</option>
-    <option value='背景美術'>背景美術</option>
-    <option value='3D-Animation'>3D-Animation</option>
-    <option value='3D-美術'>3D-美術</option>
-</datalist>
-<button class=pmControllButton >分岐</button>
-<br>
-<span class='pmLabel'>
-    工程 :
-</span>
-<span class='pmId'>
-0:
-</span>
-<select class='pmControl' id=stageSelect>
-    <option value='コンテ撮'>コンテ撮</option>
-    <option value='レイアウト'>レイアウト</option>
-</select>
-<span class='pmLabel'>
-　新規工程 :
-</span>
-<span class='pmId'>
-1:
-</span>
-<input type=text class=pmSelector list=stage_list>
-<datalist id=stage_list>
-    <option value='原画'></option>
-    <option value='動画'></option>
-    <option value='トレース'></option>
-    <option value='彩色'></option>
-</datalist>
-<button class=pmControllButton >開始</button>
-<br>
-<span class='pmLabel'>
-    作業 :
-</span>
-<span class='pmId'>
-3:
-</span>
-<select class='pmControl' id=stageSelect>
-    <option value='レイアウト作画'>レイアウト作画</option>
-    <option value='作画打合'></option>
-</select>
-<span class='pmLabel'>
-　新規作業 :
-</span>
-<span class='pmId'>
-4:
-</span>
-<input type=text class=pmSelector list=job_list>
-<datalist id=job_list>
-    <option value='監督チェック'></option>
-    <option value='演出チェック'></option>
-    <option value='作監チェック'></option>
-    <option value='総作監チェック'></option>
-</datalist>
-<button class=pmControllButton >開始</button>
-<br> -->
-<!-- ドキュメントコントロール(floating)メニュー
-class=optionPanel id=optionPanelProductManagement
--->
-<hr><hr>
-<!--
-
-//  新規カット
-カット番号を入力（確認）してリポジトリに送信（POST）
-
-
-//  作業検収
-カット内容の提示と確認（Fixed）はチェック済
-次ステージの指定（確認）してリポジリに送信（POST）
-
-//  作業終了
-強制的に作業中(Active/Hold)のデータを終了状態(Fixed)に遷移
-二重確認
-（作業中のユーザにメーッセージを発信）省略可
-モード変更送信(PUSH)
-
-//  作業中断
-終了状態(Fixed)のデータを中断(Aborted)に遷移
-二重確認
-モード変更送信
-
-//  ライン分岐
-現在のラインから新規ラインを分岐する
-
-2016拡張では保留　xMap実装後に合わせて実装
-マスターDBが無いので分岐の確認が出来ない
-
-//  ラインマージ
-親側のライン（マスター）側からサブラインドキュメントを指定してマージする
-または支線側からマスターに向かってマージを行う（親は自動認識）
-マージ先はアセットストア
-（通信ロスト等）マージ先が特定できない場合は、処理失敗
-
-2016拡張では保留　xMap実装後に合わせて実装
-マスターDBが無いので分岐の確認が出来ない
-
-//  全処理共通
-新規作成成功/失敗を表示
-リストの更新
-
-
-
-
-    <div id=messages-pmaui>
-    新規カットを作成します。カット番号/継続時間を入力して[OK]ボタンで確定してください。<br>
-        TITLE : <span>%title%</span> OPUS#:<span>%opus%</span> S-C:<input type=text></input> TIME:<input type=text></input>
-        
-    %curentStage% 工程を閉じて次の工程を開きます。新しい工程名を入力してください。<br>
-        現在の工程 : %currentStage% 新規工程 : <input type=text list=taragetStageList></input>  <button>O K</button><hr>
-    カットの更新に失敗しました。時間をおいて再度処理してください。
-    現在作業中のデータを廃棄して作業を終了します。<br>
-    作業担当者 %update_user% に通知を送信します。<input type=checkbox></input>[yes/no]<br>
-    よろしいですか？<br>
-    yes/no/cancel<hr>
-    現在の作業をすべて停止してカット制作を中断します。<br>
-    よろしいですか？<br>
-    
-    
-    </div>
-<hr>
-<hr>-->
-        </div>
-</div>
-<!-- ドキュメントコントロール(制作管理)メニュー-->
-<!-- ドキュメント ステータス　オーバレイ　-->
-<div id=documentWritable class=documentStatusOverlay>
-<span style='border-style:solid;border-color:red;'> Read Only </span> 
-</div>
-<!-- ドキュメント ステータス　オーバレイ　-->
-<!-- シートヘッダテーブル　編集機能あり縮小UIの際は非表示または縮小表示に -->
-<div id=sheetHeaderTable>
-<!-- コンパクトビューの時は　インジケータ　カット番号　時間　を残して非表示
-     <td id=edchg>
-	編集中
-     </td>
--->
-<div
-    style='text-align:right;'
-><span id=title>title-string</span>#<span id=opus>opus</span>[<span id=subtitle>subtitle</span>]//
-
-<select name=jobSelector id=jobSelector onChange='if(xUI.XPS.currentStatus.content=="Active"){serviceAgent.getEntry(this.value,true)}else{serviceAgent.getEntry(this.value)};' 
-
-					<option>----</option>
-				</select>
-</div><table class=info border=0 >
-<tr>
-<!--     <th class='opusLabel annotationText' id="opusL">
-	No
-     </th><th class='titleLabel annotationText' id="titleL">
-	TITLE
-     </th><th class='subtitleLabel annotationText' id="subtitleL">
-	subTITLE
-     </th>--><th class='scenecutLabel  annotationText'>
-	S-C
-     </th><th colspan=3 class='timeLabel annotationText'>
-	TIME
-     </th><th class='nameLabel annotationText' id="nameL">
-	name
-     </th>
-</tr>
-<tr onDblClick ="return rewriteValueByEvt(event)" >
-<!--<td rowspan=2>
-Jobセレクタの動作をもうすこしインテリジェントに変更
-編集時はリファレンスエリアの書き換え
-閲覧時は全体の変更にケース分けして処理
-
-</td><td id=opus lock="yes" >
-	#00
-</td><td id=title lock="yes" >
-	TITLE-TEXT
-</td><td id=subtitle lock="yes" >
-	subTITLE
-</td>--><td id=scene_cut lock="yes">
-	S-C
-</td><td id=time >
-	(00+00)
-</td><td id=trin >
-	---
-</td><td id=trout >
-	---
-</td><td id=update_user lock="yes">
-	name
-</td></tr>
-
-</table>
-</div>
-<!-- 固定ヘッダ ここまで 以下は表示切り換えのパネル群 -->
 <!--	ユーティリティーコマンドバー	最上段に配置　-->
 <div class=optionPanel id=optionPanelUtl >
-<hr>
  <input type=checkbox
 	id=tbLock
 	style='display:none;'
@@ -1655,7 +1246,435 @@ Jobセレクタの動作をもうすこしインテリジェントに変更
 >
 </button>
 <!--     コマンドツールバーここまで          -->
-<hr></div>
+</div>
+
+
+
+<!-- 固定ヘッダ 最上段　印刷時非表示　id="fixed"-->
+<!-- pmui production management user interface-->
+<div id=pmui class=pmui>
+<!-- 管理IDコントロール UI-->
+    <div id =pmcui class=pmcui>
+
+    <span id=pmfui>
+<button
+	id=pmfui-new
+    class='pmControl pmControl-new' 
+    title='新規カットを登録'
+	onclick='xUI.storeDocument();'
+>新規登録</button>
+    </span>
+
+<button
+	id=pmcui-checkin
+		class='jobControl jobControl-checkin'
+		onclick="serviceAgent.checkinEntry();"
+		title="チェックイン"
+	>作業開始
+	</button>
+	         <button
+	id=pmcui-update
+		class='jobControl  jobControl-save'
+		onclick='serviceAgent.pushEntry(xUI.XPS,function(){xUI.setStored("current");sync();
+},function(){alert("error :"+this.id)});'
+		title="保存"
+	>作業保存
+	</button><button
+	id=pmcui-checkout
+		class='jobControl  jobControl-checkout'
+		onclick="serviceAgent.checkoutEntry();"
+		title="チェックアウト"
+	>作業終了
+	</button><button
+	id=pmcui-deactivate
+		class='jobControl  jobControl-deactivate'
+		onclick="serviceAgent.deactivateEntry();"
+		title="作業保留"
+	>作業保留
+	</button><button
+	id=pmcui-activate
+		class='jobControl  jobControl-activate'
+		onclick="serviceAgent.activateEntry();"
+		title="作業再開"
+	>作業再開
+	</button>
+<!-- 
+ :  <span id=pmcui_line class=pmcui_> 0:(本線) </span>
+// <span id=pmcui_stage class=pmcui_> 2:原画 </span> 
+// <span id=pmcui_job class=pmcui_> 1:(原画) </span>
+// <span id=pmcui_status class=pmcui_> Active </span>
+// <span id=pmcui_documentWriteable class=pmcui_> [保存不可] </span>
+管理IDコントロール UI-->
+
+<!-- ドキュメントコントロール(制作管理)メニュー
+class=optionPanel id=optionPanelProductManagement
+-->
+    <div id=pmaui>
+<button
+	id=pmaui-new
+    class='pmControl pmControl-new' 
+    title='新規カットを登録'
+	onclick='xUI.sWitchPanel("File");'
+>新規登録</button>
+
+<button
+	id=pmaui-receipt
+    class='pmControl pmControl-receipt'
+    title='作業終了した工程を閉じて次の工程を開始'
+	onclick="serviceAgent.receiptEntry();"
+>作業検収</button><button
+	id=pmaui-checkout
+    class='pmControl pmControl-checkout'
+    disabled = true
+    title='作業中のカットを強制的に終了（回収）'
+>作業終了</button><button
+	id=pmaui-abort
+    class='pmControl pmControl-adort'
+    disabled = true
+    title='カットの全工程を停止（カット削除）'
+>制作中断</button>
+
+<button
+	id=pmaui-branch
+    class='pmControl pmControl-branch'
+    disabled = true
+    title='新規ラインを立ち上げる'
+>ライン分岐</button><button
+	id=pmaui-merge
+    class='pmControl pmControl-merge'
+    disabled = true
+    title='分岐したラインを収束'
+>ラインマージ</button>
+
+    </div>
+<!--
+<span class='pmLabel'>
+    ライン :
+</span>
+<span class='pmId'>
+0:
+</span>
+<select class='pmControl' id=linSelect>
+    <option value='本線'>本線</option>
+</select>
+<span class='pmLabel'>
+　新規ライン :
+</span>
+<span class='pmId'>
+1-2-1:
+</span>
+<input type=text class=pmSelector list=line_list>
+<datalist id=line_list>
+    <option value='trunk'>trunk</option>
+    <option value='本線'>本線</option>
+    <option value='background art'>background art</option>
+    <option value='背景美術'>背景美術</option>
+    <option value='3D-Animation'>3D-Animation</option>
+    <option value='3D-美術'>3D-美術</option>
+</datalist>
+<button class=pmControllButton >分岐</button>
+<br>
+<span class='pmLabel'>
+    工程 :
+</span>
+<span class='pmId'>
+0:
+</span>
+<select class='pmControl' id=stageSelect>
+    <option value='コンテ撮'>コンテ撮</option>
+    <option value='レイアウト'>レイアウト</option>
+</select>
+<span class='pmLabel'>
+　新規工程 :
+</span>
+<span class='pmId'>
+1:
+</span>
+<input type=text class=pmSelector list=stage_list>
+<datalist id=stage_list>
+    <option value='原画'></option>
+    <option value='動画'></option>
+    <option value='トレース'></option>
+    <option value='彩色'></option>
+</datalist>
+<button class=pmControllButton >開始</button>
+<br>
+<span class='pmLabel'>
+    作業 :
+</span>
+<span class='pmId'>
+3:
+</span>
+<select class='pmControl' id=stageSelect>
+    <option value='レイアウト作画'>レイアウト作画</option>
+    <option value='作画打合'></option>
+</select>
+<span class='pmLabel'>
+　新規作業 :
+</span>
+<span class='pmId'>
+4:
+</span>
+<input type=text class=pmSelector list=job_list>
+<datalist id=job_list>
+    <option value='監督チェック'></option>
+    <option value='演出チェック'></option>
+    <option value='作監チェック'></option>
+    <option value='総作監チェック'></option>
+</datalist>
+<button class=pmControllButton >開始</button>
+<br> -->
+<!-- ドキュメントコントロール(floating)メニュー
+class=optionPanel id=optionPanelProductManagement
+-->
+<hr><hr>
+<!--
+
+//  新規カット
+カット番号を入力（確認）してリポジトリに送信（POST）
+
+
+//  作業検収
+カット内容の提示と確認（Fixed）はチェック済
+次ステージの指定（確認）してリポジリに送信（POST）
+
+//  作業終了
+強制的に作業中(Active/Hold)のデータを終了状態(Fixed)に遷移
+二重確認
+（作業中のユーザにメーッセージを発信）省略可
+モード変更送信(PUSH)
+
+//  作業中断
+終了状態(Fixed)のデータを中断(Aborted)に遷移
+二重確認
+モード変更送信
+
+//  ライン分岐
+現在のラインから新規ラインを分岐する
+
+2016拡張では保留　xMap実装後に合わせて実装
+マスターDBが無いので分岐の確認が出来ない
+
+//  ラインマージ
+親側のライン（マスター）側からサブラインドキュメントを指定してマージする
+または支線側からマスターに向かってマージを行う（親は自動認識）
+マージ先はアセットストア
+（通信ロスト等）マージ先が特定できない場合は、処理失敗
+
+2016拡張では保留　xMap実装後に合わせて実装
+マスターDBが無いので分岐の確認が出来ない
+
+//  全処理共通
+新規作成成功/失敗を表示
+リストの更新
+
+
+
+
+    <div id=messages-pmaui>
+    新規カットを作成します。カット番号/継続時間を入力して[OK]ボタンで確定してください。<br>
+        TITLE : <span>%title%</span> OPUS#:<span>%opus%</span> S-C:<input type=text></input> TIME:<input type=text></input>
+        
+    %curentStage% 工程を閉じて次の工程を開きます。新しい工程名を入力してください。<br>
+        現在の工程 : %currentStage% 新規工程 : <input type=text list=taragetStageList></input>  <button>O K</button><hr>
+    カットの更新に失敗しました。時間をおいて再度処理してください。
+    現在作業中のデータを廃棄して作業を終了します。<br>
+    作業担当者 %update_user% に通知を送信します。<input type=checkbox></input>[yes/no]<br>
+    よろしいですか？<br>
+    yes/no/cancel<hr>
+    現在の作業をすべて停止してカット制作を中断します。<br>
+    よろしいですか？<br>
+    
+    
+    </div>
+<hr>
+<hr>-->
+        </div>
+<!-- ドキュメントコントロール(制作管理)メニュー-->
+</div>
+<!-- pmui production management user interface--><!-- ヘッダツール群 入力コントロール -->
+<div class=headerTool id=headerTool >
+	<!-- カウンタ -->
+<button id=edchg
+disabled
+>EXTEST</button>
+<input	type=button
+	id=activeLvl
+	name=activeLvl
+	class=aekConvert
+	value=A
+	onclick="chkValue(this.id);"
+	title="AEキー変換"
+>
+<input	type=text
+	id=fct0
+	name=fct0
+	class=fct
+	value='00:00:00+00_'
+	onChange='chkValue(this.id);'
+	title="変更するとジャンプ"
+><input	type=text
+	id=fct1
+	name=fct1
+	class=fct
+	value='p00 / 000+00_'
+	onChange='chkValue(this.id);'
+	title="数字だけはコマ数"
+>
+	<!-- カウンタ -->
+
+<span id=inputControl class="floating-right">
+	<!-- スピン -->
+<input	type=text
+	name=spin_V
+	id=spin_V
+	class=spinCtl
+	value=3
+	onMousedown="nas.sliderVALUE([event,this.id,'24','1','0']);"
+	onChange="chkValue(this.id);"
+	title="スピン値"
+>
+<span style="position:relative;height:16px;width:24px;">
+<button
+	name=spin_Vup
+	id=v_up
+	class="subControl subControl-incr spinCtl spinCtl-top"
+	onclick="chkValue(this.id);"
+	title="SPIN増"
+> </button><button
+	name=spin_Vdn
+	id=v_dn
+	class="subControl subControl-decr spinCtl spinCtl-bottom"
+	onclick="chkValue(this.id);"
+	title="SPIN減"
+> </button></span>
+<a
+	id=spinCkLb
+	href="javascript:void(0);"
+	onClick='return chg("spinCk");'
+	title="選択範囲をスピン指定にする"
+
+> Spin </a><input type=checkbox
+	name=spinCk
+	id=spinCk
+	onChange="chkValue(this.id);"
+	title="選択範囲をスピン指定にする"
+>
+ 
+	<!-- スピン -->
+
+<input	name=iNputbOx
+	id=iNputbOx
+	class=iNputbOx
+	type=text
+	size=24
+	onKeyPress="return xUI.keyPress(event);"
+	title="シートにデータを入力します。"
+> 
+<!--
+	onKeyUp   ="return xUI.keyUp(event);"
+	onKeyDown ="return xUI.keyDown(event);"
+	onBlur='xUI.put(this.value);'
+	onKeyPress="console.log(xUI.keyPress(event));return true;"
+-->
+<button
+	name=ok
+	id=ok
+	style="width:36px;position:relative;top:4px;"
+	onclick="chkValue(this.id);"
+	title="確定[Enter]"
+>
+		<img src=./images/ui/ok.png height=16>
+<!--		    <span class='ui-icon ui-icon-radio-off'>
+-->
+</button><button
+	name=ng
+	id=ng
+	style="width:20px;position:relative;top:4px;"
+	onclick="chkValue(this.id);"
+	title="取り消し[esc]"
+>
+		<img src=./images/ui/ng.png height=16> 
+<!--    <span class='ui-icon ui-icon-close'>
+-->
+</button>
+</span>
+</div>
+<!-- ヘッダツール群 入力コントロール -->
+
+<!-- ドキュメント ステータス　オーバレイ　-->
+<div id=documentWritable class=documentStatusOverlay>
+<span style='border-style:solid;border-color:red;'> Read Only </span> 
+</div>
+<!-- ドキュメント ステータス　オーバレイ　-->
+
+<!-- シートヘッダテーブル　編集機能あり縮小UIの際は非表示または縮小表示に -->
+<div id=sheetHeaderTable>
+<!-- コンパクトビューの時は　インジケータ　カット番号　時間　を残して非表示
+     <td id=edchg>
+	編集中
+     </td>
+-->
+<div
+    style='text-align:right;'
+><hr>
+<span id=XpsIdentifier></span>
+<!-- <span id=title>title-string</span>#<span id=opus>opus</span>[<span id=subtitle>subtitle</span>]-->
+// <span id=pmcui_line class=pmcui_> 0:(本線) </span>
+// <span id=pmcui_stage class=pmcui_> 2:原画 </span> 
+// <span id=pmcui_job class=pmcui_> 1:(原画) </span>
+// <span id=pmcui_status class=pmcui_> Active </span>
+// <span id=pmcui_documentWriteable class=pmcui_> [保存不可] </span>
+
+
+
+<select name=jobSelector id=jobSelector onChange='if(xUI.XPS.currentStatus.content=="Active"){serviceAgent.getEntry(this.value,true)}else{serviceAgent.getEntry(this.value)};' 
+
+					<option>----</option>
+				</select>
+</div><table class=info border=0 >
+<tr>
+<!--     <th class='opusLabel annotationText' id="opusL">
+	No
+     </th><th class='titleLabel annotationText' id="titleL">
+	TITLE
+     </th><th class='subtitleLabel annotationText' id="subtitleL">
+	subTITLE
+     </th>--><th class='scenecutLabel  annotationText'>
+	S-C
+     </th><th colspan=3 class='timeLabel annotationText'>
+	TIME
+     </th><th class='nameLabel annotationText' id="nameL">
+	name
+     </th>
+</tr>
+<tr onDblClick ="return rewriteValueByEvt(event)" >
+<!--<td rowspan=2>
+Jobセレクタの動作をもうすこしインテリジェントに変更
+編集時はリファレンスエリアの書き換え
+閲覧時は全体の変更にケース分けして処理
+
+</td><td id=opus lock="yes" >
+	#00
+</td><td id=title lock="yes" >
+	TITLE-TEXT
+</td><td id=subtitle lock="yes" >
+	subTITLE
+</td>--><td id=scene_cut lock="yes">
+	S-C
+</td><td id=time >
+	(00+00)
+</td><td id=trin >
+	---
+</td><td id=trout >
+	---
+</td><td id=update_user lock="yes">
+	name
+</td></tr>
+
+</table>
+</div>
+<!-- 固定ヘッダ ここまで 以下は表示切り換えのパネル群 -->
 <!--    コンテキストメニューUI        -->
 <div id ="contextMenu" class ="contextMenu optionPanelFloat">
 <!--
@@ -1947,16 +1966,26 @@ serviceAgent.pushEntry(xUI.XPS,function(){xUI.setStored("current");sync();
 	onClick="document.getElementById('toolbarHeader').style.display=(document.getElementById('toolbarHeader').style.display=='none')?'inline':'none';xUI.adjustSpacer();"
 	title="toolbarHeader"
 >toolbarHeader</A></li>
-<li><span id=cMheaderTools-d class='pM pM-alt'></span><A	id=cMheaderTools
+<li><span id=cMcommandbar-d class='cM cM-alt'></span><A	id=cMcommandbar
 	HREF='javascript:void(0);'
-	onclick='xUI.sWitchPanel("headerTool");return false'
-	title="header tools show/hide"
->headerTools</A></li>
+	onclick='xUI.sWitchPanel("Utl");return false;'
+	title="ユーティリテーメニュー"
+>commandBar</A></li>
 <li><span id=cMpmui-d class='pM pM-alt'></span><A	id=cMpmui
 	HREF='javascript:void(0);'
 	onclick='xUI.sWitchPanel("pmui");return false'
 	title="制作管理メニュー"
 >進捗管理バー</A></li>
+<li><span id=cMheaderTools-d class='pM pM-alt'></span><A	id=cMheaderTools
+	HREF='javascript:void(0);'
+	onclick='xUI.sWitchPanel("headerTool");return false'
+	title="header tools show/hide"
+>headerTools</A></li>
+<li><span id=cMinputControl-d class='pM pM-alt'></span><A	id=cMinputControl
+	HREF='javascript:void(0);'
+	onclick='xUI.sWitchPanel("inputControl");return false'
+	title="input control show/hide"
+>inputControl</A></li>
 <li style="display:none;"><span id=cMairMenu-d class='cM cM-alt'></span><A	id=cMairMenu
 	HREF='javascript:void(0);'
 	onClick="document.getElementById('airMenu').style.display=(document.getElementById('airMenu').style.display=='none')?'inline':'none';"
@@ -1967,11 +1996,7 @@ serviceAgent.pushEntry(xUI.XPS,function(){xUI.setStored("current");sync();
 	onClick="document.getElementById('sheetHeaderTable').style.display=(document.getElementById('sheetHeaderTable').style.display=='none')?'inline':'none';xUI.adjustSpacer();"
 	title="sheetHeaderTable"
 >sheetHeaderTable</A></li>
-<li><span id=cMcommandbar-d class='cM cM-alt'></span><A	id=cMcommandbar
-	HREF='javascript:void(0);'
-	onclick='xUI.sWitchPanel("Utl");return false;'
-	title="ユーティリテーメニュー"
->commandBar</A></li>
+
 <li><span id=cMmemoArea-d class='cM cM-alt'></span><A id=cMmemoArea
 	HREF='javascript:void(0);'
 	onClick="xUI.sWitchPanel('memoArea')"
@@ -2072,7 +2097,7 @@ serviceAgent.pushEntry(xUI.XPS,function(){xUI.setStored("current");sync();
 >□かこみ</A></li>
 <li><span id=cMcameraPnl-d class='pM pM-alt'></span><A	id=cMcameraPnl
 	HREF='javascript:void(0);'
-	onclick='xUI.sWitchPanel("Camera");return false'
+	onclick='xUI.sWitchPanel("Cam");return false'
 	title="Camera"
 >cMcameraPnl</A></li>
 <hr>
@@ -3987,7 +4012,6 @@ onDblClick='if (! document.getElementById("single").checked) chkValue(this.id)'
 </div>
 <!--	ツールボックス	-->
 
-<hr>
 <!--	ラベル付き音響編集
 <div class=optionPanel id=optionPanelSnd>	-->
 <div class=optionPanelFloat id=optionPanelSnd >
@@ -4380,7 +4404,7 @@ duration :
    <div id=memo></div>
 </div>
 <!-- メモ表示欄　-->
-<div class=application_status id=app_status>***<br></div>
+<div id=app_status class=application_status>***<br></div>
 </div>
 <div id=sheet_view>
  <div class=headerTool>

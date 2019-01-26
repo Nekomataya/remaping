@@ -384,7 +384,8 @@ nas.AnimationReplacement.prototype.getStream=function(cellCounts){
 _parseReplacementTrack=function(){
 //    var blankRegex  = new RegExp("^[ｘＸxX×〆0０]$");//カラ判定　システム変数として分離予定
     var interpRegex = new RegExp("^[\-\+=○◯●・a-zア-ン]$|^\[[^\]]+\]$");//中間値補間（動画記号）サイン　同上
-    var valueRegex  = new RegExp("^[\(<]?([A-Z][\-_\.]?)?[0-9].+[>\)]?$");//無条件有効値 同上
+    var valueRegex  = new RegExp("^[\(<][^>\)]+[>\)]$|^[\(<]?([A-Z][\-_\.]?)?[0-9]\S+[>\)]?$|^[0-9]+.?$");//無条件有効値 同上
+//    var valueRegex  = new RegExp("^[\(<]?([A-Z][\-_\.]?)?[0-9]\S+[>\)]?$|^[0-9]+.?$");//無条件有効値 同上
     //自分自身(トラック)を親として新規セクションコレクションを作成
     var myCollectionBlank = new XpsTimelineSectionCollection(this);//ブランクベースコレクション
     var myCollection      = new XpsTimelineSectionCollection(this);//ベースコレクション

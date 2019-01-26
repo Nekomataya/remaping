@@ -370,10 +370,11 @@ var ViewMode="WordProp"	;	//UIモード  コンパクトCompat/ シートワー�
     "account_box"       ユーザアカウント切り替え
     "optionPanelLogin"  認証パネル
     "toolbarHeader"     ツールバー
-    "pmcui"             作業メニュー
-    "headerTool"        ヘッダー入力コントロール
-    "sheetHeaderTable"  タイムシートヘッダ
     "optionPanelUtl"　  コマンドバー
+    "pmcui"             作業メニュー
+    "headerTool"        ヘッダー入力コントロールバー
+    "inputControl"     入力コントロール
+    "sheetHeaderTable"  タイムシートヘッダ
     "optionPanelTbx"    ソフトウェアキーボード
     "optionPanelDbg"    デバッグコンソール
     "memoArea"          メモ表示域
@@ -384,15 +385,16 @@ var UIViewIdList = [
     "account_box",
     "optionPanelLogin",
     "toolbarHeader",
+    "optionPanelUtl",
     "pmui",
     "headerTool",
+    "inputControl",
     "sheetHeaderTable",
-    "optionPanelUtl",
     "optionPanelTbx",
     "optionPanelDbg",
     "memoArea"
 ];
-var ToolView='11011111001';
+var ToolView='110111111001';
 
 //--
 /*

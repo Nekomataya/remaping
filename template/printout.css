@@ -282,19 +282,6 @@ div.printPage {
 }
 /*
 	タイムシート記述終了マーカー
-	印字用記述マーカーと画面用は共用
-
-.endMarker-print {
-	display:inline-block;
-	position:relative;
-	width:378px;
-	height:15px;
-	margin:0;
-	text-align:center;
-	border-top-style:double;	
-	border-width:4px 0 0 0;
-	z-index:3;
-}
 */
 .endMarker {
 	display:inline-block;
@@ -530,16 +517,16 @@ button.iconButton:disabled {
 .iconButton-multipage { background-position: -108px -162px; }
 .iconButton-singlepage { background-position: -135px -162px; }
 .iconButton-plus { background-position: -162px -162px; }
-/*.iconButton- { background-position: -189px -162px; } */
+.iconButton-paintFS { background-position: -189px -162px; }
 
 .iconButton-movie { background-position: -216px -162px; }
 .iconButton-ps { background-position: -243px -162px; }
 .iconButton-printer { background-position: -270px -162px; }
+.iconButton-floating { background-position: -297px -162px; }
+.iconButton-info { background-position: -324px -162px; }
+.iconButton-DBentry { background-position: -351px -162px; }
+.iconButton-management { background-position: -378px -162px; }
 /*
-.iconButton- { background-position: -297px -162px; }
-.iconButton- { background-position: -324px -162px; }
-.iconButton- { background-position: -351px -162px; }
-.iconButton- { background-position: -378px -162px; }
 .iconButton- { background-position: -405px -162px; }
 */
 .iconButton-shiftLayerB { background-position: 0 -189px; }
@@ -562,7 +549,7 @@ button.iconButton:disabled {
 */
 .iconButton-addStillTL { background-position: 0 -216px; }
 .iconButton-addReplacementTL { background-position: -27px -216px; }
-.iconButton-addCameraworkTL { background-position: -54px -216px; }
+.iconButton-addStageworkTL { background-position: -54px -216px; }
 .iconButton-addEffectsTL { background-position: -81px -216px; }
 .iconButton-addSoundTL { background-position: -108px -216px; }
 .iconButton-addTransitionTL { background-position: -135px -216px; }
@@ -623,12 +610,12 @@ button.iconButton:disabled {
 .iconButton-goPrev { background-position: -162px -297px; }
 .iconButton-stop { background-position: -189px -297px; }
 .iconButton-eject { background-position: -216px -297px; }
+.iconButton-OPEN { background-position: -243px -297px; }
+.iconButton-READ { background-position: -270px -297px; }
+.iconButton-FIX { background-position: -297px -297px; }
+.iconButton-CLOSE { background-position: -324px -297px; }
+.iconButton-HOLD { background-position: -351px -297px; }
 /*
-.iconButton- { background-position: -243px -297px; }
-.iconButton- { background-position: -270px -297px; }
-.iconButton- { background-position: -297px -297px; }
-.iconButton- { background-position: -324px -297px; }
-.iconButton- { background-position: -351px -297px; }
 .iconButton- { background-position: -378px -297px; }
 .iconButton- { background-position: -405px -297px; }
 */
@@ -830,7 +817,7 @@ button.spinCtl-bottom {
 }
 
 /**
- * .timeControplButton
+ * .timeControlButton
  */
 .timeControl {
 	margin: 2px 62px 2px 0;
@@ -1152,49 +1139,212 @@ div.application_status {
 }
 /*	オプションパネル
 */
-#optionPanelLogin{
-    display:none;
+div.optionPanel{
+	display:none;
+	padding:0 0 0 8px;
+	backgroung-color:snow;
 }
-#optionPanelTbx{
-    display:none;
+div.optionPanelModal{
+	display:none;
+}
+div.optionPanelFloat{
+	display:none;
     position:absolute;
-    top:64px;
-    left:120px;
-    width:660px;
-    height:165px;
     background-color:#efefef;
     padding:0;
-    border-style:double;
+    border-style:solid;
+    border-width:1px;
+    border-color:#808080;
+    z-index:7;
+  /* 角丸 */
+    -moz-border-radius: 4px ;
+    -webkit-border-radius: 4px;
+    border-radius: 4px;
 }
-#optionPanelTbx a.minimize{
+a.minimize{
     position:absolute;
     right:32px;
     top:1px;
 }
-#optionPanelTbx a.close{
+a.minimize img{
+    border:none;
+}
+a.close{
     position:absolute;
     right:8px;
     top:1px;
 }
-#optionPanelTbx a.minimize img{
+a.close img{
     border:none;
 }
-#optionPanelTbx a.close img{
-    border:none;
-}
-#optionPanelTbx dl dt{
+.optionPanelFloat dl dt {
     height:25px;
     line-height:25px;
     text-indent:1em;
     font-weight:bold;
     cursor:move;
 }
-#optionPanelTbx dl dd{
+.optionPanelFloat dl dd {
     margin:0;
     padding:2em;
     line-height:1.5;
     text-indent:1em;
 }
+/*アカウントパネル*/
+#account_box	{
+    position:absolute;
+    top:0;
+	right:0px;
+	padding-right:16px;
+}
+/*ログインパネル*/
+#optionPanelLogin{
+    display:none;
+}
+/*ソフトウェアキーボード*/
+#optionPanelTbx {
+    display:none;
+    position:absolute;
+    top:64px;
+    left:120px;
+    width:660px;
+    height:165px;
+}
+#formTbx {
+	padding-left:8px;
+}
+/*音響フローティングパネル*/
+#optionPanelSnd {
+    top:32px;
+    left:0px;
+    width:660px;
+    height:248px;
+}
+#formSnd {
+	padding-left:12px;
+}
+#dialogEdit {
+    border-style:none;
+}
+
+/*カメラワークパネル*/
+#optionPanelCam {
+    top:128px;
+    right:32px;
+    width:256px;
+    height:256px;
+}
+#formCam {
+	padding-left:12px;
+}
+/*ステージワークパネル*/
+#optionPanelStg {
+    top:96px;
+    right:64px;
+    width:640px;
+    height:480px;
+}
+#formStg {
+	padding-left:12px;
+}
+/*コンポジットワークパネル*/
+#optionPanelSfx {
+    top:64px;
+    right:96px;
+    width:640px;
+    height:480px;
+}
+#formSfx {
+	padding-left:12px;
+}
+/*手描きメモパネル*/
+#optionPanelDraw {
+    top:32px;
+    right:0px;
+    width:128px;
+    height:256px;
+}
+#formDraw {
+	padding-left:8px;
+}
+
+/*画像フローティングパネル*/
+#optionPanelRef {
+    display:none;
+    position:absolute;
+    top:64px;
+    left:120px;
+	width:640px;
+    padding:0;
+    border-style:solid;
+    border-width:1px;
+    border-color:#808080;
+    z-index:7;
+	overflow:hidden;
+  /* 角丸 */
+    -moz-border-radius: 4px ;
+    -webkit-border-radius: 4px;
+    border-radius: 4px;
+}
+/**
+	背景表示アンダーレイ
+ */
+div#underlay {
+	display:none;
+}
+/**
+	参照用画像オーバーレイ
+*/
+div.imageOverlay {
+	opacity:.25;
+	background-blend-mode: normal; 
+	overflow:hidden;
+    position:relative;
+}
+#imgEdit {
+    border-style:none;
+}
+#optionPanelRef a.minimize {
+    position:absolute;
+    right:32px;
+    top:1px;
+}
+#optionPanelRef a.close {
+    position:absolute;
+    right:8px;
+    top:1px;
+}
+#optionPanelRef a.minimize img{
+    border:none;
+}
+#optionPanelRef a.close img{
+    border:none;
+}
+#optionPanelRef dl dt{
+    height:25px;
+    line-height:25px;
+    text-indent:1em;
+    font-weight:bold;
+    cursor:move;
+}
+#optionPanelRef dl dd{
+    margin:0;
+    padding:2em;
+    line-height:1.5;
+    text-indent:1em;
+}
+.panelCorner{
+    position:absolute;
+    right:0px;
+    bottom:0px;
+    height:16px;
+    width:16px;
+    cursor:se-resize;
+	margin:0px;
+	padding:0px;
+}
+
+/* 以下オプションパネル群 */
 #optionPanelVer {
     display:none;
     width:480px;
@@ -1203,6 +1353,26 @@ div.application_status {
     padding:6px;
     border-style:double;
 }
+
+#optionPanelRol {
+    display:none;
+    width:720px;
+    height:340px;
+    background-color:#efefef;
+    padding:6px;
+    border-style:double;
+	text-align:center;
+}
+#optionPanelProg {
+    display:none;
+    width:240px;
+    height:128px;
+    background-color:#efefef;
+    padding:6px;
+    border-style:double;
+	text-align:center;
+}
+
 #optionPanelPref {
     display:none;
     width:480px;
@@ -1211,9 +1381,121 @@ div.application_status {
     padding:6px;
     border-style:double;
 }
-/*---------------- ドロップダウンメニュー
-印刷時はすべて非表示
+/*	ドキュメントブラウザ関連
+
 */
+input.ddpInput	{
+	disabled:true;
+}
+
+
+#issueSelector select{
+		width:100%;
+		height:42px;
+	}
+.issueSelector {
+		vertical-align:middle;
+	}
+	.document-selector {
+	  height:60%;
+	}
+	.document-selector-opus {
+	  width:60%;
+	  text-align:right;
+	}
+	.document-selector-cut {
+	  width:40%;
+	  text-align:left;
+	}
+.sciInput {
+	height:24px;
+}
+
+.productFilter {
+	height:27px;
+	width:64px;
+	vertical-align:middle;
+}
+.numberFilter {
+	
+	height:27px;
+	width:48px;
+	vertical-align:middle;
+}
+.documentPanelTools {
+	text-align:right;
+	background-color:#bbddbb;
+}
+.documentPanelTools-man {
+	background-color:#ddbbbb;
+}
+.documentPanelButton {
+	height:27px;
+	width:120px;
+	vertical-align:middle;
+}
+.documentPanelButton-management {
+	height:24px;
+	width:120px;
+	vertical-align:middle;
+}
+.documentPanelButton-search {
+	 width:24px;
+}
+
+/* インポートダイアログ関連
+
+*/
+input.timeInputTC {
+    width:72px;
+    height:24px;
+    border-style:none;
+    background-color:rgba(0,0,0,0);
+}
+
+input.SCiImportCB {
+	display:inline;
+}
+
+#optionPanelSCI_title {
+    width:250px;
+}
+#optionPanelSCI_opus {
+    width:96px;
+}
+#optionPanelSCI_subtitle {
+    width:320px;
+}
+.SCiInput {
+    height:24px;
+    border-style:none;
+    background-color:rgba(0,0,0,0);
+}
+.SCiInput_Number {
+    width:240px;
+}
+
+span.timeInputButtons {
+    position:relative;
+    left:64px;
+    top:4px;
+}
+span.titleInputLB {
+    text-align:right;
+}
+
+div.sciTemplate {
+     display:none;
+     color:red;
+}
+hr.dialog_border {
+	margin: 0px;
+	border-width: 10px 0 0 0;
+  	border-style: solid; /* 種類 */
+	border-color: red;
+}
+
+/*---------------- ドロップダウンメニュー*/
 
 #pMenu div{
   display:none;
@@ -1261,7 +1543,11 @@ transform-origin: 0 0;transform:scale(1,1);
     margin: 0;
     padding: 5px 10px;
   }
-  
+/**
+	　jQuery-ui　tooltip
+*/
+ .ui-tooltip {	display: none;}
+
 /**
 	cellGraphicLayer
 	canvas object
@@ -1289,6 +1575,9 @@ transform-origin: 0 0;transform:scale(1,1);
  /**
 	.pmcui
 */
+#pmui	{
+	diaplay:none;
+}
 .pmcui	{
 	display:none;
 }
@@ -1413,7 +1702,7 @@ div.documentStatusOverlay {
 }
 	
 .contextMenu {
-	
+	display:none;
 }
 /*
 	ストップウオッチバー

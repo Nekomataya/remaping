@@ -1351,10 +1351,22 @@ for(var idx=0;idx<mySeps.length;idx++){
 /**
     setToolView
     ツール群の一括ループ切り替え
-    クッキーと同じ形式
-    引数がない場合は
-    (ユーザ設定)＞全表示＞最少表示＞推奨表示＞推奨コンパクト＞(ユーザ設定)
+    クッキーと同じ形式またはキーワード full,minimum,default,compact,current
+     引数がない場合以下をループ
+    (ユーザ設定(current))＞全表示(full)＞最少表示(minimum)＞推奨表示(defeult)＞推奨コンパクト(compact)＞(ユーザ設定(current))
     各ツールの個別切り替えを行うとその時点の表示がユーザ設定と置き換わるので注意
+    "pMenu"             ドロップダウンメニュー
+    "account_box"       ユーザアカウント切り替え
+    "optionPanelLogin"  認証パネル
+    "toolbarHeader"     ツールバー
+    "optionPanelUtl"　  コマンドバー
+    "pmcui"             作業メニュー
+    "headerTool"        ヘッダー入力コントロールバー
+    "inputControl"     入力コントロール
+    "sheetHeaderTable"  タイムシートヘッダ
+    "optionPanelTbx"    ソフトウェアキーボード
+    "optionPanelDbg"    デバッグコンソール
+    "memoArea"          メモ表示域
 */
 xUI.setToolView = function(toolView){
 	var currentView = [];
@@ -1363,26 +1375,34 @@ xUI.setToolView = function(toolView){
 	};
 	currentView=currentView.join("");
     if(typeof this.toolView =='undefined') this.toolView = currentView;
-    if(String(toolView).match(/^[01]+$/)){
-        this.toolView = toolView;
-    }else{
-        var viewSet = [
-            '00000000000',
-            '01000010000',
-            '11011111001',
-            '11111111001',
-            this.toolView
-        ];
-        toolView = viewSet[(viewSet.indexOf(currentView)+1)%viewSet.length];
+    switch (toolView) {
+    case 'full':toolView = '110111111001';break;
+    case 'minimum':toolView = '000000100000';break;
+    case 'default':toolView = '110001110001';break;
+    case 'compact':toolView = '010000110000';break;
+    default:   
+        if(String(toolView).match(/^[01]+$/)){
+            this.toolView = toolView;
+        }else{
+            var viewSet = [
+                '110111111001',
+                '010000011000',
+                '110001110001',
+                '000000100000',
+                this.toolView
+                ];
+            toolView = viewSet[(viewSet.indexOf(currentView)+1)%viewSet.length];
+        }
     }
     if(toolView != currentView){
-//UI表示状態のレストア
+//UI表示状態設定
     for (var ix=0;ix<UIViewIdList.length;ix++){
         var myTgt=$("#"+UIViewIdList[ix]);
         if(String(toolView).charAt(ix)=="0"){myTgt.hide()}else{myTgt.show()} 
     }
     }
     xUI.adjustSpacer();
+console.log([toolView,xUI.toolView]);
     return toolView;
 }
 /* TEST
@@ -4758,9 +4778,7 @@ iNputbOx以外の入力もこのメソッドで受ける
 */
 xUI.keyDown    =function(e){
 if((xUI.player)&&(xUI.player.keyboard)){
-//	var ClockClicks = (new Date()).getTime();
 	if(e.keyCode == 32) {
-//[space]='if(xUI.player.status=="stop"){xUI.player.start()}else{if(xUI.player.markSwap){xUI.player.getCount=true}else{xUI.player.stop()}};'
 		if(xUI.player.status=='stop'){
 				xUI.player.start();
 		} else {
@@ -4772,7 +4790,6 @@ if((xUI.player)&&(xUI.player.keyboard)){
 		}
 		return false;
 	} else if(e.keyCode == 13){
-//[enter]='if(xUI.player.status=="run"){if(xUI.player.markSwap){xUI.player.stop()}else{xUI.player.getCount=true}}else{xUI.player.clearMark()};'
 		if(xUI.player.status=='run'){
 			if(xUI.player.markSwap){
 				xUI.player.stop()
@@ -4796,6 +4813,41 @@ if((xUI.player)&&(xUI.player.keyboard)){
 }
 //ブラウザ全体のキーダウンを検出
 	key = e.keyCode;//キーコードを取得
+//入力中以外のショートカット処理
+	switch(key) {
+case	66 :		;	//[ctrl]+[B]/ パネルセット切り替え
+	if ((e.ctrlKey)||(e.metaKey))	{
+		this.setToolView();
+		return true;}else{return true}
+	break;
+case	68 :		;	//[ctrl]+[D]/　スクロール・ページ表示モード切り替え
+	if ((e.ctrlKey)||(e.metaKey))	{
+		xUI.viewMode=(xUI.viewMode=="Compact")?"WordProp":"Compact";xUI.resetSheet();
+		return false;}else{return true}
+	break;
+case	79 :		;	//[ctrl]+[O]/ Open Document
+	if ((e.ctrlKey)||(e.metaKey)) {
+		 if(e.shiftKey){
+		    this.openDocument("localFile");
+		}else{
+		    this.openDocument();
+		}
+		return false;
+	}
+	return true;
+	break;
+case	83 :    ;	//[ctrl]+[S]/ Save or Store document
+	if ((e.ctrlKey)||(e.metaKey)) {
+		 if(e.shiftKey){
+		    this.storeDocument("as");
+		}else{
+		    this.storeDocument();
+		}
+		return false;
+	}
+		return true;
+	break;
+    }
 //フォーカスエレメントがiNputbOx以外なら入力を戻す
     if(document.activeElement!==document.getElementById("iNputbOx")){
         if(((key==79)||(key==83))&&((e.ctrlKey)||(e.metaKey))){
@@ -4936,31 +4988,9 @@ case	40	:		//
 	        this.sectionManipulateOffset=['head',0];
 	    }else{
 		//通常移動処理
-//	    if(! e.ctrlKey){
-//		    if(this.getid("Selection")!="0_0"){this.selection();this.spinHi();};//選択範囲解除
-//	    }
-//		    if (this.edchg){this.put(this.eddt);}//更新
 	        this.sectionManipulateOffset=['body',0];
-//		    if(key==38){this.spin("up")}else{this.spin("down")};
 	    };        
 		    this.sectionPreview(this.Select[1]+kOffset);
-//		    this.sectionUpdate();
-/*		    
-            var trackContents = xUI.floatTrack.sections.manipulateSection(xUI.floatSectionId,xUI.Select[1],xUI.Selection[1]);
-      if(false){
-//undo保留の場合は上のルーチン
-            xUI.XPS.put([xUI.Select[0],0],trackContents);
-            xUI.syncSheetCell([xUI.Select[0],0],[xUI.Select[0],xUI.XPS.xpsTracks[0].duration]);
-      }else{
-            var currentFrame=xUI.Select[1];
-            var currentSelection=xUI.Selection[1];
-            xUI.selectCell([xUI.Select[0],0]);
-            xUI.selection();
-            xUI.put(trackContents);
-            xUI.selectCell([xUI.Select[0],currentFrame]);
-            xUI.selection([xUI.Select[0],currentFrame+currentSelection]);
-      }
-*/
     }else if(this.edmode == 2){
  	   if (	e.shiftKey &&
 		    this.Select[1]+this.Selection[1]>=0 &&
@@ -5032,28 +5062,6 @@ case	73 :		;	//[ctrl]+[I]/information
 	if ((e.ctrlKey)||(e.metaKey))	{
 	    myScenePref.open("edit");
 		return false;}else{return true}
-	break;
-case	79 :		;	//[ctrl]+[O]/ Open Document
-	if ((e.ctrlKey)||(e.metaKey)) {
-		 if(e.shiftKey){
-		    this.openDocument("localFile");
-		}else{
-		    this.openDocument();
-		}
-		return false;
-	}
-	return true;
-	break;
-case	83 :    ;	//[ctrl]+[S]/ Save or Store document
-	if ((e.ctrlKey)||(e.metaKey)) {
-		 if(e.shiftKey){
-		    this.storeDocument("as");
-		}else{
-		    this.storeDocument();
-		}
-		return false;
-	}
-		return true;
 	break;
 case	86 :		;	//[ctrl]+[V]/paste
 	if ((e.ctrlKey)||(e.metaKey))	{
@@ -5401,8 +5409,6 @@ default :;
 //キーアップもキャプチャする。UI制御に必要 今のところは使ってない?
 xUI.keyUp = function (e){
 	if(xUI.player.keyboard){
-//		[space]='if((xUI.player.markSwap)&&(xUI.player.status=="run")){xUI.player.getCount=false};
-//		[enter]='if(!(xUI.player.markSwap)&&(xUI.player.status=="run")){xUI.player.getCount=false};'
 		if(xUI.player.markSwap){
 			if((e.keyCode == 32)&&(xUI.player.status=='run')) xUI.player.getCount=false;
 		}else{
@@ -5413,7 +5419,6 @@ xUI.keyUp = function (e){
 	    }
 	}
 	key = e.keyCode;//キーコードを取得
-//      console.log(key+':up:');
 	if(this.eXMode>=2){
 		document.getElementById("iNputbOx").select();
 		return false;
@@ -6040,7 +6045,7 @@ xUI.openDocument=function(mode){
             fileBox.openFileDB();
         }else{
 //        this.sWitchPanel("Data");//インポート・エクスポートパネルを呼び出す必要はなくなったので削除
-            if(document.getElementById('optionPanelData').style.display!='inline'){xUI.sWitchPanel('Data')};
+//            if(document.getElementById('optionPanelData').style.display!='inline'){xUI.sWitchPanel('Data')};
             document.getElementById('myCurrentFile').value = '';
             document.getElementById('myCurrentFile').click();
         }
@@ -6436,6 +6441,7 @@ case	"SheetHdr": ;//固定UIシートヘッダ
 break;
 
 case	"headerTool":	;//ヘッダツール
+case	"inputControl":	;//入力Control
 case	"account_box":	;//アカウント表示ボックス
 case	"pmui":	;//固定ツールバー
 	if($("#"+status).is(":visible")){$("#"+status).hide()}else{$("#"+status).show()};
@@ -8042,6 +8048,8 @@ case    "CSX":
         $("#pMenu li").hover(function() {
             $(this).children('ul').show();
         }, function() {$(this).children('ul').hide();});
+//表示切り替え
+    xUI.setToolView('compact');
 break;
 default:
 //標準的なブラウザ
@@ -8594,17 +8602,19 @@ default:
 	}
 //
 
-	document.getElementById("title").innerHTML=titleString;
+
+	if(document.getElementById("title")) document.getElementById("title").innerHTML=titleString;
 if(xUI.viewMode != "Compact"){
 	for (pg=1;pg<=Math.ceil(XPS.duration()/xUI.PageLength);pg++){
 		document.getElementById(prop+pg).innerHTML=titleString+"/"+XPS.subtitle;
 }
 	}
+    document.getElementById("XpsIdentifier").innerHTML=decodeURIComponent(Xps.getIdentifier(xUI.XPS,'cut'));
+
 	break;
 case	"opus":	;
 case	"subtitle":	;
-	document.getElementById(prop).innerHTML=
-	(XPS[prop])? XPS[prop] : "";
+	if(document.getElementById(prop)) document.getElementById(prop).innerHTML=(XPS[prop])? XPS[prop] : "";
 	sync("title");
 	break;
 case	"create_time":	;
