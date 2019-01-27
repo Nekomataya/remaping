@@ -1908,23 +1908,26 @@ div.documentStatusOverlay {
 #optionPanelTimer {
 	color:#22dd22;
 	background-color:#444444;
+	height:32px;
+	vertical-align:middle;
 }
 .timerButton {
 	color :#222222;
 	background-color:#888888;
 	border-style:solid;
 	border-width:0;
-	height:16px;
+	height:27px;
   /* 角丸 */
     -moz-border-radius: 3px ;
     -webkit-border-radius: 3px;
     border-radius: 3px;
 }
 .timerButton-sq {
+	height:16px;
 	width:16px;
 }
 .timerButton-wide {
-	width:96px;
+	width:27px;
 }
 
 /*

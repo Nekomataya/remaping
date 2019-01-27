@@ -41,8 +41,8 @@
  *		ただし開始メッセージが抑制されている場合は表示されません。
  */
 
-	var welcomeMsg="サーバ対応版 -test- 20190115";
-	var windowTitle="ver. 1.8.0";//WindowTitleとしての役割は終了 統合バージョンです
+	var welcomeMsg="サーバ対応版 -test- 20190127";
+	var windowTitle="ver. 1.8.1";//WindowTitleとしての役割は終了 統合バージョンです
 
 /**************************************************************************
  *	ロゴ等
@@ -150,7 +150,7 @@
 // 後方のペイント更新が重要
 SheetLooks = {
     SheetTextColor  :"#111111",
-	SheetBaseColor	:"#dfefef",
+	SheetBaseColor	:"#ffffef",
 	SelectedColor	:"#9999ff",
 	RapidModeColor	:"#ffff44",
 	FloatModeColor	:"#88eeee",
@@ -193,8 +193,9 @@ var myWords	=[
 
 
 //---ページ属性	*cookie[0]
-    SheetBaseColor ="#dfefef";
-    PageProintSize ="";
+//    SheetBaseColor ="#dfefef";
+	SheetBaseColor	="#efffef"	;//test
+//    PageProintSize ="";
 /*	sheetAllWidth	="*"	;//
 	sheetAllHeight	="*"	;//
 	sheetHeadHeight	=64	;//

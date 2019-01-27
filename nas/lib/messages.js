@@ -390,8 +390,8 @@ nas.uiMsg.dmAskUserinfo = {
     ja:"ユーザ名とメールアドレスを入力してください。"
 }
 nas.uiMsg.dmCookieRemoved = {
-    en:"I deleted the cookie. \nPlease reload to reset the value.",
-    ja:"クッキーを削除しました。\n値をリセットするには、再読み込みをしてください。"
+    en:"I deleted the cookie. \nIn order to reset the value, reloading the page is necessary.\nIt will be reloaded with [OK].",
+    ja:"クッキーを削除しました。\n値をリセットするには、ページの再読込みが必要です。\n[OK]で再読込みします。"
 };
 
 nas.uiMsg.dmAlertMenytracks = {

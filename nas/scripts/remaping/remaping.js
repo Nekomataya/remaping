@@ -1088,7 +1088,7 @@ xUI._checkProp=function(){
 xUI.setBackgroundColor = function(bgColor){
 SheetLooks = {
     SheetTextColor  :"#111111",
-	SheetBaseColor	:"#ddeedd",
+	SheetBaseColor	:"#ffffef",
 	SelectedColor	:"#9999FF",
 	RapidModeColor	:"#ffff44",
 	FloatModeColor	:"#88eeee",
@@ -2306,7 +2306,8 @@ xUI.shiftScreen(50,50);
  */
 xUI.adjustSpacer=function(){
     var headHeight=(this.viewMode=="Compact")? $("#app_status").offset().top-$("#pMenu").offset().top:document.getElementById("fixedHeader").clientHeight;
-    var myOffset=(this.viewMode=="Compact")? $("#app_status").offset().top-headHeight:0;
+//    var myOffset=(this.viewMode=="Compact")? $("#app_status").offset().top-headHeight:0;
+    var myOffset=0;
 //一時コード  あとで調整  20180916
     if(document.getElementById("scrollSpaceHd"))
         document.getElementById("scrollSpaceHd").style.height=(headHeight-myOffset)+"px";
@@ -4777,6 +4778,7 @@ iNputbOx以外の入力もこのメソッドで受ける
 フォーカスがiNputbOx以外にある場合は、トラップする特定キー以外はNOPで戻す
 */
 xUI.keyDown    =function(e){
+//stopwatch処理 
 if((xUI.player)&&(xUI.player.keyboard)){
 	if(e.keyCode == 32) {
 		if(xUI.player.status=='stop'){
@@ -4818,7 +4820,7 @@ if((xUI.player)&&(xUI.player.keyboard)){
 case	66 :		;	//[ctrl]+[B]/ パネルセット切り替え
 	if ((e.ctrlKey)||(e.metaKey))	{
 		this.setToolView();
-		return true;}else{return true}
+		return false;}else{return true}
 	break;
 case	68 :		;	//[ctrl]+[D]/　スクロール・ページ表示モード切り替え
 	if ((e.ctrlKey)||(e.metaKey))	{
@@ -7189,7 +7191,8 @@ function nas_Rmp_Startup(){
     nas.FRATE=nas.newFramerate(myFrameRate);
 //背景カラーを置換
     SheetLooks.SheetBaseColor=SheetBaseColor;
-//シートロゴをアップデート
+console.log('startup')
+console.log(SheetLooks);//シートロゴをアップデート
 /*
     応急処置
     ロケーションを確認して  開発／試験サーバ  であった場合はヘッダロゴ画像を差し替える
@@ -7312,7 +7315,8 @@ if(! xUI.XPS.xMap.currentJob) xUI.XPS.xMap.syncProperties(xUI.XPS);
 /**
     シートのカラーデータを構築
 */
-//console.log(SheetLooks);
+console.log('global')
+console.log(SheetLooks);
     xUI.setSheetLook(SheetLooks);//タイムシートルック初期化
     xUI.resetSheet();
     nas_Rmp_Init();
@@ -10097,7 +10101,8 @@ if (!navigator.cookieEnabled){return false;}
 function dlCk() {
 	ckName = 'rEmaping'; document.cookie = ckName + '=;expires=Thu,01-Jan-70 00:00:01 GMT';
 	useCookie=false;
-	alert(localize(nas.uiMsg.dmCookieRemoved));
+	var reloadNow=confirm(localize(nas.uiMsg.dmCookieRemoved));
+	if(reloadNow){document.location.reload()}
 }
 function resetCk()
 {

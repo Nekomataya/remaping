@@ -3548,7 +3548,7 @@ Under examination<br />
 	style="font-size:x-small;color:red"
 > WEB APPLICATION </span><br />
 <span style="font-size:small" id=versionString>
-index.html 2018/  kiyo <br />
+index.html 2019/  kiyo <br />
 <span id=myVer0></span> <span id=myServer0>[no-server]</span><br />
 
 XPS File Ver. :nasTIME-SHEET 0.5<br />
@@ -4285,34 +4285,41 @@ duration :
 <span class=floating-right>
 <button
 	id=timerSwitchPrm
-    class='timerButton timerButton-wide'
+    class='iconButton iconButton-goFWD'
 	onMouseDown='if(xUI.player.status=="stop"){xUI.player.start()}else{if(xUI.player.markSwap){xUI.player.getCount=true}else{xUI.player.stop()}};'
 	onMouseUp='if((xUI.player.markSwap)&&(xUI.player.status=="run")){xUI.player.getCount=false};'
->START/STOP</button>
+	title='START/STOP'
+></button>
 <button
 	id=timerSwitchMark
-	title='stopwatch test mark'
-    class='timerButton timerButton-wide'
+    class='iconButton iconButton-flagPlus'
 	onMouseDown='if(xUI.player.status=="stop"){xUI.player.start(true)}else{xUI.player.getCount=true};'
 	onMouseUp='if(xUI.player.status=="run"){xUI.player.getCount=false};'
->Mark</button>
+	title='mark'
+></button>
 <button
 	id=timerSwitchSub
-    class='timerButton timerButton-wide'
+    class='iconButton iconButton-eraser'
 	onMouseDown='if(xUI.player.status=="run"){if(xUI.player.markSwap){xUI.player.stop()}else{xUI.player.getCount=true}}else{xUI.player.clearMark()};'
 	onMouseUp='if(!(xUI.player.markSwap)&&(xUI.player.status=="run")){xUI.player.getCount=false};'
-	title='stopwatch test stop'
->Mark/Reset</button>
+	title='STOP/Reset'
+></button>
 <button
 	onClick='if(xUI.player.status=="stop"){xUI.selectCell(xUI.Select[0]+"_0");};'
-    class='timerButton timerButton-wide'
-	title='stopwatch test'
->HOME</button>
+    class='iconButton iconButton-eject'
+	title='go home'
+></button>
 <button
 	onClick='if(xUI.player.status=="stop"){xUI.player.buildCount()};'
-    class='timerButton timerButton-wide'
-	title='stopwatch test'
->applyMark</button>
+    class='iconButton iconButton-selectBox'
+	title='apply mark'
+></button>
+<button
+    class='iconButton iconButton-blank'
+	onClick='if($("#timerPref").isVisible()){$("#timerPref").hide();}else{$("#timerPref").show();};'
+	title=timer preference'
+>🔨</button>
+    <span id=timerPref style='display:none;'>
 <input
 	id=waitCount
 	class=spinCtl
@@ -4335,7 +4342,7 @@ duration :
 	id=swapButtonAssign
 	type=checkbox
     class=timerButton
-	onChange='xUI.player.markSwap=(this.checked)?true:false;document.getElementById("timerSwitchPrm").innerHTML=(this.checked)?"START/Mark":"START/STOP";document.getElementById("timerSwitchSub").innerHTML=(this.checked)?"STOP/Reset":"Mark/Reset";'
+	onChange='xUI.player.markSwap=(this.checked)?true:false;document.getElementById("timerSwitchPrm").title=(this.checked)?"START/Mark":"START/STOP";document.getElementById("timerSwitchSub").title=(this.checked)?"STOP/Reset":"Mark/Reset";'
 	title='change butonn function assignment'
 >key assign
 <!-- input
@@ -4346,6 +4353,7 @@ duration :
 	title='set standby-frame start'
 	checked
 >standby -->
+    </span>
 </span>
 </div>
 <!-- ストップウオッチUIパネル -->
