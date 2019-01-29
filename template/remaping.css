@@ -82,6 +82,9 @@ div #toolbarHeader {
 	width:100%;
 	background-color:#a0a0a0;
 }
+div #sheetHeaderTable{
+	padding-right:8px;
+}
 /*	ステータス表示行	*/
 .headerInfo{
 	text-align:right;

@@ -2309,6 +2309,7 @@ console.log(currentBox)
     currentBox.forEach(function(itm,idx,itself){itself[idx]=parseInt(itm);});
     var currentFr = parseInt($('.floating-right').css('padding-right'));
     var currentAb = parseInt($('#account_box').css('padding-right'));
+    var currentSh = parseInt($('#sheetHeaderTable').css('padding-right'));
     var currentLp = parseInt($('#optionPanelLogin').css('padding-right'));
 //left,raightをリセット
 console.log([currentBox[3],currentFr,currentAb,currentLp])
@@ -2316,12 +2317,14 @@ console.log([currentBox[3],currentFr,currentAb,currentLp])
        currentFr -= currentBox[3];
        currentAb -= currentBox[3];
        currentLp -= currentBox[3];        
+       currentSh -= currentBox[3];
     }
 console.log([currentBox[3],currentFr,currentAb,currentLp])
     $('body').css('padding',[y,currentBox[1],currentBox[2],x].join('px ')+'px');
     $('.floating-right').css('padding-right',(currentFr+x)+'px');
     $('#account_box').css('padding-right'   ,(currentAb+x)+'px');
     $('#optionPanelLogin').css('padding-right'    ,(currentLp+x)+'px');
+    $('#sheetHeaderTable').css('padding-right'    ,(currentSh+x)+'px');
     xUI.screenShift = [x,y];
     xUI.adjustSpacer();
 }
