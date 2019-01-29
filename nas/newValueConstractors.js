@@ -636,12 +636,12 @@ _parseCameraworkTrack= function(){
 
         if(isBlank){
             if( currentSection.value ){
-console.log(currentSection.value)
+//console.log(currentSection.value)
                 currentSection.duration --;
                 if (fix == lastBracketsId){
                     currentSection.value.postfix = this[fix];
                     currentSection.tailMargin = 1;
-console.log(currentSection.value.type.join(':'));
+//console.log(currentSection.value.type.join(':'));
                 }
                 currentSection.value.attributes.push([currentSection.value.prefix,currentSection.value.postfix].join('-'));
                 if(currentSection.value.prefix)  currentSection.headMargin = 1;
@@ -711,7 +711,7 @@ console.log(currentSection.value.type.join(':'));
                     currentSection.headMargin = 1;
                 };// */
                 }
-console.log(currentSection.value.type.join(':'))
+//console.log(currentSection.value.type.join(':'))
                 continue;
         }
 //開始ノード（予約語）を検知　強制的に新しい区間を開始
@@ -733,7 +733,7 @@ console.log(currentSection.value.type.join(':'))
                     currentSection.value.prefix = this[lastBracketsId];
                     currentSection.headMargin = 1;
                 };// */
-console.log(currentSection.value.type.join(':'))
+//console.log(currentSection.value.type.join(':'))
                 continue;
             }
         };
@@ -758,7 +758,7 @@ console.log(currentSection.value.type.join(':'))
                     currentSection.duration = 1;
                 }
             }
-console.log(currentSection.value.type.join(':'))
+//console.log(currentSection.value.type.join(':'))
             continue;
         }
 //第一エントリで区間タイプが判別可能な区間の判定
@@ -771,7 +771,7 @@ if(! mySymbol) console.log(this[fix]);
 //Symbol区間の開始
                 if(fix==0){
                     currentSection.value=new nas.AnimationCamerawork(null,mySymbol.name);//change Value;
-console.log(currentSection.value.type.join(':'))
+//console.log(currentSection.value.type.join(':'))
                     continue;
                 }else{
                     currentSection.duration --;
@@ -806,7 +806,7 @@ console.log(currentSection.value.type.join(':'))
                     currentSection.headMargin = 1;
                 };// */
             }
-console.log(currentSection.value.type.join(':'))
+//console.log(currentSection.value.type.join(':'))
             continue;
         }
 /*==================================================================*/
@@ -848,7 +848,7 @@ console.log(currentSection.value.type.join(':'))
             } else {
                 endNode = this[startNodeId];
             }
-console.log(currentSection.value.type.join(':'))
+//console.log(currentSection.value.type.join(':'))
 //            continue;
         }else if(startNodeId == fix){
 //セルエントリが開始ノードであった場合のみ終了ノードだけを設定する            
@@ -870,9 +870,9 @@ console.log(currentSection.value.type.join(':'))
             if(! ckSymbol){
                   ckSymbol = nas.cameraworkDescriptions.get(detectedName); 
             }
-console.log(fix + ' : '+ this[fix]);
-console.log(ckSymbol);
-console.log(this[startNodeId]);
+//console.log(fix + ' : '+ this[fix]);
+//console.log(ckSymbol);
+//console.log(this[startNodeId]);
 /*
                 (currentSection.value.type[0]=="transition")||
                 (currentSection.value.type[1]=="fadeIn")||
@@ -889,7 +889,7 @@ console.log(this[startNodeId]);
                 currentSymbol = ( ckSymbol )? ckSymbol : nas.cameraworkDescriptions.get(currentSection.value.name);
                 if(!currentSymbol){ currentSymbol = nas.cameraworkDescriptions.get('unknown')}
                 currentSection.value.type=[currentSymbol.type,currentSymbol.name];
-console.log(fix +': set section value');
+//console.log(fix +': set section value');
             }else{
                 currentSection.duration --;
                 if(lastBracketsId == (fix-1)) currentSection.tailMargin = -1 ; 
@@ -899,7 +899,7 @@ console.log(fix +': set section value');
                 currentSection.duration = 1;
                 currentSymbol = ( ckSymbol )? ckSymbol : nas.cameraworkDescriptions.get(currentSection.value.name);
                 if(!currentSymbol){ currentSymbol = nas.cameraworkDescriptions.get('unknown')}
-console.log(fix +': start section');
+//console.log(fix +': start section');
             }
 //先行セクションが[値]セルであった場合
                 if(lastBracketsId == (fix-1)){
@@ -914,9 +914,9 @@ console.log(fix +': start section');
             ){
                 endNode = currentSymbol.nodeSigns[currentSymbol.nodeSigns.length-1];
             }
-console.log(currentSection.value.type.join(':'))
-console.log(currentSymbol)
-console.log(endNode);
+//console.log(currentSection.value.type.join(':'))
+//console.log(currentSymbol)
+//console.log(endNode);
             continue;           
         }
 //コメントエントリ
@@ -927,7 +927,7 @@ console.log(endNode);
     }
 
     this.sections=myCollection;
-console.log(this.sections)
+//console.log(this.sections)
     return this.sections;
 }
 
@@ -1076,14 +1076,14 @@ nas.AnimationGeometry.prototype.parseContent=function(myContent){
             }
         } else if(myContent[line].match(/^(\S+)\t?(\S+)\t?([^\t]+)?\t?(.*)$/)){
         //　第一形式の再パース
-console.log(myContent[line]);
+//console.log(myContent[line]);
             var myGroup=RegExp.$1; //グループの再パースは行われない
             var myName =RegExp.$2;
             var myComment=RegExp.$4;
             var valueArray=nas.parseDataChank(RegExp.$3);
             var numeProps =[["size","x"],["size","y"],["offset","x"],["offset","y"]];
-console.log(myComment);console.log(valueArray);
-console.log(this);
+//console.log(myComment);console.log(valueArray);
+//console.log(this);
 /*
     フィールド文字列であった場合の判定が必要　2018 10 09
 */
@@ -1935,13 +1935,13 @@ _parseSoundTrack =function(){
             }else{
 //引数をサウンドオブジェクトでなくxMapElementに変更予定
 //                nas.new_MapElement(name,Object xMapGroup,Object Job);
-console.log(currentSound.name);
+//console.log(currentSound.name);
                 var sectionOffset = (currentSound.name)? 2 : 1 ;
                 sectionOffset += currentSound.attributes.length;
                 currentSection.tailMargin= -sectionOffset;
                 currentSection=myCollection.addSection(currentSound);//新規有値セクション作成
                 currentSection.headMargin = sectionOffset;
-console.log('ValuedSection offset :'+ sectionOffset)
+//console.log('ValuedSection offset :'+ sectionOffset)
 //                currentSection.value.
             }
                         continue;

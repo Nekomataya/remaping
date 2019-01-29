@@ -231,10 +231,10 @@ nas.xMapElement =function xMapElement(myName,myParentGroup,myLinkJob,contentSour
 
 	if(contentSource) this.content.parseContent(contentSource);
 
-if(this.type == 'cell'){
-console.log(this);
-this.toString();
-}
+//if(this.type == 'cell'){
+//console.log(this);
+//this.toString();
+//}
 };
 nas.xMapElement.prototype.toString=function(){
 
@@ -442,11 +442,11 @@ xMap.prototype.new_xMapElement = function (myName,myOption,myLink,contentSource)
 	if(! (myLink instanceof nas.Pm.ProductionJob)) return false;
 	if(myOption instanceof nas.xMapGroup){
 //親グループが指定されたらエレメント作成
-console.log(arguments);
+//console.log(arguments);
 		var newElement=new nas.xMapElement(myName,myOption,myLink,contentSource);
-console.log([myName,myOption,myLink,contentSource])
-console.log(newElement);
-console.log(myOption);
+//console.log([myName,myOption,myLink,contentSource])
+//console.log(newElement);
+//console.log(myOption);
 		if(myOption.elements) myOption.elements.push(newElement);
  	}else{
 //タイプ文字列指定の場合、エレメントグループ作成・デフォルトパラメータを設定する
@@ -566,9 +566,11 @@ console.log(myOption);
 xMap.prototype.new_ProductionLine=function(myName){
 	var newLine=nas.pmdb.lines.entry(myName);//名前からラインのテンプレートを取得する。失敗のケースあり
 	if(!(newLine instanceof nas.Pm.ProductionLine)){
-		return false;//ここは取得失敗時（新規ラインかもしれない）の処理  今日はfalse  20160412
+		newLine=Object.create(nas.pmdb.lines.entry('null'));//未定義テンプレートを取得
+		newLine.name=myName;//名前のみ設定
 	}else{
 		newLine=Object.create(newLine);//名前からラインのテンプレートを取得する
+	}
 		newLine.stages=new Array();//ステージコレクション要るか？
 		newLine.id=[new Number(this.lines.length)];//親コレクション内のID(ラインコレクション登録前=Origin:0)　配列
 		newLine.parent=this;//親xMapへの参照
@@ -577,7 +579,6 @@ xMap.prototype.new_ProductionLine=function(myName){
 		}else{
 			return false;//追加失敗
 		}
-	}
 }
 //新規ステージオブジェクト登録
 /*
@@ -586,11 +587,15 @@ xMap.prototype.new_ProductionLine=function(myName){
 	ステージオブジェクトに親をもたせたほうが良いかもしれない
 */
 xMap.prototype.new_ProductionStage=function(myName,myLine){
-	var newStage=nas.pmdb.stages.entry(myName);//取得失敗時はfalse
+	var newStage=nas.pmdb.stages.entry(myName);
 	if(!(newStage instanceof nas.Pm.ProductionStage )){
-		return false;//ここは取得失敗時（新規ステージかもしれない）の処理  今日はfalse  20160412
+//取得に失敗した際はundefinedステージから複製した一時ステージを使用する
+//		newStage=Object.create(nas.pmdb.stages.entry('undefined'));
+//		newStage.name=myName;
+		newStage = nas.Pm.newStage(myName,myLine);
 	}else{
-		newStage=Object.create(newStage);
+        newStage=Object.create(newStage);
+	}
 		newStage.jobs=new Array();
 		newStage.line=myLine;//parentLineObject
 		newStage.id=new Number(myLine.stages.length);//親コレクション内のID(Origin:0)
@@ -601,13 +606,13 @@ xMap.prototype.new_ProductionStage=function(myName,myLine){
 		}else{
 			return false;//コレクションの追加に失敗
 		}
-	}
 }
 //新規ジョブオブジェクト登録
 /*
 ジョブは新規に作成
 */
 xMap.prototype.new_Job=function(myName,myStage){
+//console.log([myName,myStage]);
 	var Now=new Date();
 	var newJob = new nas.Pm.ProductionJob(myName,myStage);
 
@@ -1387,8 +1392,10 @@ console.log(values);
 
     var myLine  = this.new_ProductionLine(values.line.name);
         myLine.id = values.line.id;
+console.log(myLine);
     var myStage = this.new_ProductionStage(values.stage.name,myLine);
         myStage.id = values.stage.id; 
+console.log(myStage);
     var myJob   = this.new_Job(values.job.name,myStage);
         myJob.id = values.job.id;
 console.log(this);

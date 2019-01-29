@@ -3132,8 +3132,11 @@ Xps.parseProduct = function(productString){
     デフォルト値は、タイトルから取得
     sciStringに時間情報が含まれないケースあり
     time指定の存在しない識別子の場合"6:0"を補う
+
+    引数が与えられない場合は''とする
 */
 Xps.parseSCi = function(sciString){
+    if(typeof sciString == 'undefined') sciString = '';
     var dataArray = String(sciString).split('/');
 //    if((dataArray.length==0)||(String(dataArray[0]).length==0)){return false};
     var result = [];
@@ -3552,18 +3555,18 @@ XpsTimelineTrack.prototype.getSectionByFrame = function(myFrame){
  
  */
 XpsTimelineTrack.prototype.pushEntry = function (elementName,groupName){
-console.log(arguments);
+//console.log(arguments);
     var myGroup   = this.xParent.parentXps.xMap.getElementByName(groupName);
     var myElement = this.xParent.parentXps.xMap.getElementByName([groupName,elementName].join("-"));//請求するターゲットジョブ処理は保留
         if(!myElement){
-console.log('no detect Element :'+[groupName,elementName].join("-"));
+//console.log('no detect Element :'+[groupName,elementName].join("-"));
         if(!myGroup){;//new_xMapElement(name,type,Object Job)
-console.log('no detect Group :'+groupName);
+//console.log('no detect Group :'+groupName);
             myGroup = this.xParent.parentXps.xMap.new_xMapElement(groupName,this.option,this.xParent.parentXps.xMap.currentJob);
-console.log(myGroup);
+//console.log(myGroup);
         }
         myElement = this.xParent.parentXps.xMap.new_xMapElement(elementName,myGroup,this.xParent.parentXps.xMap.currentJob,[groupName,elementName].join('\t'));
     }
-console.log(myElement);
+//console.log(myElement);
     return myElement;
 }

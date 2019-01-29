@@ -1863,9 +1863,7 @@ nas.Pm.newStage=function(myStage,myLine){
         return newStage;
     }else{
   //ステージは未登録なので、新規ステージ編集？
-        newStage= new nas.Pm.Stage();
-        newStage.line=myLine;newStage.name=myStage;
-        return newSatge;
+        return new nas.Pm.ProductionStage(myStage,myLine);
   　}
 }
 nas.Pm.ProductionStage.prototype.toString=function(form){

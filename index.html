@@ -1615,23 +1615,55 @@ disabled
 	編集中
      </td>
 -->
-<div
-    style='text-align:right;'
+<div id     = headerInfo
+     class  = "headerInfo"
 ><hr>
-<span id=XpsIdentifier></span>
+    <span
+        id=documentIdf
+    ></span>//<span
+        id=headerInfoWritable
+    ></span>
+</div>
+<div
+    id = headerInfoAlt
+    class  = "headerInfo headerInfoAlt"
+><hr>
+<A
+    id=XpsIdentifier
+    onClick='if((event.metaKey)||(event.ctrlKey)){xUI.importDocument()}else{xUI.openDocument()}'
+>
 <!-- <span id=title>title-string</span>#<span id=opus>opus</span>[<span id=subtitle>subtitle</span>]-->
-// <span id=pmcui_line class=pmcui_> 0:(本線) </span>
-// <span id=pmcui_stage class=pmcui_> 2:原画 </span> 
+</A>//<span id=pmcui_line class=pmcui_>0:(本線)
+</span>//<span id=pmcui_stage class=pmcui_>2:原画
+
+<!-- // <select
+    id=pmcui_stage
+    class=historySelect
+    onChange='if(xUI.XPS.currentStatus.content=="Active"){serviceAgent.getEntry(this.value,true)}else{serviceAgent.getEntry(this.value)};' 
+>
+					<option>----</option>
+</select> -->
+</span>//<select
+    id=jobSelector
+    class=historySelect
+    name=jobSelector 
+    onChange='if(xUI.XPS.currentStatus.content=="Active"){serviceAgent.getEntry(this.value,true)}else{serviceAgent.getEntry(this.value)};' 
+>
+					<option>----</option>
+</select>//<span id=pmcui_documentWritable class=pmcui_>[保存不可]</span>
+
+
+<!--
+
 // <span id=pmcui_job class=pmcui_> 1:(原画) </span>
 // <span id=pmcui_status class=pmcui_> Active </span>
-// <span id=pmcui_documentWriteable class=pmcui_> [保存不可] </span>
 
-
-
-<select name=jobSelector id=jobSelector onChange='if(xUI.XPS.currentStatus.content=="Active"){serviceAgent.getEntry(this.value,true)}else{serviceAgent.getEntry(this.value)};' 
-
+<input id=currentJob type=text name=jobSelector  list=jobSelector  onChange='if(xUI.XPS.currentStatus.content=="Active"){serviceAgent.getEntry(this.value,true)}else{serviceAgent.getEntry(this.value)};' 
+>
+<datalist id=jobSelector>
 					<option>----</option>
-				</select>
+				</datalist>
+-->
 </div><table class=info border=0 >
 <tr>
 <!--     <th class='opusLabel annotationText' id="opusL">

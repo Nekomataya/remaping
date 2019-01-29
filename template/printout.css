@@ -65,6 +65,14 @@ div.server-info {
 div #toolbarHeader{
 	display:none;
 }
+/*	ステータス表示行	*/
+.headerInfo{
+	text-align:right;
+}
+/*	ステータス表示行セレクターつき（閲覧用）	*/
+.headerInfoAlt	{
+	display:none;
+}
 /*		デバッグ
 	AIR専用エレメントは取リわけ
 */

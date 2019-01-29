@@ -366,7 +366,7 @@ ServiceNode.prototype.getRepositories=function(callback){
  
     ラインID
 ラインが初期化される毎に通番で増加 整数
-0   本線 primaryライン
+0   本線trunkライン
 1   本線から最初に分岐したライン
 1-1 ライン１から分岐したライン
 2   本線から分岐した２番めのライン
@@ -565,7 +565,7 @@ listEntry.prototype.push=function(myIdentifier){
         return this.issues;
 }
 /**
-A=new listEntry("%E3%81%8B%E3%81%A1%E3%81%8B%E3%81%A1%E5%B1%B1Max#%E3%81%8A%E3%81%9F%E3%82%81%E3%81%97[%E3%82%B5%E3%83%B3%E3%83%97%E3%83%AB%E3%82%AB%E3%83%83%E3%83%88]//S-C10(72)//0:primary//1:layout//1://");
+A=new listEntry("%E3%81%8B%E3%81%A1%E3%81%8B%E3%81%A1%E5%B1%B1Max#%E3%81%8A%E3%81%9F%E3%82%81%E3%81%97[%E3%82%B5%E3%83%B3%E3%83%97%E3%83%AB%E3%82%AB%E3%83%83%E3%83%88]//S-C10(72)//0:trunk//1:layout//1://");
 A
 */
 /**
@@ -899,13 +899,15 @@ localRepository.title=_title;
     該当するオブジェクトがない場合はnullを戻す
 */
 _opus=function(myIdentifier,searchDepth){
-    if(! searchDepth)searchDepth = 0;
+//console.log([myIdentifier,searchDepth])
+    if(! searchDepth) searchDepth = 0;
     var currentOpus = Xps.parseProduct(myIdentifier);
-    var isTkn = (currentOpus.opus=='undefined')? true:false;
+    var isTkn = ((currentOpus.opus =='')&&(currentOpus.title == myIdentifier))? true:false;
+//console.log([searchDepth,currentOpus,isTkn])
     for ( var idx = 0 ;idx <this.productsData.length;idx ++){
       if(
-        ((String(currentOpus.title).indexOf(this.productsData[idx].name) < 0) &&
-        (! isTkn ))||
+        ((! isTkn ) &&
+        (String(currentOpus.title).indexOf(this.productsData[idx].name) < 0))||
         (! this.productsData[idx].episodes )
       ) continue;
       for (var eid = 0 ;eid < this.productsData[idx].episodes[0].length; eid ++){
@@ -925,21 +927,25 @@ localRepository.opus=_opus;
 */
 _cut=function(myIdentifier){
     var target = Xps.parseIdentifier(myIdentifier);
-    var isTkn = (target.cut=='undefined')? true:false;
+    var isTkn = ((target.cut =='')&&(target.title == myIdentifier))? true:false;
+//console.log([myIdentifier,target,isTkn]);
+//console.log(this.productsData)
     for ( var idx = 0 ;idx <this.productsData.length;idx ++){
     if(
         (! this.productsData[idx].episodes )||(
-         (String(target.title).indexOf(this.productsData[idx].name) < 0) &&
-         (! isTkn )
+         (! isTkn )&&
+         (String(target.title).indexOf(this.productsData[idx].name) < 0)
         )
       ) continue;
+//console.log(this.productsData[idx].episodes[0]);
       for (var eid = 0 ;eid < this.productsData[idx].episodes[0].length; eid ++){
         if (
             (! this.productsData[idx].episodes[0][eid].cuts )||(
-             (String(target.opus).indexOf(this.productsData[idx].episodes[0][eid].name) < 0) &&
-             (! isTkn ) 
+             (! isTkn ) &&
+             (String(target.opus).indexOf(this.productsData[idx].episodes[0][eid].name) < 0)
             )
         ) continue;
+//console.log(this.productsData[idx].episodes[0][eid].cuts[0]);
         for (var cid = 0 ; cid < this.productsData[idx].episodes[0][eid].cuts[0].length ; cid ++) {
             if (
                 (Xps.compareCutIdf(target.sci[0].cut,this.productsData[idx].episodes[0][eid].cuts[0][cid].name))||
@@ -2086,9 +2092,9 @@ NetworkRepository.prototype.getEpisodes=function (callback,callback2,prdToken,ep
     if(typeof epToken == 'undefined'){
         epToken     = [];
         allEpisodes = true;
-//console.log(prdToken)
+console.log(prdToken)
         var myProduct=this.title(prdToken);
-//console.log(myProduct)
+console.log(myProduct)
         if((! myProduct)||(! myProduct.episodes)||(myProduct.episodes[0].length == 0)){console.log('stop'); return false;}
         for (var px = 0 ;px < myProduct.episodes[0].length;px ++){epToken.push(myProduct.episodes[0][px].token);}
     }
@@ -2098,8 +2104,8 @@ NetworkRepository.prototype.getEpisodes=function (callback,callback2,prdToken,ep
         if(! myEpisode) continue;
         if((allEpisodes)&&(myEpisode.cuts)){console.log('skip'+myEpisode.name) ;continue;}
         //対象が全エピソードで、エピソードがすでにカット情報を持っているケースでは処理スキップ
-//console.log("get episodes details for : "+myEpisode.name) ;
-//console.log("Token : "+myEpisode.token) ;
+console.log("get episodes details for : "+myEpisode.name) ;
+console.log("Token : "+myEpisode.token) ;
 	            // /api/v2
                 var targetURL = serviceAgent.currentRepository.url+ '/api/v2/episodes/'+myEpisode.token +'.json';
 	    $.ajax({
@@ -2107,8 +2113,8 @@ NetworkRepository.prototype.getEpisodes=function (callback,callback2,prdToken,ep
             type: 'GET',
             dataType: 'json',
             success: function(result) {
-//console.log('success : episode details for:'+result.data.episode.name);//リザルト不正　調整中20171116
-//console.log(result);
+console.log('success : episode details for:'+result.data.episode.name);//リザルト不正　調整中20190129
+console.log(result);
         var 　updateTarget = serviceAgent.currentRepository.opus(result.data.episode.token);
         if(! updateTarget){console.log('erroe###');console.log(updateTarget);};   
 //非同期処理中に変数を共有するのでmyEpisodeが変動するためターゲットをリザルトから再キャプチャ
@@ -2639,12 +2645,14 @@ NetworkRepository.prototype.getEntry=function (myIdentifier,isReference,callback
 //識別子からトークンを得る
     var myEntry = this.entry(myIdentifier);
     var myCut   = this.cut(myEntry.issues[0].cutID);
+console.log(myEntry);
     if((! myEntry)||(! myCut)){
             var msg=localize({en:"no entry %1 in DB",ja:"DBからエントリ%1の取得に失敗しました"},decodeURIComponent(myIdentifier));
         alert(msg);
-//console.log(myEntry);console.log(myCut);
-//console.log(serviceAgent.currentRepository);
-//console.log("noEntry : "+ decodeURIComponent(myIdentifier));//プロダクトが無い
+console.log(myEntry);
+console.log(myCut);
+console.log(serviceAgent.currentRepository);
+console.log("noEntry : "+ decodeURIComponent(myIdentifier));//プロダクトが無い
         return false;
     }
     if(! targetInfo.currentStatus){
@@ -2973,7 +2981,7 @@ NetworkRepository.prototype.pushEntry=function (myXps,callback,callback2){
                                data-cut_id="24"　
                                data-episode_token="mfjVjBUuG6Q8GHu7u6nzJTa2"
                                data-cut_token="73o16nRYK7oqNNmeGDHWizLV"
-                               data-line_id="0:(primary)"
+                               data-line_id="0:(trunk)"
                                data-stage_id="0:Startup"
                                data-job_id="1:work"
                                data-status="Active"

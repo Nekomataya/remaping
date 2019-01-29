@@ -82,7 +82,14 @@ div #toolbarHeader {
 	width:100%;
 	background-color:#a0a0a0;
 }
-
+/*	ステータス表示行	*/
+.headerInfo{
+	text-align:right;
+}
+/*	ステータス表示行セレクターつき（閲覧用）	*/
+.headerInfoAlt	{
+	display:none;
+}
 /*		デバッグ
 	AIR専用エレメントは取リわけ
 */
@@ -1217,6 +1224,34 @@ td.colSep {
 
 input	{text-align:center;}
 select	{text-align:center;}
+
+select.historySelect {
+    outline:none;
+    text-indent: 0.01px;
+    text-overflow: '';
+    background: none transparent;
+    vertical-align: middle;
+    font-size: inherit;
+    color: inherit;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+}
+select option{
+  background-color: #fff;
+  color: #333;
+}
+select::-ms-expand {
+  display: none;
+}
+select:-moz-focusring { 
+  color: transparent; 
+  text-shadow: 0 0 0 #828c9a;
+}
+
+select.historySelect:hover		{color:red;background-color:snow}
+select.historySelect:active		{color:gray;background-color:snow}
+select.historySelect:focus		{color:#880000;background-color:snow}
 /*
  * {
   margin: 0; padding: 0;

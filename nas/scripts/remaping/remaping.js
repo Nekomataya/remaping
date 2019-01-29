@@ -875,7 +875,8 @@ console.log(editxMap);
             管理中  カットのプロパティが変更できるが、内容は編集できない
     viewOnly    編集禁止（データのreadonlyではなくUI上の編集ブロック）
 */
-    this.viewMode    = ViewMode;        // 表示モード Compact/WordProp
+    this.restriction = false;           // 操作制限フラグ boolean
+    this.viewMode    = ViewMode;        // 表示モード Compact/WordProp Scroll/Page
     this.uiMode      ='floating';      // ui基本動作モード production/management/browsing/floating 
     this.viewOnly    = false;            // 編集禁止フラグ
     this.hideSource  = false;           // グラフィック置き換え時にシートテキストを隠す
@@ -1376,7 +1377,7 @@ xUI.setToolView = function(toolView){
 	currentView=currentView.join("");
     if(typeof this.toolView =='undefined') this.toolView = currentView;
     switch (toolView) {
-    case 'full':toolView = '110111111001';break;
+    case 'full'   :toolView = '110111111001';break;
     case 'minimum':toolView = '000000100000';break;
     case 'default':toolView = '110001110001';break;
     case 'compact':toolView = '010000110000';break;
@@ -1384,11 +1385,17 @@ xUI.setToolView = function(toolView){
         if(String(toolView).match(/^[01]+$/)){
             this.toolView = toolView;
         }else{
-            var viewSet = [
+            var viewSet = (xUI.restriction)?[
+                '110111101001',
+                '010000001000',
+                '110001100001',
+                '000000100000',
+                this.toolView
+                ]:[
                 '110111111001',
                 '010000011000',
                 '110001110001',
-                '000000100000',
+                '000000110000',
                 this.toolView
                 ];
             toolView = viewSet[(viewSet.indexOf(currentView)+1)%viewSet.length];
@@ -1396,6 +1403,9 @@ xUI.setToolView = function(toolView){
     }
     if(toolView != currentView){
 //UI表示状態設定
+    if(xUI.restriction){
+         toolView = ("000000000000"+((parseInt(toolView,2) & parseInt("111111101111",2)).toString(2))).slice(-UIViewIdList.length);
+      }
     for (var ix=0;ix<UIViewIdList.length;ix++){
         var myTgt=$("#"+UIViewIdList[ix]);
         if(String(toolView).charAt(ix)=="0"){myTgt.hide()}else{myTgt.show()} 
@@ -5407,8 +5417,9 @@ default :;
 }
 //
 //xUI.keyPress    =keyPress_ ;
-//
-//キーアップもキャプチャする。UI制御に必要 今のところは使ってない?
+/**
+    キーアップをキャプチャ。UI制御に必要 今のところは使ってない?
+*/
 xUI.keyUp = function (e){
 	if(xUI.player.keyboard){
 		if(xUI.player.markSwap){
@@ -5421,7 +5432,16 @@ xUI.keyUp = function (e){
 	    }
 	}
 	key = e.keyCode;//キーコードを取得
-	if(this.eXMode>=2){
+//フォーカスエレメントがiNputbOx以外なら入力を戻す
+    if(document.activeElement!==document.getElementById("iNputbOx")){
+        if(((key==79)||(key==83))&&((e.ctrlKey)||(e.metaKey))){
+        console.log("capt")
+            return false;
+        }else{
+            return true;
+        }
+    }
+    if(this.eXMode>=2){
 		document.getElementById("iNputbOx").select();
 		return false;
 	}
@@ -7736,12 +7756,12 @@ console.log(currentXps.getIdentifier(true));
                         xUI.XPS.syncIdentifier(myIdentifier,false);
                         
 //同期が行われたのでフラグを立てる
-console.log(xUI.XPS)
+//console.log(xUI.XPS)
                     }
                     
                     if( startupDocument.length==0 ){
 console.log('detect first open no content');//初回起動を検出  コンテント未設定
-console.log(XPS)
+//console.log(XPS)
                         xUI.XPS.line     = new XpsLine(nas.pmdb.pmTemplates.members[0]);
                         xUI.XPS.stage    = new XpsStage(nas.Pm.pmTemplates.members[0].stages.members[0]);
                         //xUI.XPS.stage    = new XpsStage((xUI.XPS.line.stages).split(',')[0]);
@@ -7753,7 +7773,7 @@ console.log(XPS)
 //data-scale を廃止した場合は、不用
                         var myCutTime = nas.FCT2Frm($('#backend_variables').attr('data-scale'));
                         if((myCutTime) && (!(isNaN(myCutTime))) && (myCutTime != xUI.XPS.time())){
-console.log('setDuration with data-scale')
+//console.log('setDuration with data-scale')
                             xUI.XPS.setDuration(myCutTime);
                         }
                     }
@@ -7808,7 +7828,7 @@ console.log('初期化終了');
          } else {
 //マルチドキュメントモード
 // リポジトリのIDは不問 とりあえず１(ローカル以外)
-console.log('onsite multi-document mode');
+//console.log('onsite multi-document mode');
              serviceAgent.currentServer.getRepositories(function(){
 //                 serviceAgent.switchRepository(1,documentDepot.rebuildList);
                  serviceAgent.switchRepository(1);
@@ -7818,7 +7838,7 @@ console.log('onsite multi-document mode');
          }
 //if(serviceAgent.currentRepository.entry(Xps.getIdentifier(xUI.XPS))),
      }else{
-console.log('Application Offsite');
+//console.log('Application Offsite');
 //オフサイトモード
     console.log(serviceAgent.currentServer);
 //オンサイト専用UIを隠す
@@ -8448,8 +8468,9 @@ case    "historySelector":;
     var currentIdentifier = (xUI.uiMode == 'production')? Xps.getIdentifier(xUI.referenceXPS):Xps.getIdentifier(xUI.XPS);
     var currentEntry = serviceAgent.currentRepository.entry(currentIdentifier);
     if(! currentEntry) break;
+    var myContentsLine ='';
     var myContentsStage='';var stid=-1;
-    var myContentsJob='';
+    var myContentsJob  ='';
         for (var ix=currentEntry.issues.length-1;ix >= 0;ix--){
             var matchResult=Xps.compareIdentifier(currentEntry.issues[ix].identifier,currentIdentifier);
             if(decodeURIComponent(currentEntry.issues[ix][2]).split(":")[0] == 0){stid=ix-1}
@@ -8469,11 +8490,20 @@ case    "historySelector":;
                     myContentsStage += '</a></li>'
                 }
             }
+/*
+            if(matchResult>2){
+                myContentsJob += '<option value="'+decodeURIComponent(currentEntry.issues[ix].identifier)+'"' ;
+                myContentsJob += (matchResult>4)?
+                    'selected >':' >';
+                myContentsJob += decodeURIComponent(currentEntry.issues[ix][2])+"/"+currentEntry.issues[ix][3];
+                myContentsJob += '</option>'
+            }
+*/
             if(matchResult>2){
                 myContentsJob += '<option value="'+currentEntry.issues[ix].identifier+'"' ;
                 myContentsJob += (matchResult>4)?
                     'selected >':' >';
-                myContentsJob += decodeURIComponent(currentEntry.issues[ix][2])+"/"+currentEntry.issues[ix][3];
+                myContentsJob += decodeURIComponent(currentEntry.issues[ix][2])+"//"+currentEntry.issues[ix][3];
                 myContentsJob += '</option>'
             }
             
@@ -8482,20 +8512,28 @@ case    "historySelector":;
         document.getElementById('jobSelector').innerHTML=myContentsJob;
     break;
 case	"productStatus":;
+	document.getElementById('documentIdf').innerHTML  = decodeURIComponent(Xps.getIdentifier(xUI.XPS));
+
 	document.getElementById('pmcui_line').innerHTML  = xUI.XPS.line.toString(true);
 	document.getElementById('pmcui_stage').innerHTML = xUI.XPS.stage.toString(true);
-	document.getElementById('pmcui_job').innerHTML   = xUI.XPS.job.toString(true);
+
+//	document.getElementById('pmcui_stage').innerHTML = '<option value="'+Xps.getIdentifier(xUI.XPS)+'" selected >'+ xUI.XPS.stage.toString(true) +'</option>';
+	
+//	document.getElementById('pmcui_job').innerHTML   = xUI.XPS.job.toString(true);
 //	document.getElementById('pmcui_status').innerHTML= decodeURIComponent(xUI.XPS.currentStatus);
-	document.getElementById('pmcui_status').innerHTML= xUI.XPS.currentStatus.toString();
-	document.getElementById('pmcui_documentWriteable').innerHTML= (xUI.viewOnly)?'[編集不可]':'';
+    document.getElementById('jobSelector').innerHTML =
+        '<option value="'+Xps.getIdentifier(xUI.XPS)+'" selected >'+[xUI.XPS.job.toString(true),decodeURIComponent(xUI.XPS.currentStatus)].join('//') +'</option>';
+//	document.getElementById('pmcui_status').innerHTML= xUI.XPS.currentStatus.toString();
+	document.getElementById('headerInfoWritable').innerHTML= (xUI.viewOnly)?'[編集不可] ':' ';
     if (xUI.viewOnly){
-	document.getElementById('pmcui_documentWriteable').innerHTML= '[編集不可]';
+	document.getElementById('pmcui_documentWritable').innerHTML= '[編集不可] ';
     $('#documentWritable').show();
     }else{
-	document.getElementById('pmcui_documentWriteable').innerHTML= '';
+	document.getElementById('pmcui_documentWritable').innerHTML= ' ';
     $('#documentWritable').hide();
     }
-	document.getElementById('pmcui_documentWriteable').innerHTML += String(xUI.sessionRetrace);
+	document.getElementById('headerInfoWritable').innerHTML += String(xUI.sessionRetrace);
+	document.getElementById('pmcui_documentWritable').innerHTML += String(xUI.sessionRetrace);
 	switch (xUI.uiMode){
 		case 'production':
 	document.getElementById('pmcui').style.backgroundColor = '#bbbbdd';
