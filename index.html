@@ -2,6 +2,7 @@
 <html>
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta name="viewport" content="width=device-width" >
 <title>remaping..</title>
 
 <link rel="shortcut icon" href="./icons/favicon.ico">
@@ -605,6 +606,11 @@ serviceAgent.pushEntry(xUI.XPS,function(){xUI.setStored("current");sync();
 </li>
 <li><span	id=pMshow>Show</span>
 <ul>
+<li><span id=pMrestrictionMode-d class='pM pM-alt'>[制限モード]</span><A	id=pMrestrictionMode
+	HREF='javascript:void(0);'
+	onclick='xUI.setRestriction(! xUI.restrintion);return false;'
+	title="制限モード切り替え"
+>[制限モード]</A></li>
 <li><span id=pMmanagementMode-d class='pM pM-alt'>[ 管理モード ]</span><A	id=pMmanagementMode
 	HREF='javascript:void(0);'
 	onclick='xUI.setUImode("next");sync("productStatus");return false;'
@@ -1947,6 +1953,11 @@ serviceAgent.pushEntry(xUI.XPS,function(){xUI.setStored("current");sync();
 	onclick='if(confirm("アプリケーションを再読み込みします\nデータは破棄されます\nよろしいですか？")){document.location.reload()};return false;'
 	title="reload application"
 >reload</A> </li>
+<li><span id=cMrestrictionMode-d class='cM cM-alt'>[ 制限モード ]</span><A	id=cMrestrictionMode
+	HREF='javascript:void(0);'
+	onclick='xUI.setRestriction(! xUI.restriction);return false;'
+	title="管理モード切り替え"
+>[ 制限モード ]</A></li>
 <li><span id=cMmanagementMode-d class='cM cM-alt'>[ 管理モード ]</span><A	id=cMmanagementMode
 	HREF='javascript:void(0);'
 	onclick='xUI.setUImode("next");sync("productStatus");return false;'
@@ -4324,7 +4335,7 @@ duration :
 ></button>
 <button
 	id=timerSwitchMark
-    class='iconButton iconButton-flagPlus'
+    class='iconButton iconButton-pen_3'
 	onMouseDown='if(xUI.player.status=="stop"){xUI.player.start(true)}else{xUI.player.getCount=true};'
 	onMouseUp='if(xUI.player.status=="run"){xUI.player.getCount=false};'
 	title='mark'
@@ -4347,10 +4358,10 @@ duration :
 	title='apply mark'
 ></button>
 <button
-    class='iconButton iconButton-blank'
+    class='iconButton iconButton-gia_d'
 	onClick='if($("#timerPref").isVisible()){$("#timerPref").hide();}else{$("#timerPref").show();};'
 	title=timer preference'
->🔨</button>
+></button>
     <span id=timerPref style='display:none;'>
 <input
 	id=waitCount

@@ -204,11 +204,14 @@ nas.LangPack.ja=[
 
 ["pMshow","innerHTML","表示"],
 
+    ["pMrestrictionMode","innerHTML","[制限モード]"],
+    ["pMrestrictionMode","title","入力制限モード切り替え"],
+
     ["pMmanagementMode","innerHTML","[管理モード]"],
     ["pMmanagementMode","title","管理モード切り替え"],
 
     ["pMeditMode","innerHTML","[表示モード]"],
-    ["pMeditMode","title","表示モード切り替え"],
+    ["pMeditMode","title","ページ/スクロール切り替え"],
 
     ["pMcolumns","innerHTML","[段組]"],
     ["pMcolumns","title","二段組"],
@@ -693,10 +696,14 @@ nas.LangPack.en=[
     ["pMpreviousVer","innerHTML","previous ver"],
 
 ["pMshow","innerHTML","Show"],
+    ["pMrestrictionMode","innerHTML","[restriction]"],
+    ["pMrestrictionMode","title","change input restriction mode"],
+
     ["pMmanagementMode","innerHTML","[management mode]"],
     ["pMmanagementMode","title","chamge management mode"],
+
     ["pMeditMode","innerHTML","[view mode]"],
-    ["pMeditMode","title","change view mode"],
+    ["pMeditMode","title","change view mode page/scroll"],
 
     ["pMcolumns","innerHTML","[columns]"],
     ["pMcolumns","title","doble column"],

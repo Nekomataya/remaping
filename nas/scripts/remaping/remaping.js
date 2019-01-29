@@ -1418,7 +1418,27 @@ console.log([toolView,xUI.toolView]);
 /* TEST
 xUI.setToolView()
 */
-
+/**
+    制限モードへ移行
+    
+*/
+xUI.setRestriction = function(mode){
+    if(typeof mode == 'undefined') mode=true;
+    if(mode){
+        xUI.restriction = true;
+        xUI.viewMode    = "Compact";//?
+        xUI.resetSheet();
+        xUI.setToolView('minimum');
+        xUI.flipRefColumns('hide');
+    }else{
+        xUI.restriction = false;
+        xUI.viewMode    = "wordProp";//?
+        xUI.resetSheet();
+        xUI.setToolView('current');
+        xUI.flipRefColumns('show');
+    }
+    return xUI.restriction;
+}
 /**
     xUI.setDocumentStatus(myCommnad)
     ドキュメントのステータスを変更する
@@ -8149,7 +8169,11 @@ if(dbg){
 //    if(dbg) alert(msg);
     dbg=false;
 }
-
+//起動時の画面幅で制限モードON
+    if((window.innerWidth<640)||
+    (window.parent.screen.width<640)){
+        xUI.setRestriction(true);
+    }
 /* ヘッダ高さの初期調整*/
 //xUI.adjustSpacer();
 xUI.tabSelect(xUI.activeDocumentId);
