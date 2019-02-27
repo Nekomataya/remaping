@@ -41,8 +41,8 @@
  *		ただし開始メッセージが抑制されている場合は表示されません。
  */
 
-	var welcomeMsg="サーバ対応版 -test- 20190127";
-	var windowTitle="ver. 1.8.1";//WindowTitleとしての役割は終了 統合バージョンです
+	var welcomeMsg="サーバ対応版 -作業安定版- 20190227";
+	var windowTitle="ver. 1.8.2";//WindowTitleとしての役割は終了 統合バージョンです
 
 /**************************************************************************
  *	ロゴ等
@@ -150,7 +150,7 @@
 // 後方のペイント更新が重要
 SheetLooks = {
     SheetTextColor  :"#111111",
-	SheetBaseColor	:"#ffffef",
+	SheetBaseColor	:"#ffefef",
 	SelectedColor	:"#9999ff",
 	RapidModeColor	:"#ffff44",
 	FloatModeColor	:"#88eeee",
