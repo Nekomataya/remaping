@@ -1,10 +1,11 @@
- /**
- * Remaping本体スクリプト
+/**
+ * $fileOverview
+ *  <pre>Remaping本体スクリプト
  *     XPSオブジェクトとMAPオブジェクトについては、
  *     以下のドキュメントを参照のこと
  *     http://www.nekomataya.info/remaping/teck.html
  *     $Id: remaping.js,v 1.66 2014/11/29 kiyo Exp $
- * CEP動作のための修正開始
+ * CEP動作のための修正開始 </pre>
  */
 // http://d.hatena.ne.jp/amachang/20071010/1192012056 //
 /*@cc_on _d=document;eval('var document=_d')@*/
@@ -12,14 +13,15 @@
 $.fn.isVisible = function() {
     return $.expr.filters.visible(this[0]);
 };
-/**  class xUI
- *     UIコントロールオブジェクト
- *      
- */
 //----------------------------------- UIコントロールオブジェクトを作成、初期化
 function new_xUI(){
+/**  @class
+ *<pre>     UIコントロールオブジェクト
+ *  エディタ・アプリケーション本体のクラスオブジェク
+ *</pre>
+ */
     var xUI = {};
-/**
+/*
  * xUI のエラーメッセージは旧Xpsオブジェクトから移転されたもの
  * XpsオブジェクトにUIエラーハンドリングは不用
  */
@@ -40,6 +42,7 @@ function new_xUI(){
 //------- UIオブジェクト初期化前の未定義参照エラーを回避するためのダミーメソッド
     xUI.flipContextMenu=function(evt){return true;};
     xUI.Mouse=function(evt){return true;};
+    xUI.Touch=function(evt){return true;};
 //	初期化前にバックアップデータの処理が発生するので暫定的に初期化しておく
     xUI.backupStore    ="0123456789";    //作業バックアップ
 
@@ -106,9 +109,9 @@ function new_xUI(){
     xUI.sectionBodyColor;
 // ---------------------- ここまでカラー設定
 /**
-    xUI.importBox
-    複数データ対応ドキュメントインポーター
-*/
+ *    xUI.importBox
+ *    複数データ対応ドキュメントインポーター
+ */
     xUI.importBox={};//インポート情報トレーラー初期化
     xUI.importBox.overwriteProps    ={};
     xUI.importBox.importTarget  = false;
@@ -117,15 +120,16 @@ function new_xUI(){
     xUI.importBox.allowExtensions=new RegExp("\.(txt|csv|xps|ard|ardj|tsh|xdts|tdts)$",'i');
 
 /**
-    importBox リセット
-    インポート操作の直前でリセットを行うこと
-*/
+ *  @function
+ *    importBox リセット
+ *   インポート操作の直前でリセットを行うこと
+ */
 xUI.importBox.reset = function(){
     this.targetContents    =[];
     this.selectedContents  =[];
     this.importTarget  = false;
-//    if((document.getElementById('loadShortcut').value=='ref')){}
-    if((document.getElementById('loadShortcut'))&&(document.getElementById('loadShortcut').value=='ref')){
+//    if((document.getElementById('loadTarget').value=='ref')){}
+    if((document.getElementById('loadTarget'))&&(document.getElementById('loadTarget').value=='ref')){
         this.importTarget=xUI.referenceXPS;
     } else {
         this.importTarget=xUI.XPS;
@@ -136,9 +140,12 @@ xUI.importBox.reset = function(){
 }
     xUI.importBox.reset();
 /**
-    変換ターゲットとなるFileオブジェクト配列を引数にして以下の関数を呼び出す
-    全カット変換終了時のコールバック関数を与えることが可能
-*/
+ *  @function
+ *   変換ターゲットとなるFileオブジェクト配列を引数にして以下の関数を呼び出す
+ *   全カット変換終了時のコールバック関数を与えることが可能
+ *  @params {Array of File} targetFiles
+ *  @params {Function} callback
+ */
 xUI.importBox.read = function (targetFiles,callback){
     if(appHost.platform == "AIR"){
 //***AIR  用の分岐は  単ファイルのままで保留2018 0201
@@ -1052,6 +1059,7 @@ xUI._checkProp=function(){
             case "still" : this.stillCount++ ;break;
             case "effect": ;
             case "sfx"   : this.sfxCount++   ;break;
+            case "stage" :
             case "stagework" :
             case "geometry": this.stageworkCount++   ;break;
             case "camerawork":;
@@ -2615,8 +2623,9 @@ if(! mySection) console.log(myElement);
 
           break;
           case "geometry":;
-//          case "effect":;
-//          case "sfx":;
+          case "stage":;
+          case "stagework":;
+myStr = xUI.trTd(myStr); break;
             if (myStr.match(/^[\|｜]$/)){
                 myStr=(this.showGraphic)?"<br>":"｜";                
                 drawForm = "line";
@@ -2646,6 +2655,7 @@ if(! mySection) console.log(myElement);
           case "composite":;
           case "effect":;
           case "sfx":;
+            if(! mySection.value) break;
 if(myStr.match(/^</)) console.log(myStr);
             var drawForms ={"▲":"fi","▼":"fo","]><[":"transition"};//この配分は仮ルーチン  良くない
             if (myStr.match(/^[\|｜↑↓\*＊]$/)){
@@ -3061,9 +3071,13 @@ var    _BODY ='';
 //----印字用ページヘッダ・第一ページのみシートヘッダ---//
 if(pageNumber>1){
 //    _BODY+='<div class="pageBreak"> </div>';
-    _BODY+='<br><table class=pageHeader>';
+    _BODY+='<div class="printPageStatus">';
+    _BODY+=decodeURIComponent(Xps.getIdentifier(xUI.XPS,'job')) +' : '+new Date().toNASString();
+    _BODY+='</div><table class=pageHeader>';
 }else{
-    _BODY+='<table class=sheetHeader>';
+    _BODY+='<div class="printPageStatus">';
+    _BODY+=decodeURIComponent(Xps.getIdentifier(xUI.XPS,'job')) +' : '+new Date().toNASString();
+    _BODY+='</div><table class=sheetHeader>';
 };
 //  ページヘッダとシートヘッダの共通表示
 
@@ -4400,34 +4414,43 @@ xUI.getRange    =function(Range)
 xUI.putReference    =function(datastream,direction){
     xUI.put(datastream,direction,true);
 }
-/*    xUI.put(dataStream[[,direction],toReference])
-引数
-    :dataStream     シートに設定するデータ  単一の文字列  またはXpsオブジェクト または  配列  省略可
-    :direction      データ開始位置ベクトル  配列  省略可  省略時は[0,0]
-    :toReference    ターゲットオブジェクト切り替えフラグ
-    シートに外部から値を流し込むメソッド
-        xUI.put(データストリーム)
-        読込み時にも使用
-    Xps.put オブジェクトメソッドに対応
-    undo処理は戻り値から書き換えに成功した範囲と書き換え前後のデータが取得できるのでその戻値を利用する
-    このメソッド内では、選択範囲方向の評価を行わないためフォーカス／セレクションは事前・事後に調整を要する場合がある
-    選択範囲によるクリップはオブジェクトメソッドに渡す前に行う必要あり
-    
-    グラフィックレイヤー拡張によりシート上の画像パーツを更新する操作を追加
-    Xps更新後に、xUI.syncSheetCell()メソッドで必要範囲を更新
-
-    グラフィック描画queueを設置してキューに操作を追加してから更新メソッドをコールする形に変更する
-    更新メソッドはキューを処理して不用な描画をスキップするようにする（未実装20170330）
-
-    マクロ展開後には同様に必要範囲内のフットマーク再表示を行う
-    
-    参照エリアに対する描画高速化のために、このメソッドでリファレンスの書換をサポートする
-    引数に変更がなければ従来動作  フラグが立っていればリファレンスを書換
-    リファレンス操作時はundo/redoは働かない
-
-    再描画抑制undoカウンタを設置
-    カウンタの残値がある限り再描画をスキップしてカウンタを減算する
-*/
+/**
+ *  タイムシートデータの入力を行う - UNDO処つき
+ *
+ *    <pre>
+ *    シートに外部から値を流し込むメソッド
+ *    xUI.put(dataStream[[,direction],toReference])
+ *        読込み時にも使用
+ *    Xps.put オブジェクトメソッドに対応
+ *    undo処理は戻り値から書き換えに成功した範囲と書き換え前後のデータが取得できるのでその戻値を利用する
+ *    このメソッド内では、選択範囲方向の評価を行わないためフォーカス／セレクションは事前・事後に調整を要する場合がある
+ *    選択範囲によるクリップはオブジェクトメソッドに渡す前に行う必要あり
+ *    
+ *    グラフィックレイヤー拡張によりシート上の画像パーツを更新する操作を追加
+ *    Xps更新後に、xUI.syncSheetCell()メソッドで必要範囲を更新
+ *
+ *    グラフィック描画queueを設置してキューに操作を追加してから更新メソッドをコールする形に変更する
+ *    更新メソッドはキューを処理して不用な描画をスキップするようにする（未実装20170330）
+ *
+ *    マクロ展開後には同様に必要範囲内のフットマーク再表示を行う
+ *    
+ *    参照エリアに対する描画高速化のために、このメソッドでリファレンスの書換をサポートする
+ *    引数に変更がなければ従来動作  フラグが立っていればリファレンスを書換
+ *    リファレンス操作時はundo/redoは働かない
+ *
+ *    再描画抑制undoカウンタを設置
+ *    カウンタの残値がある限り再描画をスキップしてカウンタを減算する
+ *    </pre>
+ *  @params {String|Object Xps|Array}  dataStream
+ *     シートに設定するデータ  単一の文字列  またはXpsオブジェクト または  配列  省略可<br />
+ *  
+ *  @params {Array} direction
+ *     データ入力ベクトル  配列  省略可  省略時は[0,0]
+ *  @params {boolean} toReference
+ *    ターゲットオブジェクト切り替えフラグ
+ *  @returns {Array} 入力開始アドレス、終了アドレス
+ *      [[TrackStartAddress,FrameStartAddress],lastAddress];
+ */
 xUI.put = function(datastream,direction,toReference){
   if(! toReference) toReference = false;
   if((xUI.viewOnly)&&(! toReference)) return xUI.headerFlash('#ff8080');//入力規制時の処理
@@ -4785,10 +4808,20 @@ xUI.diff=function(target){
         return (this.XPS[target] != this.referenceXPS[target]);
     }
 }
-//バックアップデータ入出力method作成
+/**
+ *  シートセル入力バックアップ
+ *      キー入力等で編集前のセル内容のバッファを送受するメソッド
+ *  @params {Array} Datas
+ *       セルの内容データ　省略時は現在の値を戻す。
+ *  @returns {String} バックアップ内容　または　受領フラグ
+ *
+ */
 xUI.bkup    =function(Datas){
-if (! Datas){return this.Backupdata[0]};
-if (Datas.length==0){return this.Backupdata[0]}else{this.Backupdata=Datas;return true;};
+    if ((! Datas)||(Datas.length==0)){
+        return this.cellBackup[0];
+    }else{
+        this.cellBackup=Datas;return true;
+    };
 };
 /*
 UI関数群
@@ -4797,12 +4830,20 @@ UI関数群
 */
 /*=====================================*/
 
-//メッセージをアプリケーションステータスに出力する。 引数なしでクリア
+/**
+ *   メッセージをアプリケーションステータスに出力する。
+ *   引数なしでクリア
+ *  @params {String}    msg
+ *      メッセージ本体
+ *  @params {String}    prompt
+ *      プロンプトサイン
+ */
 xUI.printStatus    =function(msg,prompt){
     if(! msg){msg="<br />"};
     if(! prompt){prompt=""};
     var bodyText=(prompt+msg);
-    document.getElementById("app_status").innerHTML=bodyText.replace(/\n/g,"<br>");
+//    document.getElementById("app_status").innerHTML=bodyText.replace(/\n/g,"<br>");
+    $("#app_status").text(bodyText);
 }
 /**    キーダウンでキー入力をサバく
 
@@ -5684,6 +5725,14 @@ console.log(e);
     }
     return true;
 }
+/*  cUI.onTouch
+
+*/
+xUI.Touch = function(e){
+    console.log(e);
+    return true;
+}
+
 /*    xUI.Mouse(e)
 引数:    e    マウスイベント
 戻値:        UI制御用
@@ -6085,6 +6134,7 @@ default    :    return true;
 xUI.openDocument=function(mode){
     if(xUI.uiMode=='production') {mode='localFile';}
     document.getElementById('loadShortcut').value='true';
+    document.getElementById('loadTarget').value  ='body';
     if(mode=='localFile'){
         if(fileBox.openFileDB){
             fileBox.openFileDB();
@@ -6100,12 +6150,12 @@ xUI.openDocument=function(mode){
 }
 /**
 りまぴん-WEB-用　ローカルファイルインポートコマンド
-loadShortcut 変数の設定とファイルセレクタのクリアを同時に行い
+loadTarget 変数の設定とファイルセレクタのクリアを同時に行い
 クリックイベントを送出する
 */
 xUI.importDocument =function(targetArea){
     if(! targetArea) targetArea = '';
-    document.getElementById('loadShortcut').value = targetArea;
+    document.getElementById('loadTarget').value = targetArea;
     if(fileBox.openFileDB){
         fileBox.openFileDB();
     }else{
@@ -6371,6 +6421,8 @@ var myPanels=["#optionPanelMemo",
 	return;
    }
 
+//アニメーション効果フラグAE
+    var AEF=(window.innerWidth < 900 )? 0:1;
 //jQueryオブジェクトを取得してターゲットにする
 		var myTarget=$("#optionPanel"+status);//jQ object
 //if(! myTarget[0]){alert("noObject : #optionPanel"+status);return flase;};
@@ -6416,15 +6468,7 @@ case	"Draw":     ;//手描き編集パネル
 case	"TimeUI":	;//ツールボックス
 		if(myTarget.is(':visible')){myTarget.hide()}else{myTarget.show()};
 	break;
-case	"Utl":	;//ユーティリテーメニューパネル
-	if(! myTarget.is(':visible')){
-		myTarget.show();
-	}else{
-//		if(! document.getElementById("tbLock").checked){		}
 
-			myTarget.hide();
-	};
-	break;
 case	"memo":	;//memo edit start
 	myTarget=$("#optionPanelMemo");//置き換え
 	hideTarget=$("#memo");
@@ -6477,9 +6521,14 @@ case	"menu":	;//ドロップダウンメニューバー  消す時に操作性�
 //	xUI.adjustSpacer();
 break;
 case	"ToolBr":	;//固定ツールバー
-	if($("#toolbarHeader").is(":visible")){$("#toolbarHeader").hide()}else{$("#toolbarHeader").show()};
-//	xUI.adjustSpacer();
-break;
+	myTarget=$("#toolbarHeader");
+case	"Utl":	;//ユーティリテーメニューパネル
+	if(myTarget.is(':visible')){
+		myTarget.hide(["slide","blined"][AEF]);
+	}else{
+		myTarget.show(["slide","blined"][AEF]);
+	};
+break;	
 case	"SheetHdr": ;//固定UIシートヘッダ
 	if($("#sheetHeaderTable").is(":visible")){$("#sheetHeaderTable").hide()}else{$("#sheetHeaderTable").show()};
 //	xUI.adjustSpacer();
@@ -6919,16 +6968,22 @@ xUI.setRetrace = function(){
 
 */
 /**
- *  xUIにターゲットオブジェクトを与えてシートをリセットする関数
+ *  xUIにターゲットオブジェクトを与えてシートをリセットする関数<pre>
  *  初期化手順を用いていた部分の置換え用途で作成
  *  初期化手順内でもこの手続を呼び出すように変更
  *  この手続内では基本的にundo処理は行わない
  *  したがって必要に従ってこの手続を呼ぶ前にundoの初期化を行うか、またはundo操作を行う必要がある。
+ *  引数省略時は画面のリフレッシュのみを行う。</pre>
+ *  @params {Object Xps} editXps
+ *      主ターゲットXps　省略可
+ *  @params {Object Xps} referenceXps
+ *      参照ターゲットXpa  省略可
  */
 xUI.resetSheet=function(editXps,referenceXps){
 //  現在のカーソル配置をバックアップ
     var restorePoint = this.Select.concat();
     var restoreSelection=this.Selection.concat();
+    this.selection();//選択解除
     var reWriteXPS = false;
     var reWriteREF = false;
 
@@ -7030,10 +7085,11 @@ xUI.resetSheet=function(editXps,referenceXps){
         xUI.selectCell(restorePoint);
         xUI.selection(add(restorePoint,restoreSelection));
     },0);
-    this.bkup([XPS.xpsTracks[1][0]]);
+//    this.bkup([XPS.xpsTracks[1][0]]);
 //画像部品の表示前のカーソル位置描画,'width':markerWidth
-    this.selectCell(restorePoint);
-    this.selection(restoreSelection);
+//    this.selectCell(restorePoint);
+//    this.selection(restoreSelection);
+//    this.selection(add(restorePoint,restoreSelection));
 //セクション編集状態であれば解除
     if(this.edmode>0){this.mdChg('normal');}
 //表示内容の同期
@@ -7197,7 +7253,7 @@ xUI.activeteDocument  = function(tabId){
  */
 //ユーザ設定を予備加工
     var MaxFrames=nas.FCT2Frm(Sheet);//タイムシート尺
-    var MaxLayers=[SoundColumns,SheetLayers,CameraworkColumns,SfxColumns];//セル重ね数
+    var MaxLayers=[SoundColumns,SheetLayers,CameraworkColumns,StageworkColumns,SfxColumns];//セル重ね数
 
 //始動オブジェクトとして空オブジェクトで初期化する スタートアップ終了までのフラグとして使用
 var xUI         =new Object();
@@ -7255,7 +7311,7 @@ if(location.hostname.indexOf("remaping-stg")>=0){
 /**
        グローバルの XPSを実際のXpsオブジェクトとして再初期化する
 */
-    XPS=new Xps([SoundColumns,SheetLayers,CameraworkColumns,SfxColumns],MaxFrames,myFrameRate);
+    XPS=new Xps([SoundColumns,SheetLayers,CameraworkColumns,StageworkColumns,SfxColumns],MaxFrames,myFrameRate);
 /*
     Mapオブジェクトの改装を始めるので、いったん動作安定のため切り離しを行う
     デバッグモードでのみ接続
@@ -7338,7 +7394,10 @@ if(false){
 
 if((! startupDocument)&&(fileBox)&&(fileBox.contentText.length)){ startupDocument=fileBox.contentText;}
 if( startupDocument.length > 0){
-    XPS.readIN( startupDocument);NameCheck=false;
+console.log(startupDocument);
+console.log(XPS);
+console.log(XPS.parseXps(startupDocument));
+    NameCheck=false;
 }
 //リファレンスシートデータがあればオブジェクト化して引数を作成
         var referenceX=new Xps(5,nas.SheetLength+':00.');
@@ -7434,7 +7493,7 @@ function nas_Prt_Startup(callback){
        グローバルの XPSを実際のXpsオブジェクトとして再初期化する
 */
 //    XPS=new Xps(MaxLayers,MaxFrames);
-    XPS=new Xps([SoundColumns,SheetLayers,CameraworkColumns,SfxColumns],MaxFrames);
+    XPS=new Xps([SoundColumns,SheetLayers,CameraworkColumns,StageworkColumns,SfxColumns],MaxFrames);
 
 /*============*     初期化時のデータ取得    *============*/
 /*
@@ -9312,23 +9371,27 @@ var processImport=function(autoBuffer){
             console.log(xUI.importBox.selectedContents[dix].toString());
         }
     }else{
-        if((document.getElementById('loadShortcut').value != 'ref')&&(xUI.uiMode=='production')&&(xUI.sessionRetrace == 0)){
+        if((document.getElementById('loadTarget').value != 'ref')&&(xUI.uiMode=='production')&&(xUI.sessionRetrace == 0)){
 //インポート時 undoが必要なケースでは xUI.putに渡す
             xUI.put(xUI.importBox.selectedContents[0]);
         }else{
 //undoリセットが望ましい場合はxUI.resetSheetに渡してリセットする
-            if(document.getElementById('loadShortcut')=='ref'){
+            if(document.getElementById('loadTarget')=='ref'){
+console.log('ref')
                 xUI.resetSheet(false,xUI.importBox.selectedContents[0]);
             }else{
+console.log('body');
                 xUI.resetSheet(xUI.importBox.selectedContents[0]);
             }
         }
     }
   }else{
      var loading=false;
-    if(document.getElementById('loadShortcut')=='ref'){
+    if(document.getElementById('loadTarget')!='ref'){
+console.log('>>body')
         loading=xUI.XPS.readIN(xUI.data_well.value);
     }else{
+console.log('>>ref')
         loading=xUI.referenceXPS.readIN(xUI.data_well.value);
     }
     if(loading){
@@ -9963,7 +10026,7 @@ myCookie[0]=pageAttributes;
     StageworkColumns = (useCookie.XPSAttrib)?xUI.stageworkCount:null;
     SfxColumns = (useCookie.XPSAttrib)?xUI.sfxCount:null;
 
-myCookie[1]=[myTitle,mySubTitle,myOpus,myFrameRate,Sheet,SoundColumns,SheetLayers,CameraworkColumns,SfxColumns];
+myCookie[1]=[myTitle,mySubTitle,myOpus,myFrameRate,Sheet,SoundColumns,SheetLayers,CameraworkColumns,StageworkColumns,SfxColumns];
 
 //	[2] UserName
 	if(useCookie.UserName)	{
@@ -10104,7 +10167,8 @@ if (!navigator.cookieEnabled){return false;}
     if(rEmaping[1][5]) SoundColumns      = unescape(rEmaping[1][5]);
     if(rEmaping[1][6]) SheetLayers       = unescape(rEmaping[1][6]);
     if(rEmaping[1][7]) CameraworkColumns = unescape(rEmaping[1][7]);
-    if(rEmaping[1][8]) SfxColumns        = unescape(rEmaping[1][8]);
+    if(rEmaping[1][8]) StageworkColumns  = unescape(rEmaping[1][8]);
+    if(rEmaping[1][9]) SfxColumns        = unescape(rEmaping[1][9]);
 	}
 
 //	[2] UserName

@@ -1,10 +1,12 @@
 ﻿/**
- *  pmio.js
+ *  @fileOverview
  *  production managemaent io
  *
- *  nas.Pm は 管理情報を分離するためのオブジェクト群
+ *  nas.Pm は 管理情報を分離するためのクラス<br />
  *
  *  PmUnitを中核にしてそれに含まれる被管理情報をオブジェクトとして保持する
+ */
+/*
  *
  *  PmUnitは Production(or Project) Management Unit(マネジメントユニット)を表す
  *  ＝カット袋に相当するオブジェクトの拡張機能＝
@@ -52,7 +54,7 @@ nas.pmdb  は、リポジトリ切り替え毎に各リポジトリの.pmdbに�
             .episodes[episodeIndex].works ?
 
 	nas.pmdb.products
-		
+
 	nas.pmdb.assets
 		アセット情報コレクション
 			制作時に管理対象となるアセットの定義テーブル
@@ -72,6 +74,7 @@ nas.pmdb  は、リポジトリ切り替え毎に各リポジトリの.pmdbに�
     設定パーサは設定ストリームを入力として、リジョン毎に分離
     各リジョンを適切のパーサに振り分けて、自身のコレクションDBを再初期化する
     各パーサは、追加処理を行うが、設定パーサ側でデータのクリアを行い、再初期化動作とする
+
     nas.Pm.parseConfig(ストリーム)
 
     nas.pmdb.users
@@ -120,33 +123,39 @@ pmdbの各オブジェクトにはユニークなプロパティを格納するu
 RDBMのuniqueインデックスの付いたフィールドに同じ
 
 */
-
+/**
+ * @class
+ *   nas 制作管理クラス
+ */
 nas.Pm = {};
 //nas.Pm.organization = new nas.Pm.Organization() 
+/** @constant   */
 nas.Pm.users        = new nas.UserInfoCollection();
+/** @constant   */
 nas.pmdb            = nas.Pm;
 
-/*
-    PmDomain オブジェクトは、制作管理上の基礎データを保持するキャリアオブジェクト
-    制作管理ディレクトリノード毎に保持される。
-    基礎データを必要とするプログラムに基礎データをサービスする
-    基本データが未登録の場合は親オブジェクトの同データを参照してサービスを行う
-
-case:localRepository    
-    localRepository.pmdb = new nas.Pm.PmDomain(localRepository);
-case:NetworkRepository
-    NetworkRepository.pmdb = new nas.Pm.PmDomain(NetworkRepository);
-*/
+/**
+ *   PmDomain オブジェクトは、制作管理上の基礎データを保持するキャリアオブジェクト
+ *   制作管理ディレクトリノード毎に保持される。
+ *   基礎データを必要とするプログラムに基礎データをサービスする
+ *   基本データが未登録の場合は親オブジェクトの同データを参照してサービスを行う
+ *　@params {Object Repositry|Title|Episode} myParent
+ *   リポジトリ（共有）、プロダクト（作品）または　エピソード（各話）
+ *  @example
+ *case:localRepository    
+ *    localRepository.pmdb = new nas.Pm.PmDomain(localRepository);
+ *case:NetworkRepository
+ *    NetworkRepository.pmdb = new nas.Pm.PmDomain(NetworkRepository);
+ */
 nas.Pm.PmDomain=new function(myParent){
     this.parent=myParent;
-    this.users;     //
-    this.staff;     //
-    this.lines;     //
-    this.stages;    //
-    this.jobNames;  //
-    this.organization
-    this.medias;
-
+    this.users;         //
+    this.staff;         //
+    this.lines;         //
+    this.stages;        //
+    this.jobNames;      //
+    this.organization;  //
+    this.medias;        //
 }
 
 /**
@@ -157,17 +166,17 @@ nas.Pm.PmDomain=new function(myParent){
  * keyword がメンバーキーだった場合はそのまま返す
  * 検索に失敗したらfalse
  * オブジェクト本体が必要な場合は、Object.members[key]またはこの検索関数を間接的にコールする_getMemberメソッドを使用
- * タイトル/エピソード/メディア/アセット/ライン/ステージ　共用
- * @param {string} keyword
+ * タイトル|エピソード|メディア|アセット|ライン|ステージ　共用
+ * @param {String} keyword
  * @return {property}
- * memberProp 
+ * memberProp
  * キーワードは、各コレクションの共通プロパティで、検索対象となるもの
-    id          DBアクセス用のキー値（予約）
-    projectName 作品としてのタイトル　タイトルに所属する情報の場合に有効だが、検索キーとしてはタイトルコレクション以外では無効
-    name        コレクションメンバーの一般名称
-    shortName   コレクションメンバーの省略表記
-    fullName    コレクションメンバーの正式表記
-    code        コレクションメンバーの短縮アイテムコード
+ *   id          DBアクセス用のキー値（予約）
+ *   projectName 作品としてのタイトル　タイトルに所属する情報の場合に有効だが、検索キーとしてはタイトルコレクション以外では無効
+ *   name        コレクションメンバーの一般名称
+ *   shortName   コレクションメンバーの省略表記
+ *   fullName    コレクションメンバーの正式表記
+ *   code        コレクションメンバーの短縮アイテムコード
  *
  */
 nas.Pm.searchProp = function(keyword,target){

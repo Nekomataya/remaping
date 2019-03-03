@@ -521,14 +521,19 @@ if(flg=="all"){
 vxPrompt= function(msg,params){return prompt(msg,params);};
 
 //タイムライン追加
+/**
+ *	現在アクティブなタイムラインの右側にタイムラインを１つだけ追加する
+ *	以下の手順のもとにラベルは引数指定または自動生成
+ *	コマンドには、確認等の手順はなし
+ *	既存のタイムラインラベルは変更されない
+ *	ユーザは必要ならば挿入後にリネーム
+ *　@params {String} kind
+ *		挿入するトラックのタイプ dialog|sound|still|timing|camera|effect|geometry
+ *	@params {String} trackName
+ *		挿入するトラックのラベル　任意
+ */
 /*
-	現在アクティブなタイムラインの右側にタイムラインを１つだけ追加する
-	以下の手順のもとにラベルは引数指定または自動生成
-	コマンドには、確認等の手順はなし
-	既存のタイムラインラベルは変更されない
-	必要ならば挿入後に変名を行う
-
-	UNDO拡張に伴って変更 2015.09.14
+ 	UNDO拡張に伴って変更 2015.09.14
 
 addTimeline(kind,label)
 	kind はタイムライン種別
@@ -540,12 +545,12 @@ addTimeline(kind,label)
 			それ以外の場合は現在のタイムラインラベルに数字を加算
 	カメラ/エフェクト	挿入後のタイムラインID 3番タイムラインでの指定時には必ず"04"
 */
-addTimeline=function(myOpt,myName){
-	var trackPrefix = {'dialog':'N','still':'BOOK','camera':'CAM','effect':'FX','stage':'PEG','sound':'S'}
+addTimeline=function(myOpt,trackName){
+	var trackPrefix = {'dialog':'N','still':'BOOK','camera':'cam','effect':'ex','geometry':'stg','sound':'S'}
 	if(xUI.Select[0]>xUI.XPS.xpsTracks.length-2){return false;};//コメントの右側へは挿入不可
 	var insertPoint=[xUI.Select[0]+1,xUI.Select[1]];//挿入ポイントを作成
 	if(!myOpt){myOpt="timing"};
-	if(!myName){
+	if(!trackName){
 		switch(myOpt){
 case	"timing":
 			var currentLabels=[];
@@ -554,22 +559,23 @@ case	"timing":
 				if (xUI.XPS.xpsTracks[pIdx].option == "timing") currentLabels.push(xUI.XPS.xpsTracks[pIdx].id.charAt(0));
 			}
 			currentName=currentLabels.sort()[currentLabels.length-1];
-			myName= ("ABCDEFGHIJKLMNOPQRSTUVWXYZ").charAt((("ABCDEFGHIJKLMNOPQRSTUVWXYZ").indexOf(currentName)+1)%26);
+			trackName= ("ABCDEFGHIJKLMNOPQRSTUVWXYZ").charAt((("ABCDEFGHIJKLMNOPQRSTUVWXYZ").indexOf(currentName)+1)%26);
 break;
 case	"dialog":
 case	"stage":
+case	"geometry":
 case	"still":
 case	"camera":
 case	"effect":		//トラックを数えて数値でラベル名を作成
 		var countTrack = 0;
 		for (var pIdx = 0; pIdx < xUI.XPS.xpsTracks.length;pIdx++){if (xUI.XPS.xpsTracks[pIdx].option==myOpt) countTrack++;}
-		myName= trackPrefix[myOpt]+(countTrack +1);
+		trackName= trackPrefix[myOpt]+(countTrack +1);
 break;
-default	:	myName=nas.Zf(insertPoint[0],2).toString();//挿入点のID 二桁文字列
+default	:	trackName=nas.Zf(insertPoint[0],2).toString();//挿入点のID 二桁文字列
 		
 		}
 	}
-console.log(myName);
+console.log(trackName);
 /*
 	現在のXPSの複製を作り新しいタイムラインを作成して挿入位置に挿入
 	putメソッドでドキュメントを入れ替える
@@ -577,9 +583,12 @@ console.log(myName);
 	var newXPS= new Xps();
 	newXPS.readIN(xUI.XPS.toString());
 	var currentDuration=newXPS.duration();
-//console.log([insertPoint[0],new XpsTimelineTrack(myName,myOpt,newXPS.xpsTracks,currentDuration)]);
-	newXPS.insertTL(insertPoint[0],new XpsTimelineTrack(myName,myOpt,newXPS.xpsTracks,currentDuration));
-	xUI.put(newXPS);
+//console.log([insertPoint[0],new XpsTimelineTrack(trackName,myOpt,newXPS.xpsTracks,currentDuration)]);
+	newXPS.insertTL(insertPoint[0],new XpsTimelineTrack(trackName,myOpt,newXPS.xpsTracks,currentDuration));
+//	xUI.selection();
+//	xUI.selectCell('0_0')
+	var X=xUI.put(newXPS);
+console.log(X);
 	xUI.selectCell(insertPoint.join("_"));
 }
 //タイムライン挿入
@@ -830,6 +839,7 @@ reNameLabel=function(TimelineId) {
 		  	msg.push(document.getElementById("CWLabelTemplate").innerHTML);
 		  case "geometry":
 		  case "peg":
+		  case "stage":
 		  case "stagework":
 		  	msg.push(document.getElementById("CWLabelTemplate").innerHTML);
 		  break;
@@ -1004,20 +1014,26 @@ for(var idx=0;idx<currentContent.length;idx++){
 	xUI.selection(bkSelect);
 }
 
-/*	呼び出されたら指定範囲にバルクの区間記述を入力する。
-
-指定範囲がない場合はセレクションを使用
-動作条件は、指定範囲が単一タイムラインで２フレーム以上ある場合（１フレームの区間は対象外）
-選択タイムラインが
-カメラワーク→両端に区間端子（三角）を置き前後に値ノードを配置する。
-エフェクト→両端に区間端子シンボルを置いて注釈を挿入する。シンボルは、ラベルで判定 判定不能な場合はデフォルト
-ダイアログ→サウンドエフェクト区間を入れる
-セリフはダイアログの方から入力
-スチル	→NOP
-セル→NOP
-
-動作終了後は、選択を解除してカーソル位置を復帰
-*/
+/**
+ *	@summary
+ *　現在の選択範囲に指定の区間記述を入力する。
+ *	@description
+ * <pre>
+ * 選択範囲がない場合はNOP
+ * 動作条件は、指定範囲が単一タイムラインで２フレーム以上ある場合（１フレームの区間は対象外）
+ * 選択タイムラインが
+ * カメラワーク→両端に区間端子（三角）を置き前後に値ノードを配置する。
+ * エフェクト→両端に区間端子シンボルを置いて注釈を挿入する。シンボルは、ラベルで判定 判定不能な場合はデフォルト
+ * ダイアログ→サウンドエフェクト区間を入れる
+ * セリフはダイアログの方から入力
+ * スチル	→NOP
+ * セル→NOP
+ * 
+ * 動作終了後は、選択を解除してカーソル位置を復帰
+ *</pre>
+ *	@params {String} myOpt
+ *		描画する区間の種別
+ */
 writeNewSection=function(myOpt){
   if((xUI.Selection[0]>0)||(xUI.Selection[1]<1)){return}
 
@@ -1027,29 +1043,43 @@ writeNewSection=function(myOpt){
   var myBody=[];
  if(! myOpt){
  	myOpt=(xUI.Select[0]==0)?"dialog":(xUI.Select[0]<=xUI.XPS.xpsTracks.length-1)?xUI.XPS.xpsTracks[xUI.Select[0]].option:"comment";
+ 	
  }
     switch(myOpt){
       case "camera":
+      case "camerawork":
+      case "stage":
+      case "stagework":
+      case "geometry":
+      		myOpt = 'slide';
       case "pan":
       case "slide":
       case "TU":
       case "TB":
-      	//カメラワークトラックには値指定ブラケット付きで
+      	//カメラワーク/ジオメトリトラックには値指定ブラケット付きで
       	if(startFrm > 0){startFrm--}else{myLength--};//開始フレーム０以外は一コマ先行で配置
       	if((startFrm+1+myLength) >= (xUI.XPS.xpsTracks[xUI.Select[0]].length-1)){
       		myLength--};//終了フレームが最終の場合は一コマカット
 	myBody.push("[A]");
 	myBody.push("▽");
 	for(var idx=1;idx<myLength;idx++){
-		myBody.push((idx==Math.floor((myLength-1)/2))?"<"+myOpt+">":"|");
+		myBody.push(((xUI.XPS.xpsTracks[xUI.Select[0]].option=="camera")&&(idx==Math.floor((myLength-1)/2)))?"<"+myOpt+">":"|");
 	}
 	myBody.push("△");
 	myBody.push("[B]");
       break;
+      case "composite":
+      case "sfx":
       case "effect":
-	myBody.push(")FX(");
-	for(var idx=1;idx<myLength;idx++){myBody.push("|");}
-	myBody.push(")FX(");
+      	//コンポジットトラック値指定アングルブラケット付き
+      	if(startFrm > 0){startFrm--}else{myLength--};//開始フレーム０以外は一コマ先行で配置
+      	if((startFrm+1+myLength) >= (xUI.XPS.xpsTracks[xUI.Select[0]].length-1)){
+      		myLength--};//終了フレームが最終の場合は一コマカット
+	myBody.push("<100%>");
+	myBody.push("┳");
+	for(var idx=1;idx<myLength;idx++){myBody.push("┃");}
+	myBody.push("┻");
+	myBody.push("<100%>");
       break;
       case "FI":
 	myBody.push("▲");
@@ -1079,10 +1109,18 @@ writeNewSection=function(myOpt){
 	for(var idx=2;idx<myLength+1;idx++){myBody.push("┃");}
 	myBody.push("┛");
 	break
+	case "dialog":
+      	//ダイアログトラックにはダイアログセパレータ付きで
+      	if(startFrm > 0){startFrm--}else{myLength--};//開始フレーム０以外は一コマ先行で配置
+      	if((startFrm+1+myLength) >= (xUI.XPS.xpsTracks[xUI.Select[0]].length-1)){
+      		myLength--};//終了フレームが最終の場合は一コマカット
+	myBody.push("____");
+	for(var idx=0;idx<=myLength;idx++){myBody.push("|");}
+	myBody.push("____");
+      break;
 	case "timing": return;
-        break;
-      default:
-	for(var idx=0;idx<myLength+1;idx++){myBody.push("|");}
+    default:
+		for(var idx=0;idx<myLength+1;idx++){myBody.push("|");}
     }
 
 	xUI.selectCell(xUI.Select[0]+"_"+startFrm);
@@ -1205,31 +1243,33 @@ interpSign=function(){
   }
 }
 /*addCircle(キーワード)
-引数:keyword	"none","circle","triangle" or "brackets"
-
-フォーカスのあるシートセルのまたは選択範囲内の記述が操作ターゲット
-ターゲットとなるセルの記述にキーワードで指定された修飾を施す。または削除する。
-ターゲットセルにすでに指定の装飾がある場合は、その装飾を削除するトグル動作。
-ターゲットは、空白、カラセル、補間サイン、省略の線引以外の記述
-処理対象範囲はつねにトラック全体(=内容変更のある場合は変更範囲をput)
-
-選択範囲のない場合
-捜査対象はフォーカスのあるセルの記述のみ
-同トラックの全ての同じ記述に指定の装飾を加える
-記述が処理対象外の場合はNOP
-
-選択範囲がある場合
-範囲が一列ならばそのまま複数列の場合はフォーカスのある一列に変更する
-その区間内の全てのセルをスキャンして操作対象列を作る。
-同一の記述は１対象としてカウント
-
-将来的に、トラックのプロパティとしてmodifierリストが保持されなくてはならない。
-その際にはmodifierプロパティに働きかける関数になり、この内容はそちらへ移植される。
-xUI.XPS.xpsTracks[tid].
-
-<矢括弧>(=△囲み)は、中間値補間サインとして予約されているので中間値チェックにかかるため先に判定して抜ける。
-戻り値は、変更後のストリーム？  入力したセル数？ 最終アドレス？
-*/
+ *	@params {String} keyword
+ *		"none"|"circle"|"triangle"|"brackets"
+ * 
+ * フォーカスのあるシートセルのまたは選択範囲内の記述が操作ターゲット
+ * ターゲットとなるセルの記述にキーワードで指定された修飾を施す。または削除する。
+ * ターゲットセルにすでに指定の装飾がある場合は、その装飾を削除するトグル動作。
+ * ターゲットは、空白、カラセル、補間サイン、省略の線引以外の記述
+ * 処理対象範囲はつねにトラック全体(=内容変更のある場合は変更範囲をput)
+ * 
+ * 選択範囲のない場合
+ * 捜査対象はフォーカスのあるセルの記述のみ
+ * 同トラックの全ての同じ記述に指定の装飾を加える
+ * 記述が処理対象外の場合はNOP
+ * 
+ * 選択範囲がある場合
+ * 範囲が一列ならばそのまま複数列の場合はフォーカスのある一列に変更する
+ * その区間内の全てのセルをスキャンして操作対象列を作る。
+ * 同一の記述は１対象としてカウント
+ * 
+ * 将来的に、トラックのプロパティとしてmodifierリストが保持されなくてはならない。
+ * その際にはmodifierプロパティに働きかける関数になり、この内容はそちらへ移植される。
+ * xUI.XPS.xpsTracks[tid].
+ * 
+ * <矢括弧>(=△囲み)は、replacementトラック中間値補間サインとして予約されているので中間値チェックにかかるため先に判定して抜ける。
+ * 	@returns {Array}
+ *	戻り値は、変更後のストリーム？  入力したセル数？ 最終アドレス？
+ */
 addCircle=function(kwd){
 	if(! kwd) kwd="circle";
      if(typeof interpRegex == "undefined")
@@ -1304,28 +1344,6 @@ addCircle=function(kwd){
 	}
 //収集後に処理対象数が０の場合は機能終了
  if(targetDescriptions.length == 0) return;
-/*
-	if(false){
-		if((myValue.match(/^\<(.*)\>$/))||(
-			(myValue!="")&&
-			(!(myValue.match(interpRegex)))&&
-			(!(myValue.match(/[|｜￤;:X✗×]/)))
-		)){
-		  if(myValue.match(/^[\<\[\(](.*)[\>\]\)]$/)){
-			newValue.push(RegExp.$1);
-		  } else {
-		  	switch(kwd){
-		  	case "triangle":		newValue.push("<"+myValue+">");break;
-		  	case "brackets":		newValue.push("["+myValue+"]");break;
-		  	case "circle":
-			default:			newValue.push("("+myValue+")");
-			}
-		  }
-		}else{
-			newValue.push(myValue);
-		}
-	}
-	*/
 //トラック全体をサーチして新規データをビルド
 	var changeStart  = -1;
 	var changeEnd    = -1;

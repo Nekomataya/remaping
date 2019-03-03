@@ -1,8 +1,13 @@
 ﻿/**
+ * @fileOverview
  * nas_common.js
  * 共用可能スクリプト部分
- *
- * --- おことわり
+ * アニメーション一般ライブラリ<br />
+ * AE等のAdobe Script 環境で使用可能な機能を提供します
+ * 2016/01/29
+ */
+
+/* --- おことわり
  *
  * このプログラムの著作権は「ねこまたや」にあります。
  *
@@ -138,24 +143,26 @@
  * ; returns object
  *
  *
- * @fileoverview nas アニメーション一般ライブラリ
- * AE等のAdobe Script 環境で使用可能な関数およびプロパティをサポートします
- * 2016/01/29
  */
 
 myFilename = ('nas_common.js');
 myFilerevision = ('2.0');
 
-/**
+/*
  * @description 実行環境の判定
  *	isAIR nas.isAIR等を参照していた部分を全面的に環境プロパティ appHostで書きなおす
  *  appHost はオブジェクトで作成してプラットフォーム及びバージョンを識別できる情報を与える HTML関連コードからこちらへ移動済み
- 
- *  @class AppHost オブジェクト
- *	AppHost.ESTK  bool
- *	AppHost.platform string
- *	AppHost.version string
- *	AppHost.os    string
+ */
+/** 環境保持クラス
+ *  @class AppHost
+ *
+ *  @property  {boolean} ESTK Adobe ESTS環境下であるか否かのフラグ
+ *  @property  {String} platform
+ *　稼働環境指示変数
+ *  @property  {String} version
+ *　稼働環境バージョン変数
+ *  @property  {String} os
+ *　稼働OS変数
 */
 function AppHost()
 {
@@ -248,15 +255,17 @@ var appHost=new AppHost();
 		}
 
 
-/**
- * 動作プラットフォームを判別してプラットフォーム別の初期化を行う
+/*
+ * namespace として　Class nasを設定
  */
 if (typeof nas == 'undefined') {
+/**
+ @namespace*/
     nas = {};
 }
 try {
-    /**
-     * appオブジェクトを確認してAdobeScript環境を判定
+    /*
+     * globalのappオブジェクトを確認してAdobeScript環境を判定
      */
     if (app) {
         /**
@@ -326,22 +335,25 @@ xUI = false;
  *
  */
 /**
-    ユーザ情報オブジェクト nas.UserInfo
-    表示名(ニックネーム／ハンドル)と識別用メールアドレス(id)を持つ
-var currentUser = new nas.UnserInfo("handle:user@example.co.jp")
-var currentUser = new nas.UnserInfo("handle")
-var currentUser = new nas.UnserInfo("user@example.co.jp")
-    ドキュメント上の記録形式は以下
-
-    displayName:uid@domain
-例 ねこまたや:user@example.com
-
-初期化引数に':'が含まれない場合は、引数がメールアドレスか否かを判定して
-メールアドレスなら uid部をハンドルとして使用
-それ以外の場合は、全体をハンドルにしてメールアドレスをnullで初期化する
-メールアドレス整合性のチェックは特になし
-一致比較は、メールアドレス側で行う  null,空白は いずれの場合も一致なし
-空白で初期化したデフォルトの値はシステムで利用しないように注意する
+ * @class @constractor
+ *    ユーザ情報オブジェクト<br />
+ *    表示名(ニックネーム／ハンドル)と識別用メールアドレス(id)を持つ
+ * @param {String} nameDescription
+ *  ユーザ記述文字列<br />
+ *    ドキュメント上の記録形式は以下<br />
+ *    displayName:uid@domain<br />
+ *　@example
+ *var currentUser = new nas.UserInfo("handle:user@example.co.jp")
+ *var currentUser = new nas.UserInfo("handle")
+ *var currentUser = new nas.UserInfo("user@example.co.jp")
+ *var currentUser = new nas.UserInfo("ねこまたや:user@example.com")
+ *<pre>
+ *初期化引数に':'が含まれない場合は、引数がメールアドレスか否かを判定して
+ *メールアドレスなら uid部をハンドルとして使用
+ *それ以外の場合は、全体をハンドルにしてメールアドレスをnullで初期化する
+ *メールアドレス整合性のチェックは特になし
+ *一致比較は、メールアドレス側で行う  null,空白は いずれの場合も一致なし
+ *空白で初期化したデフォルトの値はシステムで利用しないように注意する</pre>
  */
 nas.UserInfo = function UserInfo(nameDescription){
     if ((typeof nameDescription == 'undefined')||(! nameDescription)){nameDescription = ':'}
@@ -375,10 +387,13 @@ nas.UserInfo = function UserInfo(nameDescription){
         for(var prop in arguments[1]) this[prop] = arguments[1][prop];
     };
 }
-/*
-引数:
-    JSON または  プロパティ名
-*/
+/**
+ * @params {String} opt
+ *    出力フォーマット指定オプション<br />
+ * キーワード"JSON" または  プロパティ名"handle"|"email"<br />
+ * opt未指定の場合は、標準のユーザ記述文字列を戻す
+ *  @returns {String}
+ */
 nas.UserInfo.prototype.toString = function(opt){
     if(! opt) opt = 0;
     if (opt=='JSON'){
@@ -398,11 +413,14 @@ console.log(prp)
         return [this.handle,this.email].join(':');
     }
 }
-/*
-    ユーザ情報の同値判定
-    e-mailがある場合はハンドルが異なっていても同じアカウントとする
-    e-mailのない場合はハンドルのみで同値判断をする
-*/
+/**
+ *    ユーザ情報の同値判定
+ *  @params {Object nas.UserInfo|String} myName
+ *  比較用のユーザオブジェクト　または　ユーザ記述文字列
+ *    e-mailがある場合はハンドルが異なっていても同じアカウントとする
+ *    e-mailのない場合はハンドルのみで同値判断をする
+ *  @returns {boolean}
+ */
 nas.UserInfo.prototype.sameAs = function(myName){
     if(!(myName instanceof nas.UserInfo)){ myName = new nas.UserInfo(myName)};
     if(! this.handle) return false;
@@ -417,13 +435,16 @@ nas.UserInfo.prototype.sameAs = function(myName){
     A.sameAs(B);
 */
 /**
-    nas.UserInfoCollection
-    要素は、nas.UserInfoオブジェクト
-    引数にオブジェクトまたは文字列の配列を与えて初期化可能
-    直接操作する場合は必ずオブジェクトで与えること
-    不正メンバーはコレクション対象外
-    空コレクションをつくる際は引数で空配列を渡す
-*/
+ *    nas.UserInfo　オブジェクトコレクション
+ *  @constractor
+ *  @class
+ *    コレクションする要素は、nas.UserInfoオブジェクト
+ *    引数にオブジェクトまたはユーザ記述文字列の配列を与えて初期化可能
+ *    直接操作する場合は必ずオブジェクトで与えること
+ *    不正メンバーはコレクション対象外
+ *    空コレクションをつくる際は引数で空配列を渡すこと
+ *  @params {Array of nas.UserInfo} users
+ */
 nas.UserInfoCollection = function (users){
     this.members=[];
     if(users instanceof Array){
@@ -435,20 +456,22 @@ nas.UserInfoCollection = function (users){
         }
     }
 }
-    /*
-         コレクションメンバーを文字列の配列で返す
-    */
+    /**
+     *    コレクションメンバーをユーザ記述文字列の配列に変換
+     *  @returns　{Array of String}
+     */
     nas.UserInfoCollection.prototype.convertStringArray = function(){
         var resultArray =[];
         for (var i = 0;i<this.members.length;i++){ resultArray.push(this.members[i].toString());}
         return resultArray;
     }
-    /*
-        コレクションメンバーを検索してインデックスを返す
-        発見できなかった場合は -1
-        引数がハンドルのみであった場合もハンドルの一致でインデックスを返す
-        その場合先に一致したハンドルが返されるので希望のデータではない可能性があるので注意
-    */
+    /**
+     *   コレクションメンバーを検索してインデックスを返す
+     *   発見できなかった場合は -1
+     *   引数がハンドルのみであった場合もハンドルの一致でインデックスを返す
+     *   その場合先に一致したハンドルが返されるので希望のデータではない可能性があるので注意
+     *  @params {Object nas.UserInfo|String} searchUser
+     */
     nas.UserInfoCollection.prototype.userIndexOf = function(searchUser){
         if (this.members.length == 0) return -1;
         for (var i = 0;i<this.members.length;i++){
@@ -456,11 +479,12 @@ nas.UserInfoCollection = function (users){
         }
         return -1;
     }
-    /*
-        コレクションにメンバーを追加する。既存のメンバーは追加されない。戻り値はメンバーのインデックス
-        配列引数渡しNG
-        不正メンバーは追加されない。その場合の戻り値は -1
-    */
+    /**
+     *   コレクションにメンバーを追加する。既存のメンバーは追加されない。戻り値はメンバーのインデックス
+     *   配列引数渡しNG
+     *   不正メンバーは追加されない。その場合の戻り値は -1
+     *  @params {Object nas.UserInfo|String} newMember
+     */
     nas.UserInfoCollection.prototype.addMember = function(newMember){
         if (!(newMember instanceof nas.UserInfo)){
 console.log(typeof newMember);
@@ -477,10 +501,12 @@ console.log(typeof newMember);
         if ( iX < 0 ) {this.members.push(newMember);return (this.members.length-1);}else{return iX;}
     }
     /**
-        userストリームをtext出力
-        引数: form String 出力形式指定 full/dump,plain/text または JSON
-        引数無しでカンマ区切りリスト
-    */
+     *   userストリームをtext出力
+     *   @params {String} form
+     *   出力形式指定文字列 "full"|"dump"|"plain"|"text"|"JSON"
+     *   引数無しでカンマ区切りリスト("csv")
+     *   @returns {String} 
+     */
     nas.UserInfoCollection.prototype.dump=function(form){
         switch(form){
         case    'JSON':
@@ -499,11 +525,12 @@ console.log(typeof newMember);
             return this.members.toString();
         }
     }
-    /*
-        userストリームを引数にしてCollectionの内容をすべて入れ替える
-        ストリームの形式は plain-text または full-dump または  JSON
-        引数が空の場合は、何も操作せずに戻る
-    */
+    /**
+     *   userストリームを引数にしてCollectionの内容をすべて入れ替える
+     *   ストリームの形式は "plain-text" または "full-dump" または  "JSON"を自動判別
+     *   引数が空の場合は、何も操作せずに戻る
+     *  @params {String} dataStream
+     */
     nas.UserInfoCollection.prototype.parseConfig=function(dataStream){
         if(dataStream.length==0) return false;
         this.members.length = 0;
@@ -627,57 +654,90 @@ nas._ARRAYValue	=function(myUnit){
 		return myResult;//配列で
 	};
 /**
- * 	nas.UnitValue Object
- * コンストラクタ:
- * 	new nas.UnitValue("値"[,"単位"]);
- * 引数:
- * 	値  String 単位つき文字列または数値文字列又は数値
- * 	単位 String 単位を文字列で  省略可  省略時は'pt'
- * 
- * 例  	new nas.UnitValue("値"[,"単位"]);
- * 
- * 	A = new nas.UnitValue("123","mm");
- * 	A = new nas.UnitValue("-72pt","in");
- * 	A = new nas.UnitValue(25.4,"cm");
- * 	A = new nas.UnitValue("うさぎ",'カメ');// {value: 0, type: "pt"}
- * 	A = new nas.UnitValue('125 degree');// {value: 0, type: "pt"}
- * 
- * 単位が指定されない場合は第一引数の単位を使用、異なる場合は第一引数の値を第二引数の単位へ変換してオブジェクト化する
- * どちらも無効な場合は、第一引数の数値部分をpointで換算
- * 無効な単位系で初期化された場合は単位系を無効のまま数値のみ初期化して  無効単位系に対する要求はptで代用する？＜estk互換
- * 無効な値で初期化された場合は値を0に設定する。＜estk互換
- *  (Adobe Extend Script 準拠)
+ *	@summary
+ *  単位つきの長さを統一的に扱うクラス　単位間のコンバート機能を内包している<br />
+ * Adobe ESTK 互換<br />
+ *
+ * @class
+ *	@description
+ * Adobe Extend Script の UnitValue クラスとメソッド互換の単位つき長さオブジェクト<br />
+ * 第二引数で単位が指定されない場合は第一引数の単位を使用する<br />
+ * 引数間で単位が異なる場合は第一引数の指定値を第二引数の単位へ変換してオブジェクト化する<br />
+ * どちらも無効な場合は、第一引数の数値部分をpointで換算<br />
+ * 未知の単位が与えられた場合は単位系を無効のまま数値のみで初期化して要求はptで代用する＜estk互換＞<br />
+ * 無効な値で初期化された場合は値を0に設定する。＜estk互換＞<br />
  * 有効な単位は	in,inches,mm,millimeters,cm,centimeters,pt,picas,points,mp,millipoints
+ *
+ * 	@params {Number or String} numberString
+ *  数値、単位つき数値文字列 or 数値文字列
+ * 	@params {String} unitString
+ *  単位 String 単位を文字列で  省略可
  * 
- * オブジェクトメソッド：
+ * @example
+ * 	A = new nas.UnitValue("123","mm")    ;//
+ * 	B = new nas.UnitValue("-72pt","in")  ;//
+ * 	C = new nas.UnitValue(25.4,"cm")     ;//
+ * 	D = new nas.UnitValue("うさぎ",'カメ') ;// {value: 0, type: "pt"}
+ * 	E = new nas.UnitValue('125 degree')  ;// {value: 0, type: "pt"}
+ * 	F = new nas.UnitValue(A)             ;// {value: 123, type: "mm"}
  * 
- * nas.UnitValue.as("単位文字列")	指定された単位文字列に変換した数値を返す
- * nas.UnitValue.convert("単位文字列")	指定された単位文字列にオブジェクトを変換する 変換後の単位付き数値文字列を返す
- * 
- * nas.UnitValue=function(myNumberString,myUnitString){
- * 	this.value=0;
- * 	this.type='pt';
- * }
  */
-nas.UnitValue=function(myNumberString,myUnitString){
-	if(typeof myNumberString == "string"){
+nas.UnitValue=function(numberString,unitString){
+    this.value ;
+    this.type  ;
+//
+    this.setValue(numberString,unitString);
+}
+/**
+ * 引数をパースしてUnitValueのプロパティを設定するメソッド<br />
+ * 初期化の際にもコールされる<br />
+ * 	@params {Number or String} myNumberString 数値、単位つき数値文字列 or 数値文字列
+ * 	@params {String} myUnitString 単位 String 単位を文字列で  省略可
+ *  @returns {nas.UnitValue} 値をセットされた nas.UnitValue 本体
+ */
+nas.UnitValue.prototype.setValue=function(myNumberString,myUnitString){
+    if(myNumberString instanceof nas.UnitValue){
+        myNumberString = myNumberString.toString();
+    }
+    if(typeof myNumberString == "string"){
 		var myNumberUnit=myNumberString.replace(/[\+\-\.\s0-9]/g,'')
 	}else{
 		var myNumberUnit='';//第一引数が文字列以外
 		myNumberString=new String(myNumberString);
 	};
 	if(arguments.length<2){myUnitString=myNumberUnit;}
-	if(!(myUnitString.match(nas.UNITRegex))) myUnitString="pt";// 
-
+	if((myUnitString) && !(myUnitString.match(nas.UNITRegex))) myUnitString="pt";// 
 	this.value=(myNumberUnit=='')?parseFloat(myNumberString):nas.decodeUnit(myNumberString,myUnitString);
 	if((! this.value)||(isNaN(this.value))){this.value=0.000000;}
-
 	this.type=myUnitString;
+	return this;
 }
-
+/**
+ *  指定された単位文字列に変換した数値を返す
+ *
+ *  @params {String} 単位文字列
+ *  @returns {Number} 指定単位系における値
+ */
 nas.UnitValue.prototype.as	=nas.UNITAs;
+/**
+ *  指定された単位文字列にオブジェクトを変換する
+ * 
+ *  @params {String} 単位文字列
+ *  @returns {String} 変換後の単位付き数値文字列
+ */
 nas.UnitValue.prototype.convert	=nas.UNITConvert;
+/**
+ *  現在の単位文字列を付記した数値文字列を返す
+ * 
+ *  @params {String} 単位文字列
+ *  @returns {String} 単位付き数値文字列
+ */
 nas.UnitValue.prototype.toString=nas.UNITString;
+/**
+ *  現在の単位系の値を返す　Object.valueに同じ
+ *  
+ *  @returns {Number} 値
+ */
 nas.UnitValue.prototype.valueOf	=nas.UNITValue;
 
 /*	test
@@ -878,7 +938,7 @@ nas.Resolution=function(){
 		return myResult;
 	};
 }
-/**
+/*
 	座標オブジェクト
 コンストラクタ:
 	new nas.Point(x[,y[,z]])
@@ -899,7 +959,7 @@ nas.Resolution=function(){
 
 Point.length  で次数が取得できる
 
-プロパティはUnitValue
+プロパティはUnitValue または　文字列で初期化
 引数が数値ならばptとして初期化する
 与えられない次数の値を0として扱うことが可能
 引数なしの場合は2次元 ["0pt","0pt"] で初期化される
@@ -924,57 +984,67 @@ nas.Position は古いので  nas.Pointを使えやゴルァ
 コンストラクタと初期化クラスメソッドを割ったほうが良いかも？
 
 */
+/**
+    二項または三項のnas.UnitValueをまとめて、座標点として扱う
+    
+    @param {UnitValue or String} x
+    @param {UnitValue or String} y
+    @param {UnitValue or String} z
+    @example
+     A = new nas.Point(new nas.UnitValue('12.356 mm'),new nas.UnitValue('0.0 mm'));
+     B = new nas.Point("12.356mm, 0.0mm");
+ */
 nas.Point=function(x,y,z){
 	this.props = ['x','y','z'];
 	this.x = new nas.UnitValue('0 pt');
 	this.y = new nas.UnitValue('0 pt');
 	this.z;
 	this.length = 2;
-	this.type="pt";
+	this.type='pt';
+// 引数をパーサで処理する
+    if(arguments.length){
+        var props=new Array(arguments.length)
+        for (var i = 0 ;i<arguments.length;i++){props[i]=arguments[i]}
+         this.setValue(props);
+      }
 }
 nas.Point.prototype.toString=nas._LISTString;
 nas.Point.prototype.valueOf =nas._ARRAYValue;
-
-nas.newPoint=function(){
-//	this.props=['x','y','z'];
-	if(arguments.length == 0){
-		arguments=[new nas.UnitValue('0 pt'),new nas.UnitValue('0 pt')];
-	}
-	//第一引数がポイントオブジェクトであれば、その複製を返す
-	if(arguments[0] instanceof nas.Point){
-		return Object.create(arguments[0]);
-	}
-		var newPoint= new nas.Point();//戻り値用新規Point
-	//第一引数が配列なら配列内容からポイントを作成して戻す
-	if(arguments[0] instanceof Array){
-		if(arguments[0].length == 1) return newPoint;//配列要素数0ならデフォルトオブジェクトで戻す
-		newPoint.length=(arguments[0].length > 3)? 3:arguments[0].length;
-		//DimensionLength==Array.length 3以下に限定
-		var myType=(typeof arguments[1] == "undefined")? false :arguments[1];
-		for(var myDim=0;myDim<3;myDim++){
-			if(myDim >= newPoint.length){newPoint[newPoint.props[myDim]] = undefined;continue;}
-			
-			if(arguments[0][myDim] instanceof nas.UnitValue){
-		    	newPoint[newPoint.props[myDim]]  =arguments[0][myDim];
-	  		}else{
-	  	  		newPoint[newPoint.props[myDim]] =(myType)?
-	  	  		new nas.UnitValue(arguments[0][myDim],myType):new nas.UnitValue(arguments[0][myDim]);
-	  		}
-		}	
+/*
+    表記方法のゆらぎを吸収してポイントオブジェクトを返す関数
+    
+*/
+nas.Point.prototype.setValue=function(){
+    if(arguments.length == 0) return this;
+    //引数が存在しない場合は、NOP
+    var myParams = arguments;
+    if(arguments[0] instanceof Array) myParams = arguments[0];
+    if(myParams[0] instanceof nas.Point){
+	//第一引数がポイントオブジェクトであれば、値を複製
+	    this.x = new nas.UnitValue(myParams[0].x);
+	    this.y = new nas.UnitValue(myParams[0].y);
+	    this.z = new nas.UnitValue(myParams[0].z);
+	    this.length = myParams[0].length;
+	    this.type=this.x.type;
 	}else{
-		newPoint.length=(arguments.length > 3)? 3:arguments.length;
-		//DimensionLength==引数の次数 | 3 以下に限定
-		for(var myDim=0;myDim<3;myDim++){
-			if(myDim >= newPoint.length){newPoint[newPoint.props[myDim]] = undefined;continue;}
-	  		if(arguments[myDim] instanceof nas.UnitValue){
-	   			newPoint[newPoint.props[myDim]]  =arguments[myDim];
-	  		}else{
-	    		newPoint[newPoint.props[myDim]]  =new nas.UnitValue(arguments[myDim]);
-	  		}
-		}
+	    if(myParams[0] instanceof Array){
+	        myParams=myParams[0];//第一引数が配列の場合は、操作対象を当該の配列に設定
+	    }else if(String(myParams[0]).match(/,/)){
+	        myParams=myParams[0].split(',');//コンマ分離可能な文字列なら配列化
+	    }
+	//引数の要素が２に満たない場合のみ"0pt"を一つ補う。
+		if(myParams.length == 1) myParams.push("0 pt");
+
+// 以下引数の初期化処理
+        this.x = new nas.UnitValue(myParams[0]);
+        this.y = new nas.UnitValue(myParams[1]);
+    if(myParams[2]){
+        this.z = new nas.UnitValue(myParams[2]);
+    }
+		this.length = (myParams.length >= 3)? 3:2;
+        this.type = this.x.type;
 	}
-	newPoint.type=newPoint.x.type;
-	return newPoint;
+	return this;
 }
 /** test
 	A= new nas.Point();//原点初期化
@@ -1043,7 +1113,7 @@ nas.Position=function(x,y,z){
 	if(arguments.length==0){
 		arguments=[new nas.UnitValue('0 pt'),new nas.UnitValue('0 pt')];
 	}
-	this.point=nas.newPoint(arguments);
+	this.point=new nas.Point(arguments);
     this.length=this.point.length;
 	this.props=['x','y','z'];
 	this.x=this.point.x;
@@ -1071,7 +1141,8 @@ nas.Position=function(x,y,z){
     
 */
 nas.Position.prototype.toString=function(){
-    this.point.toString(arguments)
+    var unit=(arguments.length)?arguments[0]:undefined;
+    this.point.toString(unit)
 }
 nas.Position.prototype.listString=nas._LISTString;
 nas.Position.prototype.valueOf =nas._ARRAYValue;
@@ -1113,6 +1184,11 @@ nas.Offset=function(myPos,myOrt){
 		return myResult;
 	};
 }
+/*test
+A= new nas.Offset();
+B= new nas.Offset(new nas.Point("12mm","10mm"),new nas.Orientation("0d"));
+
+*/
 /*
 	ベクトルオブジェクト
 コンストラクタ:
@@ -2415,14 +2491,14 @@ nas.COMP_H = 486;//comp Height(px);
 nas.COMP_A = 0.9;//comp Aspect(W/H);
 
 /**
- * @return {number}
+ * @returns {number}
  */
 nas.COMP_D = function () {
     return Math.sqrt(Math.pow(this.COMP_W * this.COMP_A, 2) + Math.pow(this.COMP_H, 2));
 };
 
 /**
- * @return {number}
+ * @returns {number}
  */
 nas.CAMERA_D = function () {
     return (this.COMP_D() * this.FOCUS_D) / this.IMAGE_CR();
@@ -2461,7 +2537,7 @@ nas.KEY_TYPE = "Scale";// or "Position"
 
 /**
  * RESOLUTION 派生変数 ラムダ関数試験
- * @return {number}
+ * @returns {number}
  */
 nas.Dpi = function () {
     return this.RESOLUTION * 2.540;
@@ -2549,25 +2625,26 @@ String.prototype.camelize = function () {
 };
 
 /**
- * @desc nas 共通ライブラリ
+ * z距離>比率換算<br />
+ * <br/>
+ * 比率1(100%)を距離0に置いた場合の 任意のレイヤプロパティｚ軸値(AE互換)から比率
+ * を求める関数
+ *  nas.CAMARA_Dプロパティに依存
  *
- * 数学関連とか映像関連の戻り値のある関数群
- * (メソッドで)
- *
- * 距離関連換算関数
- * dt2sc(Z軸位置)    戻り値:位置に相当する拡大比率
- * sc2dt(拡大比率)    戻り値:比率に相当するAEのZ軸位置
- * 双方、ともにコンポジションのプロパティに依存
- *
- * @param dt
- * @returns {number}
+ * @param {Number} dt 距離(pixel)
+ * @returns {number} z軸位置に相当する拡縮比率
  */
 nas.dt2sc = function (dt) {
     return (this.CAMERA_D() / ((1 * dt) + this.CAMERA_D()))
 };
 /**
- * @param sc
- * @returns {number}
+ * 比率>z距離換算<br />
+ * <br />
+ * 比率1(100%)を距離0に置いた場合の 任意の比率となるレイヤプロパティｚ軸値
+ * （AE互換）を求める関数
+ *  nas.CAMARA_Dプロパティに依存
+ * @param {Number} sc 拡縮比率
+ * @returns {Number} 比率に相当するAEのZ軸位置(pixel)
  */
 nas.sc2dt = function (sc) {
     return ((this.CAMERA_D() / (1 * sc)) - this.CAMERA_D())
@@ -3566,53 +3643,53 @@ if (typeof (length) == "undefined") var length = nas.length;
 if (typeof (normalize) == "undefined") var normalize = nas.normalize;
 if (typeof (degreesToRadians) == "undefined") var degreesToRadians = nas.degreesToRadians;
 if (typeof (radiansToDegrees) == "undefined") var radiansToDegrees = nas.radiansToDegrees;
-/**
+/*
  * 以前のコードを洗ってエイリアスが不要なら削除のこと AEエクスプレッション準互換ベクター/数学関数
- */
-/**
     他にfakeAE のオブエクトを利用する
 */
 
 /**
- * corveto 関連の関数
- * なんかまだつらそうだがとりあえず設定しておく
  * ベジェの一次式
+ * corveto関連の関数
+ * なんかまだつらそうだがとりあえず設定しておく
  *
- * @param SP
- * @param CP1
- * @param CP2
- * @param EP
- * @param T
- * @returns {*}
+ * @param {Number} SP
+ *  開始点
+ * @param {Number} CP1
+ *  制御点1
+ * @param {Number} CP2
+ *  制御点2
+ * @param {Number} EP
+ *  終了点
+ * @param {Number} T
+ *  作用助変数
+ * @returns {Number}
+ * この式はベジェの定義どおりの式 単項の値を戻す
  */
 nas.bezier = function (SP, CP1, CP2, EP, T) {
-    /**
-     * この式は定義どおりの式
-     * @type {number}
-     */
     var Ax = EP - SP - (3 * (CP2 - CP1));
     var Bx = 3 * (CP2 - (2 * CP1) + SP);
     var Cx = 3 * (CP1 - SP);
-
-    var Result = (Ax * Math.pow(T, 3)) + (Bx * Math.pow(T, 2)) + (Cx * T) + SP;
-
-    return Result;
+    return (Ax * Math.pow(T, 3)) + (Bx * Math.pow(T, 2)) + (Cx * T) + SP;
 };
 
 /**
- * 一次ベジェの逆関数 係数と値から序変数tをもとめる
- * この関数は範囲を限定してタイミングを求める関数として生かし
- * SP=0  EP=1
+ * 一次ベジェの逆関数 係数と値から助変数tをもとめる
+ * この関数は範囲を限定してタイミングを求める関数の一部として生かし
+ * SP=0 , EP=1 に固定
  *
- * @param CP1
- * @param CP2
- * @param Vl
- * @returns {*}
+ * @param {Number} CP1
+ *  制御点1
+ * @param {Number} CP2
+ *  制御点2
+ * @param {Number} Vl
+ *  助変数探索を行う値
+ * @returns {Number}
+ * 制御点の範囲を0-1に限定して値の増加傾向を維持することで、値に対する助変数を決定する関数
+ * 一般値を求める関数ではない
  */
 nas.bezierA = function (CP1, CP2, Vl) {
     /**
-     * 制御点の範囲を0-1に限定して値の増加傾向を維持することで、値に対する助変数を決定する 関数。
-     * 一般値を求める関数ではありませんのでご注意ください。
      */
     if (Vl > 1 || CP1 > 1 || CP2 > 1 || Vl < 0 || CP1 < 0 || CP2 < 0) {
         return "rangeover";
@@ -3624,26 +3701,23 @@ nas.bezierA = function (CP1, CP2, Vl) {
         if (Vl == 1) {
             var t = 1
         } else {
-            /**
+            /*
              * 初期化
              * 助変数の初期値を値にとる
              * テスト用仮値
              */
             t = Vl;
-            /**
+            /*
              * 求めた助変数でテスト値をとる
              * 助変数が
-             * @type {*}
              */
             var TESTv = this.bezier(0, CP1, CP2, 1, t);//初期テスト値
-            /**
+            /*
              * 上限値
-             * @type {number}
              */
             var UPv = 1;
-            /**
+            /*
              * 下限値
-             * @type {number}
              */
             var DOWNv = 0;
             do {
@@ -3652,19 +3726,19 @@ nas.bezierA = function (CP1, CP2, Vl) {
                 } else {
                     UPv = t
                 }
-                /**
+                /*
                  * テスト値によって上限または下限を入れ換え
                  * @type {number}
                  */
                 t = (DOWNv + UPv) / 2;
-                /**
+                /*
                  * チェック回数(デバック用)
                  * @type {number}
                  */
                 Ck = Ck + 1;
                 TESTv = this.bezier(0, CP1, CP2, 1, t);
             } while (TESTv / Vl < 0.999999999 || TESTv / Vl > 1.0000000001);
-            /**
+            /*
              * テスト値が目標値にたいして十分な精度になるまでループ(精度調整待ち 05/01)
              */
         }
@@ -3672,30 +3746,37 @@ nas.bezierA = function (CP1, CP2, Vl) {
     t = Math.round(t * 100000000) / 100000000;
 
     if (dbg) dbg_info.notice = "loop-count is " + Ct;
-    /**
+    /*
      * デバッグメモにカウンタの値を入れる
      * 助変数
-     * @type {number}
      */
     var Result = t;
     return Result;
 };
 
 /**
- * 一般式ﾍﾞｼﾞｪの弧の長さを求める
- * 引数は
+ * 一般式 ﾍﾞｼﾞｪの弧の長さを求める
+ * <br />
  * bezierL(開始値,制御点1,制御点2,終了値[[,開始助変数,終了助変数],分割数])
  * 分割数が省略された場合は    10
  * 開始・終了助変数が省略された場合は    0-1
  *
- * @param SP
- * @param CP1
- * @param CP2
- * @param EP
- * @param sT
- * @param eT
- * @param Slice
- * @returns {*}
+ * @param {Number or Array} SP
+ *  開始点
+ * @param {Number or Array} CP1
+ *  制御点1
+ * @param {Number or Array} CP2
+ *  制御点2
+ * @param {Number or Array} EP
+ *  終了点
+ * @param {Number} sT
+ *  開始助変数
+ * @param {Number} eT
+ *  終了助変数
+ * @param {Number} Slice
+ *  分割数
+ * @returns {Number}
+ *  戻り値の制度は分割数に依存するので注意
  */
 nas.bezierL = function (SP, CP1, CP2, EP, sT, eT, Slice) {
     if (!SP)    SP = 0;
@@ -3707,16 +3788,15 @@ nas.bezierL = function (SP, CP1, CP2, EP, sT, eT, Slice) {
     if (!sT)    sT = 0;
     if (!eT)    eT = 1;
 
-    /**
+    /*
      * AEの仕様に合わせて 単項、2次元3次元のみを扱う
-     * 次元数取得
-     * @type {number}
+     * 引数の次元を取得
+     * nas.Point Position等を与える場合は valueOfで配列化すること
      */
     var Dim = (typeof(SP) == "number") ? 1 : SP.length;
 
-    /**
+    /*
      * 分割長テーブルを作る
-     * @type {Array}
      */
     var Ltable = new Array(Slice);
 
@@ -4287,7 +4367,8 @@ nas.decodeUnit = function (myValue, resultUnit) {
     } else {
         return false;
     }
-    if((typeof resultUnit == 'undefined')||(!(resultUnit.match(/^(millimeters|mm|centimeters|cm|points|picas|pt|pixels|px|inches|in)?$/i)))) {
+//console.log(resultUnit);
+    if((typeof resultUnit == 'undefined')||(!(String(resultUnit).match(/^(millimeters|mm|centimeters|cm|points|picas|pt|pixels|px|inches|in)?$/i)))) {
         resultUnit = "pt";
     }
     if (myUnit == resultUnit) {
@@ -4487,52 +4568,54 @@ console.log(nas.compareCellIdf("X","X"));
 console.log(nas.compareCellIdf("|","X"));
 */
 /**
-nas.CellDescription([cellPrefix,cellBody,cellPostfix,cellModifier])
-nas.CellDescription(cellDescription,cellPrefix)
-コンストラクタ基本形式
-狭義のセル（動画セル）を記述するオブジェクト
-セル記述を与えて初期化するか、または必要な情報を配列で与えて初期化する。
-
-myDescription      主記述・シートに記述する基本的なテキスト
-    プレフィックス、ポストフィックス、モデファイヤを含んでいても良い
-    特殊記述は内容で判別
-
-    ブランク記述 カラセルを表す予約語
-        配列nas.CellDescription.blankSignsに登録された文字列が単独で記述されたもの
-    中間値補間記述  補間（動画）記号用予約語
-        配列nas.CellDescription.interpolationSignsに登録された文字列が単独で記述されたもの
-    省略記述 記述されたセルが直前のセルの値を継承する事を示す予約語
-        配列nas.CellDescription.ellipsisSignsに登録された文字列で始まる記述、空文字列及び空白文字
-
-    一般記述  上記の特殊記述以外の記述        
-        記述が値を持つ場合は、システム上関連付けられた値を示す。
-        値を持たない場合は省略記述と同様に直前のセルの値を継承する
-        
-myPrefix    プレフィックス部
-    通常？はトラックラベル
-    主記述に指定のある場合はそちらを優先する
-myPostfix
-    以下の文字列によるオーバレイまたはアンダーレイの指定を一種のみ
-    +,修正,修,上,下,カブセ,u|under,o|over,overlay
-    文字を重ねるかまたは直後に重ね数を付加して使用する
-    例  "+","++","+3"
-    主記述に指定のある場合はそちらを優先する
-    ブランク記述の場合は意味を持たないが、記述規則上ポストフィックスが記述されることは無い
-    ポストフィックスが与えられた場合、特殊記述でなく一般記述となる
-myModifier
-    丸囲い、三角囲い、四角囲い等の記述修飾を与える  
-    "none","circle","trangle","brackets","red"
-    主記述に指定のある場合はそちらを優先する
-    特殊記述にはモデファイヤが付かない
-type
-    記述のタイプを示すプロパティ
-    "nullstring","space","blank","interpolation","ellipsis"or"cell"
-    それぞれ
-    "ヌルストリング","空白","カラセル","中間値補間指定子","省略子"or"通常エントリ"
-    を示す。
-    マップの状況により同じ記述が必ずしも同じタイプとはならない
-    
-*/
+ *  @class
+ *<pre>
+ * nas.CellDescription([cellPrefix,cellBody,cellPostfix,cellModifier])
+ * nas.CellDescription(cellDescription,cellPrefix)
+ * コンストラクタ基本形式
+ * 狭義のセル（動画セル）を記述するオブジェクト
+ * セル記述を与えて初期化するか、または必要な情報を配列で与えて初期化する。
+ * 
+ * myDescription      主記述・シートに記述する基本的なテキスト
+ *     プレフィックス、ポストフィックス、モデファイヤを含んでいても良い
+ *     特殊記述は内容で判別
+ * 
+ *     ブランク記述 カラセルを表す予約語
+ *         配列nas.CellDescription.blankSignsに登録された文字列が単独で記述されたもの
+ *     中間値補間記述  補間（動画）記号用予約語
+ *         配列nas.CellDescription.interpolationSignsに登録された文字列が単独で記述されたもの
+ *     省略記述 記述されたセルが直前のセルの値を継承する事を示す予約語
+ *         配列nas.CellDescription.ellipsisSignsに登録された文字列で始まる記述、空文字列及び空白文字
+ * 
+ *     一般記述  上記の特殊記述以外の記述        
+ *         記述が値を持つ場合は、システム上関連付けられた値を示す。
+ *         値を持たない場合は省略記述と同様に直前のセルの値を継承する
+ *         
+ * myPrefix    プレフィックス部
+ *     通常？はトラックラベル
+ *     主記述に指定のある場合はそちらを優先する
+ * myPostfix
+ *     以下の文字列によるオーバレイまたはアンダーレイの指定を一種のみ
+ *     +,修正,修,上,下,カブセ,u|under,o|over,overlay
+ *     文字を重ねるかまたは直後に重ね数を付加して使用する
+ *     例  "+","++","+3"
+ *     主記述に指定のある場合はそちらを優先する
+ *     ブランク記述の場合は意味を持たないが、記述規則上ポストフィックスが記述されることは無い
+ *     ポストフィックスが与えられた場合、特殊記述でなく一般記述となる
+ * myModifier
+ *     丸囲い、三角囲い、四角囲い等の記述修飾を与える  
+ *     "none","circle","trangle","brackets","red"
+ *     主記述に指定のある場合はそちらを優先する
+ *     特殊記述にはモデファイヤが付かない
+ * type
+ *     記述のタイプを示すプロパティ
+ *     "nullstring"|"space"|"blank"|"interpolation"|"ellipsis"|"cell"
+ *     それぞれ
+ *     "ヌルストリング","空白","カラセル","中間値補間指定子","省略子"or"通常エントリ"
+ *     を示す。
+ *     マップの状況により同じ記述が必ずしも同じタイプとはならない
+ *</pre>
+ */
 nas.CellDescription=function(cellDescription,cellPrefix){
     this.prefix   = "";
     this.body     = "";
@@ -4584,7 +4667,7 @@ nas.CellDescription.blankRegex      = new RegExp("^["+nas.CellDescription.blankS
 nas.CellDescription.interpolationSigns  = ["-","=","\*","·","・","○","●","▫","▪","▴","▵","▾","▿","◈","◉","◦","◦"];// "-","·","・","○"
 nas.CellDescription.interpRegex         = new RegExp("^["+nas.CellDescription.interpolationSigns.join("")+"]$");
 
-/**
+/*
     
  */
 
@@ -4604,16 +4687,20 @@ console.log(new nas.CellDescription("<あ>修","A")) ;//triangle|修 |A|あ
 console.log(new nas.CellDescription("(1イ)修","A")) ;//circle|修 |A|1イ
 console.log(new nas.CellDescription("B-ex修","b")) ;//none|修 |b|ex
 console.log(new nas.CellDescription("C8-修q","b")) ;//none|"" |C|8-修q
-*/
+console.log(new nas.CellDescription("BOM","c")) ;///none|""|c|BOM　通常単語系
 /**
-    nas.CellDescription.prototype.setType()
-    セル記述のタイプをセットするメソッド
-    引数がなければ現在のタイプを返す
-"normal"        一般記述
-"inherit"       空文字列、空白、省略記号  等の先行の値を継承する記述
-"blank"         カラ記述
-"interpolation" 中間値補間記号
-*/
+ *  @function
+ *     セル記述のタイプをセットするメソッド
+ *     引数がなければ現在のタイプを返す
+ * @params {String} myType
+ *  オブジェクトに設定するtypeString
+ * "normal"        一般記述
+ * "inherit"       空文字列、空白、省略記号  等の先行の値を継承する記述
+ * "blank"         カラ記述
+ * "interpolation" 中間値補間記号
+ *  @returns {String}
+ *      処理後の　typeString
+ */
 nas.CellDescription.prototype.setType=function(myType){
     if((typeof myType == "undefined")&&(! (this.type))){
         nas.CellDescription.type(this);
@@ -4626,13 +4713,17 @@ nas.CellDescription.prototype.setType=function(myType){
 
 */
 /**
-    nas.CellDescription.toString(type)
-    引数:  type 文字列化タイプ  "origin","normal","complete"
-    "origin" ユーザ記述のままを返す    content
-        contentに値がない場合は"normal"の値をcontentに設定して返す デフォルト
-    "normal" 正規化済の文字列で返す    [body,postfix].join("")
-    "complete" 完全な修飾子付きで返す  [prefix,body,postfix].join("-")
-*/
+ *     @function
+ *  @params (String)  type
+ *      文字列化タイプ  "origin"|"normal"|"complete"
+ *<pre>
+ *     "origin" ユーザ記述のままを返す    content
+ *         contentに値がない場合は"normal"の値をcontentに設定して返す デフォルト
+ *     "normal" 正規化済の文字列で返す    [body,postfix].join("")
+ *     "complete" 完全な修飾子付きで返す  [prefix,body,postfix].join("-")
+ * </pre>
+ *  @returns {String}
+ */
 nas.CellDescription.prototype.toString=function(type){
     if(typeof type == "undefined") type= 'origin';
     if((type=='origin')&&(typeof this.content != undefined)){return this.content;}
@@ -4662,84 +4753,89 @@ console.log(A.toString("normal"));
 console.log(A.toString("origin"));
 */
 /**
-nas.CellDescription.prototype.parseContent(シート記述,ラベル)
-記述パーサ
-セル記述を与えて記述オブジェクトを再定義する
-
-シート記述:[前置部[セパレータ]]主記述[[セパレータ]後置部]
-ラベル:トラックラベルを与える
-
-トラックラベルはプレフィックスのデフォルト値として扱う
-トラックラベルが指定されない場合は、かつ記述にラベルが含まれない場合無ラベルのセルを初期化する
-
-値を持たないセルの扱い
-セル記述が値を持つか否かはxMapとのリンクと記述条件によるので、ここでは解決を行わない。
-解決は必要時に都度行われる
-
-セパレータは /[_\-\s]?/
-前置部は。セルの所属するグループラベルとして機能する
-シート記述に前置部を置かない場合はセパレータも省略するものとする。
-前置部に値のない場合セパレータは認識されず主記述の一部となる。
-前置部がない場合はセパレータが必須
-前置部分のない記述（これが通常）は、トラックラベルがプレフィックスとなる
-
-主記述と前置部を強調修飾することが可能
-強調修飾は
-    (.+)  丸囲い
-    <.+>  三角囲い
-    [.+]  四角囲い
-の三種
-いずれも前置部と主記述
-または主記述のみを囲うことで表現できる  両者は同じ要素として扱う
-
-主記述は基本的に動画番号または原画番号である
-一般に正の整数値であるが、文字列も原画番号として許容される
-主記述の数値部分は、最初に現れる連続した数字部が整数として正規化される。
-文字列を用いる場合は、セパレータ以外の文字列を推奨
-幾つかの文字は機能文字として予約されているので使用時に注意が必要となる。
-
-
-  後置部分は、同じセル記述に対するオーバレイ/アンダーレイを表す。
-  予約語とその重なりで同一セル関連のオーバーレイを示す
-  現在の予約語は以下
-     +           :  オーバーレイ(簡略表記)
-     o/overlay   :  オーバーレイ
-     u/underlay  :  アンダーレイ
-     修/修正     :  修正オーバーレイ
-     カ/カブセ   :  日本語でオーバーレイの慣用表現
-     上          :  漢字オーバーレイ
-     下          :  漢字アンダーレイ
-
-  後置部分の異なる同一名のセルは別々のセルではあるが強力な関連性を持つ
-  ただしこの関連性は、同一ステージ内に限定される
-  ステージが異なる場合の同名記述は基本的に弱い関連性しか持たない点に注意
-  主記述とポストフィックス間のセパレータはあってもなくても良い
-
-  例
-  A-1
-  A-1-修正
-  
-  この2つは異なるセルだが、A-1修は、A-1に関連付けられたオーバレイとして働く
-  修正レベルによっては前バージョンの絵が残らない場合もある。
-  
-  修正オーバーレイは、必要に従って何層でも重ねることが可能であるその際は後置文字を重ねるか、またはオーバーレイの層数を数値でおく
-  例
-  +,++,+++,+4 等
-  
-
-パーサは与えられた記述をパースしてセル記述オブジェクトを返す
-オブジェクトは以下のプロパティを持つ
-
-.content    与えられた文字列をそのまま
-.prefix     前置部文字列 セパレータは含まない または前置オブジェクト
-.body       正規化された記述部本体文字列 または オブジェクト
-.postfix    後置部文字列 セパレータは含まない またはオブジェクト
-.modifier   記述修飾子  "none","circle","triangle","brackets"
-.type       記述タイプ  "normal","inherit","blank","interpolation"
-
-パーサに値が与えられなかった場合、既存のプロパティからdescription-contentの更新を行う
-丸数字は失われ標準表記の(丸括弧)に置換される  
-*/
+ * @function nas.CellDescription.prototype.parseContent(,)
+ *  @params {String} description
+ *   シートセル記述
+ *  @params {String} prefixStr
+ *   トラックラベル（プレフィックス）
+ * <pre>
+ *  記述パーサ
+ * セル記述を与えて記述オブジェクトを再定義する
+ * 
+ * シート記述:[前置部[セパレータ]]主記述[[セパレータ]後置部]
+ * ラベル:トラックラベルを与える
+ * 
+ * トラックラベルはプレフィックスのデフォルト値として扱う
+ * トラックラベルが指定されない場合は、かつ記述にラベルが含まれない場合無ラベルのセルを初期化する
+ * 
+ * 値を持たないセルの扱い
+ * セル記述が値を持つか否かはxMapとのリンクと記述条件によるので、ここでは解決を行わない。
+ * 解決は必要時に都度行われる
+ * 
+ * セパレータは /[_\-\s]?/
+ * 前置部は。セルの所属するグループラベルとして機能する
+ * シート記述に前置部を置かない場合はセパレータも省略するものとする。
+ * 前置部に値のない場合セパレータは認識されず主記述の一部となる。
+ * 前置部がない場合はセパレータが必須
+ * 前置部分のない記述（これが通常）は、トラックラベルがプレフィックスとなる
+ * 
+ * 主記述と前置部を強調修飾することが可能
+ * 強調修飾は
+ *     (.+)  丸囲い
+ *     <.+>  三角囲い
+ *     [.+]  四角囲い
+ * の三種
+ * いずれも前置部と主記述
+ * または主記述のみを囲うことで表現できる  両者は同じ要素として扱う
+ * 
+ * 主記述は基本的に動画番号または原画番号である
+ * 一般に正の整数値であるが、文字列も原画番号として許容される
+ * 主記述の数値部分は、最初に現れる連続した数字部が整数として正規化される。
+ * 文字列を用いる場合は、セパレータ以外の文字列を推奨
+ * 幾つかの文字は機能文字として予約されているので使用時に注意が必要となる。
+ * 
+ * 
+ *   後置部分は、同じセル記述に対するオーバレイ/アンダーレイを表す。
+ *   予約語とその重なりで同一セル関連のオーバーレイを示す
+ *   現在の予約語は以下
+ *      +           :  オーバーレイ(簡略表記)
+ *      o/overlay   :  オーバーレイ
+ *      u/underlay  :  アンダーレイ
+ *      修/修正     :  修正オーバーレイ
+ *      カ/カブセ   :  日本語でオーバーレイの慣用表現
+ *      上          :  漢字オーバーレイ
+ *      下          :  漢字アンダーレイ
+ * 
+ *   後置部分の異なる同一名のセルは別々のセルではあるが強力な関連性を持つ
+ *   ただしこの関連性は、同一ステージ内に限定される
+ *   ステージが異なる場合の同名記述は基本的に弱い関連性しか持たない点に注意
+ *   主記述とポストフィックス間のセパレータはあってもなくても良い
+ * 
+ *   例
+ *   A-1
+ *   A-1-修正
+ *   
+ *   この2つは異なるセルだが、A-1修は、A-1に関連付けられたオーバレイとして働く
+ *   修正レベルによっては前バージョンの絵が残らない場合もある。
+ *   
+ *   修正オーバーレイは、必要に従って何層でも重ねることが可能であるその際は後置文字を重ねるか、またはオーバーレイの層数を数値でおく
+ *   例
+ *   +,++,+++,+4 等
+ *   
+ * 
+ * パーサは与えられた記述をパースしてセル記述オブジェクトを返す
+ * オブジェクトは以下のプロパティを持つ
+ * 
+ * .content    与えられた文字列をそのまま
+ * .prefix     前置部文字列 セパレータは含まない または前置オブジェクト
+ * .body       正規化された記述部本体文字列 または オブジェクト
+ * .postfix    後置部文字列 セパレータは含まない またはオブジェクト
+ * .modifier   記述修飾子  "none","circle","triangle","brackets"
+ * .type       記述タイプ  "normal","inherit","blank","interpolation"
+ * 
+ * パーサに値が与えられなかった場合、既存のプロパティからdescription-contentの更新を行う
+ * 丸数字は失われ標準表記の(丸括弧)に置換される  </pre>
+ */
 nas.CellDescription.prototype.parseContent=function(description,prefixStr){
     if (typeof description == "undefined"){
         console.log("rebuild content")
@@ -4779,7 +4875,7 @@ nas.CellDescription.prototype.parseContent=function(description,prefixStr){
         this.postfix = "";
 	}
     //前置部分を分離
-    if(description.match(new RegExp("^(("+prefixStr+"|[A-Z]?)[\-_\s]?)?(.+)$","i"))){
+    if(description.match(new RegExp("^("+prefixStr+"|([A-Z].?[\\-_\\s]))(.+)$","i"))){
         this.prefix  = ((RegExp.$2).length)? RegExp.$2:prefixStr;
         this.body    = nas.normalizeStr(RegExp.$3);
     }else{
@@ -5239,15 +5335,20 @@ JSON.Stringify(nas.cameraworkDescriptions.members);
 
 */
 
-/** nas.ItemList Object
-拡張した配列
-メソッドとして  add(Item) メソッドを持つ
-要素内を検索して同値の要素が存在すればその要素を配列の先頭に移動
-存在しない場合は配列に追加する
-戻り値は当該のアイテム
-先入れ後出しにするため、リスト登録は配列の逆順登録にする
-検索はindexOfで
-*/
+/**
+ * 配列オブジェクト拡張メソッド<br />
+ * <br />
+ *  配列要素を検索して同値の要素が存在すればその要素idを、
+ *  存在しない場合は引数を配列に追加してそのidを返す。<br />
+ *  戻り値は当該のアイテムid<br />
+ *  先入れ後出しにするため、リスト登録は配列の逆順登録にする
+ *  単純な検索はindexOfで行うように<br />
+ * 
+ * @param {any} itm
+ * @returns {Number} element id of Array
+ *  
+ *  
+ */
 Array.prototype.add=function(itm){
     var idx = this.indexOf(itm);
     if(idx<0){

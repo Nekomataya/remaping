@@ -1219,6 +1219,9 @@ td.colSep {
 .screenSpace{
 	width:97%;height:10px;
 }
+.printPageStatus {
+	display:none;
+}
 .printSpace {
 	display:inline;
 }

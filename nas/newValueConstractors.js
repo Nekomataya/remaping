@@ -119,7 +119,7 @@ nas.AnimationReplacement=function(myParent,myContent){
 }
 /**
     //  引数なし　または引数が１つで文字列'basic'またはfalseと判断される場合は標準保存形式出力
-    標準保存形式
+    標準保存形式(グループ名/エレメント名＋主要プロパティの１行出力)
 ^<group>\t<cellDescription>\t< ここまではElementObjectの出力範囲
 <proppertyValues>\t<comment>
     例
@@ -131,7 +131,7 @@ proppertyValuesは、comma区切りで以下の順のデータ
 各エントリに登録のない場合はデフォルトの値が使用される
 
     //  引数が 'extended'の場合は拡張保存形式で返す
-    拡張保存形式
+    拡張保存形式(グループ名,エレメント名を含まないタブを先頭にした複数行出力)
 ^\t<propname> = <proppertyValue>$\n
     例
 	file = "./stages/kd/kt#00[pilot]__s-c001_kd.psd///kd/A/0001+"
@@ -357,11 +357,11 @@ nas.AnimationReplacement.prototype.getStream=function(cellCounts){
 }
 /**
     置きかえタイムライントラックをパースしてセクションコレクションを返す
-    セクションの値を各トラックごとの値オブジェクトからxMapを介したxMapエレメントに変更する
+    セクションの値は各トラックごとxMapを介したxMapエレメントのcontentプロパティを接続
 
     パース時にセクションの値判定を行う
     ・無効記述
-    ・有効記述　値あり（xMap既存エレメント）・なし（新規エレメント）
+    ・有効記述　値あり（既存xMapエレメント）・なし（新規xMapエレメント）
     
  タイムライントラックをパースする際に統一手順としてトラックに対応するxMapエレメントグループの有無を確認する。
 現行Jobにトラックと同名のエレメントグループが、存在しなかった場合（Stageには存在する可能性あり）は、新規にグループを作成してエントリすること。
@@ -380,11 +380,12 @@ nas.AnimationReplacement.prototype.getStream=function(cellCounts){
 カラ区間の値は先行区間の値となる
 カラセル区間コレクションは2つの状態しか持ち得ないので、サブセクションは発生しない
 
-　*/
+ */
 _parseReplacementTrack=function(){
 //    var blankRegex  = new RegExp("^[ｘＸxX×〆0０]$");//カラ判定　システム変数として分離予定
-    var interpRegex = new RegExp("^[\-\+=○◯●・a-zア-ン]$|^\[[^\]]+\]$");//中間値補間（動画記号）サイン　同上
-    var valueRegex  = new RegExp("^[\(<][^>\)]+[>\)]$|^[\(<]?([A-Z][\-_\.]?)?[0-9]\S+[>\)]?$|^[0-9]+.?$");//無条件有効値 同上
+    var interpRegex = new RegExp("^[\-\+=○◯●・a-zア-ン]$|^\[[^\]]+\]$");/*中間値補間（動画記号）サイン　同上*/
+    var valueRegex  = new RegExp("^[\(<][^>\)]+[>\)]$|^[\(<]?([A-Z][\-_\.]?)?[0-9]\S+[>\)]?$|^[0-9]+.?$");
+    /* 無条件有効値 */
 //    var valueRegex  = new RegExp("^[\(<]?([A-Z][\-_\.]?)?[0-9]\S+[>\)]?$|^[0-9]+.?$");//無条件有効値 同上
     //自分自身(トラック)を親として新規セクションコレクションを作成
     var myCollectionBlank = new XpsTimelineSectionCollection(this);//ブランクベースコレクション
@@ -576,6 +577,7 @@ XpsTimelineTrack.prototype.parseCompositeTrack=_parseCompositeTrack;//コンポ�
 "]WIPE[,|,|,|,|,s-c12,＊,s-c13,|,|,|,|,]WIPE["
 "▲,|,|,FI,|,|,▲"
 "■","■","■","<黒コマ>","■","■","■"
+
 等のソースストリームをパースする
 
 ＞ブランクセクション   値なしで長さのみがある　Section.value.type = geometryセクションの前後には必ずつく
@@ -602,8 +604,6 @@ _parseCameraworkTrack= function(){
     var currentSection     = myCollection.addSection(null);//開始セクションを作成　継続時間０　値は保留
     var currentValue       = new nas.AnimationCamerawork(null,"");//コンテンツはカラで初期化も保留
     var currentSymbol      = null;
-//    var currentNodeSign    = false;//否で初期化(確認用)
-//    var valueDetect        = false;//否で初期化(確認用)
 
     var startNodeRegex=new RegExp("^[▼▽⇑●◯◎◆◇★☆┳┬]$");
     var endNodes={
@@ -629,23 +629,25 @@ _parseCameraworkTrack= function(){
         if (String(this[fix]).match(/^\[[^\[]+\]$/)){ lastBracketsId = fix;isBlank = true;}
         currentSection.duration ++;//currentセクションの継続長を加算
 
-         if((lastBracketsId == fix)&&(!(currentSection.value))) currentSection.tailMargin = -1 ;
+        if(
+            (lastBracketsId == fix)&&
+            ((!(currentSection.value))||(endNode))
+        ) currentSection.tailMargin = -1 ;
 
 //未記入セル カレントが空白セクションならば継続それ以外の場合は、セクション更新して継続
 //[値]セルは未記入セル扱いにする
-
         if(isBlank){
-            if( currentSection.value ){
-//console.log(currentSection.value)
+            if((!endNode)&&(fix != lastBracketsId)) continue;
+//            if( currentSection.value ){}
+            
+            if(endNode){
                 currentSection.duration --;
                 if (fix == lastBracketsId){
                     currentSection.value.postfix = this[fix];
                     currentSection.tailMargin = 1;
-//console.log(currentSection.value.type.join(':'));
                 }
                 currentSection.value.attributes.push([currentSection.value.prefix,currentSection.value.postfix].join('-'));
                 if(currentSection.value.prefix)  currentSection.headMargin = 1;
-//                currentSection.value.parseContent();
                 currentSection = myCollection.addSection(null);//changeCurrentNull
                  if (fix == lastBracketsId) currentSection.headMargin = -1;
                 currentSection.duration = 1;
@@ -654,9 +656,13 @@ _parseCameraworkTrack= function(){
             }
             continue;
         }
-//継続バー カレントが空白セクションの場合のみセクション更新して継続
+/*
+継続バー カレントが空白セクションの場合のみセクション更新して継続
+このエントリのみ扱いが特殊
+値区間が次の値区間開始でしか閉じない
+*/
         if(
-            (String(this[fix]).match(nas.cameraworkDescriptions.barRegex))
+            (String(this[fix]).match(nas.cameraworkDescriptions.singleRegex))
         ){
             if(!(currentSection.value)){
                 currentSection.duration --;
@@ -664,7 +670,7 @@ _parseCameraworkTrack= function(){
                 currentSection = myCollection.addSection(new nas.AnimationCamerawork(null,false));//changeCurrent unknown
                 currentSection.duration = 1;
                 startNodeId = fix;
-                // イレギュラー開始なので endNode を設定しない
+                endNode = true ;//endNode をtrueに設定 存在判定はするが、どのシートセルともマッチしない
                 currentSymbol = nas.cameraworkDescriptions.get('unknown');
 //先行セクションが[値]セルであった場合
                 if(lastBracketsId == (fix-1)){
@@ -719,7 +725,7 @@ _parseCameraworkTrack= function(){
 //区間の開始
             if(fix != 0){
                 startNodeId = fix;//シート入力をスタートノードに設定
-                endNode = endNodes[this[startNodeId]];//頭尾は
+                endNode = endNodes[this[startNodeId]];//頭尾マッチ
                 currentSection.duration --;
                 if((currentSection.duration < 1)&&(lastBracketsId!=(fix-1))) myCollection.pop();
                 if(lastBracketsId == (fix-1)){
@@ -962,7 +968,7 @@ nas.AnimationGeometry =function(myParent,myContent){
     this.parseContent();
 }
 
-nas.AnimationGeometry.prototype.constractor=nas.AnimationField.constractor
+//nas.AnimationGeometry.prototype.constractor=nas.AnimationField.constractor
 
 
 /**
@@ -973,15 +979,17 @@ source+
     extend
 */
 nas.AnimationGeometry.prototype.toString=function(exportForm){
+    if(! this.name) return '';//無名オブジェクトは空リターン
 //return this.contentText;//動作確認用ダミー行
     if(exportForm == 'extend'){
         var resultArray=[];
-        if(this.source)   resultArray.push('\tfile = "'    + this.source.toString(true)+'"');
-        if(this.size)     resultArray.push('\tsize = '     + this.size.toString());
-        if(this.offset)   resultArray.push(this.offset.toString());
+        if(this.position)   resultArray.push('\tposition = "'+ this.position.toString(true)+'"');
+        if(this.source)     resultArray.push('\tfile = "'    + this.source.toString(true)+'"');
+        if(this.size)       resultArray.push('\tsize = '     + this.size.toString());
+        if(this.offset)     resultArray.push(this.offset.toString());
 //        if(this.offset)   resultArray.push('\toffset = '   + this.offset.toString());
-        if(this.rotation) resultArray.push(this.rotation.toString(true));
-        if(this.comment)  resultArray.push('\tcomment = '  + this.comment);
+        if(this.rotation)   resultArray.push(this.rotation.toString(true));
+        if(this.comment)    resultArray.push('\tcomment = '  + this.comment);
         return resultArray.join("\n");
     }else if ((arguments.length==0)||((arguments.length==1)&&(! arguments[0]))||(exportForm == 'basic')){
         var resultArray=[];
@@ -1082,13 +1090,16 @@ nas.AnimationGeometry.prototype.parseContent=function(myContent){
             var myComment=RegExp.$4;
             var valueArray=nas.parseDataChank(RegExp.$3);
             var numeProps =[["size","x"],["size","y"],["offset","x"],["offset","y"]];
-//console.log(myComment);console.log(valueArray);
+//console.log(myComment);
+//console.log(valueArray);
 //console.log(this);
 /*
-    フィールド文字列であった場合の判定が必要　2018 10 09
+    フィールド文字列であった場合の判定が必要　2018 10 09 未処理 //nas.xMapGroup
 */
-            if(myGroup == this.parent.name){
-                if(! isGroup) this.name=([myGroup,myName.replace(new RegExp('^'+myGroup+'\-'),"")]).join('-');
+//console.log(isGroup);
+//console.log(myName);
+            if((this.parent instanceof Object)&&(myGroup == this.parent.name)){
+                if(! isGroup) this.name　=　myName.replace(new RegExp('^'+myGroup+'[\-_\s]+'),"");
                 var numCount=0;
                 for(var vix=0;vix<valueArray.length;vix++){
                     switch(valueArray[vix].type){
@@ -1132,13 +1143,54 @@ nas.AnimationGeometry.prototype.interpolate= function(endValue,indexCount,indexO
 }
 
 /** 指定フレーム数に内容を展開して配列で返す
-引数 :cellCount
-戻値 :配列　+ offset
+ * @params {Number} cellCount
+ * @returns {Array} 配列
 */
+/*
+値セクションと補完セクションで出力を分ける
+空配列を作成
+値セクションは値を冒頭または末尾に表示
+表示条件
+    冒頭　セクションIDがである場合を除き先行セクションが補完セクションであった場合に表示
+    末尾　後続セクションが補完セクションであった場合に表示
+補完セクション
+    継続長１フレーム・２フレーム　バーサインのみ
+    それ以上は、
+    開始サイン1,バーサイン 継続長-2,終了サイン1
+
+最少セクション長は　1
+最少セクション長を割ることは認められない　セクション削除は可能
+
+ユーザ記述の文字列は可能な限り保存したいが、その仕組は後から　2019.02
+ */
 nas.AnimationGeometry.prototype.getStream=function(cellCounts){
-    var myResult=new Array(cellCounts);
+    if(isNaN(cellCounts)) cellCounts = 1;//1  > minimumCount
 
+    var minCount = 1 ;//name
+//    if(this.prefix)  minCount++;
+//    if(this.postfix) minCount++;
 
+//    var myResult=new Array(cellCounts);
+
+    if(cellCounts<0) cellCounts=Math.abs(cellCounts);//?
+    if(cellCounts >= minCount){
+//        var myName = (mySymbol.nodeSigns.length == 1) ?mySymbol.nodeSigns[0]:'<'+this.name+'>';
+        var myResult = new Array(cellCounts);
+        for (var ix = 0 ; ix < cellCounts ;ix ++){
+            /*if(ix == Math.floor((cellCounts-(1+this.comments.length))/2)){
+                myResult[ix] = "<center>";
+                if(this.comments.length){
+                    for (var cx = 0 ;cx<this.comments.length;cx++){
+                        myResult[ix+cx+1] = '('+this.comments[cx]+')';
+                    }
+                    ix += this.comments.length;
+                }
+               continue;
+            }// */
+        }
+        if(this.prefix)  myResult = [this.prefix].concat(myResult);
+        if(this.postfix) myResult = myResult.concat([this.postfix]); 
+  }
 
     return myResult;
 }
@@ -1155,10 +1207,10 @@ nas.AnimationGeometry.prototype.getStream=function(cellCounts){
 これらを判定して、判定から外れたデータをファイルパス（素材識別データ）とみなす
 スケール以外の単位省略は不可
 
-[PAN	camerawork	,12FLD-10]
+[PAN	geometry	,12FLD-10]
 
 [FI-1	effect]
-[TU	camerawork]
+[TU	geometry]
 [透過光	effect]
 
 	field = 10FLD
@@ -1168,7 +1220,7 @@ PAN	[A]	10FLD2S3W12 Quick
 [FI-A	effect	"",,,	コメントですです]
 
 
-	camerawork
+	geometry
 [FLDString][,"file-path"]
 	1,2
 [FLDString[,left,top[,rotation]]][,"file-path"]
@@ -1196,9 +1248,21 @@ Target.match(/^[\d]+\.?[\d]*FLD()?$/i)
 FI	<10%>	normal
 FI	<0.01>		
 */
-/**
+/* TEST
+var A=new nas.AnimationGeometry(null,
+`[PAN	GEOMETRY]
+	size=252mm,142.875mm
+	position=0mm,0mm,0mm
+	offset=0mm,104.875mm
+	rotation=0d
+	comment=10in/StanderdFrame/16:9/HDTV
+# 作品データの継承があるのでこのサンプルでは本来は記述不要
+`);
+A.toString();
+*/
+/*
     カメラワークトラックをパースしてセクションコレクションを返す
-    option:(camerawork|camera)
+    option:(geometry|stagework)
     セクションの状態は
     値：
         あり>有値セクション
@@ -1206,7 +1270,7 @@ FI	<0.01>
         なし>中間値補間セクション
             valueプロパティが空で値オブジェクトを持たない
             中間値補間サブセクションコレクションを持つ
-    cameraworkタイムライントラックセクションの開始、終了判定
+    geometryタイムライントラックセクションの開始、終了判定
     セクションは「値区間(セクション)」と「中間値補間区間(セクション)」の２種に分類される
     中間値セクションは必ず前後に値セクションを持つ
     値区間は連続することが可能
@@ -1232,12 +1296,23 @@ FI	<0.01>
   　実際に開始ノードと終了ノードのみの区間があった場合は、中間値指定ノードでシートセルを埋めるように促すほうが良い
 */
 _parseGeometryTrack= function(){
-    var myCollection    = new XpsTimelineSectionCollection(this);//自分自身を親としてセクションコレクションを新作
-    var currentSection  = myCollection.addSection(false);//開始セクションを作成　継続時間０　値は保留
-    var currentSubSection  = null;//操作サブセクションへの参照　値はカラ 処理中は操作対象オブジェクトへの参照
-    var currentEffect   = new nas.AnimationGeometry("");//コンテンツはカラで初期化も保留
-    var currentNodeSign = false;//否で初期化(確認用)
-    var valueDetect     = false;//否で初期化(確認用)
+    var myCollection      = new XpsTimelineSectionCollection(this);//自分自身を親としてセクションコレクションを新作
+    var currentSection    = myCollection.addSection(null);//開始セクションを作成　継続時間０　値は保留
+    var currentSubSection = null;//操作サブセクションへの参照　値はカラ 処理中は操作対象オブジェクトへの参照
+//    var currentValue      = new nas.AnimationGeometry(null,"");//コンテンツはカラで初期化も保留
+//初期コンテンツは、継承のためにトラックに関連するxMapGroup.contentを求めて利用する。
+    var trackGroup        = this.xParent.parentXps.xMap.getElementByName(this.id);
+    if(!trackGroup)
+        trackGroup        = this.xParent.parentXps.xMap.new_xMapElement(
+            this.id,
+            'geometry',
+            this.xParent.parentXps.currentJob
+        );
+    var currentElement    = null;
+    var currentValue      = trackGroup.content;
+    var currentNodeSign   = false;//否で初期化(確認用)
+    var valueDetect       = false;//否で初期化(確認用)
+//    var startNodeRegex    = new RegExp("^▼$");//ノードサインを限定
     var startNodeRegex=new RegExp("^[▼▽●◯◎◆◇★☆]$");
     var endNodes={
         "▼":"▲",
@@ -1254,23 +1329,25 @@ _parseGeometryTrack= function(){
         currentSection.duration ++;//currentセクションの継続長を加算
         if( currentSubSection ) currentSubSection.duration ++;//currentセクションの継続長を加算
 //未記入データ　これが一番多いので最初に処理しておく
-        if(this[fix]==""){
-            continue;
-        }
+        if(this[fix]=="") continue;
 //中間値補間セクション終了ノード(対で処理する方)
         if(this[fix]==currentNodeSign){
+//console.log('detect end of interpSection :'+fix+':'+this[fix])
             //補間サブセクションを初期化するかどうかを判定
             if( currentSection.duration % currentSection.subSections.length ) {
-                currentSubSection = currentSection.subSections.addSection();//割り切れない場合サブセクションを初期化
+                currentSubSection.duration --;
+                currentSubSection = currentSection.subSections.addSection();//割り切れない場追加
                 currentSubSection.duration = 1;//必ず1
             }
             currentNodeSign=false;//補間区間終了ノードクリア
+            currentSubSection=null;//補完区間一時バッファクリア
             currentSection=myCollection.addSection(false); // 新規値セクション追加
             continue;
         } else
-/** この正規表現は仮でハードコーディング　あとで設定ファイルからの反映に変更予定*/
+/* この正規表現は仮でハードコーディング　あとで設定ファイルからの反映に変更予定*/
         if(this[fix].match(startNodeRegex)){
-/**
+//console.log('detect start of interpSection :'+fix+':'+this[fix])
+/*
     予約開始ノードサイン検出
 予約語の開始ノードサインを検出したので対応する終了ノードをセットする
 第一区間が補間区間であった場合、トラックのデフォルト値を先行区間の値とする。
@@ -1278,7 +1355,7 @@ _parseGeometryTrack= function(){
 検出したサインがカレントノードサインと一致していたら補間区間終了それ以外は副補間区間のエントリ初期化
 セクションノードサイン
 予約語
-    /^[▼▽↑●○◎◆◇★☆]$/
+    /^▼$/
     特殊ノードとして中間値補間区間を開き、同じサインで当該の区間を閉じる
     予約語以外の中間値指定ノードには閉鎖機能がない
     値指定ノード以外は基本的にすべて中間値指定ノードとする
@@ -1295,10 +1372,12 @@ _parseGeometryTrack= function(){
                     currentSection.duration --;
                     currentSection = myCollection.addSection("interpolation"); //それ以外は新規補間セクション追加
                     currentSection.duration = 1;
+                    if(currentSubSection) currentSubSection.duration --;
                     currentSubSection = currentSection.subSections.addSection();
                     currentSubSection.duration = 1;
                 }
             } else {
+                currentSubSection.duration --;
                 currentSubSection = currentSection.subSections.addSection();
             }
             currentSubSection.duration = 1;
@@ -1306,55 +1385,82 @@ _parseGeometryTrack= function(){
 //予約ノードサイン外
 /**
 valueDetect = fale;
-値指定ノード\[[^\]]+\]を検出した場合、セルエントリーの角括弧を払って評価値を得る　かつ　フラグを立てる　(valueDetect = true)
-それ以外はセルエントリーを評価値とする
-    xMapで評価値をエントリ検索
-    マップエントリがない場合でかつ　valueDetect == true なら　エントリを作成してそれを値として使用
-    エントリがあれば valueDetect = true なければ false
+値指定ノード\[[^\]]+\]を検出した場合、セルエントリーの角括弧をもったまま評価値とする。
+フラグは立てる　(valueDetect = true)
+それ以外はセルエントリーを評価値とする。
+xMapで評価値をエントリ検索　検索がヒットしたらフラグを立てる
+ヒットしたエントリをバッファに置く
+ノーヒットエントリ(valueDetect == true) なら　エントリを作成してそれをバッファに置く
+
 valueDetect==true
     カレントセクションが中間値補間セクションだった場合はカレントセクションをクロースして検出した値をもつ値セクションを初期化する
     カレントセクションの値が未設定の場合、カレントセクションの値を設定
     カレントセクションに値がある場合は新規の値セクションを初期化
 valueDetect==false
-    エントリがない場合は中間値指定ノードとなる
+    中間値指定ノードとなる
     カレントセクションが中間値補間セクションだった場合は新規に副補間区間を初期化
-    値区間だった場合は新規に中間値補間セクションを初期化して第一副補間区間を初期化する
-    トラック内無効記述（コメント）は現在許可されない。
+    カレントセクションが値区間だった場合はこれをクロース。
+    新規に中間値補間セクションを初期化して第一副補間区間を初期化する
+    トラック内無効記述（コメント）は許可されない。
 */
     valueDetect = false;
-    if(this[fix].match(/^\[([^\]])\]$/)){
-        var checkValue=RegExp.$1;
-        valueDetect=true;
-    }else{
         var checkValue= this[fix];
+    if(this[fix].match(/^\[([^\]])\]$/)){
+        valueDetect=true;
     }
-    var currentEntry = this.xParent.parentXps.xMap.getElementByName(checkValue);//グループIDを加える
-    if((! currentEntry) && (valueDetect)){
-        //new_MapElement(name,Object xMapGroup,Object Job)
-//        currentEntry=xMap.new_xMapElement(checkValue,MAP.getElementByName(this.id),this.xParent.parentXps.currentJob);
-        currentEntry=checkValue;
-    }else{
-        valueDetect=(currentEntry)?true:false;
-    }
-            if(currentEntry){
+    currentElement = this.xParent.parentXps.xMap.getElementByName([this.id,checkValue].join('-'));
+    //グループIDを加えたセル内容でxMap内を検索　既存値が存在すればそのエレメントが戻る
+    if((! currentElement) && (valueDetect)){
+//console.log(fix+':'+this[fix])
+//console.log(this.xParent.parentXps.xMap.currentJob);
+//エレメント新規登録
+       currentElement = this.xParent.parentXps.xMap.new_xMapElement(
+            checkValue,
+            trackGroup,
+            this.xParent.parentXps.xMap.currentJob,
+            [this.id,checkValue].join('\t')
+        );
+//console.log(currentElement);
+    };//else{  }
+    valueDetect=(currentElement)?true:false;
+  
+if(valueDetect){
+//console.log('value detected :'+fix+':'+this[fix]);
+//console.log(currentElement);
+}else{
+//console.log('value not detected :'+fix+':'+this[fix]);
+//console.log(currentElement);
+}
+
+            if(currentElement){
+//console.log(currentElement);
+//console.log(currentNodeSign);
                 if(currentNodeSign){
                     currentSection.duration--;//閉鎖ノード無しで前セクションを閉じるので加算したdurationをキャンセル
                     currentNodeSign = false;//補間区間終了ノードクリア
-                    currentSection = myCollection.addSection(currentEntry);//新規セクション追加
-                    currentSubSection = null;
+                    currentSection = myCollection.addSection(currentElement);//新規セクション追加
+                    currentSubSection = null;//補完区間一時バッファクリア
                 } else {
                     if (currentSection.value){
                         currentSection.duration--;//閉鎖ノード無しで前セクションを閉じるので加算したdurationをキャンセル
-                        currentSection = myCollection.addSection(currentEntry);//新規セクション追加
-                        currentSubSection = null;
+                        currentSection = myCollection.addSection(currentElement);//新規セクション追加
+                        currentSubSection = null;//補完区間一時バッファクリア
                     }else{
-                        currentSection.value=currentEntry;//値を遅延設定
+                        currentSection.value=currentElement.content;//値を遅延設定
                     }
                 }               
-            } else if(currentNodeSign) {
-//               console.log("fix:"+fix);
-　　　         currentSubSection = currentSection.subSections.addSection();
-　　　         currentSubSection.duration = 1;
+            } else {
+                if(! currentNodeSign) {
+                    currentSection.duration--;//開始ノード無しで値セクションを閉じるので加算したdurationをキャンセル
+                    currentSection = myCollection.addSection("interpolation");//新規補完セクション追加
+                    currentNodeSign = true;
+                    currentSection.duration = 1;//新規セクション長設定
+                }
+                /* 中間値補完区間　*/
+//              console.log("fix:"+fix);
+　　　             if(currentSubSection) currentSubSection.duration　--;
+　　　             currentSubSection = currentSection.subSections.addSection();
+　　　             currentSubSection.duration = 1;
             }
         }
     }
@@ -1363,118 +1469,199 @@ valueDetect==false
 }
 
 /**
- *  コンポジットタイムラインの（区間）値
- *  エフェクト
- 要素名は、可能な限り[name]角括弧で囲む 囲まれていた場合括弧は払って記録する
-要素名が数値　または　　%つき数値であった場合は strength の値として使用する
-1.0                 基数1 浮動小数点値
-100%    100/100     100分率値
-1000‰  1000/1000   1000分率値
-
-要素名が指定されない場合は、[START],[01],[02]…[END]を自動で割り付ける
-
-例
-[WXP    composite   50%]
-WXP [75%]   
-
-
+ *  @class
+ *  コンポジット(エフェクト)タイムラインの（区間）値
+ *<pre>  
+ *  要素名は、可能な限り<name>矢括弧で囲む 囲まれていた場合には括弧ごと記録する
+ *  要素名が数値　または　　%つき数値であった場合は strength の値として使用する
+ *  1.0                 基数1 浮動小数点値
+ *  100%    100/100     100分率値
+ *  1000‰  1000/1000   1000分率値(パーミルは現在解釈されない2019 03)
+ *
+ *  要素名が指定されない場合は、<START>,<01>,<02>…<END>を自動で割り付ける様に配慮する
+ *</pre>
+ * @example
+[WXP	composite	50%]
+WXP	<75%>  75%
+    
+[FI	effect]
+    comment = じわっと
+    effect  = FI
+FI	<START> 0%
+FI	<END> 100%
  */
 nas.AnimationComposite =function(myParent,myContent){
     this.parent = (myParent)? myParent : null   ;//xMapElementGroup or null
     this.contentText=(myContent)?myContent:''   ;//xMapのソースを保存する　自動で再構築が行なわれるタイミングがある
-
-    this.name                                   ;//ｘMap素材名
-    this.source                                 ;//参照画像データソース　nas.AnimationElementSource
-    this.comment=""                             ;//コメント文字列 xMap attribute
     this.extended = false                       ;//拡張表示フラグ
 
-    this.effect                                 ;
-    this.blendingMode                           ;
-    this.strength                               ;// ? 
-    this.t = new nas.TimingCurve()              ;
-    this.c = new nas.Curve()                    ;
+    this.name                                   ;/** {String} name ｘMap素材名 */
+    this.file                                   ;//参照画像データソース　nas.AnimationElementSource
+    this.comment                                ;//コメント文字列
+    this.effect                                 ;//{String} effectItemString WXP,FI,FO & others
+
+    this.blendingMode = nas.BlendingMode.NORMAL ;//enumlatedObject nas.BlendingMode
+    this.strength     = 100                     ;// ? 
+    this.t　　　　　　  = new nas.TimingCurve(0,0);//
 
     this.parseContent();
 }
 /**
-    中間点取得
-自身の値とターゲット値の中間の値を求める
-
-引数
-    endValue        ターゲット値
-    indexCount      
-    indexOffset
-    frameCount
-    frameOffset
-    props    
+ *  @function
+ *   中間点取得 オブジェクトメソッド
+ *   自身の値とターゲット値の中間の値を求める
+ *
+ * @params {Object nas.AnimationComposite}    endValue        ターゲット値
+ * @params {Number}    indexCount      
+ * @params {Number}    indexOffset
+ * @params {Number}    frameCount
+ * @params {Number}    frameOffset
+ * @params {String}    props    
 */
-nas.AnimationComposite.prototype.interpolate= function(endValue,indexCount,indexOffset,frameCount,frameOffset,props){
+nas.AnimationComposite.prototype.interpolate= function(
+    endValue,
+    indexCount,
+    indexOffset,
+    frameCount,
+    frameOffset,
+    props
+){
     myResult=Object.create(this);
     myResult.strength=(this.strength+endValue.strength)*(indexCount/indexCount);// 仮値リニア補間
     return myResult;//コンポジットタイムラインの中間値は濃度値のみ
 
 }
 /**
-    xMapデータのために文字列化して返す　予定だが
-    今はダミー
-*/
+ *    xMapデータのためにエレメントを文字列化して返す
+ *
+ *  @params {String} exportForm
+ *      出力形式指定文字列　edtend|basic
+ *
+ */
 nas.AnimationComposite.prototype.toString=function(exportForm){
-return this.contentText;//動作確認用ダミー行
+//return this.contentText;//動作確認用ダミー行
     
-    var props=['effect','blendingMode','strength','t','c','comment'];
+    var props=['effect','blendingMode','strength','T','comment'];
     var myResult = '';
+
     for (var pid=0;pid<props.length;pid++){
         if(this[props[pid]]){
             myResult += '\t'+props[pid]+' = '+this[props[pid]]
         }
     }
-
     if(exportForm == 'extend'){
         var resultArray=[];
         if(this.source)         resultArray.push('\tfile = "'    + this.source.toString(true)+'"');
+        if(this.file)           resultArray.push('\tfile = "'    + this.source.toString(true)+'"');
         if(this.effect)         resultArray.push('\teffect = '     + this.effect);
         if(this.blendingMode)   resultArray.push('\tblendingMode = '   + this.blendingMode);
         if(this.strength)       resultArray.push('\tstrength = ' + this.strength);
         if(this.t)              resultArray.push('\tT = '  + this.t.toString(true));
-        if(this.c)              resultArray.push('\tC = '  + this.c.toString(true));
         if(this.comment)        resultArray.push('\tcomment = '  + this.comment);
         return resultArray.join("\n");
     }else if ((arguments.length==0)||((arguments.length==1)&&(! arguments[0]))||(exportForm == 'basic')){
         var resultArray=[];
         
-        if(this.source) {
-            resultArray.push('"'+this.source.toString()+'"');
-        }else{
-            resultArray.push("");
-        }
-        if(this.size)     resultArray.push(this.size.toString());
-        if(this.offset)   resultArray.push(this.offset.toString());
-        if(this.rotation) resultArray.push(this.rotation.toString());
+        if(this.strength)      resultArray.push('"'+this.strength.toString()+'"');
+        if(this.effect)        resultArray.push('"'+this.effect+'"');
+        if(this.blendingMode)  resultArray.push('"'+this.blendingMode+'"');
         resultArray = [resultArray.join(",")];
-        if(this.comment) resultArray.push(this.comment);
-        return ([this.parent.name,this.name,resultArray.join("\t")]).join('\t');
+        return ([this.parent.name,this.name,resultArray.join("\t"),this.comment]).join('\t');
     }
 
 }
 /**
-    コンテンツを与えてパースする
+    引数でxMapコンテンツを与えてパースする
     引数がない場合は自身のコンテンツデータを再パースする
-[FI COMPOSITE]
+
+[FI effect]
 FI  100%    
 
 */
 nas.AnimationComposite.prototype.parseContent=function(myContent){
     if(typeof myContent == 'undefined'){
         myContent = this.contentText ;
+    }else{
+        this.contentText = myContent;
     }
-    this.contentText = (myContent)? String(myContent):"";
+    var isGroup = (myContent.indexOf('[')==0)? true:false;
+//第一形式グループ ^\[<group>\t<typeName>[\t<option-text>[\t<comment>]]\]$
+//第一形式エントリ ^<group>\t<entryName>\t<option-text>\t<comment>$
+//option-text   <strength>,<effect>,<blendingMode>
+//第二形式エントリ ^<group>\t<name>[\t<option-text>[\t<comment>]]$
+
+    myContent = String(myContent).split('\n');
+    for ( var line = 0 ; line < myContent.length ; line++){
+
+    if((isGroup)&&(myContent[line].indexOf('[')==0)) myContent[line] = myContent[line].slice(1,-1);//ブラケット削除
+
+        if(myContent[line].match(/^\t(\S+)\s*=\s*(.+)\s*$/)){
+            //第二形式(タブ開始)でプロパティ別のデータ更新を行う
+            this.extended=true;
+
+            var myProp=RegExp.$1;var valueArray=csvSimple.parse(RegExp.$2)[0];
+
+            switch(myProp){
+            case "file":
+                this.file = new nas.AnimationElementSource(valueArray[0]);
+            break;
+            case "source":
+                this.source = new nas.AnimationElementSource(valueArray[0]);
+            break;
+            case "blendingMode":
+                this.blendingMode= (nas.BlendingMode[valueArray[0]])?
+                nas.BlendingMode[valueArray[0]]:nas.BlendingMode.NORMAL;
+            break;
+          　default:
+                this[myProp]=valueArray[0];
+            }
+        } else if(myContent[line].match(/^(\S+)\t?(\S+)\t?([^\t]+)?\t?(.*)$/)){
+        //　第一形式の再パース
+            var myGroup=RegExp.$1; //グループの再パースは行われない
+            var myName =RegExp.$2;
+            var myComment=RegExp.$4;
+//            var valueArray=nas.parseDataChank(RegExp.$3);
+            var valueArray=csvSimple.parse(RegExp.$3)[0];
+console.log(myGroup);
+console.log(myName);
+console.log(myComment);
+console.log(valueArray);
+console.log(this);
+console.log(isGroup);
+console.log(myName);
+            if((this.parent instanceof Object)&&(myGroup == this.parent.name)){
+                if(! isGroup) this.name　=　myName.replace(new RegExp('^'+myGroup+'[\-_\s]+'),"");//グループプレフィックスがあれば削除
+                if(this.name.match(/^<([\-0-9\.]+(%|％)?)>$/)){
+                //名前が値を内包していた場合strengthを設定
+                    this.strength = RegExp.$1;
+                    //var valueString=;var valuePostfix=RegExp.$2;
+                    //this.strength = parseFloat(valueString)*((valuePostfix)?0.01:1);
+                }
+                if(valueArray[0]){
+                //strength
+                    this.strength=valueArray[0];
+                }
+                if(valueArray[1]){
+                //effect
+                    this.effect=valueArray[1];
+                }
+                if(valueArray[2]){
+                //blendingMode
+                    this.blendingMode=(nas.BlendingMode[valueArray[2]])?
+                    nas.BlendingMode[valueArray[2]]:nas.BlendingMode.NORMAL;
+                }
+                if(myComment) this.comment = myComment;
+            }
+        }
+
+    }
+    if(this.strength){
+        var prop = nas.parseDataChank(this.strength)[0];
+        this.strength=parseFloat(this.strength)*((prop.type=='percent')?0.01:1);
+    }
     
-    
-    
-    
-    
-    this.contentText = this.toString();
-    return this;
+    return this;    
+
 }
 nas.AnimationComposite.prototype.getStream=function(cellCounts){
     var myResult=new Array(cellCounts);
@@ -1486,12 +1673,11 @@ nas.AnimationComposite.prototype.getStream=function(cellCounts){
 }
 /**
     コンポジットトラックをパースしてセクションコレクションを返す
-    option:(effect|sfx|composite)
-    セクションの状態は
-    値：
-        あり>有値セクション
+    XpsTrack.option:(effect|sfx|composite)
+    セクションの状態は、以下の２態の状態を持つ
+        値あり>有値セクション
             何らかの値オブジェクトを持つ値セクション　この継続時間中トラックの持つ値は変化しない最短で１フレーム
-        なし>中間値補間セクション
+        値なし>中間値補間セクション
             valueプロパティが空で値オブジェクトを持たない
             中間値補間サブセクションコレクションを持つ
     compositeタイムライントラックセクションの開始、終了判定
@@ -1506,28 +1692,58 @@ nas.AnimationComposite.prototype.getStream=function(cellCounts){
     後続の値エントリを宣言して値区間を開始されくまでの間継続される
     補間区間はその区間が閉じられるまでの間　すべての空白以外のエントリが副補間区間を開始する。
     補間区間中すべてのエントリが空白であった場合に限り、空白区間がすべて副補間区間のエントリとなる
-    （＝補間区間に何も間に置かなかったトラックは１コマ撮りの補間区間となる）
+    （＝補間区間に何も間に置かなかったトラックは１コマ撮りの補間区間となる）（？この処理はやめる　例外を設けない）
 */
 _parseCompositeTrack=function(){
     var myCollection    = new XpsTimelineSectionCollection(this);//自分自身を親としてセクションコレクションを新作
     var currentSection  = myCollection.addSection(false);//開始セクションを作成　継続時間０　値は保留
     var currentSubSection  = null;//操作サブセクションへの参照　値はカラ 処理中は操作対象オブジェクトへの参照
-    var currentComposite   = new nas.AnimationComposite(null);//コンテンツはカラで初期化も保留
+
+//初期コンテンツは、継承のためにトラックに関連するxMapGroup.contentを求めて利用する。
+    var trackGroup        = this.xParent.parentXps.xMap.getElementByName(this.id);
+    if(!trackGroup)
+        trackGroup        = this.xParent.parentXps.xMap.new_xMapElement(
+            this.id,
+            'effect',
+            this.xParent.parentXps.currentJob
+        );
+    var currentElement    = null;
+    var currentValue      = trackGroup.content;
     var currentNodeSign    = false;//否で初期化(確認用)
     var valueDetect        = false;//否で初期化(確認用)
+
+    var startNodeRegex=new RegExp("^([┳┬▼▽])$|^\\](.+)\\[$|^\\)(.+)\\($");
+    var endNodes={
+        "┳":"┻",
+        "┬":"┴",
+        "▼":"▲",
+        "▽":"△"
+    };
     
     for (var fix=0;fix<this.length;fix++){
         currentSection.duration ++;//currentセクションの継続長を加算
+        if( currentSubSection ) currentSubSection.duration ++;//currentセクションの継続長を加算
         //未記入データ　これが一番多いので最初に処理しておく
-        if(this[fix]==""){
-            continue;
-        }
+        if(this[fix]=="") continue;
         //区間の値
-        //中間値補間セクション開始セパレータ(対で処理する方)
-        
-/** この正規表現は仮でハードコーディング　あとで設定ファイルからの反映に変更予定*/
-        if(this[fix].match(/^[▼▲▽△●○◎◆◇☆★]$|^\][^\]]+\[$|^\)[^\(]+\($/)){
-/**
+//中間値補間セクション終了ノード(対で処理する方)
+        if(this[fix]==currentNodeSign){
+            //補間サブセクションを初期化するかどうかを判定
+            if( currentSection.duration % currentSection.subSections.length ) {
+                currentSubSection.duration --;
+                currentSubSection = currentSection.subSections.addSection();//割り切れない場追加
+                currentSubSection.duration = 1;//必ず1
+            }
+            currentNodeSign=false;//補間区間終了ノードクリア
+            currentSubSection=null;//補完区間一時バッファクリア
+            currentSection=myCollection.addSection(false); // 新規値セクション追加
+            continue;
+        } else
+/* この正規表現は仮でハードコーディング　あとで設定ファイルからの反映に変更予定*/
+        startCheck=this[fix].match(startNodeRegex);
+        if(startCheck){
+        currentEffectProp=(startCheck[1]=="")? startCheck.slice(1).join(''):"-noItem-";
+/*
     ノードサイン検出
 第一区間が補間区間であった場合、トラックのデフォルト値を先行区間の値とする。
 第一区間は、値区間　補間区間のいずれでも良いので初期区間の値は保留されている
@@ -1535,16 +1751,18 @@ currentNodeSignがfalseであった場合はセクション開始
 それ以外の場合、補間区間のエントリ中でのサイン検出
 検出したサインがカレントノードサインと一致していたら補間区間終了それ以外は副補間区間のエントリ初期化
 セクションノードサイン
+"┳"のみのセル　または　").+("
 予約語
-    /^[▼▲▽△●○◎◆◇☆★]$|^\][^\]+]\[$|^\)[^\(+]\($/
-    特殊ノードとして中間値補間区間を開き、同じサインで当該の区間を閉じる
+    /^([┳┬▼▽])$|^\](.+)\[$|^\)(.+)\($/
+    特殊ノードとして中間値補間区間を開き、設定されたサインで当該の区間を閉じる
     予約語以外の中間値指定ノードには閉鎖機能がない
     値指定ノード以外は基本的にすべて中間値指定ノードとする
     空白エントリ・予約語以外の記述は値を指定するノードか否かを判定する。
     明示的に値を生成するノードを切り分け　残るエントリはｘMapに問い合わせを行い値を持たないエントリを中間値発生ノードとして扱う
 */
             if(currentNodeSign==false){
-                currentNodeSign=this[fix];//予約語で開いたのでノードを控える
+                currentNodeSign=(endNodes[this[fix]])? endNodes[this[fix]]:this[fix];
+                //予約語で開いたので終了ノードを設定
                 if(fix==0){
                     currentSection.subSections=new XpsTimelineSectionCollection(currentSection);//第一フレームだった場合のみ第一セクションを補間区間に変換
                     currentSubSection=currentSection.subSections.addSection();//同時に第一サブセクションを初期化
@@ -1553,25 +1771,20 @@ currentNodeSignがfalseであった場合はセクション開始
                     currentSection.duration --;
                     currentSection = myCollection.addSection("interpolation"); //それ以外は新規補間セクション追加
                     currentSection.duration = 1;
+                    if(currentSubSection) currentSubSection.duration --;
                     currentSubSection = currentSection.subSections.addSection();
                     currentSubSection.duration = 1;
                 }
-                currentSection.subSections.addSection();//オープンと同時に第一サブセクションを初期化
-            } else if (currentNodeSign==this[fix]){
-                //開始ノードと一致
-                if( currentSection.duration % currentSection.subSections.length ) {
-                    currentSection.subSections.addSection();//割り切れない場合サブセクションを初期化
-                }
-                currentNodeSign=false;//補間区間終了ノードクリア
-                currentSection = myCollection.addSection(false); // 新規セクション追加　終了ノードで閉じたので加算はなし
             } else {
+                currentSubSection.duration --;
                 currentSection.subSections.addSection();
             }
+            currentSubSection.duration = 1;
         } else {
 //予約ノードサイン外
 /**
 valueDetect = fale;
-値指定ノード[値]を検出した場合、セルエントリーからBracketsを払って評価値を得る　かつ　フラグを立てる　(valueDetect = true)
+値指定ノード[値]を検出した場合、セルエントリーからAngleBracketsを払って評価値を得る　かつ　フラグを立てる　(valueDetect = true)
 それ以外はセルエントリーを評価値とする
     xMapで評価値をエントリ検索
     マップエントリがない場合でかつ　valueDetect == true なら　エントリを作成してそれを値として使用
@@ -1587,37 +1800,50 @@ valueDetect==false
     トラック内無効記述（コメント）は現在許可されない。
 */
     valueDetect = false;
-    if(this[fix].match(/^\[([^\]]+)\]$/)){
-        var checkValue=RegExp.$1;
-        valueDetect=true;
-    }else{
         var checkValue= this[fix];
+    if(this[fix].match(/^<([^>]+)\>$/)){
+//        var checkValue=RegExp.$1;
+        valueDetect=true;
     }
-    var currentEntry = this.xParent.parentXps.xMap.getElementByName(checkValue);
-    if((! currentEntry) && (valueDetect)){
-        //new_MapElement(name,Object xMapGroup,Object Job)
-//        currentEntry=xMap.new_xMapElement(checkValue,MAP.getElementByName(this.id),this.xParent.parentXps.currentJob);
-        currentEntry=checkValue;
+    currentElement = this.xParent.parentXps.xMap.getElementByName([this.id,checkValue].join('-'));
+    //グループIDを加えたセル内容でxMap内を検索　既存値が存在すればそのエレメントが戻る
+    if((! currentElement) && (valueDetect)){
+//エレメント新規登録
+       currentElement = this.xParent.parentXps.xMap.new_xMapElement(
+            checkValue,
+            trackGroup,
+            this.xParent.parentXps.xMap.currentJob,
+            [this.id,checkValue].join('\t')
+        );
     }else{
-        valueDetect=(currentEntry)?true:false;
+        valueDetect=(currentElement)?true:false;
     }
-            if(currentEntry){
+            if(currentElement){
                 if(currentNodeSign){
                     currentSection.duration--;//閉鎖ノード無しで前セクションを閉じるので加算したdurationをキャンセル
                     currentNodeSign = false;//補間区間終了ノードクリア
-                    currentSection = myCollection.addSection(currentEntry);//新規セクション追加
-                    currentSection = myCollection.addSection(new nas.AnimationComposite(null,currentEntry));//新規セクション追加
+                    currentSection = myCollection.addSection(currentElement);//新規セクション追加
+                    currentSubSection = null;//補完区間一時バッファクリア
                 } else {
                     if (currentSection.value){
                         currentSection.duration--;//閉鎖ノード無しで前セクションを閉じるので加算したdurationをキャンセル
-                        currentSection = myCollection.addSection(currentEntry);//新規セクション追加
+                        currentSection = myCollection.addSection(currentElement);//新規セクション追加
+                        currentSubSection = null;//補完区間一時バッファクリア
                     }else{
-                        currentSection.value=currentEntry;//値を遅延設定
+                        currentSection.value=currentElement.content;//値を遅延設定
                     }
                 }               
-            } else if(currentNodeSign) {
-　　　         currentSubSection=currentSection.subSections.addSection();
-　　　         currentSubSection.duration = 1;
+            } else {
+                if(! currentNodeSign){
+                    currentSection.duration--;//開始ノード無しで値セクションを閉じるので加算したdurationをキャンセル
+                    currentSection = myCollection.addSection("interpolation");//新規補完セクション追加
+                    currentNodeSign = true;
+                    currentSection.duration = 1;//新規セクション長設定
+                }
+                /* 中間値補完区間　*/
+　　　             if(currentSubSection) currentSubSection.duration　--;
+　　　             currentSubSection = currentSection.subSections.addSection();
+　　　             currentSubSection.duration = 1;
             }
         }
     }
@@ -1667,10 +1893,10 @@ nas.AnimationDialog=function(myParent,myContent){
     this.parent = (myParent)? myParent : null   ;//xMapElementGroup or null
     this.contentText=(myContent)?String(myContent):"";//xMapのソーステキストを保存する　自動で再構築が行なわれるタイミングがある
 
-    this.name =''                                  ;//xMap素材名（=話者の名称　＊重複あり　＊空白あり）
-    this.source                                 ;//nas.AnimationElementSource
+    this.name =''                               ;//xMap素材名（=話者の名称　＊重複あり　＊空白あり）
+    this.file                                   ;//nas.AnimationElementSource
     this.comment                                ;//
-    this.extended = false                       ;
+    this.extended = true                        ;//必ずtrue
 
     this.bodyText=""                            ;//セリフ等の本体コメント
     this.attributes =[]                         ;
@@ -1689,7 +1915,26 @@ nas.AnimationDialog=function(myParent,myContent){
 */
 nas.AnimationDialog.prototype.parseContent=function(myContent){
     if(typeof myContent == 'undefined') myContent = this.contentText;
+//xMapパーサからのグループエントリーデータなのでコンテンツをクリアして終了
+    if(myContent.indexOf('[')==0){
+//console.log('detect GroupEntry :'+myContent);
+        this.contentText='';
+        return this;
+    }
+    if( (this.parent)&&
+        (myContent.indexOf(this.parent.name+'\t') == 0)&&
+        (myContent.match(/^[\S]+\t[\S]+/))
+    ){
+//console.log('XXXXXXX entry :'+myContent);
+        var myContents  = myContent.split('\n')[0].split('\t');
+//xMapパーサからのエントリ登録データなのでコンテンツを初期化
+//第三エントリが存在した場合source propertyを設定する
+        this.name = myContents[1];
+        if(myContents.length>2){this.file = new nas.AnimationElementSource(myContents.slice(2).join(' '));}
+        myContent = myContent.split('\n').splice(1).join('\n');
+    }
     if(myContent.length){
+        
 //        if(myContent.match(/^([^"'「]*)["'「]([^"'」]*)["'」]?\s$/) ) {};//"
 //        if(myContent.match(/^([^「]*)「([^」]*)」?\s$/) ) {}
 //        if(myContent.match(/^([^「]*)「(.*)/)){}
@@ -1700,10 +1945,11 @@ if(myContent.match(/^([^「"']*)[「"']([^」"']*)/)){
             this.name="";
             this.bodyText=myContent;
         }
-        var myAttributes=this.name.match(/\([^)]+\)/g)
+        var myAttributes=nas.normalizeStr(this.name).match(/\(([^)]+)\)/g);
+//        var myAttributes=this.name.match(/\(([^)]+)\)/g);
         if(myAttributes){
             this.attributes=myAttributes;
-            this.name=this.name.replace(/\([^)]+\)/g,"");
+            this.name=this.name.slice(0,nas.normalizeStr(this.name).indexOf('('));
         }
         //                    本文内からコメントを抽出
         var myComments=this.bodyText.match(/(<[^<>]+>|\[[^\[\]]+\]|\([^\(\)]+\))|＜[^＜]+＞|〈[^〈]+〉|（[^（]+）|［[^［]+］/g);
@@ -1740,8 +1986,8 @@ getStreamメソッドに統一してオフセットつき配列で戻す方式�
 
 toString メソッドの共通オプションとして
 引数
-    なし/basic    ｘMAP保存標準形式
-    extended      ｘMap保存拡張形式
+    basic         xMap用１行エントリ
+    なし/extended シナリオ形式
     
 dialogオブジェクトに関しては、標準形式と拡張形式は同じものとなるので注意
 
@@ -1752,36 +1998,45 @@ nas.AnimationDialog.prototype.toString=function(exportForm){
 //    return JSON.stringify(this.getStream(exportForm));
 //    return (this.getStream(exportForm)).join();
 //  }else{}
-    var myResult=this.name;
-    myResult+=this.attributes.join("");
-    myResult+="「";
-    var startPt=0;
-    if(this.comments.length){var endPt=this.comments[0][0]}else{var endPt=0};
-      for(var cix=0;cix<this.comments.length;cix++){
-        myResult+=this.bodyText.slice(startPt,endPt)+this.comments[cix][1];
-        startPt=endPt;
-        if(cix<this.comments.length-1){endPt=this.comments[cix+1][0]};
-      }
-    if(startPt<this.bodyText.length){myResult+=this.bodyText.slice(startPt)};
-    myResult+="」";
-    return myResult;
-
+    if(exportForm=='basic'){
+        var myResult=[this.parent.name,this.name];
+        if(this.file) myResult.push('"'+this.file.toString(true)+'"');
+        return myResult.join('\t');
+    }else{
+        var myResult=this.name;
+        myResult+=this.attributes.join("");
+        myResult+="「";
+        var startPt=0;
+        if(this.comments.length){var endPt=this.comments[0][0]}else{var endPt=0};
+        for(var cix=0;cix<this.comments.length;cix++){
+            myResult+=this.bodyText.slice(startPt,endPt)+this.comments[cix][1];
+            startPt=endPt;
+            if(cix<this.comments.length-1){endPt=this.comments[cix+1][0]};
+        }
+        if(startPt<this.bodyText.length){myResult+=this.bodyText.slice(startPt)};
+        myResult+="」";
+        if(this.file) myResult+=('\tfile="'+this.file.toString(true)+'"');
+        if(myResult=='「」') return '';
+        return myResult;
+    }
 }
 /*    test
 A=new  nas.AnimationDialog("たぬきさん(off)「ぽん！(SE:ポン)ぽこ！<BGM:開始>りん！[光る！]とうりゃぁー！！」");
 A.parseContent();
 console.log(A)
-
 */
-/** 値を配列でもどす
-引数: cellCount
-戻値: セルのデータ並び配列＋オフセット量
-cellCountが与えられることが前提で配列を組む
-ダイアログ展開時に限り、与えられた引数に対して　前方側にname,attributes+開始セパレータ　後方側に終了セパレータ分のフレームが追加される
-引数が０でもラベルとセパレータ分のデータが戻る
-ダイアログに限り指定の継続フレーム数より要素数が増える
-これをstartOffsetとして配列のプロパティに追加して戻す
-*/
+/**
+ *  @function
+ * 値を配列でもどす
+ *  @paramas {Number} cellCount
+ *  @returns {Array}
+ *    セルエントリの配列
+ *  <pre>cellCountが与えられることが前提で配列を組む
+ * ダイアログ展開時に与えられた引数を区間長とする
+ * 区間の前方側にname,attributes+開始セパレータ　後方側に終了セパレータ分のフレームが追加される
+ * =引数が０でもラベルとセパレータ分のデータが戻る
+ * 必ずしも引数の長さの配列は戻さない。差分は呼び出し側で調整</pre>
+ */
 nas.AnimationDialog.prototype.getStream=function(cellCounts){
     if(isNaN(cellCounts)) cellCounts = (this.contents.length+this.comments.length+this.attributes.length+3);
     if(cellCounts<0)cellCounts=Math.abs(cellCounts);
@@ -2076,15 +2331,33 @@ nas.XpsAgent.prototype.parseContent=function(myContent){
  *　SL,PAN,TILT,TU,TB
  *  等々の実際の処理に展開される抽象化シンボルを扱うクラスオブジェクト
  *　シンボルデータベースnas.cameraDescriptionsを参照する
- *  シンボルを扱うため基本的にはｘMapとのリレーションを持たない 
- *　camerawork/effectトラックのセクション値
+ *  シンボルを扱うため基本的にはｘMapとのリレーションがダイアログと同様にトラックに対する強い接続を持たない
+ *  （=トラックが単なるキャリアとなる　グループ内部のオブジェクト毎に再構成が必要）
+ *　cameraworkトラックのセクション値
  *  
  * nas.AimationCamerawork
  ex.
+targets name attributes descriptions comments
+symbol:◎
+    symbol記述は、演出効果等で他の分類に収まらないかまたは複合的な状態を表す記述に対して用いられる分類
+    例えば
+    follow:symbol
+    followSL:geometry
 
-targets name attributes   
-geometry:
-    name attributes.join('-') comments.join(',')
+transition:＊
+     トラジション記述の場合はターゲットの指定が不可欠
+]x[ または　]><[ でトランジションの対象となる素材指定ができる
+外ブラケットは解釈しない
+対象が複数の場合はカンマで分離
+処理シンボルは省略可能　その場合は無名トランジションとして扱う（オーバーラップディゾルブを補う？）
+    ex.(transition)
+s-c12]><[s-c13   <OL> (3+0)
+s-c12]><[s-c13   <WIPE>(2+0)
+A-1,B-3]><[A-2,B-4 <中OL> (0+18)
+
+
+geometry:☆
+    name attributes.join('-') comments .join(',')
     ex.(geometry)
 <PAN> [A]-[B] ＞２つまで、　これ以上はセクション側で連結する 
 <TU> [A]-[B]
@@ -2094,21 +2367,16 @@ A,B,C <slide> [1]-[2]-[3] ([2],[3]間フェアリング)
 
     ex.(geometry.zigzag)
 
-
-composite
+composite:○
     ex.(composite.fi fo)
 <FI> ▲ (1+12)
 <FO> ▼ (time)
 
-transition
-    ex.(transition)
-<OL>    s-c12]><[s-c13   (3+0)
-<WIPE>  s-c12]><[s-c13   (2+0)
-<中OL>    A-1]><[A-2     (0+18)
-
-effect
+effect:□
     ex.(effect)
 BG,A,E <透過光> 強 
+
+***"effect"は予約タイプ現在（2019時点）使用されていない
 
 xps description sample
 CAM1
@@ -2125,21 +2393,31 @@ PAN     nameは中央配置
 [end]   <先行セクションの属性値として保存
 
  */
+nas.AnimationCameraworkPrefix={
+    symbol:"◎",
+    transition:"＊",
+    geometry:"☆",
+    composite:"○",
+    effect:"□"
+};
 nas.AnimationCamerawork=function(myParent,myContent){
     this.parent = (myParent)? myParent : null     ;//xMapElementGroup or null
     this.contentText=(myContent)?String(myContent):"";//xMapのソースを保存する　自動で再構築が行なわれるタイミングがある
 
-    this.name                                     ;//カメラワークシンボル名　値を識別する名称<矢括弧>でセパレート 正規化が行われた場合のトラック名になる
-    this.source                                   ;//nas.AnimationElementSource（設定されない）
+    this.name 　　= ''                            ;//カメラワークシンボル名　値を識別する名称<矢括弧>でセパレート 正規化が行われた場合のトラック名になる
+    this.file                                     ;//nas.AnimationElementSource（設定されない）
     this.comment                                  ;//コメント文字列　エレメントの注釈プロパティ-xMap編集UIのみで確認できる（設定されない）
-    this.extended = false                         ;//常にfalse
+    this.extended = true                          ;//常にtrue
 
-    this.type       = ['symbol']                  ;//typeStringArray　symbol,geometry,compositeをマスタータイプ　サブタイプでエフェクトの種類が記録される DBとの対照で決定する
-    this.targets    = [];//ワーク対象素材配列空の場合はカット全体が対象　分割されたコンテンツ冒頭で、トラックIDと一致するもの　A,B,BG,BOOK等
-    this.prefix;         //セクション冒頭で[ブラケット]で囲まれたもの
-    this.postfix;        //セクション末尾で[ブラケット]で囲まれたもの
-    this.attributes = [];//セパレートされていない文字列のうちnameにならなかったもの
-    this.comments   = [];//丸かっこでセパレートされたコメント
+    this.type         = ['symbol','']             ;//typeStringArray　symbol,geometry,compositeをマスタータイプ　サブタイプでエフェクトの種類が記録される DBとの対照で決定する
+    this.attributes   = []                        ;//セパレートされていない文字列のうちnameにならなかったもの　通常は撮影指定コメント
+    this.comments     = []                        ;//丸かっこでセパレートされたコメントの中身
+    this.descriptions = []                        ;
+    this.targets      = []                        ;//ワーク対象素材配列空の場合はカット全体が対象　トランジションの場合は必ず２要素の配列
+                                                  ;//分割されたコンテンツ冒頭で、トラックIDと一致するもの　A,B,BG,BOOK等
+                                                  ;//トランジションの場合は分離要件を調整する
+    this.prefix;                                   //セクション冒頭で[ブラケット]で囲まれる表示
+    this.postfix;                                  //セクション末尾で[ブラケット]で囲まれる表示
     
     this.parseContent();
 }
@@ -2149,55 +2427,65 @@ nas.AnimationCamerawork=function(myParent,myContent){
 書式は
     対象素材（省略可　省略時はカット全体）
     効果・識別名
-    付属パラメータ（タイプごとに定義）composite,transition,geometry,effect,zigzag,fi,fo,stroboIn,stroboOut
+    付属パラメータ（タイプごとに定義）composite,transition,geometry,effect,zigzag,fi,fo,stroboIn,stroboOut 等
 symbol:(未分類)
 
 
 連結条件は、トラック内でガードバンドを挟んで同じtarget,type,name のセクションが隣接している場合のみ
 カメラワーク（シンボル）トラック内のセクションは、ガードバンドがあってもなくても良い
 ジオメトリカメラワークトラック値セクションの前後には最低１フレームのガードバンドが入る
+引数：    exportForm   出力書式
+    basic         :xMap用１行エントリ
+    ナシ/extend   :タイムシートメモ形式１行エントリ
 */
 nas.AnimationCamerawork.prototype.toString=function(exportForm){
+    if(! this.name) return '';//
+if(exportForm == 'basic'){
+        var resultArray=[(this.parent)?this.parent.name:"",this.name];
+        if(this.file)         resultArray.push('"'+ this.file.toString(true)+'"');
+        return resultArray.join("\t");
+    }else{
+    var descriptionPrefix="";
     var myResult=[];
 //target
     if(this.targets.length){
-        myResult.push(this.targets.join(','));
+        if(this.type[0]=='transition'){
+            myResult.push([this.targets[0].join(','),"]><[",this.targets[1].join(',')].join(''));
+        }else{       
+            myResult.push(this.targets.join(','));
+        }
     }
 //warkName
     if(String(this.name).length) myResult.push('<'+this.name+'>');//文字列は<矢括弧>でセパレートする
 //attribute
     switch(this.type[0]){
-    case "geometry":
-        
-        if(this.attributes.length){
-            myResult.push(this.attributes.slice(0,2).join("-"));
-            myResult.push(this.attributes.slice(2).join(" "));
-        }
+    case "symbol":
+        if(this.attributes.length) myResult.push(this.attributes.join(" "));
     break;
     case "transition":
-        if(this.attributes.length){
-            myResult.push(this.attributes.slice(0,2).join("]><["));        
-            myResult.push(this.attributes.slice(2).join(" "));
-        }
-    break;
-    case "symbol":
+    case "composite":
+    case "geometry":
     default:
-        if(this.attributes.length) myResult.push(this.attributes.join(" "));        
+        if(this.attributes.length) myResult.push(this.attributes.join("-"));        
     }
+    if(this.descriptions.length) myResult.push(this.descriptions.join(' '));
     if(this.comments.length) myResult.push('(' + this.comments.join(') (') + ')');
     
-    return myResult.join(' ');
+    myResult = myResult.join(' ');
+    if(this.file)         myResult+=('\n\tfile="'+ this.file.toString(true)+'"');
+    return nas.AnimationCameraworkPrefix[this.type[0]] +' '+ myResult;
+    }
 }
 /*TEST
 A = new nas.AnimationCamerawork(null,"A,B,C <FI> ▲ (1+12)");
-
+B = new nas.AnimationCamerawork({name:'CAM1'},"<PAN> [A]-[B]-[C] (2+13) (ラスト早く)");
 */
 /**
     コンテンツを与えてパースする
     引数がない場合は自身のコンテンツデータを再パースする
-    xMapとのリレーションが基本的には存在しない。入力はメモ欄に記述するテキストと等価
-    メモ記述ライン冒頭が段落マークだった場合はそれを無視して評価する
-    toStringでえられる文字列を自動でメモ記述欄にトランジションと同様に表示する（ユーザ指定外）
+    xMapの記述は、基本的にダイアログと同等。入力はメモ欄に記述するテキストとほぼ等価
+    メモ記述ライン冒頭が段落マーク（◎＊○●◇◆☆★等の強調サイン）だった場合はそれを無視して評価する
+    toStringでえられる文字列を自動でメモ記述欄にカット間トランジションと同様に表示する（ユーザ指定外）
     メモ欄にユーザが入力した記述はメモ内容をパースして、カメラワーク記述を認識した場合タイムシートへの挿入を問い合わせる？
 
     例
@@ -2218,23 +2506,90 @@ A = new nas.AnimationCamerawork(null,"A,B,C <FI> ▲ (1+12)");
 name        明示的<シンボル名>・暗示的シンボル名
 prefix      コンテンツ頭の[ブラケット]で囲まれた要素
 postfix     コンテンツ末尾の[ブラケット]で囲まれた要素
-attributes  カッコのないむき出しの要素
-comments    (丸かっこ)で囲まれた要素
+attributes  カッコのないむき出しの要素　基本的に素材ターゲット、transitionターゲットの場合は配列の配列
+comments    (丸かっこ)で囲まれた要素　数値指定　尺指定はこの形式で統一
 省略サインはすべて無視
+
+トランジションのセパレータは　/\](x|><|.+)\[/
+
+
+xMap上の記述の形式
+[CAM1   CAMERAWORK]
+    グループ（トラック）登録
+グループ（トラック）に、記述上の位置を示す以上の意味はない。
+デフォルト値には有効な値が存在しない。
+空白セクションに対応する「無効値」がデフォルト値となる。
+よってグループ記述に対する値のパースは「名前だけを持った無効値」を返す。
 */
 nas.AnimationCamerawork.prototype.parseContent=function(myContent){
     if(typeof myContent == 'undefined'){
         myContent = this.contentText ;
     }
+
+//xMapパーサからのグループエントリーデータなのでコンテンツをクリアして終了
+  if(myContent.indexOf('[')==0){
+//console.log('detect GroupEntry :'+myContent);
+    this.contentText  ='';
+//    this.name         = undefined;
+//    this.file         = undefined;
+//    this.comment      = undefined;
+//    this.type         = ['symbol',''];
+//    this.attributes   = [];
+//    this.comments     = [];
+//    this.descriptions = [];
+//    this.targets      = [];
+//    this.prefix       =undefined;
+//    this.postfix      =undefined;
+        return this;
+}
     myContent = nas.normalizeStr(myContent);
-    
-    this.comments   = [];
-    this.attributes = [];
-    this.prefix     = undefined;
-    this.postfix    = undefined;
-//value検出 正規表現で検出できなかった場合は、分かち書きを分解してDBを総当たり
-    var myContents = (myContent.replace(/\s+/g,'\t')).split('\t');
-    var myName = '';
+    myContentLines = myContent.split('\n');
+    this.attributes   = [];
+    this.comments     = [];
+    this.descriptions = [];
+    this.targets      = [];
+    this.prefix       = undefined;
+    this.postfix      = undefined;
+
+    var myName        = '';
+    var myTargets     = [];
+    var myProps       = [];
+    var bracketValues = [];
+
+    for (var lid=0;lid<myContentLines.length;lid++){
+        if(String(myContentLines[lid]).length==0) continue;//カメラワークでは意味を持たないので空白行スキップ
+//console.log([myContentLines[lid].indexOf(this.parent.name+'\t')])
+    if( (this.parent)&&
+        (myContentLines[lid].indexOf(this.parent.name+'\t') == 0)&&
+        (myContentLines[lid].match(/^[\S]+\t[\S]+/))
+    ){
+//console.log('XXXXXXX entry :'+myContentLines[lid]);
+        var myContents  = myContentLines[lid].split('\t');
+//xMapパーサからのエントリ登録データなのでコンテンツを初期化
+//第三エントリが存在した場合source propertyを設定する
+        this.name = myContents[1];
+        if(myContents.length>2){this.file = new nas.AnimationElementSource(myContents.slice(2).join(' '));}
+        continue;
+    }else{
+//プロパティ単独記述　プロパティ別のパースが必要だが、ここで処理しないほうが良いかも　その場合はtoString側も要修正
+    if(myContentLines[lid].match(/^\t([^=\s]+)=(.+)/)){
+//console.log('single propertiy =========================='+ myContent+'+++++');
+        var myPrp = RegExp.$1; var myVlu = RegExp.$2;
+        switch(myPrp){
+        case 'file':this.file = new nas.AnimationElementSource(myVlu);break;
+        default : this[myPrp]=myVlu;
+        }
+        continue;
+    }
+    var myContents    = (myContentLines[lid].replace(/^[◎*◯○●・◇◆☆★]/g,"").replace(/\s+/g,'\t')).split('\t');
+//console.log(this.parent.name);
+//console.log(myContents);
+//    var myName        = '';
+//    var myTargets     = [];
+//    var myProps       = [];
+//    var bracketValues = [];
+
+//name検出
     if (myContent.match(/<([^<]+)>/)){
         myName = RegExp.$1;
     } else if(myContents.length){
@@ -2252,16 +2607,22 @@ nas.AnimationCamerawork.prototype.parseContent=function(myContent){
         if(! myName) myName = (myWord)? myWord : "";//！注意点！
 /*  カメラワークの名称を取得できなかった場合は、遅延解決のため必ず""(空文字列)に設定のこと　*/
     }
+// トランジション検出
+//  カメラワークタイプがトランジションに固定されて名前はトランジションのサブタイプ（種別）情報となる
+    var detectTransition = myContent.match(/([^\[\s]+)\]([^\[\-ー→]+)\[([^\]\s]+)/i);
+//console.log(detectTransition);
+    if(detectTransition){
+        if((myName == detectTransition[0])||(myName == '')) myName = detectTransition[2];
+        this.targets=[detectTransition[1].split(','),detectTransition[3].split(',')];   
+        if(myName.match(/x|></i)) myName = 'transition';//noname transition sign
+    }
     this.name = myName;
 //検出したシンボルからタイプ
     var mySymbol = nas.cameraworkDescriptions.get(this.name);
     if (! mySymbol) mySymbol = nas.cameraworkDescriptions.get('unknown')
+/*symbol未検出時はユーザ指定を促すか？*/
     this.type = [mySymbol.type,mySymbol.name];
-/*symbol検出時はユーザ指定を促すか？*/
 
-    var myTargets  =    [];
-    var myProps    =    [];
-    var bracketValues = [];
 //コメント検出
     var commentsGet = myContent.match(/\(([^\)]+)\)/g);
 //コメントリダクション
@@ -2274,14 +2635,25 @@ nas.AnimationCamerawork.prototype.parseContent=function(myContent){
     }
 
 //タイプ別に残りの属性値を判別
+//console.log(myContents);
     for(var cix = 0 ; cix < myContents.length ; cix++){
+//transition指定エントリをスキップ
+        if((detectTransition)&&(myContents[cix] == detectTransition[0])){
+//console.log(myContents[cix]);
+            continue;
+        }
 //コメント取得済みなのでスキップ
-        if(myContents[cix].match(/^\(|\)$/i)) continue;
-//カメラワーク名スキップ（存在すれば大文字小文字を含めて一致する）
-        if(myContents[cix].indexOf(this.name) == 0) continue;
+        if(myContents[cix].match(/^\(|\)&/)) continue;
+//カメラワーク名スキップ
+        var checkName = myContents[cix].match(new RegExp('<?'+this.name+'>?','i'));
+        if((checkName)&&(checkName[0])){
+//console.log(checkName);
+            continue;
+        }
 //ターゲット検出
 //この時点ではポストフィックスと空エントリが含まれる
         if(myContents[cix].match(/(cell|セル)$|(BG.*|BOOK.*)$|,/i)){
+//console.log(myContents[cix]);
             if((myContents[cix].indexOf(',') > 0)){
                 myTargets = myTargets.concat(myContents[cix].split(','));
                 continue;
@@ -2292,35 +2664,27 @@ nas.AnimationCamerawork.prototype.parseContent=function(myContent){
         }
 //残りはすべてアトリビュート
 //[ブラケット]
-        if( myContents[cix].match(/^(\[[^\]]+\][-ー→]?)+/)){
+//console.log(myContents[cix]);
+       if( myContents[cix].match(/^(\[[^\]]+\][-ー→]?)+/)){
             bracketValues  = bracketValues.concat(myContents[cix].replace(/[-ー→]/g,",").split(','));
             continue
         }
-//]><[ transition
-/*
-    "c12]wipe[c13","A1]中OL[A2"　等のトランジション記述を前後で分割
-*/
-        if( myContents[cix].match(/[^\[]+(\][^\[]+\[)[^\]]+/)){
-            myProps.push(myContents[cix].split(RegExp.$1));
-            continue
-        }
         switch (this.type[0]){
-        case "geometry":
-        break;
         case "composite":
             if((mySymbol.nodeSigns)&&(mySymbol.nodeSigns.length > 2)&&(myProps.indexOf(mySymbol.nodeSigns[1]) < 0)){
                 myProps.push(mySymbol.nodeSigns[2]);
             }
-        break;
+        case "geometry":
         case "transition":
-        break;
         case "symbol":
         default:
             myProps.push(myContents[cix]);
         }    
     }
 //myTargetsリダクション
+        
     for (var tix = 0 ;tix < myTargets.length;tix ++){
+        if(myTargets[tix] instanceof Array){this.targets.push(myTargets[tix]);continue;}
         if(! myTargets[tix]) continue;
         this.targets.push(myTargets[tix].replace(/(cell|セル)$/gi,''));
     }
@@ -2334,9 +2698,16 @@ nas.AnimationCamerawork.prototype.parseContent=function(myContent){
 //myPropsリダクション
     for (var pix = 0 ;pix < myProps.length;pix ++){
         if(! myProps[pix]) continue;
-        this.attributes.push(myProps[pix]);
+        var isGroup=false;
+        if((this.parent)&&(this.parent instanceof nas.xMapGroup)) isGroup = this.parent.link.stage.line.parent.getElementByName(myProps[pix]);
+        if((isGroup)&&(isGroup instanceof nas.xMapGroup)){
+            this.targets.push(myProps[pix]);
+        }else{
+            this.descriptions.push(myProps[pix]);
+        }
     }
-
+  }
+    }
     this.contentText = this.toString();//(myContent)?String(myContent):"";
     return this;
 }
@@ -2381,6 +2752,7 @@ nas.AnimationCamerawork.prototype.getStream=function(cellCounts){
     if(cellCounts<0)cellCounts=Math.abs(cellCounts);
     if(cellCounts >= minCount){
         var mySymbol = nas.cameraworkDescriptions.get(this.type[1]);
+        if(! mySymbol) mySymbol = nas.cameraworkDescriptions.get('bar');
         var myName = (mySymbol.nodeSigns.length == 1) ?mySymbol.nodeSigns[0]:'<'+this.name+'>';
         var myResult = new Array(cellCounts);
         for (var ix = 0 ; ix < cellCounts ;ix ++){

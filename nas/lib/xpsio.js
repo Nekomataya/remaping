@@ -1,6 +1,9 @@
 ﻿/**
- * @fileoverview Xpsオブジェクト生成
- *
+ * @fileoverview    Xps(Animation Timesheet)ライブラリ
+ * @auther      nekomataya kiyo@nekomataya.info
+ * @requires    nas_common
+ */
+/*
  * 2007.04.03 エラーメッセージ分離
  * 2013.04.02 外部フォーマット解析部分分離
  * 2015.06.12 Xps及びMap関連オブジェクトをnas.配下に移動
@@ -67,9 +70,9 @@
  * Xps.newLayers= function(layerCount)://レイヤプロパティトレーラを作成して返す（削除されました）
  * Xps.newTracks= function(TrackCount);//タイムシートの本体オブジェクトを作成して戻す
  */
-/**
+/*
 Xpsをフルスペックに拡張するための基礎情報
-区間パースに必要な予約後の設定
+区間パースに必要な予約語の設定
 dialog
     ダイアログセクション開ノード
     ダイアログセクション閉ノード
@@ -83,7 +86,11 @@ replacement
     プロパティサイン原画、原画アタリ（参考）、中間値補間サイン、ブランクサイン
 camera
 camerawork
+    抽象化された撮影指定トラック
+    区間プロパティ 区間プレフィックス　区間ポストフィックス　抽象化（symbol）DB
 geometry
+stage
+stagework
     セクション開ノード
     セクション閉ノード
     中間値補間サイン
@@ -97,12 +104,12 @@ composite
 var XpsTrackProperties=[
     "dialog","sound",
     "cell","timing","replacement","still",
-    "camerawork","camera","geometry",
+    "camerawork","camera","geometry","stage","stagework",
     "effect","sfx","composit",
     "comment"
 ];
 var XpsTrackPropRegex=new RegExp(XpsTrackProperties.join("|"),"i");
-/**
+/*
  * @constructor XpsStageオブジェクトコンストラクタ
  *
  * ステージプロパティとして参照される
@@ -135,20 +142,27 @@ XpsStage.prototype.toString=function(){
     return "["+this.name+"][["+this.job+"]]";//?
 }
 */
-/**　Xpsに単独記録する制作管理オブジェクト
-    ライン記述を与えてオブジェクトを初期化する
-    
-    ライン記述は　'(本線):0',1:(背景),'(背景3D-build):1:1','1-1:(背景3D-build)' 等
-     識別名の(括弧)は払う
-     前置型式後置型式どちらでも解釈
-     引数記述が数値のみ指定は許されない（初期化に失敗させる）
-    
-     ライン・ステージ・ジョブの三点を初期化後にXpsがリンクするxMapと対照を行い
-     当該のObjectに対するリンクを記録する？　⇒　常に検索が可能なので記録しない
-     
-     当該ライン・ステージ・ジョブがxMapに存在しない場合は、xMapドキュメントを初期化の際に同期
-     
-     
+/**
+ *    Xpsに単独記録する制作管理オブジェクト
+ *    ライン記述を与えてオブジェクトを初期化する
+ *  @param {String}  lineString
+ *  ライン記述<br />
+ *　@example
+ * var A= new XpsLine('(本線):0');
+ * var A= new XpsLine( 1:(背景));
+ * var A= new XpsLine('(背景3D-build):1:1');
+ * var A= new XpsLine('1-1:(背景3D-build)');
+ * 等
+ */
+ 
+/*     識別名の(括弧)は払って比較
+ *     前置型式、後置型式どちらでも解釈
+ *     引数記述が数値のみ指定は許されない（初期化に失敗させる）
+ *    
+ *     ライン・ステージ・ジョブの三点を初期化後にXpsがリンクするxMapと対照を行い
+ *     当該のObjectに対するリンクを記録する？　⇒　常に検索が可能なので記録しない
+ *     
+ *     当該ライン・ステージ・ジョブがxMapに存在しない場合は、xMapドキュメントを初期化の際に同期
 */
 function XpsLine (lineString){
 	this.id	=	[0];//
@@ -168,17 +182,25 @@ function XpsLine (lineString){
       }
     }
 }
+/**
+ *  @param {bool} opt
+ * 整数id部前置・後置切り替えオプション
+ */
 XpsLine.prototype.toString = function(opt){
     if(opt)     return [this.id.join('-'),'(' + this.name +')'].join(':');
     return ['(' + this.name +')',this.id.join(':')].join(':');
 }
 
-/*
-    ステージ記述を与えてプロパティを設定する
-    "1:原画" , "原画:1" どちらの型式でも良い
-    ':' は省略不可
-    記録時は後方型式
-*/
+/**
+ *  ステージ情報を保持するオブジェクト
+ *  @param {String} stageString
+ *  ステージを表す記述
+ *  @example
+ *  var A= new XpsStage("1:原画");
+ *  var A= new XpsStage("原画:1");
+ *  整数id部は前置・後置どちらの型式でも良い
+ *   ':' は省略不可  Xpsへの記録時は後方型式を推奨
+ */
 function XpsStage (stageString){
     this.id = 0 ;this.name = 'init';
     if(stageString){
@@ -191,22 +213,36 @@ function XpsStage (stageString){
       }
     }
 }
+/**
+ *  @param {bool} opt
+ * 整数id部前置・後置切り替えオプション
+ */
 XpsStage.prototype.toString = function(opt){
     if(opt)     return [this.id,this.name].join(':');
     return [this.name,this.id].join(':');
 }
+/**
+ *  @param {String} myString　次ステージ名
+ * 整数id部を、次ステージのために繰り上げる
+ * 次ステージ名が与えられない場合は、IDのゼロ埋め３桁の数値に置き換える
+ */
 XpsStage.prototype.increment = function(myString){
     this.id   = nas.incrStr(String(this.id));
     this.name = (myString)? myString:nas.Zf(this.id,3);
     return this;
 }
+/**
+ * ステージをリセットして整数id部を０にする。次ラインのための機能であったが　このメソッドは削除予定
+ * 使用禁止
+ *  @param {String} myString　次ステージ名
+ */
 XpsStage.prototype.reset = function(myString){
     this.id   = 0;
     this.name = (myString)? myString:'init';
     return this;
 }
 
-/**
+/*
     XPS上では特にJobがサブステージとしての傾向が強いのでオブジェクトごと兼用でも良い
     今コードが同じ…
     だが、IDのインクリメントが違うか…
@@ -328,7 +364,11 @@ console.log([
             break;
         case "camera":
         case "camerawork":
+            return new nas.AnimationCamerawork(null,"");
+            break;
         case "geometry":
+        case "stage":
+        case "stagework":
             return new nas.AnimationGeometry(null,"");
             break;
         case "composit":
@@ -1010,9 +1050,9 @@ XpsTimelineSectionCollection.prototype = Array.prototype;
  セクションを中間値生成セクションとして初期化するためには、引数isInterpをtrueにする
  subSectionsが初期化されデフォルトのサブセクションが登録される
 
- * @param myParent
- * @param myDuration
- * @param isInterp
+ * @param {Object XpsTimelineSectionCollection} myParent
+ * @param {Number} myDuration
+ * @param {boolean} isInterp
  */
 function _getSectionId () {
     for (var idx = 0; idx < this.parent.length; idx++) {
@@ -1132,44 +1172,113 @@ XpsTimelineSection.prototype.getContent = function(){
     }
     return timeline.slice(startframe,startframe+this.duration);
 }
-/** 指定の長さに従ってセクションの内容を返す
-指定長が、コンテンツの最小長を割る場合は、value自身が（ユーザ入力を失わないために）指定を無視して最小の長さのストリームを返す。
-そのため　リザルトが引数のと一致しない場合がある
-引数: frameCount
-返値: 配列+offset
-
-セクションがサブセクションを持つ場合は、現在のサブセクションの構造を保って伸縮するように試みる。
-指定された継続長が現在よりも短ければ内容をカット
-長い場合は最初のサブセクションを繰り返す
-負数が指定された場合は空配列を戻す（duration==0）
-特殊条件
-((frameCount ==  1)&&(headMargin == -1)&&(tailMargin == -1))
-
-
-(this.getContent)
-*/
+/**
+ * セクションの内容を配列に指定の長さに再展開して返す
+ *<pre>
+ *指定長がコンテンツの最小長を割る場合は、value自身が（ユーザ入力を失わないために）指定を無視して最小の長さのストリームを返す。
+ *そのため　リザルトが引数の値と一致しない場合がある。
+ * セクションがサブセクションを持つ場合は、現在のサブセクションの構造を保って伸縮するように試みる。
+ * 指定された継続長が現在よりも短ければ内容をカット
+ * 指定よリも長い場合は最初のサブセクションを繰り返す
+ * 負数が指定された場合は空配列を戻す（duration==0）
+ *  特殊条件
+ *((frameCount ==  1)&&(headMargin == -1)&&(tailMargin == -1))
+ *(this.getContent)
+ *
+ * トラックの種別が dialog/cameraworkの場合のみ、value.getStreamを呼ぶ。
+ * それ以外の場合はストリームの内容がvalue.nameのみであるため、このメソッドが出力を作成するほうが効率的。
+ *</pre>
+ *
+ * @params {Number} frameCount
+ * @returns {Array of timesheetinput} 
+ *  xUI.put メソッドに入力可能なシート内容の配列
+ *
+ * @example
+ * xUI.Select([2,0]);
+ * xUI.put(xUI.XPS.xpsTracks[2].sections[0].getStream(32));
+ *
+ */
 XpsTimelineSection.prototype.getStream = function(frameCount){
 console.log(frameCount);
-    if( frameCount < 0 ) return [];
+    if( frameCount < 0 ) return [];//NOP
     if(! frameCount ) frameCount = this.duration;
+//値補完区間（interprate|geometry|composite）の場合
     if(this.subSections){
-        if (frameCount < this.dutarion){
-            return this.getContent().slice(0,frameCount);
+        var nodeSymbol = false;
+        var nodeSymbols ={
+            geometry :["|","▼","▲"],
+            stage    :["|","▼","▲"],
+            stagework:["|","▼","▲"],
+            sfx      :["┃","┳","┻"],
+            effect   :["┃","┳","┻"],
+            composite:["┃","┳","┻"]
+        }
+        if(this.parent.parent.option.match(/geometry|stage|stagework|sfx|effect|composite/)){
+            nodeSymbol = nodeSymbols[this.parent.parent.option];
+        }
+        var newContent = this.getContent();//オリジナルを展開
+console.log(newContent.toString());
+        if (frameCount == this.dutarion){
+            return newContent;
         }else{
-            var newContent = this.getContent();//オリジナルを展開
-            var sourceSection = this.subSections[0];
+            var seedSection = this.subSections[0].getContent();
+            if((nodeSymbol)&&(seedSection[0]!=nodeSymbol[0])) seedSection[0]=nodeSymbol[0];
+            if((nodeSymbol)) newContent[newContent.length-1]=nodeSymbol[0];
+console.log(seedSection);
+console.log(newContent.toString());
             while (newContent.length < frameCount){
-               newContent = newContent.concat(sourceSection.getStream());
+               newContent = newContent.concat(seedSection);
                 if (newContent.length > frameCount) break;
             }
-            return newContent.slice(0,frameCount);
+            newContent = newContent.slice(0,frameCount);
+            if(nodeSymbol){
+                if(frameCount > 1) newContent[0]=nodeSymbol[1];
+                if(frameCount > 2) newContent[newContent.length-1]=nodeSymbol[2];
+            }
+console.log(newContent);
+            return newContent;
         }
     }else{
+/* サブセクションなし　値なし|値あり　*/
         if(!(this.value)) frameCount = frameCount + this.headMargin + this.tailMargin;
         if(frameCount < 0) frameCount = 0;
-console.log(this);
-        var myResult=(this.value)? this.value.getStream(frameCount): new Array(frameCount);
-        return myResult
+        var myResult = new Array(frameCount);
+console.log(frameCount +':'+this.getContent[0]+':'+this.parent.parent.option);
+        var currentSectionId = this.id();
+        switch(this.parent.parent.option){
+        case "camera":;
+        case "camerawork":;
+        case "dialog":;
+            if (this.value) myResult= this.value.getStream(frameCount);
+        break;
+        case "stage":;
+        case "stagework":;
+        case "geometry":;
+        /*  */
+          if(frameCount>0){
+            if((this.parent[currentSectionId+1])&&(this.parent[currentSectionId+1]).subSections){
+                if(this.value) myResult[myResult.length-1] = this.value.name;
+            }else{
+                if(this.value) myResult[0] = this.value.name;
+            }
+          }
+        break;
+        case "sfx":;
+        case "effect":;
+        case "composite":;
+        case "sfx":;
+          if(frameCount>0){
+            if((this.parent[currentSectionId+1])&&(this.parent[currentSectionId+1]).subSections){
+                if (this.value) myResult[myResult.length-1] =  this.value.name;
+            }else{
+                if (this.value) myResult[0] = this.value.name;
+            }
+          }
+        break;
+        default:
+            myResult[0] = this.getContent()[0];
+        }
+        return myResult;
     }
 }
 
@@ -1202,24 +1311,30 @@ XpsTimelineSubSection.prototype.strtOffset = _getSectionStartOffset;
  */
 
 /**
- * @constructor object Xps コンストラクタ
- * @param Layers タイムライントラックのうちデフォルトのダイアログ(1)を抜いた数
- * @param Length 継続長 フレーム数
- * @param Framerate フレームレート Object nas.Framerate or Number fps
+ *　object Xps(汎用アニメーションタイムシート)日本形式のタイムシート記述クラスを提供
+ * @class 
+ *   汎用アニメーションタイムシートクラス
+ * 
+ * @param {Number or Array or Object} Layers
+ *  タイムライントラックのうちデフォルトのダイアログ(1)を抜いた数
+ * @param {Number} Length
+ *  タイムシート記述継続長（フレーム数）で初期化
+ * @param {Object nas.Framerate or Number}
+ *  Framerate フレームレート  fps
  *
  *     Xpsオブジェクトの初期化引数を拡張
  * 第一引数はかつて「レイヤ数」であったが、これを拡張して配列を受け取れるようにする
  * 引数がスカラの場合は、従来互換として「リプレースメントトラック数」とする
  * 配列であった場合は、以下の順で解決を行う
  * 
-[リプレースメントトラック数]
-[ダイアログトラック数,リプレースメントトラック数]
-[ダイアログトラック数,リプレースメントトラック数,ジオメトリトラック数]
-[ダイアログトラック数,リプレースメントトラック数,ジオメトリトラック数,コンポジットトラック数]
-
-配列長が1の場合は、特例でリプレースメントトラック数とする
-ダイアログトラック数は、1以上とする1以下の値が与えられた際は1として初期化される。
-
+ * [リプレースメントトラック数]
+ * [ダイアログトラック数,リプレースメントトラック数]
+ * [ダイアログトラック数,リプレースメントトラック数,ジオメトリトラック数]
+ * [ダイアログトラック数,リプレースメントトラック数,ジオメトリトラック数,コンポジットトラック数]
+ * 
+ * 配列長が1の場合は、特例でリプレースメントトラック数とする
+ * ダイアログトラック数は、1以上とする1以下の値が与えられた際は1として初期化される。
+ * 
 完全な指定を行う場合は、引数として専用の指定オブジェクトを渡す
 例:
 {
@@ -1231,10 +1346,11 @@ XpsTimelineSubSection.prototype.strtOffset = _getSectionStartOffset;
     camera:1,
     replacement:2,
     effects:1,
+    stage:2,
     sound:2
 }
  *  各プロパティの出現順位置・回数は任意
- *  冒頭は基本的にdialigで1以上の値にすること
+ *  冒頭は基本的にdialigで1以上の値にすること。そうでない場合は{dialog:1}が補われる。
  *  末尾プロパティはcommentで値1とすること
  *  冒頭プロパティがdialogでない場合は、{dialog:1} が補われる
  *  末尾プロパティがcommentでない場合にはデフォルトの{comment:1}が補われる
@@ -1253,16 +1369,19 @@ function Xps(Layers, Length, Framerate) {
     //配列引数の場合トラック配置用のオブジェクトに展開
     var trackSpec=[];
     if(! (Layers[0] instanceof Array)){
+console.log(Layers);
         switch (Layers.length){
             case 0:trackSpec=[["dialog",1],["timing",4]];break;
             case 1:trackSpec=[["dialog",1],["timing",Layers[0]]];break;
             case 2:trackSpec=[["dialog",Layers[0]],["timing",Layers[1]]];break;
             case 3:trackSpec=[["dialog",Layers[0]],["timing",Layers[1]],["camera",Layers[2]]];break;
-            case 4:
+            case 4:;
+            case 5:;
             default:
-                trackSpec=[["dialog",Layers[0]],["timing",Layers[1]],["camera",Layers[2]],["effect",Layers[3]]];
+                trackSpec=[["dialog",Layers[0]],["timing",Layers[1]],["camera",Layers[2]],["geometry",Layers[3]],["effect",Layers[4]]];
         }
     }else{
+console.log(Layers);
         for(var pix=0;pix<Layers.length;pix++){
             if(! String(Layers[pix][0]).match(XpsTrackPropRegex)){
                 trackSpec=[["dialog",1],["timing",4]];
@@ -1280,12 +1399,12 @@ function Xps(Layers, Length, Framerate) {
 //console.log (Framerate);
 //console.log (Length);
     }
-    /**
+    /*
      * デフォルト値がレイヤなし継続長なしだと弊害があるのでデフォルト値を変更 2009/10/12
      * 旧オブジェクトに存在したエラーメッセージ群はUIオブジェクトへ分離
      * Xps標準のプロパティ設定
      */
-    /**
+    /*
      * すべてのプロパティでXpsを初期化するのは、基準値トレーラーとしての基底オブジェクトのみ
      * (Xps.parentStage == null)
      * 以降のステージは、基底オブジェクトをprototypeとして作成される。
@@ -1294,22 +1413,18 @@ function Xps(Layers, Length, Framerate) {
      addLine又はbranch,add(new)Stage,add(new)Job,
      */
     this.parent;//親Xps参照用プロパティ初期値は undefined（参照無し）
-    /**
+    /*
     XpsのstageオブジェクトはxMap共用のPm.Issueオブジェクトと置換する
     Issueオブジェクトの文字列化メソッドは標準でxMap記録文字列
     オプションでXps文字列・カット識別子文字列の切り替え
     */
 
     this.xMap =new xMap();//参照用xMapを初期化
-
-//    this.stage = new XpsStage(this, "", "");
-//    this.stage = new nas.Pm.Issue(this, "", "");
     this.line  = new XpsLine("(本線):0");
     this.stage = new XpsStage("layout:0");
     this.job   = new XpsStage('init:0');
-//    this.currentStatus = 'Startup';//old
-    this.currentStatus = new JobStatus();//new
-    /**
+    this.currentStatus = new JobStatus();
+    /*
      * オブジェクトでないほうが良いかも＞line/stage/job のオブジェクトに変更予定
      * ファイルパスでなく参照オブジェクトに変更予定オブジェクト側に参照可能なパスがあるものとする
      * @type {string}
@@ -1365,22 +1480,23 @@ function Xps(Layers, Length, Framerate) {
  *現状で以前の引数を踏襲しているため旧のレイヤーカウントで初期化が行なわれる
  *  トラックカウントに変更の予定
 trackSpec オブジェクトで初期化に変更
- * @param trackCount
- * @param frameCount
- * @returns {Array}
+ * @param {Number} trackCount
+ * @param {Number} frameCount
+ * @returns {Array} 
  * タイムライントラックトレーラはプロパティトレーラを兼ねる
  * 初期化時のみ利用
  * 初期化時にカメラトラックを作成しない
  */
 Xps.prototype.newTracks = function (trackSpec,trackDuration) {
     var myTimelineTracks = new XpsTrackCollection(this,this.jobIndex,trackDuration);//parent,index,duration
-    var trackCount  = 0;
-    var dialogIndex = 1;
-    var soundIndex = 1;
-    var stilIndex = 1;
-    var cellIndex = 0;
-    var cameraIndex = 1;
-    var effectIndex = 1;
+    var trackCount   = 0;
+    var dialogIndex  = 1;
+    var soundIndex   = 1;
+    var stilIndex    = 1;
+    var cellIndex    = 0;
+    var cameraIndex  = 1;
+    var stgIndex     = 1;
+    var effectIndex  = 1;
     var defaultNames = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 
     for(var pix=0;pix<trackSpec.length;pix++){
@@ -1422,12 +1538,21 @@ Xps.prototype.newTracks = function (trackSpec,trackDuration) {
             break;
             case "camera":
             case "camerawork":
-            case "geometry":
                 for(var ix=0;ix <trackSpec[pix][1];ix++){
                     myTimelineTracks.splice( myTimelineTracks.length-1, 0,
                         new XpsTimelineTrack("cam"+cameraIndex, trackSpec[pix][0],this.xpsTracks,trackDuration,trackCount)
                     );
                     cameraIndex ++;
+                };
+            break;
+            case "geometry":
+            case "stage":
+            case "stagework":
+                for(var ix=0;ix <trackSpec[pix][1];ix++){
+                    myTimelineTracks.splice( myTimelineTracks.length-1, 0,
+                        new XpsTimelineTrack("stg"+stgIndex, trackSpec[pix][0],this.xpsTracks,trackDuration,trackCount)
+                    );
+                    stgIndex ++;
                 };
             break;
             case "sxf":
@@ -1794,12 +1919,14 @@ Xps.prototype.getTC = function (mtd) {
  * 現状ではデータを持ったままタイムラインを挿入することはできない。
  * 必ず空のタイムラインが挿入される。
  *
- * @param myId
- * @param myTimelines
+ * @param {Number} myId
+ *  挿入点トラックid　指定idの前方に挿入される
+ * @param {Araay of XpsTimelineTrack} myTimelines
+ *  挿入オブジェクトまたは配列
  */
 Xps.prototype.insertTL = function (myId, myTimelines) {
     //引数が配列ではないまたは単独のタイムライントラックオブジェクトである場合配列化する
-    /**
+    /*
         XpsTimelineTrackが配列ベースのためか、通常の配列をinstanceof XpsTimelineTrack で判定すると trueが戻るので
         プロパティで判定を行う
         obj.id(トラックラベル)があればタイムライントラック
@@ -2245,13 +2372,16 @@ Xps.prototype.parseXps = function (datastream) {
         "UPDATE_USER",
         "CREATE_TIME",
         "UPDATE_TIME",
+        "EXTENSION_DATA",
         "Line",
         "LineStatus",
         "Stage",
         "StageStatus",
         "Job",
         "JobStatus",
-        "CurrentStatus"
+        "CurrentStatus",
+        "JobAssign",
+        "Messages"
     ];
     /**
      * @type {string[]}
@@ -2271,13 +2401,16 @@ Xps.prototype.parseXps = function (datastream) {
         "update_user",
         "create_time",
         "update_time",
+        "extension_data",
         "line",
         "lineStatus",
         "stage",
         "stageStatus",
         "job",
         "jobStatus",
-        "currentStatus"
+        "currentStatus",
+        "jobAssign",
+        "messages"
     ];
     var props = new Array(varNames.length);
     for (i = 0; i < varNames.length; i++) {
@@ -2288,7 +2421,8 @@ Xps.prototype.parseXps = function (datastream) {
      * 時間プロパティ欠落時のために初期値設定
      * @type {*[]}
      */
-     var readMessage=false;
+     var readMessage   =false;
+     var readExtension =false;
 //		SrcData.time="6+0";
     SrcData.trin = [0, "trin"];
     SrcData.trout = [0, "trout"];
@@ -2307,11 +2441,17 @@ Xps.prototype.parseXps = function (datastream) {
          * 申し送り取得フラグが立っていればコメントと他の有効記述以外をメッセージに加算
          * 終了サインまたは他の有効記述で取得終了
          */
-        if(readMessage){
+        if((readMessage)||(readExtension)){
             if(SrcData[line].match(/^#\[|^\[.*|^\#\#([A-Z].*)=(.*)$/)){
-                readMessage=false;
+                readMessage=false;readExtension=false;
             }else{
-                if(! (SrcData[line].match(/^\#.*/))) SrcData.currentStatus.message+="\n"+SrcData[line];
+                if(! (SrcData[line].match(/^\#.*|^\[.*/))){
+                    if(readMessage) {
+                        SrcData.currentStatus.message +="\n"+SrcData[line];
+                    }else{
+                        SrcData.extension_data +="\n"+SrcData[line];
+                    }
+                }
             }
             continue;
         }
@@ -2399,8 +2539,11 @@ console.log(nAme);
                                 //申し送りメッセージ取得フラグを立てて次のループに入る
                      readMessage=true;continue;
                   break;
-                case    "additionalData":;
+                case    "EXTENSION_DATA":;
                     console.log(vAlue);
+                    SrcData.extension_data = vAlue;
+                                //申し送りメッセージ取得フラグを立てて次のループに入る
+                    readExtension=true;continue;
                 break;
                 default:
                     /**
@@ -2468,6 +2611,8 @@ console.log(nAme);
             }
         }
     }
+//console.log(SrcData);
+//console.log(JSON.stringify(SrcData));
     /*++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
     /**
      * 第二パス終了・読み取った情報でXPSオブジェクトを再初期化(共通)
@@ -2489,7 +2634,7 @@ console.log(nAme);
 
     /**
      * 第二パスで読み取ったプロパティをXPSに転記
-     * タイム以外はそのまま転記
+     * time/currentStatus/extension_data 以外はそのまま転記
      */
     for (id = 0; id < propNames.length; id++) {
         prpName = propNames[id];
@@ -3468,7 +3613,7 @@ XpsTimelineTrack.prototype.parseCompositeTrack=_parseCompositeTrack;//コンポ�
 
 //XpsTimelineTrack.prototype.parseTrack=_parseTrack;
 //XpsTimelineTrack.prototype.parseTrack=_parseTrack;
-/**
+/*
 
     タイムラインをパースしてセクション及びその値を求めるxUIのメソッド
     タイムライン種別ごとにパースするオブジェクトが異なるので
@@ -3480,10 +3625,12 @@ XpsTimelineTrack.prototype.parseCompositeTrack=_parseCompositeTrack;//コンポ�
     Replacement
         parseKyeDrawind(補間区間あり)
         parseAnimationCell(確定タイムライン)
-    Geometry
+    Camerawork
         parseCameraworkTrack
+    Geometry
+        parseGeometryTrack
     Composite
-        parseEffectTrack
+        parseCompositeTrack
     各々のパーサは、データ配列を入力としてセクションコレクションを返す
     各コレクションの要素はタイムラインセクションオブジェクト
     値はタイムライン種別ごとに異なるがセクション自体は共通オブジェクトとなる
@@ -3507,8 +3654,12 @@ XpsTimelineTrack.prototype.parseTimelineTrack = function(){
         break;
         case "camerawork":;
         case "camera":;
-        case "geometry":;
             myResult =  this.parseCameraworkTrack();
+        break;
+        case "geometry":;
+        case "stage":;
+        case "stagework":;
+            myResult =  this.parseGeometryTrack();
         break;
         case "effect":;
         case "sfx":;

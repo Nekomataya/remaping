@@ -224,6 +224,8 @@ var SheetLayers=4;
 			//セル重ねの数 初期値を整数で A~D　ならば　4　
 var CameraworkColumns=0;
 			//カメラワーク欄の数 初期値を整数で
+var StageworkColumns=0;
+			//ステージワーク欄の数 初期値を整数で
 var SfxColumns=0;
 			//カメラワーク欄の数 初期値を整数で
 //---

@@ -108,7 +108,7 @@ function xMap(titleString,targetDecription){
 
 //エレメントには  Job/Groupの参照があり  GroupからStageへの参照がある
 //ステージ内の同名（同グループ）エレメントであっても、Jobが異なる場合は双方を維持する
-//通常のリクエストには際後発のエレメントを戻す
+//通常のリクエストには最後発のエレメントを戻す
 //
 		this.elementGroups   = [];
 		this.elementStore    = [];
@@ -118,7 +118,7 @@ function xMap(titleString,targetDecription){
 /* コレクション汎用メソッド
  * 配列をコレクションとして使用する場合の標準メソッド
  */
-/**
+/*
     暫定メソッド　配列をトレーラの代用として利用する際にこのファンクションを利用
 	全要素を検査して同管理パスの要素があればそれをもどして終了
 	カブりがない場合は、コレクションに新規メンバーとして追加
@@ -141,9 +141,24 @@ function xAdd(mEmber){
  *	job
 
 ラインID	二次元配列化整数
-ステージID	ライン通しの整数ID
+    0:(本線)
+    0-1:(作画-B)
+    1:(背景)
+    2:(3D-CGI)
+    2-1:(モデリング)
+    2-2:(リギング)
+    2-2-1:(フェイスリギング)
+    2-3:(アニメーション)
+    2-4:(マテリアル)
+    
+ステージID	全ライン通しの整数ID
+    0:SCi.0:(本線)
 ジョブID	ステージ内通しの整数ID
 各IDの規則変更に留意
+
+getPathメソッドは、Pm.ProductionLine,Pm.ProductionStage,Pm.ProductonJob,xMapGroup,xMapElementに実装 ?
+
+XpsXXXとProductionXXX の統合　
  */
 
 
@@ -154,15 +169,32 @@ function xAdd(mEmber){
 
 
 //xMap.のメソッドを定義
+/**
+ *  エレメントストアからidでエレメントを抽出する
+ * @params {Integer} idx
+ *  捜索するエレメントid 整数
+ * @returns {Object nas.xMapElement or null}
+ *  条件に合致するオブジェクトを戻す
+ *  ノーヒットの場合は null
+ */
 xMap.prototype.getElementById =function(idx){
  for (var id=0;id<this.elementStore.length;id++){
     if(this.elementStore[id].id==idx) return this.elementStore[id];
  }
  return false;
 };
+/**
+ *  エレメントストアから名称でエレメントを検索する
+ * @params {String} myName
+ *  捜索するエレメント名,グループ名,グループ名-エレメント名　のいずれか
+ * @returns {Object nas.xMapElement or null}
+ *  最初に条件にヒットしたオブジェクトを戻す
+ *  ノーヒットの場合は null
+ */
 xMap.prototype.getElementByName =function(myName){
     myName=Xps.normalizeCell(myName);
  for (var id=0;id<this.elementStore.length;id++){
+
     var groupName = (this.elementStore[id] instanceof nas.xMapGroup)?
     this.elementStore[id].name : this.elementStore[id].parent.name;
     groupName = Xps.normalizeCell(groupName)
@@ -224,7 +256,7 @@ nas.xMapElement =function xMapElement(myName,myParentGroup,myLinkJob,contentSour
 	this.name	= myName;// nas.AnimationReplacementの場合に限り 再初期化(this.content.parseContent())時に CellDescription/完全 に置換される
 
 	this.content = Object.create(this.parent.content);//継承  親グループが正常に初期化されているのが条件 nas.AnimationXXX シリーズ
-	this.content.extended=false;//出力時に全プロパティを出力する必要があるか否かのフラグ
+//	this.content.extended=false;//出力時に全プロパティを出力する必要があるか否かのフラグ
 	if((this.type=="cell")||(this.type=="replacement")) this.content.overlay=null;
 //	if(this.content.type=="replacement"){this.content.overlay=null;}
 	this.comment="";
@@ -237,10 +269,11 @@ nas.xMapElement =function xMapElement(myName,myParentGroup,myLinkJob,contentSour
 //}
 };
 nas.xMapElement.prototype.toString=function(){
-
+console.log([this.parent.name,this.name].join('\t'))
 	var myResult='';
-//	this.parent.name +"::\t"+this.name+"\t"+this.content.toString() +"\t"+this.comment+"::\n";
 	if(this.content.extended){
+		myResult+=[this.parent.name,this.name].join('\t');
+		myResult+='\n';
 		myResult+=this.content.toString('extend');
 	}else{
 		myResult+=this.content.toString('basic');
@@ -277,7 +310,7 @@ ____________________________________________
     still       :picture グループ代表スチル画像をオブジェクトで＝何も記述しなくとも値ができる
     appearance　:appearance  :nas.AnimationAppearance("off")
     camara
-    camarawork
+    camarawork  :camerawork  :nas.AnimationCmaerawork(null)  標準カメラワークシンボル
     geometry    :geometry    :nas.AnimationGeometry(standerd frame animationField)  標準カメラジオメトリ
     sfx
     composite
@@ -306,7 +339,7 @@ nas.xMapGroup =function xMapGroup(myName,myTypeString,myLinkJob,contentText){
 	this.id;//セッション内ユニークインデックス
 	this.parent = this;// Object xMapGroup itself
 	this.link   = myLinkJob;//linked PmJob/Object
-	this.type   = String(myTypeString).toLowerCase();//system,sound,replacement,composite,geometry,effect,text/String
+	this.type   = String(myTypeString).toLowerCase();//system,sound,replacement,camerawork,composite,geometry,effect,text/String
 	this.name   = myName;//
 	this.content=xMap.getDefaultContent(this,contentText);//タイプストリング毎の初期化を行うことが必要
 	this.content.additional = false;
@@ -339,10 +372,12 @@ nas.xMapGroup.prototype.toString=function(jobFilter){
 //	var myResult = [this.name,this.type,this.content.toString(),this.comment];
 //	var myResult = [this.name,this.type,this.content.toString()];
 	if(this.content.extended){
+//グループの持つ.contentに拡張パラメータフラグが立っている場合に限りグループのパラメータを追加
 		var addResult=this.content.toString('extend');
 		if(addResult) myResult += addResult+'\n';
 	}
 	myResult += '#------------------------------------------------------------\n';
+//ここから各エレメントの出力
 	for (var eIdx=0;eIdx<this.elements.length;eIdx++){
 		if((typeof jobFilter == "undefined")||(jobFilter===this.elements[eIdx].link)) myResult += this.elements[eIdx].toString(true) +'\n';
 	}
@@ -371,14 +406,17 @@ xMap.getDefaultContent=function(targetGroup,contentString){
 	switch (targetGroup.type){
 	case	'dialog':
 	case	'sound':
-		result=new nas.AnimationDialog(targetGroup,contentString);
+		result=new nas.AnimationDialog(targetGroup,"");
 	break;
 	case	'cell':
 	case	'replacement':
 	case	'still':
 		result=new nas.AnimationReplacement(targetGroup,contentString);
 	break;
+	case	'camera':
 	case	'camerawork':
+		result=new nas.AnimationCamerawork(targetGroup,"");
+	break;
 	case	'geometry':
 		result=new nas.AnimationGeometry(targetGroup,contentString);
 	break;
@@ -412,19 +450,43 @@ xMap.getDefaultContent=function(targetGroup,contentString){
  *EG.getValue	,値オブジェクトの取得
  */
 
-/*
+/**
+ *	@summary
+ * xMapオブジェクト総合エレメントコレクションにエレメントを登録する
+ *
+ * @params {String} myName
+ * @params {String or Object nas.xMapGroup} myOption
+ * @params {Object nas.Pm.ProductionJob} myLink
+ * @returns {Object nas.xMapGroup or nas.xMapElement}
+ *
+ *	@description
+ *<pre>
  *	エレメント作成メソッド
  *		継承セットアップ・コレクション登録処理を同時に設定
- *グループ作成
+ *  グループ作成
  *	new_xMapElement(name,type,Object nas.Pm.ProductionJob);//名前,タイプ文字列,リンクするジョブを引数にする
- *戻り値：グループオブジェクト
+ * 戻り値：グループオブジェクト
+ *	インデックスナンバを生成してxMapのコレクションにメンバーグループを登録
  *
- *エレメント作成
+ * エレメント作成
  *	new_MapElement(name,Object xMapGroup,Object Job);//名前,継承する親グループ,リンクするジョブを引数にする
- *戻り値：エレメントオブジェクト
- *	インデックスナンバを生成してMap.elementGroups[name]にグループエレメントを登録する
+ * 戻り値：エレメントオブジェクト
+ *	インデックスナンバを生成してxMapのコレクションにメンバーエレメントを登録
+ *　更に引数のxMapElementGroupにメンバーエレメントを登録する
  *
- *例：test
+ *　@example
+ * var myMap=new xMap();
+ * 	var myLine	=	myMap.new_ProductionLine("trunk");//ライン初期化
+ * 	var myStage	=	myMap.new_ProductionStage("layout",myLine)//ステージを初期化
+ * 	var myJob	=	myMap.new_Job("",myStage)//第一ジョブを初期化
+ * 	
+ *  var groupA	=	myMap.new_xMapElement("A"	,"cell"	,myJob);//グループ作成-連結するジョブが必要
+ * 
+ *  var A1		=	myMap.new_xMapElement("A-1"	,groupA	,myJob);//B.name;
+ *  myMap.getElementByName("A");
+ *</pre>
+ */
+ /* TEST :
  var myMap=new xMap();
  	var myLine	=	myMap.new_ProductionLine("trunk");//ライン初期化
  	var myStage	=	myMap.new_ProductionStage("layout",myLine)//ステージを初期化
@@ -434,9 +496,6 @@ xMap.getDefaultContent=function(targetGroup,contentString){
  
  var A1		=	myMap.new_xMapElement("A-1"	,groupA	,myJob);//B.name;
  myMap.getElementByName("A");
- *
- *
- *	
  */
 xMap.prototype.new_xMapElement = function (myName,myOption,myLink,contentSource){
 	if(! (myLink instanceof nas.Pm.ProductionJob)) return false;
@@ -457,7 +516,7 @@ xMap.prototype.new_xMapElement = function (myName,myOption,myLink,contentSource)
     system  :
         
     エレメントの作成には必ずこのルーチンを通してエレメントストアの管理を行うこと
-    エレメントの削除は単独のエレメントのメソッドで行う
+    エレメントの削除は個々のエレメントのremoveメソッドで行う
     ガベージコレクションはストアオブジェクトのメソッドにする
 */
 //		if(!(String(myOption).match( /(timing|replacement|cell|camera(work)?|geometry|sfx|composite|effect|sound|system|text|xps|still)/i ))) myOption = "cell";
@@ -505,9 +564,16 @@ xMap.prototype.new_xMapElement = function (myName,myOption,myLink,contentSource)
     			newElement.content=new nas.AnimationComposite(newElement,contentSource);
 			}
 		break;
-		case "geometry":
 		case "camera":
 		case "camerawork":
+    			newElement.content=new nas.AnimationCamerawork(newElement,contentSource);
+/*			if( contentSource instanceof nas.AnimationCamerawork ){
+    			newElement.content=contentSource;
+    		}else{
+    			newElement.content=new nas.AnimationCamerawork(newElement,contentSource);
+    		}*/
+		break;
+		case "geometry":
 			if( contentSource instanceof nas.AnimationGeometry ){
     			newElement.content=contentSource;
     		}else{
@@ -946,15 +1012,12 @@ var currentElement     		 ;//個別エントリー
 var elementDescription =[]   ;//個別エントリの記述バッファ　行ごとの配列
 
 	elementDescription.flush=function(){
+console.log('called : '+this.length);
 		if(this.length){
-			
-//			currentElement.text = this.join;('\n');
 			currentElement.setData(this.join('\n'));
-
-
 			newMap.elementStore.add(currentElement);
 			currentGroup.elements.add(currentElement);
-//console.log(currentElement.text);
+console.log(this.join('\n'));
 		}
 		this.length = 0;
 	}
@@ -971,7 +1034,7 @@ var elementDescription =[]   ;//個別エントリの記述バッファ　行ご
 		}
 		//なぜだかナゾなぜに一文字多いのか?
 //テキストディスクリプション取得時以外の　#コメントと空行をスキップに変更
-		if(((currentGroup)&&(! currentGroup.type.match(/dialog|sound|text/)))&&(SrcData[line].match(/(^#[^#]|^\s*$)/))) continue;
+		if(((currentGroup)&&(! currentGroup.type.match(/dialog|sound|text|camera|camerawork/)))&&(SrcData[line].match(/(^#[^#]|^\s*$)/))) continue;
 //			シートプロパティにマッチ
 //			ライン記述を先行評価
 		if(SrcData[line].match(/^##([^=]+)=?(.*)$/)){
@@ -1185,18 +1248,27 @@ console.log(innerContent);
 //console.log("X--:\t"+RegExp.$1+" :"+currentJob+"/"+currentStage+"/"+currentLine)
 				if(currentJob instanceof nas.Pm.ProductionJob){
 					elementDescription.flush();
-
 					var groupDescription= innerContent.split('\t');
 console.log(line+":detect elementGroup :"+ groupDescription.slice(0,2)+"\tjob as: "+currentJob.getPath()+"<<<end");
+console.log(SrcData[line]);
+/* 管理メソッドを使用してidを保持できるようにすること
 					currentGroup = new nas.xMapGroup(
 						groupDescription[0],
 						(groupDescription[1])?groupDescription[1]:'cell',
 						currentJob,
 						SrcData[line]
 					);
+*/
+					currentGroup = newMap.new_xMapElement(
+						groupDescription[0],
+						(groupDescription[1])?groupDescription[1]:'cell',
+						currentJob,
+						SrcData[line]
+					);
+					
 					//currentGroup.text=SrcData[line];
+console.log(currentGroup);
 					newMap.elementGroups.add(currentGroup);
-
 					currentElement=undefined;
 					elementDescription.length=0;
 					if(groupDescription.length>2){
@@ -1206,9 +1278,6 @@ console.log('追加属性 :' + groupDescription.slice(2) );
 					//グループのタイプに従って追加属性のセットアップを同時に行う
 					//グループ内のデフォルト値保持用のテンプレートコンテンツの属性として追加
 					//これ以降の追加属性の設定は、現行のエレメントがnullの場合グループの属性　エレメントが宣言された後は現行エレメントの追加属性となるXX
-
-
-
 					}
 				} 
 				continue;
@@ -1230,24 +1299,27 @@ content-type=text 以外の空白行　*要注意* 空白行を認めるContent-
 // console.log(line+": commentLine :"+SrcData[line]);
 	 			continue;
 			};//commentSkip
+console.log(SrcData[line]);
 //	マップエントリパーサ
-//この場では振り分けのみを行い、実際のパースは外部メソッドに委ねる
+//この場では振り分けのみを行い、実際のパースは値オブジェクトのメソッドに委ねる
  			if(currentJob instanceof nas.Pm.ProductionJob){
-				if (SrcData[line].match(/^(\S+)\t(\S+)(\t([^\t]+)(\t([^\t]+))?)?$/)){
+				if (
+					(SrcData[line].indexOf(currentGroup.name+'\t')==0)&&
+					(SrcData[line].match(/^(\S+)\t(\S+)(\t([^\t]+)(\t([^\t]+))?)?$/))
+				){
 				// xMapエレメント エントリー行 /^(<groupId>)\t(<elementId>)(\t(<elementProp>)(\t(commentString))?)?$/
 					var groupName = RegExp.$1; var entryName = RegExp.$2;
 					var props     = RegExp.$4; var comment   = RegExp.$6;
-
-					elementDescription.flush();
-
+//console.log([groupName ,currentGroup.name]);
 					if(groupName == currentGroup.name){
+						elementDescription.flush();
 						currentElement = new nas.xMapElement(entryName,currentGroup,currentJob,SrcData[line]);
 console.log(line + ': detect xMapElement :'+groupName +' : '+entryName );
 						elementDescription.push(SrcData[line]);
 					}
 				}else{
 				// グループ/エレメント プロパティ定義行
-//console.log(line + ' :set element properties :' + SrcData[line])
+console.log(line + ' :detect element properties :' + SrcData[line])
 					if(currentElement){
 						elementDescription.push(SrcData[line]);
 					}else{
@@ -1272,8 +1344,7 @@ return newMap;
  *	書き出しの際は  保持しているLine/Stage/Jobは全て書き出す
  *	ブランチは、オブジェクト自体をブランチオブジェクトに設定してそのオブジェクトの書き出しを行うこと
  */
-xMap.prototype.toString= function()
-{
+xMap.prototype.toString= function(){
 	var Now=new Date();
 //セパレータ文字列
 	var	bold_sep='\n#';
@@ -1332,12 +1403,14 @@ for (var lidx=0;lidx<this.lines.length;lidx++){
 //JobLoop
 		for (var jidx=0;jidx<this.lines[lidx].stages[sidx].jobs.length;jidx++){
 			var currentJob = this.lines[lidx].stages[sidx].jobs[jidx];
+console.log([lidx,sidx,jidx].join(':') +" >> "+ currentJob.name)
 			result+=currentJob.toString();
 			
 				for(var gidx=0;gidx<this.elementGroups.length;gidx++){
 					if(this.elementGroups[gidx].link!==currentJob){
 						continue;
 					}else{
+console.log(this.elementGroups[gidx]);
 						var currentGroup=this.elementGroups[gidx];
 						result+=currentGroup.toString();//groupがエレメントの出力を内包しているのでここで最終出力
 					}
