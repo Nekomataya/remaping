@@ -7656,7 +7656,7 @@ console.log('Application server-onsite');
     $('#headerLogo').hide();
     $('#headerRepository').hide();
     $('#account_box').hide();
-    xUI.shiftScreen(50,50);
+//    xUI.shiftScreen(50,50);//旧UIでは不要
 
 //  サーバ指定のフレームレートが存在する場合は最優先で取得してデフォルト値を設定する
         var frtString=$("#backend_variables").attr("data-frame_rate");
@@ -8126,8 +8126,7 @@ case    "AIR":
 //        if((window.navigator.platform).indexOf("Win")>=0){$("#pMenu").hide()};
 break;
 case "CEP":
-//    window.parent.psHtmlDispatch();
-    xUI.shiftScreen(50,50);
+//    window.parent.psHtmlDispatch();    xUI.shiftScreen(50,50);
 case    "CSX":
 //tableメニュー表記
         $("tr#airMenu").each(function(){$(this).hide()});
