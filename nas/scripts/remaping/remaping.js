@@ -6194,7 +6194,7 @@ xUI.storeDocument=function(mode){
                     callEcho();//ダウンロード保存
                 }else{
                     serviceAgent.addEntry(xUI.XPS,function(){
-                        var myIdentifier = Xps.getIdentifier(xUI.XPS,false);
+                        var myIdentifier = Xps.getIdentifier(xUI.XPS,'job');
                         serviceAgent.currentRepository.getSCi(function(){
                             serviceAgent.currentRepository.getEntry(myIdentifier);
                         },false,myIdentifier);

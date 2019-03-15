@@ -1129,6 +1129,13 @@ select	{text-align:center;}
 .v_bar	{color:blue;border-style:solid;border-color:blue;border-width:0 1px 0 0;padding:0;margin:0;}
 .v_wave	{height:11px;padding:0;margin:0;}
 line  {margin:0;padding:0;}
+.rotate {
+	display: inline-block;     /* インラインブロック化 */
+	-webkit-transform-origin: 50% 50%; /* Chrome,Safari */
+	-ms-transform-origin:     50% 50%; /* IE */
+	transform-origin:         50% 50%; /* CSS3 */
+	transform: rotate( 90deg );
+}
 /* */
 td#title {
 	font-weight:900;
