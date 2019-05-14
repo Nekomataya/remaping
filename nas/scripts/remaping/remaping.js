@@ -188,14 +188,26 @@ xUI.importBox.read = function (targetFiles,callback){
       reader.addEventListener('load', function(e) {
         var output = reader.result;//
         xUI.data_well.value = reader.result;//最後に読み込んだ内容で上書きされるので注意
-console.log(reader);
+//console.log(reader);
         var myXps = xUI.convertXps(reader.result,divideExtension(reader.name)[1],xUI.importBox.overwriteProps);// 指定オプション無しで一旦変換する
- console.log(myXps);
         if(!myXps){
             alert(reader.name+' is not supported format');
         }
-        xUI.importBox.importTarget.parseXps(myXps.toString());
-        xUI.resetSheet();
+        if((xUI.uiMode == 'production')&&(xUI.importBox.importTarget===xUI.XPS)){
+            if( (xUI.XPS.xpsTracks.duration != myXps.xpsTracks.duration)||
+                (xUI.XPS.xpsTracks.length != myXps.xpsTracks.length)
+            ) xUI.reInitBody(myXps.xpsTracks.length,myXps.xpsTracks.duration);
+            xUI.selection();xUI.selectCell([0,0]);
+            xUI.put(myXps.getRange());
+        }else{
+            if((xUI.uiMode != 'floating')&&(xUI.importBox.importTarget===xUI.XPS)){
+                xUI.resetSheet(myXps);
+                xUI.setUImode('floating');
+            }else{
+                xUI.importBox.importTarget.parseXps(myXps.toString());
+                xUI.resetSheet();
+            }
+        }
       }, true);
       // ファイルの内容をテキストとして取得
         reader.readAsText(input, myEncode);
@@ -460,9 +472,7 @@ console.log([datastream,optionString,overwriteProps,streamOption]);
             //TVPaint csv
         break;
         case    (/^\"Frame\",/).test(datastream):
-console.log(datastream);
-            datastream =StylosCSV2XPS(datastream);//ボタン動作を自動判定にする 2015/09/12 引数は使用せず
-console.log(datastream);
+            datastream =StylosCSV2XPS(datastream,0);//ボタン動作を自動判定にする 2015/09/12 引数は使用せず
         break;
         case    (/^\{[^\}]*\}/).test(datastream):;
             try{datastream =ARDJ2XPS(datastream);console.log(datastream);}catch(err){console.log(err);return false;};
@@ -9348,7 +9358,7 @@ window.addEventListener('DOMContentLoaded', function() {
     }
 });//window.addEvent
 
-/**
+/*
 りまぴん用インポート処理関数
 トリガーはファイルトレーラーの変更
 複数ファイルの場合はファイル名でデータを補ってカレントリポジトリに一括送信（管理モードでのみ実行）
@@ -9362,9 +9372,14 @@ browsing    load/Floationg setUImode('floationg')
 production  import/currentStatus
 
 
-    
-*/
+xUIの状況を確認して必要に従ってimportDocumentを呼ぶ  
+ */
+/**
+ *  @paramas    {boolean}   autoBuffer
+ *      
+ */
 var processImport=function(autoBuffer){
+    
     if(typeof autoBuffer == 'undefined') autoBuffer = true;
   if(autoBuffer){
 //        コンバート済みデータが格納されている配列はxUI.importBox.selectedContents
@@ -9374,7 +9389,7 @@ var processImport=function(autoBuffer){
             console.log(xUI.importBox.selectedContents[dix].toString());
         }
     }else{
-        if((document.getElementById('loadTarget').value != 'ref')&&(xUI.uiMode=='production')&&(xUI.sessionRetrace == 0)){
+        if((document.getElementById('loadTarget').value != 'ref')&&(xUI.uiMode == 'production')&&(xUI.sessionRetrace == 0)){
 //インポート時 undoが必要なケースでは xUI.putに渡す
             xUI.put(xUI.importBox.selectedContents[0]);
         }else{
@@ -9392,7 +9407,21 @@ console.log('body');
      var loading=false;
     if(document.getElementById('loadTarget')!='ref'){
 console.log('>>body')
-        loading=xUI.XPS.readIN(xUI.data_well.value);
+        if(xUI.uiMode == 'production'){
+            var tempDocument = new Xps();
+            tempDocument.readIN=xUI._readIN;
+            tempDocument.readIN(xUI.data_well.value);
+            if(tempDocument){
+                if( (xUI.XPS.xpsTracks.duration != tempDocument.xpsTracks.duration)||
+                    (xUI.XPS.xpsTracks.length != tempDocument.xpsTracks.length)
+                ) xUI.reInitBody(tempDocument.xpsTracks.length,tempDocument.xpsTracks.duration);
+                xUI.selection();xUI.selectCell([0,0]);
+                xUI.put(tempDocument.getRange());
+                return ;
+            }
+        }else{
+            loading=xUI.XPS.readIN(xUI.data_well.value);
+        }
     }else{
 console.log('>>ref')
         loading=xUI.referenceXPS.readIN(xUI.data_well.value);
@@ -9404,10 +9433,7 @@ console.log('>>ref')
     }
   }
       if(xUI.uiMode=='browsing') {xUI.setUImode('floating')};
-//      xUI.sWitchPanel('Data');
-
 }
-
 /*
 	テンプレートを利用したeps出力
 テンプレートは、サーバ側で管理したほうが良いのだけど  一考

@@ -566,23 +566,28 @@ console.log(myXps);
 	シートの初期化時点ではBG,BOOK類の挿入を行わず、ラベル初期化の際に該当位置へ挿入を行う
 */
 	var insertStill = true;
-	var trackOffset = 0;
+	var trackOffset = (soundTracks.length)? 0:1;
 //ダイアログラベル転記
-	for (var ix = 0 ; ix < soundTracks.length ;ix ++){
-		myXps.xpsTracks[ix].id = soundTracks[ix];
+//xdtsでサウンドトラックがない場合は、バルクのトラックを一つ追加する
+	if(soundTracks.length == 0){
+		myXps.xpsTracks[0].id = 'N.';
+	}else{
+		for (var ix = 0 ; ix < soundTracks.length ;ix ++){
+			myXps.xpsTracks[ix].id = soundTracks[ix];
+		}
 	}
-	trackOffset = soundTracks.length;
+	trackOffset += soundTracks.length;
 //タイミングラベル転記
 	for (var ix = 0 ; ix < replacementTracks.length ;ix ++){
 console.log(trackOffset+ix);
 		myXps.xpsTracks[trackOffset+ix].id = replacementTracks[ix];
 	}
-	trackOffset = soundTracks.length+replacementTracks.length;
+	trackOffset += replacementTracks.length;
 //カメラワークラベル転記
 	for (var ix = 0 ; ix < cameraworkTracks.length ;ix ++){
 		myXps.xpsTracks[trackOffset+ix].id = cameraworkTracks[ix];
 	}
-	trackOffset = soundTracks.length+replacementTracks.length;
+//	trackOffset = soundTracks.length+replacementTracks.length;
 
 
 /* フィールドスキャン
@@ -595,6 +600,7 @@ console.log(trackOffset+ix);
 			var trackOption = (["timing",'','','sound','','camerawork'])[fieldKind];//相当するxpsTrackOptionに割当
 			for (var tx = 0 ; tx< myTDTS.timeTables[sheetID].fields[fx].tracks.length ; tx++){
 				var trackId = tx;
+				if(soundTracks.length == 0) trackId ++;//
 				if (fieldKind == 0){
 					trackId += soundTracks.length;
 				} else if (fieldKind == 5){
