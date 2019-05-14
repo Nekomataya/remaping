@@ -57,7 +57,7 @@
     xUI.importBox.overwriteProps    ={};
     xUI.importBox.maxSize  = 1000000;
     xUI.importBox.maxCount = 10;
-    xUI.importBox.allowExtensions=new RegExp("\.(txt|csv|xps|ard|ardj|tsh)$",'i');
+    xUI.importBox.allowExtensions=new RegExp("\.(txt|csv|xps|ard|ardj|tsh|xdts|tdts)$",'i');
 
 xUI.importBox.reset = function(){
     this.targetContents    =[];
@@ -189,10 +189,13 @@ console.log(xUI.importBox);
     optionTrailer が与えられない場合は書き直しは行われない
 */
 xUI.importBox.resetTarget= function(dataTrailer,optionTrailer){
+console.log(optionTrailer);
     if (optionTrailer){
       document.getElementById('optionPanelSCI_title').value    = optionTrailer.title;
-      document.getElementById('optionPanelSCI_opus').value     = optionTrailer.episode;
-      document.getElementById('optionPanelSCI_subtitle').value = optionTrailer.description;
+      if(optionTrailer.episode)     document.getElementById('optionPanelSCI_opus').value     = optionTrailer.episode;
+      if(optionTrailer.opus)        document.getElementById('optionPanelSCI_opus').value     = optionTrailer.opus;
+      if(optionTrailer.description) document.getElementById('optionPanelSCI_subtitle').value = optionTrailer.description;
+      if(optionTrailer.subtitle)    document.getElementById('optionPanelSCI_subtitle').value = optionTrailer.subtitle;
     } else {
       document.getElementById('optionPanelSCI_title').value    = dataTrailer[0].xps.title;
       document.getElementById('optionPanelSCI_opus').value     = dataTrailer[0].xps.opus;
@@ -231,17 +234,17 @@ xUI.importBox.resetTarget= function(dataTrailer,optionTrailer){
     document.getElementById('optionPanelSCI_title').value    = String(optionTrailer[prp]);
     document.getElementById('optionPanelSCI_title').disabled = true;
                 break;
-                case "episode":
+                case "opus":
     document.getElementById('optionPanelSCI_opus').value    = String(optionTrailer[prp]);
     document.getElementById('optionPanelSCI_opus').disabled = true;
                 break;
-                case "description":
+                case "subtitle":
     document.getElementById('optionPanelSCI_subtitle').value    = String(optionTrailer[prp]);
     document.getElementById('optionPanelSCI_subtitle').disabled = true;
                 break;
-                case "cut":
+                case "sci":
      if(dataTrailer.length==1){
-        document.getElementById('optionPanelSCI_01_sc').value    = String(optionTrailer[prp]);
+        document.getElementById('optionPanelSCI_01_sc').value    = String(optionTrailer[prp].cut);
         document.getElementById('optionPanelSCI_01_sc').disabled = true;
     }
                 break;
@@ -373,6 +376,10 @@ convertXps=function(datastream,optionString,overwriteProps,streamOption){
         switch (true) {
         case    (/^nasTIME-SHEET\ 0\.[1-5]/).test(datastream):
 //    判定ルーチン内で先にXPSをチェックしておく（先抜け）
+        break;
+        case    (/^((toei|exchange)DigitalTimeSheet Save Data\n)/).test(datastream):
+            datastream =TDTS2XPS(datastream);
+            //ToeiDigitalTimeSheet / eXchangeDigitalTimeSheet
         break;
         case    (/^UTF\-8\,\ TVPaint\,\ \"CSV 1\.[01]\"/).test(datastream):
             datastream =TVP2XPS(datastream);

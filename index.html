@@ -231,12 +231,12 @@ serviceAgent.pushEntry(xUI.XPS,function(){xUI.setStored("current");sync();
 <!-- 旧ドキュメントメニュー -->
 <li id=dMcgi><span id=pMimportDatas-d class='pM pM-alt'>Open</span><A id=pMimportDatas
 	href="javascript:void(0);"
-	onclick="xUI.openDocument('body');return false;"
+	onclick="xUI.importDocument('body');return false;"
 	title="ローカルドキュメントを開く"
 >Open</A></li>
 <li id=dMair><span id=pMopenFS-d class='pM pM-alt'>Open</span><A id=pMopenFS
 	href="javascript:void(0);"
-	onclick="fileBox.openFileDB();return false;"
+	onclick="xUI.importDocument;return false;"
 	title="ローカルドキュメントを開く(ファイル)"
 >Open</A></li>
 <li id=dMair><span id=pMsaveFS-d class='pM pM-alt'>Save</span><A id=pMsaveFS
@@ -2586,9 +2586,10 @@ onclick='nas.incrFCTonHTMLInput(document.getElementById("editTC"),"-(1)")'
 	このエリア上で直接編集してもかまいません。
 	…[tab]は、入力できないかもしれませんが。
 */
+<input type=hidden id=loadShortcut    value=false>
 
 -->
-<input type=hidden id=loadShortcut    value=false>
+<input type=hidden id=loadTarget    value=true>
 <div style="text-align:center;">
 <span id=localFileLoader>
 <form id="dataLoader" name="dataLoader" method="post" action="javascript:void(0);" enctype="multipart/form-data">

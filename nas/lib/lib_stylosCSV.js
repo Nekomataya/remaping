@@ -1,8 +1,10 @@
 ﻿/**
- *    @fileoverview StylosCSV2XPS(CSVStream,spcFolder,dialogFolder)
- *
- *    stylos CSVファイルをXPS互換テキストにコンバートする
- *    CLIP STUDIP PAINT(以下 CSPと略) CSV ファイルをサポートする
+ *    @fileoverview
+ *  セルシスのRetas!Pro　スタイロスの出力するCSVデータの入出力をサポートするライブラリ
+ *  CLIP STUDIP PAINT(以下 CSPと略) CSV ファイルをサポートする
+ */
+ 
+/*    
  *    引き数は、CSVデータのテキストストリーム
  *    書式は限定的で、スタイロスまたはCLIP STUDIO PAINT （以下CSP）の書き出す形式に準じていなくてはならない。
  *    データフィールドは必ず二重引用符でくくる
@@ -50,44 +52,50 @@
  *
  * 音声トラックを認識した場合　セルラベルで内容を初期化する機能を追加する　RETASとの整合性をチェックすること
  * 1枚画像でセルラベルがトラックラベルと一致した場合に置き換え用途のダミーと置き換える機能が必要
- * 
- * @param CSVStream
- * @param spcFolder
- * @param dialogFolder
- * @returns {boolean}
+ */
+/** 
+ *    stylos CSVファイルをXPS互換テキストにコンバートする
+ *  
+ * @param {String}  CSVStream
+ *      CSVソース文字列
+ * @param {Array of String}  spcFolder
+ *      変換対象　eg.'LO','原画','動画' ...etc<br>
+ *      省略可　読み込むフォルダをIDまたはフォルダ名で指定<br>複数指定の場合は配列で与える<br>省略時はいちばん上のフォルダ
+ * @param {String}  dialogFolder
+ *      省略可　台詞として読み込むフォルダをIDまたはフォルダ名で指定<br>複数指定の場合は配列で与える<br>省略時は自動判定
+ * @returns {String}
+ *      Xps互換ストリームデータ
  */
 function StylosCSV2XPS(CSVStream, spcFolder, dialogFolder) {
-    /**
+    /*
      * データ冒頭のみチェックして明確に違うストリームの場合はエラーを返す
      */
     if (!CSVStream.match(/^\"Frame\",/)) {
         return false;
     }
-    /**
+    /*
      * CSVデータをオブジェクト化する
-     * @type {{}}
      */
     myStylosCSV = {};
-    /**
+    /*
      * ラインで分割して配列に取り込み
      * ここではデータフィールドに改行は含まれないことを前提としているのでデータ形式に注意
-     * @type {Array}
      */
     myStylosCSV.SrcData = [];
     if (CSVStream.match(/\r/)) {
         CSVStream = CSVStream.replace(/\r\n?/g, ("\n"));
     }
     var CSVRecords = CSVStream.split("\n");
-    /**
+    /*
      * レコード数が3以下(=<2)の場合は、処理可能なフレームがないので不正データ
      */
     if (CSVRecords.length < 3) {
         return false
     }
-    /**
+    /*
      * 各ラインを更にテキストの配列に分解 空行のみのエントリを廃棄
      * フィールド数が異なるレコードが含まれていた場合は、不正データとみなす
-     * @type {Number}
+     * 
      ここで簡易的にパースしているが、本式のcsvパーサがほしい
      ただし、スタイロス||クリップスタジオペイントのcsvは
      フィールド中に改行が含まれない
@@ -100,13 +108,12 @@ function StylosCSV2XPS(CSVStream, spcFolder, dialogFolder) {
         if (CSVRecords[idx].length == 0) {
             continue;
         }
-//        myStylosCSV.SrcData.push(CSVRecords[idx].split(","));//ここでsplitしているだけなので["]が両端に残る
         myStylosCSV.SrcData.push(JSON.parse("["+CSVRecords[idx]+"]"));//レコードごとにJSON.parseで配列化する。
         if (myStylosCSV.SrcData[myStylosCSV.SrcData.length - 1].length != fieldCount) {
             return false;
         }
     }
-    /**
+    /*
      * 第一第二レコードをチェックしてフォルダ情報テーブルを作る
      * @type {Array}
      */
@@ -132,18 +139,18 @@ function StylosCSV2XPS(CSVStream, spcFolder, dialogFolder) {
         }
     }
     if(currentStageIdx == 0){
-// ドキュメントルートにステージが得られなかったので動画ステージとして全体を反転して空のタイアログを挿入する
+// ドキュメントルートにステージが得られなかったので動画ステージとして全体を反転して空のdialogトラックを挿入する
                 myStylosCSV.folders[currentStageIdx].reverse();        
     }
     myStylosCSV.folders.reverse();
 
 console.log(myStylosCSV)
-    /**
+    /*
      * ！！タイムシートの左端から（タイムライン下から/ ドキュメント下から）順のテーブルにするために反転！！
      * @type {number}
      */
     myStylosCSV.frameDuration = myStylosCSV.SrcData.length - 2;
-    /**
+    /*
      * フレーム継続数 全ライン数-(ヘッダ行,ラベル行)
      * 引数を処理
      * 変換対象テーブルを構築　フォルダラベルはステージ相当のため転記できないのでタイムラインのIDでスタックする
@@ -174,7 +181,7 @@ console.log(myStylosCSV)
                 }
             }
         }
-        /**
+        /*
          * 最終的にターゲットが存在しなかった場合(エントリ数 0)は自動変換モードへ移行
          */
     }
@@ -185,13 +192,13 @@ console.log(myStylosCSV)
         timingLoop:    for (var ix = 0; ix < spcFolder.length; ix++) {
             for (var fx = 0; fx < myStylosCSV.folders.length; fx++) {
                 if (spcFolder[ix] == myStylosCSV.folders[fx].name) {
-                    /**
+                    /*
                      * 引数がラベル(文字列)の場合を優先する。ラベルの場合は完全一致が条件
                      */
                     timingTarget.push(fx);
                     break timingLoop;//ラベル文字列として一致したので処理を次のエントリへ
                 } else {
-                    /**
+                    /*
                      * ラベルとして解決できなかったら、整数にパースしてインデックスで照合
                      */
                     if (parseInt(spcFolder[ix]) == fx) {
@@ -201,7 +208,7 @@ console.log(myStylosCSV)
                 }
             }
         }
-        /**
+        /*
          * 最終的にターゲットが存在しなかった場合(エントリ数 0)は自動変換モードへ移行
          */
     }
@@ -209,7 +216,7 @@ console.log(myStylosCSV)
 
     if (dialogTarget.length == 0) {
         var myDialogRegex = new RegExp("(N\\.?|セリフ|せりふ|台詞|dialog|sound|S\d+)", "i");
-        /**
+        /*
          * 指定がないので自動検索でテーブルを作る
          */
         for (var fidx = 0; fidx < myStylosCSV.folders.length; fidx++) {
@@ -222,7 +229,7 @@ console.log(myStylosCSV.folders[fidx].name);
             }
         }
     } else {
-        /**
+        /*
          * この時点では引数チェックは処理済みフォルダ名で指定を行った場合はここでなく事前にフォルダID配列(dialogTarget)に変換
          */
         for (var fidx = 0; fidx < dialogTarget.length; fidx++) {
@@ -234,11 +241,11 @@ console.log(myStylosCSV.folders[fidx].name);
         }
     }
 
-    /**
+    /*
      * フォルダIDまたはステージ名で指定されたエントリーをピックアップして加える
      */
     if (timingTarget.length == 0) {
-        /**
+        /*
          * 指定がないのでダイアログを除くタイムシート末尾のフォルダのタイムラインを取得
          */
         for (var fidx = myStylosCSV.folders.length - 1; fidx >= 0; fidx--) {
@@ -252,7 +259,7 @@ console.log(myStylosCSV.folders[fidx].name);
             break;
         }
     } else {
-        /**
+        /*
          * 展開時点ではターゲットはフォルダIDの配列に変換済みであること
          */
         for (var fidx = 0; fidx < timingTarget.length; fidx++) {
@@ -263,18 +270,16 @@ console.log(myStylosCSV.folders[fidx].name);
         }
     }
 
-    /**
+    /*
      * ラベル取得
-     * @type {Array}
      */
     myStylosCSV.layerLabel = [];//ラベル配列
     for (var idx = 0; idx < myStylosCSV.convertTable.length; idx++) {
         if ((myStylosCSV.dialogCount) && (idx == 0)) continue;
         myStylosCSV.layerLabel.push(myStylosCSV.SrcData[1][myStylosCSV.convertTable[idx]]);//ダイアログラベル取得
     }
-    /**
-     * XPS互換ストリームに変換
-     * @returns {string}
+    /*
+     * セルシスcsvオブジェクトXPS互換ストリーム出力
      */
     myStylosCSV.toSrcString = function () {
 //	var myLineFeed=nas.GUI.LineFeed;
@@ -290,12 +295,11 @@ console.log(myStylosCSV.folders[fidx].name);
         resultStream += "##TROUT=0+00.,\x22\x22";
         resultStream += myLineFeed;
 
-        /**
+        /*
          * タイムライン種別
-         * @type {string}
          */
         resultStream += "[option\t";
-        /**
+        /*
          * データ状況によってはダイアログ用タイムラインが存在しないので、dialigCount==0の場合は、空のダミータイムラインを作成する
          */
         if (this.dialogCount == 0) {
@@ -309,9 +313,8 @@ console.log(myStylosCSV.folders[fidx].name);
         }
         resultStream += "]";
         resultStream += myLineFeed;
-        /**
+        /*
          * ラベル配置
-         * @type {string}
          */
         resultStream += "[CELL\tN\t";
         for (idx = 0; idx < this.layerLabel.length; idx++) {
@@ -326,7 +329,7 @@ console.log(myStylosCSV.folders[fidx].name);
             if (this.dialogCount == 0) {
                 resultStream += "\t";
             }
-            /**
+            /*
              * コンバートデータにダイアログが存在しない場合のダミー
              */
             if (false) {
@@ -360,19 +363,22 @@ console.log(myStylosCSV.folders[fidx].name);
 }
 
 /**
- * XPS2StylosCSV(myXPS,myReferenceXPS)
- * @param myXPS
- * @param myReferenceXPS
- * @returns {*}
- *
- * 引数はオブジェクトでも、ストリームでも受け付ける。
+ *  Xpsからスタイロス形式のCSVストリームへ変換する
+ *  @param {Object Xps | String} myXPS
+ *      ソースXpsオブジェクト　または　ストリーム
+ *  @param {Object Xps | String}    myReferenceXPS
+ *      第二ソースオブジェクト　またはストリーム
+ *  @returns {String}
+ *      変換済みCsvデータ
+ */
+/* 引数はオブジェクトでも、ストリームでも受け付ける。
  * コンバートするXPSと必要な場合は参照用XPSを加えてスタイロスの書きだすCSVと同じ形式で書き出すことができる。
  * 文字コードのコンバートは特にしていないので、必要なら何か別のコンバート手段を利用してShift-JISに変換されたし。
  * このデータはスタイロスに書き戻せないので、りまぴんでの編集後に書き出す意味はあまりない。
  * 互換データが欲しい場合のみ有効
  */
 function XPS2StylosCSV(myXPS, myReferenceXPS) {
-    /**
+    /*
      * 引数がソースであっても処理する。XPSでない場合はfalse
      */
     if (myXPS instanceof Xps) {
@@ -380,14 +386,14 @@ function XPS2StylosCSV(myXPS, myReferenceXPS) {
     } else {
         if ((myXPS instanceof String) && (myXPS.match(/^nasTIME-SHEET/))) {
             var sourceXPS = new Xps();
-            if (!sourceXPS.readIN(myXPS)) {
+            if (!sourceXPS.parseXps(myXPS)) {
                 return false;
             }
         } else {
             return false;
         }
     }
-    /**
+    /*
      * リファレンスXPSがない場合は、カラで親サイズのカラオブジェクトを作る（親XPSのコピーのほうが良いか？）
      */
     if (myReferenceXPS instanceof Xps) {
@@ -399,79 +405,109 @@ function XPS2StylosCSV(myXPS, myReferenceXPS) {
                 return false;
             }
         } else {
-//            var referenceXPS = myXPS;//複製
-//            var referenceXPS = new Xps(myXPS.layers.length, myXPS.duration());//カラオブジェクト
-            var referenceXPS = new Xps(myXPS.xpsTracks.length-2, myXPS.duration());//カラオブジェクト
+            var referenceXPS = new Xps(sourceXPS.xpsTracks.length-2, sourceXPS.duration());//カラオブジェクト
         }
     }
-    /**
+    /*
      * リファレンスXPSのサイズが本体シートに満たない場合はサイズを拡張する
      */
-    if ((myReferenceXPS.xpsTracks.length < myXPS.xpsTracks.length) ||
-        (myReferenceXPS.duration() < myXPS.duration())) {
-        myReferenceXPS.reInitBody(myXPS.xpsTracks.length, myXPS.duration());
+    if (referenceXPS.duration() < sourceXPS.duration()) {
+        referenceXPS.reInitBody(referenceXPS.xpsTracks.length, sourceXPS.duration());
     }
-    /**
+    /*
      * コンバートする
-     * @type {Array}
      */
     var myStylosCSV = [];
-//    myStylosCSV.recordCunt = myXPS.layers.length * 2 + 2;//(レイヤ数×２＋フレームカウント＋セリフ)
-    myStylosCSV.recordCunt = (myXPS.xpsTracks.length - 2) * 2 + 2;//(トラック数×２＋フレームカウント＋セリフ)
-    /*　ここは見直しが必要　タイミングトラックをそれぞれのXpsごとにカウントして処理するルーチンを書くこと　2016 10 23*/
-    /**
+    myStylosCSV.frmCount    = 1;//フレームカウント用トラック
+    myStylosCSV.refCount    = 0;//原画トラックカウント
+    myStylosCSV.dialogCount = 0;//セリフトラックカウント
+    myStylosCSV.bodyCount   = 0;//動画トラックカウント
+//コンバート対象のトラックをカウントする リファレンスシートの置き換えトラック数＋対象シートのセリフ及び置き換えトラック数＋フレームカウントトラック
+    for (var trks = 0; trks< sourceXPS.xpsTracks.length-1;trks ++){
+        if (sourceXPS.xpsTracks[trks].option.match(/dialog|sound/i)){myStylosCSV.dialogCount++}
+    }
+    for (var trks = 0; trks< sourceXPS.xpsTracks.length-1;trks ++){
+        if (sourceXPS.xpsTracks[trks].option.match(/timing|cell/i)){myStylosCSV.bodyCount++}
+    }
+    for (var trks = 0; trks< referenceXPS.xpsTracks.length-1;trks ++){
+        if (referenceXPS.xpsTracks[trks].option.match(/timing|cell/i)){myStylosCSV.refCount++}
+    }
+//    myStylosCSV.recordCunt = (myXPS.xpsTracks.length - 2) * 2 + 2;//(トラック数×２＋フレームカウント＋セリフ)
+    /*　ここは見直しが必要　タイミングトラックをそれぞれのXpsごとにカウントして処理するルーチンを書くこと　2016 10 23
+        変更（2019.0514）
+    */
+    
+    /*
      * 第一レコードを作る
-     * @type {Array}
      */
     var currentRecord = [];
     currentRecord.push('"Frame"');
     currentRecord.push('"原画"');
-    for (var LC = 0; LC < myXPS.xpsTracks.length - 2; LC++) {
+    for (var LC = 1; LC < myStylosCSV.refCount; LC++) {
         currentRecord.push('""');
     }
     currentRecord.push('"台詞"');
+    for (var LC = 1; LC < myStylosCSV.dialogCount; LC++) {
+        currentRecord.push('""');
+    }
     currentRecord.push('"動画"');
-    for (var LC = 0; LC < myXPS.xpsTracks.length - 2; LC++) {
+    for (var LC = 1; LC < myStylosCSV.bodyCount; LC++) {
         currentRecord.push('""');
     }
     myStylosCSV.push(currentRecord.join(","));
-    /**
+    /*
      * 第二レコードを作る
      * @type {Array}
      */
     currentRecord = [];
-    currentRecord.push('""');
-    for (var LC = 1; LC < myXPS.xpsTracks.length - 1; LC++) {
-        if (LC < referenceXPS.xpsTracks.length) {
+    currentRecord.push('""');//フレームカウント
+    for (var LC = 1; LC < referenceXPS.xpsTracks.length - 1; LC++) {
+        if (referenceXPS.timeline(LC).option.match(/timing|cell/i)) {
             currentRecord.push('"' + referenceXPS.timeline(LC).id + '"');
-        } else {
-            currentRecord.push('""');
         }
     }
-    currentRecord.push('""');//セリフトラック分
-    for (var LC = 1; LC < myXPS.xpsTracks.length-1; LC++) {
-        currentRecord.push('"' + sourceXPS.timeline(LC).id + '"');
+//    currentRecord.push('""');//セリフトラック分
+    for (var LC = 0; LC < sourceXPS.xpsTracks.length - 1; LC++) {
+        if (sourceXPS.timeline(LC).option.match(/dialog|sound/i)) {
+            currentRecord.push('"' + sourceXPS.timeline(LC).id + '"');
+        }
+    }
+//    currentRecord.push('""');//本体トラック分
+    for (var LC = 1; LC < sourceXPS.xpsTracks.length-1; LC++) {
+        if (sourceXPS.timeline(LC).option.match(/timing|cell/i)) {
+            currentRecord.push('"' + sourceXPS.timeline(LC).id + '"');
+        }
     }
     myStylosCSV.push(currentRecord.join(","));
 
-    /**
-     * ボディデータを流し込む
+    /*
+     *  ボディデータを流し込む
+     *  メモ情報はコンバートできないので削除
      */
     for (var myFrame = 0; myFrame < myXPS.duration(); myFrame++) {
         currentRecord = [];
-        currentRecord.push((myFrame + 1).toString(10));//フレームカウント
-        for (var LC = 1; LC < referenceXPS.xpsTracks.length - 1; LC++) {
-            currentRecord.push('"' + referenceXPS.timeline(LC)[myFrame] + '"');//ダイアログフレームをとばす
+        currentRecord.push('"'+(myFrame + 1).toString(10)+'"');//フレームカウント
+        for (var LC = 0; LC < referenceXPS.xpsTracks.length - 1; LC++) {
+            if(referenceXPS.timeline(LC).option.match(/timing|cell/i)){
+                currentRecord.push('"' + referenceXPS.timeline(LC)[myFrame] + '"');
+            }
         }
-        for (var LC = 0; LC < myXPS.xpsTracks.length - 1 ; LC++) {
-            currentRecord.push('"' + sourceXPS.timeline(LC)[myFrame] + '"');//メモ情報はコンバートできない。
+        for (var LC = 0; LC < sourceXPS.xpsTracks.length - 1 ; LC++) {
+            if(sourceXPS.timeline(LC).option.match(/dialog|sound/i)){
+                currentRecord.push('"' + sourceXPS.timeline(LC)[myFrame] + '"');
+            }
+        }
+        for (var LC = 0; LC < sourceXPS.xpsTracks.length - 1 ; LC++) {
+            if(sourceXPS.timeline(LC).option.match(/timing|cell/i)){
+                currentRecord.push('"' + sourceXPS.timeline(LC)[myFrame] + '"');
+            }
         }
         myStylosCSV.push(currentRecord.join(","));
     }
 
     return myStylosCSV.join("\n");
 }
-/**
+/*
  * 暫定的にXPSストリーム（ソース）で返しているが、オブジェクトのままのほうが良いかもしれない。一考の余地あり？
  * この形式で各フォーマットのコンバータを作って一元化したいが、どうよ？
  * 逆変換も欲しいね。

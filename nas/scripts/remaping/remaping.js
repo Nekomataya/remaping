@@ -188,7 +188,9 @@ xUI.importBox.read = function (targetFiles,callback){
       reader.addEventListener('load', function(e) {
         var output = reader.result;//
         xUI.data_well.value = reader.result;//最後に読み込んだ内容で上書きされるので注意
+console.log(reader);
         var myXps = xUI.convertXps(reader.result,divideExtension(reader.name)[1],xUI.importBox.overwriteProps);// 指定オプション無しで一旦変換する
+ console.log(myXps);
         if(!myXps){
             alert(reader.name+' is not supported format');
         }
@@ -421,6 +423,7 @@ xUI.importBox.checkValue = function(itm){
     
 */
 xUI.convertXps=function(datastream,optionString,overwriteProps,streamOption){
+console.log([datastream,optionString,overwriteProps,streamOption]);
     if(! String(datastream).length ){
         return false;
     }else{
@@ -457,7 +460,9 @@ xUI.convertXps=function(datastream,optionString,overwriteProps,streamOption){
             //TVPaint csv
         break;
         case    (/^\"Frame\",/).test(datastream):
+console.log(datastream);
             datastream =StylosCSV2XPS(datastream);//ボタン動作を自動判定にする 2015/09/12 引数は使用せず
+console.log(datastream);
         break;
         case    (/^\{[^\}]*\}/).test(datastream):;
             try{datastream =ARDJ2XPS(datastream);console.log(datastream);}catch(err){console.log(err);return false;};
@@ -486,7 +491,6 @@ xUI.convertXps=function(datastream,optionString,overwriteProps,streamOption){
       }
         if(! datastream){return false}
     }
-
   if(datastream){
     var convertedXps=new Xps();
     convertedXps.parseXps(datastream);
@@ -6133,7 +6137,7 @@ default    :    return true;
 */
 xUI.openDocument=function(mode){
     if(xUI.uiMode=='production') {mode='localFile';}
-    document.getElementById('loadShortcut').value='true';
+//    document.getElementById('loadShortcut').value='true';
     document.getElementById('loadTarget').value  ='body';
     if(mode=='localFile'){
         if(fileBox.openFileDB){
