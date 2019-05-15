@@ -7340,8 +7340,8 @@ if(dbg)    XPS.getMap(MAP);
 
 if(document.getElementById( "startupContent" )){
          startupDocument=$("#startupContent").text();
-        var dataStart= startupDocument.indexOf("nasMAP-FILE");
-//        var dataStart= startupDocument.indexOf("nasTIME-SHEET");
+//        var dataStart= startupDocument.indexOf("nasMAP-FILE");//テストコード
+        var dataStart= startupDocument.indexOf("nasTIME-SHEET");
         if(dataStart<0){
              startupDocument="";
         }else if(dataStart>0){
