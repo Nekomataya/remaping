@@ -182,7 +182,7 @@ console.log(xUI.importBox);
 //    console.log(xUI.importBox.selectedContents);
 //    for(ix =0 ;ix <xUI.importBox.selectedContents.length;ix++){
 //    console.log(xUI.importBox.selectedContents[ix].toString()+'\n\n');
-    }
+//    }
     $("#optionPanelSCI").dialog("close");
     if(xUI.importBox.callback instanceof Function){
         xUI.importBox.callback();
