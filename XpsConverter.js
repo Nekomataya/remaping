@@ -199,7 +199,6 @@ console.log(optionTrailer);
     if (optionTrailer){
       document.getElementById('optionPanelSCI_title').value    = optionTrailer.title;
       if(optionTrailer.episode)     document.getElementById('optionPanelSCI_opus').value     = optionTrailer.episode;
-      if(optionTrailer.opus)        document.getElementById('optionPanelSCI_opus').value     = optionTrailer.opus;
       if(optionTrailer.description) document.getElementById('optionPanelSCI_subtitle').value = optionTrailer.description;
       if(optionTrailer.subtitle)    document.getElementById('optionPanelSCI_subtitle').value = optionTrailer.subtitle;
     } else {
