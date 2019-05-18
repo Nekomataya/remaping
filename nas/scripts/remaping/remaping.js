@@ -189,7 +189,15 @@ xUI.importBox.read = function (targetFiles,callback){
         var output = reader.result;//
         xUI.data_well.value = reader.result;//最後に読み込んだ内容で上書きされるので注意
 //console.log(reader);
-        var myXps = xUI.convertXps(reader.result,divideExtension(reader.name)[1],xUI.importBox.overwriteProps);// 指定オプション無しで一旦変換する
+//エリアターゲット 
+        var areaTarget = (document.getElementById('loadTarget').value == 'ref')? 0:undefined;
+        var myXps = xUI.convertXps(
+            reader.result,
+            divideExtension(reader.name)[1],
+            xUI.importBox.overwriteProps,
+            false,
+            areaTarget
+        );// 指定オプション無しで一旦変換する
         if(!myXps){
             alert(reader.name+' is not supported format');
         }
@@ -223,11 +231,24 @@ xUI.importBox.read = function (targetFiles,callback){
       reader.addEventListener('load', function(e) {
         var output = reader.result;//
         xUI.data_well.value = reader.result;//最後に読み込んだ内容で上書きされるので注意  20180220
-        var myXps = xUI.convertXps(reader.result,divideExtension(reader.name)[1],xUI.importBox.overwriteProps);// 指定オプション無しで一旦変換する
+//エリアターゲット 
+        var areaTarget = (document.getElementById('loadTarget').value == 'ref')? 0:undefined;
+        var myXps = xUI.convertXps(
+            reader.result,
+            divideExtension(reader.name)[1],
+            xUI.importBox.overwriteProps,
+            false,
+            areaTarget
+        );// 指定オプション無しで一旦変換する
         if(!myXps){
             alert(reader.name+' is not supported format');
         }
-        xUI.importBox.targetContents.push({"name":reader.name,"content":reader.result,"xps":myXps,"checked":true});
+        xUI.importBox.targetContents.push({
+            "name":reader.name,
+            "content":reader.result,
+            "xps":myXps,
+            "checked":true
+        });
         if ( xUI.importBox.importCount == xUI.importBox.targetContents.length ){
             console.log(xUI.importBox.targetContents)
             var firstFile=Xps.parseIdentifier(divideExtension(xUI.importBox.targetContents[0].name)[1]);
@@ -393,23 +414,26 @@ xUI.importBox.checkValue = function(itm){
     document.getElementById('resetSCiTarget').disabled = false;
 }
  /*
-    xUI.convertXps(datastream,optionString,overiteProps,streamOption)
+    xUI.convertXps(datastream,optionString,overiteProps,streamOption,targetOption)
 引数:
-    datestream
+    @params {Staring}    datestream
         コンバート対象のデータ
         基本的にテキストデータ
         バイナリデータの場合は1bite/8bit単位の数値配列として扱う（現在未実装）
-    optionString
+    @params {String}    optionString
         コンバート対象のデータがXPSのプロパティ全てを持たない場合があるので
         最低限のプロパティ不足を補うための指定文字列
         URIencodedIdentifier または TextIdentifierを指定
         通常はこのデータがファイル名の形式で与えられるのでファイル名をセットする
         空白がセットされた場合は、カット番号その他が空白となる
-    overwriteProps
+    @params {Object}    overwriteProps
         コンバータ側で上書きするプロパティをプロパティトレーラーオブジェクトで与える
         インポーター側へ移設予定
-    streamOption
+    @params {boolean}    streamOption
         ストリームスイッチフラグがあればストリームで返す（旧コンバータ互換のため）
+    @params {String}    targetOption
+        コンバート対象になるデータに複数のタイムシートが含まれている場合にその対象データを指定するオプション
+        引数が与えらえない場合は、最後にヒットしたタイムシートを戻す（ステージ指定用）
 
     複数データ用コンバート関数
     内部でparseXpsメソッドを呼んでリザルトを返す
@@ -434,8 +458,8 @@ xUI.importBox.checkValue = function(itm){
 戻値:  Object Xps or XpsStream or false
     
 */
-xUI.convertXps=function(datastream,optionString,overwriteProps,streamOption){
-console.log([datastream,optionString,overwriteProps,streamOption]);
+xUI.convertXps=function(datastream,optionString,overwriteProps,streamOption,targetOption){
+console.log([datastream,optionString,overwriteProps,streamOption,targetOption]);
     if(! String(datastream).length ){
         return false;
     }else{
@@ -456,6 +480,8 @@ console.log([datastream,optionString,overwriteProps,streamOption]);
     }
 // 上書きプロパティ指定がない場合は空オブジェクトで初期化
     if(! overwriteProps){overwriteProps={};}
+// シート指定引数は、存在すればそのままコンバート関数に渡す。存在しない場合はfalse|undefinedを渡す
+
 //データが存在したら、種別判定して、コンバート可能なデータはコンバータに送ってXPS互換ストリームに変換する
 //Xpxデータが与えられた場合は素通し
 //この分岐処理は、互換性維持のための分岐
@@ -463,8 +489,12 @@ console.log([datastream,optionString,overwriteProps,streamOption]);
         case    (/^nasTIME-SHEET\ 0\.[1-5]/).test(datastream):
 //    判定ルーチン内で先にXPSをチェックしておく（先抜け）
         break;
-        case    (/^((toei|exchange)DigitalTimeSheet Save Data\n)/).test(datastream):
+        case    (/^(exchangeDigitalTimeSheet Save Data\n)/).test(datastream):
             datastream =TDTS2XPS(datastream);
+            //ToeiDigitalTimeSheet / eXchangeDigitalTimeSheet
+        break;
+        case    (/^(toeiDigitalTimeSheet Save Data\n)/).test(datastream):
+            datastream =TDTS2XPS(datastream,targetOption);
             //ToeiDigitalTimeSheet / eXchangeDigitalTimeSheet
         break;
         case    (/^UTF\-8\,\ TVPaint\,\ \"CSV 1\.[01]\"/).test(datastream):
@@ -472,7 +502,7 @@ console.log([datastream,optionString,overwriteProps,streamOption]);
             //TVPaint csv
         break;
         case    (/^\"Frame\",/).test(datastream):
-            datastream =StylosCSV2XPS(datastream,0);//ボタン動作を自動判定にする 2015/09/12 引数は使用せず
+            datastream =StylosCSV2XPS(datastream,targetOption);//ボタン動作を自動判定にする 2015/09/12 引数は使用せず
         break;
         case    (/^\{[^\}]*\}/).test(datastream):;
             try{datastream =ARDJ2XPS(datastream);console.log(datastream);}catch(err){console.log(err);return false;};

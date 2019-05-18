@@ -2607,7 +2607,7 @@ onclick='nas.incrFCTonHTMLInput(document.getElementById("editTC"),"-(1)")'
 	title="ファイルの内容のみを編集エリアに取り込む"
 ><input type=button
     id=dataLoaderRef value="参照取込" style="width:10%"
-	onClick='if(xUI.referenceXPS.parseXps(xUI.convertXps(xUI.data_well.value,"",{},true))){xUI.resetSheet();}'
+	onClick='if(xUI.referenceXPS.parseXps(xUI.convertXps(xUI.data_well.value,"",{},true,0))){xUI.resetSheet();}'
 	title="データを参照エリアへ読み込む"
 ><input type=button
     id=dataLoaderGet value="取込" style="width:10%"

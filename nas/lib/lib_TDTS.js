@@ -31,11 +31,13 @@ function Tdts(){
 	ドキュメントプロパティトレーラー
 
 Object DocumentHeader{
-	colors    :[Array of 8bit3ch-colorValueArray x 3],
-	cut       :"cutIdfString",
-	direction :"String",
-	eipsode   :"episodeString",
-	scene     :"sceneIdfString"
+	colors    		:[Array of 8bit3ch-colorValueArray x 3],
+	cut       		:"cutIdfString",
+	direction 		:"String",
+	eipsode   		:"episodeString",
+	scene     		:"sceneIdfString",
+	showHeaderDummy :boolean　(ver 1.9で確認 アプリケーションのプロパティからドキュメントのプロパティへ移行したと思われる)
+	workSlips		:{Object WorkSlips}(ver 1.9で確認　内容は不明　非コンバート対象)
 }
 */
 	TDTS.DocumentHeader = function(){
@@ -44,7 +46,34 @@ Object DocumentHeader{
 		this.direction ;
 		this.eipsode   ;
 		this.scene     ;
+		this.showHeaderDummy ;
+		this.workSlips ;
 	};
+/*
+作業伝票コレクションオブジェクト
+	作業伝票の構造が…固定フォーマットすぎるかも
+	ひとまずオブジェクトは作成するが　対応は保留　xMap実装後に対応検討 2019 05.17
+*/
+	TDTS.WorkSlips = function (){
+		this.memo 		;//{String}
+		this.processes	;//{Array of TDTS.Process}
+		this.works    	;//{Array of TDTS.Work}
+	}
+	TDTS.SlipProcess = function (){
+		this.assistant	;//{String}
+		this.chief		;//{String}
+		this.director	;//{String}
+		this.free		;//{String}
+		this.freeRole	;//{String}
+	}
+	TDTS.SlipWork = function (){
+		this.ebable		;//{boolean}
+		this.tracks		;//{Array of TDTS.SlipTrack}
+	}
+	TDTS.SlipTrack = function(){
+		this.artist			;//{String}
+		this.numberOfSheets	;//{number}
+	}
 /*
 タイムテーブルオブジェクト
 	テーブルはタイムシート１セットに相当する単位
@@ -463,8 +492,12 @@ TDTS.SectionItemTable = {
 
 /**
 簡易コンバータ
-引数はTDTS/XTDSオブジェクトまたは、データストリーム
-XPSソース文字列を返す
+	@params	{Object TDTD|String}	myTDTS
+		引数はTDTS/XTDSオブジェクトまたは、データストリーム
+	@params	{number}	sheetID
+		ソース変換するシートID　未指定の場合は最後のタイムシート
+	@returns	{String}
+		XPS互換ソース文字列を返す
  */
 function TDTS2XPS(myTDTS,sheetID) {
 	var dataForm = 'XDTS';
@@ -499,9 +532,10 @@ function TDTS2XPS(myTDTS,sheetID) {
 
 console.log(myTDTS);
 
-//　変換対象のタイムシートを決定　指定があれば設定　dataForm == XDTSの場合、または指定のない場合は０番
-	if ((typeof sheetID == 'undefined')||(dataForm == 'XDTS')) sheetID = 0;
-	if (sheetID > myTDTS.timeTables.length) sheetID = myTDTS.timeTables.length;//トレーラー内のシート数を超過していたら最後のシートに
+//　変換対象のタイムシートを決定　指定があれば設定　dataForm == XDTSの場合、または指定のない場合は最後のタイムシート
+//　XDTSの場合は一つしかシートがないので常に0番
+	if ((typeof sheetID == 'undefined')||(dataForm == 'XDTS')) sheetID = myTDTS.timeTables.length - 1;
+	if (sheetID >= myTDTS.timeTables.length) sheetID = myTDTS.timeTables.length - 1;//トレーラー内のシート数を超過していたら最後のシートに
 //　タイムテーブルの継続時間　tdtsはトランジションの概念を内包しないのでそのままTIMEに割り付ける
     var myFrames = myTDTS.timeTables[sheetID].duration;    
 //　タイムライントラックの必要数を算出
