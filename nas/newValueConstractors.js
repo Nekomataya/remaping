@@ -383,7 +383,7 @@ nas.AnimationReplacement.prototype.getStream=function(cellCounts){
  */
 _parseReplacementTrack=function(){
 //    var blankRegex  = new RegExp("^[ｘＸxX×〆0０]$");//カラ判定　システム変数として分離予定
-    var interpRegex = new RegExp("^[\-\+=○◯●・a-zア-ン]$|^\[[^\]]+\]$");/*中間値補間（動画記号）サイン　同上*/
+//    var interpRegex = new RegExp("^[\-\+=○◯●・a-zア-ン]$|^\[[^\]]+\]$");/*中間値補間（動画記号）サイン　同上*/
     var valueRegex  = new RegExp("^[\(<][^>\)]+[>\)]$|^[\(<]?([A-Z][\-_\.]?)?[0-9]\S+[>\)]?$|^[0-9]+.?$");
     /* 無条件有効値 */
 //    var valueRegex  = new RegExp("^[\(<]?([A-Z][\-_\.]?)?[0-9]\S+[>\)]?$|^[0-9]+.?$");//無条件有効値 同上
@@ -424,7 +424,7 @@ var currentSectionBlank=(isBlank)? myCollectionBlank.addSection(disAppearance):m
         currentSectionBlank.duration ++;     //セクション長加算
         if(currentSubSection) currentSubSection.duration ++ ;
         //未記入データ　これが一番多いので最初に処理しておく(処理高速化のため)
-        if(currentCell[0].match(/^([\|｜;]|\s+)$/)||currentCell.length==0) continue;
+        if(currentCell[0].match(/^([\|｜;]|\s+)?$/)||(currentCell[0]==null)||(currentCell.length==0)) continue;
         /*      ブランク判定
             値処理に先立ってブランク関連の処理をすべて終了する
             ブランク状態切り替え判定 カレントを切り替えて新規セクションを積む
@@ -484,7 +484,7 @@ var currentSectionBlank=(isBlank)? myCollectionBlank.addSection(disAppearance):m
                 currentSubSection.duration ++;
                 //新規中間値補間セクションを立てる 以降は、モードを抜けるまでカレント固定
               }else{
-                currentSubSection.duration --;
+                if (currentSubSection) currentSubSection.duration --;
                 currentSubSection = currentSection.subSections.addSection(new nas.AnimationReplacement(null,currentCell.join("-")));
                 currentSubSection.duration ++;
                 //中間値補間モード内ではサブセクションを登録
@@ -522,10 +522,15 @@ var currentSectionBlank=(isBlank)? myCollectionBlank.addSection(disAppearance):m
                 }
                 isBlank = false;
             }
+//console.log(isInterp);
+//console.log(currentSection);
+//console.log(currentSubSection);
             if(isInterp){
                 isInterp = false;
-                currentSubSection.duration --;
-                currentSubSection = null;
+                if(currentSubSection){
+                        currentSubSection.duration --;
+                        currentSubSection = null;
+                };
             }
             if(fix==0){
                 currentSection.value = currentValue;

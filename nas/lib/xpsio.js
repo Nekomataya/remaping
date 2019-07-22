@@ -1793,22 +1793,6 @@ SCi     "__","("が禁止される
  * @returns {string}
  */
 Xps.prototype.getIdentifier = function (opt) {
-if(false){
-    if (opt) {
-        return [this.title, this.opus, this.scene, this.cut].join("_");
-    } else {
-        var myDatas = [this.title, this.opus, this.scene];
-        var myDefaults = [myTitle, myOpus, myScene];
-        var myResult = [];
-        for (i in myDatas) {
-            if (myDatas[i] != myDefaults[i]) {
-                myResult.push(myDatas[i])
-            }
-        }
-        myResult.push(this.cut);
-        return myResult.join("__");
-    }
-}else{
     var myResult=""
     switch (opt){
     case 'cut':
@@ -1833,8 +1817,7 @@ if(false){
     }
 
     return myResult;
-}   
-};
+   };
 
 /** 識別子の情報でカットのプロパティを上書きする
     インポート時に必要な情報は識別子にすべて含まれるためそれで上書きを行う
