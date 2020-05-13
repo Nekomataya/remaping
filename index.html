@@ -54,6 +54,7 @@
 <script src=./nas/lib/xpsio.js></script>
 
 <script src=./nas/scripts/remaping/airUI.js></script>
+<script src=./nas/scripts/remaping/nodeUI.js></script>
        <script src=./nas/lib/cameraworkDescriptionDB.js></script>
        <script src=./nas/configPM.js></script>
 <!--         <script src=./pmdb/configPMDB.js></script> -->
@@ -1528,10 +1529,15 @@ disabled
 	title="数字だけはコマ数"
 >
 	<!-- カウンタ -->
-
-<span id=inputControl class="floating-right">
 	<!-- スピン -->
-<input	type=text
+<button
+	name=spin_Vdn
+	id=v_dn
+	class="spinCtl spinCtl-left"
+	onclick="chkValue(this.id);"
+	title="SPIN減"
+	data-i18n='[title]v_dn_description'
+>-</button><input	type=text
 	name=spin_V
 	id=spin_V
 	class=spinCtl
@@ -1539,21 +1545,15 @@ disabled
 	onMousedown="nas.sliderVALUE([event,this.id,'24','1','0']);"
 	onChange="chkValue(this.id);"
 	title="スピン値"
->
-<span style="position:relative;height:16px;width:24px;">
-<button
+	data-i18n='[title]spin_v_description'
+><button
 	name=spin_Vup
 	id=v_up
-	class="subControl subControl-incr spinCtl spinCtl-top"
+	class="spinCtl spinCtl-right"
 	onclick="chkValue(this.id);"
 	title="SPIN増"
-> </button><button
-	name=spin_Vdn
-	id=v_dn
-	class="subControl subControl-decr spinCtl spinCtl-bottom"
-	onclick="chkValue(this.id);"
-	title="SPIN減"
-> </button></span>
+	data-i18n='[title]v_up_description'
+>+</button>
 <a
 	id=spinCkLb
 	href="javascript:void(0);"
@@ -1569,11 +1569,16 @@ disabled
  
 	<!-- スピン -->
 
+
+<div id=inputControl >
+<span
+	id=iNputhEader
+	class=iNputhEader
+>❚❚❚</span>
 <input	name=iNputbOx
 	id=iNputbOx
 	class=iNputbOx
 	type=text
-	size=24
 	onKeyPress="return xUI.keyPress(event);"
 	title="シートにデータを入力します。"
 > 
@@ -1583,16 +1588,15 @@ disabled
 	onBlur='xUI.put(this.value);'
 	onKeyPress="console.log(xUI.keyPress(event));return true;"
 -->
+
+	<!--		    <span class='ui-icon ui-icon-radio-off'>
 <button
 	name=ok
 	id=ok
 	style="width:36px;position:relative;top:4px;"
 	onclick="chkValue(this.id);"
 	title="確定[Enter]"
->
-		<img src=./images/ui/ok.png height=16>
-<!--		    <span class='ui-icon ui-icon-radio-off'>
--->
+>	<img src=./images/ui/ok.png height=16>
 </button><button
 	name=ng
 	id=ng
@@ -1600,11 +1604,12 @@ disabled
 	onclick="chkValue(this.id);"
 	title="取り消し[esc]"
 >
-		<img src=./images/ui/ng.png height=16> 
-<!--    <span class='ui-icon ui-icon-close'>
+	<img src=./images/ui/ng.png height=16> 
 -->
+	<!--    <span class='ui-icon ui-icon-close'>
 </button>
-</span>
+-->
+</div>
 </div>
 <!-- ヘッダツール群 入力コントロール -->
 

@@ -1,6 +1,6 @@
 ﻿/**
  * @fileoverview    Xps(Animation Timesheet)ライブラリ
- * @auther      nekomataya kiyo@nekomataya.info
+ * @author      nekomataya kiyo@nekomataya.info
  * @requires    nas_common
  */
 /*
@@ -2027,7 +2027,6 @@ Xps.prototype.reInitBody = function (newTimelines, newDuration) {
             newTracks.push(new XpsTimelineTrack('','timing',this.xpsTracks,this.duration()));
         }
         this.xpsTracks.insertTrack(0,newTracks);
-//if(dbg) console.log(this.xpsTracks);
     }else if(widthUp < 0){
         for (var tid = (this.xpsTracks.length-2);tid >= (newTimelines-1);tid --){
             this.xpsTracks[tid].remove();
@@ -2044,10 +2043,8 @@ if(this.xpsTracks.duration){
 }else{
     this.xpsTracks.length = newTimelines;//配列長(タイムライン数)の設定 メソッドに置きかえ予定
 
-    /**
-     * 延長したらカラデータで埋める
-     * この部分はxpsTracksへの変更にともなって更新が必要
-     */
+// 延長したらカラデータで埋める
+// この部分はxpsTracksへの変更にともなって更新が必要
     if (widthUp) {
         for (var i = 0; i < oldWidth; i++) {
             this.xpsTracks[i].length = newDuration;
@@ -2058,10 +2055,7 @@ if(this.xpsTracks.duration){
             }
         }
         for (var i = oldWidth; i < newTimelines; i++) {
- //           this.xpsTracks[i] = new Array(newDuration);
-//	XpsTimelineTrack(myLabel, myType, myParent, myLength, myIndex)
             this.xpsTracks[i] = new XpsTimelineTrack(i,option,this.xpsTracks,newDuration,i);
-//if(durationUp)
             for (var f = 0; f < newDuration; f++) {
                 this.xpsTracks[i][f] = '';
             }
@@ -2077,13 +2071,9 @@ if(this.xpsTracks.duration){
         }
     }
 
-    /**
-     * タイムラインが増えた場合は、再描画前にグループ情報の追加が必要
-     * 空データを自動生成してやる必要あり
-     * 現在はラベル名以外は直前タイムラインの複製
-     * @type {number}
-     */
-//    this["layers"].length = (newTimelines - 2);//(現在決め打ち)
+// タイムラインが増えた場合は、再描画前にグループ情報の追加が必要
+// 空データを自動生成してやる必要あり
+// 現在はラベル名以外は直前タイムラインの複製
 	this.xpsTracks.length = newTimelines;
     if (widthUp) {
         for (i = oldWidth - 2; i < (newTimelines - 2); i++) {
@@ -2144,38 +2134,34 @@ Xps.prototype.getRange = function (Range) {
 // ストリームで返す
     return zBUF;
 };
-/**
+/**<pre>
  * Xps.put(書込開始アドレス:[startC,startF],データストリーム)
- * 書込開始アドレスを起点にストリームでデータ置き換え
+ * 書込開始アドレスを起点にストリームでタイムライントラックデータを置き換え
  * Xpsオブジェクトメソッド
  * undo/redo等はUIレベルの実装なのでここでは関知しない
  * 書込開始アドレスに負の数を与えると、書込アドレスが負の場合レンジ外となる
  * レンジ外データは無視される
  * このメソッドでは本体データとしてセパレータの",""\n"を与えることはできない（禁則事項）
- * リザルトとして書き込みに成功したベクトル（左上、右下）、書き換え前のデータストリーム、書き込みに成功したデータを返す
+ * リザルトとして
+ * 書き込みに成功したベクトル（左上、右下）、書き換え前のデータストリーム、書き込みに成功したデータ
+ * を返す </pre>
  *
  * @param myAddress
  * @param myStream
  * @returns {*}
  */
 Xps.prototype.put = function (myAddress, myStream) {
+//指定がなければ操作失敗
     if ((!myAddress) || (typeof myStream == "undefined")) {
         return false
-    }//指定がなければ操作失敗
-
-    /**
-     * データストリームが空文字列の場合は要素数１の配列に展開する
-     * データストリームを配列に展開
-     * @type {Array}
-     */
+    }
+//データストリームを配列に展開
+//データストリームが空文字列の場合は要素数１の配列に展開する
     var srcData = new Array(myStream.toString().split("\n").length);
     for (var n = 0; n < srcData.length; n++) {
         srcData[n] = myStream.toString().split("\n")[n].split(",");
     }
-    /**
-     * 指定アドレスから書き込み可能な範囲をクリップする
-     * @type {*[]}
-     */
+//指定アドレスから書き込み可能な範囲をクリップする
     var writeRange = [myAddress.slice(), add(myAddress, [srcData.length - 1, srcData[0].length - 1])];
     if (writeRange[0][0] < 0) writeRange[0][0] = 0;
     if (writeRange[0][0] >= this.xpsTracks.length)    writeRange[0][1] = this.xpsTracks.length - 1;
@@ -2185,15 +2171,9 @@ Xps.prototype.put = function (myAddress, myStream) {
     if (writeRange[1][0] >= this.xpsTracks.length)    writeRange[1][0] = this.xpsTracks.length - 1;
     if (writeRange[1][1] < writeRange[0][1]) writeRange[1][1] = writeRange[0][1];
     if (writeRange[1][1] >= this.xpsTracks[0].length) writeRange[1][1] = this.xpsTracks[0].length - 1;
-    /**
-     * 書き込み範囲をバックアップ
-     * @type {Array}
-     */
+//書き込み範囲をバックアップ
     var currentData = this.getRange(writeRange);
-    /**
-     * ループして置き換え
-     */
-    //var updatedRange=new Array();
+//ループして置き換え
     for (var c = 0; c < srcData.length; c++) {
         var writeColumn = c + myAddress[0];
         this.xpsTracks[writeColumn].sectionTrust=false;
@@ -2204,14 +2184,10 @@ Xps.prototype.put = function (myAddress, myStream) {
                 (writeFrame >= 0) && (writeFrame < this.xpsTracks[0].length)
             ) {
                 this.xpsTracks[writeColumn][writeFrame] = srcData[c][f];
-                //updatedRange.push([writeColumn,writeFrame]);
             }
         }
     }
-    /**
-     * 戻り値は、書き込みに成功したレンジ
-     */
-//	return this.getRange([updatedRange[0],updatedRange[updatedRange.length-1]]);
+//戻り値は、書き込みに成功したレンジ
     return [writeRange, this.getRange(writeRange), currentData];
 };
 
@@ -2305,7 +2281,7 @@ Xps.prototype.parseXps = function (datastream) {
              *  データ処理中に含まれていた他フォーマットの解析部分は、別ライブラリで吸収
              *  バージョンは 0.5 まで拡張
              */
-            if (SrcData[l].match(/^nasTIME-SHEET\ 0\.[1-5]$/)) {
+            if (SrcData[l].match(/^nasTIME-SHEET\ 0\.[1-9]x?$/)) {
                 SrcData.startLine = l;//データ開始行
             } else if((SrcData.startLine >= 0)&&(SrcData[l].match(/^##FRAME_RATE=(.*)$/))){
                 SrcData.framerate= nas.newFramerate(RegExp.$1);
@@ -2313,6 +2289,7 @@ Xps.prototype.parseXps = function (datastream) {
             }
         }
     }
+console.log(SrcData);
     /**
      * 第一パス終了
      * データ識別行がなければ処理中断

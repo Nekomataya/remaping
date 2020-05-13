@@ -74,7 +74,7 @@ function new_xUI(){
     xUI.activeColor      ;//リンクアクティブ色
 //メニュー関連
     xUI.toolView        ;//ツールパネル表示状態(cookieの値)
-    ;//
+    xUI.closeWindowAtCheckout = true;//
     ;//
     ;//
 //タイムライン・ラベル識別カラ－
@@ -299,7 +299,7 @@ xUI.importBox.updateTarget= function(){
                 Math.ceil(modefiedXps.trin[0]+modefiedXps.trout[0]/2)
             );
     //  変更されたXpsのステータスをFloatingに変更（暫定処理）
-        modefiedXps.currentStatus.content    = 'Floating';
+//        modefiedXps.currentStatus.content    = 'Floating';
         xUI.importBox.selectedContents.push(modefiedXps);
     }
     $("#optionPanelSCI").dialog("close");
@@ -624,7 +624,7 @@ console.log([datastream,optionString,overwriteProps,streamOption,targetOption]);
 
         ステータスがFloationgモードのドキュメントをサーバ(リポジトリ)に記録することはない
         要注意  ドキュメントステータスと動作モードの混同は避けること
-        
+    >>>>>>ドキュメントモードのFloationgは廃止 2019.12
 マルチドキュメント拡張    2018 09
 XPSシングルドキュメントではなくxMapシングルドキュメントに変更
 xMapに関連つけられる１以上複数のタイムシート（=SCi）
@@ -1504,7 +1504,7 @@ xUI.setRestriction = function(mode){
     checkout        from Active         to Fixed
     abort           from Fixed          to Aborted
     reseipt         from Fixed          to Startup
-    flaot                                copy to Floating
+    flaot                                copy to Floating 廃止
       if(unactive)  from Startup/Fixed/Hold     No Change
       if(active)    from Active                 to Hold
     sink            from Floating       copy to Startup/Fixed
@@ -1644,7 +1644,9 @@ xUI.setUImode = function (myMode){
             $('#pmcui').css('color','#666688');
             break;
         case 'floating':;
-        if(xUI.XPS.currentStatus.content.indexOf("Floating")<0){return xUI.uiMode;}
+        if(xUI.XMAP.dataNode){return xUI.uiMode;}
+    
+//        if(xUI.XPS.currentStatus.content.indexOf("Floating")<0){return xUI.uiMode;}
          //floating で必要なメニュー
          /*
          新規登録  カレントドキュメントを現在のリポジトリに登録する
@@ -1726,16 +1728,16 @@ xUI.setUImode = function (myMode){
             var nextMode = ['production','browsing','floating','management'].indexOf(xUI.uiMode);
             switch(xUI.uiMode){
             case "management":
-                nextMode = (xUI.XPS.currentStatus.content=='Floating')? 'floating':'browsing';
+                nextMode = (! xUI.XMAP.dateReposiroty)? 'floating':'browsing';
             break;
             case "floating":
-                nextMode = (xUI.XPS.currentStatus.content=='Floating')? 'management':'browsing';
+                nextMode = (! xUI.XMAP.dateReposiroty)? 'management':'browsing';
             break;
             case "browsing":
-                nextMode = (xUI.XPS.currentStatus.content=='Floating')? 'floating':'management';
+                nextMode = (! xUI.XMAP.dateReposiroty)? 'floating':'management';
             break;
             case "production":
-                nextMode = (xUI.XPS.currentStatus.content=='Floating')? 'floating':'browsing';
+                nextMode = (! xUI.XMAP.dateReposiroty)? 'floating':'browsing';
             break;
             }
                 return this.setUImode(nextMode);
@@ -2120,8 +2122,22 @@ xUI.UndoBuffer=function(){
 /*    undoバッファ初期化
         undoバッファをクリアして初期化
             undoStackのデータ構造
+
         [セレクト座標,セレクション,入力データストリーム,[セレクト座標,セレクション]]
-    または    [セレクト座標,セレクション,Xpsオブジェクト]
+eg.[
+    [0,4],
+    [0,0],
+    "3,,,6,,,7,,,\n1,,,,,,X,,,\n",
+    [0,4],
+    [0,0],
+]
+    または
+        [セレクト座標,セレクション,Xpsオブジェクト]
+eg.[
+    [0,4],
+    [0,0],
+    {object Xps}
+]
 
     座標と選択範囲(セレクション)は配列、入力データはcomma,改行区切りの2次元のstream
     第４要素が存在する場合は、その位置にカーソル移動を行う
@@ -5178,6 +5194,11 @@ case	67 :		;	//[ctrl]+[C]/copy
 		this.yank();
 		return true;}else{return true}
 	break;
+case	69 :		;	//[ctrl]+[E]/export AE Key
+	if ((e.ctrlKey)||(e.metaKey))	{
+		writeAEKey();
+		return true;}else{return true}
+	break;
 case	73 :		;	//[ctrl]+[I]/information 
 	if ((e.ctrlKey)||(e.metaKey))	{
 	    myScenePref.open("edit");
@@ -5409,11 +5430,11 @@ xUI.keyPress = function(e){
 	key = e.keyCode;//キーコードを取得
 //      console.log(key+':press:');
 	if(xUI.edmode>0){
-if(xUI.edmode==1){
+        if(xUI.edmode==1){
 //ブロック移動モード
-}else{
+        }else{
 //セクション編集モード
-}
+        }
 	  return true;
 	}
 /*
@@ -5424,12 +5445,15 @@ if(xUI.edmode==1){
 	2:ラピッドモード
 	
  */
+if((key<48)||(key>57)){
 if(xUI.eXMode){
 	//ラピッドモード前駆状態フラグONなのでラピッドモード判定
-	if(xUI.eXMode==1 && document.getElementById("iNputbOx").value.length==1)
-	{	//	入力が前キーと同一ならばモードアクティブ
-		if(xUI.eXCode==key && document.getElementById("iNputbOx").value.charCodeAt(0)==key)
-		{
+	if(xUI.eXMode==1 && document.getElementById("iNputbOx").value.length==1){
+//	入力が前キーと同一ならばモードアクティブ
+		if(
+		    xUI.eXCode==key &&
+		    document.getElementById("iNputbOx").value.charCodeAt(0)==key
+		){
 			xUI.eXMode++;//モード遷移
 			eddt="";
 			xUI.eddt="";
@@ -5441,6 +5465,13 @@ if(xUI.eXMode){
 			xUI.eXMode=0;xUI.eXCode=0;return true;//遷移失敗 このセッションでは入れない
 		};
 	}
+//テスト　ラピッドコマンドを必ず実行するその後通常処理へ（ノースキップ）
+if(false){
+	for (var idx=0;idx<(rapidMode.length-1)/2;idx++){if(key==rapidMode[idx*2].charCodeAt(0))break;};
+		if(idx<(rapidMode.length-1)/2){
+			xUI.doRapid([rapidMode[idx*2+1]]);
+		}
+}
 //モード変更直後でも1回はラピッド動作する
 	if(xUI.eXMode>=2){
 		if(xUI.eXMode==2){
@@ -5449,13 +5480,13 @@ if(xUI.eXMode){
 			if(xUI.eddt==xUI.bkup())xUI.edChg(false);
 			syncInput(xUI.bkup());
 		};
-	for (idx=0;idx<(rapidMode.length-1)/2;idx++){if(key==rapidMode[idx*2].charCodeAt(0))break;};
+	for (var idx=0;idx<(rapidMode.length-1)/2;idx++){if(key==rapidMode[idx*2].charCodeAt(0))break;};
 		if(idx<(rapidMode.length-1)/2){
 			xUI.doRapid([rapidMode[idx*2+1]]);
 			return false;
 		}else{
-			if (key!=13 && key!=8 && key!=9)
-			{
+//		    return true;
+			if (key!=13 && key!=8 && key!=9 ){
 		//モード解除
 				if(xUI.eXMode){
 		xUI.eXMode=0;	xUI.eXCode=0;
@@ -5465,8 +5496,8 @@ if(xUI.eXMode){
 		xUI.spinAreaColorSelect=xUI.inputModeColor.NORMALselection;
 		xUI.spinHi();
 		return true;
-//		return false;
 				}
+        console.log(124)
 			}
 		}
 	}
@@ -5481,7 +5512,7 @@ if(xUI.eXMode){
 			xUI.eXMode=1;xUI.eXCode=key;return true;//予備モードに入る
 		}
 	}
-}
+}}
 //		通常判定
 	switch(key) {
 case	27	: 			;//esc
@@ -5549,7 +5580,7 @@ xUI.keyUp = function (e){
             return true;
         }
     }
-    if(this.eXMode>=2){
+    if((this.eXMode>=2)&&((key<48)||(key>57))){
 		document.getElementById("iNputbOx").select();
 		return false;
 	}
@@ -8225,7 +8256,8 @@ default:
             $(this).children('ul').show();
         }, function() {$(this).children('ul').hide();});
 }
-
+//Node.js|electron環境の際airMenuを再表示
+    if(appHost.Nodejs) $("#airMenu").show();//="inline";
 //オンサイト時の最終調整はこちらで？
     if(xUI.onSite){
 //        xUI.sWitchPanel('Prog');
@@ -9018,8 +9050,6 @@ editMemo=function(e,insertTarget){
 */
 function writeAEKey(n){
 if(! n){n=xUI.Select[0]; }
-//リザルトエリアが表示されていない場合表示させる。
-	if (! $("#optionPanelAEK").is(':visible')){xUI.sWitchPanel("AEKey");}
 		document.getElementById("AEKrEsult").value=XPS2AEK(XPS,n-1);
 		if(! Safari){document.getElementById("AEKrEsult").focus();}
 		if((appHost.platform=="AIR")&&(air.Clipboard)){
@@ -9027,9 +9057,16 @@ if(! n){n=xUI.Select[0]; }
 			writeClipBoard(XPS2AEK(XPS,n-1));
 		}else{
 //ブラウザの場合もコピーにトライ
-			document.getElementById("AEKrEsult").select();
-			if(document.execCommand)document.execCommand("copy");
+            if(navigator.clipboard){
+                navigator.clipboard.writeText(document.getElementById("AEKrEsult").value);
+            }else{
+//リザルトエリアが表示されていない場合表示させる。
+	            if (! $("#optionPanelAEK").is(':visible')){xUI.sWitchPanel("AEKey");}
+			    document.getElementById("AEKrEsult").select();
+			    if(document.execCommand) document.execCommand("copy");
+			}
 		}
+	return document.getElementById("AEKrEsult").value;
 }
 
 
@@ -11879,12 +11916,12 @@ this.layerTableUpdate =function(){
 //各種設定表示初期化
 this.getProp =function ()
 {
-    document.getElementById("scnRepository").innerHTML = (XPS.currentStatus.content != 'Floating')?
+    document.getElementById("scnRepository").innerHTML = (! xUI.XMAP.dataNode)?
         [serviceAgent.currentRepository.url,serviceAgent.currentRepository.name].join("/"):
         "This data is not stored in any repository.";
 //このデータはいずれのリポジトリにも保存されていません
         document.getElementById("scnNewSheet").checked=false;//新規フラグダウン
-    if (XPS.currentStatus.content == 'Floating'){
+    if (! xUI.XMAP.dataNode){
         document.getElementById("scnPushentry").disabled=false;
     }else{
         document.getElementById("scnPushentry").disabled=true;

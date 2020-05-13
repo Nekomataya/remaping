@@ -838,9 +838,35 @@ input.aekConvert {
 }
 /*		UI　入力エリア
 */
+span.iNputhEader{
+	outline:none;
+	text-align:left;
+	width:9%;
+	border-style:none;
+	background-color:none;
+	font-size:14px;
+	margin-left:6px;
+	padding-left:2px
+}
+span.iNputhEader:hover{
+	text-align:left;
+	border-style:solid;
+	border-width:1px;
+	background-color:snow;
+}
 input.iNputbOx {
-	text-align:right;
-	width:9em;
+	outline:none;
+	text-align:left;
+	width:90%;
+	border-style:none;
+	background-color:none;
+	font-size:14px;
+	margin-left:6px;
+	padding-left:2px
+}
+input.iNputbOx :focus{
+	border-style:solid;
+	border-width:1px;
 }
 /*		UI　サブコントロール
 	height:12px(1px overlap)
@@ -910,18 +936,23 @@ button.subControl:disabled {
 
 input.spinCtl {
 	width:48px;
+	height:16px;
 	margin: 0;
+	padding:0;
     text-align:center;
     border:1px solid #888;
-    margin-right:20px;
 }
 button.spinCtl {
+	width:20px;
+	height:18px;
 	margin: 0;
-    font-size:6px;
+    font-size:12px;
     text-align:center;
     padding:0;
     border:1px solid #888;
-	position:absolute;
+	position:relative;
+	background-color:gray;
+	color:white;
 }
 /*
     background-image:-moz-linear-gradient(top,#fff 0%,
@@ -943,6 +974,23 @@ button.spinCtl-bottom {
     -moz-border-radius: 0 0 4px 4px ;
     -webkit-border-radius: 0 0 4px 4px;
     border-radius: 0 0 4px 4px;
+
+}
+button.spinCtl-left {
+	left:0;top:0;
+	margin: 0;
+   /* 角丸 */
+    -moz-border-radius: 4px 0 0 4px;
+    -webkit-border-radius: 4px 0 0 4px;
+    border-radius: 4px 0 0 4px;
+}
+button.spinCtl-right {
+	left:0;top:0;
+	margin: 0;
+   /* 角丸 */
+    -moz-border-radius: 0 4px 4px 0;
+    -webkit-border-radius: 0 4px 4px 0;
+    border-radius: 0 4px 4px 0;
 
 }
 

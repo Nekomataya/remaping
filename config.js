@@ -31,7 +31,8 @@
         2017/03/03  画像部品キャッシュ・書き換えの高速化
         2017/05/06  高速化＋デバッグ　バックグラウンド更新の準備
         2017/06/15  スタートアップ時のバグを修正
- * $Id: config.js,v2.0 2017/6/15  $
+        2020/03/14  ラピッドモード調整　STS互換キーセット試験
+ * $Id: config.js,v2.0 2020/3/14  $
  */
 	var dbg=false	;	//デバッグモード
 
@@ -41,8 +42,8 @@
  *		ただし開始メッセージが抑制されている場合は表示されません。
  */
 
-	var welcomeMsg="サーバ対応版 -作業安定版- 20190227";
-	var windowTitle="ver. 1.8.2";//WindowTitleとしての役割は終了 統合バージョンです
+	var welcomeMsg="サーバ対応版 -作業安定版- 20200314";
+	var windowTitle="ver. 1.8.3";//WindowTitleとしての役割は終了 統合バージョンです
 
 /**************************************************************************
  *	ロゴ等
@@ -152,7 +153,7 @@ SheetLooks = {
     SheetTextColor  :"#111111",
 	SheetBaseColor	:"#ffefef",
 	SelectedColor	:"#9999ff",
-	RapidModeColor	:"#ffff44",
+	RapidModeColor	:"#ff4444",
 	FloatModeColor	:"#88eeee",
 	SectionModeColor:"#ff44ff",
 	SelectionColor	:"#f8f8dd",
@@ -404,7 +405,7 @@ var ToolView='110111111001';
 ラピッドモードコマンド
 */
 //サンプル全機能セット
-
+/*
 rapidMode=[
 	"+","incrSpin",
 	"-","decrSpin",
@@ -426,7 +427,7 @@ rapidMode=[
 	"e","end",
 	"p","paren",
 	"b","brac",
-"end"];
+"end"];//*/
 //おすすめセットのようによく使いそうな機能を選んで絞った方が動作が軽快になります。
 //設定は可能ですが、数字をショートカットにはしない方が良いでしょう…当たり前ですけど
 //おすすめセットのコメント記号をはずして各自で書き換えてご使用ください。
@@ -450,6 +451,17 @@ rapidMode=[
 	".","back",
 "end"];
 */
+//	STS互換+モード
+
+var rapidMode=[
+	"+","incrSpin",
+	"-","decrSpin",
+	"/","spinSub",
+	"*","spinAdd",
+	"x","spinSub",
+	"z","spinAdd",
+	".","back",
+"end"];//*/
 /**************************************************************************
  *	機能名は以下のリストから選択。
  *	他の機能案があれば「ねこまたや」へどうぞ。
@@ -474,6 +486,7 @@ rapidMode=[
  *	pgDn	//[page-dpwn]	1秒進む
  *	paren	//数字エントリを括弧で囲む
  *	brac	//エントリを角括弧で囲む
+ *	exit	//ラピッドモードを抜ける
  */
 //ラピッドコマンドテーブル
 //	登録機能は固定
@@ -520,7 +533,9 @@ rapidMode.command["brac"]=function(){
 	EXword=EXword.replace(/\*/,xUI.bkup().toString());
 	syncInput(EXword);
 ;}	;//
-
+rapidMode.command["exit"]=function(){
+    
+}
 /*****************************************************************************
  *
  *		ファイルハンドリングCGIアドレス 暫定版

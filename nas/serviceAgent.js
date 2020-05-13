@@ -1,5 +1,5 @@
 ﻿/**
- * 　@auther kiyo@nekomataya.info (ねこまたや)
+ * 　@author kiyo@nekomataya.info (ねこまたや)
  *  @fileoverview ServiceAgent モジュール
 
     サービスエージェント
@@ -979,6 +979,7 @@ localRepository.getProducts=function(callback,callback2,myToken){
         var keyCount=localStorage.length;
         for (var kid=0;kid<keyCount;kid++){
             if(localStorage.key(kid).indexOf(this.keyPrefix)==0){
+//            if(localStorage.key(kid).match(/\.(xmap|pmdb|stbd)$/i)) continue;
                 var currentIdentifier=localStorage.key(kid).slice(this.keyPrefix.length);
 //タイトルリストにすでに登録されているか検査 未登録エントリをDBに追加
 //token指定がある場合は、登録タイトルを抹消して新しい情報で上書き？
@@ -1035,6 +1036,7 @@ localRepository.getEpisodes=function(callback,callback2,myProductToken,myOpusTok
         for (var kid = 0;kid < keyCount; kid++){
 //console.log(myProduct.name);
             if(localStorage.key(kid).indexOf(this.keyPrefix)==0){
+//            if(localStorage.key(kid).match(/\.(xmap|pmdb|stbd)$/i)) continue;
                 var currentIdentifier=localStorage.key(kid).slice(this.keyPrefix.length);
                 var myData = Xps.parseIdentifier(currentIdentifier);
                 if(myData.title != myProduct.name) continue;//タイトル違いを排除
@@ -1081,6 +1083,7 @@ localRepository.getSCi=function (callback,callback2,myOpusToken,pgNo,ppg) {
         var keyCount=localStorage.length;
         for (var kid = 0; kid < keyCount; kid ++){
             if(localStorage.key(kid).indexOf(this.keyPrefix)==0){
+            if(localStorage.key(kid).match(/\.(xmap|pmdb|stbd)$/i)) continue;
                 var currentIdentifier=localStorage.key(kid).slice(this.keyPrefix.length);
                 var myData = Xps.parseIdentifier(currentIdentifier);
                 if(myOpus.name != myData.opus) continue;
@@ -1156,6 +1159,7 @@ localRepository.getList=function(force,callback){
     this.entryList.length=0;//配列初期化
     for (var kid=0;kid<keyCount;kid++){
         if(localStorage.key(kid).indexOf(this.keyPrefix)==0){
+        if(localStorage.key(kid).match(/\.(xmap|pmdb|stbd)$/i)) continue;
             var currentIdentifier=localStorage.key(kid).slice(this.keyPrefix.length);
             //エントリリストにすでに登録されているか検査
             var currentEntry = this.entry(currentIdentifier);
@@ -1643,7 +1647,10 @@ localRepository.checkoutEntry=function(assignData,callback,callback2){
                 xUI.sWitchPanel();//ドキュメントパネルが表示されていたらパネルクリア
                 xUI.setUImode('browsing');//モードをbrousingへ
                 sync('historySelector');//履歴セレクタ更新
-                if(callback instanceof Function){ setTimeout('callback()',10)};
+                if(callback instanceof Function){
+console.log(12345)
+                     setTimeout(callback,10)
+                };
                 return result;
             }else{
 //console.log("fail checkout store")
@@ -2180,7 +2187,7 @@ NetworkRepository.prototype.getSCi=function (callback,callback2,epToken,pgNo,ppg
     }
 */
     if(typeof pgNo == 'undefined') pgNo = '1';
-    if(typeof ppg  == 'undefined')  ppg = myEpisode.cuts[0].length;
+    if(typeof ppg  == 'undefined')  ppg = (myEpisode.cuts[0])? myEpisode.cuts[0].length:100;
 //console.log(arguments);
 //console.log([pgNo,ppg]);
     var targetURL = serviceAgent.currentRepository.url+ '/api/v2/cuts.json?episode_token='+myEpisode.token+'&page_no='+parseInt(pgNo)+'&per_page='+parseInt(ppg);
@@ -3805,7 +3812,7 @@ serviceAgent = {
     repositories:[],
     currentStatus       :'offlline',
     currentServer       :null,
-    currentRepository   :null
+    currentRepository   :null,
 };
 /**
     サービスエージェントの初期化(テスト版)
@@ -4441,10 +4448,12 @@ serviceAgent.checkoutEntry=function(callback,callback2){
             var title   = localize(nas.uiMsg.pMcheckout);//'作業終了 / チェックアウト';
 //            var msg     = localize(nas.uiMsg.dmPMnewAssign,xUI.XPS.cut);
 var msg = localize({
-  en:"",
-  ja:"%1\n作業終了します"  
+  en:"\n",
+  ja:"%1\n作業終了します\n"
 },decodeURIComponent(Xps.getIdentifier(xUI.XPS)))
-
+var checkd = '';
+if (xUI.closeWindowAtCheckout == true) checkd = 'checked';
+msg += "<input id=closeWindowAtCheckout type=checkbox onchange='xUI.closeWindowAtCheckout = this.checked' "+checkd+"><a href='javascript:document.getElementById(\"closeWindowAtCheckout\").checked=(document.getElementById(\"closeWindowAtCheckout\").checked)?false:true;'>ウインドウを閉じる</a></input>";
             var msg2    = '<br>';
 
             msg2   += localize(nas.uiMsg.toPrefix);
@@ -4468,7 +4477,7 @@ var msg = localize({
                 var assignNoteText="";
                 if((this.status == 0)&&(assignUserName)){
                     var assignData=encodeURIComponent(JSON.stringify([assignUserName,assignNoteText]));
-                    serviceAgent.currentRepository.checkoutEntry(assignData,callback,callback2);
+                    serviceAgent.currentRepository.checkoutEntry(assignData,function(){if(xUI.closeWindowAtCheckout==true) window.close();},callback2);
 //                        alert(localize(nas.uiMsg.dmAlertCheckoutFail));//チェックアウト失敗
                 }
             });

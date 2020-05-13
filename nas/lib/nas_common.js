@@ -6,7 +6,7 @@
  * AE等のAdobe Script 環境で使用可能な機能を提供します
  * 2016/01/29
  */
-
+'use strict';
 /* --- おことわり
  *
  * このプログラムの著作権は「ねこまたや」にあります。
@@ -137,16 +137,19 @@
  *
  * ========    既存オブジェクトにオーバーライドするメソッド
  * "yy/mm/dd hh:mm:ss" 形式を拡張
- * Date.toNASString()
+ * Date.prototype.toNASString()
  * ;returns String
- * Date.setNASString("yy/mm/dd hh:mm:ss")
+ * Date.prototype.setNASString("yy/mm/dd hh:mm:ss")
  * ; returns object
- *
+ * 古い環境でtrimメソッドがない場合のみ設定
+ * String.prototype.trim()
+ * ; returns String
  *
  */
-
-myFilename = ('nas_common.js');
-myFilerevision = ('2.0');
+/** @constant {String} filename*/
+var myFilename = ('nas_common.js');
+/** @constant {String} fileversion*/
+var myFilerevision = ('2.2');
 
 /*
  * @description 実行環境の判定
@@ -156,16 +159,18 @@ myFilerevision = ('2.0');
 /** 環境保持クラス
  *  @class AppHost
  *
- *  @property  {boolean} ESTK Adobe ESTS環境下であるか否かのフラグ
+ *  @property  {boolean} ESTK
+ *      Adobe ESTS環境下であるか否かのフラグ
  *  @property  {String} platform
- *　稼働環境指示変数
+ *　     稼働環境指示変数 CEP|CSX|AIR|Chrome|Safari|Opera|MSIE|Netscape|Mozilla|unknown
  *  @property  {String} version
- *　稼働環境バージョン変数
+ *　     稼働環境バージョン変数 各環境ごとに意味が異なるので注意
  *  @property  {String} os
- *　稼働OS変数
+ *　     稼働OS変数　Win|Mac|Other
 */
 function AppHost()
 {
+    this.Nodejs;
     this.ESTK;
 	this.platform;
 	this.version;
@@ -173,10 +178,13 @@ function AppHost()
 }
 
 AppHost.prototype.init=function(){
-    //AdobeESTKの判定
-    this.ESTK=(typeof app =="undefined")? false:true;
+    //Node.js環境判定
+    this.Nodejs = (typeof require =="undefined")? false:true;
+    //AdobeESTK判定
+    this.ESTK   = (     typeof app =="undefined")? false:true;
     
 	var uaName=navigator.userAgent;
+    var uaVer ;
 	if(window.__adobe_cep__){
 	//CEP
 		this.platform="CEP";
@@ -244,34 +252,32 @@ AppHost.prototype.init=function(){
 
 var appHost=new AppHost();
 	appHost.init();
-
+// Stringクラスに trimメソッドが存在しない環境にtrimを設定
+if(! String.prototype.trim){
+    String.prototype.trim = function trim(){
+        return this.replace(/^\s*/,'').replace(/\s*$/,'');
+    }
+}
 // if (navigator.userAgent.indexOf("AdobeAIR") > -1) {isAIR=true}
 //AIR 環境が 純正/CSX(Configurator)/CEP 三種あるので判定が必要になる
+        var isAIR;var isADX;
 		if(window.runtime){
-		  isAIR=true;
+		  isAIR = true;
 		}else{
-		 isADX = 2;//初期値CEP
+		  isADX = 2;//初期値CEP
 		  try{isADX=(window.__adobe_cep__)? 2:1;}catch(er){isADX = 0;}
 		}
-
-
 /*
  * namespace として　Class nasを設定
  */
 if (typeof nas == 'undefined') {
-/**
- @namespace*/
-    nas = {};
+/** @namespace */
+    var nas = {};
 }
 try {
-    /*
-     * globalのappオブジェクトを確認してAdobeScript環境を判定
-     */
+    /*     globalのappオブジェクトを確認してAdobeScript環境を判定    */
     if (app) {
-        /**
-         * Adobe Scripts
-         * @type {boolean}
-         */
+        /*    Adobe Scripts    */
         nas.isAdobe = true;
         nas.Version["common"] = "common:" + myFilename + " :" + myFilerevision;
         try {
@@ -312,14 +318,12 @@ try {
  * すなわちnasライブラリ稼働時は、つねにxUIオブジェクトが存在するものとする
  * @type {boolean}
  */
-xUI = false;
-
-
+var xUI = false;
 /**
  *    @desc nas Lib base Object
  */
 /**
- *@fileoverview	nas配下に基礎オブジェクト拡張
+ *  @fileoverview	nas配下に基礎オブジェクト拡張
  *
  *基礎オブジェクト群は、基底プロパティの記述に使用するので最終的には従来のnas_common.jsよりも先にロードする必要がある。
  *又は基礎オブジェクトとしてnas_common.jsに編入
@@ -334,6 +338,33 @@ xUI = false;
  *単位付きカプセル化オブジェクトでは、演算の際に期待する値を確実に得るためには Object.as(Unit)で明示的に単位を指定すること
  *
  */
+
+/**
+ *  列挙型リストオブジェクトから、数値をキーにキーワードを返すメソッド
+ *<pre>
+ *  適用可能なオブジェクトは、以下
+ *  nas.BlendingMode
+ *  nas.PegForm
+ *</pre>
+ *  @params {Number} targetNumber
+ *      列挙子の値
+ *  @params {String} targetName
+ *      列挙子のプレフィックス
+ *  @returns    {String}
+ *      列挙子のプレフィックスにキーワードを加えたもの
+ *  @example
+ *  nas.getEnumulatedNameByNumber(3620,'BlendingMode');//>> BelndingMode.NORMAL
+ */
+nas.getEnumulatedNameByNumber =function getEnumulatedNameByNumber(targetNumber,targetName){
+    if((!nas[targetName])||(! nas[targetName].propertyIsEnumerable)) return '';
+    var resultArry=[targetName];
+        for(prp in nas[targetName]){
+            if (nas[targetName][prp] == targetNumber){resultArry.push(prp); break;}
+        }
+return resultArry.join('.');
+};//値が配列|Objectであったケースを考慮のこと。
+
+
 /**
  * @class @constractor
  *    ユーザ情報オブジェクト<br />
@@ -390,13 +421,53 @@ nas.UserInfo = function UserInfo(nameDescription){
 /**
  * @params {String} opt
  *    出力フォーマット指定オプション<br />
- * キーワード"JSON" または  プロパティ名"handle"|"email"<br />
+ * キーワード"JSON"|"text"|"dump" または  プロパティ名"handle"|"email"<br />
  * opt未指定の場合は、標準のユーザ記述文字列を戻す
  *  @returns {String}
+ JSON   {}
+ text   handle:uid:{additional property}
+ dump   [handle,uid,{additional property}]
  */
 nas.UserInfo.prototype.toString = function(opt){
-    if(! opt) opt = 0;
+    if(! opt) opt = '';
+    switch (opt){
+    case 'JSON':
+        return JSON.stringify(this);
+    break;
+    case 'full':
+    case 'full-dump':
+    case 'dump':
+        var form='dump';
+    break;
+    case 'plain-text':
+    case 'plain':
+    case 'text':
+    case '':
+        var form='text';
+    break;
+    default:
+        return this[opt];
+    }
+    var additionalOpt={};
+    var additionalCount=0;
+    for (var prp in this){
+        if((prp=='handle')||(prp=='email')||(this[prp] instanceof Function)) continue;
+        additionalOpt[prp]=this[prp];
+        additionalCount++;
+    }
+    if(form == 'dump'){
+        if(additionalCount) return JSON.stringify([this.handle,this.email,additionalOpt]);
+        return JSON.stringify([this.handle,this.email]);
+    }else{
+        if(additionalCount) return [this.handle,this.email,JSON.stringify(additionalOpt)].join(':');
+        return [this.handle,this.email].join(':');        
+    }
+    
+
+/*
     if (opt=='JSON'){
+        return JSON.stringify(this);
+    }else if (opt=='plain-text'){
         return JSON.stringify(this);
     }else if(this[opt]){
         return this[opt];
@@ -405,13 +476,12 @@ nas.UserInfo.prototype.toString = function(opt){
         var additionalCount=0;
     for (prp in this){
         if((prp=='handle')||(prp=='email')||(this[prp] instanceof Function)) continue;
-console.log(prp)
         additionalOpt[prp]=this[prp];
         additionalCount++;
     }
         if(additionalCount) return [this.handle,this.email,JSON.stringify(additionalOpt)].join(':');
         return [this.handle,this.email].join(':');
-    }
+    };// */
 }
 /**
  *    ユーザ情報の同値判定
@@ -444,9 +514,12 @@ nas.UserInfo.prototype.sameAs = function(myName){
  *    不正メンバーはコレクション対象外
  *    空コレクションをつくる際は引数で空配列を渡すこと
  *  @params {Array of nas.UserInfo} users
+ *  @params {Object nas.Pm.PmDomain} parent
  */
-nas.UserInfoCollection = function (users){
-    this.members=[];
+nas.UserInfoCollection = function (users,parent){
+    this.members = [];
+    this.timestamp = new Date().getTime();
+    this.parent  = parent;//optional
     if(users instanceof Array){
         for (var j = 0;j<users.length;j++){
             if (!(users[j] instanceof nas.UserInfo)){
@@ -455,6 +528,7 @@ nas.UserInfoCollection = function (users){
             if(users[j].handle) this.members.push(users[j]);
         }
     }
+    if((this.parent )&&(this.parent instanceof nas.Pm.PmDomain)) this.parent.contents.add('users');
 }
     /**
      *    コレクションメンバーをユーザ記述文字列の配列に変換
@@ -487,7 +561,7 @@ nas.UserInfoCollection = function (users){
      */
     nas.UserInfoCollection.prototype.addMember = function(newMember){
         if (!(newMember instanceof nas.UserInfo)){
-console.log(typeof newMember);
+//console.log(typeof newMember);
             if(newMember.match(/^(.+)\:(\{[^\{\}]+\}$)/)){
                 var additionalOpt=JSON.parse(RegExp.$2);
                // for(prp in additionalOpt) newMember[prp] = additionalOpt[prp];
@@ -515,12 +589,14 @@ console.log(typeof newMember);
         case    'full':
         case    'dump':
                 var resultArray=[];
-            for (var ix=0 ; ix < this.members.length ;ix ++){ resultArray.push(this.members[ix].toString()) };
-            return JSON.stringify(resultArray);break;
+            for (var ix=0 ; ix < this.members.length ;ix ++){ resultArray.push(this.members[ix].toString(form)) };
+            return resultArray.join('\n');break;
         case    'plain-text':
         case    'plain':
         case    'text':
-            return this.members.join('\n');break;
+                var resultArray=[];
+            for (var ix=0 ; ix < this.members.length ;ix ++){ resultArray.push(this.members[ix].toString(form)) };
+            return resultArray.join('\n');break;
         default:
             return this.members.toString();
         }
@@ -534,6 +610,7 @@ console.log(typeof newMember);
     nas.UserInfoCollection.prototype.parseConfig=function(dataStream){
         if(dataStream.length==0) return false;
         this.members.length = 0;
+        if((this.parent)&&(this.parent instanceof nas.Pm.PmDomain)) this.parent.contents.add('users');
         var form = 'plain-text';
         if(dataStream.match(/^\s*\[\s*\{/)){
             form = 'JSON';
@@ -544,6 +621,10 @@ console.log(typeof newMember);
             case 'JSON':
                 var tempData = JSON.parse(dataStream);
                 for(var ix = 0;ix<tempData.length;ix++){
+                    if(tempData[ix].timestamp){
+                        this.timestamp = tempData[ix].timestamp ;
+                        continue ;
+                    }
                     var optProp ={};var hasOpt=false;
                     for(prp in tempData[ix]){
                         if((prp == 'handle')||(prp == 'email')) continue;
@@ -558,9 +639,15 @@ console.log(typeof newMember);
                 }
             break;
             case 'full-dump':
-                var tempData = JSON.parse(dataStream);
+                var tempData = dataStream.split('\n');
                 for(var ix = 0;ix<tempData.length;ix++){
-                     this.addMember(tempData[ix]);
+                    if(tempData[ix].length==0) continue;//空行スキップ
+                    var newEntry = JSON.parse(tempData[ix]);
+                    if(newEntry.length > 2){
+                        this.addMember(new nas.UserInfo([newEntry[0],newEntry[1]].join(':'),newEntry[2]));
+                    }else{
+                        this.addMember(new nas.UserInfo([newEntry[0],newEntry[1]].join(':')));
+                    }
                 }
             break;
             case 'plain-text':
@@ -903,16 +990,19 @@ nas.Resolution=function(){
 */
 //---------------------------------------------------------------
 	if(arguments.length==0){
-		arguments=[new nas.UnitResolution("72 ppi","dpc")];
+		var args = [new nas.UnitResolution("72 ppi","dpc")];
+	    this.length = 1;
+	}else{
+        var args = Array.prototype.slice.call(arguments)
+	    this.length=arguments.length;//DimensionLength 1~3
 	}
 	this.props=["x","y","z"];
-	this.length=arguments.length;//DimensionLength 1~3
-	this.x  =new nas.UnitResolution(arguments[0]);
+	this.x  =new nas.UnitResolution(args[0]);
 
     this.type = this.x.type;//第一引数の単位で統一
 
-	this.y  =(arguments[1])? new nas.UnitResolution(arguments[1],this.type):this.x;
-	this.z  =(arguments[2])? new nas.UnitResolution(arguments[2],this.type):this.x;
+	this.y  =(args[1])? new nas.UnitResolution(args[1],this.type):this.x;
+	this.z  =(args[2])? new nas.UnitResolution(args[2],this.type):this.x;
 
 	this.toString=function(opt){
     		var myResult=[];
@@ -1010,10 +1100,10 @@ nas.Point=function(x,y,z){
 }
 nas.Point.prototype.toString=nas._LISTString;
 nas.Point.prototype.valueOf =nas._ARRAYValue;
-/*
-    表記方法のゆらぎを吸収してポイントオブジェクトを返す関数
-    
-*/
+/**
+ *    表記方法のゆらぎを吸収してポイントオブジェクトを設定する自己初期化メソッド
+ *   @params {Array|Object nas.Point|String csv} argumants
+ */
 nas.Point.prototype.setValue=function(){
     if(arguments.length == 0) return this;
     //引数が存在しない場合は、NOP
@@ -1046,7 +1136,7 @@ nas.Point.prototype.setValue=function(){
 	}
 	return this;
 }
-/** test
+/* test
 	A= new nas.Point();//原点初期化
 
 	myX= new nas.UnitValue("12mm");
@@ -1074,7 +1164,7 @@ nas.Point.prototype.setValue=function(){
 	console.log (I.toString());
 
  */
-/**
+/*
  * 	位置オブジェクト
  * 	
  * 位置オブジェクトは、座標オブジェクトを主たるデータとして位置プロパティを保持する複合オブジェクト
@@ -1111,7 +1201,8 @@ nas.Point.prototype.setValue=function(){
  */
 nas.Position=function(x,y,z){
 	if(arguments.length==0){
-		arguments=[new nas.UnitValue('0 pt'),new nas.UnitValue('0 pt')];
+		x=new nas.UnitValue('0 pt');
+		y=new nas.UnitValue('0 pt');
 	}
 	this.point=new nas.Point(arguments);
     this.length=this.point.length;
@@ -1595,6 +1686,83 @@ myRate*2;
 
 */
 /**
+    トランジションオブジェクト
+
+    this.name       = '--';//{string} name
+        トランジションの名称
+    this.time       = "0" ;//{String} nasFCT
+        トランジション時間　nas.FCT
+    this.direction  = ''  ;//{string} in|out from|to false|true
+        トランジション方向　in|out デフォルトはin
+    トランジション方向は、オブジェクトの使用されたプロパティに従って動的に変化するので注意
+*/
+nas.ShotTransition = function(trDescription,direction){
+    this.name       = '--';//{string} name
+    this.time       = "0" ;//{String} nasFCT
+    this.direction  = 'in';//{string} in|out
+    if(trDescription) this.parse(trDescription);
+    if(direction){
+        this.direction = (String(direction).match(/^to\b|out\b/i))?
+            'out':'in';
+    }else{
+        if(this.name.match(/^to\b|out\b/i)) this.direction = 'out';
+    }
+}
+/**
+    トランジション記述のパース
+    "1+12 , trout" 等のコンマ区切りと"trout(1+12)"等の（括弧）表記を自動認識
+*/
+nas.ShotTransition.prototype.parse = function(trDescription){
+    if(trDescription instanceof nas.ShotTransition){
+//duplicate
+        this.name       = trDescription.name     ;//{string} name
+        this.time       = trDescription.time     ;//{String} nasFCT
+        this.direction  = trDescription.direction;//{string} in|out
+    }else{
+        if(trDescription.indexOf(',') >= 0){
+            var dataArray = trDescription.split(',');
+            this.name = dataArray[1].trim();
+            this.time = (dataArray[0])? dataArray[1]:'0';
+        }else{
+            var timeGet = trDescription.match(/^([^\(]*)(\(([^\)]+)\))?/);
+            this.name = timeGet[1].trim();
+            this.time = (timeGet[2])? timeGet[3]:'0';
+        }
+    }
+}
+/**
+    引数で出力形式を選択
+    @params {String} form
+        出力フォーマット xps|<others>
+    @returns {String}
+        'xps'　記録形式出力フォーマット　time値が0で出力あり
+        通常は時間値がない場合''を出力
+        その他の場合 <name>(<time>)
+*/
+nas.ShotTransition.prototype.toString = function(form){
+    if(form == 'xps'){
+        return [this.time,this.name].join(',');
+    }else{
+        if(nas.FCT2Frm(this.time) == 0) return '';
+        return this.name + '('+this.time+')';
+    }
+}
+
+/**
+    トランジション長をフレーム数で返す
+*/
+nas.ShotTransition.prototype.frames = function(){
+    return nas.FCT2Frm(this.time);
+}
+/*TEST
+    new nas.ShotTransition('trin');
+    new nas.ShotTransition('trout');
+    new nas.ShotTransition('trin (1+12)');
+    new nas.ShotTransition('trout(3+0//24)','in');
+    new nas.ShotTransition(false,'from');
+    new nas.ShotTransition('wipe(3+18)','to');
+*/
+/**
 	サイズオブジェクト
 コンストラクタ
 	new nas.Size(width,height[,depth])
@@ -1621,14 +1789,16 @@ form2:
 */
 nas.Size=function(){
 	if(arguments.length==0){
-		arguments=[new nas.UnitValue("72 pt"),new nas.UnitValue("72 pt")];
+		var args = [new nas.UnitValue("72 pt"),new nas.UnitValue("72 pt")];
+        this.length = 2;
+	}else{
+	    var args = Array.prototype.slice.call(arguments)
+	    this.length=arguments.length;//DimensionLength
 	}
-	this.length=arguments.length;//DimensionLength
 	this.props=["x","y","z"];
 	for(var myDim=0;myDim<this.length;myDim++){
-		 this[this.props[myDim]]  =new nas.UnitValue(arguments[myDim]);
+		 this[this.props[myDim]]  =new nas.UnitValue(args[myDim]);
 	}
-
 	this.toString=function(opt){
     		var myResult=[];
 	    if(! opt){
@@ -1651,21 +1821,23 @@ nas.Size=function(){
 	};
 }
 /**
-    スケールオブジェクト
-Scale.length
-Scale.x
-Scale.y
-Scale.z
-Scale.type='percent'
-*/
-nas.Scale = function(){
+ *    スケールオブジェクト
+ *Scale.x
+ *Scale.y
+ *Scale.z
+ *Scale.type='percent'
+ */
+nas.Scale = function(x,y,z){
 	if(arguments.length==0){
-		arguments=["100%"];
+		var args = ["100%"];
+        this.length = 1;
+	}else{
+	    var args = Array.prototype.slice.call(arguments)
+	    this.length=arguments.length;//DimensionLength
 	}
-	this.length=arguments.length;//DimensionLength
 	this.props=["x","y","z"];
-	for(var myDim=0;myDim<this.length;myDim++){
-		 this[this.props[myDim]]  = new nas.Rate(arguments[myDim]);
+	for(var myDim=0 ; myDim<this.length ; myDim++){
+		 this[this.props[myDim]]  = new nas.Rate(args[myDim]);
 	}
 	this.rate=this.x.rate;
 
@@ -1747,8 +1919,16 @@ nas.TimingCurve=function(){
 	this.push([0,0]);this.push([1,1]);//デフォルトのlinearタイミング
 }
 nas.TimingCurve.prototype =Array.prototype;
+/*
+	enum 逆引き
+*/
+nas.reversemap = function reversemap(idx){
+	for(prp in this) if(this[prp]==idx)return prp;
+	return null;
+}
 
 /**
+ *  @enum {array}
 デフォルトタイミングライブラリ
 
 	リニアタイミング（均等タイミング）	0	0	1	1
@@ -1775,47 +1955,48 @@ nas.Timing={
 
 
 /**
-    合成モードオブジェクト
-
-nas.BlendingMode.ADD
-nas.BlendingMode.ALPHA_ADD
-nas.BlendingMode.CLASSIC_COLOR_BURN
-nas.BlendingMode.CLASSIC_COLOR_DODGE
-nas.BlendingMode.CLASSIC_DIFFERENCE
-nas.BlendingMode.COLOR
-nas.BlendingMode.COLOR_BURN
-nas.BlendingMode.COLOR_DODGE
-nas.BlendingMode.DANCING_DISSOLVE
-nas.BlendingMode.DARKEN
-nas.BlendingMode.DIFFERENCE
-nas.BlendingMode.DISSOLVE
-nas.BlendingMode.EXCLUSION
-nas.BlendingMode.HARD_LIGHT
-nas.BlendingMode.HARD_MIX
-nas.BlendingMode.HUE
-nas.BlendingMode.LIGHTEN
-nas.BlendingMode.LINEAR_BURN
-nas.BlendingMode.LINEAR_DODGE
-nas.BlendingMode.LINEAR_LIGHT
-nas.BlendingMode.LUMINESCENT_PREMUL
-nas.BlendingMode.LUMINOSITY
-nas.BlendingMode.MULTIPLY
-nas.BlendingMode.NORMAL
-nas.BlendingMode.OVERLAY
-nas.BlendingMode.PIN_LIGHT
-nas.BlendingMode.SATURATION
-nas.BlendingMode.SCREEN
-nas.BlendingMode.SILHOUETE_ALPHA
-nas.BlendingMode.SILHOUETTE_LUMA
-nas.BlendingMode.SOFT_LIGHT
-nas.BlendingMode.STENCIL_ALPHA
-nas.BlendingMode.STENCIL_LUMA
-nas.BlendingMode.VIVID_LIGHT
-
-現在の実装では実際の値は問題にならない
-列挙値として仮にAE互換の整数値を与えておく　
-
-これは将来合成数式のキャリアとして再設定される…かも
+ *  @enum {number}
+ *    合成モードオブジェクト
+ *
+ *nas.BlendingMode.ADD
+ *nas.BlendingMode.ALPHA_ADD
+ *nas.BlendingMode.CLASSIC_COLOR_BURN
+ *nas.BlendingMode.CLASSIC_COLOR_DODGE
+ *nas.BlendingMode.CLASSIC_DIFFERENCE
+ *nas.BlendingMode.COLOR
+ *nas.BlendingMode.COLOR_BURN
+ *nas.BlendingMode.COLOR_DODGE
+ *nas.BlendingMode.DANCING_DISSOLVE
+ *nas.BlendingMode.DARKEN
+ *nas.BlendingMode.DIFFERENCE
+ *nas.BlendingMode.DISSOLVE
+ *nas.BlendingMode.EXCLUSION
+ *nas.BlendingMode.HARD_LIGHT
+ *nas.BlendingMode.HARD_MIX
+ *nas.BlendingMode.HUE
+ *nas.BlendingMode.LIGHTEN
+ *nas.BlendingMode.LINEAR_BURN
+ *nas.BlendingMode.LINEAR_DODGE
+ *nas.BlendingMode.LINEAR_LIGHT
+ *nas.BlendingMode.LUMINESCENT_PREMUL
+ *nas.BlendingMode.LUMINOSITY
+ *nas.BlendingMode.MULTIPLY
+ *nas.BlendingMode.NORMAL
+ *nas.BlendingMode.OVERLAY
+ *nas.BlendingMode.PIN_LIGHT
+ *nas.BlendingMode.SATURATION
+ *nas.BlendingMode.SCREEN
+ *nas.BlendingMode.SILHOUETE_ALPHA
+ *nas.BlendingMode.SILHOUETTE_LUMA
+ *nas.BlendingMode.SOFT_LIGHT
+ *nas.BlendingMode.STENCIL_ALPHA
+ *nas.BlendingMode.STENCIL_LUMA
+ *nas.BlendingMode.VIVID_LIGHT
+ *
+ *現在の実装では実際の値は問題にならない
+ *列挙値として仮にAE互換の整数値を与えておく　
+ *
+ *これは将来合成数式のキャリアとして再設定される…かも
 */
 
 nas.BlendingMode ={
@@ -1854,6 +2035,7 @@ nas.BlendingMode ={
 	STENCIL_LUMA:3641,
 	VIVID_LIGHT:3630
 }
+nas.BlendingMode.reversemap = nas.reversemap;
 /*
 nas.AnimationPeg Object
 nasペグシステムでサポートするペグオブジェクト
@@ -1908,16 +2090,23 @@ frameOffset
 	ペグ位置に対するフレームのオフセット
 	エレメント（ローカル）座標系で記録する
 */
-/*
-myPeg =new nas.AnimationPegForm(pegForm)
-
-*/
-nas.AnimationPegForms={
+/**
+ *  @enum {number}
+ *      ペグ形式DB
+ */
+nas.PegForm={
 	"invisible":0,
 	"ACME":1,
 	"jis2hales":2,
 	"us3hales":3
 }
+nas.PegForm.reversemap = nas.reversemap;
+
+/**
+ *  @params {String}    pegName
+ *      myPeg =new nas.AnimationPegForm(pegForm)
+
+ */
 nas.AnimationPegForm=function(pegName){
 	this.name=pegName;//"invisible","ACME","jis2hales","ansi3holes"
 }
@@ -1981,7 +2170,7 @@ nas.AnimationField.prototype.toString=function(exportForm){
 
 /**
  * nas.AnimationElementSource Object
- * 各エレメントのソースファイルを統合して扱うオブジェクト
+ * 各エレメントのソースデータを統合して扱うオブジェクト
  * 初期化引数:ターゲット記述テキスト
  * .file ソースファイル object/File 又はパス文字列  初期値 null
  * .file.additionalLocation ソースファイルのサブロケーション  文字列  結合可能
@@ -1990,16 +2179,51 @@ nas.AnimationField.prototype.toString=function(exportForm){
  * .startOffset ソース継続時間に対するオフセット  int/frames
  * .type     ソースに与えられた役割を表す型式文字列
  
-type属性は、静止画/動画/音声/Xpst と　ソース/プロキシ/リファレンス　の組み合わせ12種類
-に加えて作業伝票としてのXPstを扱うことができる
-xpst/still/movie/sound[-/src/prox/ref]
+type属性は、静止画/動画/音声/Xpst/Comp と　ソース/プロキシ/リファレンス　の組み合わせ12種類
+に加えて作業伝票としてのXPstを扱うことができる (2019現在未使用プロパティ)
+comp|xpst|still|movie|sound[-src|prox|ref]
+
+type　comp-src　のみ実体データを指さない
+compは同xMap内部のエレメントをエレメント名で指定する合成指定となる（xpstの代わりに単純な記述を許す）
+
+"= Ago-あ + A-1^ + A-1^^"　のように 時間情報を持たずにエレメント同士の合成を指定できる「合成式」文字列とする
+合成要素は、アクセス可能なxMapエレメント名
+合成演算子は以下　(ベース（白)=0 | ストローク(黒)=1の空間で数値演算を行う)
+画像のチャンネル深度に関わらず　0-1にマッピングを行って、その色空間を用いる
+
+'=' イコール - 合成式の開始宣言
+'+' プラス - 演算子・ノーマル合成(加算)
+'*' スター - 演算子・画像クリップを行う　先置の要素に後置の要素を乗算してクリップする
+'-' マイナス - 演算子・後ろに続く要素の画素を反転させる
+'('')'括弧 - 合成のグループ化を行う(演算優先度をコントロールする)
+'@['']'合成要素のアルファを使用する場合は   要素を]で囲む アルファを反転する場合は   - を前置する
+'!{''}'合成要素のルミナンスを使用する場合は 要素を!{}で囲む ルミナンスを反転する場合は - を前置する
+';'セミコロン - 合成式を終了する（省略可）
+
+要素と合成演算子の間にはスペースを置く
+
+単純な線合成
+= Aあ + A1^ ;
+事前にルミナンスマスク化されているMセルでクリッッピング
+= ( Aあ + A1^ ) * M3 ;
+ルミナンスを抽出してLセルでクリップ
+= A5 * !{ L8 } ;
+
+反転アルファを抽出したLセルでクリップ
+= A5 * - !{ L8 } ;
+
+eg.
+
+B-12 = B-(あ) + B-12' ;
+B-13 = B-(あ) + B-13' ;
+B-14 = B-(あ) + B-14' ;
 
  */
 nas.AnimationElementSource=function(targetDescription){
     this.contentText=targetDescription;
     this.file=null;
     this.subLocations=[];
-	this.framerate=nas.pmdb.activeTitle.framerate;
+	this.framerate=(nas.pmdb.activeProduct)?nas.pmdb.activeProduct.title.framerate:nas.FRATE;
     this.duration;
     this.stratOffset;
     this.type="still-src";
@@ -2041,7 +2265,8 @@ nas.AnimationElementSource.prototype.toString=function(exportForm){
             (
                 (this.duration)||
                 (this.startOffset)||
-                (! this.framerate.sameAs(nas.pmdb.activeTitle.framerate))||
+//                (! this.framerate.sameAs(nas.pmdb.activeProduct.framerate))||
+                (! this.framerate.sameAs(nas.FRATE))||
                 (this.type!="still-src")
             )
         ){
@@ -2053,7 +2278,8 @@ nas.AnimationElementSource.prototype.toString=function(exportForm){
             var props=[];
             if(this.duration)           props.push("dutation="+this.duration);
             if(this.startOffset)        props.push("startOffset="+this.startOffset);
-            if(! this.framerate.sameAs(nas.pmdb.activeTitle.framerate));
+//            if(! this.framerate.sameAs(nas.pmdb.activeProduct.framerate))
+            if(! this.framerate.sameAs(nas.FRATE))
                                         props.push("framerate="+this.framerate.toString());
             if(this.type!="still-src")  props.push("type="+this.type);
             myResult.push(props.join(','));
@@ -2310,21 +2536,25 @@ nas.parseDataChank =function(dataChank){
 	var dataForms=[];
 	for(var dix=0;dix<dataChank.length;dix++){
 		var dataType  ='source';
-		var target=dataChank[dix]
+		var target =String(dataChank[dix]).trim();
 		if(target.match( /^[+-]?\d+\.?\d*$/ )){
 			dataType='numeric';
+			dataChank[dix] = parseFloat(target);
 		}else if (nas.BlendingMode[target]){
 			dataType='blendingMode';
 		}else if(target.match(/^(\d+\.?\d*FLD)(\d+[NS])?(\d+[EW])?(\d+\.?\d*[CA]?)?$/i)){
 			dataType='inchField';
+			dataChank[dix] = target;
 		}else if(target.match(/^(\d+\.?\d*)(FR?L?)$/i)){
 			dataType='scaleField';
+			dataChank[dix] = target;
 		}else if(target.match(/^[+-]?\d+\.?\d*(\D+)$/)){
 			var unitString = RegExp.$1;
 			if(unitString.match(nas.UNITRegex)) dataType='unitValue';
 			else if (unitString.match(/rad|d|degrees|°/i)) dataType='unitAngle';
 			else if (unitString.match(/dpi|dpc|ppi|ppc|lpi|lpc/i )) dataType='unitResolutions';
 			else if (unitString == '%') dataType='percent';
+			dataChank[dix] = target;
 		}
 		dataForms.push({type:dataType,value:dataChank[dix]});
 	}
@@ -2375,6 +2605,7 @@ nas.parseFrame('120F');
 /**
  * カレントユーザ文字列
  * ここで参照して、以降はグローバルを使用しないようにする2011/08/17
+ * クッキーに保存したので　クッキー読み取り時に更新
  */
 nas.CURRENTUSER = myName;
 /**
@@ -2401,39 +2632,52 @@ nas.RATE = '24FPS';
 /**
  * サンプル基準値
  * サンプルフレームレート(フレーム継続時間に置き換えるか一考)
- * @type {number}
+ * @type {Object | nas.Framerate}
  */
 // nas.FRATE = 24;
 nas.FRATE = nas.newFramerate(nas.RATE);
 /**
  * サンプル解像度ppc(dpc)
- * @type {number}
+ * @type {Number}
  */
 //nas.RESOLUTION = 144. / 2.540;//dpc
 nas.RESOLUTION = new nas.UnitResolution("144dpi",'dpc');//nas関数が変動ユニットに未対応なので現在は'dpc'を指定のこと2019.01
 /**
  * サンプル基準寸法(mm)
- * @type {number}
+ * @type {Number}
  */
 nas.LENGTH = 225.;//nas.LENGTH = new nas.UnitValue("254mm") ;//フレーム基準寸法(横幅)
 /**
  * フレームアスペクト（参考値 横／縦）
- * @type {number}
+ * @type {Number}
  */
 nas.ASPECT = 16 / 9;
 /**
  * ピクセルアスペクト（参考値 横／縦）
- * @type {number}
+ * @type {Number}
  */
 nas.PIXELASPECT = 1;
 /**
  * サンプル基準フレーム(fl)
- * @type {number}
+ * @type {Number}
  */
 nas.FRAME_L = 100;
 
 /**
+ * カット番号連番
+ * @type {Boolean}
+ */
+nas.ShotNumberUnique = true;
+
+/**
+ * シーン番号表示
+ * @type {Boolean}
+ */
+nas.SceneUse = false;
+
+/**
  * FCTインターフェース関連
+ *  @type {Number}
  * タイムシート継続時間 秒/枚
  */
 nas.SheetLength = SheetLength;
@@ -2775,34 +3019,42 @@ nas.cak = function (StartSize, EndSize, TargetSize) {
 
 /**
  * ゼロ埋め ZERROfilling
- * @param N
- * @param f
+ * @params {String}   N
+ * @params {Number}    f
  * @returns {string}
- * @constructor
-数値を指定桁数の０で埋めて桁合わせして戻す
-数値以外の文字が胡内されていたばあい、文字列は捨てられる
-指定桁数がない場合は引数をそのまま戻す
-指定桁数が引数の桁よりも少ない場合は何も操作されない
-数値が小数部を含む場合は、整数部を指定桁数に揃える
-数字以外の文字が前置されていた場合はNaNを戻す
-今回の修正で以下の変更が行われるため要注意  2017.10.18
-引数 旧戻値  新戻値
-"0123",0 "0123" "123"
-"0123A",0 "0123A" "123"
+ *<pre>
+ * 数値を指定桁数の０で埋めて桁合わせして戻す
+ * 数値以外の文字が後置されていた場合、後置部は捨てられる
+ * 指定桁数がない場合は引数をそのまま戻す
+ * 指定桁数が引数の桁よりも少ない場合は何も操作されない
+ * 数値が小数部を含む場合は、整数部を指定桁数に揃える
+ * 数字以外の文字が前置されていた場合はNaNを戻す
+ * 今回の修正で以下の変更が行われるため要注意  2017.10.18
+ * 引数 旧戻値  新戻値
+ * ("0123",0) "0123" "123"
+ * ("0123A",0) "0123A" "123"
+ * </pre>
  */
 nas.Zf = function (N, f) {
-    var prefix = "";
-    
+    var prefix  = "";
+    var postfix = "";
+    var decimalPart = 0;
+
     N = parseFloat(N);
     if(isNaN(N)) return N;
     if (N < 0) {
         N = Math.abs(N);
         prefix = "-"
     }
+    if(N != Math.floor(N)){
+        postfix = String(N).replace(/^\d+\./,'\.');
+        N = Math.floor(N);
+    }
+    
     if (String(N).length < f) {
-        return prefix + ('000000000000000000000000000000000000000000000000' + String(N)).slice(String(N).length + 48 - f, String(N).length + 48);
+        return prefix + ('000000000000000000000000000000000000000000000000' + String(N)).slice(String(N).length + 48 - f, String(N).length + 48) + postfix;
     } else {
-        return String(N);
+        return prefix + String(N) + postfix;
     }
 };
 /*test
@@ -2810,22 +3062,61 @@ console.log(nas.Zf("123",4));//0123
 
 */
 /**
- * 前後文字列つきゼロ埋め(動画番号正規化)
+ * 前後文字列つきゼロ埋め(動画番号等の正規化)
  *
- * @param myName
- * @param num
- * @returns {*}
- * @constructor
+ * @params {String} myName
+ * @param {Array of Number|Number} num
+ * @returns {String}
+ * 
+ 文字列内の（少数以下を含む）数値部をすべて処理する仕様に変更
+ ナンバー引数を配列に変更
+ 配列要素数が処理部の数を下回る場合は、残り引数は0（桁わせの削除）とする
+ 引数が配列でなく数値一つの場合は、すべての処理要素に同じ値を適用する
+ 引数:'A123-3456Bx33.2',4
+ 旧リザルト  :A0123-56Bx33.2
+ 新リザルト  :A0123-0056Bx0033.2
+
+ 引数:'A123-3456Bx33.2',[4,3]
+ 旧リザルト  :A0123-56Bx33.2
+ 新リザルト  :A0123-056Bx033.2
+
+ 引数:'A123-3456Bx33.2',[4];//旧リザルト互換
+ 旧リザルト  :A0123-56Bx33.2
  */
 nas.RZf = function (myName, num) {
-    if (typeof num == "undefined") num = 4;
-    if (String(myName).match(/([^\d]*)([\d]+)([^\d]?.*)/)) {
-        return RegExp.$1 + nas.Zf(RegExp.$2, num) + RegExp.$3;
-    } else {
-        return myName;
+    if(myName == '') return '';
+    if (typeof num == "undefined") num = 0;
+    var opStrings = myName.match(/[^\d]*(\d+\.?\d*)|[^\d]+$/g);
+    if (!(num instanceof Array)){
+        var numArray = [];
+        for (var i =0 ; i < opStrings.length; i ++) numArray.push(num);
+    }else{
+        var numArray = num;
     }
+    var resultArray = [];
+    for (var op = 0 ; op < opStrings.length ; op ++){
+        if (String(opStrings[op]).match(/([^\d\.]*)(\d+\.?\d*)/)) {
+            if(numArray[op]){
+                resultArray.push(RegExp.$1 + nas.Zf(RegExp.$2,numArray[op]));
+            }else{
+                resultArray.push(RegExp.$1 + nas.Zf(RegExp.$2, 0));
+            }
+        }else{
+            resultArray.push(opStrings[op]);
+        }
+    }
+        return resultArray.join('');
+//    if (String(myName).match(/([^\d]*)([\d]+)([^\d]?.*)/)) {
+//        return RegExp.$1 + nas.Zf(RegExp.$2, num) + RegExp.$3;
+//    } else {
+//        return myName;
+//    }
 };
-
+/* //test
+    console.log (nas.RZf('A123,012.0123xBB034HYjr',4));
+    console.log (nas.RZf('A123q012.0123xBB034HYjr',[4]));
+    console.log (nas.RZf('A123,012.0123xBB034HYjr',[4,6,7]));
+*/
 /**
  * 時間フレーム変換
  * @param ms
@@ -2890,14 +3181,19 @@ nas.FCT2ms = function (fct) {
  * 指定モードとしてtype6(30df)/7(60df)を与える
  * type7は30DF互換なので30DFと同じタイミングで4フレームドロップカウントする
  *
- * @param frames Int /time value
- * @param type Int 0 - 7/TC type
- * @param ostF Int or bool/count origination
- * @param fpsC Number or Object nas.Framerate/ framerate of value
+ * @param {Number|String} frames
+ *       Int /time value
+ * @param {Number} type
+ *       Int 0 - 7/TC type
+ * @param {Boolean|Number} ostF
+ *       Int or bool/count origination
+ * @param {Number|Object nas.Framerate}  fpsC Number or Object nas.Framerate/ framerate of value
  * @returns {*}
  * @constructor
  */
 nas.Frm2FCT = function (frames, type, ostF, fpsC) {
+//    if (typeof frames == 'string') 
+    frames = parseInt(frames);
     if (!type) {
         type = 0
     }
@@ -2940,16 +3236,17 @@ nas.Frm2FCT = function (frames, type, ostF, fpsC) {
         var md = Math.floor(fRh / dmF);//10分単位
         var mu = ((fRh % dmF) < lmFc) ? 0 : Math.floor(((fRh % dmF) - lmFc) / lmFd) + 1;//10分以下の分数
         m = (md * 10) + mu;//加算して分数
-        fRm = fRh - (dmF * md) - (lmFd * mu);//
+        var fRm = fRh - (dmF * md) - (lmFd * mu);//
         fRm -= (mu == 0) ? 0 : dropF;//正分まで処理を終えた残フレーム
         s = (mu == 0) ? Math.floor(fRm / sF) : Math.floor((fRm + dropF) / sF);//秒数・例外を除きドロップ2フレ補償
-        fRs = ((mu == 0) || (s == 0)) ? fRm - (s * sF) : fRm - (s * sF) + dropF;
+        var fRs = ((mu == 0) || (s == 0)) ? fRm - (s * sF) : fRm - (s * sF) + dropF;
         f = ((mu == 0) || (s != 0)) ? fRs : fRs + dropF;
         return nas.Zf((h % 24), 2) + ":" + nas.Zf(m, 2) + ":" + nas.Zf(s, 2) + ";" + nas.Zf(f, 2);
     } else {
         /**
          *  通常のTCを作成
          */
+        var PostFix;var negative_flag;
         var negative_flag = false;
         if (frames < 0) {
             frames = Math.abs(frames);
@@ -2959,7 +3256,7 @@ nas.Frm2FCT = function (frames, type, ostF, fpsC) {
             PostFix = ' _';
         } else {
             ostF = 0;
-            PostFix = ' .';
+            PostFix = '';//' .'
         }
 //
 //	default	00000
@@ -2977,16 +3274,16 @@ nas.Frm2FCT = function (frames, type, ostF, fpsC) {
         var FrS = Math.floor(frames - (s * fpsC)) + ostF;//秒単位端数フレーム
         var FrP = Math.floor(frames - (((p - 1) * this.SheetLength) * fpsC)) + ostF;//ページ
         var SrP = s - ((p - 1) * this.SheetLength);//ページ単位端数 秒
-
+        var Counter;
         switch (type) {
             case 5:
-                Counter = 'p ' + this.Zf(p, 1) + ' / + ' + this.Zf(FrP, 3) + PostFix;
+                Counter = 'p ' + this.Zf(p, 1) + ' / +' + this.Zf(FrP, 3) + PostFix;
                 break;
             case 4:
                 Counter = 'p ' + this.Zf(p, 1) + ' / ' + SrP + ' + ' + this.Zf(FrS, 2) + PostFix;
                 break;
             case 3:
-                Counter = this.Zf(s, 1) + ' + ' + this.Zf(FrS, 2) + PostFix;
+                Counter = this.Zf(s, 1) + '+' + this.Zf(FrS, 2) + PostFix;
                 break;
             case 2:
                 Counter = this.Zf(m, 1) + ':' + this.Zf(SrM, 2) + ':' + this.Zf(FrS, 2) + PostFix;
@@ -3045,13 +3342,13 @@ if (typeof Fct == 'undefined') return false;
     if (!fpsC) {
         fpsC = Number(this.FRATE)
     }
-    fct = Fct.toString();
-
-    var negative_flag = 1;
+var fct = Fct.toString();
+var negative_flag = 1;
 var myFrames;//
 var ostF;
 var PostFix;
 var TCtype;
+var tmpTC;
     /**
      * 負数表示がある場合ネガティブモードに遷移
      */
@@ -3356,12 +3653,12 @@ nas.preformvector = function (vec1, vec2) {
  * @returns {Array}
  */
 nas.add = function (vec1, vec2) {
-    var preformedVec = this.preformvector(vec1, vec2);
+    var preformedVec = nas.preformvector(vec1, vec2);
     var vec3 = new Array(preformedVec[2]);
     /**
      * 和を求めて返す。
      */
-    for (idx = 0; idx < vec3.length; idx++) {
+    for (var idx = 0; idx < vec3.length; idx++) {
         vec3[idx] = preformedVec[0][idx] + preformedVec[1][idx]
     }
     return vec3;
@@ -3378,12 +3675,12 @@ nas.add = function (vec1, vec2) {
  * @returns {Array}
  */
 nas.sub = function (vec1, vec2) {
-    var preformedVec = this.preformvector(vec1, vec2);
+    var preformedVec = nas.preformvector(vec1, vec2);
     var vec3 = new Array(preformedVec[2]);
     /**
      * 差を求めて返す。
      */
-    for (idx = 0; idx < vec3.length; idx++) {
+    for (var idx = 0; idx < vec3.length; idx++) {
         vec3[idx] = preformedVec[0][idx] - preformedVec[1][idx]
     }
     return vec3;
@@ -3408,7 +3705,7 @@ nas.mul = function (vec, amount) {
     /**
      * 積を求めて返す。
      */
-    for (idx = 0; idx < vecD; idx++) {
+    for (var idx = 0; idx < vecD; idx++) {
         vecNew[idx] = vec[idx] * amount
     }
     return vecNew;
@@ -3435,7 +3732,7 @@ nas.div = function (vec, amount) {
     /**
      * 商を求めて返す。
      */
-    for (idx = 0; idx < vecD; idx++) {
+    for (var idx = 0; idx < vecD; idx++) {
         vecNew[idx] = vec[idx] / amount
     }
     return vecNew;
@@ -3469,7 +3766,7 @@ nas.clamp = function (vec, limit1, limit2) {
     /**
      * 要素ごとに値をクランプして返す。
      */
-    for (idx = 0; idx < vecD; idx++) {
+    for (var idx = 0; idx < vecD; idx++) {
         if (vec[idx] >= min && vec[idx] <= max) {
             vecNew[idx] = vec[idx];
         } else {
@@ -3493,7 +3790,7 @@ nas.dot = function (vec1, vec2) {
     /**
      * 要素ごとに積算。
      */
-    for (idx = 0; idx < preformedVec[2].length; idx++) {
+    for (var idx = 0; idx < preformedVec[2].length; idx++) {
         Result += (preformedVec[0][idx] * preformedVec[1][idx])
     }
     return Result;
@@ -3509,7 +3806,7 @@ nas.dot = function (vec1, vec2) {
  * @returns {number}
  */
 nas.cross = function (vec1, vec2) {
-    var preformedVec = this.preformvector(vec1, vec2);
+    var preformedVec = nas.preformvector(vec1, vec2);
     vec1 = preformedVec[0];
     vec2 = preformedVec[1];
     var vecD = preformedVec[2];
@@ -3559,7 +3856,7 @@ nas.length = function (vec) {
                 typeof(arguments[1][0]) == "number" &&
                 typeof(arguments[1][1]) == "number"
             ) {
-                vec = this.sub(arguments[0], arguments[1]);
+                vec = nas.sub(arguments[0], arguments[1]);
             } else {
                 return "配列を入力しましょう";
             }
@@ -3584,7 +3881,7 @@ nas.length = function (vec) {
         case 3:
             Length = Math.pow(Math.pow(vec[0], 2) + Math.pow(vec[1], 2), .5);
             if (vecD > 2) {
-                for (idx = 2; idx < vecD; idx++) {
+                for (var idx = 2; idx < vecD; idx++) {
                     Length = Math.pow(Math.pow(Length, 2) + Math.pow(vec[idx], 2), .5)
                 }
             }
@@ -3604,7 +3901,7 @@ nas.length = function (vec) {
  * @returns {Array}
  */
 nas.normalize = function (vec) {
-    return this.div(vec, this.length(vec))
+    return nas.div(vec, nas.length(vec))
 };
 
 /**
@@ -3800,7 +4097,7 @@ nas.bezierL = function (SP, CP1, CP2, EP, sT, eT, Slice) {
      */
     var Ltable = new Array(Slice);
 
-    for (i = 0; i < Slice; i++) {
+    for (var i = 0; i < Slice; i++) {
         switch (Dim) {
             case    1:
                 Ltable[i] = Math.abs(
@@ -3833,7 +4130,7 @@ nas.bezierL = function (SP, CP1, CP2, EP, sT, eT, Slice) {
         }
     }
     var T = 0;
-    for (n in Ltable) {
+    for (var n in Ltable) {
         T += Ltable[n]
     }
 
@@ -3908,8 +4205,8 @@ nas.showMatrix = function (Name, Matrix, L, C) {
      */
     var Result = Name + ":\n";
 
-    for (i = 0; i < L; i++) {
-        for (j = 0; j < C; j++) {
+    for (var i = 0; i < L; i++) {
+        for (var j = 0; j < C; j++) {
 //	puts -nonewline [format \t%\ 4.4f [lindex ${Matrix} [expr ${i} * ${C} + ${j}]]]
             Result += "\t " + Matrix[i * C + j];
         }
@@ -3983,7 +4280,7 @@ nas.mDeterminant = function (myMatrix) {
             /**
              * 対角部分の積
              */
-            for (i = 0; i < n; i++) {
+            for (var i = 0; i < n; i++) {
                 Result *= myMatrix[i][i]
             }
         }
@@ -4032,10 +4329,10 @@ nas.multiMatrix = function (M1, M2) {
     var D1L = 3;
     var D2C = Math.floor(M2.length / D1L);
     var D2L = D1C;
-    for (Mi = 0; Mi < D1L; Mi++) {
-        for (Mj = 0; Mj < D2C; Mj++) {
+    for (var Mi = 0; Mi < D1L; Mi++) {
+        for (var Mj = 0; Mj < D2C; Mj++) {
             var X = 0;
-            for (count = 0; count < D1C; count++) {
+            for (var count = 0; count < D1C; count++) {
                 X = X + M1[Mi * D1C + count] * M2[Mj % D2C + D2C * count];
             }
             multiprideMatrix.push(X);
@@ -4076,11 +4373,11 @@ nas.mInverse = function (Matrix) {
     /**
      * 余因数生成
      */
-    for (j = 0; j < D; j++) {
-        for (i = 0; i < D; i++) {
+    for (var j = 0; j < D; j++) {
+        for (var i = 0; i < D; i++) {
             var Cm = [];
-            for (Cj = 0; Cj < D; Cj++) {
-                for (Ci = 0; Ci < D; Ci++) {
+            for (var Cj = 0; Cj < D; Cj++) {
+                for (var Ci = 0; Ci < D; Ci++) {
                     if ((Cj - j) == 0) {
 
                     } else {
@@ -4228,7 +4525,7 @@ nas.biteCount = function (myString) {
         myString = "";
     }
     var btCount = 0;
-    for (cid = 0; cid < myString.length; cid++) {
+    for (var cid = 0; cid < myString.length; cid++) {
         cXV = myString.charCodeAt(cid);
         while (cXV > 0) {
             btCount++;
@@ -4254,7 +4551,7 @@ nas.biteClip = function (myString, count) {
         count = 31
     }
     var btCount = 0;
-    for (cid = 0; cid < myString.length; cid++) {
+    for (var cid = 0; cid < myString.length; cid++) {
         cXV = myString.charCodeAt(cid);
         while (cXV > 0) {
             btCount++;
@@ -4332,7 +4629,7 @@ nas.propCount = function (myObject, myOption) {
         var resultArray = [];
     }
     var myResult = 0;
-    for (prp in myObject) {
+    for (var prp in myObject) {
         myResult++;
         if (myOption) {
             resultArray.push(prp)
@@ -4367,6 +4664,7 @@ nas.decodeUnit = function (myValue, resultUnit) {
     } else {
         return false;
     }
+    var myResult;var reusltUnit;
 //console.log(resultUnit);
     if((typeof resultUnit == 'undefined')||(!(String(resultUnit).match(/^(millimeters|mm|centimeters|cm|points|picas|pt|pixels|px|inches|in)?$/i)))) {
         resultUnit = "pt";
@@ -4488,30 +4786,43 @@ console.log(nas.labelNormalization("B-01223雨森Ax","."));
 console.log(nas.labelNormalization("たぬき3"));
 */
 //比較補助関数
-/** nas.normalizeStr(myString)
- * 
+/** nas.normalizeStr(str)
+ *  @params {String}    str
+ *       元文字列
+ *  @params {Number}   zeroCount
+ *       数値部分を桁合わせする数 -1の場合桁合わせは行わない
+ *       
  *  myString.normalizeメソッドが存在すればnormalize("NFKC")をもどす
  */
 
-nas.normalizeStr = function(str){
-if(str.normalize){return str.normalize("NFKC");}
+nas.normalizeStr = function(str,zeroCount){
+    if(typeof zeroCount == 'undefined') zeroCount = -1;
+    if(str.normalize){
+        str = str.normalize("NFKC");
+    }else{
 // ノーマライズが無い時は半角化のみ実行
 
-  str=str.replace(/[！-～]/g, function(s) {
-    return String.fromCharCode(s.charCodeAt(0) - 0xFEE0);//char-code shift
-  });
+    str=str.replace(/[！-～]/g, function(s) {
+        return String.fromCharCode(s.charCodeAt(0) - 0xFEE0);//char-code shift
+    });
   // 文字コードシフトで対応できない文字の変換
-  return str.replace(/”/g, "\"")
+  str = str.replace(/”/g, "\"")
     .replace(/’/g, "'")
     .replace(/‘/g, "`")
     .replace(/￥/g, "\\")
     .replace(/  /g, " ")
     .replace(/〜/g, "~");
+ }
+ if(zeroCount > -1){
+     str = nas.RZf(str,zeroCount);
+ }
+ return str
 }
 
 
 /*test
 console.log (nas.normalizeStr("安全ｶｸﾆﾝＢＡＮＤ（12３④５）"));
+console.log (nas.normalizeStr("安全ｶｸﾆﾝＢＡＮＤ（12３④５）",5));
 */
 
 /**
@@ -4524,7 +4835,7 @@ console.log (nas.normalizeStr("安全ｶｸﾆﾝＢＡＮＤ（12３④５）")
  *   数字の連続部分を数字部
  *   それ以降を後置部
  * と定義する
- * ＞小数点以下は後置部となる
+ * ＞小数点以下は後置部となるので注意
  */
 nas.parseNumber=function(str){
     if(typeof str == 'undefined') str = '';
@@ -4548,7 +4859,7 @@ nas.parseNumber("Final-A 123-under");
  * 引数は、記述文字列または記述オブジェクト
  * 実際の判定はセル記述オブジェクトのメソッドを利用するので、
  * 比較するどちらかの要素がセル記述オブジェクトであることが明確なケースでは
- * この関数を使う必要は無い obj.compae(desc) を利用するように推奨
+ * この関数を使う必要は無い obj.compare(desc) を利用するように推奨
  */
 nas.compareCellIdf=function(tgt,dst){
     if((! tgt) || (! dst)) return false;
@@ -4591,10 +4902,10 @@ console.log(nas.compareCellIdf("|","X"));
  *         記述が値を持つ場合は、システム上関連付けられた値を示す。
  *         値を持たない場合は省略記述と同様に直前のセルの値を継承する
  *         
- * myPrefix    プレフィックス部
- *     通常？はトラックラベル
+ * cellPrefix    プレフィックス部
+ *     通常はタイムライントラックラベル
  *     主記述に指定のある場合はそちらを優先する
- * myPostfix
+ * cellPostfix
  *     以下の文字列によるオーバレイまたはアンダーレイの指定を一種のみ
  *     +,修正,修,上,下,カブセ,u|under,o|over,overlay
  *     文字を重ねるかまたは直後に重ね数を付加して使用する
@@ -4602,12 +4913,12 @@ console.log(nas.compareCellIdf("|","X"));
  *     主記述に指定のある場合はそちらを優先する
  *     ブランク記述の場合は意味を持たないが、記述規則上ポストフィックスが記述されることは無い
  *     ポストフィックスが与えられた場合、特殊記述でなく一般記述となる
- * myModifier
+ * cellModifier
  *     丸囲い、三角囲い、四角囲い等の記述修飾を与える  
  *     "none","circle","trangle","brackets","red"
  *     主記述に指定のある場合はそちらを優先する
  *     特殊記述にはモデファイヤが付かない
- * type
+ * cellType
  *     記述のタイプを示すプロパティ
  *     "nullstring"|"space"|"blank"|"interpolation"|"ellipsis"|"cell"
  *     それぞれ
@@ -5342,15 +5653,25 @@ JSON.Stringify(nas.cameraworkDescriptions.members);
  *  存在しない場合は引数を配列に追加してそのidを返す。<br />
  *  戻り値は当該のアイテムid<br />
  *  先入れ後出しにするため、リスト登録は配列の逆順登録にする
- *  単純な検索はindexOfで行うように<br />
+ *  引数に比較関数cmpfxを与えることが出来る
+ *  cmpfx(tgt,dst)で、一致が発生した場合配列へのメンバ追加は行われない
+ *  cmpfxがない場合はindexOfで検索を行う<br />
  * 
  * @param {any} itm
+ * @param {Function} cmpfx
  * @returns {Number} element id of Array
  *  
  *  
  */
-Array.prototype.add=function(itm){
-    var idx = this.indexOf(itm);
+Array.prototype.add=function(itm,cmpfx){
+    if(cmpfx instanceof Function){
+    var idx = -1;
+        for (var ix=0;ix<this.length;ix++){
+            if(cmpfx(itm,this[ix])){idx = ix;break;}
+        }
+    }else{
+        idx = this.indexOf(itm);
+    }
     if(idx<0){
         this.push(itm);idx = this.length-1;
     }
@@ -5403,27 +5724,31 @@ nas.IdfUnEscape('%%A%BCDE%FG','%');
 nas.IdfEscape('ASSDFGERtyusadhjgalll','AS','&');
 */
 /**
-    特定文字の%エンコーダ
-引数文字列の指定された文字を部分的にURIエンコード(%文字コード)して返す関数
-第一引数が与えられない場合は、空文字列として扱う（空文字列を返す）
-第二引数が与えられない場合は、encodeURIComponentの値を返す
-
-    要素の文字列は識別子をファイル名等に利用する場合、ファイルシステムで使用できない文字が禁止されるが、この文字も併せて部分エンコードの対象となる。
-    対象文字列は、Windowsの制限文字である  ¥\/:*?"<>| に加えて . 及びエンコード前置文字の %
-
-nas.IdfEncode(sourceString,strings);
-nas.IdfEncode("ABCDE%FG",'ABC');
-
-result:
-逆関数なし
-デコードはdecodeURIもしくはdecodeURIComponent関数を使用
-*/
+ *     特定文字の%エンコーダ
+ * 引数文字列の指定された文字を部分的にURIエンコード(%文字コード)して返す関数
+ * 第一引数が与えられない場合は、空文字列として扱う（空文字列を返す）
+ * 第二引数が与えられない場合は、encodeURIComponentの値を返す
+ * 
+ *     要素の文字列は識別子をファイル名等に利用する場合、ファイルシステムで使用できない文字が禁止されるが、この文字も併せて部分エンコードの対象となる。
+ *     対象文字列は、Windowsの制限文字である  ¥\/:*?"<>| に加えて . 及びエンコード前置文字の %
+ * 
+ * nas.IdfEncode(sourceString,strings);
+ * nas.IdfEncode("ABCDE%FG",'ABC');
+ *	@params	{String}	sourceString
+ *		エンコード前文字列
+ *	@params	{String}	strings
+ *		置き換え対象文字列
+ *	@returns {String}
+ *		エンコード済文字列
+ * 逆関数なし
+ * デコードはdecodeURIもしくはdecodeURIComponent関数を使用
+ */
 nas.IdfEncode = function(sourceString,strings){
     if(typeof sourceString == 'undefined'){return ""};
     if(typeof strings == 'undefined'){return encodeURIComponent(sourceString)};
     strings = strings + "\¥\\\\\\\/:\\\*\\\?\"<>|\\\.%";
     if ((String(sourceString).length == 0)||(strings.length < 1)) return encodeURIComponent(sourceString);
-    if(sourceString.indexOf('\\') >= 0){sourceString = sourceString.replace(/\\/,'\\\\')};
+    if(String(sourceString).indexOf('\\') >= 0){sourceString = sourceString.replace(/\\/,'\\\\')};
         return String(sourceString).replace(new RegExp('['+strings+']','g'),function(match, p1, p2, p3, offset, string){
             var myCode = (match).charCodeAt();
             if(myCode <= 255 ){
@@ -5435,9 +5760,90 @@ nas.IdfEncode = function(sourceString,strings){
 }
 //TEST
 /*
-nas.IdfEncode('ASBCDEF\\G','AXC\');
+nas.IdfEncode('ASBCDEF\\G','AXC\\');
 decodeURIComponent(nas.IdfEncode('%%A%BCDE%FG','%'));
 nas.IdfEncode('ASSDFGERtyusadhjgalll','AS');
 
+*/
+/**
+ *  uuid文字列を返す
+ *   @returns {String}
+ *       UUID(v4)
+ */
+nas.uuid = function uuid() {
+  var uuid = "", i, random;
+  for (var i = 0; i < 32; i++) {
+    random = Math.random() * 16 | 0;
+    if (i == 8 || i == 12 || i == 16 || i == 20) { uuid += "-" }
+    uuid += (i == 12 ? 4 : (i == 16 ? (random & 3 | 8) : random)).toString(16);
+  }
+  return uuid;
+}
+//test
+//console.log nas.uuid();
+
+/*
+セパレータでパスの種別を選り分ける
+"title#ep[subtitle]//"この用法にするとすべての識別子を下の判定で抽出できる
+"title.pmdb"        :NG
+"title//.pmdb"      :OK
+'//'を含む ＞識別子
+含まない　　＞ファイルパス
+
+ファイルパスセパレータ 
+'\ ' 含む(windows path)
+    '.'で開始　相対パス
+    ドライブレターを含む
+'/ ' 含む(unix path)
+    '.'で開始　相対パス
+    '/'で開始　絶対パス
+    スキームで開始 URL
+    それ以外で開始　相対パス
+いずれも含まない　単独ファイル名（相対パス）
+関数としては判定結果のみを返す
+判定結果で処理を分岐する際に必要
+*/
+/**
+    引数文字列がデータ識別子かファイルパスであるかを判定する関数
+    判定精度は上げる必要がある　2019.06.04
+*/
+nas.checkDataPath = function(dataString){
+    if(String(dataString).indexOf('//') > 0)  return 'idf' ;
+    if(String(dataString).indexOf('\\') >= 0) return 'win' ;
+    if(String(dataString).indexOf('/') >= 0)  return 'unix';
+    return false;
+}
+/*test
+nas.checkDataPath("A#01[subtitle]//1/2/3//0//2//1//startup.xmap");
+nas.checkDataPath("c:\\temp\\temp.txt");
+nas.checkDataPath("/home/name/text.txt");
+*/
+/**
+ *	括弧で囲まれたテキストをインデントする
+ *	params	{String}	input
+ *	returns	{String}
+ *		括弧の深度に従ってインデントを加える
+ */
+nas.tabIndentCode = function tabIndentCode(input){
+//	var lines = input.replace( /\{|\[|,/g , "$&\n").replace( /\}|\]/g , "\n$&").split('\n');
+	var lines = input.split('\n');
+	var indent = '';
+	for (var l = 0 ; l < lines.length ; l ++){
+		if(lines[l].match(/\}|\]|\)/)) indent = indent.slice(1);
+		lines[l] = indent + lines[l];
+		if(lines[l].match(/\{|\[|\(/)) indent += '\t';
+	}
+	return lines.join('\n');
+}
+/*TEST
+	var test =`
+{
+123(
+ABC
+DEF
+)
+}
+`
+	nas.tabIndentCode(test);
 */
 
