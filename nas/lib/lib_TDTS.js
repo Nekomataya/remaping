@@ -501,6 +501,7 @@ TDTS.SectionItemTable = {
  */
 function TDTS2XPS(myTDTS,sheetID) {
 	var dataForm = 'XDTS';
+	var cloped = false;//暫定変数　変換時のデータ切り捨てフラグ
     /**
      * 引数の第一行目を確認してJSON部分を分離
      */
@@ -640,14 +641,14 @@ console.log(trackOffset+ix);
 				} else if (fieldKind == 5){
 					trackId += soundTracks.length + replacementTracks.length;
 				}
-/*
-	フィールドID3,5のトラックはセクション長を取得して、次セクションの冒頭及びトラックの終端で解決する
-*/
+//フィールドID3,5のトラックはセクション長を取得して、次セクションの冒頭及びトラックの終端で解決する
 				var inputStream   = "";//入力はコンマ区切りストリーム
 				var sectionStart  = 0 ;
 				var sectionLength = 0 ;
 				for (var ex = 0 ; ex< myTDTS.timeTables[sheetID].fields[fx].tracks[tx].frames.length ; ex++){
 					var myEntry = myTDTS.timeTables[sheetID].fields[fx].tracks[tx].frames[ex];
+// myEntry.frameプロパティが負数、またはdurationを超過した場合はクロップが発生する
+					if((! cloped)&&((myEntry.frame < 0)||(myEntry.frame >= myFrames))) cloped = true;
 					var targetFrame = myEntry.frame ;
 					if(myEntry.data[0].memo){
 						console.log('detect memo image');
@@ -659,7 +660,8 @@ console.log(trackOffset+ix);
 					}
 					if(! myEntry.data[0].values) continue;
 					var inputValue = myEntry.data[0].values[0];
-					if (fieldKind == 0){ ;//replacement
+					if (fieldKind == 0){
+//replacement
 console.log(myEntry.data[0].values[0])
 						if(myEntry.data[0].values[0].match(/^SYMBOL_/)){
 							inputValue = TDTS.dataSymbol[myEntry.data[0].values[0]]
@@ -667,29 +669,45 @@ console.log(myEntry.data[0].values[0])
 console.log({'setAddress':[trackId,targetFrame],'inputValue':inputValue});
 						myXps.put([trackId,targetFrame],inputValue);
 						continue;
-					} else if (fieldKind == 3){ ;//sound
+//置換えトラック
+					} else if (fieldKind == 3){
+//sound
 						if(myEntry.data[0].values[0].match(/^SYMBOL_HYPHEN$/)){
 							sectionLength ++;
 							continue;
 						}else{
-							myXps.put([trackId,sectionStart],inputStream.toString(sectionLength));
-//遅延解決 して次のセクションの値をオブジェクトでセット（ビルドは遅延解決）
+//継続サイン以外（サウンドデータ）がある
+							if((inputStream)&&(sectionLength)){
+//未解決のデータが存在すれば解決してプロパティをリセットする
+								var headMargin =((inputStream.name)? 1 : 0) + inputStream.attributes.length + 1;
+								myXps.put([trackId,sectionStart-headMargin],inputStream.getStream(sectionLength));
+//								myXps.put([trackId,sectionStart],inputStream.toString(sectionLength));
+								sectionLength = 0;
+							}else{
+								console.log([inputStream,sectionLength]);
+							}
+//遅延解決して次のセクションの値をオブジェクトでセット（ビルドは遅延解決）
 							sectionStart  = targetFrame;
 							sectionLength = 1;
 							inputStream = new nas.AnimationDialog();
 							var dialogString = (myEntry.data[0].values[1].match(/.*「[^」]*」/)) ?
 								myEntry.data[0].values.join(''):
 								([myEntry.data[0].values[0],"「",myEntry.data[0].values[1],"」"]).join('');
-console.log(dialogString)
+console.log(dialogString);
 							inputStream.parseContent(dialogString);
 							continue;
 						}
-					} else if (fieldKind == 5){ ;//camerawork
+//サウンドトラック処理
+					} else if (fieldKind == 5){
+//camerawork
 						if(myEntry.data[0].values[0].match(/^SYMBOL_HYPHEN$/)){
+//継続サイン検出
 							sectionLength ++;
 							continue;
-						}else{
-								var itmid = TDTS.SectionItemTable.indexOf(inputStream);
+						}
+//継続サインでない場合はカメラワーク指定
+							var itmid = TDTS.SectionItemTable.indexOf(inputStream);
+//事前処理中のアイテムが合えば遅延解決してセクション長をクリア
 							if (inputStream){
 								if(inputStream.match(/^\d+$/)) itmid = inputStream ;
 							if(itmid >= 0){
@@ -731,10 +749,12 @@ console.log(dialogString)
 								// if(inputStream.match())ここで文字列の場合の判定を入れる
 							}
 							continue;
-						}
+//カメラワークトラック処理
 					}
 				}
+//トラック毎の終了処理
 				if(fieldKind == 5){
+//カメラワーク
 					if (inputStream){
 						var currentWork = TDTS.SectionItemTable[inputStream];
 						if(! currentWork){
@@ -760,14 +780,16 @@ console.log(dialogString)
 						inputStream = '';
 					}
 				}else if(fieldKind == 3){
+//サウンド
 					if(inputStream){
 						var headMargin =((inputStream.name)? 1 : 0) + inputStream.attributes.length + 1;
 						myXps.put([trackId,sectionStart-headMargin],inputStream.getStream(sectionLength));
 					}
 				}
 			}
-		}
-	}
+		};//トラック終端処理
+	};//トラックループ
+
 //フラグが立っている場合はIDを確認して後方から静止画トラックの挿入
 	if(insertStill){
 		for (var ix = stillTracks.length -1 ; ix >= 0 ; ix --){
@@ -786,8 +808,12 @@ console.log(dialogString)
 			myXps.xpsTracks.insertTrack(insertPoint,insertTracks);
 		}
 	}
-
-    return myXps.toString();
+//データクロップが発生した場合はクロップ済みであることをノートテキストに追加する
+	if(cloped) myXps.xpsTracks.noteText += '\n'+localize({
+		en:'**(Some information was truncated when converting data from TDTS|XDTS. Please check the content.)',
+		ja:'**(TDTS|XDTSからのデータ変換の際に、一部の情報を切り捨てました。内容を確認してください)'
+	});
+	return myXps.toString();
 }
 /**
 TDTS/XDTSデータを引数にしてTdtsオブジェクトを返す

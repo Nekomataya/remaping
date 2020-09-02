@@ -1502,9 +1502,6 @@ class=optionPanel id=optionPanelProductManagement
 <!-- pmui production management user interface--><!-- ヘッダツール群 入力コントロール -->
 <div class=headerTool id=headerTool >
 	<!-- カウンタ -->
-<button id=edchg
-disabled
->EXTEST</button>
 <input	type=button
 	id=activeLvl
 	name=activeLvl
@@ -1574,14 +1571,16 @@ disabled
 <span
 	id=iNputhEader
 	class=iNputhEader
->❚❚❚</span>
+><button id=edchg
+disabled
+>EXTEST</button>
 <input	name=iNputbOx
 	id=iNputbOx
 	class=iNputbOx
 	type=text
 	onKeyPress="return xUI.keyPress(event);"
 	title="シートにデータを入力します。"
-> 
+> </span>
 <!--
 	onKeyUp   ="return xUI.keyUp(event);"
 	onKeyDown ="return xUI.keyDown(event);"
@@ -4406,7 +4405,27 @@ duration :
 </span>
 </div>
 <!-- ストップウオッチUIパネル -->
-
+<!-- 拡張署名欄 -->
+<!--
+<div id=extSig>
+<table>
+	<tr><td rowspan=2>sig.</td>
+		<th >CT.</th>
+		<th colspan = 4>LO.</th>
+		<th>原画.</th>
+	</tr>
+	<tr>
+		<td height=3>kiyo@nekomataya.info</td>
+		<td>kiyo@nekomataya.info</td>
+		<td>kiyo@nekomataya.info</td>
+		<td>kiyo@nekomataya.info</td>
+		<td>kiyo@nekomataya.info</td>
+		<td>kiyo@nekomataya.info</td>
+	</tr>
+</table>
+<hr></div>
+-->
+<!-- 拡張署名欄 -->
 <!-- メモ編集エリア　画面表示のみ　印刷時はシートヘッダ上に別表示-->
 <div id=memoArea>
    <div id=memo_header >

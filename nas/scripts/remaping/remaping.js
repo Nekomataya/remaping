@@ -533,6 +533,7 @@ console.log([datastream,optionString,overwriteProps,streamOption,targetOption]);
     }
   if(datastream){
     var convertedXps=new Xps();
+console.log(datastream);
     convertedXps.parseXps(datastream);
 //ここでセリフトラックのチェックを行って、シナリオ形式のエントリを検知したら展開を行う
     for(var tix=0;tix<convertedXps.xpsTracks.length;tix++){
@@ -573,6 +574,9 @@ console.log([datastream,optionString,overwriteProps,streamOption,targetOption]);
                     dialogOffset += convertQueue[qix][0].attributes.length;
                 var dialogDuration = convertQueue[qix][2]-convertQueue[qix][1]; 
                 var startAddress =[tix,(convertQueue[qix][1] - dialogOffset)];
+console.log(convertQueue[qix][0]);//AnimationDialogueは、できているが不正データが戻る
+console.log(convertQueue[qix][0].getStream(dialogDuration));//undefinedを戻す　ダイアログオブジェクト本体が不正
+
                 var dialogStream =(convertQueue[qix][0].getStream(dialogDuration)).join(',');
                 convertedXps.put(startAddress,dialogStream);
             }
@@ -2041,7 +2045,7 @@ xUI.sectionUpdate=function(){
       xUI.selection([xUI.Select[0],trackContents[1]+trackContents[2]]);
     xUI.scrollStop = false;
 
-    if(xUI.XPS.xpsTracks[xUI.Select[0]].option.match( /dialog|sound/ ))SoundEdit.getProp();
+    if(xUI.XPS.xpsTracks[xUI.Select[0]].option.match( /dialog|sound/ )) SoundEdit.getProp();
 }
 /*    xUI.floatTextHi()
 引数:なし  モード変数を確認して動作

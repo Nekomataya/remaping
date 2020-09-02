@@ -2157,8 +2157,15 @@ _parseSoundTrack =function(){
 */
 _parseSoundTrack =function(){
     var myCollection = new XpsTimelineSectionCollection(this);//自分自身を親としてセクションコレクションを新作
+/*
+    トラックの機能拡張に先駆けて、セリフ記述の仕様変更を行う
+    トラック第一フレームに開始マーカー以外の値が存在する場合（話者の名前も含む）セクション開始フレームを0とする（ラベルのないダイアログ＝この場合ラベルはトラックのvalueプロパティに置く事ができる）
+    コレクションの開始セクションがブランク固定でなくなるのが最大の変更点
+
     //この実装では開始マーカーが０フレームにしか位置できないので必ずブランクセクションが発生する
     //継続時間０で先に作成 同時にカラのサウンドObjectを生成
+
+*/
     var groupName = this.id;
     var myGroup = this.xParent.parentXps.xMap.getElementByName(groupName);
     if (!myGroup) myGroup = this.xParent.parentXps.xMap.new_xMapElement(
@@ -2166,12 +2173,13 @@ _parseSoundTrack =function(){
         'dialog',
         this.xParent.parentXps.xMap.currentJob,
         ""
-    ) ;//nas.xMapGroup(groupName,'dialog',null);//new nas.xMapGroup(myName,myOption,myLink);
-    var currentSection=myCollection.addSection(null);//区間値false
+    ) ;
+//nas.xMapGroup(groupName,'dialog',null);//new nas.xMapGroup(myName,myOption,myLink);
+    var currentSection=myCollection.addSection(null);//区間初期値 null
     var currentSound=new nas.AnimationDialog(myGroup,"");//第一有値区間の値コンテンツはカラで初期化も保留
     for (var fix=0;fix<this.length;fix++){
         currentSection.duration ++;//currentセクションの継続長を加算
-        //未記入データ最も多いので最初に判定しておく
+        //未記入データが最も多いので最初に判定して処理継続
         if(this[fix]=="") continue;
         //括弧でエスケープされたコメント又は属性
         if(this[fix].match(/(^\([^\)]+\)$|^<[^>]+>$|^\[[^\]]+\]$)/)){
@@ -2205,6 +2213,10 @@ _parseSoundTrack =function(){
 //                currentSection.value.
             }
                         continue;
+        }
+//第一フレームの値がセクションセパレータ以外であった場合、第一セクションを有値セクションとして初期化する
+        if(fix == 0){
+            currentSection = myCollection.addSection(currentSound);
         }
 //判定を全て抜けたデータは本文又はラベルは上書きで更新
 //ラベル無しの音声オブジェクトは無しのまま保存必要に従って先行オブジェクトのラベルを引継ぐ
