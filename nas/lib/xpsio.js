@@ -913,19 +913,120 @@ function XpsTimelineTrack(myLabel, myType, myParent, myLength) {
         }
         return false;
     }
+
+/*
+
+    タイムラインをパースしてセクション及びその値を求めるxUIのメソッド
+    タイムライン種別ごとにパースするオブジェクトが異なるので
+    各オブジェクトに特化したパーサが必要
+    別々のパーサを作ってセクションパーサから呼び出して使用する
+    Sound
+        parseSoundTrack
+        *parseDialogTrack
+    Replacement
+        parseKyeDrawind(補間区間あり)
+        parseAnimationCell(確定タイムライン)
+    Camerawork
+        parseCameraworkTrack
+    Geometry
+        parseGeometryTrack
+    Composite
+        parseCompositeTrack
+    各々のパーサは、データ配列を入力としてセクションコレクションを返す
+    各コレクションの要素はタイムラインセクションオブジェクト
+    値はタイムライン種別ごとに異なるがセクション自体は共通オブジェクトとなる
+
+    セクションパースは、非同期で実行される場合がありそうなので、重複リクエストを排除するためにキュー列を作って運用する必要ありそう
+    その場合は、このルーチンがコントロールとなる?1105memo
+    もう一つ外側（トラックコレクション又はXps側）に必要かも
+
+*/
+    this.parseTimelineTrack = function(){
+        var myResult = false;
+        var defaultElementGroup = this.xParent.parentXps.xMap.getElementByName(this.id);
+        if(! defaultElementGroup) defaultElementGroup=this.xParent.parentXps.xMap.new_xMapElement(this.id,this.option,this.xParent.parentXps.xMap.currentJob);
+        switch(this.option){
+        case "dialog":;
+//            myResult =  this.parseDialogTrack();
+//        break;
+        case "sound":;
+            myResult =  this.parseSoundTrack();
+        break;
+        case "camerawork":;
+        case "camera":;
+            myResult =  this.parseCameraworkTrack();
+        break;
+        case "geometry":;
+        case "stage":;
+        case "stagework":;
+            myResult =  this.parseGeometryTrack();
+        break;
+        case "effect":;
+        case "sfx":;
+        case "composit":;
+            myResult =  this.parseCompositeTrack();
+        break;
+        case "cell":;
+        case "timing":;
+        case "still":;
+        case "replacement":;
+        default:
+            myResult =  this.parseReplacementTrack();
+        }
+        if (myResult){this.sectionTrust=true;}
+        return myResult;
+    }
+/**
+ * フレームを指定してタイムライントラック上のセクションを返す
+ * 
+ * セクションバッファが最新でない場合は、セクションパースを実施する
+ * 当該のセクションが存在しない場合はnullを戻す
+ */
+    this.getSectionByFrame = function(myFrame){
+        if((typeof myFrame == "undefined") ||(! myFrame < 0)) return null;
+        var myResult = null;
+        var mySections = this.sections;
+        if(!(this.sectionTrust)) mySections = this.parseTimelineTrack();
+//ここは非同期実行不可
+        if(mySections){
+            for (var ix=0;ix<mySections.length;ix ++){
+                if(myFrame < (mySections[ix].startOffset()+mySections[ix].duration)){
+                myResult = this.sections[ix];
+                break;
+                }
+            }
+        }
+        return myResult;
+    }
+/**
+ * xMap getElementByName/new_xMapElementをラップするタイムライントラックのメソッド
+ * 既存のエレメントを指定した場合は、当該エレメントを返し
+ * 存在しないエレメントを指定した場合は、エレメントを作成して返す
+ * 同一の手続きが多いため補助関数を作成
+ 引数はエレメント名、グループ名
+ 
+ */
+    this.pushEntry = function (elementName,groupName){
+        var myGroup   = this.xParent.parentXps.xMap.getElementByName(groupName);
+        var myElement = this.xParent.parentXps.xMap.getElementByName([groupName,elementName].join("-"));//請求するターゲットジョブ処理は保留
+        if(!myElement){
+            if(!myGroup){;//new_xMapElement(name,type,Object Job)
+                myGroup = this.xParent.parentXps.xMap.new_xMapElement(groupName,this.option,this.xParent.parentXps.xMap.currentJob);
+            }
+            myElement = this.xParent.parentXps.xMap.new_xMapElement(elementName,myGroup,this.xParent.parentXps.xMap.currentJob,[groupName,elementName].join('\t'));
+        }
+        return myElement;
+    }
+
 //汎用関数設定
     this.getDefaultValue = _getMapDefault;//
 
-    this.parseSoundTrack		=_parseSoundTrack;
-    this.parseDialogTrack		=_parseSoundTrack;
-    this.parseReplacementTrack	=_parseReplacementTrack;
-    this.parseCameraworkTrack	=_parseCameraworkTrack;
-    this.parseGeometryTrack		=_parseGeometryTrack;
-    this.parseCompositeTrack	=_parseCompositeTrack;
-    this.parseTimelineTrack = XpsTimelineTrack.parseTimelineTrack;
-    this.getSectionByFrame  = XpsTimelineTrack.getSectionByFrame;
-    this.pushEntry          = XpsTimelineTrack.pushEntry;
-    this.countMember        = XpsTimelineTrack.countMember;
+    this.parseSoundTrack        =_parseSoundTrack;
+    this.parseDialogTrack       =_parseSoundTrack;
+    this.parseReplacementTrack  =_parseReplacementTrack;
+    this.parseCameraworkTrack   =_parseCameraworkTrack;
+    this.parseGeometryTrack     =_parseGeometryTrack;
+    this.parseCompositeTrack    =_parseCompositeTrack;
 }
 
 XpsTimelineTrack.prototype = Array.prototype;
@@ -3856,12 +3957,12 @@ XpsTimelineTrack.prototype.parseCompositeTrack=_parseCompositeTrack;//コンポ�
 /**
  以下は、別ソースでセットアップしたメソッドを導入するテストコード
 */
-
+/*
 XpsTimelineTrack.prototype.parseSoundTrack=_parseSoundTrack;
-//XpsTimelineTrack.prototype.parseDialogTrack=_parseDialogTrack;
+XpsTimelineTrack.prototype.parseDialogTrack=_parseDialogTrack;
 
-//XpsTimelineTrack.prototype.parseKeyAnimationTrack=_parsekeyAnimationTrack;
-//XpsTimelineTrack.prototype.parseAnimationTrack=_parseAnimationTrack;
+XpsTimelineTrack.prototype.parseKeyAnimationTrack=_parsekeyAnimationTrack;
+XpsTimelineTrack.prototype.parseAnimationTrack=_parseAnimationTrack;
 XpsTimelineTrack.prototype.parseReplacementTrack=_parseReplacementTrack;
 
 XpsTimelineTrack.prototype.parseCameraworkTrack=_parseCameraworkTrack;
@@ -3869,113 +3970,7 @@ XpsTimelineTrack.prototype.parseCameraworkTrack=_parseCameraworkTrack;
 XpsTimelineTrack.prototype.parseGeometryTrack=_parseGeometryTrack;
 XpsTimelineTrack.prototype.parseCompositeTrack=_parseCompositeTrack;//コンポジット
 
-//XpsTimelineTrack.prototype.parseTrack=_parseTrack;
-//XpsTimelineTrack.prototype.parseTrack=_parseTrack;
-/*
-
-    タイムラインをパースしてセクション及びその値を求めるxUIのメソッド
-    タイムライン種別ごとにパースするオブジェクトが異なるので
-    各オブジェクトに特化したパーサが必要
-    別々のパーサを作ってセクションパーサから呼び出して使用する
-    Sound
-        parseSoundTrack
-        *parseDialogTrack
-    Replacement
-        parseKyeDrawind(補間区間あり)
-        parseAnimationCell(確定タイムライン)
-    Camerawork
-        parseCameraworkTrack
-    Geometry
-        parseGeometryTrack
-    Composite
-        parseCompositeTrack
-    各々のパーサは、データ配列を入力としてセクションコレクションを返す
-    各コレクションの要素はタイムラインセクションオブジェクト
-    値はタイムライン種別ごとに異なるがセクション自体は共通オブジェクトとなる
-
-    セクションパースは、非同期で実行される場合がありそうなので、重複リクエストを排除するためにキュー列を作って運用する必要ありそう
-    その場合は、このルーチンがコントロールとなる?1105memo
-    もう一つ外側（トラックコレクション又はXps側）に必要かも
-
+XpsTimelineTrack.prototype.parseTrack=_parseTrack;
+XpsTimelineTrack.prototype.parseTrack=_parseTrack;
 */
-XpsTimelineTrack.prototype.parseTimelineTrack = function(){
-    var myResult = false;
-    var defaultElementGroup = this.xParent.parentXps.xMap.getElementByName(this.id);
-    if(! defaultElementGroup) defaultElementGroup=this.xParent.parentXps.xMap.new_xMapElement(this.id,this.option,this.xParent.parentXps.xMap.currentJob);
-//    console.log(defaultElementGroup);
-    switch(this.option){
-        case "dialog":;
-//            myResult =  this.parseDialogTrack();
-//        break;
-        case "sound":;
-            myResult =  this.parseSoundTrack();
-        break;
-        case "camerawork":;
-        case "camera":;
-            myResult =  this.parseCameraworkTrack();
-        break;
-        case "geometry":;
-        case "stage":;
-        case "stagework":;
-            myResult =  this.parseGeometryTrack();
-        break;
-        case "effect":;
-        case "sfx":;
-        case "composit":;
-            myResult =  this.parseCompositeTrack();
-        break;
-        case "cell":;
-        case "timing":;
-        case "still":;
-        case "replacement":;
-        default:
-            myResult =  this.parseReplacementTrack();
-    }
-    if (myResult){this.sectionTrust=true;}
-    return myResult;
-}
-/**
-フレームを指定してタイムライントラック上のセクションを返す
-セクションバッファが最新でない場合は、セクションパースを実施する
-当該のセクションが存在しない場合はnullを戻す
-*/
-XpsTimelineTrack.prototype.getSectionByFrame = function(myFrame){
-    if((typeof myFrame == "undefined") ||(! myFrame < 0)) return null;
-    var myResult = null;
-    var mySections = this.sections;
-    if(!(this.sectionTrust)) mySections = this.parseTimelineTrack();
-    //ここは非同期実行不可
-    if(mySections){
-        for (var ix=0;ix<mySections.length;ix ++){
-            if(myFrame < (mySections[ix].startOffset()+mySections[ix].duration)){
-            myResult = this.sections[ix];
-            break;
-            }
-        }
-    }
-    return myResult;
-}
-/**
- * xMap getElementByName/new_xMapElementをラップするタイムライントラックのメソッド
- * 既存のエレメントを指定した場合は、当該エレメントを返し
- * 存在しないエレメントを指定した場合は、エレメントを作成して返す
- * 同一の手続きが多いため補助関数を作成
- 引数はエレメント名、グループ名
- 
- */
-XpsTimelineTrack.prototype.pushEntry = function (elementName,groupName){
-//console.log(arguments);
-    var myGroup   = this.xParent.parentXps.xMap.getElementByName(groupName);
-    var myElement = this.xParent.parentXps.xMap.getElementByName([groupName,elementName].join("-"));//請求するターゲットジョブ処理は保留
-        if(!myElement){
-//console.log('no detect Element :'+[groupName,elementName].join("-"));
-        if(!myGroup){;//new_xMapElement(name,type,Object Job)
-//console.log('no detect Group :'+groupName);
-            myGroup = this.xParent.parentXps.xMap.new_xMapElement(groupName,this.option,this.xParent.parentXps.xMap.currentJob);
-//console.log(myGroup);
-        }
-        myElement = this.xParent.parentXps.xMap.new_xMapElement(elementName,myGroup,this.xParent.parentXps.xMap.currentJob,[groupName,elementName].join('\t'));
-    }
-//console.log(myElement);
-    return myElement;
-}
+

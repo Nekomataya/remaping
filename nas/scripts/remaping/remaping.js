@@ -7711,7 +7711,10 @@ document.getElementById("UIheader").style.display="none";
 サーバーオンサイトであるか否かを判定して表示を更新
      エレメントが存在すればon-site
  */
-     if(document.getElementById('backend_variables')){
+     if(
+        (document.getElementById('backend_variables'))&&
+        ($("#backend_variables").attr("data-organization_token").indexOf('<%=')!= 0)
+    ){
 //オンサイト
 console.log('Application server-onsite');
         if (serviceAgent.servers.length==1) {

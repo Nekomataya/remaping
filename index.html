@@ -5,87 +5,87 @@
 <meta name="viewport" content="width=device-width" >
 <title>remaping..</title>
 
-<link rel="shortcut icon" href="./icons/favicon.ico">
-<link href="template/remaping.css" type="text/css" rel=stylesheet media="screen,tv">
-<link href="template/printout.css" type="text/css" rel=stylesheet media="print">
+<link rel="shortcut icon" href="/remaping/icons/favicon.ico">
+<link href="/remaping/template/remaping.css" type="text/css" rel=stylesheet media="screen,tv">
+<link href="/remaping/template/printout.css" type="text/css" rel=stylesheet media="print">
 
-<link href="template/jquery-ui.css" type="text/css" rel="stylesheet">
+<link href="/remaping/template/jquery-ui.css" type="text/css" rel="stylesheet">
 
 
 <!-- 以下　AIR動作時のライブラリ-->
 
-<!--		<script type="text/javascript" src="./lib/AIR/AIRLocalizer.js"></script>
-		<script type="text/javascript" src="./lib/AIR/AIRMenuBuilder.js"></script>
+<!--		<script type="text/javascript" src="/remaping/lib/AIR/AIRLocalizer.js"></script>
+		<script type="text/javascript" src="/remaping/lib/AIR/AIRMenuBuilder.js"></script>
 
-<script src="./lib/AIR/servicemonitor.swf" type="application/x-shockwave-flash"></script>
-<script src="./lib/AIR/aircore.swf" type="application/x-shockwave-flash"></script>
-<script src="./lib/AIR/applicationupdater_ui.swf" type="application/x-shockwave-flash"></script>
-<script src="./lib/AIR/applicationupdater.swf" type="application/x-shockwave-flash"></script>
-<script src="./lib/AIR/HTMLHostLibrary.swf" type="application/x-shockwave-flash"></script>
+<script src="/remaping/lib/AIR/servicemonitor.swf" type="application/x-shockwave-flash"></script>
+<script src="/remaping/lib/AIR/aircore.swf" type="application/x-shockwave-flash"></script>
+<script src="/remaping/lib/AIR/applicationupdater_ui.swf" type="application/x-shockwave-flash"></script>
+<script src="/remaping/lib/AIR/applicationupdater.swf" type="application/x-shockwave-flash"></script>
+<script src="/remaping/lib/AIR/HTMLHostLibrary.swf" type="application/x-shockwave-flash"></script>
 
-<script type="text/javascript" src="./lib/AIR/AIRAliases.js"></script>
+<script type="text/javascript" src="/remaping/lib/AIR/AIRAliases.js"></script>
  -->
 
 <!-- 以下　AIR動作時のデバッグライブラリ -->
 <!--
- 		<script type="text/javascript" src="./lib/AIR/AIRIntrospector.js"></script>
-		<script type="text/javascript" src="./lib/AIR/AIRSourceViewer.js"></script>
+ 		<script type="text/javascript" src="/remaping/lib/AIR/AIRIntrospector.js"></script>
+		<script type="text/javascript" src="/remaping/lib/AIR/AIRSourceViewer.js"></script>
 
  -->
-<script src=./lib/jquery.js></script>
-<script src=./lib/jquery-ui.js></script>
-<script src=./lib/ecl/ecl.js></script>
-<script src=./lib/csv/csvsimple.js></script>
+<script src=/remaping/lib/jquery.js></script>
+<script src=/remaping/lib/jquery-ui.js></script>
+<script src=/remaping/lib/ecl/ecl.js></script>
+<script src=/remaping/lib/csv/csvsimple.js></script>
 
-<script src=./config.js></script>
-<script src=./nas/lib/nas_common.js></script>
-<script src=./nas/lib/nas_common_HTML.js></script>
+<script src=/remaping/config.js></script>
+<script src=/remaping/nas/lib/nas_common.js></script>
+<script src=/remaping/nas/lib/nas_common_HTML.js></script>
 
 <!-- システム汎用ライブラリ remaping.jsよりも前方でロードする必要あり　-->
 <!-- new test code -->
 <!--
  デバッグ終了後に、nas/lib/ フォルダへ移動
 -->
-        <script src=./nas/newValueConstractors.js></script>
-        <script src=./nas/pmio.js></script>
+        <script src=/remaping/nas/newValueConstractors.js></script>
+        <script src=/remaping/nas/pmio.js></script>
 <!-- new test code -->
 
-<script src=./nas/lib/mapio.js></script>
-<script src=./nas/lib/xpsio.js></script>
+<script src=/remaping/nas/lib/mapio.js></script>
+<script src=/remaping/nas/lib/xpsio.js></script>
 
-<script src=./nas/scripts/remaping/airUI.js></script>
-<script src=./nas/scripts/remaping/nodeUI.js></script>
-       <script src=./nas/lib/cameraworkDescriptionDB.js></script>
-       <script src=./nas/configPM.js></script>
-<!--         <script src=./pmdb/configPMDB.js></script> -->
-<script src=./nas/scripts/remaping/remaping.js></script>
+<script src=/remaping/nas/scripts/remaping/airUI.js></script>
+<script src=/remaping/nas/scripts/remaping/nodeUI.js></script>
+       <script src=/remaping/nas/lib/cameraworkDescriptionDB.js></script>
+       <script src=/remaping/nas/configPM.js></script>
+<!--         <script src=/remaping/pmdb/configPMDB.js></script> -->
+<script src=/remaping/nas/scripts/remaping/remaping.js></script>
 
 <!-- 下　remaping.js　にマージ予定　-->
-<script src=./nas/scripts/remaping/utils.js></script>
+<script src=/remaping/nas/scripts/remaping/utils.js></script>
 
 
 <!--     汎用ライブラリのためソース分離 一括マージ可能      -->
-<script src=./nas/lib/postscriptConvert.js></script>
-<script src=./nas/lib/lib_AEK.js></script>
-<script src=./nas/lib/lib_TVP.js></script>
-<script src=./nas/lib/lib_stylosCSV.js></script>
-<script src=./nas/lib/lib_TSH.js></script>
-<script src=./nas/lib/lib_ARD.js></script>
-<script src=./nas/lib/lib_ARDJ.js></script>
-<script src=./nas/lib/lib_TSX.js></script>
-<script src=./nas/lib/lib_TDTS.js></script>
+<script src=/remaping/nas/lib/postscriptConvert.js></script>
+<script src=/remaping/nas/lib/lib_AEK.js></script>
+<script src=/remaping/nas/lib/lib_TVP.js></script>
+<script src=/remaping/nas/lib/lib_stylosCSV.js></script>
+<script src=/remaping/nas/lib/lib_TSH.js></script>
+<script src=/remaping/nas/lib/lib_ARD.js></script>
+<script src=/remaping/nas/lib/lib_ARDJ.js></script>
+<script src=/remaping/nas/lib/lib_TSX.js></script>
+<script src=/remaping/nas/lib/lib_TDTS.js></script>
 
 <!-- /*  開発用テストコード   2016.07.16  追加*/ これらはすべてremaping.jsへ統合予定-->
-<script src=./nas/serviceAgent.js></script>
-<script src=./nas/scripts/serverio_test.js></script>
-<script src=./nas/filePanelTest.js></script>
+<script src=/remaping/nas/serviceAgent.js></script>
+<script src=/remaping/nas/scripts/serverio_test.js></script>
+<script src=/remaping/nas/filePanelTest.js></script>
 
-<script src=./nas/newTaksController.js></script>
+<script src=/remaping/nas/newTaksController.js></script>
 <!-- /*  AdobeExtension/Scripts 準互換 多言語化リソース  */ -->
 
-<script src=./nas/lib/nas_locale.js></script>
-<script src=./nas/lib/messages.js></script>
-<script src=./nas/scripts/remaping/messages.js></script>
+<script src=/remaping/nas/lib/nas_locale.js></script>
+<script src=/remaping/nas/lib/messages.js></script>
+<script src=/remaping/nas/scripts/remaping/messages.js></script>
 
 <!-- ライブラリインストール -->
 <!--document.onkeydown=function(){return xUI.keyDown(event);}-->
@@ -1595,7 +1595,7 @@ disabled
 	style="width:36px;position:relative;top:4px;"
 	onclick="chkValue(this.id);"
 	title="確定[Enter]"
->	<img src=./images/ui/ok.png height=16>
+>	<img src=/remaping/images/ui/ok.png height=16>
 </button><button
 	name=ng
 	id=ng
@@ -1603,7 +1603,7 @@ disabled
 	onclick="chkValue(this.id);"
 	title="取り消し[esc]"
 >
-	<img src=./images/ui/ng.png height=16> 
+	<img src=/remaping/images/ui/ng.png height=16> 
 -->
 	<!--    <span class='ui-icon ui-icon-close'>
 </button>
@@ -2462,7 +2462,7 @@ onclick='nas.incrFCTonHTMLInput(document.getElementById("editTC"),"-(1)")'
 <br>
 <br>
 		<center><b>処理中です…</b></center><br>
-		<center><img src=images/ui/wait.gif width=42 height=42></center><br>
+		<center><img src=/remaping/images/ui/wait.gif width=42 height=42></center><br>
 		<center><b>processing......</b></center><br>
 <br>
 <br>
@@ -3370,7 +3370,12 @@ onclick='documentDepot.updateDocumentSelector(new RegExp("3[0-9][0-9][^0-9]*$"))
 -->
 </div>
 <!--	ファイルブラウザ試験中	-->
-
+<!-- 新規登録ダイアログ -->
+<div class=optionPanelModal id=optionPanelNewEntry>
+	<span>TITLE-Selector</span>
+	<span>episode-Selector</span>
+</div>
+<!-- 新規登録ダイアログ -->
 <!--	各種設定	-->
 <div class=optionPanelModal id=optionPanelPref>
 
@@ -3591,7 +3596,7 @@ Please use with Javascript enabled<br>
 <B>Univarsal Animation Timesheet<br>汎用タイムシートエディタ</B><br />
 <br />
 Under examination<br />
-<img src=images/remaping.gif border=0 width=256 height=127 onClick='document.getElementById("optionPanelVer").style.display="none";'/><br />
+<img src=/remaping/images/remaping.gif border=0 width=256 height=127 onClick='document.getElementById("optionPanelVer").style.display="none";'/><br />
 <span 
 	style="font-size:x-small;color:red"
 > WEB APPLICATION </span><br />
@@ -3741,7 +3746,7 @@ debug console
 <!--	デバッグパネル	-->
 <!--	ツールボックス	-->
 <div class=optionPanelFloat id=optionPanelTbx >
-<dl><dt style="background-color:#888888;">toolBox<a href="" class=minimize ><img src=images/ui/minimize.png alt="＿"></a><a href="" class=close ><img src=images/ui/close.png alt="×"></a></dt></dl>
+<dl><dt style="background-color:#888888;">toolBox<a href="" class=minimize ><img src=/remaping/images/ui/minimize.png alt="＿"></a><a href="" class=close ><img src=/remaping/images/ui/close.png alt="×"></a></dt></dl>
 <div id=formTbx >
 <form name=test action="javascript:void(0);">
 <!-- りまぴん ツールボックスインターフェース-->
@@ -4065,7 +4070,7 @@ onDblClick='if (! document.getElementById("single").checked) chkValue(this.id)'
 <div class=optionPanelFloat id=optionPanelSnd >
 <!-- <span id=soundPnl class=SoundPanel>音声編集</span>
 <hr>-->
-<dl><dt style="background-color:#888888;"><span id=soundPnl class=SoundPanel>音声編集</span><a href="" class=minimize ><img src=images/ui/minimize.png alt="＿"></a><a href="" class=close ><img src=images/ui/close.png alt="×"></a></dt></dl>
+<dl><dt style="background-color:#888888;"><span id=soundPnl class=SoundPanel>音声編集</span><a href="" class=minimize ><img src=/remaping/images/ui/minimize.png alt="＿"></a><a href="" class=close ><img src=/remaping/images/ui/close.png alt="×"></a></dt></dl>
 <div id=formSnd><fieldset id='dialogEdit'>
 label:
 <input type='text' autocomplete='on' list='sndCasts' id='soundLabel'
@@ -4273,7 +4278,7 @@ duration :
 <!--	ラベル付き音響編集パネル	-->
 <!--	カメラワーク入力UI	-->
 <div class=optionPanelFloat id=optionPanelCam >
-<dl><dt style="background-color:#888888;">camerawork<a href="" class=minimize ><img src=images/ui/minimize.png alt="＿"></a><a href="" class=close ><img src=images/ui/close.png alt="×"></a></dt></dl>
+<dl><dt style="background-color:#888888;">camerawork<a href="" class=minimize ><img src=/remaping/images/ui/minimize.png alt="＿"></a><a href="" class=close ><img src=/remaping/images/ui/close.png alt="×"></a></dt></dl>
 <div id=formCam>
 
 *Camerawork*
@@ -4281,14 +4286,14 @@ duration :
 <!--	カメラワーク入力UI	-->
 <!--	ステージワーク編集UI	-->
 <div class=optionPanelFloat id=optionPanelStg >
-<dl><dt style="background-color:#888888;">stagework<a href="" class=minimize ><img src=images/ui/minimize.png alt="＿"></a><a href="" class=close ><img src=images/ui/close.png alt="×"></a></dt></dl>
+<dl><dt style="background-color:#888888;">stagework<a href="" class=minimize ><img src=/remaping/images/ui/minimize.png alt="＿"></a><a href="" class=close ><img src=/remaping/images/ui/close.png alt="×"></a></dt></dl>
 <div id=formStg>
 *Stagework*
-</div><img src=./images/ui/cornerTip.png id=StgPanelCorner class=panelCorner onDragStart='return false;'></div>
+</div><img src=/remaping/images/ui/cornerTip.png id=StgPanelCorner class=panelCorner onDragStart='return false;'></div>
 <!--	ステージワーク編集UI	-->
 <!--	コンポジットワーク編集UI	-->
 <div class=optionPanelFloat id=optionPanelSfx >
-<dl><dt style="background-color:#888888;">composite<a href="" class=minimize ><img src=images/ui/minimize.png alt="＿"></a><a href="" class=close ><img src=images/ui/close.png alt="×"></a></dt></dl>
+<dl><dt style="background-color:#888888;">composite<a href="" class=minimize ><img src=/remaping/images/ui/minimize.png alt="＿"></a><a href="" class=close ><img src=/remaping/images/ui/close.png alt="×"></a></dt></dl>
 <div id=formSfx>
 
 *Compositework*
@@ -4296,7 +4301,7 @@ duration :
 <!--	コンポジットワーク編集UI	-->
 <!--	手描きメモ編集UI	-->
 <div class=optionPanelFloat id=optionPanelDraw >
-<dl><dt style="background-color:#888888;">drawing manu<a href="" class=minimize ><img src=images/ui/minimize.png alt="＿"></a><a href="" class=close ><img src=images/ui/close.png alt="×"></a></dt></dl>
+<dl><dt style="background-color:#888888;">drawing manu<a href="" class=minimize ><img src=/remaping/images/ui/minimize.png alt="＿"></a><a href="" class=close ><img src=/remaping/images/ui/close.png alt="×"></a></dt></dl>
 <div id=formDraw>
 
 *hendDrawing*
@@ -4306,13 +4311,13 @@ duration :
 <!-- 参照用オーバーレイ画像ビュアウインドウ optionPanelRef > optionPanelRef
 <div class='optionPanelFloat' id =optionPanelRef >
 <dl>
-<dt style="background-color:#888888;"><span id=soundPnl class=SoundPanel>画像</span><a href="" class=minimize ><img src=images/ui/minimize.png alt="＿"></a><a href="" class=close ><img src=images/ui/close.png alt="×"></a></dt>
+<dt style="background-color:#888888;"><span id=soundPnl class=SoundPanel>画像</span><a href="" class=minimize ><img src=/remaping/images/ui/minimize.png alt="＿"></a><a href="" class=close ><img src=/remaping/images/ui/close.png alt="×"></a></dt>
 <dt style="background-color:#aaaaaa;">[+][-][100%] [URL]  　[-----◆---------]</dt></dl>
 <div class=imageOverlay>
     <iframe id ='referencePanelWindow' src="http://www.nekomataya.info/test/references/" title="iframe example" width="640" height="480" style='opcity:0.75'>
   <p>Your browser does not support iframes.</p>
     </iframe></div>
-    <img src=./images/ui/cornerTip.png id=RefPanelCorner class=panelCorner>
+    <img src=/remaping/images/ui/cornerTip.png id=RefPanelCorner class=panelCorner>
 </div>-->
 <!-- 参照用オーバーレイ画像ビュアウインドウ optionPanelRef > optionPanelRef-->
 
@@ -4499,7 +4504,7 @@ duration :
       <div align=center>
 <br><br><br><br><br><br><br><br>ただいま準備中…ちょっぴりお待ちください<br>
 あ、非常に申し訳ありませんがりまぴんはIEでは正常に動作しません。<br>サポート外です。<br>
-<h3> タイムシート編集サービス　テスト中 </h3><img src=images/remaping.gif border=0 /><br /><img src=images/ui/wait.gif width=48 height=48><br>
+<h3> タイムシート編集サービス　テスト中 </h3><img src=/remaping/images/remaping.gif border=0 /><br /><img src=/remaping/images/ui/wait.gif width=48 height=48><br>
 index.html ,v 1.7 2018/03/05  support@u-at.net <br />
 <span id=myVer1></span> <span id=myServer1>[no-server]</span>
 <br>
@@ -4518,6 +4523,31 @@ index.html ,v 1.7 2018/03/05  support@u-at.net <br />
     data-server_url='http://remaping.scivone-dev.com'
     data-server_url='http://u-at.net'
     アドレスはサーバーのルートを使用　2017.04.13
+
+以下の行はカット袋系のサービスが有効になるまで使用s停止・メンテナンス
+
+      data-cut_bag_token
 -->
-<div id=underlay><img src=template/images/logo/logo_UAT.png width='256'><div>
+<span id="backend_variables"
+      data-organization_token="<%= @current_membership.organization.token %>"
+      data-user_access_token="<%= @user_access_token %>"
+      data-user_token="<%= current_user.token %>"
+      data-user_name="<%= current_user.show_name %>"
+      data-user_email="<%= current_user.email %>"
+      data-episode_id="<%= @cut.episode.nil? ? nil : @cut.episode.id %>"
+      data-frame_rate="<%= @cut.episode.nil? ? nil : @cut.episode.product.frame_rate %>"
+      data-cut_id="<%= @cut.id %>"
+      data-product_token="<%= @cut.episode.nil? ? nil : @cut.episode.product.nil? ? nil : @cut.episode.product.token %>"
+      data-episode_token="<%= @cut.episode.nil? ? nil : @cut.episode.token %>"
+      data-cut_token="<%= @cut.token %>"
+      data-scale="<%= @cut.scale %>"
+      data-line_id="<%= @cut.line_id %>"
+      data-stage_id="<%= @cut.stage_id %>"
+      data-job_id="<%= @cut.job_id %>"
+      data-status="<%= @cut.status %>"
+      data-sheet_color="<%= @cut.episode.nil?  ? nil : @cut.episode.product.sheet_color_hex %>"
+      data-session_token="<%= @session_token %>"
+></span>
+
+<div id=underlay><img src=/remaping/template/images/logo/logo_UAT.png width='256'><div>
 </body></html>

@@ -3,38 +3,38 @@
 <title>xps data convert</title>
 
 <!-- スタイルシート　アプリ本体準拠-->
-<link href="template/jquery-ui.css" type="text/css" rel="stylesheet">
-<link href="template/pickup.css" type="text/css" rel=stylesheet>
+<link href="/remaping/template/jquery-ui.css" type="text/css" rel="stylesheet">
+<link href="/remaping/template/pickup.css" type="text/css" rel=stylesheet>
 
 <!--  外部ライブラリ -->
-<script src=./lib/jquery.js></script>
-<script src=./lib/jquery-ui.js></script>
-<script src=./lib/ecl/ecl.js></script>
+<script src=/remaping/lib/jquery.js></script>
+<script src=/remaping/lib/jquery-ui.js></script>
+<script src=/remaping/lib/ecl/ecl.js></script>
 
 <!-- システム汎用ライブラリ remaping.jsよりも前方でロードする必要あり -->
-<script src=./config.js></script>
-<script src=./nas/lib/nas_common.js></script>
-<script src=./nas/lib/nas_common_HTML.js></script>
+<script src=/remaping/config.js></script>
+<script src=/remaping/nas/lib/nas_common.js></script>
+<script src=/remaping/nas/lib/nas_common_HTML.js></script>
 
-        <script src=./nas/newValueConstractors.js></script>
-        <script src=./nas/pmio.js></script>
-        <script src=./nas/configPM.js></script>
+        <script src=/remaping/nas/newValueConstractors.js></script>
+        <script src=/remaping/nas/pmio.js></script>
+        <script src=/remaping/nas/configPM.js></script>
 
-<script src=./nas/lib/mapio.js></script>
-<script src=./nas/lib/xpsio.js></script>
+<script src=/remaping/nas/lib/mapio.js></script>
+<script src=/remaping/nas/lib/xpsio.js></script>
 
 
 <!--     コンバート用ライブラリ    -->
-<script src=./nas/lib/lib_AEK.js></script>
-<script src=./nas/lib/lib_TVP.js></script>
-<script src=./nas/lib/lib_stylosCSV.js></script>
-<script src=./nas/lib/lib_TSH.js></script>
-<script src=./nas/lib/lib_ARD.js></script>
-<script src=./nas/lib/lib_ARDJ.js></script>
-<script src=./nas/lib/lib_TSX.js></script>
-<script src=./nas/lib/lib_TDTS.js></script>
+<script src=/remaping/nas/lib/lib_AEK.js></script>
+<script src=/remaping/nas/lib/lib_TVP.js></script>
+<script src=/remaping/nas/lib/lib_stylosCSV.js></script>
+<script src=/remaping/nas/lib/lib_TSH.js></script>
+<script src=/remaping/nas/lib/lib_ARD.js></script>
+<script src=/remaping/nas/lib/lib_ARDJ.js></script>
+<script src=/remaping/nas/lib/lib_TSX.js></script>
+<script src=/remaping/nas/lib/lib_TDTS.js></script>
 
-<script src=./XpsConverter.js></script>
+<script src=/remaping/XpsConverter.js></script>
 <script>
  $(function() {
         var localFileLoader = $("#localFileLoader");
@@ -202,12 +202,12 @@ var userFunction=function(){
 インポート可能なデータは以下のフォーマット
 各フォーマットごとに所定のライブラリを必要とする
 
-AEキーフレームテキスト  ./nas/lib/lib_AEK.js
-AERemap    ./nas/lib/lib_ARD.js
-cellRemap./nas/lib/lib_ARDJ.js
-T-Sheet./nas/lib/lib_TSH.js
-Stylos(ClipStudio)-csv ./nas/lib/lib_stylosCSV.js
-TVP-csv1.0/1.1 ./nas/lib/lib_TVP.js
+AEキーフレームテキスト  /remaping/nas/lib/lib_AEK.js
+AERemap    /remaping/nas/lib/lib_ARD.js
+cellRemap/remaping/nas/lib/lib_ARDJ.js
+T-Sheet/remaping/nas/lib/lib_TSH.js
+Stylos(ClipStudio)-csv /remaping/nas/lib/lib_stylosCSV.js
+TVP-csv1.0/1.1 /remaping/nas/lib/lib_TVP.js
 ------
 
 ダイアログが表示されてユーザによる確認と編集が可能

@@ -809,10 +809,14 @@ console.log(dialogString);
 		}
 	}
 //データクロップが発生した場合はクロップ済みであることをノートテキストに追加する
-	if(cloped) myXps.xpsTracks.noteText += '\n'+localize({
-		en:'**(Some information was truncated when converting data from TDTS|XDTS. Please check the content.)',
-		ja:'**(TDTS|XDTSからのデータ変換の際に、一部の情報を切り捨てました。内容を確認してください)'
-	});
+
+	if(cloped) myXps.xpsTracks.noteText += '\n'+(
+		(typeof localize == 'undefined')?
+			'**(Some information was truncated when converting data from TDTS|XDTS. Please check the content.)':localize({
+				en:'**(Some information was truncated when converting data from TDTS|XDTS. Please check the content.)',
+				ja:'**(TDTS|XDTSからのデータ変換の際に、一部の情報を切り捨てました。内容を確認してください)'
+		})
+	);
 	return myXps.toString();
 }
 /**
