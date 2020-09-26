@@ -167,6 +167,20 @@ th {
 /*
 	シートヘッダビュー設定
 */
+#edchg {
+	display:inline-block;
+	width:6em;
+	height:20px;
+	text-align:center;
+	vertical-align:middle;
+	border-style:solid;
+	margin: 4px 10px 4px 0px;
+	border-width:1px;
+   /* 角丸 */
+    -moz-border-radius: 4px;
+    -webkit-border-radius: 4px;
+    border-radius: 4px;	
+}
 th.opusLabel{width:4em;}
 th.titleLabel{width:18em;}
 /*th.scenecutLabel{}*/
@@ -824,55 +838,9 @@ input.aekConvert {
 }
 /*		UI　入力エリア
 */
-div.iNputhEader{
-	position:relative;
-	outline:none;
-	text-align:left;
-	width:100%;
-	height:32px;
-	border-style:none;
-	background-color:none;
-	font-size:14px;
-	margin-left:7em;
-	padding-left:6em;
-}
-div.iNputhEader:hover{
-	text-align:left;
-	border-style:solid;
-	border-width:1px;
-	background-color:snow;
-}
-button#edchg {
-	display:inline;
-	position:absolute;
-	width:5em;
-	height:24px;
-	text-align:center;
-	vertical-align:middle;
-	border-style:solid;
-	margin: 4px 0px 4px 0px;
-	border-width:1px;
-   /* 角丸 */
-    -moz-border-radius: 4px;
-    -webkit-border-radius: 4px;
-    border-radius: 4px;	
-}
-
 input.iNputbOx {
-	outline:none;
-	text-align:left;
-	width:100%;
-	border-style:solid;
-	border-width:1px;
-	border-color:black;
-	background-color:none;
-	font-size:14px;
-	margin:4px 12em 4px 6em;
-	padding:4px 10px 4px 4px;
-}
-input.iNputbOx :focus{
-	border-style:solid;
-	border-width:1px;
+	text-align:right;
+	width:9em;
 }
 /*		UI　サブコントロール
 	height:12px(1px overlap)
@@ -942,23 +910,18 @@ button.subControl:disabled {
 
 input.spinCtl {
 	width:48px;
-	height:16px;
 	margin: 0;
-	padding:0;
     text-align:center;
     border:1px solid #888;
+    margin-right:20px;
 }
 button.spinCtl {
-	width:20px;
-	height:18px;
 	margin: 0;
-    font-size:12px;
+    font-size:6px;
     text-align:center;
     padding:0;
     border:1px solid #888;
-	position:relative;
-	background-color:gray;
-	color:white;
+	position:absolute;
 }
 /*
     background-image:-moz-linear-gradient(top,#fff 0%,
@@ -980,23 +943,6 @@ button.spinCtl-bottom {
     -moz-border-radius: 0 0 4px 4px ;
     -webkit-border-radius: 0 0 4px 4px;
     border-radius: 0 0 4px 4px;
-
-}
-button.spinCtl-left {
-	left:0;top:0;
-	margin: 0;
-   /* 角丸 */
-    -moz-border-radius: 4px 0 0 4px;
-    -webkit-border-radius: 4px 0 0 4px;
-    border-radius: 4px 0 0 4px;
-}
-button.spinCtl-right {
-	left:0;top:0;
-	margin: 0;
-   /* 角丸 */
-    -moz-border-radius: 0 4px 4px 0;
-    -webkit-border-radius: 0 4px 4px 0;
-    border-radius: 0 4px 4px 0;
 
 }
 
@@ -1272,9 +1218,6 @@ td.colSep {
 
 .screenSpace{
 	width:97%;height:10px;
-}
-.printPageStatus {
-	display:none;
 }
 .printSpace {
 	display:inline;
