@@ -5069,6 +5069,10 @@ case	13	:		//Enter 標準/次スピン・シフト/前スピン・コントロ�
 	return false;
 	break;
 case	27	:	//esc 選択範囲解除
+//ラピッドモード解除
+	if(xUI.eXMode){
+		return rapidMode.command.exit();
+	}
 //		編集中
 	if (this.edchg){return false;}//バックアップ復帰のためスキップ(実処理はUP)
 //      区間操作中
@@ -5491,6 +5495,7 @@ if(false){
 		}else{
 //		    return true;
 			if (key!=13 && key!=8 && key!=9 ){
+console.log("key = "+key);
 		//モード解除
 				if(xUI.eXMode){
 		xUI.eXMode=0;	xUI.eXCode=0;
@@ -5501,7 +5506,7 @@ if(false){
 		xUI.spinHi();
 		return true;
 				}
-        console.log(124)
+//        console.log(124)
 			}
 		}
 	}
@@ -9066,7 +9071,8 @@ if(! n){n=xUI.Select[0]; }
 //ブラウザの場合もコピーにトライ
             if(navigator.clipboard){
                 navigator.clipboard.writeText(document.getElementById("AEKrEsult").value);
-            }else{
+            }
+            if(document.getElementById('opnAEKpnl').checked){
 //リザルトエリアが表示されていない場合表示させる。
 	            if (! $("#optionPanelAEK").is(':visible')){xUI.sWitchPanel("AEKey");}
 			    document.getElementById("AEKrEsult").select();
@@ -12866,6 +12872,3 @@ function dbg_action(cmd){
 //	if(console){if(dbg) console.log(body);}
 
 }
-
-
- 

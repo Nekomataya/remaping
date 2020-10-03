@@ -28,11 +28,13 @@
  *		2015/10/17	クッキーの記録内容に編集モードを追加
  *		2016/01/27  クッキーの記録内容にUIツールの表示状態を追加
  *      2016/08/12  WEBサービス開始のための改装
-        2017/03/03  画像部品キャッシュ・書き換えの高速化
-        2017/05/06  高速化＋デバッグ　バックグラウンド更新の準備
-        2017/06/15  スタートアップ時のバグを修正
-        2020/03/14  ラピッドモード調整　STS互換キーセット試験
- * $Id: config.js,v2.0 2020/3/14  $
+ *      2017/03/03  画像部品キャッシュ・書き換えの高速化
+ *      2017/05/06  高速化＋デバッグ　バックグラウンド更新の準備
+ *      2017/06/15  スタートアップ時のバグを修正
+ *      2020/03/14  ラピッドモード調整　STS互換キーセット試験
+ *      2020/10/03  ラピッドキーに "a,s}を追加(add,sub) exitコマンドを追加して"q"にマップ
+ *                  エスケープキーでモード解除
+ * $Id: config.js,v2.0 2020/10/03  $
  */
 	var dbg=false	;	//デバッグモード
 
@@ -452,15 +454,18 @@ rapidMode=[
 "end"];
 */
 //	STS互換+モード
-
 var rapidMode=[
+	"n","nop",
 	"+","incrSpin",
 	"-","decrSpin",
 	"/","spinSub",
 	"*","spinAdd",
 	"x","spinSub",
 	"z","spinAdd",
+	"s","spinSub",
+	"a","spinAdd",
 	".","back",
+	"q","exit",
 "end"];//*/
 /**************************************************************************
  *	機能名は以下のリストから選択。
@@ -534,7 +539,12 @@ rapidMode.command["brac"]=function(){
 	syncInput(EXword);
 ;}	;//
 rapidMode.command["exit"]=function(){
-    
+		xUI.eXMode=0;	xUI.eXCode=0;
+		xUI.selectedColor=xUI.inputModeColor.NORMAL;
+		xUI.spinAreaColor=xUI.inputModeColor.NORMALspin;
+		xUI.spinAreaColorSelect=xUI.inputModeColor.NORMALselection;
+		xUI.spinHi();
+		return true;
 }
 /*****************************************************************************
  *

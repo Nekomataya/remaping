@@ -3432,6 +3432,8 @@ onclick='documentDepot.updateDocumentSelector(new RegExp("3[0-9][0-9][^0-9]*$"))
 	</tr>
 	<tr>
 		<td id=prefLbAE colspan=2 class=toolbarR >AE キーデータオプション<br />
+		<a id=prefLbOpnAEKpnl href="javascript:" onClick='return myPref.chg("opnAEKpnl")'>open panel</a>:<INPUT
+			TYPE=CheckBox NAME=opnAEKpnl id=opnAEKpnl><br />
 		blank method. <SELECT NAME=blmtd id=prefBlmtd onChange="myPref.chgblk(this.id)">
 			<OPTION VALUE=0>ファイル
 			<OPTION VALUE=1>不透明度
@@ -4524,7 +4526,7 @@ index.html ,v 1.7 2018/03/05  support@u-at.net <br />
     data-server_url='http://u-at.net'
     アドレスはサーバーのルートを使用　2017.04.13
 
-以下の行はカット袋系のサービスが有効になるまで使用s停止・メンテナンス
+以下の行はカット袋系のサービスが有効になるまで使用停止・メンテナンス
 
       data-cut_bag_token
 -->
@@ -4535,7 +4537,6 @@ index.html ,v 1.7 2018/03/05  support@u-at.net <br />
       data-user_name="<%= current_user.show_name %>"
       data-user_email="<%= current_user.email %>"
       data-episode_id="<%= @cut.episode.nil? ? nil : @cut.episode.id %>"
-      data-frame_rate="<%= @cut.episode.nil? ? nil : @cut.episode.product.frame_rate %>"
       data-cut_id="<%= @cut.id %>"
       data-product_token="<%= @cut.episode.nil? ? nil : @cut.episode.product.nil? ? nil : @cut.episode.product.token %>"
       data-episode_token="<%= @cut.episode.nil? ? nil : @cut.episode.token %>"
