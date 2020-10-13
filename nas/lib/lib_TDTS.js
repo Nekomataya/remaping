@@ -7,16 +7,34 @@
  *        CLIP STUDIO PAINTがXDTSの範囲を超えたデータを受け取っても問題なく動作するためXDTSとTDTSの扱いの差異は
  *        ヘッダ文字列のみで処理される
  ＊＊　暫定版コンバータ　手書きメモ等画像オブジェクトは現在両方向にコンバート不可
+ *	2020.10拡張 tdts ver.7に暫定対応 xdtsは、ver.5で内容変わらず
+ * 
+ *   TDTS ver.7では複数(兼用)のタイムシートを持つためにtimeSheets構造が新規に導入されている
+ *   配列構造で内部要素は、ver.5の構造を、versionプロパティ以外そのままキープしているように見える 
+ * 	V5
+ * 	{header:{},timeTables:[{},...],version:5}
+ * 	V7
+ * 	{timeSheets:[{header:{},timeTables:[{},...]},...],version:7}
+ * 
+ *	動画欄がfield4で場合により有効
  */
 /*
 タイムシートドキュメントオブジェクト
 	tdts(ToeianimationDigitalTimeSheet) format 及び　xdts(eXchangeDigitalTimeSheet)兼用
 将来仕様が分かれた場合は、独立にXDTSを書き起こすこと
-
+V5
 Object Tdts{
 	header     :Object DocumentHeader,
 	timeTables :[Array of Object TimeTable],
-	version    :Number 
+	version    :{Number 5}
+}
+V7
+Object Tdts{
+	timeSheets:[
+		header     :Object DocumentHeader,
+		timeTables :[Array of Object TimeTable]
+	],
+	version    :{Number 7} 
 }
 */
 var TDTS = {};//ClassObject
@@ -26,6 +44,21 @@ function Tdts(){
 	this.timeTables = [];//[Array of TimeTable]
 	this.version = 5 ;
 }
+/*
+function Tdts(){
+	this.timeSheets =[];[Array of TimesheetDocument]
+	this.version = 7 ;
+}
+*/
+/*
+	タイムシートドキュメントオブジェクト
+	絵コンテの１カットに相当する情報単位
+	ヘッダー、伝票類をこのユニットで持つ
+*/
+	TDTS.TimesheetDomument = function(){
+		this.header = new TDTS.DocumentHeader()
+		this.timeTables = [];//[Array of TimeTable]
+	}
 /*
 ドキュメントヘッダ
 	ドキュメントプロパティトレーラー
@@ -496,10 +529,16 @@ TDTS.SectionItemTable = {
 		引数はTDTS/XTDSオブジェクトまたは、データストリーム
 	@params	{number}	sheetID
 		ソース変換するシートID　未指定の場合は最後のタイムシート
+	@params	{number}	fieldTarget
+		ソース変換するシートのフィールドID 0:原画 4:動画 未指定の場合は 0 それ以外は 4
+		tdtsでのみ有効
+	@params	{number}	targetTimesheet
+		ソース変換する兼用カットのID 未指定時は０(最初のカット)
+		tdtsでのみ有効
 	@returns	{String}
 		XPS互換ソース文字列を返す
  */
-function TDTS2XPS(myTDTS,sheetID) {
+function TDTS2XPS(myTDTS,sheetID,fieldTarget,targetTimesheet) {
 	var dataForm = 'XDTS';
 	var cloped = false;//暫定変数　変換時のデータ切り捨てフラグ
     /**
@@ -511,6 +550,7 @@ function TDTS2XPS(myTDTS,sheetID) {
         /**
          * JSONオブジェクトあればトライ　失敗したらEvalで更にトライ
          */
+console.log(myTDTS);
         if (JSON) {
             try {
                 myTDTS = JSON.parse(myTDTS);
@@ -524,30 +564,51 @@ function TDTS2XPS(myTDTS,sheetID) {
             } catch (err) {
                 myTDTS = false;
             }
-    	}
+        }
     }
-    if (!((myTDTS instanceof Object)&&(myTDTS.timeTables)&&(myTDTS.version==5))){
-    	myTDTS=false;
+console.log(myTDTS);
+
+    if (!(
+            (myTDTS instanceof Object)&&
+            (
+                (myTDTS.timeTables)&&(myTDTS.version==5)
+            )||(
+                (myTDTS.timeSheets)&&(myTDTS.version==7)
+            )
+        )){
+        myTDTS=false;
     }
     if (!myTDTS) return myTDTS;
 
 console.log(myTDTS);
-
+//ver.7読み出しに暫定対応 ver.7&&未指定の場合最初のシートを対象にする
+	var timesheetDocument = myTDTS;
+	if((myTDTS.timeSheets)&&(myTDTS.version==7)){
+		if(myTDTS.timeSheets[targetTimesheet]){
+			timesheetDocument = myTDTS.timeSheets[targetTimesheet];
+		}else{
+			timesheetDocument = myTDTS.timeSheets[0];
+		}
+	}
 //　変換対象のタイムシートを決定　指定があれば設定　dataForm == XDTSの場合、または指定のない場合は最後のタイムシート
 //　XDTSの場合は一つしかシートがないので常に0番
-	if ((typeof sheetID == 'undefined')||(dataForm == 'XDTS')) sheetID = myTDTS.timeTables.length - 1;
-	if (sheetID >= myTDTS.timeTables.length) sheetID = myTDTS.timeTables.length - 1;//トレーラー内のシート数を超過していたら最後のシートに
-//　タイムテーブルの継続時間　tdtsはトランジションの概念を内包しないのでそのままTIMEに割り付ける
-    var myFrames = myTDTS.timeTables[sheetID].duration;    
-//　タイムライントラックの必要数を算出
+	if ((typeof sheetID == 'undefined')||(dataForm == 'XDTS')) sheetID = timesheetDocument.timeTables.length - 1;
+	if (sheetID >= timesheetDocument.timeTables.length) sheetID = timesheetDocument.timeTables.length - 1;//トレーラー内のシート数を超過していたら最後のシートに
+//読み出しターゲットを設定　原画|動画
+	if((fieldTarget)&&(dataForm == 'TDTS')){
+		fieldTarget = 4;
+	}else{
+		fieldTarget = 0;
+	}
+// タイムテーブルの継続時間　tdtsはトランジションの概念を内包しないのでそのままTIMEに割り付ける
+    var myFrames = timesheetDocument.timeTables[sheetID].duration;    
+// タイムライントラックの必要数を算出
 	var soundTracks       = [];
 	var replacementTracks = [];
 	var cameraworkTracks  = [];
-
-
 	var stillTracks = [];
-	if (myTDTS.timeTables[sheetID].books){
-		stillTracks = myTDTS.timeTables[sheetID].books[0].tracks;
+	if (timesheetDocument.timeTables[sheetID].books){
+		stillTracks = timesheetDocument.timeTables[sheetID].books[0].tracks;
 
 /*	コンバート対象のシートからプロパティを転記
 	timeTable.name タイムシート名　該当するプロパティなし　強いてあげるならステージ・ジョブ識別子に相当
@@ -555,22 +616,27 @@ console.log(myTDTS);
 */
 	};	
 //通常トラックラベルをヘッダーから収集する
-	if (myTDTS.timeTables[sheetID].timeTableHeaders){
-		for (var hx = 0 ; hx < myTDTS.timeTables[sheetID].timeTableHeaders.length ; hx++ ){
-			switch (myTDTS.timeTables[sheetID].timeTableHeaders[hx].fieldId){
+	if (timesheetDocument.timeTables[sheetID].timeTableHeaders){
+		for (var hx = 0 ; hx < timesheetDocument.timeTables[sheetID].timeTableHeaders.length ; hx++ ){
+			switch (timesheetDocument.timeTables[sheetID].timeTableHeaders[hx].fieldId){
 			case 0:	;
-				replacementTracks = myTDTS.timeTables[sheetID].timeTableHeaders[hx].names.slice();
+//かならず一旦は原画のトラック名を取得する
+				replacementTracks = timesheetDocument.timeTables[sheetID].timeTableHeaders[hx].names.slice();
 			break;
 			case 1: ;
 			case 2:	;
 			break;
 			case 3:	;
-				soundTracks = myTDTS.timeTables[sheetID].timeTableHeaders[hx].names.slice();
+				soundTracks = timesheetDocument.timeTables[sheetID].timeTableHeaders[hx].names.slice();
 			break;
 			case 4:	;
+				if((fieldTarget)&&(yTDTS.timeTables[sheetID].timeTableHeaders[hx].names.length)){
+//ターゲットが動画でかつトラクが存在すれば上書き
+					replacementTracks = timesheetDocument.timeTables[sheetID].timeTableHeaders[hx].names.slice();
+				}
 			break;
 			case 5:	;
-				cameraworkTracks = myTDTS.timeTables[sheetID].timeTableHeaders[hx].names.slice();
+				cameraworkTracks = timesheetDocument.timeTables[sheetID].timeTableHeaders[hx].names.slice();
 			break;
 			}
 		}
@@ -589,11 +655,11 @@ console.log([["dialog",soundTracks.length],["timing",replacementTracks.length],[
 //new Xps([['sound',4],['timing',4],['camera',4]],120,30);
 console.log(myXps);
 //ドキュメント情報転記
-	if(myTDTS.header){
-    	if (myTDTS.header.cut)      { myXps.cut   = myTDTS.header.cut     };
-    	if (myTDTS.header.scene)    { myXps.scene = myTDTS.header.scene   };
-    	if (myTDTS.header.episode)  { myXps.opus  = myTDTS.header.episode };
-    	if (myTDTS.header.direction){ myXps.xpsTracks.noteText = myTDTS.header.direction };
+	if(timesheetDocument.header){
+    	if (timesheetDocument.header.cut)      { myXps.cut   = timesheetDocument.header.cut     };
+    	if (timesheetDocument.header.scene)    { myXps.scene = timesheetDocument.header.scene   };
+    	if (timesheetDocument.header.episode)  { myXps.opus  = timesheetDocument.header.episode };
+    	if (timesheetDocument.header.direction){ myXps.xpsTracks.noteText = timesheetDocument.header.direction };
 	};
 
 //ラベルを初期化すると同時にトラックの内容を転記？
@@ -626,14 +692,16 @@ console.log(trackOffset+ix);
 
 
 /* フィールドスキャン
-トラックから記述(入力ストリーム)を組み立て　putメソッドで流し込む
+トラックから記述(入力ストリーム)を組み立て putメソッドで流し込む
 フィールド種別ごとに別処理
 */
-	if (myTDTS.timeTables[sheetID].fields){
-		for (var fx = 0 ; fx < myTDTS.timeTables[sheetID].fields.length ; fx++ ){
-			var fieldKind = myTDTS.timeTables[sheetID].fields[fx].fieldId;//フィールドID取得
-			var trackOption = (["timing",'','','sound','','camerawork'])[fieldKind];//相当するxpsTrackOptionに割当
-			for (var tx = 0 ; tx< myTDTS.timeTables[sheetID].fields[fx].tracks.length ; tx++){
+	if (timesheetDocument.timeTables[sheetID].fields){
+		for (var fx = 0 ; fx < timesheetDocument.timeTables[sheetID].fields.length ; fx++ ){
+			if((fieldTarget)&&(fx == 0)) continue;
+//ターゲットが動画の場合フィールドIDをスキップ
+			var fieldKind = timesheetDocument.timeTables[sheetID].fields[fx].fieldId;//フィールドID取得
+			var trackOption = (["timing",'','','sound','timing','camerawork'])[fieldKind];//相当するxpsTrackOptionに割当
+			for (var tx = 0 ; tx< timesheetDocument.timeTables[sheetID].fields[fx].tracks.length ; tx++){
 				var trackId = tx;
 				if(soundTracks.length == 0) trackId ++;//
 				if (fieldKind == 0){
@@ -645,8 +713,8 @@ console.log(trackOffset+ix);
 				var inputStream   = "";//入力はコンマ区切りストリーム
 				var sectionStart  = 0 ;
 				var sectionLength = 0 ;
-				for (var ex = 0 ; ex< myTDTS.timeTables[sheetID].fields[fx].tracks[tx].frames.length ; ex++){
-					var myEntry = myTDTS.timeTables[sheetID].fields[fx].tracks[tx].frames[ex];
+				for (var ex = 0 ; ex< timesheetDocument.timeTables[sheetID].fields[fx].tracks[tx].frames.length ; ex++){
+					var myEntry = timesheetDocument.timeTables[sheetID].fields[fx].tracks[tx].frames[ex];
 // myEntry.frameプロパティが負数、またはdurationを超過した場合はクロップが発生する
 					if((! cloped)&&((myEntry.frame < 0)||(myEntry.frame >= myFrames))) cloped = true;
 					var targetFrame = myEntry.frame ;
@@ -660,7 +728,7 @@ console.log(trackOffset+ix);
 					}
 					if(! myEntry.data[0].values) continue;
 					var inputValue = myEntry.data[0].values[0];
-					if (fieldKind == 0){
+					if ((fieldKind == 0)||(fieldKind == 4)){
 //replacement
 console.log(myEntry.data[0].values[0])
 						if(myEntry.data[0].values[0].match(/^SYMBOL_/)){
@@ -821,7 +889,7 @@ console.log(dialogString);
 }
 /**
 TDTS/XDTSデータを引数にしてTdtsオブジェクトを返す
-引数が空の場合は、東映タイムシートツールと同仕様のブランクドキュメントを返す
+引数が空の場合は、東映タイムシートツールと同仕様のxdtsブランクドキュメント(ver.5)を返す
 */
 TDTS.parseTdts = function(dataStream){
 	if((typeof dataStream != 'undefined') || (String(dataStream).match(/^((toei|exchange)DigitalTimeSheet Save Data\n)/))){

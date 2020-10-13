@@ -494,7 +494,8 @@ console.log([datastream,optionString,overwriteProps,streamOption,targetOption]);
             //ToeiDigitalTimeSheet / eXchangeDigitalTimeSheet
         break;
         case    (/^(toeiDigitalTimeSheet Save Data\n)/).test(datastream):
-            datastream =TDTS2XPS(datastream,targetOption);
+            datastream = TDTS2XPS(datastream,targetOption);
+console.log(datastream);
             //ToeiDigitalTimeSheet / eXchangeDigitalTimeSheet
         break;
         case    (/^UTF\-8\,\ TVPaint\,\ \"CSV 1\.[01]\"/).test(datastream):
@@ -5204,6 +5205,7 @@ case	67 :		;	//[ctrl]+[C]/copy
 	break;
 case	69 :		;	//[ctrl]+[E]/export AE Key
 	if ((e.ctrlKey)||(e.metaKey))	{
+        console.log(writeAEKey);
 		writeAEKey();
 		return true;}else{return true}
 	break;
@@ -5671,18 +5673,23 @@ return true;
 //
 //xUI.keyUp    =    keyUp_    ;
 //
-/** コンテキストメニュー表示
-*/
+/**
+ * コンテキストメニュー表示切り替え
+ *  @params {Object Event}  e
+ */
 xUI.flipContextMenu=function(e){
     if((xUI.contextMenu.isVisible())&&(e.type == 'mousedown')){
-console.log(e.srcElement);      
+console.log(e.srcElement);
         if(e.srcElement.onclick){
-console.log(e.srcElement.onclick);
+//クリックされたコマンドを実行して
+//console.log(e.srcElement.onclick);
             e.srcElement.onclick();
         }
+//消す
         xUI.contextMenu.hide();
         return false;
     }else if((e.button == 2 )&&(e.type == 'mousedown')){
+//初期位置設定
         xUI.contextMenu.css('top',e.clientY-xUI.screenShift[1]);
         xUI.contextMenu.css('left',e.clientX-xUI.screenShift[0]);
         var onHeadline=false;
@@ -5804,6 +5811,21 @@ xUI.contextMenu.html([
 ].join('<br>\n'));
 */
         xUI.contextMenu.show();
+//表示前に確定したサイズから画面外に隠れるケースで位置を調整
+//上下
+        if((window.innerHeight - (xUI.contextMenu.position().top+xUI.contextMenu.height())) < 0){
+            xUI.contextMenu.css('top',e.clientY-xUI.screenShift[1]-xUI.contextMenu.height())
+        }
+//左右 タイムシートセルとそれ以外で切り分け
+        if(e.srcElement instanceof HTMLTableCellElement){
+            if((window.innerWidth - (xUI.contextMenu.position().left+xUI.contextMenu.width())) < 0){
+                xUI.contextMenu.css('left',e.clientX-xUI.screenShift[0]-xUI.contextMenu.width()-e.srcElement.clientWidth);
+            }
+        }else{
+            if((window.innerWidth - (xUI.contextMenu.position().left+xUI.contextMenu.width())) < 0){
+                xUI.contextMenu.css('left',e.clientX-xUI.screenShift[0]-xUI.contextMenu.width()-32);
+            }
+        }
 console.log(e);
         return false;
     }
@@ -8859,7 +8881,7 @@ case	"cut":	;
 	var scn= XPS["scene"]	; 
 	var cut= XPS["cut"]	;
 	
-	var myValue=(XPS["scene"] || XPS["cut"])?  scn +" "+ cut :"<br />";
+	var myValue=(XPS["scene"] || XPS["cut"])?  "s" + scn + "-c" + cut :"<br />";
 //	document.title=(XPS["scene"] || XPS["cut"])? windowTitle +" "+scn +" "+ cut:windowTitle;
 
 	document.getElementById("scene_cut").innerHTML=myValue;
