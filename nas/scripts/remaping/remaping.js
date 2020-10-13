@@ -5681,11 +5681,11 @@ xUI.flipContextMenu=function(e){
     if((xUI.contextMenu.isVisible())&&(e.type == 'mousedown')){
 console.log(e.srcElement);
         if(e.srcElement.onclick){
-//クリックされたコマンドを実行して
+//クリックされたコマンドを実行
 //console.log(e.srcElement.onclick);
             e.srcElement.onclick();
         }
-//消す
+//メニューを隠す
         xUI.contextMenu.hide();
         return false;
     }else if((e.button == 2 )&&(e.type == 'mousedown')){
@@ -8201,9 +8201,11 @@ $("#optionPanelSnd").dialog({
         $("li.debug").each(function(){$(this).hide()});
         $("li.airDbg").each(function(){$(this).hide()});
     }
-//AIRを認識した場合cgiUIとairUIを切り換え
-switch (appHost.platform){
-case    "AIR":
+//AIR|Node.js(+Electron)を認識した場合cgiUIとlocalUIを切り換え
+
+//switch (appHost.platform){
+    if ((appHost.Nodejs)||(appHost.platform == "AIR")){
+//case    "AIR":
 //tableメニュー表記
         $("tr#cgiMenu").each(function(){$(this).hide()});
 //ショートカットアイコンボタン
@@ -8233,10 +8235,11 @@ case    "AIR":
         }, function() {$(this).children('ul').hide();});
 //osがwindowsでかつAIR環境だった場合のみドロップダウンメニューを隠す
 //        if((window.navigator.platform).indexOf("Win")>=0){$("#pMenu").hide()};
-break;
-case "CEP":
+//break;
+    }else if((appHost.platform == "CEP")||(appHost.platform == "CSX")){
+//case "CEP":
 //    window.parent.psHtmlDispatch();    xUI.shiftScreen(50,50);
-case    "CSX":
+//case    "CSX":
 //tableメニュー表記
         $("tr#airMenu").each(function(){$(this).hide()});
 //ショートカットアイコンボタン
@@ -8264,8 +8267,9 @@ case    "CSX":
         }, function() {$(this).children('ul').hide();});
 //表示切り替え
     xUI.setToolView('compact');
-break;
-default:
+//break;
+    }else{
+//default:
 //標準的なブラウザ
         $("tr#airMenu").each(function(){$(this).hide()});
 //ショートカットアイコンボタン
@@ -8289,8 +8293,9 @@ default:
         $("#pMenu li").hover(function() {
             $(this).children('ul').show();
         }, function() {$(this).children('ul').hide();});
-}
-//Node.js|electron環境の際airMenuを再表示
+    }
+// }
+//Node.js(+electron)環境の際airMenuを再表示
     if(appHost.Nodejs) $("#airMenu").show();//="inline";
 //オンサイト時の最終調整はこちらで？
     if(xUI.onSite){
