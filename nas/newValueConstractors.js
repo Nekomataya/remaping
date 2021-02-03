@@ -118,31 +118,29 @@ nas.AnimationReplacement=function(myParent,myContent){
     this.parseContent();
 }
 /**
-    //  引数なし　または引数が１つで文字列'basic'またはfalseと判断される場合は標準保存形式出力
-    標準保存形式(グループ名/エレメント名＋主要プロパティの１行出力)
-^<group>\t<cellDescription>\t< ここまではElementObjectの出力範囲
-<proppertyValues>\t<comment>
-    例
-"./stages/kd/kt#00[pilot]__s-c001_kd.psd///kd/A/0001+",254mm,142.875mm,127mm,71.4375mm	testOverlay
-
-proppertyValuesは、comma区切りで以下の順のデータ
-["<source>"[,size.X,size.Y[,offset.X,offset.Y[,offset.R]]]]
-末尾から順にすべて省略可能
-各エントリに登録のない場合はデフォルトの値が使用される
-
-    //  引数が 'extended'の場合は拡張保存形式で返す
-    拡張保存形式(グループ名,エレメント名を含まないタブを先頭にした複数行出力)
-^\t<propname> = <proppertyValue>$\n
-    例
-	file = "./stages/kd/kt#00[pilot]__s-c001_kd.psd///kd/A/0001+"
-	
-	
-    //  引数が一つ以上ある場合の処理
-
-*/
+ *  引数なし　または引数が１つで文字列'basic'またはfalseと判断される場合は標準保存形式出力
+ *    標準保存形式(グループ名/エレメント名＋主要プロパティの１行出力)
+ *^<group>\t<cellDescription>\t< ここまではElementObjectの出力範囲
+ *<proppertyValues>\t<comment>
+ *    例
+ *"./stages/kd/kt#00[pilot]__s-c001_kd.psd///kd/A/0001+",254mm,142.875mm,127mm,71.4375mm	testOverlay
+ *
+ *proppertyValuesは、comma区切りで以下の順のデータ
+ *["<source>"[,size.X,size.Y[,offset.X,offset.Y[,offset.R]]]]
+ *末尾から順にすべて省略可能
+ *各エントリに登録のない場合はデフォルトの値が使用される
+ *
+ *   //  引数が 'extended'の場合は拡張保存形式で返す
+ *    拡張保存形式(グループ名,エレメント名を含まないタブを先頭にした複数行出力)
+ *^\t<propname> = <proppertyValue>$\n
+ *    例
+ *	file = "./stages/kd/kt#00[pilot]__s-c001_kd.psd///kd/A/0001+"
+ *	
+ *	
+ *  引数が一つ以上ある場合の処理
+ *
+ */
 nas.AnimationReplacement.prototype.toString=function(exportForm){
-//return this.contentText;//動作確認用ダミー行
-
     if(exportForm == 'extend'){
         var resultArray=[];
         if(this.source)   resultArray.push('\tfile = "'    + this.source.toString(true)+'"');
@@ -153,14 +151,14 @@ nas.AnimationReplacement.prototype.toString=function(exportForm){
         return resultArray.join("\n");
     }else if ((arguments.length==0)||((arguments.length==1)&&(! arguments[0]))||(exportForm == 'basic')){
         var resultArray=[];
-        
+        var groupName = (this.parent)?this.parent.name:'';
         if(this.source)   resultArray.push('"'+this.source.toString()+'"');
         if(this.size)     resultArray.push(this.size.toString());
         if(this.offset)   resultArray.push(this.offset.toString());
         if(this.rotation) resultArray.push(this.rotation.toString());
         resultArray = [resultArray.join(",")];
         if(this.comment) resultArray.push(this.comment);
-        return ([this.parent.name,this.name,resultArray.join("\t")]).join('\t');
+        return ([groupName,this.name,resultArray.join("\t")]).join('\t');
     }
 }
 //nas.AnimationReplacement.prototype.valueOf=function(){
@@ -343,7 +341,7 @@ case :this.parent == null
         }
 
     }
-    return this;    
+    return this;
 }
 /** 指定フレーム数に内容を展開して配列で返す
 引数 :cellCount
