@@ -355,8 +355,6 @@ var processImport=function(){
 戻値:　Object Xps or XpsStream or false
     
 */
-
-
 convertXps=function(datastream,optionString,overwriteProps,streamOption){
     if(! String(datastream).length ){
         return false;

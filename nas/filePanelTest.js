@@ -187,7 +187,9 @@ Aborted ステータスのエントリは、制作管理モードでのみ表示
 // ここで正規表現フィルタを引数にする？
     if(!(myRegexp instanceof RegExp)){ myRegexp = new RegExp(".+");}
 // 選択済みタイトルで抽出
+console.log(documentDepot.currentProduct);
     var myDocuments = documentDepot.getEntriesByOpusid(documentDepot.currentProduct);
+console.log(myDocuments);
 //  正規表現フィルタで抽出してHTMLを組む
     var myContents = "";
     var myResult   = [];
@@ -237,21 +239,25 @@ if((currentStatus=='Fixed')&&(currentStatus.assign)){
 引数:プロダクト識別子
  */
 documentDepot.getEntriesByOpusid=function(myIdentifier){
-    if(! myIdentifier) myIdentifier=documentDepot.currentProduct;
+    if(! myIdentifier) myIdentifier = documentDepot.currentProduct;
     myIdentifier+="//";
+console.log(myIdentifier);
 // タイトルIDで抽出
     var myDocuments = [];
     for ( var dcid = 0 ; dcid < documentDepot.documents.length ; dcid ++){
-//console.log(documentDepot.documents[dcid].toString());console.log(myIdentifier);
-        if((documentDepot.currentProduct)&&(Xps.compareIdentifier(documentDepot.documents[dcid].toString(),myIdentifier) > -1)){
+console.log(documentDepot.documents[dcid].toString());
+console.log(myIdentifier);
+        if(
+            (documentDepot.currentProduct)&&
+            (Xps.compareIdentifier(documentDepot.documents[dcid].toString(),myIdentifier) > -1)
+        ){
             myDocuments.push(documentDepot.documents[dcid]);
-        }
+        };
          continue;
-    }
+    };
     myDocuments.sort(documentDepot.sortBySCi);
     return myDocuments;    
 }
-
 /**
 listEntryのカット番号順にソートする　評価関数
 */

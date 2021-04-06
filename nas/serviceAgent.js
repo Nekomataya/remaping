@@ -297,7 +297,7 @@ ServiceNode.prototype.getRepositories=function(callback){
 //            if(result.res != "200"){this.errorhandle(result);}else{};
 // result replace result.data
             serviceAgent.repositories.splice(1); // ローカルリポジトリを残してクリア(要素数１)
-//console.log(result);
+console.log(result);
             for( var rix=0 ; rix<result.data.organizations.length ; rix ++){
                 serviceAgent.repositories.push(new NetworkRepository(
                     result.data.organizations[rix].name,
@@ -899,7 +899,7 @@ localRepository.title=_title;
     該当するオブジェクトがない場合はnullを戻す
 */
 _opus=function(myIdentifier,searchDepth){
-//console.log([myIdentifier,searchDepth])
+console.log([myIdentifier,searchDepth])
     if(! searchDepth) searchDepth = 0;
     var currentOpus = Xps.parseProduct(myIdentifier);
     var isTkn = ((currentOpus.opus =='')&&(currentOpus.title == myIdentifier))? true:false;
@@ -1895,7 +1895,7 @@ NetworkRepository=function(repositoryName,myServer,repositoryURI){
 //    this.episode_token      = $('#server-info').attr('episode_token');
 //    this.cut_token          = $('#server-info').attr('cut_token');
 // ?idの代替なので要らないか？ 
-    this.pmd={};//制作管理データキャリア　機能クラスオブジェクト化？
+    this.pmdb={};//制作管理データキャリア　機能クラスオブジェクト化？
     this.currentIssue;
     this.productsData=[];//workTitleCollectionで置換？タイトルキャリアでノードルートになる
     this.entryList = new listEntryCollection();
@@ -1941,16 +1941,17 @@ NetworkRepository.prototype.cut=_cut;
     プロダクトデータ取得のみの場合は　空動作のコールバックを渡す必要あり
 */
 NetworkRepository.prototype.getProducts=function (callback,callback2,prdToken){
-    if(typeof prdToken == 'undefined'){prdToken = [];}
+    if(typeof prdToken == 'undefined') prdToken = [];
     if(!(prdToken instanceof Array)) prdToken=[prdToken];
     $.ajax({
         url: serviceAgent.currentRepository.url+'/api/v2/products.json',
         type: 'GET',
         dataType: 'json',
         success: function(result) {
+console.log(result);
             //resultにデータが無いケース{}があるので分離が必要
-          　//権限等で
-          　//この時点でタイトルに付属のメンバーシップをs同時に取得してオブジェクトに設定する（プロパティオブジェクト未実装20171116）
+            //権限等で
+            //この時点でタイトルに付属のメンバーシップを同時に取得してオブジェクトに設定する（プロパティオブジェクト未実装20171116）
 		    serviceAgent.currentRepository.productsData = result.data.products;
 		    if(prdToken.length){
 		    //引数があれば引数のプロダクトを順次処理
@@ -1993,11 +1994,12 @@ NetworkRepository.prototype.productsUpdate=function(callback,callback2,myToken){
         type: 'GET',
         dataType: 'json',
         success: function(result) {
-            var productUpdated=false;
+console.log(result);
+            var productUpdated = false;
             for(var idx = 0 ;idx < serviceAgent.currentRepository.productsData.length ;idx ++){
 		        if(result.data.product.token != serviceAgent.currentRepository.productsData[idx].token) continue;
                 //プロダクトデータを詳細データに「入替」エピソードの概要を取得する
-if(dbg) console.log("update product data detail:"+serviceAgent.currentRepository.productsData[idx].name) ;
+console.log("update product data detail:"+serviceAgent.currentRepository.productsData[idx].name) ;
 //console.log(serviceAgent.currentRepository.productsData);
 		                serviceAgent.currentRepository.productsData[idx] = result.data.product ;
 		                if(! (serviceAgent.currentRepository.productsData[idx].episodes)){serviceAgent.currentRepository.productsData[idx].episodes=[[]];};//episodes/cutsの配列整理が終了したら変更
@@ -2038,8 +2040,8 @@ NetworkRepository.prototype.updateEpisodes=function (callback,callback2,prdToken
         type: 'GET',
         dataType: 'json',
         success: function(result) {
+console.log(result);
                 //プロダクトデータのエピソード一覧を「入替」
-
 		    if(result){
 		        if(! myProduct.episodes) {myProduct.episodes=[[]];}
 		        //後ほどエピソードレベルのユーザ情報取得
@@ -2095,19 +2097,22 @@ NetworkRepository.prototype.updateEpisodes=function (callback,callback2,prdToken
     それ以外は指定プロダクトのすべてを更新
  */
 NetworkRepository.prototype.getEpisodes=function (callback,callback2,prdToken,epToken) {
+console.log(prdToken);
+console.log(epToken);
     var allEpisodes=false;
     if(typeof epToken == 'undefined'){
         epToken     = [];
         allEpisodes = true;
-console.log(prdToken)
         var myProduct=this.title(prdToken);
 console.log(myProduct)
         if((! myProduct)||(! myProduct.episodes)||(myProduct.episodes[0].length == 0)){console.log('stop'); return false;}
         for (var px = 0 ;px < myProduct.episodes[0].length;px ++){epToken.push(myProduct.episodes[0][px].token);}
-    }
+    };
     if(!(epToken instanceof Array)) epToken = [epToken];
+console.log(epToken);
     for(var ex = 0;ex < epToken.length ;ex ++){
         var myEpisode=this.opus(epToken[ex]);
+console.log(myEpisode);
         if(! myEpisode) continue;
         if((allEpisodes)&&(myEpisode.cuts)){console.log('skip'+myEpisode.name) ;continue;}
         //対象が全エピソードで、エピソードがすでにカット情報を持っているケースでは処理スキップ
@@ -2122,8 +2127,8 @@ console.log("Token : "+myEpisode.token) ;
             success: function(result) {
 console.log('success : episode details for:'+result.data.episode.name);//リザルト不正　調整中20190129
 console.log(result);
-        var 　updateTarget = serviceAgent.currentRepository.opus(result.data.episode.token);
-        if(! updateTarget){console.log('erroe###');console.log(updateTarget);};   
+        var updateTarget = serviceAgent.currentRepository.opus(result.data.episode.token);
+        if(! updateTarget){console.log('erroe###');console.log(updateTarget);};
 //非同期処理中に変数を共有するのでmyEpisodeが変動するためターゲットをリザルトから再キャプチャ
 //オブジェクト入れ替えでなくデータの追加アップデートに変更
 //内容は等価だがAPIの変更時は注意
@@ -2165,7 +2170,7 @@ console.log(result);
  */
 NetworkRepository.prototype.getSCi=function (callback,callback2,epToken,pgNo,ppg) {
     var myEpisode = this.opus(epToken);
-//console.log('getSCi :');console.log(myEpisode);
+console.log('getSCi :');console.log(myEpisode);
     if((! myEpisode)||(! myEpisode.cuts)) return false;
 /*
     if(! myEpisode){
@@ -2711,7 +2716,7 @@ if(dbg) console.log(targetURL);
         type: 'GET',
         dataType: 'json',
         success: function(result) {
-//console.log(result);
+console.log(result);
 //データ請求に成功したので、現在のデータを判定して処理の必要があれば処理
         	var myContent=result.data.cut.content;//XPSソーステキストをセット
         	var currentXps = new Xps();
@@ -2924,6 +2929,7 @@ NetworkRepository.prototype.addOpus=function (myIdentifier,prodIdentifier,callba
 		url : serviceAgent.currentRepository.url+"/api/v2/episodes.json",
 		data : JSON.stringify(data),
 		success : function(result) {
+console.log(result);
 		    if( callback instanceof Function) callback();
 		},
 		error:function(result) {
@@ -3821,28 +3827,36 @@ serviceAgent = {
 serviceAgent.init= function(){
     this.servers=[]; //サーバコレクション初期化
     this.repositories=[localRepository]; //ローカルリポジトリを0番として加える
-    if(document.getElementById('backend_variables')){
-    ;//本番用
-      if($("#backend_variables").attr("data-server_url")){
-//ローカルテスト時はこちらで
-      　var myUrl = $("#backend_variables").attr("data-server_url");
-      }else{
+    if(
+        (document.getElementById('backend_variables'))&&
+        ($('#backend_variables').attr('data-user_token').match(/<%.+%>/))
+    ){
+        var myServers={
+            UAT: {name:'U-AT',url:'https://u-at.net'},
+            Srage:{name:'Stage',url:'https://remaping-stg.u-at.net'},
+            devFront:{name:'devFront',url:'https://remaping.scivone-dev.com'}
+        };
+        for(svs in myServers){
+            this.servers.push(
+                new ServiceNode(myServers[svs].name,myServers[svs].url)
+            );
+        };
+    }else if(
+        (document.getElementById('backend_variables'))&&
+        $("#backend_variables").attr("data-server_url")
+    ){
+//バックエンド変数にURLあり
+        this.servers.push(new ServiceNode(
+            "CURRENT",
+            $("#backend_variables").attr("data-server_url")
+        ));
+    }else{
+//現在のロケーションから取得
         var loc = String(window.location).split('/');//
         var locOffset = (loc[loc.length-1]=="edit")? 3:2;
         var myUrl = loc.splice(0,loc.length-locOffset).join('/');
-//      var myUrl = 'http://remaping.scivone-dev.com';//テスト用決め打ち
-//      var myUrl = 'https://remaping-stg.u-at.net';//テスト用に決め打ち
-//      var myUrl = 'https://u-at.net';//テスト用決め打ち
-      }
-      this.servers.push(new ServiceNode("CURRENT",myUrl));
-    }else{
-      var myServers={
-        UAT: {name:'U-AT',url:'https://u-at.net'},
-        Srage:{name:'Stage',url:'https://remaping-stg.u-at.net'},
-        devFront:{name:'devFront',url:'https://remaping.scivone-dev.com'}
-      };
-      for(svs in myServers){this.servers.push(new ServiceNode(myServers[svs].name,myServers[svs].url));}
-    }
+        this.servers.push(new ServiceNode("CURRENT",myUrl));
+    };
 /*
     仮のサーバセレクタを設定
 */
@@ -4016,7 +4030,7 @@ serviceAgent.switchRepository=function(myRepositoryID,callback){
 //ドキュメントセレクタを停止
         document.getElementById( "cutList" ).disabled=true;
         /*== ドキュメントリスト更新 ==*/
-//console.log("change repository :"+ myRepositoryID);
+console.log("change repository :"+ myRepositoryID);
         serviceAgent.currentRepository.getProducts(function(){
 
                         documentDepot.getProducts();

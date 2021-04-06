@@ -2822,19 +2822,22 @@ nas.Dpc = function () {
 
 /**
  * DateオブジェクトにtoNASString形式処理を乗せる
- * @returns {string}
+ *  @params {String} form
+    yyyy
+ *  @returns {string}
  */
-Date.prototype.toNASString = function () {
-    var h = this.getHours();
-    var m = this.getMinutes();
-    var s = this.getSeconds();
-    var yy = this.getFullYear();
-    var mm = this.getMonth() + 1;
-    var dd = this.getDate();
-    var Result = yy + "/" + mm + "/" + dd + "\ " + h + "\:" + m + "\:" + s;
+Date.prototype.toNASString = function (form) {
+    if(! form) form = "yy/mm/dd h:m:s";
+    var h    = this.getHours();
+    var m    = this.getMinutes();
+    var s    = this.getSeconds();
+    var yy   = this.getFullYear();
+    var mm   = nas.Zf(this.getMonth() + 1 , 2 );
+    var dd   = nas.Zf(this.getDate() , 2 );
+        var Result = form.replace(/yy/ ,yy).replace(/mm/ ,mm).replace(/dd/ ,dd).replace(/h/ ,h).replace(/m/ ,m).replace(/s/ ,s);
     return Result;
 };
-
+// Date
 /**
  * @param nasString
  * @returns {Date}
@@ -4939,7 +4942,7 @@ nas.CellDescription=function(cellDescription,cellPrefix){
     this.body     = cellDescription[1];
     this.postfix  = cellDescription[2];
     this.modifier = cellDescription[3];
-    this.type     = nas.cellDescription.type(this.body);
+    this.type     = nas.CellDescription.type(this.body);
   }else{
     this.parseContent(cellDescription,cellPrefix);
   }
@@ -4979,8 +4982,9 @@ nas.CellDescription.interpolationSigns  = ["-","=","\*","·","・","○","●","
 nas.CellDescription.interpRegex         = new RegExp("^["+nas.CellDescription.interpolationSigns.join("")+"]$");
 
 /*
-    
+    丸囲い、三角囲み等のブラケット修飾されている要素を判定する正規表現
  */
+nas.CellDescription.modifiedRegex = new RegExp( "^\\(.+\\)$|^\\[.+\\]$|^\\<.+\\>$|^\\s*$|^["+nas.CellDescription.interpolationSigns.join("")+"]$");
 
 /* TEST
 console.log(new nas.CellDescription())     ;//
@@ -5148,8 +5152,9 @@ console.log(A.toString("origin"));
  * 丸数字は失われ標準表記の(丸括弧)に置換される  </pre>
  */
 nas.CellDescription.prototype.parseContent=function(description,prefixStr){
-    if (typeof description == "undefined"){
-        console.log("rebuild content")
+    if ((typeof description == "undefined")||(description == null)){
+        description = "";
+//        console.log("rebuild content")
         if (this.body.length>0){
           this.content=this.toString(true);
           return;
@@ -5160,7 +5165,7 @@ nas.CellDescription.prototype.parseContent=function(description,prefixStr){
     if (typeof prefixStr   == "undefined") prefixStr = "";
     this.content=description;
     //丸数字を一つだけ（）で囲む（正規化前に行う）
-    description=String(description).replace(/[①-⑳㉑㉒-㉛㉜-㉟㊱-㊿]/,"($&)");
+    description = String(description).replace(/[①-⑳㉑㉒-㉛㉜-㉟㊱-㊿]/,"($&)");
     //正規化  丸数字は通常の数字に展開されて失われる
     description=nas.normalizeStr(description);
     //モデファイヤを判別して削除

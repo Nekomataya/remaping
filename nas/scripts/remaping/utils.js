@@ -1221,14 +1221,16 @@ interpSign()
 その区間にSPIN指定の間隔で補完サインを配置する。基点は選択範囲の最も上のシートセル
 */
 interpSign=function(){
-	var interpRegex=nas.CellDescription.interpRegex
+	var interpRegex=nas.CellDescription.interpRegex;
 	var myValue = xUI.XPS.xpsTracks[xUI.Select[0]][xUI.Select[1]];
   if(xUI.Selection.join(",")=="0,0"){
 	if(myValue.match(interpRegex)){
-		var newValue=InterpolationSigns[((InterpolationSigns.indexOf(myValue))+1) % InterpolationSigns.length];
+		var newValue=nas.CellDescription.interpolationSigns[
+			((nas.CellDescription.interpolationSigns.indexOf(myValue))+1) % nas.CellDescription.interpolationSigns.length
+		];
 		xUI.put(newValue);
 	}else	if(true){
-		xUI.put(nas_expdList(InterpolationSigns[0]));
+		xUI.put(nas_expdList(nas.CellDescription.interpolationSigns[0]));
 		xUI.spin("down");
 	}else{
 		return;
@@ -1239,7 +1241,7 @@ interpSign=function(){
 	xUI.selectCell([currentColumn,myRange[0][1]]);
 	xUI.selection([currentColumn,myRange[1][1]]);
 	xUI.put(nas_expdList("/-/"));
-	xUI.selectCell([currentColumn,myRange[0][1]]);
+	xUI.selectCell([currentColumn,myRange[1][1]+1]);
   }
 }
 /*addCircle(キーワード)
@@ -1456,7 +1458,118 @@ for (var tid=0;tid<myToolTips.length;tid++){
 	りまぴんでは編集のたびにセクションを含むタイムラインをパースする
 	キャッシュは行われない
 */
+/*
+	対象トラックを走査してセル表記をノーマライズする
+	丸囲い等の強調装飾記述を統一する
+	
+ */
+var normalizeTimeline = function normalizeTimeline(timelineTrack){
+	var cellStack = [];
+	var cell;
+	for(var f=0; f<timelineTrack.length;f++){
+		cell = new nas.CellDescription(timelineTrack[f],timelineTrack.id);
+		if(cell.type != "normal") continue;
+		var pcl = cellStack.find(function(elm){return (elm.compare(cell)>0);});
+		if(pcl){
+			if(pcl.modifier != cell.modifier) timelineTrack[f]=pcl.content;
+		}else{
+			cellStack.add(cell);
+		};
+	};
+};
 
+/**
+ *	セル記述入力正規化フィルタ
+ *		確定値 タイムシート記述時に確定した値を持つセルのうち
+ *		カラセルを除く既存の記述を複製する
+ *
+ *			モードは以下
+ *	0:加工なし・文字列正規化のみで返す
+ *	1:動画|セル用標準加工 １番のみ強制丸囲み
+ *	2:LO|原画用加工 １番を含む新規の確定値セルをすべて丸囲みする
+ *
+ *	0以外は
+ *	トラック既存のセル記述の装飾を参照して入力を加工
+ *	または exchスイッチが立っている場合
+ *	トラック既存の入力を新規入力を参照して加工
+ *	その際入力値側の加工はスキップ
+ *
+ *	@params	{Array of String|String}  cell
+ *		配列渡し
+ *	@params	{Object|XpsTimelineTrack} targetTrack
+ *	@params {Number Int}              mode
+ *		0|1|2
+ *	@params {Boolean}                 exch
+ *
+ *	@returns {Array}
+ *		フィルタ処理した配列戻し
+ */
+var iptFilter = function(cell,targetTrack,mode,exch){
+    if(typeof cell == 'undefined') return cell;
+    if(!(cell instanceof Array)) cell = [cell];
+    if(!(targetTrack instanceof XpsTimelineTrack)) return cell;
+	if(! mode) mode = 0;
+	if(! exch) exch = false;
+	var excStack = [];
+	var changeStart = targetTrack.length;var changeEnd = 0;
+	for(var cid = 0;cid < cell.length ; cid ++){
+		cell[cid] = new nas.CellDescription(cell[cid]);
+		if(cell[cid].type != 'normal') continue;
+		cell[cid].parseContent(nas.normalizeStr(String(cell[cid].content)));//normalize
+		if((mode > 0)&&(cell[cid].body == '1')&&(cell[cid].modifier == 'none')) cell[cid].parseContent('(1)');//１番強制丸囲み mode1-2 共通
+		if((mode > 1)&&(cell[cid].modifier == 'none')) cell[cid].parseContent('('+cell[cid].body+')');//強制丸囲み mode2
+		var pcl = targetTrack.findCell(cell[cid]);
+		if((pcl)&&(cell[cid].modifier != pcl.modifier)){
+			if(exch){
+				excStack.push(cell[cid]);
+			}else{
+				cell[cid].parseContent(pcl.content);
+			};
+		};
+	};
+	if((exch)&&(excStack.length)){
+		for(exc = 0;exc < excStack.length ; exc ++){
+			for(f = 0;f < targetTrack.length ; f ++){
+				if(excStack[exc].compare(targetTrack[f])>0){
+					if(changeStart > f) changeStart = f;
+					if(changeEnd < f)   changeEnd   = f;
+				}
+			};
+		};
+		var pclContent = targetTrack.xParent.parentXps.getRange([
+			[targetTrack.index,changeStart],
+			[targetTrack.index,changeEnd]
+		]).split(",");
+//console.log([[targetTrack.index,changeStart],[targetTrack.index,changeEnd]]);
+//console.log(pclContent);
+		for(var pid = 0; pid < pclContent.length; pid ++){
+			var mt = excStack.find(function(elm){return elm.compare(pclContent[pid])});
+			if(mt) pclContent[pid] = mt.content;
+		};
+		var bkup  = xUI.Select.join('_');
+		var bkupR = [xUI.Select[0]+xUI.Selection[0],xUI.Select[1]+xUI.Selection[1],];
+		xUI.selectCell([targetTrack.index,changeStart]);
+		xUI.selection();
+//console.log(pclContent);
+		xUI.put(pclContent.join());
+		xUI.selectCell(bkup);
+		xUI.selection(bkupR);
+	};
+	return cell.join();
+
+/*            if(
+                (!pcl)&&
+                ((targetTrack.option == 'timing')||(targetTrack.option == 'replacement'))&&
+                (xUI.ipMode <= 0)&&
+                (! nas.CellDescription.modifiedRegex.test(srcData[tx][fx]))&&
+                (! nas.CellDescription.blankRegex.test(srcData[tx][fx]))
+            ){
+                srcData[tx][fx] = "(" + srcData[tx][fx] + ")";
+            };// */
+};
+/*TEST
+	iptFilert(["1","2","3",4,5])
+*/
 /*
 	このファイルの関数は基本的にはxUIまたはXPSのメソッドなので
 	デバグ終了後には必要に応じてラッパ関数を残してふさわしい位置へ移動すること。

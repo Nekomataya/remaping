@@ -1017,7 +1017,22 @@ function XpsTimelineTrack(myLabel, myType, myParent, myLength) {
         }
         return myElement;
     }
-
+/**
+ *	タイムライントラックから最初にヒットしたセル記述を返す
+ *  戻り値にはヒットしたフレームidを加える
+ *	@params {String} cell
+ *	@returns	{Object nas.CellDescription|null}
+ */
+    this.findCell = function (cell){
+	    for(var f=0; f<this.length;f++){
+		    var pcl = new nas.CellDescription(this[f],this.id);
+		    if(pcl.type != "normal") continue;
+		    if(pcl.compare(cell) > 0) {
+		        pcl.frame = f;
+		        return pcl;
+		    }
+		};return null;
+	};
 //汎用関数設定
     this.getDefaultValue = _getMapDefault;//
 
@@ -3611,8 +3626,8 @@ Xps.compareIdentifier("35%E5%B0%8F%E9%9A%8A_PC#RBE//04d",'35%E5%B0%8F%E9%9A%8A_P
     引数がまたは第一要素がカラの場合はfalse
 */
 Xps.parseProduct = function(productString){
-    var dataArray = String(productString).replace( /[\[\]]/g ,'#').split('#');
-//     if((dataArray.length==0)||(String(dataArray[0]).length==0)){ return false};
+    productString = String(productString).replace( /[\[\]\/]/g ,'#');
+    var dataArray = productString.split('#');
     return {
         title     :   ((typeof dataArray[0]=='undfined')||(String(dataArray[0])=='undefined'))? "":decodeURIComponent(dataArray[0]),
         opus      :   ((typeof dataArray[1]=='undfined')||(String(dataArray[1])=='undefined'))? "":decodeURIComponent(dataArray[1]),

@@ -191,7 +191,8 @@ var myWords	=[
 	["つけPAN","T.U.","T.B.","中O.L.","F.I.","F.O.","ZOOM IN","ZOOM OUT"],
 	["[A]","[B]","[C]","[D]","[E]","[F]","[G]","[]"],
 	["(1)","(2)","(3)","(4)","(5)","(6)","(7)","()"],
-	["兼用","透過光"," / ","回転","ローリング","特効","BOOK","BG"]
+	["兼用","透過光"," / ","回転","ローリング","特効","BOOK","BG"],
+	["%stage%:[%user% %date%]","[%user% %date%]","(%user% %date%)","<%user% %date%>","---<済 %user% %date%>---"]
 ];
 
 
@@ -361,8 +362,12 @@ var TSXEx	=false;
 		//TMS については、//www.nekora.main.jp/ あたりを参照
 
 //---ウインドウモード	Ver1.5以降
-var ViewMode="WordProp"	;	//UIモード  コンパクトCompat/ シートワープロ WordProp
+var ViewMode = "WordProp"	;	//UIモード  コンパクトCompat/ シートワープロ WordProp
 //var ViewMode="Compact"	;
+
+//---(工程)入力モード
+var InputMode = 1           ;  //編集モード変数 0:原画構成 1:動画補完 2:音響(スポッティング)
+
 
 /*
     Cookie[7]
@@ -630,7 +635,7 @@ var	useCookie	=[true];//クッキーを使う場合は"true"にしてくださ�
 //クッキーの期限 
 //	0		ゼロ > そのセッション限り
 //	日数	数値を与えると、最後に使った日からその日数の間有効
-	useCookie.expiers	=31	;
+	useCookie.expiers	= 31	;
 //[0]	 シートカラーと印字サイズ
 	useCookie.SheetProp	= true	;
 //[1]	最後に編集したシートの尺数。レイヤ数などを記録するかどうか?

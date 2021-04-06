@@ -1551,6 +1551,7 @@ class=optionPanel id=optionPanelProductManagement
 	title="SPIN増"
 	data-i18n='[title]v_up_description'
 >+</button>
+<!--
 <a
 	id=spinCkLb
 	href="javascript:void(0);"
@@ -1558,14 +1559,36 @@ class=optionPanel id=optionPanelProductManagement
 	title="選択範囲をスピン指定にする"
 
 > Spin </a><input type=checkbox
-	name=spinCk
-	id=spinCk
+	name=spinCkx
+	id=spinCkx
 	onChange="chkValue(this.id);"
 	title="選択範囲をスピン指定にする"
 >
- 
+--> 
 	<!-- スピン -->
-
+	<!-- スピン設定 -->
+    <label class="switch__label">
+        <input type="checkbox" class="switch__input"
+        	id='spinCk'
+			onChange="chkValue(this.id);"
+        >
+        <span class="switch__content"></span>
+        <span id="spinSlider" class="switch__slider">連動</span>
+    </label>
+	<!-- 入力モード -->
+    <label class="switch__label">
+		<input id ='iptChange' type="range"  min="0" max="2" value="0" onChange="chkValue(this.id);">
+		<span id="iptSlider" class="switch__slider_tryval" ></span>
+    </label>
+<!--
+        <input type="text" class="switch__input"
+        	id = 'iptChange'
+        	value = 0
+			onclick="chkValue(this.id);"
+        >
+        <span class="switch__content"></span>
+        <span id="iptSlider" class="switch__slider">動画</span>
+-->
 
 <div id=inputControl >
 <span
@@ -4412,27 +4435,95 @@ duration :
 </span>
 </div>
 <!-- ストップウオッチUIパネル -->
+<!-- 拡張署名欄 
+
+<div id=extSig style='display:flex;vertilcal-align:bottom'>
+<span style='vertilcal-align:bottom'>
+   <a href="javascript:void(0);"
+    onclick='xUI.sWitchPanel("Sign");'
+    title='hide sig. area'
+   ><span  style='vertilcal-align:bottom'>[×]</span></a>
+   <a href="javascript:void(0);"
+	onclick='xUI.sWitchPanel("Sign");return false;'
+	style='vertilcal-align:bottom'
+>sig. </a>
+</span>
+	<span id='sig_0_label'>LABEL</span>:
+	<span style='text-align:center' id="sig_0-0">
+<!-- 		<img  src='./images/icons/stamp.png'>
+		<span id='sig_0-0_stamp' style='width:32px;height:32px;background-color:red;mask-image:url("images/icons/stamp.png");mask-clip: content-box;'> 
+		</span><br>
+
+	[
+		<span id='sig_0-0_label'>Name1</span>
+		<span id='sig_0-0_date'>00/00</span>
+	]</span>
+	<span style='text-align:center' id="sig_0-1">
+	[
+		<span id='sig_0-1_label'>Name2</span>
+		<span id='sig_0-1_date'>00/00</span>
+	]</span>
+</div>
+<hr>
+
 <!-- 拡張署名欄 -->
-<!--
-<div id=extSig>
-<table>
-	<tr><td rowspan=2>sig.</td>
-		<th >CT.</th>
-		<th colspan = 4>LO.</th>
-		<th>原画.</th>
-	</tr>
-	<tr>
-		<td height=3>kiyo@nekomataya.info</td>
-		<td>kiyo@nekomataya.info</td>
-		<td>kiyo@nekomataya.info</td>
-		<td>kiyo@nekomataya.info</td>
-		<td>kiyo@nekomataya.info</td>
-		<td>kiyo@nekomataya.info</td>
-	</tr>
-</table>
-<hr></div>
--->
-<!-- 拡張署名欄 -->
+<!-- 署名編集 -->
+
+<div class=optionPanelFloat id=optionPanelSign  style='text-align:center;min-width:480px;'>
+<dl><dt style="background-color:#888888;">signature<a href="" class=minimize ><img src=/remaping/images/ui/minimize.png alt="＿"></a><a href="" class=close ><img src=/remaping/images/ui/close.png alt="×"></a></dt></dl>
+<div id='formSign'>
+	<span id=sigStage></span>:
+	<input id=sigLabel
+		type=text
+		autocomplete='on'
+		list='stampNames'
+		size=32
+		value=''
+		onchange ='SignBox.update();'
+	>
+		<datalist id='stampNames'>
+			<option value="=済=">
+			<option value="=OK=">
+			<option value="=NG=">
+			<option value="=保留=">
+		</datalist>
+	<input id=sigDate
+		type=text
+		size=32
+		onchange ='SignBox.update();'
+	>
+	<br>
+	<div id=stampList style='display:flex;vertilcal-align:bottom;text-align:right;overflow-x:scroll;overflow-y:hide;width:480px;height:64px'>
+	[
+		<span >FIX</span>
+	]
+	[
+		<span>O K</span>
+	]
+	[
+		<span>N G</span>
+	]
+	</div>
+
+		<span id=stampColorList>
+			<button class=colorSelect id="stampColorList00" onClick="myPref.chgColor(this.id)" value="=CUSTOM=" title="current Color"> </button>
+			<button class=colorSelect id="stampColorList01" onClick="myPref.chgColor(this.id)" value="#ffffee" title="y" style="background-color:#ffffee"> </button>
+		</span>
+		<input id=stampColor type=text list=stampColorList autoComplete="on" onChange="myPref.chgColor(this.id)" />
+		<input id=stampColorpick type=color onChange="myPref.chgColor(this.id)" />
+<br>
+<button
+	id=signature
+	style = 'font-size:24px;'
+>	[
+		<span >編集済データ</span>
+		<span >編集済データ</span>
+	]
+</button>
+
+
+</div></div>
+<!-- 署名編集 -->
 <!-- メモ編集エリア　画面表示のみ　印刷時はシートヘッダ上に別表示-->
 <div id=memoArea>
    <div id=memo_header >
@@ -4471,13 +4562,14 @@ duration :
     id=memoPnlClose class=toolTip value="閉じる"
 	onClick='if(xUI.XPS.xpsTracks.noteText!=document.getElementById("rEsult").value){if(confirm("内容が変更されています。\n更新しますか?")){xUI.XPS.xpsTracks.noteText=document.getElementById("rEsult").value;xUI.setStored("force");sync("memo");}};xUI.sWitchPanel("memo");' /><br>
 </td>
-<td ><span id=memoPnlCaption>タイムシートコメントを編集します</span><br>
+<td><span id=memoPnlCaption>タイムシートコメントを編集します</span><br>
 <textarea name=rEsult id=rEsult cols=96 rows=8 >
 </textarea></td>
 </tr><tr>
 <td colspan=2>
 <span id=myWords
 	onClick="editMemo(event,document.getElementById('rEsult'));"
+
 >word table</span>
 </td>
 </tr></table>

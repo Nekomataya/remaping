@@ -933,8 +933,9 @@ console.log(editxMap);
 */
     this.restriction = false;           // 操作制限フラグ boolean
     this.viewMode    = ViewMode;        // 表示モード Compact/WordProp Scroll/Page
-    this.uiMode      ='floating';      // ui基本動作モード production/management/browsing/floating 
-    this.viewOnly    = false;            // 編集禁止フラグ
+    this.ipMode      = InputMode;       // 編集モード変数 0:フィルタなし 1:動画補完 2:原画補完
+    this.uiMode      ='floating';       // ui基本動作モード production/management/browsing/floating 
+    this.viewOnly    = false;           // 編集禁止フラグ
     this.hideSource  = false;           // グラフィック置き換え時にシートテキストを隠す
     this.showGraphic = true;            // 置き換えグラフィックを非表示  ＝  テキスト表示
 //if(appHost.platform=="AIR") this.showGraphic    = false;
@@ -1052,12 +1053,12 @@ console.log(xUI.yankBuf);
 //保存ポインタ関連
 
 //ラピッド入力モード関連
-    this.eXMode =0;         //ラピッドモード変数(0/1/2/3)
-    this.eXCode =0;         //ラピッドモード導入キー変数
+    this.eXMode = 0;         //ラピッドモード変数(0/1/2/3)
+    this.eXCode = 0;         //ラピッドモード導入キー変数
 //シート入力関連
-    this.eddt   ="";        //編集バッファ
-    this.edchg  =false;     //編集フラグ
-    this.edmode=0;          //編集操作モード  0:通常入力  1:ブロック移動  2:区間編集
+    this.eddt   = "";        //編集バッファ
+    this.edchg  = false;     //編集フラグ
+    this.edmode = 0;          //編集操作モード  0:通常入力  1:ブロック移動  2:区間編集
     this.floatSourceAddress = [0,0];//選択範囲及び区間移動元アドレス
     this.floatDestAddress   = [0,0];//同移動先アドレス
     this.selectBackup       ;//カーソル位置バックアップ
@@ -1768,6 +1769,19 @@ xUI.setUImode = function (myMode){
     
     return xUI.uiMode;
 }
+/*    xUI.ipChg(status boolean)
+    入力モード変更 原画|動画モードを切り替えと同時に表示を調整
+
+xUI.ipChg=function(newMode){
+    xUI.ipMode =  (newMode)? 1:0 ;
+    document.getElementById('iptSlider').innerText = (xUI.ipMode > 0)? '動画' : '原画';
+    if(document.getElementById("iptChange").checked != (xUI.ipMode > 0)){
+        document.getElementById("iptChange").checked = (xUI.ipMode > 0);
+    };
+    document.getElementById("iNputbOx").focus();
+    return this.ipMode;
+};
+// */
 
 /*    xUI.edChg(status boolean)
     セル編集フラグ 切り替えと同時に表示を調整
@@ -4480,7 +4494,7 @@ xUI.putReference    =function(datastream,direction){
     xUI.put(datastream,direction,true);
 }
 /**
- *  タイムシートデータの入力を行う - UNDO処つき
+ *  タイムシートデータの入力を行う - UNDO処理つき
  *
  *    <pre>
  *    シートに外部から値を流し込むメソッド
@@ -4526,6 +4540,7 @@ xUI.put = function(datastream,direction,toReference){
   
   if(typeof datastream == "undefined") datastream="";
   if(typeof direction  == "undefined") direction=[0,0];
+//
   if(! toReference){
 //  undo/redo 事前処理
     switch (this.inputFlag){
@@ -4989,8 +5004,8 @@ case	83 :    ;	//[ctrl]+[S]/ Save or Store document
 		return true;
 	break;
     }
-//フォーカスエレメントがiNputbOx以外なら入力を戻す
     if(document.activeElement!==document.getElementById("iNputbOx")){
+//フォーカスエレメントがiNputbOx以外なら入力を戻す
         if(((key==79)||(key==83))&&((e.ctrlKey)||(e.metaKey))){
         console.log("capt")
             return false;
@@ -4999,6 +5014,8 @@ case	83 :    ;	//[ctrl]+[S]/ Save or Store document
         }
     }
 	this.eddt = document.getElementById("iNputbOx").value;
+    var currentTrack = xUI.XPS.xpsTracks[xUI.Select[0]];
+    var exch = ((e.ctrlKey)||(e.metaKey))? true:false;
 	var interpKey=110;
 //      console.log(key+':down:');
 	switch(key) {
@@ -5006,7 +5023,7 @@ case	25	:if(! Safari) break;
 case	9	:	//tab
 if (! this.tabSpin) {
 	if(!this.edchg) return;
-	this.put(this.eddt);
+	this.put(iptFilter(this.eddt,currentTrack,xUI.ipMode,exch));
 	return false;break;
 }
 case	13	:		//Enter 標準/次スピン・シフト/前スピン・コントロール/interpSpin
@@ -5017,7 +5034,7 @@ case	13	:		//Enter 標準/次スピン・シフト/前スピン・コントロ�
 	        if(xUI.edmode==3) this.sectionUpdate();
 	        this.mdChg('normal');                           //[ctrl]+[shift]+[ENTER]:モード解除
 	      }else{
-	        this.mdChg('float');	                        //[shift]+[ENTER]:float遷移
+	        this.mdChg('float');                        //[shift]+[ENTER]:float遷移
 	      }
 	    }else if((e.ctrlKey)||(e.metaKey)){
             if(xUI.edmode==3) this.sectionUpdate();                           //[ctrl]+[ENTER]:確定のみ
@@ -5039,7 +5056,8 @@ case	13	:		//Enter 標準/次スピン・シフト/前スピン・コントロ�
 	}
 */	
 	  if (this.edchg){
-		this.put(nas_expdList(this.eddt));//更新
+	    var expdList = iptFilter(nas_expdList(this.eddt).split(","),currentTrack,xUI.ipMode,exch);
+		this.put(expdList);//更新
 		this.selectCell(add(this.Select,[0,1]));//入力あり
 	  }else{
 	    if(e.shiftKey){
@@ -5150,7 +5168,7 @@ case	40	:		//
 	    }else{
 		//通常移動処理
 	    };
-	    this.mdChg('float');         
+	    this.mdChg('float');
     }else{
  	   if (	e.shiftKey &&
 		    this.Select[1]+this.Selection[1]>=0 &&
@@ -5165,7 +5183,7 @@ case	40	:		//
 	    if((! e.ctrlKey)&&(! e.metaKey)){
 		    if(this.getid("Selection")!="0_0"){this.selection();this.spinHi();};//選択範囲解除
 	    }
-		    if (this.edchg){this.put(this.eddt);}//更新
+            if (this.edchg) this.put(iptFilter(this.eddt,currentTrack,xUI.ipMode,exch));//更新
 		    if(key==38){this.spin("up")}else{this.spin("down")};
 	    };
 	};
@@ -5179,10 +5197,10 @@ case	37	:		//左[←]
 	    return true;
 	};	break;
 case 	33:		//ページアップ
-	if (this.edchg){this.put(this.eddt);}//更新
+    if (this.edchg) this.put(iptFilter(this.eddt,currentTrack,xUI.ipMode,exch));//更新
 	this.spin("pgup");return false;	break;
 case 	34:		//ページダウン
-	if (this.edchg){this.put(this.eddt);}//更新
+    if (this.edchg) this.put(iptFilter(this.eddt,currentTrack,xUI.ipMode,exch));//更新
 	this.spin("pgdn");return false;	break;
 case	35 :;//[END]
 	this.selectCell(this.Select[0]+"_"+this.XPS.duration());
@@ -5439,6 +5457,14 @@ return false;
 xUI.keyPress = function(e){
 	key = e.keyCode;//キーコードを取得
 //      console.log(key+':press:');
+//      console.log(xUI.edmode+':xUI.edmode:');
+    if(this.ipMode <= 0){
+//iNputbOxでかつ原画モード時はショートカット入力
+        if(((key==160)||(key==8211))&&((e.altKey)||(e.ctrlKey)||(e.metaKey))){
+            interpSign();
+            return false;
+        };
+    };
 	if(xUI.edmode>0){
         if(xUI.edmode==1){
 //ブロック移動モード
@@ -5859,6 +5885,8 @@ xUI.Touch = function(e){
 
  */
 xUI.Mouse=function(e){
+    var currentTarck = xUI.XPS.xpsTracks[xUI.Select[0]];
+    var exch = ((e.ctrlKey)||(e.metaKey));
 //    console.log(e.target.id);
 //    if(e.target.id=='dialogEdit'){return false};
     if((this.edmode==3)&&(e.target.id=='sheet_body')&&(e.type=='mouseout')){
@@ -6136,8 +6164,11 @@ case    "dblclick"    :
 break;
 case    "mousedown"    :
 //document.getElementById("iNputbOx").value=("mouseDown")
-    if (this.edchg){this.put(this.eddt);}//更新
-
+    if(this.edchg){
+		var expdList = iptFilter(nas_expdList(this.eddt).split(","),currentTrack,xUI.ipMode,exch);
+		this.put(expdList);//更新
+		this.selectCell(add(this.Select,[0,1]));//入力あり
+    }
     this.Mouse.rID=this.getid("Select");//
     this.Mouse.sID=TargeT.id;
     this.Mouse.action=true;
@@ -6490,6 +6521,7 @@ xUI.sWitchPanel = function sWitchPanel(status){
 //一括クリアするパネルのリスト
 //	"#optionPanelProg",
 var myPanels=["#optionPanelMemo",
+	"#optionPanelSign",
 	"#optionPanelLogin",
 	"#optionPanelData",
 	"#optionPanelAEK",
@@ -6564,6 +6596,7 @@ case	"Dbg":	;//デバッグパネル
 		this.sWitchPanel("clear");
 		if(myStatus){myTarget.hide()}else{myTarget.show()};
 	break;
+case	"Sign":	    ;//署名パネル
 case	"Cam":	    ;//カメラワークパネル
 case	"Ref":	    ;//情報参照パネル(fixed)
 case	"Sfx":	    ;//コンポジットパネル
@@ -7262,7 +7295,8 @@ xUI.resetSheet=function(editXps,referenceXps){
 
 /* ヘッダ高さの初期調整*/
     this.adjustSpacer();
-
+/* 入力モードスイッチ初期化*/
+    sync('ipMode');
 /* エンドマーカー位置調整 はadjustSpacerに内包
 //印字用endマーカーは  印刷cssを参照して誤差を反映させること  フレームのピッチを計算すること
 印刷画面は印刷画面出力時に再度同メソッドで調整  トラック間の
@@ -8690,15 +8724,6 @@ case    "historySelector":;
                     myContentsStage += '</a></li>'
                 }
             }
-/*
-            if(matchResult>2){
-                myContentsJob += '<option value="'+decodeURIComponent(currentEntry.issues[ix].identifier)+'"' ;
-                myContentsJob += (matchResult>4)?
-                    'selected >':' >';
-                myContentsJob += decodeURIComponent(currentEntry.issues[ix][2])+"/"+currentEntry.issues[ix][3];
-                myContentsJob += '</option>'
-            }
-*/
             if(matchResult>2){
                 myContentsJob += '<option value="'+currentEntry.issues[ix].identifier+'"' ;
                 myContentsJob += (matchResult>4)?
@@ -8716,11 +8741,6 @@ case	"productStatus":;
 
 	document.getElementById('pmcui_line').innerHTML  = xUI.XPS.line.toString(true);
 	document.getElementById('pmcui_stage').innerHTML = xUI.XPS.stage.toString(true);
-
-//	document.getElementById('pmcui_stage').innerHTML = '<option value="'+Xps.getIdentifier(xUI.XPS)+'" selected >'+ xUI.XPS.stage.toString(true) +'</option>';
-	
-//	document.getElementById('pmcui_job').innerHTML   = xUI.XPS.job.toString(true);
-//	document.getElementById('pmcui_status').innerHTML= decodeURIComponent(xUI.XPS.currentStatus);
     document.getElementById('jobSelector').innerHTML =
         '<option value="'+Xps.getIdentifier(xUI.XPS)+'" selected >'+[xUI.XPS.job.toString(true),decodeURIComponent(xUI.XPS.currentStatus)].join('//') +'</option>';
 //	document.getElementById('pmcui_status').innerHTML= xUI.XPS.currentStatus.toString();
@@ -8807,7 +8827,14 @@ stat=(XPS.xpsTracks[xUI.Select[0]]["option"].match(/still|timing|replacement/))?
 	if(! document.getElementById("blpos").disabled) chkPostat();
 	break;
 case	"spinS":
-	document.getElementById("spinCk").checked=xUI.spinSelect;
+	document.getElementById("spinCk").checked       = xUI.spinSelect;
+    document.getElementById('spinSlider').innerText = (xUI.spinSelect)? '連動' : '';
+	break;
+case	"ipMode": ;//表示
+	document.getElementById("iptChange").value     = xUI.ipMode;
+	$("#iptChange").css('background-color',["#eee","#ddd","#ccc"][xUI.ipMode]);
+    document.getElementById('iptSlider').innerText = ['','動画','原画'][xUI.ipMode];
+    $('#iptSlider').css('left',["1px","22px","44px"][xUI.ipMode]);
 	break;
 case	"title":
 
@@ -8842,9 +8869,6 @@ default:
 	}else{
 	var titleString=(XPS["title"])? XPS["title"] : "";
 	}
-//
-
-
 	if(document.getElementById("title")) document.getElementById("title").innerHTML=titleString;
 if(xUI.viewMode != "Compact"){
 	for (pg=1;pg<=Math.ceil(XPS.duration()/xUI.PageLength);pg++){
@@ -9061,7 +9085,17 @@ function putMyWords(){
 	for(var idx=0;idx<myWords.length;idx++){
 		myResult+="\n<td>";
 		for(var idxw=0;idxw<myWords[idx].length;idxw++){
-			myResult+="<input type=button class=toolTip value=\""+myWords[idx][idxw]+"\"><br>";;
+		    var buttonValue = myWords[idx][idxw];
+			if(idx == (myWords.length-1)){
+                if(buttonValue.match( /\%/ )){
+                    buttonValue = buttonValue.replace(/\%stage\%/g,xUI.XPS.stage.name);
+                    buttonValue = buttonValue.replace(/\%user\%/g,xUI.currentUser.handle);
+                    buttonValue = buttonValue.replace(/\%date\%/g,new Date().toLocaleDateString());
+                }
+			    myResult+="<input type=button class='toolTip sig' value=\""+buttonValue+"\"><br>";
+			}else{
+			    myResult+="<input type=button class=toolTip value=\""+buttonValue+"\"><br>";
+			}
 		}
 		myResult+="\n</td>";
 	}
@@ -9079,7 +9113,17 @@ editMemo=function(e,insertTarget){
 	(myTarget instanceof HTMLButtonElement)
     ){
 	    var myValue=(myTarget.value)?myTarget.value:myTarget.innerHTML;
-	    insertTarget.insert(myValue);
+	    if(myTarget.classList.contains('sig')){
+	        if(insertTarget.value.indexOf("sig.")<0){
+	            insertTarget.value = "sig. "+ myValue +"\n<hr>"+ insertTarget.value;
+	        }else{
+	            var isp = insertTarget.value.indexOf('\n');
+	            insertTarget.setSelectionRange(isp,isp);
+	            insertTarget.insert(myValue);
+	        }
+	    }else{
+	        insertTarget.insert(myValue);
+	    }
 	    insertTarget.focus();
 	}
 }
@@ -9112,18 +9156,27 @@ if(! n){n=xUI.Select[0]; }
 
 //リスト展開プロシージャ
 /**
-引数:	ソース文字列  ListStr /   再帰呼出しフラグ  rcl
-戻値:	putメソッドの引数ストリーム
+    @params  {String}   ListStr
+            ソース文字列
+    @params  {Boolean}  rcl
+            再帰呼出しフラグ
+    @returns    {String}
+            putメソッド入力引数ストリーム
+
 	マクロ記法の文字列をputメソッドに引き渡し可能なストリームへ展開する
 	リスト展開エンジンは汎用性を持たせたいので、無理やりグローバルに置いてある。
 	要注意
 	戻り値の形式は  "1,,2,,3,,4,,5"等のスピン展開後のカンマ区切りテキストストリーム
+	スイッチを解釈してリスト展開時に文字の入れ替えフィルタリングを行う
+	展開時のトラックを取得する必要あり
+    リスト展開はxUIのメソッドに移行予定
 */
-	var expd_repFlag	=false	;
-	var expd_skipValue	=0	;//グローバルで宣言
+	var expd_repFlag	= false	;
+	var expd_skipValue	= 0	;//グローバルで宣言
 
-// リスト展開はxUIのメソッドか?
+
 function nas_expdList(ListStr,rcl){
+//console.log(ListStr);
 	if(typeof rcl=="undefined"){rcl=false}else{rcl=true}
 	var leastCount=(xUI.Selection[1])? xUI.Selection[1]:XPS.duration()-xUI.Select[1];
 	if(!rcl){
@@ -9141,9 +9194,8 @@ function nas_expdList(ListStr,rcl){
 	){
         if(ListStr.match(/^\\(.+)$/)){
             ListStr = RegExp.$1;
-            console.log(ListStr);
             var myWork = new nas.AnimationCamerawork(null,ListStr);
-            console.log(myWork)
+console.log(myWork)
             var minimumLength = myWork.getStream(1).length;
             var sectionLength= (xUI.Selection[1])? (xUI.Selection[1]+1):minimumLength * xUI.spinValue;
             if(sectionLength < minimumLength) sectionLength = minimumLength;
@@ -9151,7 +9203,6 @@ function nas_expdList(ListStr,rcl){
             return ListStr;
         }
 	}
-	
 //	台詞トラックの場合、カギ括弧・引用符の中をすべてセパレートして戻す
 //  ダイアログトラックは固定ではなくなったので判定を変更
 //  コメントトラックを排除する必要あり	
@@ -9188,13 +9239,12 @@ if (ListStr.match(/「(.+)」?/)) {
 */
 	};
 //ダイアログトラック以外はカギカッコ開くまたは引用符で開始される引数は、先頭文字を払ってコマ単位で縦に展開して戻す
-if(ListStr.match( /^[\'\"「](.+)/)){    return (RegExp.$1).replace(/./g,"$&,"); };
+if(ListStr.match(/^[\'\"「](.+)/)){    return (RegExp.$1).replace(/./g,"$&,"); };
 //		r導入リピートならば専用展開プロシージャへ渡してしまう
 		if (ListStr.match(/^([\+rR])(.*)$/)){
 			var expdList=TSX_expdList(ListStr);
 			expd_repFlag=true;
 		}else{
-
 //		リスト文字列を走査してセパレータを置換
 	ListStr=ListStr.replace(/[\,\x20]/g,SepChar);
 //		スラッシュを一組で括弧と置換(代用括弧)
@@ -9204,6 +9254,8 @@ if(ListStr.match( /^[\'\"「](.+)/)){    return (RegExp.$1).replace(/./g,"$&,");
 //		var PostX="/[0-9](\)[1-9])/";//括弧の後にセパレータを補う
 	ListStr=ListStr.replace(/([^\.])(\)[1-9]?)/g,"$1\.$2");
 
+//フィルタリングスイッチがあれば強制的にノーマライズ
+//    if(xUI.ipMode > 0) ListStr = nas.normalizeStr(ListStr);
 //		前処理終わり
 //		リストをセパレータで分割して配列に
 	var srcList=new Array;
@@ -9239,41 +9291,38 @@ if(ListStr.match( /^[\'\"「](.+)/)){    return (RegExp.$1).replace(/./g,"$&,");
 		{
 	if (srcList[ct2].match(/^\($/)){sDepth++}
 	if (srcList[ct2].match(/^(\)|\/)[\*x]?([0-9]*)$/)){sDepth--}
-			if (sDepth==0)
-			{EndCt=ct2;
+			if (sDepth==0){
+			    EndCt=ct2;
 //	最初の括弧が閉じたので括弧の繰り返し分を取得/ループ
-			var rT=RegExp.$2*1;if(rT<1){rT=1};
-			if(RegExp.$2==""){expd_repFlag=true;};
-			var ct3=0;//ローカルスコープにするために宣言する
-			for(ct3=1;ct3<=rT;ct3++)
-			{if((StartCt+1)!=EndCt)
-{
+			    var rT=RegExp.$2*1;
+			    if(rT<1) rT = 1;
+			    if(RegExp.$2=="") expd_repFlag = true;
+			    var ct3=0;//関数スコープにするために宣言する
+			    for(ct3=1;ct3<=rT;ct3++){
+			        if((StartCt+1)!=EndCt){
 //alert("DPS= "+sDepth+" :start= "+StartCt+"  ;end= "+EndCt +"\n"+ srcList.slice(StartCt+1,EndCt).join(SepChar)+"\n\n-- "+rT);
-expdList=expdList.concat(nas_expdList(srcList.slice(StartCt+1,EndCt).join(SepChar),"Rcall"));
+                        expdList = expdList.concat(nas_expdList(srcList.slice(StartCt+1,EndCt).join(SepChar),"Rcall"));
 //括弧の中身を自分自身に渡して展開させる
 //展開配列が規定処理範囲を超過していたら処理終了
-	if(expdList.length>=leastCount){return expdList}
-}
-			}
-			ct=EndCt;break;
+	                    if(expdList.length >= leastCount) return expdList;
+                    }
+			    }
+			    ct=EndCt;break;
 			}//if block end
 		}//ct2 loop end
-			if(rT==0)
-			{expdList.push(srcList[ct]);s_kip();//ct++;
-			}
+		if(rT==0){expdList.push(srcList[ct]);s_kip();}//ct++;
 	}else{
 //	トークンが展開可能なら展開して生成データに積む
-			if (tcn.match(/^([1-9]{1}[0-9]*)\-([1-9]{1}[0-9]*)$/))
-			{
-	var stV=Math.round(RegExp.$1*1) ;var edV=Math.round(RegExp.$2*1);
-		if (stV<=edV){
-	for(tcv=stV;tcv<=edV;tcv++){expdList.push(tcv);s_kip();}
+		if (tcn.match(/^([1-9]{1}[0-9]*)\-([1-9]{1}[0-9]*)$/)){
+	        var stV=Math.round(RegExp.$1*1) ;var edV=Math.round(RegExp.$2*1);
+		    if (stV<=edV){
+	            for(tcv=stV;tcv<=edV;tcv++){expdList.push(tcv);s_kip();}
+		    }else{
+	            for(tcv=stV;tcv>=edV;tcv--){expdList.push(tcv);s_kip();}
+		    }
 		}else{
-	for(tcv=stV;tcv>=edV;tcv--){expdList.push(tcv);s_kip();}
+	        expdList.push(tcn);s_kip();
 		}
-			}else{
-	expdList.push(tcn);s_kip();
-			}
 
 	}
 }
@@ -9843,6 +9892,40 @@ default:url="./template/timeSheet_eps.txt";
 	jQueryでフローティングウインドウを初期化
 */
 /*
+optionPanelSign
+*/
+jQuery(function(){
+    jQuery("#optionPanelSign a.close").click(function(){
+        jQuery("#optionPanelSign").hide();
+        return false;
+    });
+    jQuery("#optionPanelSign a.minimize").click(function(){
+        if(jQuery("#optionPanelSign").height()>100){
+           jQuery("#formSign").hide();
+           jQuery("#optionPanelSign").height(24);
+	}else{
+           jQuery("#formSign").show();
+           jQuery("#optionPanelSign").height(165);
+	};
+        return false;
+    });
+    jQuery("#optionPanelSign dl dt").mousedown(function(e){
+        jQuery("#optionPanelSign")
+            .data("clickPointX" , e.pageX - jQuery("#optionPanelSign").offset().left)
+            .data("clickPointY" , e.pageY - jQuery("#optionPanelSign").offset().top );
+        jQuery(document).mousemove(function(e){
+var myOffset=document.body.getBoundingClientRect();
+
+            jQuery("#optionPanelSign").css({
+                top:e.pageY  - jQuery("#optionPanelSign").data("clickPointY") + myOffset.top - xUI.screenShift[1] +"px",
+                left:e.pageX - jQuery("#optionPanelSign").data("clickPointX") + myOffset.left- xUI.screenShift[0] +"px"
+            });
+        });
+    }).mouseup(function(){
+        jQuery(document).unbind("mousemove")
+    });
+});
+/*
 OptionPanelTbx
 */
 jQuery(function(){
@@ -10206,7 +10289,8 @@ myCookie[5]=[Counter0,Counter1];
 	AutoScroll	=(useCookie.UIOptions)?xUI.autoScroll:null;
 	TabSpin		=(useCookie.UIOptions)?xUI.tabSpin:null;
 	ViewMode	=(useCookie.UIOptions)?xUI.viewMode:null;
-myCookie[6]=[SLoop,CLoop,AutoScroll,TabSpin,ViewMode];
+	InputMode	=(useCookie.UIOptions)?xUI.ipMode:null;
+myCookie[6]=[SLoop,CLoop,AutoScroll,TabSpin,ViewMode,InputMode];
 
 //	[7] UIView
 if(useCookie.UIView){
@@ -10355,6 +10439,7 @@ if (!navigator.cookieEnabled){return false;}
 	if(rEmaping[6][2]) AutoScroll   = (rEmaping[6][2]=="true")?true:false;
 	if(rEmaping[6][3]) TabSpin      = (rEmaping[6][3]=="true")?true:false;
 	if(rEmaping[6][4]) ViewMode     = rEmaping[6][4];
+	if(rEmaping[6][5]) InputMode    = parseInt(rEmaping[6][5]);
 	}
 //	[7] UIView
 	if(useCookie.UIView){
@@ -10510,11 +10595,16 @@ function chkPostat(){
 	if (blpos.disabled!=status)
 		blpos.disabled=status;
 }
-function chgValue(id)
-{
+/*
+    
+ */
+function chgValue(id){
 	var myTarget=document.getElementById(id);
-	switch (id)
-	{
+	switch (id){
+case	"iptChange":
+		xUI.ipMode = parseInf(myTarget.value);
+		sync('ipMode');
+		break;
 case	"memo"	:
 case	"noteText"	:
 //		XPS["memo"]=myTarget.value;
@@ -10930,21 +11020,21 @@ function skbPush(Chr){
 	break;
 	case	"esc":chkValue("ng");return;
 	break;
-	default	:document.getElementById("iNputbOx").value+=Chr;//
+	default	:document.getElementById("iNputbOx").value += Chr;//
 	}
-	if((! xUI.edchg)&&(textBody!=document.getElementById("iNputbOx").value)){
+	if(textBody != document.getElementById("iNputbOx").value){
+	    xUI.eddt = document.getElementById("iNputbOx").value;
 		xUI.edChg(true);//編集フラグ立て
-	}
+	};//(! xUI.edchg)
 	document.getElementById("iNputbOx").focus();
 }
 /**
 	UIControlの値を検査して値に従ったアクションに変換する
-	引数はエレメントのid
+	@params {String}    id
+	    動作キーワード
 */
-function chkValue(id)
-{
+function chkValue(id){
 	document.getElementById("iNputbOx").select();
-
 	switch (id)
 	{
 case	"fct0"	:
@@ -10961,22 +11051,27 @@ case	"cut"	:	xUI.cut();	break;
 case	"paste"	:	xUI.paste();break;
 case	"activeLvl"	:
 	var Lvl=xUI.Select[0];
-	if(Lvl>0&&Lvl<=(XPS.xpsTracks.length-1)){	writeAEKey(Lvl);	}
+	if(Lvl>0&&Lvl<=(xUI.XPS.xpsTracks.length-1)) writeAEKey(Lvl);
 	return;
 	break;
 case	"iNputbOx"	:	hello();break;
 case	"ok"	:
-	if (xUI.edchg)
-	{
-		xUI.put(nas_expdList(document.getElementById("iNputbOx").value));//更新
+	if (xUI.edchg){
+        var expdList = nas_expdList(xUI.eddt);
+		xUI.put(iptFilter(
+		    expdList.split(","),
+		    xUI.XPS.xpsTracks[xUI.Select[0]],
+		    xUI.ipMode,
+		    false
+		));//更新
 	}
 	if(expd_repFlag){
 		xUI.spin("down");expd_repFlag=false;
 	}else{
-		xUI.spin("fwd")
+		xUI.spin("down")
+//		xUI.spin("fwd")
 	}
-		break;
-
+	break;
 case	"ng"	:
 	if(xUI.edchg){xUI.edChg(false);}
 	syncInput(xUI.bkup());
@@ -10984,7 +11079,6 @@ case	"ng"	:
 		{xUI.selection();break;}
 		//選択範囲解除
 		break;
-
 case	"undo"	:	xUI.undo();break;
 case	"redo"	:	xUI.redo();break;
 case	"up"	:	;//スピン
@@ -11002,6 +11096,11 @@ case	"v_up"	:	;//スピン関連
 case	"v_dn"	:	;//IDとキーワードを合わせてそのまま送る
 case	"pgdn"	:	;
 case	"pgup"	:	xUI.spin(id);break;
+
+case	"iptChange":	;//スイッチ変更
+    xUI.ipMode = parseInt(document.getElementById("iptChange").value);
+	sync("ipMode");
+			break;
 case	"spinCk":	;//スイッチ変更
 	xUI.spinSelect=document.getElementById(id).checked;
 	sync("spinS");
@@ -11023,7 +11122,12 @@ case	"tBtrackSelect"	:	;//レイヤ変更
 	break;
 case	"cell"	:	;//セルの入力
 case	"tBitemSelect"	:	;//セルの入力
-	xUI.put((document.getElementById(id).selectedIndex+1));
+	xUI.put(iptFilter(
+	    document.getElementById(id).selectedIndex+1,
+	    xUI.XPS.xpsTracks[xUI.Select[0]],
+	    xUI.ipMode,
+	    false
+	));
 	xUI.spin("fwd");
 
 	break;
@@ -11032,15 +11136,17 @@ case	"tBkeywordSelect"	:	;//文字の一括入力
 EXword=xUI.favoriteWords[document.getElementById(id).selectedIndex];
 TGword=XPS.xpsTracks[xUI.Select[0]][xUI.Select[1]];
 //文字列に*があれば、現在の値と置換
-if(EXword.match(/\*/))EXword=EXword.replace(/\*/,TGword);
+if(EXword.match(/\*/)){
+    EXword=EXword.replace(/\*/,TGword);
 //#があれば現在の値の数値部分と置換
-
-if(EXword.match(/\#/)){
+}else if(EXword.match(/\#/)){
 	if(TGword.match(/(\D*)([0-9]+)(.*)/)){
 		var prefix=RegExp.$1;var num=RegExp.$2;var postfix=RegExp.$3;
 		EXword=EXword.replace(/\#/,num);
 		EXword=prefix+EXword+postfix;
 	}
+}else if(EXword.match(nas.CellDescription.interpRegex)){
+        interpSign();
 }
 	xUI.put(EXword);
 	xUI.spin("fwd");
@@ -12853,9 +12959,33 @@ SoundEdit.open=function(){
 	}
 	return null;
 }
+/*
+    xUI.SignBoxパネル機能オブジェクト
+*/
+SignBox = {
+    stampText:"%user%",
+    stampNames:['%user%','監督','演出','作監','総作監','動検','仕検','特効','撮影'],
+    stampPicture:"fixed",
+    stampPictures:['%user%','=済=','=OK=','=NG='],
+    stampColor:"#ff4444",
+    stampColors:["#888888","#ff4444","#22CC22","#8888ff"]
+};
+SignBox.init = function init(name){
+    document.getElementById('sigStage').innerText = nas.pmdb.stages.entry(xUI.XPS.stage.name).shortName;
+    document.getElementById('sigLabel').value = (this.stampText == '%user%')?
+    xUI.currentUser.handle:this.stampText;
+    document.getElementById('sigDate').value  = new Date().toNASString('mm/dd');
 
+};
 
+SignBox.update = function init(name){
+    this.stampText    = document.getElementById('sigLabel').value;
+    this.stampPicture = '';
+    document.getElementById('signature').innerText = "[" + 
+        document.getElementById('sigLabel').value + " " +
+        document.getElementById('sigDate').value  + "]";
 
+};
 
 // debaug デバグ用ルーチン		------ dbg.js
 
