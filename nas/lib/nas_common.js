@@ -3144,22 +3144,11 @@ nas.fr2ms = function (frm) {
  * @param fpsC Object nas.Framerate
  */
 nas.ms2FCT = function (ms, type, ostF, fpsC) {
-    if (!type) {
-        type = 0
-    }
-    if (!ostF) {
-        ostF = 0
-    }
-    if (!fpsC) {
-        fpsC = this.FRATE
-    }
-    if (type > 5) {
-        fpsC = 29.97 * (type - 5)
-    }
-    /**
-     * type 6 7の時にフレームレート強制
-     * @type {number}
-     */
+    if (!type) type = 0 ;
+    if (!ostF) ostF = 0 ;
+    if (!fpsC) fpsC = this.FRATE ;
+    if (fpsC instanceof nas.Framerate) fpsC = fpsC.valueOf();
+    if ((type > 5)&&(type < 8)) fpsC = 29.97 * (type - 5);
     var myFrms = Math.round((ms * fpsC) / 1000);
     return this.Frm2FCT(myFrms, type, ostF, fpsC);
 };
@@ -3172,37 +3161,38 @@ nas.ms2FCT = function (ms, type, ostF, fpsC) {
 nas.FCT2ms = function (fct) {
     return 1000 * (this.FCT2Frm(fct)) / this.FRATE
 };
-
-
 /**
  * カウンタ文字列生成
  * ドロップ対応版 2010/11/04
  * SMPTE ドロップ30対応 2010/11/05
  * モード指定 type6
- *
  * 30DF 60DF のみをサポートの予定 どちらのモードも0オリジン
  * 指定モードとしてtype6(30df)/7(60df)を与える
  * type7は30DF互換なので30DFと同じタイミングで4フレームドロップカウントする
- *
- * @param {Number|String} frames
+ * type8を増設・電卓のTC互換でオリジネーション0固定
+ *  最後のセパレーターが変化する
+ *  24fps  "+"
+ *  25fps  "-"
+ *  10|100fps "."(小数点)
+ *  その他 ":"(デフォルト)
+ * 小数部のあるフレームレートの場合は、ナチュラルドロップ
+ * @params {Number|String} frames
  *       Int /time value
- * @param {Number} type
- *       Int 0 - 7/TC type
- * @param {Boolean|Number} ostF
- *       Int or bool/count origination
- * @param {Number|Object nas.Framerate}  fpsC Number or Object nas.Framerate/ framerate of value
+ * @params {Number} type
+ *       Int 0 - 8/TC type
+ * @params {Boolean|Number} ostF
+ *       Int or bool/count origination(offsetFrames)
+ * @params {Number|Object nas.Framerate}  fpsC Number or Object nas.Framerate/ framerate of value
  * @returns {*}
  * @constructor
  */
 nas.Frm2FCT = function (frames, type, ostF, fpsC) {
 //    if (typeof frames == 'string') 
     frames = parseInt(frames);
-    if (!type) {
-        type = 0
-    }
-    if (!fpsC) {
-        fpsC = this.FRATE
-    }
+    if(isNaN(frames)) frames ='0';
+    if (!type) type = 0;
+    if(! fpsC) fpsC = this.FRATE;
+    if(fpsC instanceof nas.Framerate) fpsC = fpsC.valueOf()
     if ((type == 6) || (type == 7)) {
         /*	SMPTE 30DF/type6 60DF/type7*/
         var dF = 2589408;
@@ -3221,20 +3211,14 @@ nas.Frm2FCT = function (frames, type, ostF, fpsC) {
             sF = sF * 2;
             dropF = dropF * 2;
         }
-        /**
-         * 負数は24hの補数化して解決
-         * @type {number}
-         */
+// 負数は24hの補数化して解決
         var FR = (frames < 0) ? dF + (frames % dF) : frames;
         var h = 0;
         var m = 0;
         var s = 0;
         var f = 0;
         h = Math.floor((FR / hF) % 24);//SMPTE TCは24時ループ
-        /**
-         * mを10分単位でクリップすると計算が単純化される
-         * @type {number}
-         */
+// mを10分単位でクリップすると計算が単純化される
         var fRh = FR % hF;//未処理フレーム
         var md = Math.floor(fRh / dmF);//10分単位
         var mu = ((fRh % dmF) < lmFc) ? 0 : Math.floor(((fRh % dmF) - lmFc) / lmFd) + 1;//10分以下の分数
@@ -3245,7 +3229,26 @@ nas.Frm2FCT = function (frames, type, ostF, fpsC) {
         var fRs = ((mu == 0) || (s == 0)) ? fRm - (s * sF) : fRm - (s * sF) + dropF;
         f = ((mu == 0) || (s != 0)) ? fRs : fRs + dropF;
         return nas.Zf((h % 24), 2) + ":" + nas.Zf(m, 2) + ":" + nas.Zf(s, 2) + ";" + nas.Zf(f, 2);
-    } else {
+    } else if(type == 8){
+        /*	SMPTE 風 hh:mm:ss:ff */
+        var dF   = fpsC * 86400;//dayFrames
+        var hF   = fpsC * 3600 ;//hourFrames
+// 負数は24hの補数化して解決
+        var FR = (frames < 0) ? dF + (frames % dF) : frames;
+        var h = Math.floor((FR / hF) % 24);//SMPTE TCは24時ループ
+        var m = Math.floor( FR / (fpsC * 60)) % 60;//
+        var s = Math.floor( FR / fpsC) % 60;
+        var f = Math.floor( FR % fpsC);
+        var keySeparator = ":";
+        if(fpsC == 24){
+            keySeparator = '+';
+        }else if (fpsC == 25){
+            keySeparator = '-';
+        }else if (fpsC == 100){
+            keySeparator = '.';
+        }
+        return nas.Zf((h % 24), 2) + ":" + nas.Zf(m, 2) + ":" + nas.Zf(s, 2) + keySeparator + nas.Zf(f, 2)+'.';
+    }else{
         /**
          *  通常のTCを作成
          */
@@ -3269,6 +3272,7 @@ nas.Frm2FCT = function (frames, type, ostF, fpsC) {
 //	type 5	p 0 / + 000
 //		type 6	00:00:00;00
 //		type 7	00:00:00;00
+//  type 8  00:00:00[:-+.]00
 //
         var m = Math.floor((frames + ostF) / (fpsC * 60));
         var s = Math.floor((frames + ostF) / fpsC);
@@ -3300,7 +3304,10 @@ nas.Frm2FCT = function (frames, type, ostF, fpsC) {
         return Counter;
     }
 };
-
+/*TEST
+    type 8
+    nas.Frm2FCT(nas.FCT2Frm('01:23:32+01',24),8,"",24);
+*/
 /**
  * nas.FCT2Frm(Fct,fpsC,check)
  * 引数 :タイムカウンタ文字列[,カウンタフレームレート][,タイプ判定オプション]

@@ -1516,8 +1516,10 @@ var iptFilter = function(cell,targetTrack,mode,exch){
 		cell[cid] = new nas.CellDescription(cell[cid]);
 		if(cell[cid].type != 'normal') continue;
 		cell[cid].parseContent(nas.normalizeStr(String(cell[cid].content)));//normalize
-		if((mode > 0)&&(cell[cid].body == '1')&&(cell[cid].modifier == 'none')) cell[cid].parseContent('(1)');//１番強制丸囲み mode1-2 共通
-		if((mode > 1)&&(cell[cid].modifier == 'none')) cell[cid].parseContent('('+cell[cid].body+')');//強制丸囲み mode2
+		if ((targetTrack.option == 'timing')||(targetTrack.option == 'replacement')){
+			if((mode > 0)&&(cell[cid].body == '1')&&(cell[cid].modifier == 'none')) cell[cid].parseContent('(1)');//１番強制丸囲み mode1-2 共通
+			if((mode > 1)&&(cell[cid].modifier == 'none')) cell[cid].parseContent('('+cell[cid].body+')');//強制丸囲み mode2
+		};// else if(){}
 		var pcl = targetTrack.findCell(cell[cid]);
 		if((pcl)&&(cell[cid].modifier != pcl.modifier)){
 			if(exch){

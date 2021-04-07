@@ -5456,7 +5456,7 @@ return false;
 */
 xUI.keyPress = function(e){
 	key = e.keyCode;//キーコードを取得
-//      console.log(key+':press:');
+      console.log(key+':press:');
 //      console.log(xUI.edmode+':xUI.edmode:');
     if(this.ipMode <= 0){
 //iNputbOxでかつ原画モード時はショートカット入力
