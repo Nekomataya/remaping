@@ -1366,10 +1366,32 @@ a.close img{
     top:64px;
     left:120px;
     width:660px;
-    height:165px;
+    height:210px;
+}
+
+.tBSelector {
+    height:9em;
+    width:7em;
+    text-align:center;
+    font-size:12pt;
 }
 #formTbx {
-	padding-left:8px;
+    padding-left:8px;
+}
+.skb_key {
+    height:1.75em;
+    width:2.75em;
+    background-color:#eeeeee;
+}
+.skb_key_func {
+    background-color:#dddddd;
+}
+.skb_key_m {
+    width:4em;
+}
+.skb_key_w {
+    width:5em;
+    background-color:#cccccc;
 }
 /*音響フローティングパネル*/
 #optionPanelSnd {

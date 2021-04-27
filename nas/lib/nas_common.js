@@ -4985,7 +4985,7 @@ nas.CellDescription.blankRegex      = new RegExp("^["+nas.CellDescription.blankS
  *			//この他に<.+>も補間記号として働く
  *		    //	詳細別紙
  */
-nas.CellDescription.interpolationSigns  = ["-","=","\*","·","・","○","●","▫","▪","▴","▵","▾","▿","◈","◉","◦","◦"];// "-","·","・","○"
+nas.CellDescription.interpolationSigns  = ["-","=","\*","·","・","○","●","▫","▪","▴","▵","▾","▿","◈","◉","◦"];// "-","·","・","○"
 nas.CellDescription.interpRegex         = new RegExp("^["+nas.CellDescription.interpolationSigns.join("")+"]$");
 
 /*

@@ -1781,7 +1781,6 @@ function Xps(Layers, Length, Framerate) {
     //配列引数の場合トラック配置用のオブジェクトに展開
     var trackSpec=[];
     if(! (Layers[0] instanceof Array)){
-console.log(Layers);
         switch (Layers.length){
             case 0:trackSpec=[["dialog",1],["timing",4]];break;
             case 1:trackSpec=[["dialog",1],["timing",Layers[0]]];break;
@@ -2701,7 +2700,6 @@ Xps.prototype.parseXps = function (datastream) {
             }
         }
     }
-console.log(SrcData);
     /**
      * 第一パス終了
      * データ識別行がなければ処理中断
@@ -2837,7 +2835,6 @@ console.log(SrcData);
              * 時間関連プロパティを先行して評価。
              * 読み取ったフレーム数と指定時間の長いほうでシートを初期化する。
              */
-console.log(nAme);
             switch (nAme) {
                 case    "FRAME_RATE":
                     //フレームレートは第一パスで取得

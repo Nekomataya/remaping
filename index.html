@@ -72,6 +72,7 @@
 <script src=/remaping/nas/lib/lib_TSH.js></script>
 <script src=/remaping/nas/lib/lib_ARD.js></script>
 <script src=/remaping/nas/lib/lib_ARDJ.js></script>
+<script src=/remaping/nas/lib/lib_STS.js></script>
 <script src=/remaping/nas/lib/lib_TSX.js></script>
 <script src=/remaping/nas/lib/lib_TDTS.js></script>
 
@@ -3770,9 +3771,9 @@ debug console
 </div>
 <!--	デバッグパネル	-->
 <!--	ツールボックス	-->
-<div class=optionPanelFloat id=optionPanelTbx >
+  <div class=optionPanelFloat id=optionPanelTbx >
 <dl><dt style="background-color:#888888;">toolBox<a href="" class=minimize ><img src=/remaping/images/ui/minimize.png alt="＿"></a><a href="" class=close ><img src=/remaping/images/ui/close.png alt="×"></a></dt></dl>
-<div id=formTbx >
+    <div id=formTbx >
 <form name=test action="javascript:void(0);">
 <!-- りまぴん ツールボックスインターフェース-->
 <table
@@ -3791,16 +3792,16 @@ debug console
 			checked
 		><a href="javascript:void(0)" onClick='return chg("single")'>single-click</a>
 <input	type=button
+	class='skb_key skb_key_w'
 	id=skbHome
 	name=home
 	value=HOME
-	style="width:48px;"
 	onclick="chkValue(this.name);"
 	title="先頭へ"
 ><input	type=button
+	class='skb_key skb_key_w'
 	id=skbEnd
 	name=end
-	style="width:48px;"
 	value=END
 	onclick="chkValue(this.name);"
 	title="カット尻へ"
@@ -3812,11 +3813,11 @@ debug console
 <td	id=l_select
 	valign=top
 ><select
+	class ="tBSelector"
 	id="tBtrackSelect"
 	name="map_labels"
 	title="トラックを選択"
-	size=5
-style="height:6em;width:7em;text-align:center;font-size:12pt"
+	size=8
 onClick='if(document.getElementById("single").checked) chkValue(this.id)'
 onDblClick='if (! document.getElementById("single").checked) chkValue(this.id)'
 >
@@ -3831,10 +3832,10 @@ onDblClick='if (! document.getElementById("single").checked) chkValue(this.id)'
 <td	id=c_select
 	valign=top
 ><select
+	class ="tBSelector"
 	id="tBitemSelect"
 	name="cell_numbers"
-	size=5
-style="height:6em;width:7em;text-align:center;font-size:12pt"
+	size=8
 onClick='if(document.getElementById("single").checked) chkValue(this.id)'
 onDblClick='if (! document.getElementById("single").checked) chkValue(this.id)'
 >
@@ -3846,10 +3847,10 @@ onDblClick='if (! document.getElementById("single").checked) chkValue(this.id)'
 <td	id=u_select
 	valign=top
 ><select
+	class ="tBSelector"
 	id="tBkeywordSelect"
 	name="fav"
-	size=5
-style="height:6em;width:7em;text-align:center;font-size:12pt"
+	size=8
 onClick='if(document.getElementById("single").checked) chkValue(this.id)'
 onDblClick='if (! document.getElementById("single").checked) chkValue(this.id)'
 >
@@ -3876,218 +3877,219 @@ onDblClick='if (! document.getElementById("single").checked) chkValue(this.id)'
 	<!-- skb -->
 	
 <input	type=button
+	class='skb_key skb_key_func'
 	name=skb12
 	id=skb12
 	value="esc"
 	title="esc"
-	style="	width:2.8em;"
 	onclick="skbPush(this.value)"
 ><input	type=button
+	class='skb_key skb_key_func'
 	name=skb13
 	id=skb13
 	value="^z"
 	title="undo"
-	style="	width:2.8em;"
 	onclick="skbPush(this.value)"
 ><input	type=button
+	class='skb_key skb_key_func'
 	name=skb14
 	id=skb14
 	value="^y"
 	title="redo"
-	style="	width:2.8em;"
 	onclick="skbPush(this.value)"
 ><input	type=button
+	class='skb_key skb_key_m skb_key_func'
 	name=skb15
 	id=skb15
 	value="←"
 	title="bs"
-	style="	width:3.8em;"
 	onclick="skbPush(this.value)"
 ><br />
 <input	type=button
+	class=skb_key
 	name=skb07
 	id=skb07
 	value="7"
 	title="7"
-	style="	width:2.8em;"
 	onclick="skbPush(this.value)"
 ><input	type=button
+	class=skb_key
 	name=skb08
 	id=skb08
 	value="8"
 	title="8"
-	style="	width:2.8em;"
 	onclick="skbPush(this.value)"
 ><input	type=button
+	class=skb_key
 	name=skb09
 	id=skb09
 	value="9"
 	title="9"
-	style="	width:2.8em;"
 	onclick="skbPush(this.value)"
 ><input	type=button
+	class='skb_key skb_key_m skb_key_func'
 	name=skb
 	id=skbCircle
 	value="(*)"
 	title="addPln"
-	style="	width:3.8em;"
 	onclick="skbPush(this.value)"
 ><br />
 <input	type=button
+	class=skb_key
 	name=skb04
 	id=skb04
 	value="4"
 	title="4"
-	style="	width:2.8em;"
 	onclick="skbPush(this.value)"
 ><input	type=button
+	class=skb_key
 	name=skb05
 	id=skb05
 	value="5"
 	title="5"
-	style="	width:2.8em;"
 	onclick="skbPush(this.value)"
 ><input	type=button
+	class=skb_key
 	name=skb06
 	id=skb06
 	value="6"
 	title="6"
-	style="	width:2.8em;"
 	onclick="skbPush(this.value)"
 ><input	type=button
+	class='skb_key skb_key_m skb_key_func'
 	name=skb
 	id=skbMinus
 	value="-"
 	title="-"
-	style="	width:3.8em;"
 	onclick="skbPush(this.value)"
 ><br />
 <input	type=button
+	class=skb_key
 	name=skb01
 	id=skb01
 	value="1"
 	title="1"
-	style="	width:2.8em;"
 	onclick="skbPush(this.value)"
 ><input	type=button
+	class=skb_key
 	name=skb02
 	id=skb02
 	value="2"
 	title="2"
-	style="	width:2.8em;"
 	onclick="skbPush(this.value)"
 ><input	type=button
+	class=skb_key
 	name=skb03
 	id=skb03
 	value="3"
 	title="3"
-	style="	width:2.8em;"
 	onclick="skbPush(this.value)"
 ><input	type=button
+	class='skb_key skb_key_m skb_key_func'
 	name=skb
 	id=skbDot
 	value="."
 	title="sep"
-	style="	width:3.8em;"
 	onclick="skbPush(this.value)"
 ><br />
 <input	type=button
+	class=skb_key
 	name=skb00
 	id=skb00
 	value="0"
 	title="0"
-	style="	width:2.8em;"
 	onclick="skbPush(this.value)"
 ><input	type=button
+	class=skb_key
 	name=skb10
 	id=skb10
 	value="("
 	title="openPln"
-	style="	width:2.8em;"
 	onclick="skbPush(this.value)"
 ><input	type=button
+	class=skb_key
 	name=skb11
 	id=skb11
 	value=")"
 	title="closePln"
-	style="	width:2.8em;"
 	onclick="skbPush(this.value)"
 ><input	type=button
+	class='skb_key skb_key_m skb_key_func'
 	name=skb
 	id=skbOK
 	value="〇"
 	title="〇"
-	style="	width:3.8em;"
 	onclick="chkValue('ok')"
 ><br />
 	<!-- skb -->
 </td>
 <td>
 <input	type=button
+	class='skb_key skb_key_w'
 	id=skbPgup
 	name=pgup
-	style="width:5em;"
 	value=Pgup
 	onclick="chkValue(this.name);"
 	title="１ページもどる"
 ><input	type=button
+	class='skb_key skb_key_w'
 	id=skbPgdn
 	name=pgdn
-	style="width:5em;"
 	value=Pgdn
 	onclick="chkValue(this.name);"
 	title="１ページ進む"
 >
 <br />
 <input	type=button
+	class='skb_key skb_key_w'
 	id=skbUp
 	name=up
 	title="UP"
 	value=△
 	onclick="chkValue(this.name);"
-	style="width:5em"
 ><br /><input	type=button
+	class='skb_key skb_key_w'
 	id=skbLeft
 	name=left
 	title="left"
 	value=&lt;&lt;
 	onclick="chkValue(this.name);"
-	style="width:5em"
 ><input type=button
+	class='skb_key skb_key_w'
 	id=skbRight
 	name=right
 	alt="RIGHT"
 	value=&gt;&gt;
 	onclick="chkValue(this.name);"
-	style="width:5em"
 ><br /><input type=button
+	class='skb_key skb_key_w'
 	id=skbDown
 	name=down
 	alt="DOWN"
 	value=▽
 	onclick="chkValue(this.name);"
-	style="width:5em"
 >
 <br />
 <input type=button
+	class='skb_key skb_key_w'
 	id=skbBack
 	name=back
 	alt="spinF"
 	value=↑spin↑
 	onclick="chkValue(this.name);"
-	style="width:5em"
 ><input type=button
+	class='skb_key skb_key_w'
 	id=skbFwd
 	name=fwd
 	alt="spinB"
 	value=↓spin↓
 	onclick="chkValue(this.name);"
-	style="width:5em"
 >
 </td>
 </tr>
-</table></form></div>
-</div>
+</table></form>
+    </div>
+  </div>
 <!--	ツールボックス	-->
 
 <!--	ラベル付き音響編集
@@ -4617,9 +4619,10 @@ index.html ,v 1.7 2018/03/05  support@u-at.net <br />
     data-server_url='http://remaping.scivone-dev.com'
     data-server_url='http://u-at.net'
     アドレスはサーバーのルートを使用　2017.04.13
+以下の行は本番サーバでは無効（プロパティが無い）ため削除が必要
+      data-frame_rate
 
 以下の行はカット袋系のサービスが有効になるまで使用停止・メンテナンス
-
       data-cut_bag_token
 -->
 <span id="backend_variables"
@@ -4629,7 +4632,6 @@ index.html ,v 1.7 2018/03/05  support@u-at.net <br />
       data-user_name="<%= current_user.show_name %>"
       data-user_email="<%= current_user.email %>"
       data-episode_id="<%= @cut.episode.nil? ? nil : @cut.episode.id %>"
-      data-frame_rate="<%= @cut.episode.nil? ? nil : @cut.episode.product.frame_rate %>"
       data-cut_id="<%= @cut.id %>"
       data-product_token="<%= @cut.episode.nil? ? nil : @cut.episode.product.nil? ? nil : @cut.episode.product.token %>"
       data-episode_token="<%= @cut.episode.nil? ? nil : @cut.episode.token %>"

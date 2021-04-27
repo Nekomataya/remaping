@@ -1,4 +1,4 @@
-/**
+﻿/**
  * $fileOverview
  *  <pre>Remaping本体スクリプト
  *     XPSオブジェクトとMAPオブジェクトについては、
@@ -117,7 +117,7 @@ function new_xUI(){
     xUI.importBox.importTarget  = false;
     xUI.importBox.maxSize  = 1000000;
     xUI.importBox.maxCount = 10;
-    xUI.importBox.allowExtensions=new RegExp("\.(txt|csv|xps|ard|ardj|tsh|xdts|tdts)$",'i');
+    xUI.importBox.allowExtensions=new RegExp("\.(txt|csv|xps|xpst|ard|ardj|tsh|xdts|tdts|sts)$",'i');
 
 /**
  *  @function
@@ -169,6 +169,7 @@ xUI.importBox.read = function (targetFiles,callback){
         var targetQueue=[];
   for(var ix=0;ix<targetFiles.length;ix++){
     var check = targetFiles[ix];
+//拡張子でふるい分け
     if((check.name.match(this.allowExtensions)) && (check.size <= this.maxSize) && (ix < this.maxCount)){
         targetQueue.push(check); this.importCount ++;
     }else{
@@ -180,27 +181,28 @@ xUI.importBox.read = function (targetFiles,callback){
     var input = targetQueue[ix];
 //最初のファイルをターゲットに読込
     if(this.importTarget){
-	var myEncode=(input.name.match(/\.(ard|csv|tsh)$/))?"Shift-JIS":"UTF-8";
-      // ファイルリーダーオブジェクト初期化(Chrome/Firefoxのみ)
-      var reader = new FileReader();
-      reader.name=input.name;
-      // ファイルの読み込みに成功したら、その内容をxUI.data_wellに反映
-      reader.addEventListener('load', function(e) {
-        var output = reader.result;//
-        xUI.data_well.value = reader.result;//最後に読み込んだ内容で上書きされるので注意
+	    var myEncode=(input.name.match(/\.(ard|csv|tsh|sts)$/))?"Shift-JIS":"UTF-8";
+//	    if(input.name.match(/\.sts$/)) myEncode = "bin";
+// ファイルリーダーオブジェクト初期化(Chrome/Firefoxのみ)
+        var reader = new FileReader();
+        reader.name=input.name;
+// ファイルの読み込みに成功したら、その内容をxUI.data_wellに反映
+        reader.addEventListener('load', function(e) {
+            var output = reader.result;//
+            xUI.data_well.value = reader.result;//最後に読み込んだ内容で上書きされるので注意
 //console.log(reader);
 //エリアターゲット 
-        var areaTarget = (document.getElementById('loadTarget').value == 'ref')? 0:undefined;
-        var myXps = xUI.convertXps(
-            reader.result,
-            divideExtension(reader.name)[1],
-            xUI.importBox.overwriteProps,
-            false,
-            areaTarget
-        );// 指定オプション無しで一旦変換する
-        if(!myXps){
-            alert(reader.name+' is not supported format');
-        }
+            var areaTarget = (document.getElementById('loadTarget').value == 'ref')? 0:undefined;
+            var myXps = xUI.convertXps(
+                reader.result,
+                divideExtension(reader.name)[1],
+                xUI.importBox.overwriteProps,
+                false,
+                areaTarget
+            );// 指定オプション無しで一旦変換する
+            if(!myXps){
+                alert(reader.name+' is not supported format');
+            }
         if((xUI.uiMode == 'production')&&(xUI.importBox.importTarget===xUI.XPS)){
             if( (xUI.XPS.xpsTracks.duration != myXps.xpsTracks.duration)||
                 (xUI.XPS.xpsTracks.length != myXps.xpsTracks.length)
@@ -217,13 +219,18 @@ xUI.importBox.read = function (targetFiles,callback){
             }
         }
       }, true);
-      // ファイルの内容をテキストとして取得
-        reader.readAsText(input, myEncode);
+        if(input.name.match(/\.sts$/)){
+// ファイルの内容をarrayBufferとして取得(sts)
+            reader.readAsArrayBuffer(input);
+        }else{
+// ファイルの内容をテキストとして取得
+            reader.readAsText(input, myEncode);
+        }
         break;
-    }
+    };
 //非同期で実行
 (function(){
-	var myEncode=(input.name.match(/\.(ard|csv|tsh)$/))?"Shift-JIS":"UTF-8";
+	var myEncode=(input.name.match(/\.(ard|csv|tsh|sts)$/))?"Shift-JIS":"UTF-8";
       // ファイルリーダーオブジェクト初期化(Chrome/Firefoxのみ)
       var reader = new FileReader();
       reader.name=input.name;
@@ -264,8 +271,13 @@ xUI.importBox.read = function (targetFiles,callback){
 		    document.getElementById('optionPanelSCI_01_sc').focus();//第一カット(かならずある)にフォーカス
         };
       }, true);
-      // ファイルの内容をテキストとして取得
-      reader.readAsText(input, myEncode);
+        if(input.name.match(/\.sts$/)){
+// ファイルの内容をarrayBufferとして取得(sts)
+            reader.readAsArrayBuffer(input);
+        }else{
+// ファイルの内容をテキストとして取得
+            reader.readAsText(input, myEncode);
+        }
 })();//キューの各エントリを処理
   }
       }else{
@@ -417,9 +429,9 @@ xUI.importBox.checkValue = function(itm){
     xUI.convertXps(datastream,optionString,overiteProps,streamOption,targetOption)
 引数:
     @params {Staring}    datestream
-        コンバート対象のデータ
-        基本的にテキストデータ
-        バイナリデータの場合は1bite/8bit単位の数値配列として扱う（現在未実装）
+        コンバート対象のデータ 
+        String | ArrayBuffer
+        バイナリデータの場合は1bite/8bit単位の数値配列として扱う（ArrayBuffer）
     @params {String}    optionString
         コンバート対象のデータがXPSのプロパティ全てを持たない場合があるので
         最低限のプロパティ不足を補うための指定文字列
@@ -485,8 +497,14 @@ console.log([datastream,optionString,overwriteProps,streamOption,targetOption]);
 //データが存在したら、種別判定して、コンバート可能なデータはコンバータに送ってXPS互換ストリームに変換する
 //Xpxデータが与えられた場合は素通し
 //この分岐処理は、互換性維持のための分岐
+//ArrayBufferを先に判定して別処理をする
+      if(datastream instanceof ArrayBuffer){
+            var arrB = new Uint8Array(datastream);
+            console.log(arrB);
+            datastream = STS2XPS(arrB);
+      }else{
         switch (true) {
-        case    (/^nasTIME-SHEET\ 0\.[1-5]/).test(datastream):
+        case    (/^nasTIME-SHEET\ 0\.[1-9].*/).test(datastream):
 //    判定ルーチン内で先にXPSをチェックしておく（先抜け）
         break;
         case    (/^(exchangeDigitalTimeSheet Save Data\n)/).test(datastream):
@@ -494,8 +512,7 @@ console.log([datastream,optionString,overwriteProps,streamOption,targetOption]);
             //ToeiDigitalTimeSheet / eXchangeDigitalTimeSheet
         break;
         case    (/^(toeiDigitalTimeSheet Save Data\n)/).test(datastream):
-            datastream = TDTS2XPS(datastream,targetOption);
-console.log(datastream);
+            datastream =TDTS2XPS(datastream,targetOption);
             //ToeiDigitalTimeSheet / eXchangeDigitalTimeSheet
         break;
         case    (/^UTF\-8\,\ TVPaint\,\ \"CSV 1\.[01]\"/).test(datastream):
@@ -529,6 +546,7 @@ console.log(datastream);
             if(TSXEx){
                 try{datastream=TSX2XPS(datastream)}catch(err){alert(err);return false;}
             }
+        }
       }
         if(! datastream){return false}
     }
@@ -4479,9 +4497,9 @@ xUI.getRange    =function(Range)
 };
 
 
-/*    xUI.putReference(dataStream[,direction])
+/*    xUI.putReference(datastream[,direction])
 引数
-    :dataStream    シートに設定するデータ  単一の文字列  またはXpsオブジェクト または  配列  省略可
+    :datastream    シートに設定するデータ  単一の文字列  またはXpsオブジェクト または  配列  省略可
     :direction    データ開始位置ベクトル  配列  省略可  省略時は[0,0]
       参照シートに外部から値を流し込むメソッド
         xUI.putReference(データストリーム)
@@ -4498,7 +4516,7 @@ xUI.putReference    =function(datastream,direction){
  *
  *    <pre>
  *    シートに外部から値を流し込むメソッド
- *    xUI.put(dataStream[[,direction],toReference])
+ *    xUI.put(datastream[[,direction],toReference])
  *        読込み時にも使用
  *    Xps.put オブジェクトメソッドに対応
  *    undo処理は戻り値から書き換えに成功した範囲と書き換え前後のデータが取得できるのでその戻値を利用する
@@ -4520,7 +4538,7 @@ xUI.putReference    =function(datastream,direction){
  *    再描画抑制undoカウンタを設置
  *    カウンタの残値がある限り再描画をスキップしてカウンタを減算する
  *    </pre>
- *  @params {String|Object Xps|Array}  dataStream
+ *  @params {String|Object Xps|Array}  datastream
  *     シートに設定するデータ  単一の文字列  またはXpsオブジェクト または  配列  省略可<br />
  *  
  *  @params {Array} direction
@@ -5885,7 +5903,7 @@ xUI.Touch = function(e){
 
  */
 xUI.Mouse=function(e){
-    var currentTarck = xUI.XPS.xpsTracks[xUI.Select[0]];
+    var currentTrack = xUI.XPS.xpsTracks[xUI.Select[0]];
     var exch = ((e.ctrlKey)||(e.metaKey));
 //    console.log(e.target.id);
 //    if(e.target.id=='dialogEdit'){return false};
@@ -9301,10 +9319,15 @@ if(ListStr.match(/^[\'\"「](.+)/)){    return (RegExp.$1).replace(/./g,"$&,"); 
 			    for(ct3=1;ct3<=rT;ct3++){
 			        if((StartCt+1)!=EndCt){
 //alert("DPS= "+sDepth+" :start= "+StartCt+"  ;end= "+EndCt +"\n"+ srcList.slice(StartCt+1,EndCt).join(SepChar)+"\n\n-- "+rT);
-                        expdList = expdList.concat(nas_expdList(srcList.slice(StartCt+1,EndCt).join(SepChar),"Rcall"));
+                        var rca = nas_expdList(
+                                srcList.slice(StartCt+1,EndCt).join(SepChar),
+                                "Rcall"
+                        );
+                        expdList = expdList.concat(rca.split(','));
 //括弧の中身を自分自身に渡して展開させる
 //展開配列が規定処理範囲を超過していたら処理終了
-	                    if(expdList.length >= leastCount) return expdList;
+console.log(expdList.length)
+	                    if(expdList.length >= leastCount) return expdList.join(",");
                     }
 			    }
 			    ct=EndCt;break;
@@ -9341,7 +9364,7 @@ function d_break(dList){ wLists=dList.toString().split(","); return wLists[1]+wL
 				expdList.push(expdList[resultCt % blockCount]);
 			}
 		}
-		return expdList.join();//文字列で戻す
+		return expdList.join(",");//文字列で戻す
 }
 /**
 	XPS オブジェクトから データテキストを保存用ウィンドウに出力
@@ -9939,7 +9962,7 @@ jQuery(function(){
            jQuery("#optionPanelTbx").height(24);
 	}else{
            jQuery("#formTbx").show();
-           jQuery("#optionPanelTbx").height(165);
+           jQuery("#optionPanelTbx").height(210);
 	}
         return false;
     })

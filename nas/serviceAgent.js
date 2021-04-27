@@ -4491,7 +4491,7 @@ msg += "<input id=closeWindowAtCheckout type=checkbox onchange='xUI.closeWindowA
                 var assignNoteText="";
                 if((this.status == 0)&&(assignUserName)){
                     var assignData=encodeURIComponent(JSON.stringify([assignUserName,assignNoteText]));
-                    serviceAgent.currentRepository.checkoutEntry(assignData,function(){if(xUI.closeWindowAtCheckout==true) window.close();},callback2);
+                    serviceAgent.currentRepository.checkoutEntry(assignData,function(){if(xUI.closeWindowAtCheckout.checked==true) window.close();},callback2);
 //                        alert(localize(nas.uiMsg.dmAlertCheckoutFail));//チェックアウト失敗
                 }
             });

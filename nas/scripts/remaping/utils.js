@@ -1432,7 +1432,7 @@ for (var tid=0;tid<myToolTips.length;tid++){
             track:true,
         }
     } );
- }
+ };
     } );
 }
 
@@ -1517,8 +1517,10 @@ var iptFilter = function(cell,targetTrack,mode,exch){
 		if(cell[cid].type != 'normal') continue;
 		cell[cid].parseContent(nas.normalizeStr(String(cell[cid].content)));//normalize
 		if ((targetTrack.option == 'timing')||(targetTrack.option == 'replacement')){
-			if((mode > 0)&&(cell[cid].body == '1')&&(cell[cid].modifier == 'none')) cell[cid].parseContent('(1)');//１番強制丸囲み mode1-2 共通
-			if((mode > 1)&&(cell[cid].modifier == 'none')) cell[cid].parseContent('('+cell[cid].body+')');//強制丸囲み mode2
+			if((cell[cid].modifier == 'none')&&(! exch)){
+				if((mode > 0)&&(cell[cid].body == '1')) cell[cid].parseContent('(1)');//１番強制丸囲み mode1-2 共通
+				if(mode > 1) cell[cid].parseContent('('+cell[cid].body+')');//強制丸囲み mode2
+			};
 		};// else if(){}
 		var pcl = targetTrack.findCell(cell[cid]);
 		if((pcl)&&(cell[cid].modifier != pcl.modifier)){
