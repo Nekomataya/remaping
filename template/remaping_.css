@@ -2,7 +2,7 @@
 /*	りまぴん のためのスタイルシート							*/
 /*	このスタイルシートを変更してデザインを調整できます。	*/
 /*  プリント環境改善のために実寸系に置きかえ				*/
-/*	Nekomataya/kiyo 2017									*/
+/*	Nekomataya/kiyo 2017								*/
 /*	想定用紙サイズは JIS/ISO A3								*/
 
 /*========== タイムシート全体 ============*/
@@ -13,11 +13,12 @@
 	情報量が多くて密度が低いのでフォントは小さめに
 	ユーザ選択は基本的に禁止
 */
-@page { size: A3 }           /* A3タテ */
-  body {
-    width: 1122px; /* needed for Chrome */
+body {
+	width:1122px;
+	margin:0 100px 4px 0;
+	padding:0 16px 0 0 ;
 	overflow:scroll;
-	background-color:white;
+	background-color:#dedede;
 	user-select:none;
 	-moz-user-select:none;
 	-khtml-user-select:none;
@@ -27,12 +28,12 @@
 	line-height:1.5;
 	font-family: '游ゴシック体', 'Yu Gothic', 'YuGothic','ヒラギノ角ゴシック', 'Hiragino Sans', 'ヒラギノ角ゴ ProN W3', 'Hiragino Kaku Gothic ProN', 'メイリオ', 'Meiryo', 'ＭＳ Ｐゴシック', 'MS PGothic', 'sans-serif';
 }
-/* 印刷時に不可視 */
-@media print{
-.nonprint {
-	display:none;
-}
-}
+/*
+	background-image:url(images/logo/logo_UAT.png);
+ 	background-repeat: no-repeat;
+  	background-attachment: fixed;
+    background-position:100% 100%;
+*/
 /*========== リンク ============*/
 a:link		{color:#000066}
 a:visited	{color:green}
@@ -44,34 +45,45 @@ a:focus		{color:#880000;background-color:snow}
 	ウインドウ全体をUIに割り付け、UIのマージン等を取得するエレメント
 */
 #fixedHeader {
-	display:none;
+	width:100%;
+	position:fixed;
+	z-index:3;
 }
+.loginPanel	{
+	width:100%;
+	text-align:right;
+	padding:0 0 0 0;
+	}
 /* スクロール領域*/
 #UIheaderScrollV {
-	display:none;
+	display:inline;
 }
 #UIheaderScrollH {
-	display:none;
+	display:inline;
 }
 #UIheaderFix {
-	display:none;
+	display:inline;
+	z-index:4;
 }
 #qdr4 {
 	position:relative;
 }
 
+
 /* アプリケーションヘッダーライン
 	印刷時は非表示
 */
 div.server-info {
-  display:none;
+  text-align:right;
 }
-div #toolbarHeader{
-	display:none;
+div #toolbarHeader {
+	padding:0 0 0 8px;
+	float:left;
+	width:100%;
+	background-color:#a0a0a0;
 }
-/* 隠蔽クラス*/
-div.hideParams {
-	display:none;
+div #sheetHeaderTable{
+	padding-right:8px;
 }
 /*	ステータス表示行	*/
 .headerInfo{
@@ -112,13 +124,14 @@ iframe.UIhidden {
 	visibility:none;
 }
 /*
-	タイムシートテーブルルック基礎
+	table
+	border-color:#bbbbbb;
 */
 table {
-	margin:0 0 0 0;
+	margin:0 0 0 16px;
 	padding:0 0 0 0;
-	border-width:0;
-	border-style:none;
+	border-width:2px 1px 0 0;
+	border-style:solid;
 	table-layout:fixed;
 	max-height:100%;
 }
@@ -129,9 +142,10 @@ table.UItable{
 	border-style:solid;
 	table-layout:fixed;
 }
+
 table.info	{
-	width:1058px;
-	height:136px;
+	width:100%;
+	height:10px;
 	border-width:0;
 	table-layout:fixed;
 }
@@ -153,10 +167,18 @@ th {
 	border-width:4px 1px 1px 0;
 	line-height:1;
 }
+
 /*
 	シートヘッダビュー設定
-	合計280mm=1058px
 */
+th.opusLabel{width:4em;}
+th.titleLabel{width:18em;}
+/*th.scenecutLabel{}*/
+th.subtitleLabel{width:8em;}
+th.timeLabel{width:18em;}
+th.nameLabel{width:12em;}
+th.pageLabel{width:8em;}
+
 td#edchg {display:none}
 th.headerLabel{color:gray;border-color:#bbbbbb;text-align:left;border-width:0 0 4px 0;}
 .opusHeader  { width:106px;}
@@ -180,13 +202,25 @@ th.headerLabel{color:gray;border-color:#bbbbbb;text-align:left;border-width:0 0 
 	vertical-align:bottom;
 }
 /*
+xMap Design-TEST 
 
 */
+.mapButton {width:96px;}
+.note {color:#d0d0d0;}
+.thumbnail {width:320px;}
+.thumbnailS {width:128px;}
+
+.xmap {display:none;}
+/*
+	
+*/
+.annotationText {
+	color:gray;
+}
 th.tcSpan {
 	width:3em;
 }
 th.tclabel{
-	color:gray;
 	text-align:center;
 	border-style:solid;
 	border-width:2px 1px 3px 1px;
@@ -195,25 +229,27 @@ th.tclabel{
 	参照欄(アクション・参考欄)
  */
 th.referenceSpan {
-	width:17px;
+	width:2em;
 }
 th.layerlabelR {
-	color:gray;
 	text-align:center;
 	border-style:solid;
 	border-width:3px 1px 3px 0;
+	font-size:10px;
+	height:16px;
 }
 /*
 	ダイアログトラック
 */
 th.dialogSpan {
-	width:38px;
+	width:3em;
 }
 th.dialoglabel {
-	color:gray;
 	text-align:center;
 	border-style:solid;
 	border-width:2px 1px 3px 0;
+	font-size:10px;
+	height:16px;
 }
 
 /*
@@ -221,10 +257,9 @@ th.dialoglabel {
 	dialog/still/timing/sfx/camera
 */
 th.editSpan {
-	width:36px;
+	width:3em;
 }
 th.layerlabel {
-	color:gray;
 	text-align:center;
 	border-style:solid;
 	border-width:3px 1px 3px 0;
@@ -234,40 +269,45 @@ th.layerlabel {
 
 /* still */
 th.stillSpan {
-	width:12px;
+	width:1em;
 }
 th.stilllabel {
-	color:gray;
 	text-align:center;
 	border-style:solid;
 	border-width:3px 1px 3px 0;
 }
 /* timing/replacement */
 th.timingSpan {
-	width:36px;
+	width:3em;
 }
 th.timinglabel {
-	color:gray;
+	text-align:center;
+	border-style:solid;
+	border-width:3px 1px 3px 0;
+}
+/* geometry/stagework */
+th.geometrySpan {
+	width:3em;
+}
+th.geometrylabel {
 	text-align:center;
 	border-style:solid;
 	border-width:3px 1px 3px 0;
 }
 /* sfx/effect */
 th.sfxSpan {
-	width:36px;
+	width:3em;
 }
 th.sfxlabel {
-	color:gray;
 	text-align:center;
 	border-style:solid;
 	border-width:3px 1px 3px 0;
 }
 /* camera/geometry */
 th.cameraSpan {
-	width:36px;
+	width:4em;
 }
 th.cameralabel {
-	color:gray;
 	text-align:center;
 	border-style:solid;
 	border-width:3px 1px 3px 0;
@@ -278,29 +318,24 @@ th.cameralabel {
 	このエレメントは幅指定無し
 */
 th.framenoteSpan {
-	width:96px;
+	min-width:96px;
 }
 th.framenotelabel {
-	color:gray;
 	text-align:center;
 	border-style:solid;
 	border-width:2px 1px 3px 1px;
 }
-
 /*
 	ページ印刷用トレーラー
 */
 div.printPage {
-	padding:8mm;
-	padding-bottom:0;
 	page-break-inside:avoid;
-	page-break-after:always;
 }
 /*
 	シート冒頭メモ欄
 */
 .top_comment {
-	font-size:10pt;
+	font-size:8pt;
 }
 /*
 	タイムシート記述終了マーカー
@@ -308,22 +343,19 @@ div.printPage {
 .endMarker {
 	display:inline-block;
 	position:absolute;
-	width:378px;
-	height:15px;
+	width:240px;
 	margin:0;
+	height:8px;
 	text-align:center;
-	border-top-style:double;	
+	border-top-style:double;
 	border-width:4px 0 0 0;
 	z-index:3;
 	margin-top:8px;
 }
-/*
-		テーブルデータ(td)基本
-		一番多いシートセルの送りとルックを設定
-		送りピッチは基本的に 340mm/72frames = 17.847px(/96dpi)
+
+/*		テーブルデータ基本
 */
 td {
-	border-color:#bbbbbb;
 	position:relative;
 	text-align:center;
 	vertical-align:middle;
@@ -337,6 +369,7 @@ td {
 	line-height:1;
 	height:16px;
 }
+/*	height:17.847px; */
 
 td.menu {
 	text-align:left;
@@ -401,7 +434,7 @@ button.iconButton {
 	height:27px;
 	background-color:#666666;
 	border-width:1px;
-
+	vertical-align:middle;
    /* 角丸 */
     -moz-border-radius: 3px;
     -webkit-border-radius: 3px;
@@ -422,35 +455,34 @@ button.iconButton:disabled {
 
 /*	icon offset positioning 27x27*/
 
-.iconButton-blank { background-position: 27px 27px; }
+.iconButton-blank         { background-position: 27px 27px; }
 
-.iconButton-selectBox { background-position: 0 0; }
-.iconButton-selectCircle { background-position: -27px 0; }
-.iconButton-cut { background-position: -54px 0; }
-.iconButton-cut_d { background-position: -81px 0; }
-.iconButton-copy { background-position: -108px 0; }
-.iconButton-copy_d { background-position: -135px 0; }
-.iconButton-paste { background-position: -162px 0; }
-.iconButton-paste_d { background-position: -189px 0; }
-.iconButton-undo { background-position: -216px 0; }
-.iconButton-undo_d { background-position: -243px 0; }
-.iconButton-redo { background-position: -270px 0; }
-.iconButton-redo_d { background-position: -297px 0; }
-.iconButton-gia { height:18px ;background-position: -324px 0; }
-.iconButton-gia_d { height:18px ;background-position: -351px 0; }
-/*
-.iconButton- { background-position: -378px 0; }
-.iconButton- { background-position: -405px 0; }
-*/
+.iconButton-noItemDefault { background-position: 0 0; }
+.iconButton-selectBox     { background-position: -27px 0; }
+.iconButton-cut           { background-position: -54px 0; }
+.iconButton-cut_d         { background-position: -81px 0; }
+.iconButton-copy          { background-position: -108px 0; }
+.iconButton-copy_d        { background-position: -135px 0; }
+.iconButton-paste         { background-position: -162px 0; }
+.iconButton-paste_d       { background-position: -189px 0; }
+.iconButton-undo          { background-position: -216px 0; }
+.iconButton-undo_d        { background-position: -243px 0; }
+.iconButton-redo          { background-position: -270px 0; }
+.iconButton-redo_d        { background-position: -297px 0; }
+.iconButton-gia           { height:18px ;background-position: -324px 0; }
+.iconButton-gia_d         { height:18px ;background-position: -351px 0; }
+.iconButton-axeVoid       { background-position: -378px 0; }
+.iconButton-selectCircle  { background-position: -405px 0; }
 
-.iconButton-toReference { background-position: 0 -27px; }
+
+.iconButton-toReference   { background-position: 0 -27px; }
 .iconButton-fromReference { background-position: -27px -27px; }
-.iconButton-toRight { background-position: -54px -27px; }
-.iconButton-toLeft { background-position: -81px -27px; }
-.iconButton-reload { background-position: -108px -27px; }
-.iconButton-set { background-position: -135px -27px; }
-.iconButton-get { background-position: -162px -27px; }
-.iconButton-openX { background-position: -189px -27px; }
+.iconButton-toRight       { background-position: -54px -27px; }
+.iconButton-toLeft        { background-position: -81px -27px; }
+.iconButton-reload        { background-position: -108px -27px; }
+.iconButton-set           { background-position: -135px -27px; }
+.iconButton-get           { background-position: -162px -27px; }
+.iconButton-openX         { background-position: -189px -27px; }
 .iconButton-storeX { background-position: -216px -27px; }
 .iconButton-cgiStore { background-position: -243px -27px; }
 .iconButton-storeAs { background-position: -270px -27px; }
@@ -548,9 +580,9 @@ button.iconButton:disabled {
 .iconButton-info { background-position: -324px -162px; }
 .iconButton-DBentry { background-position: -351px -162px; }
 .iconButton-management { background-position: -378px -162px; }
-/*
-.iconButton- { background-position: -405px -162px; }
-*/
+.iconButton-home { background-position: -405px -162px; }
+
+
 .iconButton-shiftLayerB { background-position: 0 -189px; }
 .iconButton-shiftLayerU { background-position: -27px -189px; }
 .iconButton-swapLayers { background-position: -54px -189px; }
@@ -620,9 +652,9 @@ button.iconButton:disabled {
 .iconButton-removeKey { background-position: -324px -270px; }
 .iconButton-shiftKey { background-position: -351px -270px; }
 .iconButton-goToTime { background-position: -378px -270px; }
-/*
-.iconButton- { background-position: -405px -270px; }
-*/
+.iconButton-bigMinus { background-position: -405px -270px; }
+
+
 .iconButton-goBWD { background-position: 0 -297px; }
 .iconButton-goFWD { background-position: -27px -297px; }
 .iconButton-pause { background-position: -54px -297px; }
@@ -633,32 +665,32 @@ button.iconButton:disabled {
 .iconButton-stop { background-position: -189px -297px; }
 .iconButton-eject { background-position: -216px -297px; }
 .iconButton-OPEN { background-position: -243px -297px; }
-.iconButton-READ { background-position: -270px -297px; }
-.iconButton-FIX { background-position: -297px -297px; }
-.iconButton-CLOSE { background-position: -324px -297px; }
-.iconButton-HOLD { background-position: -351px -297px; }
-/*
-.iconButton- { background-position: -378px -297px; }
-.iconButton- { background-position: -405px -297px; }
-*/
+.iconButton-OPENFS { background-position: -270px -297px; }
+.iconButton-OPENNF { background-position: -297px -297px; }
+.iconButton-removeItem { background-position: -324px -297px; }
+.iconButton-eliminate { background-position: -351px -297px; }
+.iconButton-markON { background-position: -378px -297px; }
+.iconButton-mark { background-position: -405px -297px; }
+
+
 .iconButton-buildXPS { background-position: 0 -324px; }
 .iconButton-editXPS { background-position: -27px -324px; }
 .iconButton-linkXPS { background-position: -54px -324px; }
 .iconButton-FPS { background-position: -81px -324px; }
 .iconButton-movieFrame { background-position: -108px -324px; }
 .iconButton-moieFrameSetting { background-position: -135px -324px; }
-/*
-.iconButton- { background-position: -162px -324px; }
-.iconButton- { background-position: -189px -324px; }
-.iconButton- { background-position: -216px -324px; }
-.iconButton- { background-position: -243px -324px; }
-.iconButton- { background-position: -270px -324px; }
-.iconButton- { background-position: -297px -324px; }
-.iconButton- { background-position: -324px -324px; }
-.iconButton- { background-position: -351px -324px; }
-.iconButton- { background-position: -378px -324px; }
-.iconButton- { background-position: -405px -324px; }
-*/
+.iconButton-hamberger { background-position: -162px -324px; }
+.iconButton-doner { background-position: -189px -324px; }
+.iconButton-kebab { background-position: -216px -324px; }
+.iconButton-meatball { background-position: -243px -324px; }
+.iconButton-bento { background-position: -270px -324px; }
+.iconButton-gostop { background-position: -297px -324px; }
+.iconButton-goloop { background-position: -324px -324px; }
+.iconButton-noReader { background-position: -351px -324px; }
+.iconButton-countReader { background-position: -378px -324px; }
+.iconButton-markOFF { background-position: -405px -324px; }
+
+
 .iconButton-ONS { background-position: 0 -351px; }
 .iconButton-ONSsetting { background-position: -27px -351px; }
 .iconButton-ONS_0 { background-position: -54px -351px; }
@@ -677,60 +709,185 @@ button.iconButton:disabled {
 /*
 .iconButton- { background-position: -405px -351px; }
 */
-/*
-.iconButton- { background-position: 0 -378px; }
-.iconButton- { background-position: -27px -378px; }
-.iconButton- { background-position: -54px -378px; }
-.iconButton- { background-position: -81px -378px; }
-.iconButton- { background-position: -108px -378px; }
-.iconButton- { background-position: -135px -378px; }
-.iconButton- { background-position: -162px -378px; }
-.iconButton- { background-position: -189px -378px; }
-.iconButton- { background-position: -216px -378px; }
-.iconButton- { background-position: -243px -378px; }
-.iconButton- { background-position: -270px -378px; }
-.iconButton- { background-position: -297px -378px; }
-.iconButton- { background-position: -324px -378px; }
-.iconButton- { background-position: -351px -378px; }
-.iconButton- { background-position: -378px -378px; }
-.iconButton- { background-position: -405px -378px; }
-*/
-.iconButton-checker { background-position: 0 -405px; }
-.iconButton-cell { background-position: -27px -405px; }
-.iconButton-separation { background-position: -54px -405px; }
-.iconButton-traceAll { background-position: -81px -405px; }
-.iconButton-traceFGC { background-position: -108px -405px; }
-.iconButton-traceK { background-position: -135px -405px; }
-.iconButton-tracePPP { background-position: -162px -405px; }
-.iconButton-paintLayer { background-position: -189px -405px; }
-.iconButton-thiningLine { background-position: -216px -405px; }
-.iconButton-borderFill { background-position: -243px -405px; }
-.iconButton-smoother { background-position: -270px -405px; }
-.iconButton-colorBox { background-position: -297px -405px; }
-.iconButton-colorInfo { background-position: -324px -405px; }
-/*
-.iconButton- { background-position: -351px -405px; }
-.iconButton- { background-position: -378px -405px; }
-.iconButton- { background-position: -405px -405px; }
-*/
+
+.iconButton-addItem { background-position: 0 -378px; }
+.iconButton-editItem { background-position: -27px -378px; }
+.iconButton-issue { background-position: -54px -378px; }
+.iconButton-merge { background-position: -81px -378px; }
+.iconButton-salvage { background-position: -108px -378px; }
+.iconButton-STORE { background-position: -135px -378px; }
+.iconButton-STOREFS { background-position: -162px -378px; }
+.iconButton-STORENF { background-position: -189px -378px; }
+.iconButton-checkOut { background-position: -216px -378px; }
+.iconButton-checkIn { background-position: -243px -378px; }
+.iconButton-sinkUAT { background-position: -270px -378px; }
+.iconButton-floatUAT { background-position: -297px -378px; }
+.iconButton-receipt { background-position: -324px -378px; }
+.iconButton-branch { background-position: -351px -378px; }
+.iconButton-abort { background-position: -378px -378px; }
+.iconButton-destroy { background-position: -405px -378px; }
+
+.iconButton-message { background-position: 0 -405px; }
+
+.iconButton-checker { background-position: 0 -459px; }
+.iconButton-cell { background-position: -27px -459px; }
+.iconButton-separation { background-position: -54px -459px; }
+.iconButton-traceAll { background-position: -81px -459px; }
+.iconButton-traceFGC { background-position: -108px -459px; }
+.iconButton-traceK { background-position: -135px -459px; }
+.iconButton-tracePPP { background-position: -162px -459px; }
+.iconButton-paintLayer { background-position: -189px -459px; }
+.iconButton-thiningLine { background-position: -216px -459px; }
+.iconButton-borderFill { background-position: -243px -459px; }
+.iconButton-smoother { background-position: -270px -459px; }
+.iconButton-colorBox { background-position: -297px -459px; }
+.iconButton-colorInfo { background-position: -324px -459px; }
+.iconButton-picupColor { background-position: -351px -459px; }
+.iconButton-picupGray { background-position: -378px -459px; }
+.iconButton-picupDrawing { background-position: -405px -459px; }
+
 
 
 /*一文字用ボタン*/
-button.oneChr {display:none;}
+button.oneChr {width:1.5em;margin:0;padding:0;}
 
 /*サインイン／アウトボタン*/
-button.sign {display:none;}
+button.sign {width:10em;}
+
+/*カラーセレクトボタン*/
+button.colorSelect {
+	width:16px;
+	height:16px;
+	border-width:1px;
+	vertical-align:middle;
+   /* 角丸 */
+    -moz-border-radius: 3px;
+    -webkit-border-radius: 3px;
+    border-radius: 3px;
+}
+/*	タブコントロール
+*/
+button.tabControll {
+	font-size:100%;
+	height:24px;
+	margin:0;
+	vertical-align:middle;
+	border-style:none;
+	background-color:#eeeeee;
+
+/*タブUI背景イメージ*/
+
+background-image: url(images/ui/tabOverlay.png);
+}
+
+button.tabControll-xmap {
+	width:128px;
+}
+button.tabControll-xpst {
+	width:116px;
+}
+button.tabControll-end {
+	width:12px;
+}
+
+button.tabControll:hover {
+	color:#ff8080;
+	font-weight:bold;
+}
+
+button.tabControll:disabled {
+	color:#888888;
+}
+
+/*	icon offset positioning 0/12,24
+spacer-left-deactive
+spacer-left-active
+spacer-midd-deactive
+spacer-midd-active-left
+spacer-midd-active-right
+spacer-right-deactive
+spacer-right-active
+
+active
+deactive
+
+*/
+
+.tabControll-left-deactive           { background-position: 0 0px; }
+.tabControll-left-active   			 { background-position: 0 -24px; }
+.tabControll-midd-deactive-overlay   { background-position: 0 -48px; }
+.tabControll-midd-deactive           { background-position: 0 -72px; }
+.tabControll-midd-active             { background-position: 0 -96px; }
+.tabControll-end-deactive            { background-position: 0 -120px; }
+.tabControll-end-active              { background-position: 0 -144px; }
+
+div.tabSelector	{
+	background-color:#eeeeee;
+}
+div#tabSelector-base.tabSelector	{
+	background-color:#888888;
+	border-top:4px solid #888888;
+}
+
 
 /*		UI　AEキー　コンバートスイッチ
 */
 input.aekConvert {
-	display:none;
+	width:72px;
+	text-align:center;
 }
 /*		UI　入力エリア
 */
+div.iNputhEader{
+	position:relative;
+	outline:none;
+	text-align:left;
+	width:100%;
+	height:32px;
+	border-style:none;
+	background-color:none;
+	font-size:14px;
+	margin-left:7em;
+	padding-left:6em;
+}
+div.iNputhEader:hover{
+	text-align:left;
+	border-style:solid;
+	border-width:1px;
+	background-color:snow;
+}
+button#edchg {
+	display:inline;
+	position:absolute;
+	width:5em;
+	height:20px;
+	z-index:3;
+	text-align:center;
+	vertical-align:middle;
+	border-style:solid;
+	margin: 8px 0px 4px 4px;
+	border-width:1px;
+   /* 角丸 */
+    -moz-border-radius: 4px;
+    -webkit-border-radius: 4px;
+    border-radius: 4px;	
+}
+
 input.iNputbOx {
-	text-align:right;
-	width:9em;
+	outline:none;
+	text-align:left;
+	width:75%;
+	border-style:solid;
+	border-width:1px;
+	border-color:black;
+	background-color:#ffffff;
+	font-size:14px;
+	margin:4px 0 4px 6em;
+	padding:4px 0px 4px 6px;
+}
+input.iNputbOx :focus{
+	border-style:solid;
+	border-width:1px;
 }
 /*		UI　サブコントロール
 	height:12px(1px overlap)
@@ -742,7 +899,6 @@ span.subControl_TC {
 	height:24px;
 	width:64px;
 	left:64px;
-	vertical-align:middle;
 }
 span.subControl_XTC {
 	position:relative;
@@ -765,7 +921,6 @@ button.subControl {
 	height:12px;
 	background-color:#666666;
 	border-width:1px;
-
 /*アイコンイメージ*/
 	background-image: url(images/ui/subControlButtons.png);
 }
@@ -802,18 +957,25 @@ button.subControl:disabled {
 
 input.spinCtl {
 	width:48px;
+	height:16px;
 	margin: 0;
-    text-align:center;
-    border:1px solid #888;
-    margin-right:20px;
+	padding:0;
+	text-align:center;
+	vertical-align:middle;
+	border:1px solid #888;
 }
 button.spinCtl {
+	width:20px;
+	height:18px;
 	margin: 0;
-    font-size:6px;
-    text-align:center;
-    padding:0;
-    border:1px solid #888;
-	position:absolute;
+	font-size:12px;
+	text-align:center;
+	vertical-align:middle;
+	padding:0;
+	border:1px solid #888;
+	position:relative;
+	background-color:gray;
+	color:white;
 }
 /*
     background-image:-moz-linear-gradient(top,#fff 0%,
@@ -837,10 +999,28 @@ button.spinCtl-bottom {
     border-radius: 0 0 4px 4px;
 
 }
+button.spinCtl-left {
+	left:0;top:0;
+	margin: 0;
+   /* 角丸 */
+    -moz-border-radius: 4px 0 0 4px;
+    -webkit-border-radius: 4px 0 0 4px;
+    border-radius: 4px 0 0 4px;
+}
+button.spinCtl-right {
+	left:0;top:0;
+	margin: 0;
+   /* 角丸 */
+    -moz-border-radius: 0 4px 4px 0;
+    -webkit-border-radius: 0 4px 4px 0;
+    border-radius: 0 4px 4px 0;
+
+}
 
 /**
  * .timeControlButton
  */
+
 .timeControl {
 	margin: 2px 62px 2px 0;
 }
@@ -908,18 +1088,18 @@ button.subControl {
     -webkit-border-radius: 0 0 3px 0;
     border-radius: 0 0 3px 0;
  }
-/*========== ページヘッダーエリア包括 ============
+ /*========== ページヘッダーエリア包括 ============
 	値取得の簡略化のためこの要素のheightは、
 	この配下の二つのテーブルの合算を設定しておくこと
  */
 .headerArea {
+	display:none;
 	width:1058px;
 	height:318px;
+	padding-left:16px;
  }
-/*========== ページヘッダーテーブル ============
- 	第一ページのみシートヘッダとなる
- */
-table.pageHeader , .sheetHeader {
+ /*========== ページヘッダーテーブル ============*/
+table.pageHeader,.sheetHeader {
 	width:1058px;
 	height:68px;
 	margin:0;
@@ -946,28 +1126,18 @@ table.sheetHeaderMargin {
 	border-width:0;
 }
 td.memoSpace {
-	border-style:none;
 	border-width:0;
 	text-align:left;
+	width:1058px;
 	height:250px;
 	vertical-align:top;
 	line-height:1.5;
 }
+
 /*	ツールボックスの部品*/
 input.toolTip	{
+	height:15pt;
 	width:100%;
-}
-/*		UI.表示プロパティ
-
-*/
-div.optionPanel{
-	display:none;
-}
-div.optionPanelModal{
-	display:none;
-}
-div.optionPanelFloat{
-	display:none;
 }
 /*	タイムシートの罫線
 	タイムシートセルは以下の分類でスタイルを設定している
@@ -983,10 +1153,10 @@ div.optionPanelFloat{
 /*タイムセパレータライン*/
 /*		左端*/
 .ltSep,.ltSep_Blank {
-	color:gray;
 	text-align:right;
 	border-style:solid;
 	vertical-align:bottom;
+	height:16px;
 	border-width:0 1px 3px 1px;
 }
 /*		通常データ*/
@@ -1001,11 +1171,11 @@ div.optionPanelFloat{
 /*サブセパレータライン*/
 /*		左端*/
 .lsSep,.lsSep_Blank {
-	color:gray;
 	text-align:right;
 	border-style:solid;
 	vertical-align:bottom;
-		border-width:0 1px 2px 1px;
+	height:16px;
+	border-width:0 1px 2px 1px;
 }
 /*		通常データ*/
 .nsSep,.nsSep_Blank {
@@ -1019,23 +1189,20 @@ div.optionPanelFloat{
 /*通常ライン*/
 /*		左端*/
 .lnSep,.lnSep_Blank {
-	color:gray;
 	text-align:right;
 	border-style:solid;
 	vertical-align:bottom;
+	height:16px;
 	border-width:0 1px 1px 1px;
-	height:5px;
 }
 /*		参照データ*/
 .ref {
-		color:gray;
+	color:gray;
 }
 .rnSep,.rnSep_Blank {
-			border-width:0 1px 1px 0;
-			color:gray;
+		border-width:0 1px 1px 0;
 }
 th.rnArea{
-		color:gray;
 		border-width:2px 1px 0 0;
 		width:144px;
 		padding:0;
@@ -1050,7 +1217,6 @@ th.rnArea{
 
 
 th.editArea ,th.camArea{
-		color:gray;
 		border-width:2px 1px 0 0;
 		padding:0;
 		font-size:10px;
@@ -1064,14 +1230,22 @@ th.editArea ,th.camArea{
 		border-width:0 1px 0 0;
 		width:36px;
 }
+
 .soundbody{
         font-weight:9;
 }
+/*
+    display:inline-block;
+	writing-mode: vertical-lr;
+	-ms-writing-mode: tb-lr;
+	-webkit-writing-mode:vertical-lr;
+	text-orientation: mixed;
+*/
 /*	カラムセパレータ	*/
 td.colSep {
 	border-style:none;
-	height:1px;
-	width:11px;
+	height:2px;
+	width:6px;
 }
 /*	border-width:1px 1px 1px 1px; */
 /*エンドセパレータ（未使用）*/
@@ -1094,39 +1268,89 @@ td.colSep {
 /*======================================================
 /*	タイムシート上の入力ボックス	*/
 .IptBox {
-	display:none;
+	background-color:#ffffff;
+	height:10pt;
+	border-width:0;
+	border-style:none;
+	text-align:center;
+	margin:0;
+	padding:0;
 }
 /*	ページノンブル	*/
 .pgNm {
-	display:none;
+	font-size:9pt;
 }
+
 .infoTable {
-	display:none;
+	width:100%;
+	text-align:center;
 }
 .sheet-header {
 	z-index:auto;
 }
 .headerTool {
-	display:none;
+	padding:0 0 0 8px;
+	width:100%;
+	top:64px;
+	z-index: 7;
+}
+.XpstHeaderTool {
+	padding:0 0 0 8px;
+	width:100%;
+	top:64px;
+	z-index: 7;
 }
 .footerTool {
-	display:none;
+	padding:0 0 0 8px;
+	width:100%;
+	top:0;
+	margin:0;
 }
+
 .screenSpace{
-	display:none;
+	width:97%;height:10px;
 }
 .printPageStatus {
+	display:none;
 	text-align:right;
+	width:1058px;
 }
 .printSpace {
-	width:100%;
-	height:170px;
+	display:inline;
 }
 
 /*form view*/
 
 input	{text-align:center;}
 select	{text-align:center;}
+
+select.historySelect {
+    outline:none;
+    text-indent: 0.01px;
+    text-overflow: '';
+    background: none transparent;
+    vertical-align: middle;
+    font-size: inherit;
+    color: inherit;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+}
+select option{
+  background-color: #fff;
+  color: #333;
+}
+select::-ms-expand {
+  display: none;
+}
+select:-moz-focusring { 
+  color: transparent; 
+  text-shadow: 0 0 0 #828c9a;
+}
+
+select.historySelect:hover		{color:red;background-color:snow}
+select.historySelect:active		{color:gray;background-color:snow}
+select.historySelect:focus		{color:#880000;background-color:snow}
 /*
  * {
   margin: 0; padding: 0;
@@ -1138,18 +1362,14 @@ select	{text-align:center;}
   margin:0;
  }
 	*/
+ #sheet_view {
+ 	margin:0;
+ }
 
 /*タイムシートの文字飾り (例)*/
 .v_bar	{color:blue;border-style:solid;border-color:blue;border-width:0 1px 0 0;padding:0;margin:0;}
-.v_wave	{height:11px;padding:0;margin:0;}
+.v_wave	{ height:11px;padding:0;margin:0;}
 line  {margin:0;padding:0;}
-.rotate {
-	display: inline-block;     /* インラインブロック化 */
-	-webkit-transform-origin: 50% 50%; /* Chrome,Safari */
-	-ms-transform-origin:     50% 50%; /* IE */
-	transform-origin:         50% 50%; /* CSS3 */
-	transform: rotate( 90deg );
-}
 /* */
 td#title {
 	font-weight:900;
@@ -1158,17 +1378,16 @@ td#scene_cut {
 	font-weight:900;
 }
 
-/*
-その他のエレメントid は、ソースを直接読むか、取扱説明書をご覧ください。
-	border-color:snow;
-*/
+
 div.application_status {
 	z-index:88;
 	border-style:solid;
-	border-width:0 0 1px 0;
+	border-color:snow;
+	border-width:0 ;
 	padding:0 0 0 16px 
 }
-/*	オプションパネル
+/*
+	オプションパネル
 */
 div.optionPanel{
 	display:none;
@@ -1230,19 +1449,41 @@ a.close img{
 }
 /*ログインパネル*/
 #optionPanelLogin{
+	width:100%;
     display:none;
 }
 /*ソフトウェアキーボード*/
 #optionPanelTbx {
     display:none;
-    position:absolute;
     top:64px;
     left:120px;
     width:660px;
-    height:165px;
+    height:210px;
+}
+
+.tBSelector {
+    height:9em;
+    width:7em;
+    text-align:center;
+    font-size:12pt;
 }
 #formTbx {
-	padding-left:8px;
+    padding-left:8px;
+}
+.skb_key {
+    height:1.75em;
+    width:2.75em;
+    background-color:#eeeeee;
+}
+.skb_key_func {
+    background-color:#dddddd;
+}
+.skb_key_m {
+    width:4em;
+}
+.skb_key_w {
+    width:5em;
+    background-color:#cccccc;
 }
 /*音響フローティングパネル*/
 #optionPanelSnd {
@@ -1321,7 +1562,14 @@ a.close img{
 	背景表示アンダーレイ
  */
 div#underlay {
-	display:none;
+	opacity:.125;
+	float:right;
+	right:0px;
+	bottom:0px;
+	background-blend-mode: normal; 
+	overflow:hidden;
+    position:fixed;
+	pointer-events: none;	
 }
 /**
 	参照用画像オーバーレイ
@@ -1529,24 +1777,76 @@ hr.dialog_border {
 /*---------------- ドロップダウンメニュー*/
 
 #pMenu div{
+  z-index:8;
   display:none;
+  margin:0;
 }
 
 #pMenu li {
-  display:none;
+  position: relative;
+  float: left;
+  margin: 0;
+  padding: 0;
+  width: 72px;
+  height: 16px;
+  border: solid 1px #ccc;
+  font-weight: bold;
+  list-style-type: none;
+}
+#pMenu li:hover {
+  color: #fff;
+  background: #333;
+  z-index: 9;
 }
 #pMenu li ul {
   display: none;
+  position: absolute;
+  top: 16px;
+  left: -1px;
+  padding: 5px;
+  width: 150px;
+  background: #eee;
+  border: solid 1px #ccc;
 }
 #pMenu li ul li {
-  display:none;
+  margin: 0;
+  padding: 0;
+  width: 150px;
+  border: none;
 }
 #pMenu li ul li a {
-  display: none;
+  display: inline-block;
+  width: 150px;
+  height: 20px;
+}
+#pMenu li ul li a:hover {
+  background: #999;
+  color: #fff;
 }
 
 #pMenu li ul{
 	display:none;
+	position:absolute;
+}
+
+.pM {
+	color: #666;
+}
+
+.pM-alt {
+	coror:AAA;
+	display:none;
+}
+
+/**
+モーダルダイアログ内のフォーム
+*/
+.mdInputText {
+	width:50%;
+}
+.mdInputArea {
+	width:100%;
+	height: 192px;
 }
 
 input{
@@ -1561,7 +1861,7 @@ transform-origin: 0 0;transform:scale(1,1);
 */
  .custom-combobox {
     position: relative;
-    display: none;
+    display: inline-block;
   }
   .custom-combobox-toggle {
     position: absolute;
@@ -1577,7 +1877,7 @@ transform-origin: 0 0;transform:scale(1,1);
 /**
 	　jQuery-ui　tooltip
 */
- .ui-tooltip {	display: none;}
+ .ui-tooltip {	font-size: 10px;}
 
 /**
 	cellGraphicLayer
@@ -1594,23 +1894,28 @@ transform-origin: 0 0;transform:scale(1,1);
 	データトレーラー
 	startupXPS
 	referenceXPS
-	必ず非表示
 */
- #startupXPS,#referenceXPS {
- 	display:none;
+ #startupXPS, #referenceXPS {
+ 	width:75%;
+ 	height:128px;
  }
  #startupContent,#startupReference {
  	display:none;
  }
-
  /**
 	.pmcui
 */
 #pmui	{
-	diaplay:none;
+	padding:0 0 0 0px;
+	float:left;
+	width:100%;
 }
 .pmcui	{
-	display:none;
+	margin-top:8px;
+	background-color:#bbbbdd;
+	color:#666688;
+	border-width:1px;
+	border-style:inset;
 }
 span.pmcui_ {
 		font-style:strong;
@@ -1618,7 +1923,16 @@ span.pmcui_ {
 /* document status overlay*/
 
 div.documentStatusOverlay {
-	display:none;
+	position :absolute;
+	width : 100% ;
+	top: 300px;
+	text-align: center;
+	z-index: 5;
+	color:red;
+	font-size:64px;
+	mix-blend-mode: multiply;
+	opacity:0.25;
+	pointer-events: none;
 }
 /* document selector status*/
 
@@ -1733,14 +2047,56 @@ div.documentStatusOverlay {
 }
 	
 .contextMenu {
+	overflow:hidden;
+}
+.cM {
+	color: #666;
+}
+
+.cM-alt {
+	coror:AAA;
 	display:none;
 }
+
 /*
-	ストップウオッチバー
+    ストップウオッチ UI
 */
 #optionPanelTimer {
 	color:#22dd22;
-	background-color:#222222;
+	background-color:#444444;
+	height:32px;
+    min-width:240px;
+	vertical-align:middle;
+}
+#timerDisplay {
+    color:#22dd22;
+    background-color:#444444;
+    font-family: Consolas, "Liberation Mono", Menlo, Courier, monospace;
+    font-size:18px;
+    min-width : 12em;
+    border-style:solid;
+    border-width:1px;
+    border-color:#228822;
+    padding:2px;
+    margin:2px;
+}
+.timerButton {
+	color :#222222;
+	background-color:#888888;
+	border-style:solid;
+	border-width:0;
+	height:27px;
+  /* 角丸 */
+    -moz-border-radius: 3px ;
+    -webkit-border-radius: 3px;
+    border-radius: 3px;
+}
+.timerButton-sq {
+	height:16px;
+	width:16px;
+}
+.timerButton-wide {
+	width:27px;
 }
 
 /*
@@ -1779,6 +2135,7 @@ div.documentStatusOverlay {
 	height:110px;
 }
 .overlayLabel{
+  	background-color:#efefef;
   	border-style:solid;
   	border-width:1px;
   	border-color:#d0d0d0;
@@ -1789,5 +2146,123 @@ div.documentStatusOverlay {
     -moz-border-radius: 3px ;
     -webkit-border-radius: 3px;
     border-radius: 3px;
-	
+}
+
+
+/*
+	トグルスイッチCSS
+ */
+.switch__label {
+    width: 50px;
+    position: relative;
+	vertical-align:middle;
+    display: inline-block;
+}
+.switch__content {
+    display: block;
+    cursor: pointer;
+    position: relative;
+	vertical-align:middle;
+    border-radius: 3px;
+    height: 24px;
+    overflow: hidden;
+}
+.switch__content:before {
+    content: "";
+    display: block;
+    position: absolute;
+    width: calc(100% - 2px);
+    height: calc(100% - 2px);
+    top: 0;
+    left: 0;
+    border: 1px solid #bbbbbb;
+    border-radius: 3px;
+    background-color: #eee;
+}
+.switch__content:after {
+    content: "";
+    display: block;
+    position: absolute;
+    background-color: transparent;
+    width: 0;
+    height: 0;
+    top: 50%;
+    left: 50%;
+    border-radius: 3px;
+}
+.switch__input {
+    display: none;
+}
+.switch__slider {
+    display: block;
+    top: 2px;
+    left: 2px;
+    position: absolute;
+	vertical-align:middle;
+	text-align:center;
+    border: 1px solid #888888;
+    width: 27px;
+    height: 18px;
+    -webkit-border-radius: 3px;
+            border-radius: 3px;
+    background-color: #eeeeee;
+}
+.switch__input:checked ~ .switch__slider {
+	color : #888888;
+    left  : 21px;
+}
+.switch__input:checked ~ .switch__content:after {
+    background-color: #cccccc;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+}
+/*	３値トグルとして*/
+
+	input[type=range]::-webkit-slider-runnable-track {
+		width: 100%;
+		height: 22px;
+		background: transparent;
+		border: 0 px none;
+		border-radius: 3px;
+		cursor: pointer;
+	}
+
+	input[type=range]::-webkit-slider-thumb {
+		width: 27px;
+		height: 20px;
+		margin-top: 2px;
+		border: 0px none ;
+		border-radius: 3px;
+		background: transparent;
+		cursor: pointer;
+		-webkit-appearance: none;
+	}
+
+	input[type=range].on::-webkit-slider-runnable-track {
+		background: rgb(45, 252, 73);
+	}
+#iptChange  {
+	-webkit-appearance: none;
+	width: 72px;
+	margin: 0;
+    border: 1px solid #bbbbbb;
+    border-radius: 3px;
+    background-color: #ccc;
+}
+.switch__slider_tryval {
+    display: block;
+    top: 2px;
+    left: 1px;
+    position: absolute;
+	vertical-align:middle;
+	text-align:center;
+    width: 27px;
+    height: 18px;
+	color:#888888;
+	border: 1px solid #888888;
+    border-radius: 3px;
+    background-color: #eeeeee;
+	pointer-events: none;
 }

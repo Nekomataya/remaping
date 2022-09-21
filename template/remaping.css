@@ -1022,15 +1022,27 @@ button.subControl {
 	この配下の二つのテーブルの合算を設定しておくこと
  */
 .headerArea {
+	display:none;
 	width:1058px;
 	height:318px;
  }
  /*========== ページヘッダーテーブル ============*/
 table.pageHeader,.sheetHeader {
 	display:none;
+	width:1058px;
+	height:68px;
+	margin:0;
+	border-style:solid;
+	border-width:1px 1px 1px 1px;
+	border-color:#bbbbbb;
 }
 td.pgHeader {
 	display:none;
+	height:38px;
+	margin:0;
+	border-width:0;
+	border-style:none;
+	font-size:16pt;
 }
 /*========== シートヘッダーマージン ============
 	メモ領域をとるマージン
@@ -1038,6 +1050,11 @@ td.pgHeader {
 */
 table.sheetHeaderMargin {
 	display:none;
+	width:1058px;
+	height:250px;
+	margin:0;
+	border-style:none;
+	border-width:0;
 }
 td.memoSpace {
 	border-style:none;

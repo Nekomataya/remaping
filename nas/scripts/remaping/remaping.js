@@ -39,7 +39,7 @@ function new_xUI(){
 {en: "009:Unexpected error" ,ja: "009:想定外エラー"}
 ];//    -localized
 
-//------- UIオブジェクト初期化前の未定義参照エラーを回避するためのダミーメソッド
+//------- UIオブジェクト初期化前の未定義参照エラーを回避するためのダミーメソッド抜き
     xUI.flipContextMenu=function(evt){return true;};
     xUI.Mouse=function(evt){return true;};
     xUI.Touch=function(evt){return true;};
@@ -1106,8 +1106,8 @@ console.log(xUI.yankBuf);
                 //選択位置・常にいずれかをセレクト
     this.Selection    =[0, 0];
                 //選択範囲・ベクトル正方向=右・下
+    return this;
 };
-
 //    xUIオブジェクト初期化終了 以下メソッド
 //
 /* ============================================================================ */
@@ -1454,7 +1454,7 @@ xUI.setToolView = function(toolView){
     if(typeof this.toolView =='undefined') this.toolView = currentView;
     switch (toolView) {
     case 'full'   :toolView = '110111111001';break;
-    case 'minimum':toolView = '000000100000';break;
+    case 'minimum':toolView = '000000110000';break;
     case 'default':toolView = '110001110001';break;
     case 'compact':toolView = '010000110000';break;
     default:   
@@ -1480,7 +1480,7 @@ xUI.setToolView = function(toolView){
     if(toolView != currentView){
 //UI表示状態設定
     if(xUI.restriction){
-         toolView = ("000000000000"+((parseInt(toolView,2) & parseInt("111111101111",2)).toString(2))).slice(-UIViewIdList.length);
+         toolView = ("000000000000"+((parseInt(toolView,2) & parseInt("111111111111",2)).toString(2))).slice(-UIViewIdList.length);
       }
     for (var ix=0;ix<UIViewIdList.length;ix++){
         var myTgt=$("#"+UIViewIdList[ix]);
@@ -1801,24 +1801,25 @@ xUI.ipChg=function(newMode){
 };
 // */
 
-/*    xUI.edChg(status boolean)
-    セル編集フラグ 切り替えと同時に表示を調整
-*/
+/**
+ *  @params {Boolean}   status
+ *    セル編集フラグ 切り替えと同時に表示を調整
+ */
 xUI.edChg=function(status,opt){
     if(this.viewOnly) return xUI.headerFlash('#bb8080');
     this.edchg=status;
-    document.getElementById("edchg").style.backgroundColor=
-    (this.edchg)?
-    this.editingColor:"";//表示
+    if(document.getElementById("edchg")) document.getElementById("edchg").style.backgroundColor = (this.edchg)? this.editingColor:"";//表示
 };
 //
-/*xUI.mdChg(myModes,opt)
-引数:
-    myModes    モードを数値または文字列で指定  数値で格納
-    opt    オプション引数
-    編集モードを変更してカラーをアップデートする
-    リフレッシュつき
-*/
+/*
+ *  @paramas {Number|String} myModes
+ *  @params  {Object any} opt
+ *
+ *    myModes    モードを数値または文字列で指定  数値で格納
+ *    opt    オプション引数
+ *    編集モードを変更してカラーをアップデートする
+ *    リフレッシュつき
+ */
 xUI.mdChg=function(myModes,opt){
             //編集操作モード  0:通常入力  1:ブロック移動  2:区間編集  3:領域フロート状態
     if(typeof myModes == "undefined") myModes="normal";
@@ -2443,6 +2444,7 @@ xUI.shiftScreen(50,50);
     引数なし
  */
 xUI.adjustSpacer=function(){
+if(! document.getElementById('fixedHeader')) return;
     var headHeight=(this.viewMode=="Compact")? $("#app_status").offset().top-$("#pMenu").offset().top:document.getElementById("fixedHeader").clientHeight;
 //    var myOffset=(this.viewMode=="Compact")? $("#app_status").offset().top-headHeight:0;
     var myOffset=0;
@@ -2563,13 +2565,17 @@ xUI.setReferenceXPS=function(myXps){
     trTdから分離して機能調整
     判定されたグラフィック状態はクラスとしてセルに追加される
     描画は遅延処理
+    シートマーカー判定を追加
 */
 xUI.drawSheetCell = function (myElement){
     if(typeof myElement =="undefined"){return false;}
     var target=myElement;
     var targetJQ=$("#"+target.id);
     var formPostfix='';
-
+    var marker = null;
+    if(target.children.endMarker){
+        marker = target.children.endMarker;
+    }
     if(this.showGraphic){
         var tgtID=target.id.split("_").reverse();
         var myXps=(tgtID.length==2)? this.XPS:this.referenceXPS;
@@ -2773,15 +2779,19 @@ if(! mySection) console.log(myElement);
                 sectionDraw = true;
             }
           break;
+          case "comment":;
+              myStr = xUI.trTd(myStr);
+          break;
     }
     target.innerHTML=myStr;
-if(this.showGraphic){    
-    if((sectionDraw)&&(drawForm)){        
-        xUI.Cgl.sectionDraw([tgtID[1],mySection.startOffset()].join("_"),drawForm,mySection.duration);
-    }else{
-        if(drawForm) targetJQ.addClass('graph_'+drawForm+formPostfix);
+    if(this.showGraphic){    
+        if((sectionDraw)&&(drawForm)){        
+            xUI.Cgl.sectionDraw([tgtID[1],mySection.startOffset()].join("_"),drawForm,mySection.duration);
+        }else{
+            if(drawForm) targetJQ.addClass('graph_'+drawForm+formPostfix);
+        }
     }
-}
+    if(marker) target.appendChild(marker);
     return myStr;
 }
 }
@@ -2848,13 +2858,17 @@ xUI.getid=function(name){
         return this[name].join("_");
   }
 };
-/*    指定のシートセルを選択状態にしてカレントのカーソル位置を返す
-        xUI.selectCell(HTMLElementID)
-        xUI.selectCell([myTrack,myFrame]);
-引数が配列の場合も受け付ける
-フレームオフセットが加算される
-*/
-xUI.selectCell=function(ID,frameOffset){
+/**
+ *  @params {String|Array} ID
+ *  @params {Number}       frameOffset
+ *    指定のシートセルを選択状態にしてカレントのカーソル位置を返す
+ *        xUI.selectCell(HTMLElementID)
+ *        xUI.selectCell([myTrack,myFrame]);
+ *引数が配列の場合も受け付ける
+ *フレームオフセットが加算される
+ */
+xUI.selectCell = function(ID,frameOffset){
+if(! document.getElementById("fixedHeader")) return this.Select;
 //    if (typeof ID == "undefined") ID = '';//
     if (typeof ID == "undefined") ID = this.selectBackup;//バックアップ位置と換装
     if (typeof frameOffset == "undefined") frameOffset = 0;
@@ -2944,7 +2958,10 @@ if(this.viewMode=="Compact"){
 };
 //
 //
-/*    マルチセレクト
+/**
+    @params {String|Array|Ofject} ID
+    IDは文字列|配列
+    マルチセレクト
         xUI.selection(ID)
         xUI.selection([myTrack,myFrame]);
         現在のカーソル位置からIDまでの範囲を選択状態にする
@@ -2959,26 +2976,28 @@ xUI.selection =function(ID){
 //引数未指定ならクリアのみでリターン
     if((typeof ID=="undefined")||(ID==null)){
         this.Selection=[0 ,0];
-        document.getElementById("edchg").style.backgroundColor="";//ここでUI表示をクリアする
+        if(document.getElementById("edchg")) document.getElementById("edchg").style.backgroundColor="";//ここでUI表示をクリアする
         this.selectionHi("hilite");
         return;
     };
 //ID値から、セレクションの値を導く
 if(!(ID instanceof Array))ID=ID.split("_");
     this.Selection=[parseInt(ID[0])-this.Select[0],parseInt(ID[1])-this.Select[1]];
-
-    document.getElementById("edchg").style.backgroundColor=this.selectingColor;//ここでUIインジケータ表示
+    if(document.getElementById("edchg")) document.getElementById("edchg").style.backgroundColor=this.selectingColor;//ここでUIインジケータ表示
     this.selectionHi("hilite");
 };
 
-/*    選択範囲のハイライト
-        xUI.selectionHi(メソッド)
-        範囲が許容外だった場合は範囲を維持して操作無し
-        メソッドは["hilite","footmark","clear"]
-        モード遷移毎にカラーを変更するのはモードチェンジメソッドで集中処理
-        
-*/
+/**
+ *  @params {String} Method
+ *    選択範囲のハイライト
+ *        xUI.selectionHi(メソッド)
+ *        範囲が許容外だった場合は範囲を維持して操作無し
+ *        メソッドは["hilite","footmark","clear"]
+ *        モード遷移毎にカラーを変更するのはモードチェンジメソッドで集中処理
+ *        印刷モード時はハイライト関連をスキップ
+ */
 xUI.selectionHi    =function(Method){
+if(! document.getElementById("spin_V")) return;
 switch (Method) {
 case    "hilite"    :
                 var paintColor=this.selectionColor;break;
@@ -3036,6 +3055,7 @@ try{
         メソッドは["clear"]またはそれ以外
 */
 xUI.spinHi = function(Method){
+if(! document.getElementById("spin_V")) return;
 //選択ポイントのハイライトおよびスピン範囲のハイライト
     if(! document.getElementById(this.getid("Select"))){if(dbg) dbgPut(this.getid("Select")) ;return;};
     if(Method == "clear") {
@@ -3201,7 +3221,10 @@ if(pageNumber==Pages){
 //第一ページのみシート全体のコメントを書き込む（印刷用）  表示用には別のエレメントを使用
 if(pageNumber==1){
 //シート書き出し部分からコメントを外す 印刷時は必要なので注意 2010/08/21
-    _BODY+='<span class=top_comment ><u>memo:</u>';  
+    _BODY+='<span class=top_comment ><span>sig.</span>';
+    _BODY+='<br><div><br></div><hr>';
+    _BODY+='<br><div><br></div><hr>';
+    _BODY+='<u>note:</u>';
     _BODY+='<span id="transit_dataXXX">';
     if(this.XPS.trin[0]>0){
         _BODY+="△ "+this.XPS.trin[1]+'('+nas.Frm2FCT(this.XPS.trin[0],3,0,this.XPS.framerate)+')';
@@ -3439,6 +3462,7 @@ BODY_ += 'onMouseUp =" return xUI.Mouse(event)"';
 BODY_ += 'onMouseOver =" xUI.Mouse(event)"';
 */
 //alert(tableFixWidth+":"+tableBodyWidth);
+BODY_ +='<div class=sheetArea>';//open sheetArea
 //============= テーブル出力開始
 BODY_ +='<table class=sheet cellspacing=0 ';
     if(pageNumber<=-2){
@@ -3909,18 +3933,48 @@ BODY_ +='</tr>';
 
 BODY_ +='</tbody></table>';
 BODY_ +='\n';
-/*タイムシート記述終了マーカーを配置*/
-if((hasEndMarker)&&(pageNumber==currentPageNumber)){    
-BODY_ +='<div id=endMarker class=endMarker>';
-BODY_ += JSON.stringify([xUI.XPS.xpsTracks.length, xUI.XPS.xpsTracks.duration]);
-BODY_ +='</div>';
+/*タイムシート記述終了マーカーを配置 これはxUIクラスメソッドで配置に変更*/
+//if((hasEndMarker)&&(pageNumber==currentPageNumber)){
+//BODY_ +='<div id=endMarker class=endMarker>';
+//BODY_ += JSON.stringify([xUI.XPS.xpsTracks.length, xUI.XPS.xpsTracks.duration]);
+//BODY_ +='</div>';
 //BODY_ +='<div id=endMarker-print class=endMarker-print>::print-end::';
 //BODY_ +='<br></div>';
- };// */
+//};// */
+BODY_ +='</div>';//close sheetArea//
 BODY_ +='';
     this.Select=restoreValue;
     return BODY_;
 };
+/**
+    @params {Array|Number} endPint
+    @returns {Object HTMLElement}
+     エンドマーカー配置メソッド  placeEndMarker
+    タイムシート記述最終フレームの注釈トラックにタイムシートにオーバーレイする形でマーカーを配置する
+    マーカーはspan要素として シートセルを基準に下方オフセットで置く
+ */
+xUI.replaceEndMarker = async function replaceEndMarker(endPoint){
+//すでにマーカーがあれば削除
+    if(document.getElementById('endMarker')) document.getElementById('endMarker').remove();
+    if (typeof endPoint == 'undefined'){
+        try{
+            var endPoint = [xUI.XPS.xpsTracks.length, xUI.XPS.xpsTracks.duration];
+        }catch(er){return;}
+    };
+    if(!(endPoint instanceof Array)) {endPoint=[xUI.XPS.xpsTracks.length,endPoint]};
+    var endCellLeft  = document.getElementById([0,endPoint[1]-1].join('_'));
+    var endCellRight = document.getElementById([endPoint[0]-1,endPoint[1]-1].join('_'));
+    endCellRight.innerHTML += '<span id=endMarker class=endMarker> :: end ::</span>'
+
+//JQueryの使用をこの部分のみに制限（ここも削除予定）
+    $("#endMarker").css({
+        'top'  :(endCellRight.clientHeight),
+        'left' :(endCellLeft.offsetLeft - endCellRight.offsetLeft ),
+        'width':(endCellRight.offsetLeft + endCellRight.clientWidth - endCellLeft.offsetLeft) 
+    });//offsetParentをシートテーブルと共用してスケールを合わせる*/
+    return document.getElementById('endMarker');
+}
+
 /* エンドマーカー位置調整メソッド  endMarker
     上記で配置したendMarkerの位置を実際の終了フレームの真下に再配置するメソッド
     '#0_'+String(this.XPS.xpsTracks.duration-1);
@@ -3929,27 +3983,49 @@ BODY_ +='';
     [this.XPS.xpsTracks.length-1,this.XPS.xpsTracks.duration-1]
     以下のメソッドは  単独の関数としても利用可能
  */
-xUI.replaceEndMarker = function(endPoint){
+xUI._replaceEndMarker = function(endPoint){
     if(! document.getElementById('endMarker')) return;
     if (typeof endPoint == 'undefined'){
-   try{
-    var endPoint = [xUI.XPS.xpsTracks.length, xUI.XPS.xpsTracks.duration];
-   }catch(er){return;}
-    }
+        try{
+            var endPoint = [xUI.XPS.xpsTracks.length, xUI.XPS.xpsTracks.duration];
+        }catch(er){return;}
+    };
     if(!(endPoint instanceof Array)) {endPoint=[xUI.XPS.xpsTracks.length,endPoint]};
-    var endCellLeft  = $('#'+[0,endPoint[1]-1].join('_'));
-    var endCellRight = $('#'+[endPoint[0]-1,endPoint[1]-1].join('_'));    var parentSheet  = $(document.getElementById('endMarker').parentNode);
-    var topMargin  = $(document.getElementById('fixedHeader')).height();
-    if(xUI.viewMode=='Compact') topMargin -= document.getElementById("app_status").clientHeight;
-    var endCellLeftOffset  = endCellLeft.offset();
-    var endCellRightOffset = endCellRight.offset();
-    var parentOffset   = parentSheet.position();
-    var markerTop    = endCellRightOffset.top + endCellRight.height() - topMargin;
-    var markerLeft   = endCellLeftOffset.left - parentOffset.left;
-    var markerWidth  = endCellRightOffset.left + endCellRight.width() - endCellLeftOffset.left;
-    $("#endMarker").css({'top':markerTop,'left':markerLeft,'width':markerWidth });
+    var endCellLeft  = document.getElementById([0,endPoint[1]-1].join('_'));
+    var endCellRight = document.getElementById([endPoint[0]-1,endPoint[1]-1].join('_'));
+    var parentSheet  = document.getElementById('endMarker').parentNode;
+//document.getElementById('endMarker').offsetParent === document.getElementById('0_0').offsetParent.offsetParent
+    var topOffset    = endCellLeft.offsetParent.offsetTop;
+    var leftOffset   = endCellLeft.offsetParent.offsetLeft;
+    var scale = [1,1];
+    if(endCellLeft.offsetParent.style.transform.match(/scale\((.+)\)/)){
+        scale = Array.from((RegExp.$1).split(','),parseFloat);
+console.log('sheet scale :' + scale.join(','));
+    };
+    var canvasOffsetTop  = parentSheet.offsetTop;
+    var canvasOffsetLeft = parentSheet.offsetLeft;
+//JQueryの使用をこの部分のみに制限（ここも削除予定）
+    $("#endMarker").css({
+        'top'  :(endCellLeft.offsetTop  + endCellLeft.clientHeight) + topOffset + canvasOffsetTop,
+        'left' :(endCellLeft.offsetLeft ) + leftOffset + canvasOffsetLeft,
+        'width':(endCellRight.offsetLeft + endCellRight.clientWidth - endCellLeft.offsetLeft) 
+    });//offsetParentをシートテーブルと共用してスケールを合わせる*/
+/*    $("#endMarker").css({
+        'top'  :(endCellLeft.offsetTop  + endCellLeft.clientHeight) * scale[1] + topOffset ,
+        'left' :(endCellLeft.offsetLeft) * scale[0] + leftOffset,
+        'width':(endCellRight.offsetLeft + endCellRight.clientWidth - endCellLeft.offsetLeft)*scale[0] 
+    });//スケーリング */
+/*    $("#endMarker").css({
+        'top'  :(endCellLeft.offsetTop  + endCellLeft.clientHeight) + topOffset ,
+        'left' :(endCellLeft.offsetLeft) + leftOffset,
+        'width':(endCellRight.offsetLeft + endCellRight.clientWidth - endCellLeft.offsetLeft), 
+        'transform': "scale("+scale.join(",")+")",
+        'transform-origin': -(document.getElementById('endMarker').offsetTop) + 'px -' + (document.getElementById('endMarker').offsetLeft) +'px'
+    });//*/
+
     document.getElementById("endMarker").innerHTML = ':: end ::';
 }
+
 //
 //本体シートの表示を折り畳む（トグル）
 xUI.packColumn=function(ID){
@@ -4829,12 +4905,19 @@ if(dbg){    dbgPut(    "UNDO stack add:\n"+UNDO.join("\n")); }
 return [[TrackStartAddress,FrameStartAddress],lastAddress];
 //処理終了時に記述修飾の同期を行う場合は、リターンの前に処理を行う
 };
-/*xUI.syncSheetCell(startAddress,endAddress,isReference)
-    指定されたレンジのシートセルの内容を更新
-    指定がない場合は、シート全て
-    アドレス一致の場合は、一コマのみ
-*/
-xUI.syncSheetCell=function(startAddress,endAddress,isReference){
+/**
+ *    @params {Array}    startAddress
+ *    @params {Array}    endAddress
+ *    @params {Boolean}  isReference
+ *    @params {Function} callback
+ *    @return {Array}
+ *xUI.syncSheetCell(startAddress,endAddress,isReference)
+ *    指定されたレンジのシートセルの内容を更新
+ *    指定がない場合は、シート全て
+ *    アドレス一致の場合は、一コマのみ
+ *      戻り値は処理した範囲配列 [startAddress,endAddress]
+ */
+xUI.syncSheetCell = async function syncSheetCell(startAddress,endAddress,isReference,callback){
     if(this.activeDocument.undoBuffer.skipCt > 0) {this.activeDocument.undoBuffer.skipCt --;return;};//?
     var targetXps=(isReference)? this.referenceXPS:this.XPS;
     if((! startAddress)||(! endAddress)){
@@ -4882,7 +4965,8 @@ if((r>=0)&&(r<targetXps.xpsTracks.length)&&(f>=0)&&(f<targetXps.xpsTracks.durati
 }
         };
     };
-    setTimeout(function(){xUI.Cgl.refresh([startAddress,endAddress],isReference)},0);//非同期処理
+    return await xUI.Cgl.refresh([startAddress,endAddress],isReference,callback);//非同期処理
+//    return [startAddress,endAddress];
 }
 //syncSheetCell シートセルの表示を編集内容に同期させる  
 /**
@@ -5005,6 +5089,17 @@ case	79 :		;	//[ctrl]+[O]/ Open Document
 		    this.openDocument("localFile");
 		}else{
 		    this.openDocument();
+		}
+		return false;
+	}
+	return true;
+	break;
+case	80 :		;	//[ctrl]+[P]/ Open PrintPage
+	if ((e.ctrlKey)||(e.metaKey)) {
+		 if(e.shiftKey){
+		    printHTML("localFile");
+		}else{
+		    printHTML();
 		}
 		return false;
 	}
@@ -5615,6 +5710,7 @@ default :;
     キーアップをキャプチャ。UI制御に必要 今のところは使ってない?
 */
 xUI.keyUp = function (e){
+console.log(e.keyCode);
 	if(xUI.player.keyboard){
 		if(xUI.player.markSwap){
 			if((e.keyCode == 32)&&(xUI.player.status=='run')) xUI.player.getCount=false;
@@ -6733,15 +6829,20 @@ xUI.Cgl.init=function(){
     for (var prp in this.body){
         $("#cgl"+prp).remove();
         delete this.body[prp];
-    }
+    };
 }
-/*
-    範囲を指定してグラフィック部品を再描画するラッパ関数
-    レンジの書式はXpsの戻すレンジに準ずる
-    [[開始トラック,開始フレーム],[終了トラック,終了フレーム]]
-    リファレンスフラグが無い場合は編集対象のXPSを処理する
-*/
-xUI.Cgl.refresh=function(myRange,isReference){
+/**
+ *    @params {Array}     myRange
+ *    @params {Boolean}   isReference
+ *    @params {Function}  callback
+ *    @return {Array}
+ *    範囲を指定してグラフィック部品を再描画するラッパ関数
+ *    レンジの書式はXpsの戻すレンジに準ずる
+ *    [[開始トラック,開始フレーム],[終了トラック,終了フレーム]]
+ *    リファレンスフラグが無い場合は編集対象のXPSを処理する
+ 
+ */
+xUI.Cgl.refresh = async function(myRange,isReference,callback){
     if (typeof myRange == "undefined") {
         myRange = [[0, 0], [xUI.XPS.xpsTracks.length - 1, xUI.XPS.xpsTracks[0].length - 1]]
     }//指定がなければ全体を更新 印刷時は明確に範囲を指定する必要あり？
@@ -6755,9 +6856,9 @@ xUI.Cgl.refresh=function(myRange,isReference){
         for (var f = StartAddress[1]; f <= EndAddress[1]; f++){
             this.draw(idPrefix+[t,f].join('_'));
         }
-    }
-
-    
+    };
+    if(callback instanceof Function) callback();
+    return myRange;
 }
 /**
 	セル画像部品描画コマンド
@@ -7125,16 +7226,17 @@ xUI.setRetrace = function(){
 
 */
 /**
+ *  @params {Object Xps} editXps
+ *      主ターゲットXps　省略可
+ *  @params {Object Xps} referenceXps
+ *      参照ターゲットXpa  省略可
+ *
  *  xUIにターゲットオブジェクトを与えてシートをリセットする関数<pre>
  *  初期化手順を用いていた部分の置換え用途で作成
  *  初期化手順内でもこの手続を呼び出すように変更
  *  この手続内では基本的にundo処理は行わない
  *  したがって必要に従ってこの手続を呼ぶ前にundoの初期化を行うか、またはundo操作を行う必要がある。
  *  引数省略時は画面のリフレッシュのみを行う。</pre>
- *  @params {Object Xps} editXps
- *      主ターゲットXps　省略可
- *  @params {Object Xps} referenceXps
- *      参照ターゲットXpa  省略可
  */
 xUI.resetSheet=function(editXps,referenceXps){
 //  現在のカーソル配置をバックアップ
@@ -7217,12 +7319,13 @@ xUI.resetSheet=function(editXps,referenceXps){
         SheetBody += '</div>';
     }else{
 //ノーマルモード  コンパクトUI用のラベルヘッダーを隠す
-        document.getElementById("UIheader").style.display="none";
+        if(document.getElementById("UIheader")) document.getElementById("UIheader").style.display="none";
         var SheetBody='';
         for (Page=1 ;Page <=Math.ceil(XPS.duration()/this.PageLength);Page++){
             SheetBody += '<div id=printPg'+String(Page) +' class=printPage>';
+            SheetBody += '<div class=headerArea id=pg'+String(Page)+'Header>';
             SheetBody += this.headerView(Page);
-            SheetBody += ' <span class=pgNm>( p '+nas.Zf(Page,3)+' )</span><br>';
+            SheetBody += '</div><span class=pgNm>( p '+nas.Zf(Page,3)+' )</span><br>';
             SheetBody += this.pageView(Page);
             SheetBody += '</div>';
         };
@@ -7320,13 +7423,39 @@ xUI.resetSheet=function(editXps,referenceXps){
 印刷画面は印刷画面出力時に再度同メソッドで調整  トラック間の
 xUI.replaceEndMarker([トラック数,フレーム数],上下オフセットpx);
  */
+console.log('endmarker');
     xUI.replaceEndMarker(xUI.XPS.xpsTracks.duration);
 if(! Refstatus) xUI.flipRefColumns('hide');
 
     return ;
 };
 
-//test-    xUI.reset(new Xps(3,24),new Xps(5,72));
+//test-    xUI.resetSheet(new Xps(3,24),new Xps(5,72));
+/**
+ *   @params {Number} page
+ *   指定のドキュメントページを表示する（指定以外のページを隠す）
+ *   存在しないページが指定された場合はすべてのページを表示する
+ */
+xUI.showPage = function showPage(page){
+	if (xUI.XPS instanceof Xps){
+		var pgStart = 1;
+		var pgEnd   = Math.ceil(XPS.duration()/xUI.PageLength);
+		if((page > 0)&&(page <= pgEnd)){
+			for (var pg = pgStart ;pg <= pgEnd ;pg++){
+				if(pg == page){
+					$('#printPg'+String(pg)).show();
+				}else{
+					$('#printPg'+String(pg)).hide();
+				};
+			};
+		}else{
+			for (var pg = pgStart ;pg <= pgEnd ;pg++){
+				$('#printPg'+String(pg)).show();
+			};
+		};
+	};
+	xUI.replaceEndMarker();
+}
 
 /**
     tcサブコントロールに設定してターゲット要素の値を編集する関数
@@ -7640,62 +7769,100 @@ if((NameCheck)||(myName=="")){
     startupTaskController();
 };
 /**
-    印字用HTMLスタートアップ  （スタートアップのサブセット)
-
-
-
-
+    @params {String}   mode
+    自動処理 "print"||"png"|| other
+    @params {String}   form
+    ページ処理モード "action"|| other
+    @params {Number}   page
+    指定ページ番号
+    @parmsc {Function} callback
+    印字|保存用HTMLスタートアップ  （スタートアップのサブセット)
+    印字｜保存用ページのみで実行
+    印刷ページが、インラインフレーム前提となるのでプロパティの引き渡しを親ウインドウ経由で行うように改変
  */
-function nas_Prt_Startup(callback){
+function nas_Prt_Startup(mode,form,page,callback){
+    if(! mode) mode = '';
+    if(! form) form = '';
+    if(! page) page = 0;
 /**
        グローバルの XPSを実際のXpsオブジェクトとして再初期化する
 */
 //    XPS=new Xps(MaxLayers,MaxFrames);
     XPS=new Xps([SoundColumns,SheetLayers,CameraworkColumns,StageworkColumns,SfxColumns],MaxFrames);
-
 /*============*     初期化時のデータ取得    *============*/
 /*
- *  レンダリング時にドキュメント内にスタートアップデータが埋め込まれている
+ *  レンダリング時にドキュメント内にスタートアップデータが埋め込まれていることが前提
  */
 //    ドキュメント内スタートアップデータを読み出し
-
+var startupDocument;var referenceDocument
 if(document.getElementById( "startupContent" )){
          startupDocument=$("#startupContent").text();
 }
 
-//    同ドキュメント内にスタートアップ用参照データがあれば読み出し
-
-if(document.getElementById( "startupReference" ) && document.getElementById( "startupReference" ).innerHTML.length){
+//    同ドキュメント内にスタートアップ用参照データがあれば読み出しstartupReference
+if(
+    document.getElementById( "startupReference" ) &&
+    document.getElementById( "startupReference" ).innerHTML.length
+){
         referenceDocument=$("#startupReference").text();
 }
 //    UI生成
     xUI=new_xUI();
-
     XPS.readIN=xUI._readIN;
 //    *** xUI オブジェクトは実際のコール前に必ずXPSを与えての再初期化が必要  要注意
-
 if( startupDocument.length > 0){ XPS.readIN(startupDocument) }
 //リファレンスシートデータがあればオブジェクト化して引数を作成
-        var referenceX=new Xps(5,nas.SheetLength+':00.');
+        var referenceX = new Xps(5,nas.SheetLength+':00.');
     if((referenceDocument)&&(referenceDocument.length)){
         referenceX.parseXps(referenceDocument);
-    }
-//    xUI.init(XPS,referenceX);//初回実行時にxUIにグローバルのXPSを渡して初期化
-      xUI.init(XPS,referenceX);
-//    xUI.replaceEndMarker(undefined,4);//編集HTML用のみ
+    };
+    if(xUI.init(XPS,referenceX)){
+//ドキュメント上の値でパラメータを更新
+/*
+//ページ長・カラム
+//    xUI.replaceEndMarker([xUI.XPS.xpsTracks.length,xUI.XPS.xpsTracks.duration]);//終了マーカー配置
+    xUI.PageCols    = document.getElementById("prefPageCols").value;
+    xUI.SheetLength = document.getElementById("prefSheetLength").value;
+    xUI.PageLength  = xUI.SheetLength  *  XPS.framerate;
+//単一ページレンダリングのための引数を取得
+//タイムシート領域を印字範囲内にスケーリング
     var pgRect     = document.getElementById("printPg1").getBoundingClientRect();
-    var headerRect = document.getElementById("pg1Header").getBoundingClientRect();
+//    var headerRect = document.getElementById("pg1Header").getBoundingClientRect();
+    var headerRect = {width:1058,height:320};
     var tableRect  = document.getElementsByClassName("sheet")[0].getBoundingClientRect();
-    var baseWidth  = headerRect.width;
-    var baseHeight = 1580;//
+    var baseWidth  = headerRect.width;//ヘッダ幅に合わせる
+    var baseHeight = 1584;//A3height.96ppi.8px/unit
     var xScale = baseWidth/tableRect.width;
     var yScale = (baseHeight-headerRect.height)/tableRect.height;
-    $(".sheet").css({"transform":"scale("+[xScale,yScale].join()+")","transform-origin":"0 0"});
+//    $(".sheet").css({"transform":"scale("+[xScale,yScale].join()+")","transform-origin":"0 0"});
+    $(".sheetArea").css({"transform":"scale("+[xScale,yScale].join()+")","transform-origin":"0 0"});
     $(".printPage").css({"height":baseHeight,"width":baseWidth});
-    xUI.replaceEndMarker([xUI.XPS.xpsTracks.length,xUI.XPS.xpsTracks.duration]);//編集HTML用のみ
-
-    //スケーリング終了後のアイテム座標でマーカーを配置
-    if(callback instanceof Function) callback();
+//    xUI.replaceEndMarker([xUI.XPS.xpsTracks.length,xUI.XPS.xpsTracks.duration]);//終了マーカー配置
+// */
+//パラメータのコピー
+        xUI.sheetLooks = (window.parent.xUI.sheetLooks)
+//スケーリング終了後のアイテム座標でマーカーを配置
+        if(form == 'action') buildActionSheet();
+        adjustSheetA3(true);
+        xUI.syncSheetCell(undefined,undefined,false,()=>{
+            xUI.syncSheetCell(undefined,undefined,true,()=>{
+                xUI.replaceEndMarker().then(()=>{
+                    xUI.showPage(page);
+                    if(mode == 'print'){
+                        window.print();
+                    }else if(mode == 'png'){
+                        sheetSaveAsPng(0,()=>{
+                            window.parent.document.getElementById('printFrame').remove()
+                        });
+                    };
+                    if(callback instanceof Function) callback();
+                });
+            });
+        });
+//        xUI.Cgl.refresh();
+    }else{
+        window.close()
+    };
 };
 //
 /** タイムシートのUIをリセットする手続き
@@ -8577,13 +8744,13 @@ PropLists.aserch = aserch_	;
 /*
 	タイムシート表示同期プロシジャ
 オンメモリの編集バッファとHTML上の表示を同期させる。キーワードは以下の通り
-fct	;//フレームカウンタ
-lvl	;//キー変換ボタン
-spinS	;//スピンセレクタ
-title	;//タイトル
-subtitle	;//サブタイトル
-opus	;//制作番号
-create_time	;//作成時間
+fct	;//フレームカウンタ *
+lvl	;//キー変換ボタン *
+spinS	;//スピンセレクタ *
+title	;//タイトル *
+subtitle	;//サブタイトル *
+opus	;//制作番号 *
+create_time	;//作成時間 **
 update_time	;//更新時間?これは要らない
 create_user	;//作成ユーザ
 update_user	;//更新(作業)ユーザ
@@ -8613,6 +8780,7 @@ referenceLabel  ;//リファレンスエリアのラベル
 importControllers    ;//インポートリードアウトコントロール
 */
 function sync(prop){
+if(! document.getElementById('edchg')) return;
 if (typeof prop == 'undefined') prop = 'NOP_';
 	switch (prop){
 case    "server-info":
@@ -8982,8 +9150,8 @@ case	"trout":	;
 	break;
 case	"memo":
 	var memoText=XPS.xpsTracks.noteText.toString().replace(/(\r)?\n/g,"<br>");
-	document.getElementById(prop).innerHTML=memoText;
-	if(document.getElementById("memo_prt")){document.getElementById("memo_prt").innerHTML=memoText;}
+	if(document.getElementById(prop)) document.getElementById(prop).innerHTML = memoText;
+	if(document.getElementById("memo_prt")) document.getElementById("memo_prt").innerHTML = memoText;
 	break;
 case	"tag":	;
 case	"lbl":	;
@@ -9394,63 +9562,90 @@ function writeXPS(obj)
 
 /**
 	XPSデータを印刷および閲覧用htmlに変換
-引数：
-    mode    動作モード
-true時はhtmlをそのまま文字列でリザルトするがfalseの際は別ウィンドウを開いて書き出す
-"body-only"  で<body>タグ内のHTML本体のみを返す
-    form    出力前加工　"action"で、アクションシート相当の加工を施す
+    @params {String} mode
+    動作モード
+        true時はhtmlをそのまま文字列でリザルトするがfalseの際は別ウィンドウを開いて書き出す
+    "body-only" : <body>タグ内のHTML本体のみを返す<不使用・削除>
+    "png"       : html2canvasでレンダリングして保存(用紙アジャストあり)
+    "print"     : プリントアウトダイアログを呼び出す(用紙アジャストあり)
+
+    @params {String} form
+    出力前加工
+    "action" : アクションシート相当の加工を施す
+    @params {Number} page    単ページ指定 falseで全ページを出力する all|sigle page
+
+印刷と閲覧HTMLに用途を限定する?
+画像保存を別に設定したほうが良い?
+レンダリングをシングルページに限定する機能を加えるほうが良いか？
+
+インラインフレームを利用するように変更
+2022.09.12
+
 */
-function printHTML(mode,form){
-if(! form) form = '';
+function printHTML(mode,form,page){
+    if(! form) form = '';
+/*以下のブロックは印字用のiFrameを使用しないバージョン　2022.09.21現在ブロック中
+if(false){
+    var undoData = null ;
+//iframeを使用せず本体HTMLを利用する処理
+    if(form == 'action') undoData = buildActionSheet();
+    xUI.showPage(page);
 
-if(form == 'action'){
-    var backupPoint = xUI.activeDocument.undoBuffer.undoPt;
-    var mainXps = new Xps();
-    var backupXps = new Xps();
-    var backupRef  = new Xps();
-    mainXps.parseXps(xUI.XPS.toString());
-    backupXps.parseXps(xUI.XPS.toString());
-    backupRef.parseXps(xUI.referenceXPS.toString());
-    for (var tr = 0 ; tr < mainXps.xpsTracks.length ; tr++){
-        if(mainXps.xpsTracks[tr].option.match( /cell|timing|replacement/ )) mainXps.put([tr,0],new Array(mainXps.xpsTracks.duration));
-    }
-    xUI.resetSheet(mainXps,backupXps);  
+    switch(mode){
+    case "print":
+        adjustSheetA3(true,0);
+        window.onafterprint   = ()=>{
+//アクション処理の際はバックアップを復帰
+            if(undoData) xUI.resetSheet(...undoData);//[backupXps,backupRef];
+            adjustSheetA3(false);
+        };
+        print();
+    break;
+    case "png"  :
+        adjustSheetA3(true,80);//80ピクセルオフセット
+        sheetSaveAsPng(0,()=>{
+//アクション処理の際はバックアップを復帰
+            if(undoData) xUI.resetSheet(...undoData);//[backupXps,backupRef];
+            adjustSheetA3(false);
+        });
+    break;
+    };
+//アクション処理の際はバックアップを復帰・本体はUNDOバッファで戻す
+    if(undoData) xUI.resetSheet(...undoData);//backupXps,backupRef);  
+    return false;//リンクのアクションを抑制するためにfalseを返す
 }
-/*
-    画像パーツの転送を行うかまたは、自分自身でレンダリングできるようにする必要あり
-    エンドマーカーの配置も必要 0814
- */
-
-if(! mode){mode=false;}
+// */
+/* 以下はiframeを利用する処理 */
 var myBody="";
-
 //body-only時省略分
-    if(mode!='body-only'){
-myBody+='<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" xml:lang="ja" lang="ja">';
-myBody+='<head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"><title>';
-myBody+=XPS.scene.toString()+XPS.cut.toString();
-// myBody+='</title><link REL=stylesheet TYPE="text/css" HREF="http://www.nekomataya.info/test/remaping.js/template/printout.css">';
-if((xUI.onSite)&&(window.location.href.indexOf(serviceAgent.currentRepository.url)>=0)){
-    myBody+='</title><link REL=stylesheet TYPE="text/css" HREF="/remaping/template/printout.css">';//for TEST onSite
-    var libOffset = '/remaping/'
-}else{
-    var myAddress = window.location.href;
-    if (myAddress.match(/(.+\/)(\S+\.html?$)/i)) myAddress = RegExp.$1;
-    myBody+='</title><link REL=stylesheet TYPE="text/css" HREF="'+myAddress+'template/printout.css">';//for TEST offSite
-    var libOffset = './'   
-}
-
+if(mode!='body-only'){
+    myBody += '<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" xml:lang="ja" lang="ja">';
+    myBody += '<head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"><title>';
+    myBody += XPS.scene.toString()+XPS.cut.toString();
+    myBody+='</title>';
+//'<link REL=stylesheet TYPE="text/css" HREF="http://www.nekomataya.info/test/remaping.js/template/printout.css">';
+    if((xUI.onSite)&&(window.location.href.indexOf(serviceAgent.currentRepository.url)>=0)){
+        myBody+='<link REL=stylesheet TYPE="text/css" HREF="/remaping/template/printout.css">';//for TEST onSite
+        var libOffset = '/remaping/'
+    }else{
+        var myAddress = window.location.href;
+        if (myAddress.match(/(.+\/)(\S+\.html?$)/i)) myAddress = RegExp.$1;
+        myBody+='<link REL=stylesheet TYPE="text/css" HREF="'+myAddress+'template/printout.css">';//for TEST offSite
+        var libOffset = './'   
+    };
 /*
-if(String(location).indexOf('https')!=0){
-myBody+='</title><link REL=stylesheet TYPE="text/css" HREF="http://www.nekomataya.info/test/remaping.js/template/printout.css">';//for TEST onWeb
-}else{
-myBody+='</title><link REL=stylesheet TYPE="text/css" HREF="https://nekomataya.sakura.ne.jp/test/remaping.js/template/printout.css">';//for TEST on https
-}
+    if(String(location).indexOf('https')!=0){
+        myBody+='</title><link REL=stylesheet TYPE="text/css" HREF="http://www.nekomataya.info/test/remaping.js/template/printout.css">';//for TEST onWeb
+    }else{
+        myBody+='</title><link REL=stylesheet TYPE="text/css" HREF="https://nekomataya.sakura.ne.jp/test/remaping.js/template/printout.css">';//for TEST on https
+    };
 */
 /* ライブラリロード */
 myBody+='<script src="'+libOffset+'lib/jquery.js"></script>';
 myBody+='<script src="'+libOffset+'lib/jquery-ui.js"></script>';
 myBody+='<script src="'+libOffset+'lib/ecl/ecl.js"></script>';
+myBody+='<script src="'+libOffset+'lib/csv/csvsimple.js"></script>';
+myBody+='<script src="'+libOffset+'nas/ext-lib/html2canvas.min.js"></script>';
 myBody+='<script src="'+libOffset+'config.js"></script>';
 myBody+='<script src="'+libOffset+'nas/lib/nas_common.js"></script>';
 myBody+='<script src="'+libOffset+'nas/lib/nas_common_HTML.js"></script>';
@@ -9462,59 +9657,61 @@ myBody+='<script src="'+libOffset+'nas/lib/xpsio.js"></script>';
 myBody+='<script src="'+libOffset+'nas/scripts/remaping/airUI.js"></script>';
 myBody+='<script src="'+libOffset+'nas/lib/cameraworkDescriptionDB.js"></script>';
 myBody+='<script src="'+libOffset+'nas/scripts/remaping/remaping.js"></script>';
+myBody+='<script src="'+libOffset+'nas/scripts/remaping/utils.js"></script>';
 
-
-myBody += '<script>replaceEndMarker=function (){{if(! document.getElementById("endMarker")) return;    if (typeof endPoint == "undefined"){   try{    var endPoint = [xUI.XPS.xpsTracks.length, xUI.XPS.xpsTracks.duration];   }catch(er){return;}    }    if(!(endPoint instanceof Array)) {endPoint=[xUI.XPS.xpsTracks.length,endPoint]};    var endCellLeft  = $("#"+[0,endPoint[1]-1].join("_"));    var endCellRight = $("#"+[endPoint[0]-1,endPoint[1]-1].join("_"));    var parentSheet  = $(document.getElementById("endMarker").parentNode);    var topMargin  = $(document.getElementById("fixedHeader")).height();    var endCellLeftOffset  = endCellLeft.offset();    var endCellRightOffset = endCellRight.offset();    var parentOffset   = parentSheet.position();    var markerTop    = endCellLeftOffset.top + endCellLeft.height() -topMargin;    var markerLeft   = endCellLeftOffset.left - parentOffset.left;    var markerWidth  = endCellRightOffset.left + endCellRight.width() - endCellLeftOffset.left;   $("#endMarker").css({"top":markerTop,"left":markerLeft,"width":markerWidth });document.getElementById("endMarker").innerHTML = ":: end ::";};resizePage2Paper=function(){var areaHeight = 1250;xUI.adjustScale([1,1]); var pgRect=document.getElementById("printPg1").getBoundingClientRect(); xUI.adjustScale([1,areaHeight/pgRect.height]);};</script>';
 //myBody+='</title><link REL=stylesheet TYPE="text/css" HREF="./template/printout.css">';
+
 myBody+='<style type="text/css"> * { margin: 0; padding: 0;} #fixed {position: fixed;} #sheet_view {  margin:0; }</style></head>';//
 
+
 myBody+='<body ';//"
-myBody+= 'onload="var nRS = setTimeout(\'nas_Prt_Startup(function(){xUI.syncSheetCell();xUI.syncSheetCell(undefined,undefined,true);xUI.Cgl.refresh();})\',10);" ';//
-//myBody+= 'onload="var nRS = setTimeout(\'nas_Prt_Startup(function(){xUI.syncSheetCell();xUI.syncSheetCell(undefined,undefined,true);xUI.Cgl.refresh();window.print();window.close();})\',10);" ';//
+var startup = '() => nas_Prt_Startup(\''+mode+'\',\''+form+'\',\''+page+'\')';
+myBody+= 'onload="var nRS = setTimeout('+startup+',10);" ';//
 myBody+='" >';//
     };//ここまでbody-only時は省力
-
+//UNDOシステム外で原画トラック情報を削除
+    var mainXps = new Xps();
+    mainXps.parseXps(xUI.XPS.toString());
 myBody+='<textarea id="startupContent" >';
-myBody+= xUI.XPS.toString();
+myBody+= mainXps.toString();
 myBody+='</textarea>';
 myBody+='<textarea id="startupReference">';
 myBody+= xUI.referenceXPS.toString();
 myBody+='</textarea>';
+myBody+='<div class=hideParams><input id=prefPageCols type=hidden value='+xUI.PageCols+'></input><input id=prefPageCols type=hidden value='+xUI.PageCols+'></input><input id=prefSheetLength type=hidden value='+xUI.SheetLength+'></input></div>'
 myBody+='<div id="sheet_body">';//
-
-	for (Page=1 ;Page <=Math.ceil(XPS.duration()/xUI.PageLength);Page++)
-	{
-	    myBody+= '<div class=printPage id=printPg'+String(Page)+'>';
-	    myBody+= '<div class=headerArea id=pg'+String(Page)+'Header>';
-		myBody+= xUI.headerView(Page);
-		myBody+= '<span class=pgNm>( p '+nas.Zf(Page,3)+' )</span><br></div>';
-	// myBody+= '<div class="tableArea"  id=pg'+String(Page)+'Table>';
-		myBody+= xUI.pageView(Page);
-	//myBody+= '</div></div>'
+    var pgStart = 1;
+    var pgEnd   = Math.ceil(XPS.duration()/xUI.PageLength);
+	for (var pg = pgStart ;pg <= pgEnd ;pg++){
+	    myBody+= '<div class=printPage id=printPg'+String(pg)+'>';
+	    myBody+= '<div class=headerArea id=pg'+String(pg)+'Header>';
+		myBody+= xUI.headerView(pg);
+		myBody+= '<span class=pgNm>( p '+nas.Zf(pg,3)+' )</span><br></div>';
+		myBody+= xUI.pageView(pg);
 	    myBody+= '</div>'
 	};
-//myBody+='<div class="screenSpace"></div>';
-
-
-
-myBody+='</div>';
-
-if(mode != 'body-only') myBody+='</body></html>';
-
-if(mode){return myBody;}else{
-_w=window.open ("","xpsFile","width=1120,height=1600,scrollbars=yes,menubar=yes");
-
-	_w.document.open("text/html");
-	_w.document.write(myBody);
-	_w.document.close();
-
-	_w.window.focus();//書き直したらフォーカス入れておく 保存扱いにはしない
-//アクション処理の際はバックアップを復帰・本体はUNDOバッファで戻す
-    if(form == 'action')    xUI.resetSheet(backupXps,backupRef);  
-
+    myBody+='</div>';
+    if(mode != 'body-only') myBody+='</body></html>';
+    if((mode == 'body-only')||(mode == false)) return myBody;
+// mode png|print // iframeを作成してソースを流し込む
+	var pgview = document.getElementById('printFrame')
+	if(!pgview){
+		pgview = document.createElement('iframe');
+		pgview.id     = 'printFrame'; 
+		pgview.width  = 1120;// A3 width  1120px
+		pgview.height = 1584;// A3 height 1584px
+	}
+	pgview.srcdoc = myBody;
+	document.body.appendChild(pgview);
+    switch(mode){
+	case "print":
+        pgview.contentWindow.onbeforeunload = ()=> document.body.removeChild(pgview);
+        pgview.contentWindow.onafterprint   = ()=> document.body.removeChild(pgview);
+	break;
+	case "png": 
+	break;
+    };
 	return false;//リンクのアクションを抑制するためにfalseを返す
-}
-
 }
 /*
 	File API を使用したデータの読み込み（ブラウザでローカルファイルを読む）
@@ -11553,7 +11750,7 @@ if(	xUI.SheetLength !=document.getElementById("prefSheetLength").value ||
 ){
 	xUI["viewMode"] = newMode;
 // シート外観の変更が必要なので再初期化する
-	xUI.SheetLength=document.getElementById("prefSheetLength").value;
+	xUI.SheetLength = document.getElementById("prefSheetLength").value;
 		xUI.PageLength	=xUI.SheetLength  *  XPS.framerate;
 	xUI.PageCols= cols;
 //実行
@@ -12982,6 +13179,161 @@ SoundEdit.open=function(){
 	}
 	return null;
 }
+/**
+ *    @params {Number} page
+ *    @returns {undefined}
+ *	download timesheet as png image file
+ *  実験コード printモードでは正常だが編集モードではcssが異なるのでヘッダが欠ける
+ *      2022 09.07
+ *    正しくページ指定引数があれば、そのページのみを出力する
+ */
+async function sheetSaveAsPng(page,callback){
+//canvasを画像として保存
+	var startPg = 1;
+	var endPg   = Math.ceil(XPS.duration()/xUI.PageLength);
+    if((page >= startPg)&&(page <= endPg)){
+        startPg = parseInt(page);
+        endPg   = startPg;
+    };
+    var imgDensity = 200;
+    var imgScale = imgDensity / 96;
+    var pgCount = endPg - startPg + 1;
+
+	for (var Page = startPg ;Page <= endPg ;Page++){
+		var pgNo = String(Page);
+		await html2canvas(
+			document.getElementById("printPg"+pgNo),
+			{scale:imgScale,width:1120,height:1584,backgroundColor:xUI.sheetbaseColor}
+		).then(function(canvas){
+			var pg = pgNo;
+			document.body.appendChild(canvas);
+//toBlob(callback, mimeType, qualityArgument)
+			canvas.toBlob((blob)=>{
+				if (XPS.duration() > xUI.PageLength){
+				};
+				var url = URL.createObjectURL(blob);
+				var dl = document.createElement("a");
+				document.body.appendChild(dl);
+				dl.href = url;
+				dl.download = XPS.getIdentifier('simple') + "__xps";
+				if (XPS.duration() > xUI.PageLength){
+					dl.download += pg;
+				};
+				dl.click();
+				document.body.removeChild(dl);
+				document.body.removeChild(canvas);
+				pgCount --;
+				if((pgCount <= 0)&&(callback instanceof Function)) callback();
+			},"image/png");
+		});
+	};
+	return ;
+}
+//sheetSaveAsPng//
+/**
+ *	download timesheet as png image
+ */
+async function sheetSaveAsPngi(callback){
+//canvasを画像として保存
+	var endPg = Math.ceil(XPS.duration()/xUI.PageLength);
+    var imgDensity = 200;
+    var imgScale = imgDensity / 96;
+    var pgCount = endPg;
+	for (Page=1 ;Page <= endPg ;Page++){
+//metadata
+    var metadata ={
+  "pHYs": { 
+    "x": 96,
+    "y": 96,
+    "units": RESOLUTION_UNITS.INCHES
+  },
+  "tEXt": {
+    "Title":            XPS.getIdentifier('simple') + "__xps",
+    "Author":           xUI.currentUser.toString(),
+    "Description":      "Universal Animtion Timesheet exported image",
+    "Copyright":        "http://www.u-at.net/",
+    "Software":         "universal animation timesheet",
+  }
+};//
+		var pgNo = String(Page);
+		await html2canvas(
+			document.getElementById("printPg"+pgNo)
+		).then(function(canvas){
+			var pg = pgNo;
+			document.body.appendChild(canvas);
+//(callback, mimeType, qualityArgument)
+			canvas.toBlob((blob)=>{
+blob.arrayBuffer().then((buf)=>{
+	var dat = new Uint8Array(buf);
+//	console.log(readMetadata(dat));
+			var newBlob = writeMetadataB(blob,metadata);
+
+				var url = URL.createObjectURL(newBlob);//blob
+				var dl = document.createElement("a");
+				document.body.appendChild(dl);
+				dl.href = url;
+				dl.download = XPS.getIdentifier('simple') + "__xps";
+				if (XPS.duration() > xUI.PageLength) dl.download += pg;
+				dl.click();
+				document.body.removeChild(dl);
+				document.body.removeChild(canvas);
+				pgCount --;
+				if((pgCount <= 0)&&(callback instanceof Function)) callback();
+});
+//				const item= new ClipboardItem({"image/png": blob});
+//				navigator.clipboard.write([item]);
+			},"image/png");
+		});
+	};
+}
+//sheetSaveAsPng Alt(test)//
+
+/**
+ * 画像保存のためのタイムシートの変形と解除
+ *   @params {Boolean} opt
+ *   @params {Number}  heightOffset
+ * 印刷及び画像出力のために画面をA3サイズに整形する
+ * 解除までの間は編集をロックする
+ * 縦方向の変形オフセット量は pix/(96ppi)
+ */
+//アプリケーションヘッダエリアはもとより印刷されないか出力範囲に含まれないので操作除外
+function adjustSheetA3(opt,heightOffset){
+    if(! heightOffset) heightOffset = 48;//pixels (96ppi)
+//ページステータス	printPageStatus ON|OFF
+	var stats = document.getElementsByClassName("printPageStatus");
+	for( var i = 0; i<stats.length; i++ ) stats[i].style.display = (opt)? 'block':'none';
+//シートヘッダ		sheetHeader pgHeader ON|OFF
+	var pgheaders = document.getElementsByClassName("headerArea");
+	for( var i = 0; i<pgheaders.length; i++ ) pgheaders[i].style.display = (opt)? 'block':'none';
+//ページノンブル	pgnm OFF|ON
+	var pgnm = document.getElementsByClassName("pgNm");
+	for( var i = 0; i<pgnm.length; i++ ) pgnm[i].style.display = (opt)? 'none':'inline';
+//現在のシート記述範囲を取得
+	var pgRect     = document.getElementById("printPg1").getBoundingClientRect();
+	var headerRect = document.getElementsByClassName("headerArea")[0].getBoundingClientRect();
+	var tableRect  = document.getElementsByClassName("sheet")[0].getBoundingClientRect();
+	var baseWidth  = headerRect.width;//ヘッダ幅に合わせる
+	var baseHeight = 1584;//A3height.96ppi.8px/unit
+	var xScale = baseWidth/tableRect.width;
+	var yScale = (baseHeight-headerRect.height - heightOffset)/tableRect.height
+	if(opt){
+//シート記述範囲に用紙合わせの変形を適用
+		$(".sheetArea").css({"transform":"scale("+[xScale,yScale].join()+")","transform-origin":"0 0"});
+		$(".printPage").css({"height":baseHeight,"width":baseWidth});
+//フットスタンプを消去・ハイライトを隠蔽
+		xUI.selectBackup = xUI.Select;
+		xUI.selectionHi('clear');
+	}else{
+//変形解除
+		$(".sheetArea").css({"transform":"scale("+[1,1].join()+")","transform-origin":"0 0"});
+//ハイライトを再表示
+		xUI.selectCell();
+	};
+}
+/* TEST
+adjustSheetA3(true);
+adjustSheetA3(false);
+*/
 /*
     xUI.SignBoxパネル機能オブジェクト
 */

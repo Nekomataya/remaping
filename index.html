@@ -36,6 +36,12 @@
 <script src=/remaping/lib/jquery-ui.js></script>
 <script src=/remaping/lib/ecl/ecl.js></script>
 <script src=/remaping/lib/csv/csvsimple.js></script>
+<script src=/remaping/nas/ext-lib/html2canvas.min.js></script>
+<!-- fabric.js  -->
+<script src=./nas/ext-lib/fabric.js/dist/fabric.min.js ></script>
+
+<script src=/remaping/nas/ext-lib/crc32.js></script>
+<script src=/remaping/nas/ext-lib/png-metadata.js></script>
 
 <script src=/remaping/config.js></script>
 <script src=/remaping/nas/lib/nas_common.js></script>
@@ -93,29 +99,29 @@
 </head>
 <body 
 	onload="startupTooltip();var nRS = setTimeout('nas_Rmp_Startup()',10);nas.LangPack.chgLocale('ja');serviceAgent.init();SoundEdit.panelInit();"
-	onbeforeunload="return nas_Rmp_reStart();"
-	onContextMenu	=" return false;"
-	onSelectStart="return false;"
-	onScroll="xUI.onScroll();"
-    onKeydown= "return xUI.keyDown(event);"
-    onKeyup= "return xUI.keyUp(event);"
-	onMouseDown = "return xUI.flipContextMenu(event);"
+	onbeforeunload = "return nas_Rmp_reStart();"
+	onContextMenu  = "return false;"
+	onSelectStart  = "return false;"
+	onScroll       = "xUI.onScroll();"
+    onKeydown      = "return xUI.keyDown(event);"
+    onKeyup        = "return xUI.keyUp(event);"
+	onMouseDown    = "return xUI.flipContextMenu(event);"
 >
 <!--	onKeyDown='if(document.getElementById("iNputbOx")!==document.activeElement){document.getElementById("iNputbOx").focus();};xUI.keyDwon(event)' -->
 <div id=overlayHeadline >
 <div class=fixedHeadline id=UIheader>
 <div class=fixedHeadline id=UIheaderScrollV
-	onMouseDown =" return xUI.Mouse(event)"
-	onMouseUp =" return xUI.Mouse(event)"
-	onDblClick =" return xUI.Mouse(event)"
-	onMouseOver =" xUI.Mouse(event)"
+	onMouseDown = " return xUI.Mouse(event)"
+	onMouseUp   = " return xUI.Mouse(event)"
+	onDblClick  = " return xUI.Mouse(event)"
+	onMouseOver = " xUI.Mouse(event)"
 	class=sheet
 ></div>
 <div class=fixedHeadline id=UIheaderScrollH
-	onMouseDown =" return xUI.Mouse(event)"
-	onMouseUp =" return xUI.Mouse(event)"
-	onDblClick =" return xUI.Mouse(event)"
-	onMouseOver =" xUI.Mouse(event)"
+	onMouseDown  = " return xUI.Mouse(event)"
+	onMouseUp    = " return xUI.Mouse(event)"
+	onDblClick   = " return xUI.Mouse(event)"
+	onMouseOver  = " xUI.Mouse(event)"
 > </div>
 <div class=fixedHeadline id=UIheaderFix > </div>
 </div></div>
@@ -266,6 +272,16 @@ serviceAgent.pushEntry(xUI.XPS,function(){xUI.setStored("current");sync();
 	onclick="if(fileBox.saveAs){fileBox.saveAs();}else{alert('現在ファイルの操作ができません')};return false;"
 	title="別名で保存（ファイル）"
 >Save As</A></li>
+<li><span id=pMimportexport-d class='pM pM-alt'>Import/Export</span><a	id=pMimportexport
+	href="javascript:void(0);"
+	onclick="xUI.sWitchPanel('Data');return false;"
+	title="読み込み書き出しパネルを開く"
+>Import/Export</a></li><hr>
+<li><span id=pMdocInfo-d class='pM pM-alt'>DocumentInfo</span><A	id=pMdocInfo
+	href='javascript:void(0)'
+	onclick='myScenePref.open("edit");return false;'
+	title="シート情報"
+>DocumentInfo</A></li><hr>
 <li id=dMcgi><span id=pMdownloadXps-d class='pM pM-alt'>Export As Xps</span><A	id=pMdownloadXps
     download=''
 	href="javascript:void(0);"
@@ -283,16 +299,6 @@ serviceAgent.pushEntry(xUI.XPS,function(){xUI.setStored("current");sync();
 	onclick='xUI.data_well.value=XPS2XDTS(xUI.XPS,"xdts");callEchoExport("xdts");return false;'
 	title="ダウンロード保存（XDTS）"
 >Export As Xdts</A></li>
-<li><span id=pMimportexport-d class='pM pM-alt'>Import/Export</span><a	id=pMimportexport
-	href="javascript:void(0);"
-	onclick="xUI.sWitchPanel('Data');return false;"
-	title="読み込み書き出しパネルを開く"
->Import/Export</a></li>
-<li><span id=pMdocInfo-d class='pM pM-alt'>DocumentInfo</span><A	id=pMdocInfo
-	href='javascript:void(0)'
-	onclick='myScenePref.open("edit");return false;'
-	title="シート情報"
->DocumentInfo</A></li>
 <li id=dMair><span id=pMexportHTMLair-d class='pM pM-alt'>Export as html</span><A	id=pMexportHTMLair
 	href='javascript:void(0)'
 	onclick='if(fileBox.storeOtherExtensionFile){fileBox.storeOtherExtensionFile(printHTML(true),"html")}else{alert("現在ファイルの操作ができません")};return false;'
@@ -300,14 +306,34 @@ serviceAgent.pushEntry(xUI.XPS,function(){xUI.setStored("current");sync();
 >Export as html</A></li>
 <li id=dMcgi><span id=pMprintHTML-d class='pM pM-alt'>Print html</span><A	id=pMprintHTML
 	href='javascript:void(0)'
-	onclick='printHTML();return false;'
+	onclick='printHTML("print");return false;'
 	title="印刷"
 >Print HTML</A></li>
-<li><span id=pMbuildActionSheet-d class='pM pM-alt'></span><A	id=pMbuildActionSheet
+<li id=dMcgi><span id=pMexportPng-d class='pM pM-alt'>画像で保存</span><A	id=pMexportPng
+	href='javascript:void(0)'
+	onclick='printHTML("png");return false;'
+	title="シートをpng画像で保存"
+>画像で保存</A></li>
+<li><span id=pMbuildActionSheet-d class='pM pM-alt'>アクションシート</span><A	id=pMbuildActionSheet
 	HREF='javascript:void(0);'
-	onclick='printHTML(false,"action");'
+	onclick='buildActionSheet();'
 	title="原画アクションシートを作成"
->原画アクションシート</A></li>
+>アクションシート</A></li>
+<li><span id=pMprintAct-d class='pM pM-alt'>　--　印刷</span><A	id=pMprintAct
+	HREF='javascript:void(0);'
+	onclick='printHTML("print","action",0);return false;'
+	title="アクションシートを印刷"
+>　--　印刷</A></li>
+<li id=dMcgi><span id=pMexportActPng-d class='pM pM-alt'>　--　画像で保存</span><A	id=pMexportActPng
+	href='javascript:void(0)'
+	onclick='printHTML("png","action",0);return false;'
+	title="アクションシートをpng画像で保存"
+>　--　画像で保存</A></li>
+
+
+
+
+
 <!--
 
 <li id=dMair><span id=pMexportEPSair-d class='pM pM-alt'>Export as eps</span><A	id=pMexportEPSair

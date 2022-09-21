@@ -381,7 +381,7 @@ var InputMode = 1           ;  //編集モード変数 0:正規化のみ 1:動�
     "account_box"       ユーザアカウント切り替え
     "optionPanelLogin"  認証パネル
     "toolbarHeader"     ツールバー
-    "optionPanelUtl"　  コマンドバー
+    "optionPanelUtl"    コマンドバー
     "pmcui"             作業メニュー
     "headerTool"        ヘッダー入力コントロールバー
     "inputControl"     入力コントロール

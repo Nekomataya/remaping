@@ -1388,26 +1388,40 @@ return result;
 */
 
 /**
+ *    @returns {Array}
  * 原画アクションシート作成
  * 現在のシートをリファレンスに送って原画アクションシートを作る一連の手続
- * カレントデータを無指定でリファレンスに転送
+ * リファレンスデータを破棄してカレントデータを無指定でリファレンスに転送
  * シートのリプレースメント（タイミング）タイムラインをクリア
- * 引数:なし
- * 戻値:
+ * 引数: なし
+ * 戻値: バックアップ用データ
  * 
  */
 buildActionSheet =function(){
-	putReference();
 	var bkPos=xUI.Select.join("_");//現在のカーソルを記録
 
-	for (var lix=1;lix<xUI.XPS.xpsTracks.length-1;lix++){
-		if(xUI.XPS.xpsTracks[lix].option=="timing"){
-			console.log('clear :'+xUI.XPS.xpsTracks[lix].id)
-			xUI.selectCell(String(lix)+"_0");
-			clearTL();
-		}		 
-	}
+    var backupPoint = xUI.activeDocument.undoBuffer.undoPt;
+    var mainXps = new Xps();
+    var backupXps = new Xps();
+    var backupRef  = new Xps();
+    mainXps.parseXps(xUI.XPS.toString());
+    backupXps.parseXps(xUI.XPS.toString());
+    backupRef.parseXps(xUI.referenceXPS.toString());
+//UNDOシステム外で原画トラック情報を削除
+    for (var tr = 0 ; tr < mainXps.xpsTracks.length ; tr++){
+        if(mainXps.xpsTracks[tr].option.match( /cell|timing|replacement/ )) mainXps.put([tr,0],new Array(mainXps.xpsTracks.duration));
+    };
+	if((xUI.viewOnly)||(!document.getElementById('edchg'))){
+//編集ロックされている場合はシート全体を再初期化する
+		xUI.resetSheet(mainXps,backupXps);
+
+	}else{
+//編集可能なケースでは、リファレンス転送ののち、undoシステムに組み込む
+		putReference();
+		xUI.put(mainXps);
+	};
 	xUI.selectCell(bkPos);	//バックアップ位置へ復帰
+	return [backupXps,backupRef];
 }
 /**
  *pageZoom()
