@@ -1075,8 +1075,8 @@ console.log(xUI.yankBuf);
     this.eXCode = 0;         //ラピッドモード導入キー変数
 //シート入力関連
     this.eddt   = "";        //編集バッファ
-    this.edchg  = false;     //編集フラグ
-    this.edmode = 0;          //編集操作モード  0:通常入力  1:ブロック移動  2:区間編集
+    this.edchg  = false;     //入力ラインバッファ編集フラグ
+    this.edmode = 0;         //編集操作モード  0:通常入力  1:ブロック移動  2:区間編集
     this.floatSourceAddress = [0,0];//選択範囲及び区間移動元アドレス
     this.floatDestAddress   = [0,0];//同移動先アドレス
     this.selectBackup       ;//カーソル位置バックアップ
@@ -1803,7 +1803,7 @@ xUI.ipChg=function(newMode){
 
 /**
  *  @params {Boolean}   status
- *    セル編集フラグ 切り替えと同時に表示を調整
+ *    タイムシートセル編集フラグ 切り替えと同時に表示を調整
  */
 xUI.edChg=function(status,opt){
     if(this.viewOnly) return xUI.headerFlash('#bb8080');
@@ -2347,65 +2347,59 @@ xUI.clearBackup =function(){
     //var myReference=localStorage.removeItem("info.nekomataya.remaping.backupReference");
     alert(localize(nas.uiMsg.dmBackupClear));//バックアップクリア
 }
-/*    未保存時の処理をまとめるメソッド
-未保存か否かを判別してケースごとのメッセージを出す
-ユーザ判断を促して処理続行か否かをリザルトする
-*/
+/**
+ *    @params {String}    mode
+ *    未保存時の処理をまとめるメソッド
+ *    未保存か否かを判別してケースごとのメッセージを出す
+ *    ユーザ判断を促して処理続行か否かをリザルトする
+ *    modeは以下の何れかの値をとる
+ *    null
+ *    "saveAndOpenDropFile"
+ *    "saveAndOpen"
+ */
 xUI.checkStored=function(mode){
-if(!mode){mode=null;}
-    if(xUI.isStored()){return (true)};//保存済みなら即 true
-if(fileBox.saveFile){
-var    msg = localize(nas.uiMsg.dmDocumentNosave);
+    if(!mode) mode=null;
+    if(xUI.isStored()) return (true);//保存済
+//以下未保存の編集内容がある場合の処理
+    if(fileBox.saveFile){
+        var msg = localize(nas.uiMsg.dmDocumentNosave);//"ドキュメントは保存されていません。保存しますか？"
 //ドキュメントの保存・保存しないで更新・処理をキャンセルの３分岐に変更 2013.03.18
-    msg+="\n"+localize(nas.uiMsg.documentConfirmOkCancel)+"\n";
+//        msg += "\n"+localize(nas.uiMsg.documentConfirmOkCancel)+"\n";
 //    nas.showModalDialog("confirm2",msg,"ドキュメント更新",0,
-/*
-    function(){
-    switch (this.status){
-case 0:;//yes 保存処理  後でテンポラリファイルを実装しておくこと        
-            fileBox.openMode=mode;//ファイル保存に続行処理モードが必要  デフォルトは保存のみ
-            fileBox.saveFile();
-break;
-case 1:;
-break;
-case 2:;
-break;
-    }
-);
-*/
-    var myAction=confirm(msg);
-    if(myAction){
-        //保存処理  後でテンポラリファイルを実装しておくこと        
+        var myAction=confirm(msg);
+        if(myAction){
+//保存処理  後でテンポラリファイルを実装しておくこと        
             fileBox.openMode=mode;//ファイル保存に続行処理モードが必要  デフォルトは保存のみ
             fileBox.saveFile();
             return false;
+        }else{
+            xUI.setStored("current");sync();return true;// キャンセルの場合は保存しないで続行
+        };
     }else{
-        xUI.setStored("current");sync();return true;// キャンセルの場合は保存しないで続行
-    }
-}else{
-    var msg  = localize(nas.uiMsg.dmDocumentNosaveExport);//エクスポートしますか？
-        msg += "\n"+localize(nas.uiMsg.dmDocumentConfirmOkCancel)+"\n";//
-    var myAction=confirm(msg);
-    if(myAction){
-        //保存処理  後でテンポラリファイルを実装しておくこと        
+        var msg  = localize(nas.uiMsg.dmDocumentNosaveExport);//エクスポートしますか？
+//        msg += "\n"+localize(nas.uiMsg.dmDocumentConfirmOkCancel)+"\n";//
+        var myAction=confirm(msg);
+        if(myAction){
+//保存処理  後でテンポラリファイルを実装しておくこと        
             writeXPS(XPS);xUI.setStored("current");sync();
             return true
 //HTMLモードの保存は頻繁だと作業性が低下するので一考
             if(ServiceUrl){callEcho()};//CGIエコー
 
-    }else{
-        //破棄して続行
-        xUI.setStored("current");sync();return true
-    }
-}
+        }else{
+//破棄して続行
+            xUI.setStored("current");sync();return true
+        };
+    };
 }
 
-/** 操作スクリーンを加算シフトさせる(オフセットを設定)
-引数:
-    x,y px
-右揃えのアイテムをシフトした分だけ左に寄せて画面内に収める処理つき
-現在の値に引数を加える。戻りは想定されないので注意
-
+/**
+    @params {Number}    x
+    @params {Number}    y
+    操作スクリーンを加算シフトさせる(オフセットを設定)
+    x,y (pixels)
+    右揃えのアイテムをシフトした分だけ左に寄せて画面内に収める処理つき
+    現在の値に引数を加える。戻りは想定されないので注意
 */
 xUI.screenShift = [0,0];
 xUI.shiftScreen = function(x,y){
@@ -2438,10 +2432,11 @@ console.log([currentBox[3],currentFr,currentAb,currentLp])
 xUI.shiftScreen(50,50);
 */
 
-/*    画面サイズの変更時等にシートボディのスクロールスペーサーを調整する
-    固定ヘッダとフッタの高さをスクロールスペーサーと一致させる
-    2010.08.28
-    引数なし
+/**
+ *    画面サイズの変更時等にシートボディのスクロールスペーサーを調整する
+ *    固定ヘッダとフッタの高さをスクロールスペーサーと一致させる
+ *    2010.08.28
+ *    引数なし
  */
 xUI.adjustSpacer=function(){
 if(! document.getElementById('fixedHeader')) return;
@@ -2460,20 +2455,19 @@ if(! document.getElementById('fixedHeader')) return;
     document.getElementById("UIheaderScrollV").style.top=(headHeight+$("#app_status").height())+"px";
     document.getElementById("scrollSpaceFt").style.height="1 px";
 }
-/**    xUI.adjustScale=function(myScale);
-引数:
-    myScale    Number又は配列 数値一つの場合はY方向のスケールとして扱う
-    引数なしはスケール[1,1]にリセットする
-戻値:
-    なし
-ターゲットエレメントは以下
-"UIheaderFix"
-"UIheaderScrollH"
-"UIheaderScrollV"
-"sheet_body"
-ドキュメント内に存在しないエレメントは無視（印字用）
-スケーリングするターゲットを別に指定する場合は  idまたはid の配列で
-*/
+/**
+ *  @params {Number|Array} myScale
+ *    Number又は配列 数値一つの場合はY方向のスケールとして扱う
+ *    引数なしはスケール[1,1]にリセットする
+ *  戻値: なし
+ *  ターゲットエレメントは以下
+ *  "UIheaderFix"
+ *  "UIheaderScrollH"
+ *  "UIheaderScrollV"
+ *  "sheet_body"
+ *  ドキュメント内に存在しないエレメントは無視（印字用）
+ *  スケーリングするターゲットを別に指定する場合は  idまたはid の配列で
+ */
 xUI.adjustScale=function(myScale,scaleTargetID){
     if(typeof myScale == "undefined"){myScale=[1,1]}
     else if(! (myScale instanceof Array)){myScale=[1,(myScale)?myScale:1]};
@@ -2489,8 +2483,8 @@ xUI.adjustScale=function(myScale,scaleTargetID){
         }else{
           scaleTarget.style.transformOrigin="0px 0px";
           scaleTarget.style.transform='scale('+myScale.join(",")+')';
-        }
-    }
+        };
+    };
 }
 //xUI.adjustScale(1,0.65);
 xUI.zoomSwitch =function(){
@@ -7764,6 +7758,77 @@ if((NameCheck)||(myName=="")){
     xUI.footstampReset();
 //ツールバー表示指定があれば表示 プロパティ廃止
 //    if((xUI.utilBar)&&(!$("#optionPanelUtl").is(':visible'))){$("#optionPanelUtl").show();};//xUI.sWitchPanel('Utl');
+/*
+	UATimesheet(remaping)ドキュメント全体のドラグドロップ処理コード
+*/
+
+    document.body.addEventListener('dragover', function(e) {
+        e.stopPropagation();e.preventDefault();
+console.log(e);
+//ドラグオーバーされたファイルの種類でカラーを変更する
+        this.style.background = xUI.selectedColor;//
+    }, false);
+    document.body.addEventListener('dragleave', function(e) {
+        e.stopPropagation();e.preventDefault();
+        this.style.background = xUI.sheetbaseColor;//
+    }, false);
+    document.body.addEventListener('drop', async function(e) {
+        e.stopPropagation();e.preventDefault();
+        this.style.background = xUI.sheetbaseColor;//
+console.log('droped');
+console.log(e.composedPath());
+
+//        const itmid = pman.reName.parseId(e.dataTransfer.getData('text/plain'));
+        const files = e.dataTransfer.files; //ドロップされたファイルを取得
+        const items = e.dataTransfer.items;
+
+console.log([files,items]);
+/*
+        if(itmid >= 0){
+//アイテムドロップ
+            var itm = pman.reName.getItem(itmid);
+            if(e.composedPath().indexOf(document.getElementById('fileStrip')) >= 0){
+//            if(e.composedPath()[0].id == 'fileStrip'){};//
+console.log('droped to fileStrip end');
+//リスト領域内でアイテム外にドロップ ルートの最後尾にアタッチ
+				let targetIdx = pman.reName.parseId(e.composedPath()[0].id);
+//				let placement = pman.reName.parseId((e.composedPath()[0].id);
+				let checkedItems = pman.reName.getSelected();
+				if(checkedItems.length){
+					pman.reName.move(checkedItems,-1,'PLACEATEND');
+				}else{
+					pman.reName.move(itm,-1,'PLACEATEND');
+				};
+				pman.reName.pending = false;
+            }else{
+//リスト領域外（削除？）
+                alert('OUT of RANGE!!');
+            };
+        }else ;// */  
+        if((items.length == 1)&&(items[0].webkitGetAsEntry().isFile)){
+//ファイル単独ドロップ
+console.log(items[0].webkitGetAsEntry().isFile);
+        xUI.importBox.read(e.dataTransfer.files,processImport);
+/* エレクトロン拡張時に使用
+            if((files.length == 1)&&(files[0].path)){
+//fileにpath拡張があるのでhub&&spoke:メッセージ通信でバックグラウンド処理へ移行
+				uat.MH.parentModule.window.postMessage({
+					channel:'callback',
+					from:{name:xUI.app,id:uat.MH.objectIdf},
+					to:{name:'hub',id:uat.MH.parentModuleIdf},
+					command:'return electronIpc.getEntryFileList(...arguments)',
+					content:[files[0].path,3,pman.reName.maxItemCount],
+					callback:"pman.reName.initItems(...arguments)"
+				});
+			}else if ((files.length == 1)&&(items.length == 1)){
+			} ;// */
+        }else{
+console.log(files);
+console.log(items);
+            
+        };
+    }, false);
+//入力スタンバイ
     document.getElementById("iNputbOx").focus();
 //test タスクコントローラ起動
     startupTaskController();
@@ -8388,8 +8453,7 @@ $("#optionPanelSnd").dialog({
         }
         // イベントをキャンセルするハンドラ
         var cancelEvent = function(event) {
-            event.preventDefault();
-            event.stopPropagation();
+            event.preventDefault();event.stopPropagation();
             return false;
         }
         // dragenter, dragover イベントのデフォルト処理をキャンセル
