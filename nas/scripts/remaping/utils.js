@@ -1035,11 +1035,13 @@ for(var idx=0;idx<currentContent.length;idx++){
  *		描画する区間の種別
  */
 writeNewSection=function(myOpt){
-  if((xUI.Selection[0]>0)||(xUI.Selection[1]<1)){return}
+  if((xUI.Selection[0]>0)||(xUI.Selection[1]<1)) return;//no user selection NOP retuen
 
   var bkFrm=xUI.Select[1];
   var startFrm=xUI.Select[1];
   var myLength=xUI.Selection[1];
+  var startValue;
+  var endValue;
   var myBody=[];
  if(! myOpt){
  	myOpt=(xUI.Select[0]==0)?"dialog":(xUI.Select[0]<=xUI.XPS.xpsTracks.length-1)?xUI.XPS.xpsTracks[xUI.Select[0]].option:"comment";
@@ -1060,13 +1062,13 @@ writeNewSection=function(myOpt){
       	if(startFrm > 0){startFrm--}else{myLength--};//開始フレーム０以外は一コマ先行で配置
       	if((startFrm+1+myLength) >= (xUI.XPS.xpsTracks[xUI.Select[0]].length-1)){
       		myLength--};//終了フレームが最終の場合は一コマカット
-	myBody.push("[A]");
+	myBody.push("[A]");//開始値をブラケットで記述
 	myBody.push("▽");
 	for(var idx=1;idx<myLength;idx++){
 		myBody.push(((xUI.XPS.xpsTracks[xUI.Select[0]].option=="camera")&&(idx==Math.floor((myLength-1)/2)))?"<"+myOpt+">":"|");
 	}
 	myBody.push("△");
-	myBody.push("[B]");
+	myBody.push("[B]");//終了値をブラケットで記述
       break;
       case "composite":
       case "sfx":
@@ -1517,6 +1519,18 @@ var normalizeTimeline = function normalizeTimeline(timelineTrack){
  *
  *	@returns {Array}
  *		フィルタ処理した配列戻し
+ *
+ * タイムシートの入力に動作モード別の入力文字の自動修飾機能が付く
+ * 修飾なし、動画向け、原画向けの3つのモードがある
+ *
+ * 修飾なしのモードは入力した文字をそのままシートに記入
+ * すべてのモードで入力時に数字とアルファベットは半角に変換
+ *
+ * 動画向けの変換は1番のみ、原画向けの変換では未記入の文字にすべて丸で囲む
+ * 修飾を変更するには修飾ボタンを使用
+ *
+ * または入力確定の際に[ctrl]+[enter]キーで修飾のない文字を入力可能
+ *
  */
 var iptFilter = function(cell,targetTrack,mode,exch){
     if(typeof cell == 'undefined') return cell;

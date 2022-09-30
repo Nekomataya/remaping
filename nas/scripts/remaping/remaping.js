@@ -1421,73 +1421,133 @@ for(var idx=0;idx<mySeps.length;idx++){
 //    if(this.footstampPaint) this.footstampPaint();
     return true;
 }
-//初期化の一環で一度実行？
+/*
+    @params {Boolean} opt
+        戻り値を文字列に
 
-// xUI.setSheetLook(SheetLooks);
-
-/**
-    setToolView
-    ツール群の一括ループ切り替え
-    クッキーと同じ形式またはキーワード full,minimum,default,compact,current
-     引数がない場合以下をループ
-    (ユーザ設定(current))＞全表示(full)＞最少表示(minimum)＞推奨表示(defeult)＞推奨コンパクト(compact)＞(ユーザ設定(current))
-    各ツールの個別切り替えを行うとその時点の表示がユーザ設定と置き換わるので注意
-    "pMenu"             ドロップダウンメニュー
-    "account_box"       ユーザアカウント切り替え
-    "optionPanelLogin"  認証パネル
-    "toolbarHeader"     ツールバー
-    "optionPanelUtl"　  コマンドバー
-    "pmcui"             作業メニュー
-    "headerTool"        ヘッダー入力コントロールバー
-    "inputControl"     入力コントロール
-    "sheetHeaderTable"  タイムシートヘッダ
-    "optionPanelTbx"    ソフトウェアキーボード
-    "optionPanelDbg"    デバッグコンソール
-    "memoArea"          メモ表示域
+    現在のパネルの表示状態を返す
+    アイコンバーパネルのサブidは含まない
 */
-xUI.setToolView = function(toolView){
-	var currentView = [];
-	for (var ix=0;ix<UIViewIdList.length;ix++){
-		currentView.push(($('#'+UIViewIdList[ix]).css('display')=='none')? 0:1);				
-	};
-	currentView=currentView.join("");
-    if(typeof this.toolView =='undefined') this.toolView = currentView;
-    switch (toolView) {
-    case 'full'   :toolView = '110111111001';break;
-    case 'minimum':toolView = '000000110000';break;
-    case 'default':toolView = '110001110001';break;
-    case 'compact':toolView = '010000110000';break;
-    default:   
-        if(String(toolView).match(/^[01]+$/)){
-            this.toolView = toolView;
+xUI.checkToolView = function(opt){
+    var result = [];
+    var ix = 0;
+    for(var prp in xUI.panelTable){
+        if(document.getElementById(xUI.panelTable[prp].elementId)){
+            result.push([
+                prp,
+                xUI.panelTable[prp].elementId,
+                ($("#"+xUI.panelTable[prp].elementId).isVisible())? 1:0
+            ]);
         }else{
-            var viewSet = (xUI.restriction)?[
-                '110111101001',
-                '010000001000',
-                '110001100001',
-                '000000100000',
-                this.toolView
-                ]:[
-                '110111111001',
-                '010000011000',
-                '110001110001',
-                '000000110000',
-                this.toolView
-                ];
-            toolView = viewSet[(viewSet.indexOf(currentView)+1)%viewSet.length];
-        }
-    }
+            let v = 0;
+            if((xUI.panelTable[prp].type == 'float')&&(xUI.toolView)) v = xUI.toolView[ix];
+            result.push([
+                prp,
+                xUI.panelTable[prp].elementId,
+                v
+            ]);
+        };
+        ix ++;
+    };
+console.log (result.join('\n'));
+    if(opt) return Array.from(result,e => e[2]).join('');
+    return result;
+};//デバッグ｜チェック用 仮関数
+/**
+    @params {string} toolView
+    toolView 文字列
+
+full        フルサイズUI 
+minimum     フルサイズUI環境下で最小のツールセット（入力可能）
+default     特に指定のない場合の標準セット
+compact     コンパクトUI
+restriction 動作制限下でのセット
+{
+    'full'   :["account_box","pmui","headerTool","inputControl","sheetHeaderTable","memoArea"],
+    'minimum':["headerTool","inputControl"],
+    'default':["account_box","pmui","headerTool","inputControl"],
+    'compact':["account_box","headerTool","inputControl"]
+}
+配列が引数として渡された場合は、配列全体を連結"join('')"して文字列とする
+// */
+
+xUI.setToolView = function(toolView){
+    if(toolView instanceof Array) toolView = toolView.join('');//連結
+    var currentView = [];var ix = 0;
+    for (var prp in xUI.panelTable){
+        if(document.getElementById(xUI.panelTable[prp].elementId)){
+            currentView.push(($('#'+xUI.panelTable[prp].elementId).isVisible())? 1:0);
+        }else{
+            currentView.push((xUI.toolView)?xUI.toolView[ix]:ToolView[ix]);//config.ToolView[ix]);
+        };
+        ix ++;
+    };
+console.log('currentView :'+currentView.join(''));
+console.log('currentView :'+xUI.checkToolView(true));
+
+    xUI.toolView = currentView;//配列で控える
+    currentView=currentView.join("");//文字列化
+
+    if(String(toolView).match(/^[01]+$/)){
+            xUI.toolView = Array.from(toolView);
+    }else{
+console.log(toolView);
+        if(xUI.restriction) toolView = 'restriction';
+        if(String(toolView).match(/full|minimum|default|compact|restriction/i)){
+            var limit = {
+                restriction:0,
+                minimum:1,
+                compact:2,
+                default:3,
+                full:4
+            };
+            var tv = [];ix = 0;
+            for (var prp in xUI.panelTable){
+                if(prp != '_exclusive_item_'){
+                    if(
+                        (document.getElementById(xUI.panelTable[prp].elementId))&&
+                        (xUI.panelTable[prp].uiOrder >= 0)
+                    ){
+                        tv.push((xUI.panelTable[prp].uiOrder <= limit[toolView])?1:0);
+                    }else if(xUI.panelTable[prp].type == 'modal'){
+                        tv.push(0);
+                    }else{
+                        tv.push(((xUI.toolView)?xUI.toolView[ix]:ToolView[ix])?1:0);//config.ToolView[ix]
+                    };
+                }
+                ix ++;
+            };
+            toolView = tv.join('');
+        }else{
+            toolView = ToolView.join('');//config.ToolView;
+        };
+    };
+console.log(toolView);
     if(toolView != currentView){
 //UI表示状態設定
-    if(xUI.restriction){
-         toolView = ("000000000000"+((parseInt(toolView,2) & parseInt("111111111111",2)).toString(2))).slice(-UIViewIdList.length);
-      }
-    for (var ix=0;ix<UIViewIdList.length;ix++){
-        var myTgt=$("#"+UIViewIdList[ix]);
-        if(String(toolView).charAt(ix)=="0"){myTgt.hide()}else{myTgt.show()} 
-    }
-    }
-    xUI.adjustSpacer();
+        var changePost = false;
+        var ix = 0;
+        for (var prp in xUI.panelTable){
+            if(prp != '_exclusive_items_'){
+                if(xUI.panelTable[prp].elementId == 'toolbarPost'){
+                    changePost = (String(toolView).charAt(ix)==currentView.charAt(ix))? false:true;
+                }else{
+//入力は文字列であること
+console.log(prp,(parseInt(String(toolView).charAt(ix)) == 0)? "hide":"show")
+                    if(document.getElementById(xUI.panelTable[prp].elementId)) xUI.sWitchPanel(
+                        prp,
+                        (parseInt(String(toolView).charAt(ix)) == 0)? "hide":"show"
+                    );
+                };
+            };
+            ix ++;
+        };
+        xUI.adjustSpacer();
+        if(changePost){
+            if(xUI.sWitchPanel('ibC','switch'))
+            xUI.ibCP.switch(xUI.ibCP.activePalette);
+        };
+    };
 console.log([toolView,xUI.toolView]);
     return toolView;
 }
@@ -3213,21 +3273,22 @@ if(pageNumber==Pages){
 
     _BODY+='<table  class=sheetHeaderMargin ><tr><td class=memoSpace>';
 //第一ページのみシート全体のコメントを書き込む（印刷用）  表示用には別のエレメントを使用
-if(pageNumber==1){
+    if(pageNumber==1){
 //シート書き出し部分からコメントを外す 印刷時は必要なので注意 2010/08/21
-    _BODY+='<span class=top_comment ><span>sig.</span>';
-    _BODY+='<br><div><br></div><hr>';
-    _BODY+='<br><div><br></div><hr>';
-    _BODY+='<u>note:</u>';
-    _BODY+='<span id="transit_dataXXX">';
-    if(this.XPS.trin[0]>0){
-        _BODY+="△ "+this.XPS.trin[1]+'('+nas.Frm2FCT(this.XPS.trin[0],3,0,this.XPS.framerate)+')';
-    };
-    if((this.XPS.trin[0]>0)&&(this.XPS.trout[0]>0)){    _BODY+=' / ';};
-    if(this.XPS.trout[0]>0){
-    _BODY+="▼ "+this.XPS.trout[1]+'('+nas.Frm2FCT(this.XPS.trout[0],3,0,this.XPS.framerate)+')';
-    };
-    _BODY+='</span>';
+        _BODY += '<span class=top_comment >'
+//      _BODY += '<span>sig.</span>';
+//      _BODY += '<br><div><br></div><hr>';
+//      _BODY += '<br><div><br></div><hr>';
+        _BODY +='<u>memo:</u>';
+        _BODY += '<span id="transit_dataXXX">';
+        if(this.XPS.trin[0]>0){
+            _BODY += "△ "+this.XPS.trin[1]+'('+nas.Frm2FCT(this.XPS.trin[0],3,0,this.XPS.framerate)+')';
+        };
+        if((this.XPS.trin[0]>0)&&(this.XPS.trout[0]>0)){_BODY += ' / ';};
+        if(this.XPS.trout[0]>0){
+        _BODY += "▼ "+this.XPS.trout[1]+'('+nas.Frm2FCT(this.XPS.trout[0],3,0,this.XPS.framerate)+')';
+        };
+        _BODY += '</span>';
 
         _BODY+='<div id="memo_prt" class=printSpace >';
         if(this.XPS.xpsTracks.noteText.toString().length){
@@ -3237,13 +3298,11 @@ if(pageNumber==1){
         };
         _BODY+='</div>';
 
-    _BODY+='</span>';
-}else{
-    _BODY+='<div class=printSpace ><br><br><br><br><br><br></div>';
-};
+        _BODY+='</span>';
+    }else{
+        _BODY+='<div class=printSpace ><br><br><br><br><br><br></div>';
+    };
     _BODY+='</td></tr></table>';
-
-
 if(pageNumber==1){
 //    document.getElementById("UIheaderScrollH").innerHTML=this.pageView(0);
 //    document.getElementById("UIheaderScrollV").innerHTML=this.pageView(-2);
@@ -3968,58 +4027,6 @@ xUI.replaceEndMarker = async function replaceEndMarker(endPoint){
     });//offsetParentをシートテーブルと共用してスケールを合わせる*/
     return document.getElementById('endMarker');
 }
-
-/* エンドマーカー位置調整メソッド  endMarker
-    上記で配置したendMarkerの位置を実際の終了フレームの真下に再配置するメソッド
-    '#0_'+String(this.XPS.xpsTracks.duration-1);
-    '#'+String(this.XPS.xpsTracks.length-1)+'_'+String(this.XPS.xpsTracks.duration-1);
-    自動化のため参照エレメントの情報をendMakerのinnerHTML内に埋め込む
-    [this.XPS.xpsTracks.length-1,this.XPS.xpsTracks.duration-1]
-    以下のメソッドは  単独の関数としても利用可能
- */
-xUI._replaceEndMarker = function(endPoint){
-    if(! document.getElementById('endMarker')) return;
-    if (typeof endPoint == 'undefined'){
-        try{
-            var endPoint = [xUI.XPS.xpsTracks.length, xUI.XPS.xpsTracks.duration];
-        }catch(er){return;}
-    };
-    if(!(endPoint instanceof Array)) {endPoint=[xUI.XPS.xpsTracks.length,endPoint]};
-    var endCellLeft  = document.getElementById([0,endPoint[1]-1].join('_'));
-    var endCellRight = document.getElementById([endPoint[0]-1,endPoint[1]-1].join('_'));
-    var parentSheet  = document.getElementById('endMarker').parentNode;
-//document.getElementById('endMarker').offsetParent === document.getElementById('0_0').offsetParent.offsetParent
-    var topOffset    = endCellLeft.offsetParent.offsetTop;
-    var leftOffset   = endCellLeft.offsetParent.offsetLeft;
-    var scale = [1,1];
-    if(endCellLeft.offsetParent.style.transform.match(/scale\((.+)\)/)){
-        scale = Array.from((RegExp.$1).split(','),parseFloat);
-console.log('sheet scale :' + scale.join(','));
-    };
-    var canvasOffsetTop  = parentSheet.offsetTop;
-    var canvasOffsetLeft = parentSheet.offsetLeft;
-//JQueryの使用をこの部分のみに制限（ここも削除予定）
-    $("#endMarker").css({
-        'top'  :(endCellLeft.offsetTop  + endCellLeft.clientHeight) + topOffset + canvasOffsetTop,
-        'left' :(endCellLeft.offsetLeft ) + leftOffset + canvasOffsetLeft,
-        'width':(endCellRight.offsetLeft + endCellRight.clientWidth - endCellLeft.offsetLeft) 
-    });//offsetParentをシートテーブルと共用してスケールを合わせる*/
-/*    $("#endMarker").css({
-        'top'  :(endCellLeft.offsetTop  + endCellLeft.clientHeight) * scale[1] + topOffset ,
-        'left' :(endCellLeft.offsetLeft) * scale[0] + leftOffset,
-        'width':(endCellRight.offsetLeft + endCellRight.clientWidth - endCellLeft.offsetLeft)*scale[0] 
-    });//スケーリング */
-/*    $("#endMarker").css({
-        'top'  :(endCellLeft.offsetTop  + endCellLeft.clientHeight) + topOffset ,
-        'left' :(endCellLeft.offsetLeft) + leftOffset,
-        'width':(endCellRight.offsetLeft + endCellRight.clientWidth - endCellLeft.offsetLeft), 
-        'transform': "scale("+scale.join(",")+")",
-        'transform-origin': -(document.getElementById('endMarker').offsetTop) + 'px -' + (document.getElementById('endMarker').offsetLeft) +'px'
-    });//*/
-
-    document.getElementById("endMarker").innerHTML = ':: end ::';
-}
-
 //
 //本体シートの表示を折り畳む（トグル）
 xUI.packColumn=function(ID){
@@ -5069,7 +5076,7 @@ if((xUI.player)&&(xUI.player.keyboard)){
 	switch(key) {
 case	66 :		;	//[ctrl]+[B]/ パネルセット切り替え
 	if ((e.ctrlKey)||(e.metaKey))	{
-		this.setToolView();
+		xUI.setToolView();
 		return false;}else{return true}
 	break;
 case	68 :		;	//[ctrl]+[D]/　スクロール・ページ表示モード切り替え
@@ -6592,9 +6599,286 @@ onscrollの設定位置を一考
             $('#'+target+'-d').show();            
         }
     }
+
+/* 
+ *  xUI.panelTable
+ *      <key>:{elementId:<HTML Element Id>,type:<fix|modal|float|doc>,status:<optional {function|expression}>, <optional uiOrder:{Number}>,exclusive:<排他フラグ>}
+ type
+    fix     固定位置パネル
+    float   フロートタイプダイアログ(jquiパネル)
+    modal   モーダルダイアログ（jqui疑似モーダルパネル）
+    doc     ドッキングタイプ（未実装 - 予約）
+    exclusive_item_group アプリ別排他グループリスト
+    またはキー値の配列
+    [<key>.....]
+ uiOrder       数値の低いほど表示優先順位が高い 低優先指定の場合は高位のアイテムを包括する
+   -1:other             番外・優先度なし 比較対象外 このアトリビュートを持たない場合もこれに準ずる
+    0:restriction       制限モード入力規制
+    1:input-minimum     入力最小モード
+    2:compact           コンパクトモード
+    3:default-basic     標準モード
+    4:full              フルサイズモード
+ */
+xUI.panelTable = {
+// modal-dialog
+    'Ver'      :{elementId:"optionPanelVer"      ,type:'modal',note:"アバウト(汎)"},
+    'NodeChart':{elementId:"optionPanelNodeChart",type:'modal',note:"ノードチャート(汎)"},
+    'Pref'     :{elementId:"optionPanelPref"     ,type:'modal',note:"環境設定(汎)"},
+    'Rol'      :{elementId:"optionPanelRol"      ,type:'modal',note:"書込み制限警告(汎)"},
+    'File'     :{elementId:"optionPanelFile"     ,type:'modal',note:"サーバ｜ローカル ドキュメントブラウザ(汎)"},
+    'SCI'      :{elementId:"optionPanelSCI"      ,type:'modal',note:"Xpsインポートパネル Importer(汎)"},
+    'Prog'     :{elementId:"optionPanelProg"     ,type:'modal',note:"プログレス表示（汎）"},
+    'Scn'      :{elementId:"optionPanelScn"      ,type:'modal',note:"Xpsタイムシート情報"},
+// 
+    'Item'     :{elementId:"optionPanelInsertItem" ,type:'modal',note:"新規アイテム挿入"},
+//float-panel-dialog
+    'Paint'    :{elementId:"optionPanelPaint" ,uiOrder: 4,type:'float',note:"手書きメモb(汎)"},
+    'Draw'     :{elementId:"optionPanelDraw"  ,uiOrder:-1,type:'float',note:"手書きメモv(汎)"},
+    'Stamp'    :{elementId:"optionPanelStamp" ,uiOrder:-1,type:'float',note:"スタンプ選択"},
+    'Text'     :{elementId:"optionPanelText"  ,uiOrder: 4,type:'float',note:"テキストパネル"},
+    'Timer'    :{elementId:"optionPanelTimer" ,uiOrder:-1,type:'float',note:"ストップウォッチ(汎)"},
+    'Sign'     :{elementId:"optionPanelSign"  ,uiOrder:-1,type:'float',note:"署名パネル(汎)"},
+    'Snd'      :{elementId:"optionPanelSnd"   ,uiOrder:-1,type:'float',note:"remaping Dialog|Snd"},
+    'Ref'      :{elementId:"optionPanelRef"   ,uiOrder:-1,type:'float',note:"remaping 参考画像パネル"},
+    'Cam'      :{elementId:"optionPanelCam"   ,uiOrder:-1,type:'float',note:"remaping カメラワーク入力補助パネル"},
+    'Stg'      :{elementId:"optionPanelStg"   ,uiOrder:-1,type:'float',note:"remaping ステージワーク入力補助パネル"},
+    'Sfx'      :{elementId:"optionPanelSfx"   ,uiOrder:-1,type:'float',note:"remaping コンポジット入力補助パネル"},
+    'Tbx'      :{elementId:"optionPanelTbx"   ,uiOrder:-1,type:'float',note:"remaping ツールボックス"},
+
+//inplace-UI-panel common
+    'Login'         :{elementId:"optionPanelLogin"        ,uiOrder:-1,type:'fix', note:"サーバログイン(汎)"},
+    'menu'          :{elementId:'pMenu'                   ,uiOrder: 3,type:'fix', note:"WEB pulldown menu(汎)"},
+    'Dbg'           :{elementId:'optionPanelDbg'          ,uiOrder:-1,type:'fix', note:"debug console(汎)"},
+    'ibC'           :{elementId:'toolbarPost'             ,uiOrder: 1,type:'fix', note:"iconButtonColumn(汎)"},
+    'ToolBr'        :{elementId:'toolbarHeader'           ,uiOrder: 3,type:'fix', note:"remaping ツールバー"},
+    'Utl'           :{elementId:'optionPanelUtl'          ,uiOrder: 4,type:'fix', note:"remaping ユーティリティツール"},
+    'SheetHdr'      :{elementId:'sheetHeaderTable'        ,uiOrder: 3,type:'fix', note:"remaping シートヘッダ"},
+    'headerTool'    :{elementId:'headerTool'              ,uiOrder: 1,type:'fix', note:"remaping シートヘッダツール(カウンタ等)"},
+    'inputControl'  :{elementId:'inputControl'            ,uiOrder: 1,type:'fix', note:"remaping 入力コントロール"},
+    'account_box'   :{elementId:'account_box'             ,uiOrder: 3,type:'fix', note:"remaping アカウント表示"},
+    'pmui'          :{elementId:'pmui'                    ,uiOrder: 2,type:'fix', note:"remaping 作業管理バー(旧)"},
+    'pmcui'         :{elementId:'pmcui'                   ,uiOrder: 1,type:'fix', note:"remaping 作業管理バーアイコン(新)"},
+    'appHdBr'       :{elementId:'applicationHeadbar'      ,uiOrder: 1,type:'fix', note:"uat アプリケーションヘッドバー"},
+
+//inplace-UI-panel xpst editor
+    'Memo'          :{elementId:"optionPanelMemo"         ,uiOrder:-1,type:'fix', note:"Xpsメモ編集(xpsedit)"},
+    'memoArea'      :{elementId:"memoArea"                ,uiOrder: 3,type:'fix', note:"Xpsメモ欄(xpsedit)"},
+    'Data'          :{elementId:"optionPanelData"         ,uiOrder:-1,type:'fix', note:"remaping Import|Export(汎)"},
+    'AEKey'         :{elementId:"optionPanelAEK"          ,uiOrder:-1,type:'fix', note:"remaping AEKey"},
+
+//inplace-UI-panel pman\reName\xmap browser
+    'Search'         :{elementId:"optionPanelSearch"       ,sync:"search"         ,uiOrder: 4,type:'fix', note:"reName検索(汎)"},
+    'PreviewSize'    :{elementId:"optionPanelPreviewSize"  ,sync:"preview"        ,uiOrder: 4,type:'fix', note:"reNameプレビュー指定UI"},
+    'ThumbnailSize'  :{elementId:"optionPanelThumbnailSize",sync:"thumbnail"      ,uiOrder: 4,type:'fix', note:"reNameサムネイルサイズ｜表示UI"},
+    'prefix'         :{elementId:"prefixStrip"             ,sync:"prefix"         ,uiOrder: 4,type:'fix', note:"reNameプレフィクスUI"},
+    'suffix'         :{elementId:"suffixStrip"             ,sync:"suufix"         ,uiOrder: 4,type:'fix', note:"reNameサフィックスUI"},
+    'rename_setting' :{elementId:'rename_setting'          ,sync:"rename_setting" ,uiOrder: 4,type:'fix', note:"reName 操作設定"},
+    'flip_control'   :{elementId:'flip_control'            ,sync:"flipControl"    ,uiOrder: 4,type:'fix', note:"reName フリップコントローラ"},
+    'flip_seekbar'   :{elementId:'flip_seekbar'            ,sync:"flipSeekbar"    ,uiOrder: 4,type:'fix', note:"reName フリップ再生シークバー"},
+    'lightBoxControl':{elementId:'lightBoxControl'         ,sync:"lightBoxControl",uiOrder: 4,type:'fix', note:"reName ライトボックススイッチ"},
+    'lightBoxProp'   :{elementId:'lightBoxProperty'        ,sync:"lightBoxProp"   ,uiOrder: 4,type:'fix', note:"reName ライトボックス設定"},
+/*
+    '':{elementId:'',type:''},
+    '':{elementId:'',type:''},
+    '':{elementId:'',type:''},
+
+//*/
+    '_exclusive_items_':{
+        type:'exclusive_item_group',
+        'xpsedit':["Memo","Data","AEKey"],
+        'pman_reName':[]
+    }
+    
+};
+/*
+	xUI.sWitchPanel(target,statsu)
+	@params {String} kwd
+	@params {String} status
+	    switch|show|hide 未指定はswitch(現在の状態を反転)現在の状態と一致している場合はNOP
+パネル類の表示をコントロールする
+引数="clear"または  なしの場合は、排他表示のパネル類を表示クリア（hide）して表示を初期化する
+
+引数	JQobject	備考
+//一括クリア除外オブジェクト
+menu
+ibC
+_exclusive_items_
+headerTool
+SheetHdr
+memoArea
+inputControl
+//排他表示グループ
+login   #optionPanelLogin   //ログインUI（  排他）
+memo    #optionPanelMemo    //メモ編集（  排他）
+Data    #optionPanelData    //Import/Export（  排他）
+AEKey   #optionPanelAEK     //キー変換（  排他）
+Scn     #optionPanelScn     //シーン設定(モーダル)
+SCIs    #optionPanelSCI    //複数対応簡易シーン設定(モーダル)
+Pref    #optionPanelPref    //環境設定（モーダル）
+Ver     #optionPanelVer     //about(モーダル)
+File    #optionPanelFile    //ファイルブラウザ（モーダル）
+Timer       #optionPanelTimer       //ストップウオッチ(共)
+NodeChart   #optionPanelNOdeChart   //ノードチャート（モーダル）
+
+Rol     #optionPanelFile    //入力ロック警告（モーダル）
+Snd     #optionPanelSnd     //音響パネル(共)
+Img     #optionPanelImg     //画像パネル(共)
+
+Dbg     #optionPanelDbg	//デバッグコンソール（排他）
+Prog	#optionPanelProg	//プログレス表示（排他モーダル）
+//フローティングツール
+Tbx     #optionPanelTbx	//ソフトウェアキーボード
+//常時パネル（ユーザ指定）
+menu    #pMenu	//ドロップダウンメニュー(共)
+ToolBr      div#toolbarHeader	//ツールバー(共)
+SheetHdr    div#sheetHeaderTable	//シートヘッダー(共)
+memoArea		//ヘッダメモ欄複合オブジェクト
+Search  検索・置換UI
+Utl	#optionPanelUtl	//ユーティリティーコマンドバー(共)排他から除外
+//新UIツールポスト
+*/
+xUI.sWitchPanel = function sWitchPanel(kwd,status){
+    if(! kwd) kwd = 'ibC';
+    if(kwd == 'clear'){
+//clearコマンド
+        for (var prp in xUI.panelTable){
+            if(
+                (prp== '_exclusive_items_')||
+                (xUI.panelTable[prp].uiOrder <= 3)||
+                (! document.getElementById(xUI.panelTable[prp].elementId))
+            ) continue ;//除外
+            if(
+                ((xUI.panelTable[prp].type == 'float')||(xUI.panelTable[prp].type == 'fix'))&&
+                ($("#"+xUI.panelTable[prp].elementId).isVisible())
+            ){
+//表示中のフロートアイテムをすべてhideする
+                $("#"+xUI.panelTable[prp].elementId).hide();
+            }else if(
+                (xUI.panelTable[prp].type == 'modal')&&
+                ($("#"+xUI.panelTable[prp].elementId).isVisible())
+            ){
+//ダイアログをすべて閉じる
+                nas.HTML.removeClass(document.body,'scroll-lock');
+                $("#"+xUI.panelTable[prp].elementId).dialog("close");
+            };
+        };
+        xUI.adjustSpacer();
+        return;
+    };
+//status  'switch'|'show'|'hide'
+    if((typeof status == 'undefined')||(!(String(status).match(/show|hide/)))) status = 'switch';
+    let itm = xUI.panelTable[kwd];
+    if((itm)&&(document.getElementById(itm.elementId))){
+//操作対象エレメントが存在する場合のみ実行
+        let currentStatus = $("#"+itm.elementId).isVisible();
+        if(itm.status){
+            if(itm.status instanceof Function){
+                currentStatus = itm.status();
+            }else{
+                currentStatus = Function(String(itm.status))();
+            };
+        };
+        let opt = (status == 'switch')? (!(currentStatus)):(status == 'show');// true|false
+        if (opt != currentStatus){
+//前処理 排他アイテムグループメンバー表示の場合他のウインドウをすべて非表示
+            if((opt)&&(xUI.panelTable['_exclusive_items_'][xUI.app])&&(xUI.panelTable['_exclusive_items_'][xUI.app].indexOf(kwd) >= 0)){
+                xUI.panelTable['_exclusive_items_'][xUI.app].forEach(e => {
+console.log('exclusive_items close :'+e);
+                    if((e != kwd)&&(document.getElementById(xUI.panelTable[e].elementId))){
+                        if(xUI.panelTable[e].type == 'modal'){
+                            $("#"+xUI.panelTable[e].elementId).dialog("close");//modal
+                        }else{
+                            $("#"+xUI.panelTable[e].elementId).hide();//fix||float
+                            if((xUI.panelTable[e].type == 'fix')&&(document.getElementById(xUI.panelTable[e].elementId+'_a')))
+                                $("#"+xUI.panelTable[e].elementId+'_a').show();//alt-item
+                        };
+                    };
+                });
+            };
+console.log([kwd,((opt)?'show':'hide'),itm.elementId,currentStatus].join(' : '));
+            if(itm.type == 'modal'){
+                if(opt){
+//モーダル処理確認
+                    $("#"+itm.elementId).dialog("open");
+                    nas.HTML.addClass(document.body,'scroll-lock');
+//                    xUI.setDialog($("#"+itm.elementId));
+                    $("#"+itm.elementId).focus();
+                }else{
+                    nas.HTML.removeClass(document.body,'scroll-lock');
+                    $("#"+itm.elementId).dialog("close");
+                };
+/*            }else if(itm.type == 'float'){
+                if(status){
+                    $("#"+itm.elementId).width('100%');
+                    $("#"+itm.elementId).dialog('open')
+                }else{
+                    $("#"+itm.elementId).dialog('close');
+                };// */
+            }else{
+                if(opt){
+                    $("#"+itm.elementId).show();
+                    if((itm.type == 'fix')&&(document.getElementById(itm.elementId+'_a')))
+                        $("#"+itm.elementId+'_a').hide();//alt-item hide
+                }else{
+                    $("#"+itm.elementId).hide();
+                    if((itm.type == 'fix')&&(document.getElementById(itm.elementId+'_a')))
+                        $("#"+itm.elementId+'_a').show();//alt-item show
+                };
+            };
+//後処理 syncテーブルを参照してメニュー表示UI同期・固定アイテムの場合アジャスト
+            if(xUI.panelTable[kwd].sync) xUI.sync(xUI.panelTable[kwd].sync);
+            if(kwd == 'ibC'){
+                if($('#toolbarPost').isVisible()){
+                    xUI.shiftScreen(50,0);
+                }else{
+                    xUI.shiftScreen(0,0);
+                };
+            };
+            if(
+                (document.getElementById('applicationHeadbar'))&&
+                (((kwd == 'ibC'))||(kwd == 'menu'))
+            ) $('#toolbarPost').css('margin-top',$('#applicationHeadbar').position().top);
+            if(itm.type == 'fix') xUI.adjustSpacer();
+        };
+    };
+//    console.log(arguments);
+}
+/*
+	メモ欄の編集機能と閲覧を交互に切りかえる
+	引数なし
+ */
+xUI.sWitchNotetext = function sWitchNotetext(){
+	var myTarget   = $("#optionPanelMemo");//置き換え
+	var hideTarget = $("#memo");
+	if(! myTarget.is(':visible')){
+		xUI.sWitchPanel("clear");
+		if((document.getElementById("myWords").innerHTML=="word table")&&(myWords)){
+			document.getElementById("myWords").innerHTML=putMyWords();
+		}
+		hideTarget.hide();
+		myTarget.show();
+		document.getElementById("rEsult").value=this.XPS.xpsTracks.noteText;
+		xUI.adjustSpacer();
+		document.getElementById("rEsult").focus();
+	}else{
+		hideTarget.show();
+		xUI.XPS.xpsTracks.noteText=document.getElementById("rEsult").value;
+		sync("memo");
+		myTarget.hide();
+		xUI.adjustSpacer();
+		document.getElementById("iNputbOx").focus();
+	};
+}
+/*TEST
+sWitchNotetext();
+ */
 /*
 	xUI.sWitchPanel(引数)
-パネル類の表示をコントローする
+	xUI.sWitchPanel(target,statsu)
+	@params {String} kwd
+	@params {String} status
+	    switch|show|hide 未指定はswitch(現在の状態を反転)現在の状態と一致している場合はNOP
+パネル類の表示をコントロールする
 引数="clear"または  なしの場合は、排他表示のパネル類を表示クリア（hide）して表示を初期化する
 
 引数	JQobject	備考
@@ -6625,7 +6909,8 @@ SheetHdr    div#sheetHeaderTable	//シートヘッダー(共)
 memoArea		//ヘッダメモ欄複合オブジェクト
 Utl	#optionPanelUtl	//ユーティリティーコマンドバー(共)排他から除外
 */
-xUI.sWitchPanel = function sWitchPanel(status){
+if(false){
+xUI.sWitchPanel = function sWitchPanel(kwd,status){
 //一括クリアするパネルのリスト
 //	"#optionPanelProg",
 var myPanels=["#optionPanelMemo",
@@ -6653,7 +6938,7 @@ var myPanels=["#optionPanelMemo",
 	"#optionPanelTbx",
 	"#optionPanelDbg",
 */
-   if( status == "clear" ){
+   if( kwd == "clear" ){
 	for(var idx=0;idx<myPanels.length;idx++){
 //		if(document.getElementById("tbLock").checked && myPanels[idx]=="#optionPanelUtl"){continue;};
 		if(myPanels[idx]=="#optionPanelMemo"){
@@ -6669,14 +6954,16 @@ var myPanels=["#optionPanelMemo",
 
 //アニメーション効果フラグAE
     var AEF=(window.innerWidth < 900 )? 0:1;
+//status  'switch'|'show'|'hide'
+    if((typeof status == 'undefined')||(!(String(status).match(/show|hide/)))) status = 'switch';
 //jQueryオブジェクトを取得してターゲットにする
-		var myTarget=$("#optionPanel"+status);//jQ object
-//if(! myTarget[0]){alert("noObject : #optionPanel"+status);return flase;};
+		var myTarget=$("#optionPanel"+kwd);//jQ object
+//if(! myTarget[0]){alert("noObject : #optionPanel"+kwd);return flase;};
 //ターゲットが存在しないことがあるがそれはヨシ？
-switch(status){
+switch(kwd){
 //ダイアログ
 case	"File":	;//ファイルブラウザ
-	if((documentDepot.documents.length==0)&&(status=='File')){documentDepot.rebuildList();}
+	if((documentDepot.documents.length==0)&&(kwd=='File')){documentDepot.rebuildList();}
 case	"Ver":	;//バージョンパネル
 case	"Pref":	;//環境設定
 case	"Scn":	;//ドキュメント設定
@@ -6735,10 +7022,12 @@ case	"memo":	;//memo edit start
 	};
 	break;
 case	"memoArea": ;//メモエリア切り替え
-	if($("#memoArea").is(":visible")){
-		$("#memoArea").hide()
+	if($("#memo_header").is(":visible")){
+		$("#memoArea").hide();
+		$("#memo_header_a").show();
 	}else{
-		$("#memoArea").show()
+		$("#memoArea").show();
+		$("#memo_header_a").hide();
 	};
 //		xUI.adjustSpacer();
 break;
@@ -6785,7 +7074,7 @@ case	"headerTool":	;//ヘッダツール
 case	"inputControl":	;//入力Control
 case	"account_box":	;//アカウント表示ボックス
 case	"pmui":	;//固定ツールバー
-	if($("#"+status).is(":visible")){$("#"+status).hide()}else{$("#"+status).show()};
+	if($("#"+kwd).is(":visible")){$("#"+kwd).hide()}else{$("#"+kwd).show()};
 break;
 //case	"clear":	break;//表示クリアは、最初に分岐してパラメータを見ない仕様に変更
 default:	;//	デフォルトアクションはクリアと同値
@@ -6796,7 +7085,7 @@ default:	;//	デフォルトアクションはクリアと同値
 }
 	xUI.adjustSpacer();
 	document.getElementById("iNputbOx").focus();
-}
+}};//一時ブロック
 
 /**
     画像パーツを描画するローレベルファンクション
@@ -7307,8 +7596,9 @@ xUI.resetSheet=function(editXps,referenceXps){
         document.getElementById("UIheader").style.display="inline";
 //コンパクトUI時は1ページ限定なのでボディ出力を１回だけ行う
         var SheetBody = '<div id=printPg1 class=printPage>';
+        SheetBody += '<div class=headerArea id=pg1Header>';
         SheetBody += this.headerView(1);
-        SheetBody += '<br>';//UI調整用に１行（ステータス行の分）
+        SheetBody += '</div><br>';//UI調整用に１行（ステータス行の分）
         SheetBody += this.pageView(1);
         SheetBody += '</div>';
     }else{
@@ -8603,10 +8893,7 @@ $("#optionPanelSnd").dialog({
 //UI設定オブジェクト初期化
     myPref    =new Pref();
 //UI表示状態のレストア
-    for (var ix=0;ix<UIViewIdList.length;ix++){
-        var myTgt=$("#"+UIViewIdList[ix]);
-        if(String(ToolView).charAt(ix)=="0"){myTgt.hide()}else{myTgt.show()} 
-    }
+    xUI.setToolView(ToolView);
 //暫定  プラットホームを判定して保存関連のボタンを無効化したほうが良い  後でする
 
 //開発用表示
@@ -9395,7 +9682,7 @@ if(! n){n=xUI.Select[0]; }
             }
             if(document.getElementById('opnAEKpnl').checked){
 //リザルトエリアが表示されていない場合表示させる。
-	            if (! $("#optionPanelAEK").is(':visible')){xUI.sWitchPanel("AEKey");}
+	            if (! $("#optionPanelAEK").is(':visible')){xUI.sWitchPanel("AEKey","show");}
 			    document.getElementById("AEKrEsult").select();
 			    if(document.execCommand) document.execCommand("copy");
 			}
@@ -10578,17 +10865,28 @@ myCookie[6]=[SLoop,CLoop,AutoScroll,TabSpin,ViewMode,InputMode];
 
 //	[7] UIView
 if(useCookie.UIView){
-	ToolView=[];
-	for (var ix=0;ix<UIViewIdList.length;ix++){
-		ToolView.push(($('#'+UIViewIdList[ix]).css('display')=='none')? 0:1);				
+	var toolView=[];
+	var ix = 0
+	for (var prp in xUI.panelTable){
+		if(prp == '_exclusive_items_') continue;
+		if(document.getElementById(xUI.panelTable[prp].elementId)){
+			if(xUI.panelTable[prp].uiOrder <= 0){
+				toolView.push(0);//オーダー外なので開かない(0を置く)
+			}else{
+				toolView.push(($('#'+xUI.panelTable[prp].elementId).isVisible())? 1:0);//表示状態を保存
+			};
+		}else{
+			toolView.push(ToolView[ix]);//エレメント自体がないので旧来の値をコピー
+		};
+		ix++;
 	};
-	ToolView=ToolView.join("");
-//	alert(ToolView);//  beforunloadで呼び出すのでその際のアラート、コンソールは読めない
+//	var toolViewIbCs = xUI.ibCP.activePalette;//toolViewIbCs;
+console.log(ToolView);
+console.log(xUI.toolView);
+console.log(toolView);
+	toolView = Array.from(toolView,(e) => (e)?'1':'0');
 };//記録チェックがない場合は元のデータを変更しない
-myCookie[7]=ToolView;
-if(dbg) console.log(ToolView);
-//	alert(myCookie);
-
+myCookie[7]=toolView;
 return myCookie;
 }
 

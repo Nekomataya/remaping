@@ -65,6 +65,9 @@ a:focus		{color:#880000;background-color:snow}
 	display:inline;
 	z-index:4;
 }
+#qdr1 {
+	margin-left:0px;
+}
 #qdr4 {
 	position:relative;
 }
@@ -1119,20 +1122,22 @@ td.pgHeader {
 	２ページめ以降はダミー
 */
 table.sheetHeaderMargin {
-	width:1058px;
-	height:250px;
+	width:1056px;
+	height:256px;
 	margin:0;
 	border-style:none;
 	border-width:0;
 }
-td.memoSpace {
+.memoSpace {
+	width:1056px;
+	min-height:128px;
 	border-width:0;
 	text-align:left;
-	width:1058px;
-	height:250px;
 	vertical-align:top;
 	line-height:1.5;
+	overflow:visible;
 }
+
 
 /*	ツールボックスの部品*/
 input.toolTip	{

@@ -149,7 +149,7 @@ xUI.player.markFrame=function(element){
  *    セルマーカー|ラップ及びスタックをクリア
  */
 xUI.player.clearMark=function(){
-    if(xUI.activeDocument.Id){
+    if(xUI.activeDocument.type=='xpst'){
     (function(){
         for (var trk = 0 ;trk < xUI.XPS.xpsTracks.length ; trk++){
             for (var frm = 0 ;frm < xUI.XPS.xpsTracks[0].length ; frm++){
@@ -169,12 +169,12 @@ xUI.player.clearMark=function(){
  *      省略時は現在フォーカスのあるシートセルセル
  */
 xUI.player.buildCount=function(element){
-    if((! xUI.activeDocument.Id)||(!xUI.player.countStack.length)) return ;
+    if((xUI.activeDocument.type != 'xpst')||(!xUI.player.countStack.length)) return ;
     if(element) xUI.selectCell(element);
     var currentFrame = xUI.Select[1];
     var targetTrack = xUI.XPS.xpsTracks[xUI.Select[0]];
     var buidTarget=new Array(xUI.XPS.xpsTracks.length);
-    for (idx=0;idx < buidTarget.length;idx++){buidTarget[idx]=[];}    
+    for (var idx=0;idx < buidTarget.length;idx++){buidTarget[idx]=[];}    
 //マークをソート
     xUI.player.countStack.sort(function(a,b){
         if (a[0] < b[0]) return -1
@@ -243,13 +243,13 @@ xUI.player.buildCount=function(element){
                 if(targetTrack.option=='dialog'){
                     xUI.selectCell([xUI.Select[0],buildSections[sx].startFrame-2]);
                     var extCount = (buildSections[sx].duration <= 4)? 0 : buildSections[sx].duration-4;
-                    xUI.sheetPut('名前,----,セ,リ,フ, ~,'+(new Array(extCount).join(','))+',----')
+                    xUI.put('名前,----,セ,リ,フ, ~,'+(new Array(extCount).join(','))+',----')
                 }else{
                     xUI.selectCell([xUI.Select[0],buildSections[sx].startFrame]);
                     var writeContent=["▽"];
                     for(var cc=0;cc<(buildSections[sx].duration-2);cc++) writeContent.push('|');
                     writeContent.push("△");
-                    xUI.sheetPut(writeContent.join(','));
+                    xUI.put(writeContent.join(','));
                 }
             }
         }

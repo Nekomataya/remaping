@@ -34,7 +34,8 @@
  *      2020/03/14  ラピッドモード調整　STS互換キーセット試験
  *      2020/10/03  ラピッドキーに "a,s}を追加(add,sub) exitコマンドを追加して"q"にマップ
  *                  エスケープキーでモード解除
- * $Id: config.js,v2.0 2020/10/03  $
+ *      2022/09/29  UI設定機能を新機能に更新
+ * $Id: config.js,v2.0 2022/09/29  $
  */
 	var dbg=false	;	//デバッグモード
 
@@ -44,7 +45,7 @@
  *		ただし開始メッセージが抑制されている場合は表示されません。
  */
 
-	var welcomeMsg="サーバ対応版 -作業安定版- 20220921";
+	var welcomeMsg="サーバ対応-作業安定版- 20220929";
 	var windowTitle="ver. 1.8.4";//WindowTitleとしての役割は終了 統合バージョンです
 
 /**************************************************************************
@@ -372,41 +373,10 @@ var InputMode = 1           ;  //編集モード変数 0:正規化のみ 1:動�
 /*
     Cookie[7]
     ツール類の表示状態を保存
-
     ツール類の表示状態を記録する　ドキュメントファイルに記録するのでなく環境として記録
     ブール値を連結した文字列
-    最初から順に　
-
-    "pMenu"             ドロップダウンメニュー
-    "account_box"       ユーザアカウント切り替え
-    "optionPanelLogin"  認証パネル
-    "toolbarHeader"     ツールバー
-    "optionPanelUtl"    コマンドバー
-    "pmcui"             作業メニュー
-    "headerTool"        ヘッダー入力コントロールバー
-    "inputControl"     入力コントロール
-    "sheetHeaderTable"  タイムシートヘッダ
-    "optionPanelTbx"    ソフトウェアキーボード
-    "optionPanelDbg"    デバッグコンソール
-    "memoArea"          メモ表示域
-    一般表示メニューの順と一致　メニューが変わると変更あり
-*/
-var UIViewIdList = [
-    "pMenu",
-    "account_box",
-    "optionPanelLogin",
-    "toolbarHeader",
-    "optionPanelUtl",
-    "pmui",
-    "headerTool",
-    "inputControl",
-    "sheetHeaderTable",
-    "optionPanelTbx",
-    "optionPanelDbg",
-    "memoArea"
-];
-var ToolView='110111111001';
-
+ */
+var ToolView = '0000000001011000100000101111111111010011111111111'
 //--
 /*
 ラピッドモードコマンド

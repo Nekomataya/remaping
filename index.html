@@ -1042,8 +1042,13 @@ serviceAgent.pushEntry(xUI.XPS,function(){xUI.setStored("current");sync();
 > </button><button
 	id=ibMprintHTML
     class='iconButton iconButton-printer'
-	onClick='printHTML();'
-	title='印刷（テスト）'
+	onClick='printHTML("print");'
+	title='印刷'
+> </button><button
+	id=ibMprintPNG
+    class='iconButton iconButton-printer'
+	onClick='printHTML("png");'
+	title='画像保存(PNG)'
 > </button>
 
 <button
@@ -1951,14 +1956,31 @@ serviceAgent.pushEntry(xUI.XPS,function(){xUI.setStored("current");sync();
 >Export as html</A></li>
 <li id=cMcgi><span id=cMprintHTML-d class='cM cM-alt'>Print html</span><A	id=cMprintHTML
 	href='javascript:void(0)'
-	onclick='printHTML();return false;'
+	onclick='printHTML("print");return false;'
 	title="印刷"
 >Print HTML</A></li>
+<li id=cMcgi><span id=cMexportPNG-d class='cM cM-alt'>Export PNG</span><A	id=cMexportPNG
+	href='javascript:void(0)'
+	onclick='printHTML("png");return false;'
+	title="PNG画像で保存"
+>画像保存(PNG)</A></li>
+
 <li><span id=cMbuildActionSheet-d class='cM cM-alt'></span><A	id=cMbuildActionSheet
 	HREF='javascript:void(0);'
-	onclick='printHTML(false,"action");'
+	onclick='buildActionSheet("print","action");'
 	title="原画アクションシートを作成"
 >原画アクションシート</A></li>
+<li id=cMcgi><span id=cMprintActionHTML-d class='cM cM-alt'>Print html</span><A	id=cMprintActionHTML
+	href='javascript:void(0)'
+	onclick='printHTML("print","action");return false;'
+	title="アクションシートを印刷"
+> --- 印刷</A></li>
+<li id=cMcgi><span id=cMexportActionPNG-d class='cM cM-alt'>Export PNG</span><A	id=cMexportActionPNG
+	href='javascript:void(0)'
+	onclick='printHTML("png","action");return false;'
+	title="アクションシートをPNG画像で保存"
+> --- 画像保存</A></li>
+
     </ul>
 
 <!--    etc 範囲外（ドロップダウンメニュー非表示の際のみ出現）   -->
@@ -2070,7 +2092,7 @@ serviceAgent.pushEntry(xUI.XPS,function(){xUI.setStored("current");sync();
 >commandBar</A></li>
 <li><span id=cMpmui-d class='pM pM-alt'></span><A	id=cMpmui
 	HREF='javascript:void(0);'
-	onclick='xUI.sWitchPanel("pmui");return false'
+	onclick='xUI.sWitchPanel("pmcui");return false'
 	title="制作管理メニュー"
 >進捗管理バー</A></li>
 <li><span id=cMheaderTools-d class='pM pM-alt'></span><A	id=cMheaderTools
@@ -2537,7 +2559,7 @@ onclick='nas.incrFCTonHTMLInput(document.getElementById("editTC"),"-(1)")'
 	onClick='writeAEKey(xUI.Select[0]);'
 	 /><br>
 <input type=button class=toolTip value="閉じる"
-	onClick='xUI.sWitchPanel("clear");' /><br>
+	onClick='xUI.sWitchPanel("AEKey","hide");' /><br>
 </td>
 <td>
 <strong>キー変換方式を選択</strong><br>
@@ -2677,7 +2699,7 @@ onclick='nas.incrFCTonHTMLInput(document.getElementById("editTC"),"-(1)")'
 	onClick="xUI.data_well.value=''"
 ><input type=button
     id=dataLoaderClose value="閉じる" style="width:10%"
-	onClick='xUI.sWitchPanel("clear")'
+	onClick='xUI.sWitchPanel("Data","hide")'
 ><br /><textarea name=XPSBody id=data_well style="width:80%;height:128px"
 ></textarea><br><strong> (Export) </strong>
 <input type=button
@@ -4398,26 +4420,26 @@ duration :
 ></button>
 <button
 	id=timerSwitchMark
-    class='iconButton iconButton-pen_3'
+    class='iconButton iconButton-markON'
 	onMouseDown='if(xUI.player.status=="stop"){xUI.player.start(true)}else{xUI.player.getCount=true};'
 	onMouseUp='if(xUI.player.status=="run"){xUI.player.getCount=false};'
 	title='mark'
 ></button>
 <button
 	id=timerSwitchSub
-    class='iconButton iconButton-eraser'
+    class='iconButton iconButton-markOFF'
 	onMouseDown='if(xUI.player.status=="run"){if(xUI.player.markSwap){xUI.player.stop()}else{xUI.player.getCount=true}}else{xUI.player.clearMark()};'
 	onMouseUp='if(!(xUI.player.markSwap)&&(xUI.player.status=="run")){xUI.player.getCount=false};'
-	title='STOP/Reset'
+	title='clear mark'
 ></button>
 <button
-	onClick='if(xUI.player.status=="stop"){xUI.selectCell(xUI.Select[0]+"_0");};'
-    class='iconButton iconButton-eject'
+	onClick='if(xUI.player.status=="stop"){xUI.player.reset();xUI.selectCell(xUI.Select[0]+"_0");};'
+    class='iconButton iconButton-home'
 	title='go home'
 ></button>
 <button
 	onClick='if(xUI.player.status=="stop"){xUI.player.buildCount()};'
-    class='iconButton iconButton-selectBox'
+    class='iconButton iconButton-mark'
 	title='apply mark'
 ></button>
 <button
@@ -4464,37 +4486,27 @@ duration :
 </div>
 <!-- ストップウオッチUIパネル -->
 <!-- 拡張署名欄 
+<div id=extSig_h>
+	
+</div>
 
-<div id=extSig style='display:flex;vertilcal-align:bottom'>
-<span style='vertilcal-align:bottom'>
-   <a href="javascript:void(0);"
-    onclick='xUI.sWitchPanel("Sign");'
-    title='hide sig. area'
-   ><span  style='vertilcal-align:bottom'>[×]</span></a>
-   <a href="javascript:void(0);"
-	onclick='xUI.sWitchPanel("Sign");return false;'
-	style='vertilcal-align:bottom'
->sig. </a>
-</span>
+<div id=extSig style='display:flex;vertilcal-align:bottom;height:64px;'>
+	<span style='vertilcal-align:bottom'>
+		<a href="javascript:void(0);"
+			onclick='xUI.sWitchPanel("Sign");'
+			title='hide sig. area'
+	><span  style='vertilcal-align:bottom'>[×]</span></a>
+	<a href="javascript:void(0);"
+		onclick='xUI.sWitchPanel("Sign");return false;'
+		style='vertilcal-align:bottom'
+	>sig. </a>
+	</span>
 	<span id='sig_0_label'>LABEL</span>:
 	<span style='text-align:center' id="sig_0-0">
-<!-- 		<img  src='./images/icons/stamp.png'>
-		<span id='sig_0-0_stamp' style='width:32px;height:32px;background-color:red;mask-image:url("images/icons/stamp.png");mask-clip: content-box;'> 
-		</span><br>
-
-	[
-		<span id='sig_0-0_label'>Name1</span>
-		<span id='sig_0-0_date'>00/00</span>
-	]</span>
-	<span style='text-align:center' id="sig_0-1">
-	[
-		<span id='sig_0-1_label'>Name2</span>
-		<span id='sig_0-1_date'>00/00</span>
-	]</span>
 </div>
 <hr>
 
-<!-- 拡張署名欄 -->
+-- 拡張署名欄 -->
 <!-- 署名編集 -->
 
 <div class=optionPanelFloat id=optionPanelSign  style='text-align:center;min-width:480px;'>
@@ -4553,14 +4565,23 @@ duration :
 </div></div>
 <!-- 署名編集 -->
 <!-- メモ編集エリア　画面表示のみ　印刷時はシートヘッダ上に別表示-->
+<div id=memoArea_a style='display:none;'>
+	<a href="javascript:void(0);"
+		onclick='xUI.sWitchPanel("memoArea");'
+		title='show note text'
+	><span>[○]</span></a>
+	<a href="javascript:void(0);"
+		onclick='xUI.sWitchPanel("memoArea");return false;'
+	>MEMO : </a></span>
+</div>
 <div id=memoArea>
-   <div id=memo_header >
+   <div id=memo_header>
    <a href="javascript:void(0);"
     onclick='xUI.sWitchPanel("memoArea");'
     title='hide note text'
    ><span>[×]</span></a>
    <a href="javascript:void(0);"
-	onclick='xUI.sWitchPanel("memo");return false;'
+		onclick='xUI.sWitchNotetext();return false;'
 >MEMO : </a> <span id="transit_data"></span>
    </div>
 <!--	コメント編集	-->
@@ -4588,7 +4609,7 @@ duration :
 	onClick='xUI.XPS.xpsTracks.noteText=document.getElementById("rEsult").value;xUI.setStored("force");sync("memo");' /><br>
 <input type=button
     id=memoPnlClose class=toolTip value="閉じる"
-	onClick='if(xUI.XPS.xpsTracks.noteText!=document.getElementById("rEsult").value){if(confirm("内容が変更されています。\n更新しますか?")){xUI.XPS.xpsTracks.noteText=document.getElementById("rEsult").value;xUI.setStored("force");sync("memo");}};xUI.sWitchPanel("memo");' /><br>
+	onClick='if(xUI.XPS.xpsTracks.noteText!=document.getElementById("rEsult").value){if(confirm("内容が変更されています。\n更新しますか?")){xUI.XPS.xpsTracks.noteText=document.getElementById("rEsult").value;xUI.setStored("force");sync("memo");}};xUI.sWitchNotetext();' /><br>
 </td>
 <td><span id=memoPnlCaption>タイムシートコメントを編集します</span><br>
 <textarea name=rEsult id=rEsult cols=96 rows=8 >
@@ -4604,10 +4625,10 @@ duration :
 </div>
 <!--	コメント編集	-->
 <!-- メモ欄表示欄     -->
-   <div id=memo></div>
+   <div id=memo class=memoSpace></div>
 </div>
-<!-- メモ表示欄　-->
-<div id=app_status class=application_status>***<br></div>
+<!-- メモ表示欄 -->
+<hr><div id=app_status class=application_status>***<br></div>
 </div>
 <div id=sheet_view>
  <div class=headerTool>
