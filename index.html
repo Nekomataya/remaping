@@ -4565,21 +4565,22 @@ duration :
 </div></div>
 <!-- 署名編集 -->
 <!-- メモ編集エリア　画面表示のみ　印刷時はシートヘッダ上に別表示-->
-<div id=memoArea_a style='display:none;'>
-	<a href="javascript:void(0);"
-		onclick='xUI.sWitchPanel("memoArea");'
-		title='show note text'
-	><span>[○]</span></a>
-	<a href="javascript:void(0);"
-		onclick='xUI.sWitchPanel("memoArea");return false;'
-	>MEMO : </a></span>
-</div>
 <div id=memoArea>
+  <div id=memoArea_minimise style='display:none;'>
+	<a href="javascript:void(0);"
+		onclick='xUI.eXpandPanel("memoArea","expand");'
+		title='show note text'
+	><span>[□]</span></a>
+	<a href="javascript:void(0);"
+		onclick='xUI.eXpandPanel("memoArea","expand");return false;'
+	>MEMO : </a></span>
+  </div>
+  <div id=memoArea_expand>
    <div id=memo_header>
    <a href="javascript:void(0);"
-    onclick='xUI.sWitchPanel("memoArea");'
+    onclick='xUI.eXpandPanel("memoArea","minimise");'
     title='hide note text'
-   ><span>[×]</span></a>
+   ><span>[━]</span></a>
    <a href="javascript:void(0);"
 		onclick='xUI.sWitchNotetext();return false;'
 >MEMO : </a> <span id="transit_data"></span>
@@ -4622,13 +4623,15 @@ duration :
 >word table</span>
 </td>
 </tr></table>
-</div>
+  </div>
 <!--	コメント編集	-->
 <!-- メモ欄表示欄     -->
-   <div id=memo class=memoSpace></div>
+  <div id=memo class=memoSpace></div>
+  </div>
+<hr>
 </div>
 <!-- メモ表示欄 -->
-<hr><div id=app_status class=application_status>***<br></div>
+<div id=app_status class=application_status>***<br></div>
 </div>
 <div id=sheet_view>
  <div class=headerTool>

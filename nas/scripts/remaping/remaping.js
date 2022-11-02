@@ -6789,8 +6789,6 @@ console.log('exclusive_items close :'+e);
                             $("#"+xUI.panelTable[e].elementId).dialog("close");//modal
                         }else{
                             $("#"+xUI.panelTable[e].elementId).hide();//fix||float
-                            if((xUI.panelTable[e].type == 'fix')&&(document.getElementById(xUI.panelTable[e].elementId+'_a')))
-                                $("#"+xUI.panelTable[e].elementId+'_a').show();//alt-item
                         };
                     };
                 });
@@ -6817,12 +6815,8 @@ console.log([kwd,((opt)?'show':'hide'),itm.elementId,currentStatus].join(' : '))
             }else{
                 if(opt){
                     $("#"+itm.elementId).show();
-                    if((itm.type == 'fix')&&(document.getElementById(itm.elementId+'_a')))
-                        $("#"+itm.elementId+'_a').hide();//alt-item hide
                 }else{
                     $("#"+itm.elementId).hide();
-                    if((itm.type == 'fix')&&(document.getElementById(itm.elementId+'_a')))
-                        $("#"+itm.elementId+'_a').show();//alt-item show
                 };
             };
 //後処理 syncテーブルを参照してメニュー表示UI同期・固定アイテムの場合アジャスト
@@ -6842,6 +6836,41 @@ console.log([kwd,((opt)?'show':'hide'),itm.elementId,currentStatus].join(' : '))
         };
     };
 //    console.log(arguments);
+}
+/*
+ *    @params {String}    kwd
+ *          パネルテーブルの要素名
+ *    @params {String}    status
+ *           変更ステータス expand|minimise
+ *           引数がない場合は変更を行わず状態のみを返す
+ *    @returns {String}
+ *           切り替え後の状態を文字列で返す expand|minimize
+ *
+ *    最大化最小化に対応しているパネルを切り替える
+ */
+xUI.eXpandPanel = function(kwd,status){
+    let itm = xUI.panelTable[kwd];
+console.log(itm);
+    if(
+        (itm)&&
+        (document.getElementById(itm.elementId))&&
+        (document.getElementById(itm.elementId+'_expand'))&&
+        (document.getElementById(itm.elementId+'_minimise'))
+    ){
+        let currentStatus = ($('#'+itm.elementId+'_expand').isVisible())? 'expand':'minimise';
+        if(status == currentStatus) return currentStatus;//NOP
+        if(status == 'expand'){
+            $('#'+itm.elementId+'_expand').show();
+            $('#'+itm.elementId+'_minimise').hide();
+            currentStatus = status;
+        }else if(status == 'minimise'){
+            $('#'+itm.elementId+'_expand').hide();
+            $('#'+itm.elementId+'_minimise').show();
+            currentStatus = status;
+        };
+        if(itm.type == 'fix') xUI.adjustSpacer();
+        return currentStatus;
+    };
 }
 /*
 	メモ欄の編集機能と閲覧を交互に切りかえる
@@ -7024,10 +7053,8 @@ case	"memo":	;//memo edit start
 case	"memoArea": ;//メモエリア切り替え
 	if($("#memo_header").is(":visible")){
 		$("#memoArea").hide();
-		$("#memo_header_a").show();
 	}else{
 		$("#memoArea").show();
-		$("#memo_header_a").hide();
 	};
 //		xUI.adjustSpacer();
 break;
