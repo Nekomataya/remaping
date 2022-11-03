@@ -6654,7 +6654,18 @@ xUI.panelTable = {
     'Utl'           :{elementId:'optionPanelUtl'          ,uiOrder: 4,type:'fix', note:"remaping ユーティリティツール"},
     'SheetHdr'      :{elementId:'sheetHeaderTable'        ,uiOrder: 3,type:'fix', note:"remaping シートヘッダ"},
     'headerTool'    :{elementId:'headerTool'              ,uiOrder: 1,type:'fix', note:"remaping シートヘッダツール(カウンタ等)"},
-    'inputControl'  :{elementId:'inputControl'            ,uiOrder: 1,type:'fix', note:"remaping 入力コントロール"},
+    'inputControl'  :{elementId:'inputControl'            ,uiOrder: 1,type:'fix', note:"remaping 入力コントロール" ,func:function(elm,status){
+        var currentStatus = (elm.getAttribute('class').indexOf('inputControl-show') >= 0)? true:false;
+        var opt = (status == 'switch')? (!(currentStatus)) : ((status == 'show')? true:false);
+        if(opt != currentStatus){
+            if(opt){
+                elm.setAttribute('class','inputControl inputControl-show');
+            }else{
+                elm.setAttribute('class','inputControl inputControl-hide');
+            };
+            xUI.adjustSpacer();
+        };
+    }},
     'account_box'   :{elementId:'account_box'             ,uiOrder: 3,type:'fix', note:"remaping アカウント表示"},
     'pmui'          :{elementId:'pmui'                    ,uiOrder: 2,type:'fix', note:"remaping 作業管理バー(旧)"},
     'pmcui'         :{elementId:'pmcui'                   ,uiOrder: 1,type:'fix', note:"remaping 作業管理バーアイコン(新)"},
@@ -6693,6 +6704,7 @@ xUI.panelTable = {
 /*
 	xUI.sWitchPanel(target,statsu)
 	@params {String} kwd
+	    パネルアイテムキーワード
 	@params {String} status
 	    switch|show|hide 未指定はswitch(現在の状態を反転)現在の状態と一致している場合はNOP
 パネル類の表示をコントロールする
@@ -6805,7 +6817,11 @@ console.log([kwd,((opt)?'show':'hide'),itm.elementId,currentStatus].join(' : '))
                     nas.HTML.removeClass(document.body,'scroll-lock');
                     $("#"+itm.elementId).dialog("close");
                 };
-/*            }else if(itm.type == 'float'){
+            }else if((itm.func)&&(itm.func instanceof Function)){
+//func　プロパティがあればfuncを実行（イレギュラー処理    ）
+console.log(itm.elementId,status);
+                return itm.func(document.getElementById(itm.elementId),status);
+/*            }else if(itm.type == 'float){
                 if(status){
                     $("#"+itm.elementId).width('100%');
                     $("#"+itm.elementId).dialog('open')
@@ -7096,9 +7112,9 @@ case	"SheetHdr": ;//固定UIシートヘッダ
 	if($("#sheetHeaderTable").is(":visible")){$("#sheetHeaderTable").hide()}else{$("#sheetHeaderTable").show()};
 //	xUI.adjustSpacer();
 break;
-
-case	"headerTool":	;//ヘッダツール
 case	"inputControl":	;//入力Control
+break;
+case	"headerTool":	;//ヘッダツール
 case	"account_box":	;//アカウント表示ボックス
 case	"pmui":	;//固定ツールバー
 	if($("#"+kwd).is(":visible")){$("#"+kwd).hide()}else{$("#"+kwd).show()};

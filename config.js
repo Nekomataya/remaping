@@ -46,7 +46,7 @@
  */
 
 	var welcomeMsg="サーバ対応-作業安定版- 20220929";
-	var windowTitle="ver. 1.8.4";//WindowTitleとしての役割は終了 統合バージョンです
+	var windowTitle="ver. 1.9.0";//WindowTitleとしての役割は終了 統合バージョンです
 
 /**************************************************************************
  *	ロゴ等
@@ -225,8 +225,8 @@ var Sheet="6+0"	;
 			//カット尺初期値初期タイムシートの長さをタイムコードで
 var SoundColumns=1;
 			//セリフ欄の数 初期値を整数で(必要に従って増やせる。最低で1つはルック維持のため予約)
-var SheetLayers=4;
-			//セル重ねの数 初期値を整数で A~D　ならば　4　
+var SheetLayers=7;
+			//セル重ねの数 初期値を整数で A~D　ならば　4
 var CameraworkColumns=0;
 			//カメラワーク欄の数 初期値を整数で
 var StageworkColumns=0;

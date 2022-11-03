@@ -876,6 +876,18 @@ button#edchg {
     border-radius: 4px;	
 }
 
+/*	入力コントロール行
+*/
+.inputControl-show {
+	height : 34px;
+	opacity: 1;
+}
+.inputControl-hide {
+	height : 1px;
+	opacity: .0;
+}
+
+
 input.iNputbOx {
 	outline:none;
 	text-align:left;

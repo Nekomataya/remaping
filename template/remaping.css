@@ -829,6 +829,16 @@ div#tabSelector-base.tabSelector	{
 	border-top:4px solid #888888;
 }
 
+/*	入力コントロール行
+*/
+.inputControl-show {
+	height : 1px;
+	opacity: .1;
+}
+.inputControl-hide {
+	height : 1px;
+	opacity: .1;	
+}
 
 /*		UI　AEキー　コンバートスイッチ
 */

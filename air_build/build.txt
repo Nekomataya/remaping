@@ -1,9 +1,0 @@
-# 仮ビルド用パスフレーズ:oba95kigen!
-
-# 以下のコマンドをremapingのアプリケーションルートで実行されたし
-# 1.6 シリーズは　UAT対応によりリソースを修正
-#windows
-adt -package -storetype pkcs12 -keystore .\air_build\testRMP.p12 remaping.air remaping_air.xml index.html config.js icons images lib nas template
-
-#mac/unix
-adt -package -storetype pkcs12 -keystore ./air_build/testRMP.p12 remaping.air remaping_air.xml index.html config.js icons images lib nas template
