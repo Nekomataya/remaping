@@ -272,7 +272,7 @@ nas.Push_Log( "  FrameRate" + nas.FRATE.toString() );
 これは ひょっとしてなんかのパテントにふれる様な気がしてならない。
 要調査
 これを使うinputオブジェクトは、以下の書式でsliderVALUEを呼ぶ
-sliderVALUE([event,エレメント名,上限,下限,桁数(,初期値,方向)]);
+sliderVALUE([event,エレメント名,上限,下限,小数点桁数(,初期値,方向,ステップ数)]);
 
 初期値の挿入とロック時の動作を追加TC関連の拡張まだ(04.06.06)
 formオブジェクトの参照からinputElementに変更
@@ -281,33 +281,38 @@ formオブジェクトの参照からinputElementに変更
 */
 
 nas.sliderVALUE = function(chnk) {
-//配列で受け渡し [イベント,エレメントID,上限,下限,桁数(,デフォルト値,スライド方向)]
+//配列で受け渡し [イベント,エレメントID,上限,下限,小数点桁数(,デフォルト値,スライド方向,step)]
 	var startX = chnk[0].screenX;
 	var startY = chnk[0].screenY;
 	var slfocus = document.getElementById(chnk[1]);
 	var slmax = 1*chnk[2];
 	var slmin = 1*chnk[3];
-	var slstp = 1*chnk[4];
-	var baseValue =slmin;
-    var sldir = (chnk[6])? chnk[6]:"y";
+	var sldig = 1*chnk[4];
+	var baseValue = slmin;
+	var sldir  = (chnk[6])? chnk[6]:"y";
+	var slstep = (chnk[7])? chnk[7]:1;
 //タイプが、input以外だったりロックされていたらモード変更なしでリターン
 if (slfocus.disabled == true || (!(slfocus instanceof HTMLInputElement)) ) {return false}
 //基準値取得
-if (isNaN(slfocus.value)) {
-	if (chnk.length == 6){baseValue = 1*chnk[5]}
+var currentValue = parseInt(slfocus.value)
+if (isNaN(currentValue)) {
+	if (chnk.length >= 6){baseValue = parseInt(chnk[5])}
 } else {
-	baseValue = 1 * (slfocus.value);
-}
+	baseValue = currentValue;
+};
 //該当するエレメントのオンチェンジを保留してスライダモードに入る
 
 	slfocus.blur();//	document.nasExch.elements[slfocus].onchange = '';
 	document.body.sliderTarget=slfocus
-	document.body.sliderTarget.startX= startX;
-	document.body.sliderTarget.startY= startY;
-	document.body.sliderTarget.slmax = slmax;
-	document.body.sliderTarget.slmin = slmin;
-	document.body.sliderTarget.slstp = slstp;
-	document.body.sliderTarget.baseValue=baseValue;
+	document.body.sliderTarget.startX = startX;
+	document.body.sliderTarget.startY = startY;
+	document.body.sliderTarget.slmax  = slmax;
+	document.body.sliderTarget.slmin  = slmin;
+	document.body.sliderTarget.sldig  = sldig;
+	document.body.sliderTarget.baseValue = baseValue;
+	document.body.sliderTarget.sldir  = sldir;
+	document.body.sliderTarget.slstep = slstep;
+
 switch (navigator.appName) {
 case "Opera":
 case "Microsoft Internet Explorer":
@@ -327,7 +332,7 @@ default:
 		delete this.sliderTarget.startX;
 		delete this.sliderTarget.slmax;
 		delete this.sliderTarget.slmin;
-		delete this.sliderTarget.slstp;
+		delete this.sliderTarget.sldig;
 		delete this.sliderTarget.baseValue;
 		delete this.sliderTarget;
 		return;
@@ -346,9 +351,11 @@ function MVSlider_NS_(event) {
 	if (newValue > this.sliderTarget.slmax) {newValue = this.sliderTarget.slmax} {
 		if (newValue < this.sliderTarget.slmin) {newValue = this.sliderTarget.slmin}
 	}
-//ステップで桁だし
-	var exN = Math.pow(10,this.sliderTarget.slstp);
+//sldigで小数点以下の桁だしを行い、ステップで丸める
+	var exN = Math.pow(10,this.sliderTarget.sldig);
 	newValue = Math.floor(newValue * exN)/exN;
+	if(this.sliderTarget.slstep != 1)
+	newValue = Math.floor(newValue / this.sliderTarget.slstep) * this.sliderTarget.slstep;
 	if(this.sliderTarget.value != newValue) {
 		this.sliderTarget.value = newValue ;
 		if(this.sliderTarget.onchanging) this.sliderTarget.onchanging();
@@ -367,7 +374,7 @@ function MVSlider_IE_() {
 		if (newValue < this.sliderTarget.slmin) {newValue = this.sliderTarget.slmin}
 	}
 //ステップで桁だし
-	var exN = Math.pow(10,this.sliderTarget.slstp);
+	var exN = Math.pow(10,this.sliderTarget.sldig);
 	newValue = Math.floor(newValue * exN)/exN;
 	if(this.sliderTarget.value != newValue) {
 		this.sliderTarget.value = newValue;
