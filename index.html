@@ -16,38 +16,63 @@
 <script src=/remaping/lib/jquery-ui.js></script>
 <script src=/remaping/lib/ecl/ecl.js></script>
 <script src=/remaping/lib/csv/csvsimple.js></script>
-<script src=/remaping/nas/ext-lib/html2canvas.min.js></script>
+
+<script src=/remaping/nas_core/ext-lib/html2canvas/html2canvas.min.js></script>
 <!-- fabric.js  -->
-<script src=/remaping/nas/ext-lib/fabric.js/dist/fabric.min.js ></script>
+<script src=/remaping/nas_core/ext-lib/fabric.js/dist/fabric.min.js ></script>
 
 <script src=/remaping/nas/ext-lib/crc32.js></script>
 <script src=/remaping/nas/ext-lib/png-metadata.js></script>
 
-<script src=/remaping/config.js></script>
-<script src=/remaping/nas/lib/nas_common.js></script>
-<script src=/remaping/nas/lib/nas_common_HTML.js></script>
+<script src=/remaping/nas_core/lib/config.js></script>
+<script src=/remaping/nas_core/lib/nas_common.js></script>
+<script src=/remaping/nas_core/lib/nas_AnimationValues.js></script>
+<script src=/remaping/nas_core/lib/cameraworkDescriptionDB.js></script>
+<script src=/remaping/nas_core/lib/pmio.js></script>
+<script src=/remaping/nas_core/lib/storyboard.js></script>
+<script src=/remaping/nas_core/lib/mapio.js></script>
+<script src=/remaping/nas_core/lib/xpsio.js></script>
+
+
+
+<script src=/remaping/nas_core/ext-lib/jquery-ui-1.13.1.custom/jquery-ui.min.js></script>
+<script src=/remaping/nas_core/lib/jquery-addon.js></script>
+<script src=/remaping/nas_core/lib/nas_common_HTML.js></script>
+
+<script src=/remaping/nas_core/scripts/remaping/airUI.js></script>
+<script src=/remaping/nas_core/scripts/remaping/nodeUI.js></script>
+
+<!-- load json require jquery -->
+<script src=./nas_core/lib/etc/_pmdb_/setupPMDB.js></script>
+
+
+<script src=/remaping/nas_core/lib/docio.js></script>
+
+<script src=/remaping/nas_core/lib/nas_preferenceLib.js></script>
+
 
 <!-- システム汎用ライブラリ remaping.jsよりも前方でロードする必要あり　-->
 <!-- new test code -->
 <!--
  デバッグ終了後に、nas/lib/ フォルダへ移動
--->
         <script src=/remaping/nas/newValueConstractors.js></script>
-        <script src=/remaping/nas/pmio.js></script>
+        <script src=/remaping/nas_core/lib/pmio.js></script>
+<script src=/remaping/nas_core/lib/mapio.js></script>
+<script src=/remaping/nas_core/lib/xpsio.js></script>
+       <script src=/remaping/nas_core/lib/cameraworkDescriptionDB.js></script>
+
+-->
 <!-- new test code -->
-
-<script src=/remaping/nas/lib/mapio.js></script>
-<script src=/remaping/nas/lib/xpsio.js></script>
-
+<!--
 <script src=/remaping/nas/scripts/remaping/airUI.js></script>
 <script src=/remaping/nas/scripts/remaping/nodeUI.js></script>
-       <script src=/remaping/nas/lib/cameraworkDescriptionDB.js></script>
-       <script src=/remaping/nas/configPM.js></script>
+-->
+<!--         <script src=/remaping/nas_core/configPM.js></script> -- >
 <!--         <script src=/remaping/pmdb/configPMDB.js></script> -->
 <script src=/remaping/nas/scripts/remaping/remaping.js></script>
 
 <!-- 下　remaping.js　にマージ予定　-->
-<script src=/remaping/nas/scripts/remaping/utils.js></script>
+<script src=/remaping/nas_core/scripts/remaping/utils.js></script>
 
 
 <!--     汎用ライブラリのためソース分離 一括マージ可能      -->
