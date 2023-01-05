@@ -2140,9 +2140,9 @@ div.documentStatusOverlay {
 	white-space:nowrap;
 	color:#444;
 	margin-left:8px;
-/*stamp Image */
+/*stamp Image
 	background-image: url(images/ui/stamp.png);
-/* */
+ */
 }
 .signature-blank    { background-position:    0px 8px; }
 .signature-work     { background-position:  -72px 8px; }

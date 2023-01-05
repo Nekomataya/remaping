@@ -583,7 +583,7 @@ listEntry.prototype.getStatus=function(){
         var currenEntryInfo = Xps.parseIdentifier(this.issues[this.issues.length-1].identifier);
         return currenEntryInfo.currentStatus;
     }
-    return new Xps.JobStatus(currentStatusDescription);
+    return new JobStatus(currentStatusDescription);
 }
 /**
     エントリのステータスを設定する
@@ -632,11 +632,11 @@ Fixed   >>Float > 変わらず
 listEntry.prototype.setStatus=function(myStatus){
     var currentIssue  = this.issues[this.issues.length-1];
 //    var currentStatus = currentIssue[3].split(":");
-    var currentStatus = new Xps.JobStatus(currentIssue[3]);//オブジェクト化
+    var currentStatus = new JobStatus(currentIssue[3]);//オブジェクト化
     if(myStatus instanceof JobStatus){
      var newStatus = myStatus;
     }else{
-     var newStatus = new Xps.JobStatus(myStatus);//オブジェクト化
+     var newStatus = new JobStatus(myStatus);//オブジェクト化
     }
     if (newStatus.content.indexOf("Float")>=0){return false;}
     if (currentStatus.content=="Hold"){
@@ -649,7 +649,7 @@ listEntry.prototype.setStatus=function(myStatus){
             case "Fixed":
             case "Aborted":
             default:
-            return new Xps.JobStatus(currentIssue[3]);
+            return new JobStatus(currentIssue[3]);
         }
     } else if(currentStatus.content=="Startup"){
         switch (newStatus.content){
@@ -663,7 +663,7 @@ listEntry.prototype.setStatus=function(myStatus){
             case "Fixed":
             case "Aborted":
             default:
-            return new Xps.JobStatus(currentIssue[3]);
+            return new JobStatus(currentIssue[3]);
         }
     } else if(currentStatus.content=="Active"){
         switch (newStatus.content){
@@ -675,7 +675,7 @@ listEntry.prototype.setStatus=function(myStatus){
             case "Active":
             case "Aborted":
             default:
-            return new Xps.JobStatus(currentIssue[3]);
+            return new JobStatus(currentIssue[3]);
         }
     } else if(currentStatus.content=="Aborted"){
         switch (newStatus.content){
@@ -696,11 +696,11 @@ listEntry.prototype.setStatus=function(myStatus){
             case "Fixed":
             case "Aborted":
             default:
-            return new Xps.JobStatus(currentIssue[3]);
+            return new JobStatus(currentIssue[3]);
         }
     }
 if(dbg) console.log(currentIssue[3]);
-    return new Xps.JobStatus(currentIssue[3]);
+    return new JobStatus(currentIssue[3]);
 }
 
 /**
@@ -1466,7 +1466,7 @@ localRepository.activateEntry=function(callback,callback2){
         //':'が無い場合は、メールアドレスを使用
         if ((newXps)&&(xUI.currentUser.sameAs(newXps.update_user))){
              //同内容でステータスを変更したエントリを作成 新規に保存して成功したら先のエントリを消す
-            newXps.currentStatus = new Xps.JobStatus('Active');
+            newXps.currentStatus = new JobStatus('Active');
             localStorage.setItem(this.keyPrefix+Xps.getIdentifier(newXps),newXps.toString());
             var result = (localStorage.getItem(this.keyPrefix+Xps.getIdentifier(newXps)) == newXps.toString())?true:false;
             if(result){
@@ -1476,7 +1476,7 @@ localRepository.activateEntry=function(callback,callback2){
                   myVersion.updated_at=new Date().toString();
                   myVersion.description=currentEntry.toString(0);
                   myVersion.version_token=this.keyPrefix+myVersion.description;
-                xUI.XPS.currentStatus=new Xps.JobStatus('Active');//ドキュメントステータスを更新
+                xUI.XPS.currentStatus=new JobStatus('Active');//ドキュメントステータスを更新
 			    xUI.setStored("current");//UI上の保存ステータスをセット
 			    sync();//保存ステータスを同期
                 selectSCi();//カレントデータを再セレクトして情報更新
@@ -1509,7 +1509,7 @@ localRepository.deactivateEntry=function(callback,callback2){
         //ユーザ判定は不用
         if (newXps){
              //同内容でステータスを変更したエントリを作成 新規に保存して成功したら先のエントリを消す
-            newXps.currentStatus = new Xps.JobStatus('Hold');//（ジョブID等）status以外の変更はない
+            newXps.currentStatus = new JobStatus('Hold');//（ジョブID等）status以外の変更はない
             localStorage.setItem(this.keyPrefix+Xps.getIdentifier(newXps),newXps.toString());
             var result = (localStorage.getItem(this.keyPrefix+Xps.getIdentifier(newXps)) == newXps.toString())?true:false;
             if(result){
@@ -1521,7 +1521,7 @@ if(dbg) console.log('deactivated');
                   myVersion.description=currentEntry.toString(0);
                   myVersion.version_token=this.keyPrefix+myVersion.description;
                 documentDepot.rebuildList();
-                xUI.XPS.currentStatus=new Xps.JobStatus('Hold');//ドキュメントステータスを更新
+                xUI.XPS.currentStatus=new JobStatus('Hold');//ドキュメントステータスを更新
 			    xUI.setStored("current");//UI上の保存ステータスをセット
 			    sync();//保存ステータスを同期
                 selectSCi();//カレントデータを再セレクトして情報更新
@@ -1573,7 +1573,7 @@ if(dbg) console.log('読み出し失敗')
         if (newXps){
             newXps.job.increment(myJob);
             newXps.update_user = xUI.currentUser;
-            newXps.currentStatus = new Xps.JobStatus('Active');
+            newXps.currentStatus = new JobStatus('Active');
              //引数でステータスを変更したエントリを作成 新規に保存 JobIDは必ず繰り上る
             localStorage.setItem(this.keyPrefix+Xps.getIdentifier(newXps),newXps.toString());
             var resultData = localStorage.getItem(this.keyPrefix+Xps.getIdentifier(newXps));
@@ -1587,7 +1587,7 @@ if(dbg) console.log('読み出し失敗')
                 });
                 xUI.setReferenceXPS();
                 xUI.XPS.job.increment(myJob);
-                xUI.XPS.currentStatus=new Xps.JobStatus('Active');//ドキュメントステータスを更新
+                xUI.XPS.currentStatus=new JobStatus('Active');//ドキュメントステータスを更新
                 xUI.XPS.update_user=xUI.currentUser;//ユーザ更新
                 xUI.setStored("current");//UI上の保存ステータスをセット
 			    sync();//保存ステータスを同期
@@ -1625,7 +1625,7 @@ localRepository.checkoutEntry=function(assignData,callback,callback2){
         if (newXps){
              //同内容でステータスを変更したエントリを作成 新規に保存して成功したら先のエントリを消す
 //            newXps.currentStatus = ['Fixed',assignData].join(":");
-            newXps.currentStatus = new Xps.JobStatus('Fixed');
+            newXps.currentStatus = new JobStatus('Fixed');
             newXps.currentStatus.assign = assignData;
             //いったん元に戻す　assignData は宙に保留（ここで消失）
             localStorage.setItem(this.keyPrefix+Xps.getIdentifier(newXps),newXps.toString());
@@ -1693,7 +1693,7 @@ if(dbg) console.log('読み出し失敗')
             newXps.stage.increment(stageName);
             newXps.job.reset(jobName);
             newXps.update_user = xUI.currentUser;
-            newXps.currentStatus = new Xps.JobStatus('Startup');
+            newXps.currentStatus = new JobStatus('Startup');
 if(dbg) console.log(newXps.toString());//
              //引数でステータスを変更したエントリを作成 新規に保存 stageIDは必ず繰り上る jobは0リセット
             localStorage.setItem(this.keyPrefix+Xps.getIdentifier(newXps),newXps.toString());
@@ -1713,7 +1713,7 @@ if(dbg) console.log(newXps.currentStatus);
                 });
                 xUI.XPS.stage.increment(stageName);
                 xUI.XPS.job.reset(jobName);
-                xUI.XPS.currentStatus=new Xps.JobStatus('Startup');//ドキュメントステータスを更新
+                xUI.XPS.currentStatus=new JobStatus('Startup');//ドキュメントステータスを更新
                 xUI.XPS.update_user=xUI.currentUser;//ユーザ更新
                 xUI.setStored("current");//UI上の保存ステータスをセット
 			    sync();//保存ステータスを同期
@@ -1757,7 +1757,7 @@ localRepository.abortEntry=function(myIdentifier,callback,callback2){
         if (newXps){
             newXps.job.increment('Abort');
             newXps.update_user = xUI.currentUser;
-            newXps.currentStatus = new Xps.JobStatus('Aborted');
+            newXps.currentStatus = new JobStatus('Aborted');
 //console.log('abort entry:');
 //console.log(newXps.toString());//
              //引数でステータスを変更したエントリを作成 新規に保存 stageIDは変わらず、jobIDは繰り上る
@@ -1778,7 +1778,7 @@ localRepository.abortEntry=function(myIdentifier,callback,callback2){
                 });
 //                xUI.XPS.stage.increment(stageName);
 //                xUI.XPS.job.reset(jobName);
-//                xUI.XPS.currentStatus=new Xps.JobStatus('Startup');//ドキュメントステータスを更新
+//                xUI.XPS.currentStatus=new JobStatus('Startup');//ドキュメントステータスを更新
 //                xUI.XPS.update_user=xUI.currentUser;//ユーザ更新
 //                xUI.setStored("current");//UI上の保存ステータスをセット
 			    sync();//保存ステータスを同期
@@ -2253,8 +2253,8 @@ APIの情報は、識別子と一致しているはずだが　照合の上異�
                     myCut.job_id:
                     (new XpsStage(nas.pmdb.jobNames.members[0].toString())).toString(true);
                 var myCutStatus= (myCut.status)?
-                    myCut.status:new Xps.JobStatus('Startup');
-// myCut.status new Xps.JobStatus('Startup');
+                    myCut.status:new JobStatus('Startup');
+// myCut.status new JobStatus('Startup');
 //管理情報が不足の場合は初期値で補う description情報が未登録の場合は、APIの情報からビルドする？
 
                 var entryArray = (
@@ -2529,7 +2529,7 @@ console.log(decodeURIComponent(myCut.description));
                 if(! myCut.line_id)　myCut.line_id  =(new XpsLine(nas.pmdb.pmTemplate.members[0])).toString(true);
                 if(! myCut.stage_id) myCut.stage_id =(new XpsStage(nas.pmdb.pmTemplate.members[0].stages.getStage())).toString(true);
                 if(! myCut.job_id)   myCut.job_id   =(new XpsStage(nas.pmdb.jobNames.getTemplate(nas.pmdb.pmTemplate.members[0].stages.getStage(),"init")[0])).toString(true);
-                if(! myCut.status)   myCut.status   =(new Xps.JobStatus("Startup")).toString(true);
+                if(! myCut.status)   myCut.status   =(new JobStatus("Startup")).toString(true);
 
                 var myIdentifier =  encodeURIComponent(currentTitle.name);
                 myIdentifier += '#' + encodeURIComponent(currentEpisode.name);
@@ -3309,7 +3309,7 @@ Activate可能な場合は新しいコンテンツとdescriptionを送信　
 //同内容でステータスを変更したエントリを作成 新規に保存して成功したら先のエントリを消す
                     var newXps = Object.create(xUI.XPS);//現在のデータの複製をとる
 //console.log('activate : '+decodeURIComponent(Xps.getIdentifier(newXps)));
-                        newXps.currentStatus = new Xps.JobStatus('Active');
+                        newXps.currentStatus = new JobStatus('Active');
                         newXps.update_time   = new Date().toNASString();
                     var data = {
                         token: currentCut.token,
@@ -3424,7 +3424,7 @@ NetworkRepository.prototype.deactivateEntry=function(callback,callback2){
         //ユーザ判定は不用
         if (newXps){
              //同内容でステータスを変更したエントリを作成 新規に上書き保存（先行データは上書きされる）
-            newXps.currentStatus = new Xps.JobStatus('Hold');//（ジョブID等）status以外の変更はない
+            newXps.currentStatus = new JobStatus('Hold');//（ジョブID等）status以外の変更はない
     //ここでサーバに現在のエントリへのステータス変更要求を送信する 成功時と失敗時の処理を渡し、かつcallback を再度中継
     //カットの name,description のみを送信してステータスを変更
         var data = {
@@ -3500,7 +3500,7 @@ if(dbg) console.log ('noentry in repository :' +  decodeURIComponent(currentEntr
     if (newXps){
         newXps.job.increment(myJob);
         newXps.update_user = xUI.currentUser;
-        newXps.currentStatus = new Xps.JobStatus('Active');
+        newXps.currentStatus = new JobStatus('Active');
 if(dbg) console.log(newXps.toString());//
     //引数でステータスを変更したエントリを作成 新規に保存 JobIDは必ず繰り上げる
     //ここでサーバに現在のエントリへのステータス変更要求を送信する 
@@ -3584,7 +3584,7 @@ if(true){
         //ユーザ判定は不用 JobID変わらず
     if (newXps){
              //同内容でステータスを変更したエントリを作成 新規に保存して成功したら先のエントリを消す
-            newXps.currentStatus = new Xps.JobStatus('Fixed');//（ジョブID等）status以外の変更はない
+            newXps.currentStatus = new JobStatus('Fixed');//（ジョブID等）status以外の変更はない
             
 //            newXps.currentStatus = ['Fixed',assignData].join(":"); アサインデータはまだUIのみでペンディング
 
@@ -3686,7 +3686,7 @@ if(false){
         newXps.stage.increment(stageName);
         newXps.job.reset(jobName);
         newXps.update_user = xUI.currentUser;
-        newXps.currentStatus = new Xps.JobStatus('Startup');
+        newXps.currentStatus = new JobStatus('Startup');
 if(dbg) console.log(newXps.toString());//
              //引数でステータスを変更したエントリを作成 新規に保存 stageIDは必ず繰り上る jobは0リセット
     //ここでサーバに現在のエントリへのステータス変更要求を送信する 成功時と失敗時の処理を渡し、かつcallback を再度中継
@@ -3716,7 +3716,7 @@ if(dbg) console.log(data);
 //                documentDepot.rebuildList();
                 xUI.XPS.stage.increment(stageName);
                 xUI.XPS.job.reset(jobName);
-                xUI.XPS.currentStatus= new Xps.JobStatus('Startup');//ドキュメントステータスを更新
+                xUI.XPS.currentStatus= new JobStatus('Startup');//ドキュメントステータスを更新
                 xUI.XPS.update_user=xUI.currentUser;//ユーザ更新
                 xUI.setStored("current");//UI上の保存ステータスをセット
 			    sync();//保存ステータスを同期
@@ -4525,7 +4525,7 @@ serviceAgent.addEntry=function(myXps,callback,callback2){
                 myXps.cut        = entryInfo.cut;
                 myXps.createUser = xUI.currentUser;
                 myXps.updateUser = xUI.currentUser;
-                myXps.currentStatus =  new Xps.JobStatus();
+                myXps.currentStatus =  new JobStatus();
         var productIdf = Xps.getIdentifier(myXps,'product');
 //新規エントリを判定
         if((String(myXps.cut).length==0)||(serviceAgent.currentRepository.entry(myIdentifier))){
@@ -4693,7 +4693,7 @@ serviceAgent.closeEntry=function(callback,callback2){
         );
     }else{
         xUI.resetSheet(new Xps(5,144),new Xps(5,144));
-        xUI.XPS.currentStatus= new Xps.JobStatus("Floating");
+        xUI.XPS.currentStatus= new JobStatus("Floating");
         xUI.setUImode('floating');    
         if(callback instanceof Function) callback();
     }
@@ -4827,7 +4827,7 @@ serviceAgent.pushEntry=function(myXps,callback,callback2){
     いずれも　コールバック処理渡し
     データステータスがFloatingなので、Startupへ変更
 */
-       newXps.currentStatus = new Xps.JobStatus('Startup');
+       newXps.currentStatus = new JobStatus('Startup');
         }else{
             return false;//処理中断
         }
