@@ -7868,8 +7868,8 @@ xUI.activeteDocument  = function(tabId){
  *   リロードの際に一度だけ自校される部分
  */
 //ユーザ設定を予備加工
-    var MaxFrames=nas.FCT2Frm(Sheet);//タイムシート尺
-    var MaxLayers=[SoundColumns,SheetLayers,CameraworkColumns,StageworkColumns,SfxColumns];//セル重ね数
+    var MaxFrames=nas.FCT2Frm(config.Sheet);//タイムシート尺
+    var MaxLayers=[config.SoundColumns,config.SheetLayers,config.CameraworkColumns,config.StageworkColumns,config.SfxColumns];//セル重ね数
 
 //始動オブジェクトとして空オブジェクトで初期化する スタートアップ終了までのフラグとして使用
 var xUI         =new Object();
@@ -9118,9 +9118,9 @@ var PropLists = new Object();
 /*
 	タイトル置換機能初期化
  */
-if(useworkTitle){
+if(config.useworkTitle){
 var workTitle=new Object();
-	for (i=0;i<=(workTitles.length-1/5);i++){
+	for (i=0;i<=(config.workTitles.length-1/5);i++){
 	ix=i*5;
 	workTitle[workTitles[ix]]=new Array();
 		workTitle[workTitles[ix]].imgSrc=(workTitles[ix+1])?
