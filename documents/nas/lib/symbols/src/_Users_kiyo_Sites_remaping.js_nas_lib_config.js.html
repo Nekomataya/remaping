@@ -1,0 +1,377 @@
+<html><head><meta http-equiv="content-type" content="text/html; charset=utf-8"> <style>
+	.KEYW {color: #933;}
+	.COMM {color: #bbb; font-style: italic;}
+	.NUMB {color: #393;}
+	.STRN {color: #393;}
+	.REGX {color: #339;}
+	.line {border-right: 1px dotted #666; color: #666; font-style: normal;}
+	</style></head><body><pre><span class='line'>  1</span> <span class="TOKN">﻿</span><span class="COMM">/**
+<span class='line'>  2</span>  * @fileoverview nas ユーザ設定ファイル
+<span class='line'>  3</span>  */</span><span class="WHIT">
+<span class='line'>  4</span> 
+<span class='line'>  5</span> </span><span class="COMM">/*
+<span class='line'>  6</span>  * 新規作成時の標準値になります。
+<span class='line'>  7</span>  * 説明を読んでお好きな値に書き換えて下さい。
+<span class='line'>  8</span>  * 一部の情報は、クッキーで保存可能(予定)です。
+<span class='line'>  9</span>  *
+<span class='line'> 10</span>  *  2005/04/06
+<span class='line'> 11</span>  *  2005/04/28    デバッグフラグ追加(そのうちなくなるかもね)
+<span class='line'> 12</span>  *  2005/08/09    クッキー調整
+<span class='line'> 13</span>  *  2005/08/25    cssに合わせて背景色を追加
+<span class='line'> 14</span>  *  2005/09/01    クッキー内容追加
+<span class='line'> 15</span>  *  2005/09/04    クッキー内容追加/修正
+<span class='line'> 16</span>  *  2005/10/17    タイトル装飾追加
+<span class='line'> 17</span>  *  2005/12/11    読み込み時データシフトスイッチの動作を変更
+<span class='line'> 18</span>  *  2006/01/07レンダー乙女用に別ファイルを作成
+<span class='line'> 19</span>  *  HTML依存部分・クッキー関連部分等は削除
+<span class='line'> 20</span>  */</span><span class="WHIT">
+<span class='line'> 21</span> 
+<span class='line'> 22</span> </span><span class="COMM">/**
+<span class='line'> 23</span>  * デバッグモード
+<span class='line'> 24</span>  * @type {boolean}
+<span class='line'> 25</span>  */</span><span class="WHIT">
+<span class='line'> 26</span> </span><span class="KEYW">var</span><span class="WHIT"> </span><span class="NAME">dbg</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="KEYW">true</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 27</span> 
+<span class='line'> 28</span> </span><span class="COMM">/**
+<span class='line'> 29</span>  * 開始メッセージ
+<span class='line'> 30</span>  * お好きなメッセージに入れ替えできます。
+<span class='line'> 31</span>  * ただし開始メッセージが抑制されている場合は表示されません。
+<span class='line'> 32</span>  * @type {string}
+<span class='line'> 33</span>  */</span><span class="WHIT">
+<span class='line'> 34</span> </span><span class="KEYW">var</span><span class="WHIT"> </span><span class="NAME">welcomeMsg</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="STRN">"ライブラリ統合中　−−注意ーー　!"</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 35</span> 
+<span class='line'> 36</span> 
+<span class='line'> 37</span> </span><span class="COMM">/**
+<span class='line'> 38</span>  * 作業オプション 主にデフォルト値
+<span class='line'> 39</span>  */</span><span class="WHIT">
+<span class='line'> 40</span> 
+<span class='line'> 41</span> 
+<span class='line'> 42</span> </span><span class="COMM">/**
+<span class='line'> 43</span>  * タイトル 現行の作品名を入れておくとラクです
+<span class='line'> 44</span>  * @type {string}
+<span class='line'> 45</span>  */</span><span class="WHIT">
+<span class='line'> 46</span> </span><span class="KEYW">var</span><span class="WHIT"> </span><span class="NAME">myTitle</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="STRN">"タイトル未定"</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 47</span> 
+<span class='line'> 48</span> </span><span class="COMM">/**
+<span class='line'> 49</span>  * サブタイトル 同上
+<span class='line'> 50</span>  * @type {string}
+<span class='line'> 51</span>  */</span><span class="WHIT">
+<span class='line'> 52</span> </span><span class="KEYW">var</span><span class="WHIT"> </span><span class="NAME">mySubTitle</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="STRN">"サブタイトル未定"</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 53</span> </span><span class="COMM">/**
+<span class='line'> 54</span>  * 制作話数等
+<span class='line'> 55</span>  * @type {string}
+<span class='line'> 56</span>  */</span><span class="WHIT">
+<span class='line'> 57</span> </span><span class="KEYW">var</span><span class="WHIT"> </span><span class="NAME">myOpus</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="STRN">"第  話"</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 58</span> </span><span class="COMM">/**
+<span class='line'> 59</span>  * 初期フレームレートを置いてください。フレーム毎秒
+<span class='line'> 60</span>  * @type {number}
+<span class='line'> 61</span>  */</span><span class="WHIT">
+<span class='line'> 62</span> </span><span class="KEYW">var</span><span class="WHIT"> </span><span class="NAME">myFrameRate</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NUMB">29.97</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 63</span> </span><span class="COMM">/**
+<span class='line'> 64</span>  * カット尺初期値
+<span class='line'> 65</span>  * @type {string}
+<span class='line'> 66</span>  */</span><span class="WHIT">
+<span class='line'> 67</span> </span><span class="KEYW">var</span><span class="WHIT"> </span><span class="NAME">Sheet</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="STRN">"6+0"</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 68</span> 
+<span class='line'> 69</span> </span><span class="COMM">/**
+<span class='line'> 70</span>  * レイヤ数初期値
+<span class='line'> 71</span>  * @type {number}
+<span class='line'> 72</span>  */</span><span class="WHIT">
+<span class='line'> 73</span> </span><span class="KEYW">var</span><span class="WHIT"> </span><span class="NAME">SheetLayers</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NUMB">5</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 74</span> 
+<span class='line'> 75</span> </span><span class="COMM">/**
+<span class='line'> 76</span>  * A.Bパート等。空白でも良いでしょう。
+<span class='line'> 77</span>  * @type {string}
+<span class='line'> 78</span>  */</span><span class="WHIT">
+<span class='line'> 79</span> </span><span class="KEYW">var</span><span class="WHIT"> </span><span class="NAME">myScene</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="STRN">""</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 80</span> 
+<span class='line'> 81</span> </span><span class="COMM">/**
+<span class='line'> 82</span>  * カット番号
+<span class='line'> 83</span>  * @type {string}
+<span class='line'> 84</span>  */</span><span class="WHIT">
+<span class='line'> 85</span> </span><span class="KEYW">var</span><span class="WHIT"> </span><span class="NAME">myCut</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="STRN">"C# "</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 86</span> 
+<span class='line'> 87</span> 
+<span class='line'> 88</span> </span><span class="COMM">/**
+<span class='line'> 89</span>  * 作業ユーザ名は環境確認で設定切り替え    *cookie[2]
+<span class='line'> 90</span>  */</span><span class="WHIT">
+<span class='line'> 91</span> </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="KEYW">typeof</span><span class="WHIT"> </span><span class="NAME">app</span><span class="WHIT"> </span><span class="PUNC">!=</span><span class="WHIT"> </span><span class="STRN">"undefined"</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'> 92</span> </span><span class="WHIT">    </span><span class="KEYW">var</span><span class="WHIT"> </span><span class="NAME">myName</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="STRN">"unNameed"</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 93</span> </span><span class="PUNC">}</span><span class="WHIT"> </span><span class="KEYW">else</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'> 94</span> </span><span class="WHIT">    </span><span class="KEYW">var</span><span class="WHIT"> </span><span class="NAME">myName</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="KEYW">function</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'> 95</span> </span><span class="WHIT">        </span><span class="KEYW">var</span><span class="WHIT"> </span><span class="NAME">myName</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">Folder.desktop.parent.fsName</span><span class="PUNC">)</span><span class="PUNC">.</span><span class="NAME">replace</span><span class="PUNC">(</span><span class="REGX">/[\/\\]/g</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="STRN">","</span><span class="PUNC">)</span><span class="PUNC">.</span><span class="NAME">split</span><span class="PUNC">(</span><span class="STRN">","</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 96</span> </span><span class="WHIT">        </span><span class="NAME">myName</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">myName</span><span class="PUNC">[</span><span class="NAME">myName.length</span><span class="WHIT"> </span><span class="PUNC">-</span><span class="WHIT"> </span><span class="NUMB">1</span><span class="PUNC">]</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 97</span> </span><span class="WHIT">        </span><span class="KEYW">return</span><span class="WHIT"> </span><span class="NAME">myName</span><span class="WHIT">
+<span class='line'> 98</span> </span><span class="WHIT">    </span><span class="PUNC">}</span><span class="PUNC">)</span><span class="PUNC">(</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 99</span> </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>100</span> 
+<span class='line'>101</span> </span><span class="COMM">/**
+<span class='line'>102</span>  * NameCheckを有効にすると起動時に名前を入力するプロンプトがでます。
+<span class='line'>103</span>  * 名前は保存できます。
+<span class='line'>104</span>  * @type {boolean}
+<span class='line'>105</span>  */</span><span class="WHIT">
+<span class='line'>106</span> </span><span class="KEYW">var</span><span class="WHIT"> </span><span class="NAME">NameCheck</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="KEYW">true</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>107</span> 
+<span class='line'>108</span> 
+<span class='line'>109</span> </span><span class="COMM">//////////////////////////////////////////////</span><span class="WHIT">
+<span class='line'>110</span> </span><span class="COMM">/**
+<span class='line'>111</span>  * キー変換オプション    *cookie[3]
+<span class='line'>112</span>  */</span><span class="WHIT">
+<span class='line'>113</span> 
+<span class='line'>114</span> 
+<span class='line'>115</span> </span><span class="COMM">/**
+<span class='line'>116</span>  * カラセル方式デフォルト値
+<span class='line'>117</span>  * "file",        カラセルファイル
+<span class='line'>118</span>  * "opacity",    不透明度で処理
+<span class='line'>119</span>  * "wipe",        ワイプで処理
+<span class='line'>120</span>  * "expression1"    エクスプレッションで処理
+<span class='line'>121</span>  * "expression2"    エクスプレッションで処理
+<span class='line'>122</span>  * @type {string}
+<span class='line'>123</span>  */</span><span class="WHIT">
+<span class='line'>124</span> </span><span class="KEYW">var</span><span class="WHIT"> </span><span class="NAME">BlankMethod</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="STRN">"opacity"</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>125</span> 
+<span class='line'>126</span> </span><span class="COMM">/**
+<span class='line'>127</span>  * カラセル位置デフォルト値
+<span class='line'>128</span>  *    "build",    自動生成(現在無効)
+<span class='line'>129</span>  *    "first",    最初
+<span class='line'>130</span>  *    "end",        最後
+<span class='line'>131</span>  *    "none"        カラセルなし
+<span class='line'>132</span>  *
+<span class='line'>133</span>  * @type {string}
+<span class='line'>134</span>  */</span><span class="WHIT">
+<span class='line'>135</span> </span><span class="KEYW">var</span><span class="WHIT"> </span><span class="NAME">BlankPosition</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="STRN">"end"</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>136</span> 
+<span class='line'>137</span> 
+<span class='line'>138</span> </span><span class="COMM">/**
+<span class='line'>139</span>  * AEバージョン 4.0 5.0
+<span class='line'>140</span>  * 現在 6.0 / 6.5 は非対応 こっそり対応開始
+<span class='line'>141</span>  * AE に下位互換性があるので5.0をつかってください
+<span class='line'>142</span>  * @type {string}
+<span class='line'>143</span>  */</span><span class="WHIT">
+<span class='line'>144</span> </span><span class="KEYW">var</span><span class="WHIT"> </span><span class="NAME">AEVersion</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="STRN">"8.0"</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>145</span> 
+<span class='line'>146</span> </span><span class="COMM">/**
+<span class='line'>147</span>  * AEキータイプ
+<span class='line'>148</span>  *    "min"    キーの数が最少
+<span class='line'>149</span>  * (自分で停止にする必要がある)
+<span class='line'>150</span>  * "opt"    最適化
+<span class='line'>151</span>  * (変化点の前後にキーをつける)
+<span class='line'>152</span>  * "max"    最大
+<span class='line'>153</span>  * (すべてのフレームにキーをつける)
+<span class='line'>154</span>  * @type {string}
+<span class='line'>155</span>  */</span><span class="WHIT">
+<span class='line'>156</span> </span><span class="KEYW">var</span><span class="WHIT"> </span><span class="NAME">KEYMethod</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="STRN">"min"</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>157</span> 
+<span class='line'>158</span> </span><span class="COMM">/**
+<span class='line'>159</span>  * AEキー取り込みの際0.5フレームのオフセットを自動でつける
+<span class='line'>160</span>  * true    つける(標準)
+<span class='line'>161</span>  * false    つけない
+<span class='line'>162</span>  * @type {boolean}
+<span class='line'>163</span>  */</span><span class="WHIT">
+<span class='line'>164</span> </span><span class="KEYW">var</span><span class="WHIT"> </span><span class="NAME">TimeShift</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="KEYW">true</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>165</span> 
+<span class='line'>166</span> </span><span class="COMM">/**
+<span class='line'>167</span>  * フッテージのフレームレート
+<span class='line'>168</span>  * "auto"    コンポのフレームレートに合わせる
+<span class='line'>169</span>  * 数値    指定の数値にする
+<span class='line'>170</span>  * @type {string}
+<span class='line'>171</span>  */</span><span class="WHIT">
+<span class='line'>172</span> </span><span class="KEYW">var</span><span class="WHIT"> </span><span class="NAME">FootageFramerate</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="STRN">"auto"</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>173</span> 
+<span class='line'>174</span> </span><span class="COMM">/**
+<span class='line'>175</span>  * コンポサイズが指定されていない場合の標準値
+<span class='line'>176</span>  * "横,縦,アスペクト"
+<span class='line'>177</span>  * UIオプション(乙女用)
+<span class='line'>178</span>  * @type {string}
+<span class='line'>179</span>  */</span><span class="WHIT">
+<span class='line'>180</span> </span><span class="KEYW">var</span><span class="WHIT"> </span><span class="NAME">defaultSIZE</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="STRN">"640,480,1"</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>181</span> 
+<span class='line'>182</span> </span><span class="COMM">/**
+<span class='line'>183</span>  * カウンタタイプ
+<span class='line'>184</span>  * @type {number[]}
+<span class='line'>185</span>  */</span><span class="WHIT">
+<span class='line'>186</span> </span><span class="KEYW">var</span><span class="WHIT"> </span><span class="NAME">Counter0</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="PUNC">[</span><span class="NUMB">4</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NUMB">0</span><span class="PUNC">]</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>187</span> 
+<span class='line'>188</span> </span><span class="KEYW">var</span><span class="WHIT"> </span><span class="NAME">SheetLength</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NUMB">6</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>189</span> </span><span class="COMM">//タイムシート1枚の秒数</span><span class="WHIT">
+<span class='line'>190</span> </span><span class="COMM">//	どう転んでも普通６秒シート。でも一応可変。</span><span class="WHIT">
+<span class='line'>191</span> </span><span class="COMM">//	2列シートを使う時は偶数の秒数がおすすめ。</span><span class="WHIT">
+<span class='line'>192</span> 
+<span class='line'>193</span> </span><span class="COMM">/**
+<span class='line'>194</span>  * 現在は　"en""ja"のみ　有効
+<span class='line'>195</span>  * @type {string}
+<span class='line'>196</span>  */</span><span class="WHIT">
+<span class='line'>197</span> </span><span class="KEYW">var</span><span class="WHIT"> </span><span class="NAME">uiLocale</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="STRN">"en"</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>198</span> 
+<span class='line'>199</span> </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="KEYW">false</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>200</span> </span><span class="WHIT">    </span><span class="COMM">/**
+<span class='line'>201</span>      * シートオプション    *cookie[4]
+<span class='line'>202</span>      */</span><span class="WHIT">
+<span class='line'>203</span> 
+<span class='line'>204</span> </span><span class="WHIT">    </span><span class="COMM">/**
+<span class='line'>205</span>      * スピン量初期値
+<span class='line'>206</span>      * @type {number}
+<span class='line'>207</span>      */</span><span class="WHIT">
+<span class='line'>208</span> </span><span class="WHIT">    </span><span class="KEYW">var</span><span class="WHIT"> </span><span class="NAME">SpinValue</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NUMB">3</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>209</span> 
+<span class='line'>210</span> </span><span class="WHIT">    </span><span class="COMM">/**
+<span class='line'>211</span>      * 選択範囲指定でスピン量の指定を行うか
+<span class='line'>212</span>      * @type {boolean}
+<span class='line'>213</span>      */</span><span class="WHIT">
+<span class='line'>214</span> </span><span class="WHIT">    </span><span class="KEYW">var</span><span class="WHIT"> </span><span class="NAME">SpinSelect</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="KEYW">true</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>215</span> 
+<span class='line'>216</span> </span><span class="WHIT">    </span><span class="COMM">/**
+<span class='line'>217</span>      * シートの列数。
+<span class='line'>218</span>      * シート秒数を割り切れる数を置いて下さい。
+<span class='line'>219</span>      * 実際問題としては１または２以外は
+<span class='line'>220</span>      * 使いづらくてダメだと思うよ。
+<span class='line'>221</span>      * @type {number}
+<span class='line'>222</span>      */</span><span class="WHIT">
+<span class='line'>223</span> </span><span class="WHIT">    </span><span class="KEYW">var</span><span class="WHIT"> </span><span class="NAME">SheetPageCols</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NUMB">2</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>224</span> 
+<span class='line'>225</span> </span><span class="WHIT">    </span><span class="COMM">/**
+<span class='line'>226</span>      * 足跡機能
+<span class='line'>227</span>      * 使う=true / 使わない=false
+<span class='line'>228</span>      * @type {boolean}
+<span class='line'>229</span>      */</span><span class="WHIT">
+<span class='line'>230</span> </span><span class="WHIT">    </span><span class="KEYW">var</span><span class="WHIT"> </span><span class="NAME">FootMark</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="KEYW">true</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>231</span> 
+<span class='line'>232</span> </span><span class="COMM">//---</span><span class="WHIT">
+<span class='line'>233</span> 
+<span class='line'>234</span> </span><span class="WHIT">    </span><span class="COMM">/**
+<span class='line'>235</span>      * カウンタタイプ    *cookie[5]
+<span class='line'>236</span>      * @type {number[]}
+<span class='line'>237</span>      */</span><span class="WHIT">
+<span class='line'>238</span> </span><span class="WHIT">    </span><span class="KEYW">var</span><span class="WHIT"> </span><span class="NAME">Counter0</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="PUNC">[</span><span class="NUMB">3</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NUMB">0</span><span class="PUNC">]</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>239</span> 
+<span class='line'>240</span> </span><span class="WHIT">    </span><span class="COMM">/**
+<span class='line'>241</span>      * カウンタのタイプ
+<span class='line'>242</span>      * [表示形式,開始番号]
+<span class='line'>243</span>      * @type {number[]}
+<span class='line'>244</span>      */</span><span class="WHIT">
+<span class='line'>245</span> </span><span class="WHIT">    </span><span class="KEYW">var</span><span class="WHIT"> </span><span class="NAME">Counter1</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="PUNC">[</span><span class="NUMB">5</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NUMB">1</span><span class="PUNC">]</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>246</span> 
+<span class='line'>247</span> </span><span class="WHIT">    </span><span class="COMM">//カウンタのタイプは、5種類。いずれかを数字で</span><span class="WHIT">
+<span class='line'>248</span> </span><span class="WHIT">    </span><span class="COMM">//	type 1	00000</span><span class="WHIT">
+<span class='line'>249</span> </span><span class="WHIT">    </span><span class="COMM">//	type 2	0:00:00</span><span class="WHIT">
+<span class='line'>250</span> </span><span class="WHIT">    </span><span class="COMM">//	type 3	000 + 00</span><span class="WHIT">
+<span class='line'>251</span> </span><span class="WHIT">    </span><span class="COMM">//	type 4	p 0 / 0 + 00</span><span class="WHIT">
+<span class='line'>252</span> </span><span class="WHIT">    </span><span class="COMM">//	type 5	p 0 / + 000</span><span class="WHIT">
+<span class='line'>253</span> </span><span class="WHIT">    </span><span class="COMM">//開始番号は、0 または 1</span><span class="WHIT">
+<span class='line'>254</span> 
+<span class='line'>255</span> </span><span class="COMM">//--</span><span class="WHIT">
+<span class='line'>256</span> 
+<span class='line'>257</span> </span><span class="COMM">//---ユーザインターフェースオプション	*cookie[6]</span><span class="WHIT">
+<span class='line'>258</span> 
+<span class='line'>259</span> 
+<span class='line'>260</span> </span><span class="WHIT">    </span><span class="COMM">/**
+<span class='line'>261</span>      * スピンループ・カーソルループ
+<span class='line'>262</span>      * する=true / しない=false
+<span class='line'>263</span>      * @type {boolean}
+<span class='line'>264</span>      */</span><span class="WHIT">
+<span class='line'>265</span> </span><span class="WHIT">    </span><span class="KEYW">var</span><span class="WHIT"> </span><span class="NAME">SLoop</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="KEYW">false</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>266</span> </span><span class="WHIT">    </span><span class="KEYW">var</span><span class="WHIT"> </span><span class="NAME">CLoop</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="KEYW">true</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>267</span> 
+<span class='line'>268</span> </span><span class="WHIT">    </span><span class="COMM">/**自動スクロール
+<span class='line'>269</span>      * する=true / しない=false
+<span class='line'>270</span>      * @type {boolean}
+<span class='line'>271</span>      */</span><span class="WHIT">
+<span class='line'>272</span> </span><span class="WHIT">    </span><span class="KEYW">var</span><span class="WHIT"> </span><span class="NAME">AutoScroll</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="KEYW">true</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>273</span> 
+<span class='line'>274</span> </span><span class="WHIT">    </span><span class="COMM">/**
+<span class='line'>275</span>      * TSX互換機能を使うか
+<span class='line'>276</span>      * @type {boolean}
+<span class='line'>277</span>      */</span><span class="WHIT">
+<span class='line'>278</span> </span><span class="WHIT">    </span><span class="KEYW">var</span><span class="WHIT"> </span><span class="NAME">TSXEx</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="KEYW">false</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>279</span> 
+<span class='line'>280</span> </span><span class="WHIT">    </span><span class="COMM">/**
+<span class='line'>281</span>      * TMS互換機能を使うか?この機能はまだありません
+<span class='line'>282</span>      * @see http://www.nekora.main.jp/
+<span class='line'>283</span>      * @type {boolean}
+<span class='line'>284</span>      */</span><span class="WHIT">
+<span class='line'>285</span> </span><span class="WHIT">    </span><span class="COMM">//var TMSEx    =false;</span><span class="WHIT">
+<span class='line'>286</span> 
+<span class='line'>287</span> </span><span class="WHIT">    </span><span class="COMM">/**
+<span class='line'>288</span>      * ブラウザの互換変数
+<span class='line'>289</span>      */</span><span class="WHIT">
+<span class='line'>290</span> </span><span class="WHIT">    </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">navigator</span><span class="WHIT"> </span><span class="PUNC">==</span><span class="WHIT"> </span><span class="NAME">undefined</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>291</span> </span><span class="WHIT">        </span><span class="KEYW">var</span><span class="WHIT"> </span><span class="NAME">MSIE</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="KEYW">false</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>292</span> </span><span class="WHIT">    </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>293</span> </span><span class="COMM">////////////</span><span class="WHIT">
+<span class='line'>294</span> </span><span class="WHIT">    </span><span class="COMM">/**
+<span class='line'>295</span>      * サブセパレータの間隔
+<span class='line'>296</span>      * @type {number}
+<span class='line'>297</span>      */</span><span class="WHIT">
+<span class='line'>298</span> </span><span class="WHIT">    </span><span class="KEYW">var</span><span class="WHIT"> </span><span class="NAME">SheetSubSeparator</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NUMB">6</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>299</span> 
+<span class='line'>300</span> </span><span class="WHIT">    </span><span class="COMM">/**
+<span class='line'>301</span>      * ツールボックスの「よく使う文字」のエントリ
+<span class='line'>302</span>      * * は、現在の内容(現在無効)
+<span class='line'>303</span>      * # は、現在の数値 と置き換えられます。(現在無効)
+<span class='line'>304</span>      * @type {string[]}
+<span class='line'>305</span>      */</span><span class="WHIT">
+<span class='line'>306</span> </span><span class="WHIT">    </span><span class="KEYW">var</span><span class="WHIT"> </span><span class="NAME">FavoriteWords</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="PUNC">[</span><span class="STRN">"X"</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="STRN">""</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="STRN">"カラ"</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="STRN">"→"</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="STRN">"←"</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="STRN">"移動"</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="STRN">"↑"</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="STRN">"｜"</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="STRN">"↓"</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="STRN">"∥"</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="STRN">"___"</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="STRN">"----"</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="STRN">"[#]"</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="STRN">"(#)"</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="STRN">"&lt;#>"</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="STRN">"[*]"</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="STRN">"(*)"</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="STRN">"&lt;*>"</span><span class="PUNC">]</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>307</span> </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>308</span> 
+<span class='line'>309</span> 
+<span class='line'>310</span> </span><span class="COMM">/**
+<span class='line'>311</span>  * クッキーで保存する情報
+<span class='line'>312</span>  * true の情報を保存します。保存したくない情報は、false にしてください。
+<span class='line'>313</span>  * 情報の種類にしたがってクッキーで保存する情報と保存したくない情報を
+<span class='line'>314</span>  * 選んでください。
+<span class='line'>315</span>  * 記録しなかった情報はこのファイルの設定に従います。
+<span class='line'>316</span>  * どの情報も使用中に切り替え可能です。
+<span class='line'>317</span>  */</span><span class="WHIT">
+<span class='line'>318</span> </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="KEYW">false</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>319</span> </span><span class="WHIT">    </span><span class="COMM">/**
+<span class='line'>320</span>      * クッキーを使う場合は"true"にしてください。
+<span class='line'>321</span>      * @type {boolean[]}
+<span class='line'>322</span>      */</span><span class="WHIT">
+<span class='line'>323</span> </span><span class="WHIT">    </span><span class="KEYW">var</span><span class="WHIT"> </span><span class="NAME">useCookie</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="PUNC">[</span><span class="KEYW">true</span><span class="PUNC">]</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>324</span> </span><span class="WHIT">    </span><span class="COMM">/**
+<span class='line'>325</span>      * クッキーの期限
+<span class='line'>326</span>      * 0        ゼロ > そのセッション限り
+<span class='line'>327</span>      * 日数    数値を与えると、最後に使った日からその日数の間有効
+<span class='line'>328</span>      * @type {number}
+<span class='line'>329</span>      */</span><span class="WHIT">
+<span class='line'>330</span> </span><span class="WHIT">    </span><span class="NAME">useCookie.expiers</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NUMB">3</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>331</span> </span><span class="WHIT">    </span><span class="COMM">/**
+<span class='line'>332</span>      * [0]    ウィンドウサイズの記録と復帰
+<span class='line'>333</span>      * @type {boolean}
+<span class='line'>334</span>      */</span><span class="WHIT">
+<span class='line'>335</span> </span><span class="WHIT">    </span><span class="NAME">useCookie.WinSize</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="KEYW">true</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>336</span> </span><span class="WHIT">    </span><span class="COMM">/**
+<span class='line'>337</span>      * [1]    最後に編集したシートの尺数。レイヤ数などを記録するかどうか?
+<span class='line'>338</span>      * @type {boolean}
+<span class='line'>339</span>      */</span><span class="WHIT">
+<span class='line'>340</span> </span><span class="WHIT">    </span><span class="NAME">useCookie.XPSAttrib</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="KEYW">true</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>341</span> </span><span class="WHIT">    </span><span class="COMM">/**
+<span class='line'>342</span>      * [2]    最後に作業したユーザ名
+<span class='line'>343</span>      * @type {boolean}
+<span class='line'>344</span>      */</span><span class="WHIT">
+<span class='line'>345</span> </span><span class="WHIT">    </span><span class="NAME">useCookie.UserName</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="KEYW">true</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>346</span> </span><span class="WHIT">    </span><span class="COMM">/**
+<span class='line'>347</span>      * [3]    キー変換オプション
+<span class='line'>348</span>      * @type {boolean}
+<span class='line'>349</span>      */</span><span class="WHIT">
+<span class='line'>350</span> </span><span class="WHIT">    </span><span class="NAME">useCookie.KeyOptions</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="KEYW">true</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>351</span> </span><span class="WHIT">    </span><span class="COMM">/**
+<span class='line'>352</span>      * [4]    シートオプション
+<span class='line'>353</span>      * @type {boolean}
+<span class='line'>354</span>      */</span><span class="WHIT">
+<span class='line'>355</span> </span><span class="WHIT">    </span><span class="NAME">useCookie.SheetOptions</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="KEYW">true</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>356</span> </span><span class="WHIT">    </span><span class="COMM">/**
+<span class='line'>357</span>      * [5]    カウンタ種別
+<span class='line'>358</span>      * @type {boolean}
+<span class='line'>359</span>      */</span><span class="WHIT">
+<span class='line'>360</span> </span><span class="WHIT">    </span><span class="NAME">useCookie.CounterType</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="KEYW">true</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>361</span> </span><span class="WHIT">    </span><span class="COMM">/**
+<span class='line'>362</span>      * [6]    ユーザインターフェース
+<span class='line'>363</span>      * @type {boolean}
+<span class='line'>364</span>      */</span><span class="WHIT">
+<span class='line'>365</span> </span><span class="WHIT">    </span><span class="NAME">useCookie.UIOptions</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="KEYW">true</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>366</span> </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>367</span> </span><span class="COMM">/**
+<span class='line'>368</span>  * この設定ファイルは、Javascriptのソースです。書き換えるときはご注意を
+<span class='line'>369</span>  * エラーが出た時のためにバックアップをお忘れ無く。
+<span class='line'>370</span>  */</span></pre></body></html>

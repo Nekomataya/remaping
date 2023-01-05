@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry excluding="pmdb/|nas/scripts/otome/(actions)/mkBoard/|nas/scripts/otome/(actions)/|nas/ext-lib/JSON/|notes/|lib/jquery-ui-1.10.2.custom/development-bundle/|nas/scripts/remaping/|lib/jquery-ui-1.10.2.custom/development-bundle/ui/minified/i18n/|nas/scripts/otome/(actions)/systemResources/nas.otome.standbyBGFootages.psdBgGroup/|lib/jquery-ui-1.10.2.custom/js/|lib/jquery-ui-1.10.2.custom/development-bundle/external/|lib/|nas/lib/|nas/scripts/otome/(actions)/systemResources/XPS.mkStage/|lib/JSON/|nas/scripts/otome/|lib/AIR/|nas/scripts/otome/(actions)/systemResources/nas.otome.standbyBGFootages/|lib/jquery-ui-1.10.2.custom/development-bundle/ui/|nas/ext-lib/ecl/|nas/scripts/remaping/void20161222/|nas/scripts/otome/(actions)/frameSave/|template/|nas/scripts/otome/(tools)/utils/markerAlign/|lib/jquery-ui-1.10.2.custom/development-bundle/demos/datepicker/|nas/|nas/scripts/otome/(actions)/addRQueue/|nas/scripts/otome/(tools)/cont/|nas/scripts/remaping/backup/|nas/scripts/otome/(actions)/systemResources/nas.otome.standbyCellFootages/|nas/scripts/otome/(tools)/autoBuilder/|lib/jquery-ui-1.10.2.custom/development-bundle/ui/minified/|lib/ecl/|nas/testSource/|nas/scripts/otome/(actions)/systemResources/CompItem.clipWindow/|nas/scripts/otome/(actions)/systemResources/|nas/scripts/otome/(tools)/myScript/|nas/scripts/|nas/scripts/otome/(actions)/systemResources/CompItem.mkOutputMedia/|lib/jquery/|lib/jquery-ui-1.10.2.custom/development-bundle/ui/i18n/|nas/lib/resource/aeScriptStub/" kind="src" path=""/>
+	<classpathentry excluding="jquery-ui-1.10.2.custom/development-bundle/|jquery-ui-1.10.2.custom/development-bundle/ui/minified/i18n/|jquery-ui-1.10.2.custom/js/|jquery-ui-1.10.2.custom/development-bundle/external/|JSON/|AIR/|jquery-ui-1.10.2.custom/development-bundle/ui/|jquery-ui-1.10.2.custom/development-bundle/demos/datepicker/|jquery-ui-1.10.2.custom/development-bundle/ui/minified/|ecl/|jquery/|jquery-ui-1.10.2.custom/development-bundle/ui/i18n/" kind="src" path="lib"/>
+	<classpathentry kind="src" path="lib/AIR"/>
+	<classpathentry kind="src" path="lib/ecl"/>
+	<classpathentry kind="src" path="lib/jquery"/>
+	<classpathentry excluding="ui/minified/i18n/|external/|ui/|demos/datepicker/|ui/minified/|ui/i18n/" kind="src" path="lib/jquery-ui-1.10.2.custom/development-bundle"/>
+	<classpathentry kind="src" path="lib/jquery-ui-1.10.2.custom/development-bundle/demos/datepicker"/>
+	<classpathentry kind="src" path="lib/jquery-ui-1.10.2.custom/development-bundle/external"/>
+	<classpathentry excluding="minified/i18n/|minified/|i18n/" kind="src" path="lib/jquery-ui-1.10.2.custom/development-bundle/ui"/>
+	<classpathentry kind="src" path="lib/jquery-ui-1.10.2.custom/development-bundle/ui/i18n"/>
+	<classpathentry excluding="i18n/" kind="src" path="lib/jquery-ui-1.10.2.custom/development-bundle/ui/minified"/>
+	<classpathentry kind="src" path="lib/jquery-ui-1.10.2.custom/development-bundle/ui/minified/i18n"/>
+	<classpathentry kind="src" path="lib/jquery-ui-1.10.2.custom/js"/>
+	<classpathentry kind="src" path="lib/JSON"/>
+	<classpathentry excluding="scripts/otome/(actions)/mkBoard/|scripts/otome/(actions)/|ext-lib/JSON/|scripts/remaping/|scripts/otome/(actions)/systemResources/nas.otome.standbyBGFootages.psdBgGroup/|lib/|scripts/otome/(actions)/systemResources/XPS.mkStage/|scripts/otome/|scripts/otome/(actions)/systemResources/nas.otome.standbyBGFootages/|ext-lib/ecl/|scripts/remaping/void20161222/|scripts/otome/(actions)/frameSave/|scripts/otome/(tools)/utils/markerAlign/|scripts/otome/(actions)/addRQueue/|scripts/otome/(tools)/cont/|scripts/remaping/backup/|scripts/otome/(actions)/systemResources/nas.otome.standbyCellFootages/|scripts/otome/(tools)/autoBuilder/|testSource/|scripts/otome/(actions)/systemResources/CompItem.clipWindow/|scripts/otome/(actions)/systemResources/|scripts/otome/(tools)/myScript/|scripts/|scripts/otome/(actions)/systemResources/CompItem.mkOutputMedia/|lib/resource/aeScriptStub/" kind="src" path="nas"/>
+	<classpathentry kind="src" path="nas/ext-lib/ecl"/>
+	<classpathentry kind="src" path="nas/ext-lib/JSON"/>
+	<classpathentry excluding="resource/aeScriptStub/" kind="src" path="nas/lib"/>
+	<classpathentry kind="src" path="nas/lib/resource/aeScriptStub"/>
+	<classpathentry excluding="otome/(actions)/mkBoard/|otome/(actions)/|remaping/|otome/(actions)/systemResources/nas.otome.standbyBGFootages.psdBgGroup/|otome/(actions)/systemResources/XPS.mkStage/|otome/|otome/(actions)/systemResources/nas.otome.standbyBGFootages/|remaping/void20161222/|otome/(actions)/frameSave/|otome/(tools)/utils/markerAlign/|otome/(actions)/addRQueue/|otome/(tools)/cont/|remaping/backup/|otome/(actions)/systemResources/nas.otome.standbyCellFootages/|otome/(tools)/autoBuilder/|otome/(actions)/systemResources/CompItem.clipWindow/|otome/(actions)/systemResources/|otome/(tools)/myScript/|otome/(actions)/systemResources/CompItem.mkOutputMedia/" kind="src" path="nas/scripts"/>
+	<classpathentry excluding="(actions)/mkBoard/|(actions)/|(actions)/systemResources/nas.otome.standbyBGFootages.psdBgGroup/|(actions)/systemResources/XPS.mkStage/|(actions)/systemResources/nas.otome.standbyBGFootages/|(actions)/frameSave/|(tools)/utils/markerAlign/|(actions)/addRQueue/|(tools)/cont/|(actions)/systemResources/nas.otome.standbyCellFootages/|(tools)/autoBuilder/|(actions)/systemResources/CompItem.clipWindow/|(actions)/systemResources/|(tools)/myScript/|(actions)/systemResources/CompItem.mkOutputMedia/" kind="src" path="nas/scripts/otome"/>
+	<classpathentry excluding="mkBoard/|systemResources/nas.otome.standbyBGFootages.psdBgGroup/|systemResources/XPS.mkStage/|systemResources/nas.otome.standbyBGFootages/|frameSave/|addRQueue/|systemResources/nas.otome.standbyCellFootages/|systemResources/CompItem.clipWindow/|systemResources/|systemResources/CompItem.mkOutputMedia/" kind="src" path="nas/scripts/otome/(actions)"/>
+	<classpathentry kind="src" path="nas/scripts/otome/(actions)/addRQueue"/>
+	<classpathentry kind="src" path="nas/scripts/otome/(actions)/frameSave"/>
+	<classpathentry kind="src" path="nas/scripts/otome/(actions)/mkBoard"/>
+	<classpathentry excluding="nas.otome.standbyBGFootages.psdBgGroup/|XPS.mkStage/|nas.otome.standbyBGFootages/|nas.otome.standbyCellFootages/|CompItem.clipWindow/|CompItem.mkOutputMedia/" kind="src" path="nas/scripts/otome/(actions)/systemResources"/>
+	<classpathentry kind="src" path="nas/scripts/otome/(actions)/systemResources/CompItem.clipWindow"/>
+	<classpathentry kind="src" path="nas/scripts/otome/(actions)/systemResources/CompItem.mkOutputMedia"/>
+	<classpathentry kind="src" path="nas/scripts/otome/(actions)/systemResources/nas.otome.standbyBGFootages"/>
+	<classpathentry kind="src" path="nas/scripts/otome/(actions)/systemResources/nas.otome.standbyBGFootages.psdBgGroup"/>
+	<classpathentry kind="src" path="nas/scripts/otome/(actions)/systemResources/nas.otome.standbyCellFootages"/>
+	<classpathentry kind="src" path="nas/scripts/otome/(actions)/systemResources/XPS.mkStage"/>
+	<classpathentry kind="src" path="nas/scripts/otome/(tools)/autoBuilder"/>
+	<classpathentry kind="src" path="nas/scripts/otome/(tools)/cont"/>
+	<classpathentry kind="src" path="nas/scripts/otome/(tools)/myScript"/>
+	<classpathentry kind="src" path="nas/scripts/otome/(tools)/utils/markerAlign"/>
+	<classpathentry excluding="void20161222/|backup/" kind="src" path="nas/scripts/remaping"/>
+	<classpathentry kind="src" path="nas/scripts/remaping/backup"/>
+	<classpathentry kind="src" path="nas/scripts/remaping/void20161222"/>
+	<classpathentry kind="src" path="nas/testSource"/>
+	<classpathentry kind="src" path="notes"/>
+	<classpathentry kind="src" path="pmdb"/>
+	<classpathentry kind="src" path="template"/>
+	<classpathentry kind="con" path="org.eclipse.wst.jsdt.launching.JRE_CONTAINER"/>
+	<classpathentry kind="output" path=""/>
+</classpath>

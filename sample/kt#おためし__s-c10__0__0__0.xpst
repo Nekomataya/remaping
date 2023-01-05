@@ -1,0 +1,246 @@
+﻿nasTIME-SHEET 0.9x
+##xMAPPING_FILE=
+##TITLE=かちかち山Max
+##SUB_TITLE=サンプルカット
+##OPUS=おためし
+##SCENE=
+##CUT=10
+##TIME=3 + 00 .
+##TRIN=0 + 00 .,trin
+##TROUT=2 + 00 .,O.L.(C10/C11)
+##HEAR_MARGIN=1 + 00
+##TAIL_MARGIN=1 + 00
+##CREATE_USER=ねこまたや
+##UPDATE_USER=ねこまたや
+##CREATE_TIME=2005/05/05
+##UPDATE_TIME=
+##FRAME_RATE=24
+##Line=(本線):0
+##Stage=絵コンテ撮:0
+##Job=[init]:0
+##CurrentStatus=Startup
+##<signature>
+CT:
+	[-済-	2022.01.23	kiyo:kiyo@nekomataya.info]
+	[composite	2022.01.24	たぬき:tanuki@animal.example.com]
+LO:
+	[-済-	2022.01.24	kiyo:kiyo@nekomataya.info]
+	[監督OK	2022.01.25	鮒:funa@animal.example.com]
+	[演出	2022.01.25	亀:kame@animal.example.com]
+	[演出	2022.01.25	亀:kame@animal.example.com]
+##<signature>/
+##<sheetLooks>
+{
+	SheetTextColor      :"#111111",
+	SheetBaseColor      :"#efffff",
+	SelectedColor       :"#9999ff",
+	RapidModeColor      :"#ff4444",
+	FloatModeColor      :"#88eeee",
+	SectionModeColor    :"#ff44ff",
+	SelectionColor      :"#f8f8dd",
+	FootStampColor      :"#ffffff",
+	EditingColor        :"#eebbbb",
+	SelectingColor      :"#ccccaa",
+	Restriction         :true,
+	ViewMode            :"page",
+	PageLength          :"6+0",
+	FrameRate           :"24fps(24)",
+	SheetColumn         :2,
+	CellWidthUnit       :"px",
+	SheetHeadMargin     :346,
+	SheetLeftMargin     :20,
+	TimeGuideWidth	    :36,
+	ActionWidth         :17.5,
+	DialogWidth	        :42,
+	SheetCellWidth	    :24,
+	SheetCellNarrow	    :4,
+	StillCellWidth	    :12,
+    GeometryCellWidth   :52,
+	SfxCellWidth	    :46,
+	CameraCellWidth     :34,
+	CommentWidth        :34,
+	ColumnSeparatorWidth:22,
+	trackSpec :[
+		["dialog"     ,   1],
+		["replacement",   8],
+		["camera"     ,   3],
+		["comment"    ,   1]
+	]
+}
+##<sheetLooks>/
+##<timesheetimage>
+{
+	index      :"page-1",
+	link       :"0",
+	content    : "./kt#Otameshi__s-c010.jpeg",
+	size       : "",
+	resolution : "300ppi",
+	offset     : {x:0 ,y:0},
+	scale      : {x:1 ,y:1},
+},
+{
+	index      :"page-2",
+	link       :"72",
+	content    :"file://C:\sheet\kt#Otameshi__s-c010.jpeg",
+	resolution : "200ppi",
+	offset     : {x:0 ,y:0},
+	scale      : {x:1 ,y:1}
+},
+{
+	index      :"page-3",
+	link       :"144",
+	content    :"http://www.nekomataya.info/sample/sheet\kt#Otameshi__s-c010.jpeg",
+	size       :"",
+	resolution : "200ppi",
+	offset     : {x:0 ,y:0},
+	scale      : {x:1 ,y:1}
+}
+##<timesheetimage>/
+##<noteimage>
+{
+	index      :"",
+	link       :"0_12",
+	content    :"",
+	size       :"",
+	resolution : "96ppi",
+	offset     : {x:0 ,y:0},
+	scale      : {x:1 ,y:1}
+}
+##<noteimage>/
+#
+#[CELL]tail margin
+#===============================================================
+[sizeX			640	640	640	640	640	]
+[sizeY			480	480	480	480	480	]
+[aspect			1	1	1	1	1	]
+[lot			=AUTO=	=AUTO=	=AUTO=	=AUTO=		]
+[blmtd			wipe	wipe	wipe	wipe		]
+[blpos			end	end	end	end		]
+[option	dialog	dialog	timing	timing	timing	timing	sfx	]
+[link			5	5	5	5	.	]
+[parent			.	.	.	.	.	]
+[CELL	N		A	B	C	D	OL	]
+#===============================================================
+[tag	娘							]
+[value	(off)							]
+#===============================================================
+.	あ		(1)	1	1	X	
+.			|	｜	｜	カラ	
+.			|	｜	｜		
+.	れ		|	｜	｜	(1)	
+.			|	｜	｜	｜	
+.			|	｜	｜	｜	
+#--------------------------------------------------------
+.	だ		|	3	2	｜	
+.			|			｜	
+.			|			｜	
+.	っ		|	2	3	｜	
+.			|			｜	
+.			|			｜	
+#--------------------------------------------------------
+.	て		|	1	5	｜	
+.			|		｜	｜	
+.			|		｜	｜	
+.	だ		|	3	｜	｜	
+.	っ		|		｜	｜	
+.			|		｜	｜	
+# --------------------------------------------------------
+.	て		|	2	4	X	
+.	ぇ		|			カラ	
+.			|				
+.	|		|	3	3		
+.			|				
+.	____		|				
+# ========================================================
+.			|	1	1		
+.			|	｜	｜		
+.			|	｜	｜	(1)	
+.			|	｜	｜	｜	
+.			|	｜	｜	｜	
+.	____		|	｜	｜	｜	
+# --------------------------------------------------------
+.	ソ		|	2	2	｜	
+.			|			｜	
+.			|			｜	
+.	レ		|	3	3	｜	
+.			|			｜	
+.			|			｜	
+# --------------------------------------------------------
+.	じ		|	2	5	｜	
+.			|		｜	｜	
+.			|		｜	｜	
+.	ゃ		|	1	｜	｜	
+.			|		｜	｜	
+.			|		｜	X	
+# --------------------------------------------------------
+.	ダ		|	3	4	カラ	
+.			|				
+.			|				
+.	メ		|	1	3		
+.			|				
+.			|				____
+# ========================================================
+.	じ		|	2	1		O.L.
+.			|		｜	(1)	
+.			|		｜	｜	
+.	ゃ		|	3	｜	｜	
+.			|		｜	｜	
+.			|		｜	｜	
+# --------------------------------------------------------
+.	ん		|	1	2	｜	
+.			|	｜		｜	
+.			|	｜		｜	
+.	!		|	｜	3	｜	
+.			|	｜		｜	
+.			|	｜		｜	
+# --------------------------------------------------------
+.	も		|	2	5	｜	
+.			|		｜	｜	
+.			|		｜	｜	
+.	|	姐さん	|	3	｜	｜	
+.			|	｜	｜	X	
+.		____	|	｜	｜	カラ	
+# --------------------------------------------------------
+.		と	|	｜	4		
+.			|	｜			
+.			|	｜			
+.		か	|	2	3		
+.			|				
+.	____		|				C#10/C#11
+# ========================================================
+.		な	|	(1)	1	(1)	
+.				|	｜	｜	｜	
+.			|	｜	｜	｜	
+.		ん	|	｜	｜	｜	
+.			|	｜	｜	｜	
+.			|	｜	｜	｜	
+# --------------------------------------------------------
+.		と	|	｜	2	｜	
+.			|	｜		｜	
+.			|	｜		｜	
+.		か	|	｜	3	｜	
+.			|	｜		｜	
+.			|	｜		｜	
+# --------------------------------------------------------
+.		い	|	｜	5	｜	
+.		っ	|	｜	｜	｜	
+.			|	｜	｜	｜	
+.		ち	|	｜	｜	X	
+.		ゃ	|	｜	｜	カラ	
+.		つ	|	｜	｜		
+# --------------------------------------------------------
+.		て	|	｜	4		
+.			|	｜			
+.			|	｜			
+.		|	|	｜	3		
+.			|	｜			
+.		____	|	｜			____
+# ========================================================
+# ========================================================
+[END]
+FIX
+りまぴん用サンプルカット
+コピー自由ですどーぞご使用ください。
+
+台詞・メモ入り
+後で見るときは、こっちの方が読みやすいです。

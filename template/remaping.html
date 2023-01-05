@@ -1,0 +1,1623 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="ja" lang="ja">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>remaping..</title>
+
+
+<link REL=stylesheet TYPE="text/css" HREF="./remaping.css" media="screen,tv">
+
+<style type="text/css">
+ * {
+  margin: 0; padding: 0;
+ }
+ #fixed {
+  position: fixed;
+ }
+ #sheet_view {
+  margin:0;
+ }
+</style> 
+<!-- IE7 用のコードは基本的にすべて廃棄 2010.08.10 -->
+		<script type="text/javascript" src="../javascript/AIRAliases.js" >
+</script>
+		<script type="text/javascript" src="../javascript/AIRSourceViewer.js">
+</script>
+		<script type="text/javascript" src="../javascript/AIRIntrospector.js">
+</script>
+
+<script src=../config.js></script>
+
+<script src=../javascript/nas_common.js></script>
+<script src=../javascript/nas_common_HTML.js></script>
+<script src=../javascript/game.js></script>
+
+<script src=../javascript/dbg_.js></script>
+
+
+<script src=../javascript/mapio.js></script>
+<script src=../javascript/xpsio.js></script>
+<script src=../javascript/remaping.js></script>
+<script src=../javascript/utils.js></script>
+
+
+<script src=../javascript/fakeAE.js></script>
+<script src=../javascript/dataio.js></script>
+<script src=../javascript/sync.js></script>
+<script src=../javascript/io.js></script>
+<script src=../javascript/cookie.js></script>
+
+
+<script src=../javascript/headline.js></script>
+<script src=../javascript/toolbox.js></script>
+
+<script src=../javascript/TSX.js></script>
+
+<script src=../javascript/pref.js></script>
+<script src=../javascript/scene.js></script>
+
+<script src=../javascript/jslb_ajax.js></script>
+<script src=../javascript/getSample.js></script>
+
+<script src=../javascript/airUI.js></script>
+<!-- ライブラリインストール -->
+<!-- 保留コード群
+	
+-->
+</head>
+<body 
+	onload="var nRS = setTimeout('nas_Rmp_Startup()',10);"
+	onbeforeunload="return nas_Rmp_reStart();"
+	onContextMenu	=" return true"
+	style="background-color:#dedede;"
+	onSelectStart="return false"
+>
+<!-- 固定ヘッダ -->
+<div class=headerTool id="fixed"><div id="fixedHeader">
+<table class=toolTable >
+<tr><td class=menu nowrap width=780px>
+
+		<form	name=saveXps
+			id=saveXps
+			method=POST
+			encode=UTF-8
+			enctype="application/x-www-form-urlencoded"
+			action="javascript:void(0);"
+		>
+			<input	type=hidden
+				id=COMMAND
+				name=COMMAND
+				value=save
+			>
+			<input	type=hidden
+				id=encode
+				name=encode
+				value=utf8
+			>
+			<input	type=hidden
+				id=XPSFilename
+				name=XPSFilename
+			>
+			<input
+				type=hidden
+				id=XPSBody
+				name=XPSBody
+			>
+			<a	href="javascript:callEcho();"
+				title="シートをCGI経由でファイルに保存します。"
+			>
+				[XPSダウンロード]
+			</a>
+			<a	href="javascript:void(0);"
+				onClick="var lowt=fileBox.openFileDB();"
+				title="OPEN"
+			>
+				[open]
+			</a>
+			<a	href="javascript:void(0);"
+				onClick="fileBox.saveFile();"
+				title="save"
+			>
+				[save]
+			</a>
+			<a	href="javascript:void(0);"
+				onClick="fileBox.saveAs();"
+				title="saveAs"
+			>
+				[saveAs]
+			</a>
+</form>
+<!-- <form name=toolheader action="javascript:void(0);" > -->
+<!--<a	href="javascript:void(0);"
+	onclick="return writeXPS(XPS)"
+	title="保存用に書き出し"
+>書き出し</a>--> <a	href="javascript:void(0);"
+	onclick='sWitchPanel("Data");return false;'
+	target=data_
+	title="保存データの取り込み"
+>Read/Write</a> <A	HREF='javascript:void()'
+	onclick='myScenePref.open();return false;'
+	target='scene_'
+	title="シートの新規作成と変更"
+>Document</A> 
+<!--
+	onclick='return xUI.openSW("pref_");'
+	onclick='return xUI.openSW("scene_");'
+ -->
+<A	HREF='javascript:void(0);'
+	onclick='myPref=new Pref();myPref.open();return false;'
+	target='pref_'
+	title="各種環境設定"
+>Pref</A> 
+ <A	HREF='javascript:void()'
+	onclick='sWitchPanel("Utl");return false;'
+	title="ユーティリテーメニュー"
+>U-Menu</A> <A	HREF='javascript:void()'
+	onclick='sWitchPanel("Tbx");return false'
+	title="ツールボックス"
+>Tools</A> 
+<A	HREF='javascript:void(0);'
+	onclick='sWitchPanel("Ver");'
+	title="りまぴんについて"
+>version</A> 
+<span id=debug style="visibility:hidden;"><A	HREF='javascript:void(0);'
+	onclick='sWitchPanel("Dbg");return false;'
+	title="debug_ON"
+>debug</A> 
+<a	href="javascript:void(0);"
+	onclick='sWitchPanel("memo");return false;'
+>MEMO</a></span>
+
+<A	HREF='javascript:void(0);'
+	onclick='air.Introspector.Console.log(document);'
+	title="イントロスペクタ"
+>イントロスペクタ</A> 
+<A	HREF='javascript:void(0);'
+	onclick='var viewer = air.SourceViewer.getDefault(); viewer.viewSource();'
+	title="ソース閲覧"
+>ソース</A>
+
+<!-- </form> -->
+</td>
+</tr><tr>
+<td class=toolbar>
+	<!-- skb -->
+<input	type=button
+	title="left"
+	value=&lt;&lt;
+	id=left
+	onclick="chkValue(this.id);"
+	style="width:3em"
+><input	type=button
+	title="UP"
+	value=△
+	id=up
+	onclick="chkValue(this.id);"
+	style="width:3em"
+><input type=button
+	alt="DOWN"
+	value=▽
+	id=down
+	onclick="chkValue(this.id);"
+	style="width:3em"
+><input type=button
+	alt="RIGHT"
+	value=&gt;&gt;
+	id=right
+	onclick="chkValue(this.id);"
+	style="width:3em"
+>
+<input type=button
+	alt="spinF"
+	value=↑spin↑
+	id=back
+	onclick="chkValue(this.id);"
+	style="width:5em"
+>
+<input type=button
+	alt="spinB"
+	value=↓spin↓
+	id=fwd
+	onclick="chkValue(this.id);"
+	style="width:5em"
+>
+
+<input	type=button
+	name=skb00
+	id=skb00
+	value="0"
+	title="0"
+	style="	width:1.8em;"
+	onclick="skbPush(this.value)"
+><input	type=button
+	name=skb01
+	id=skb01
+	value="1"
+	title="1"
+	style="	width:1.8em;"
+	onclick="skbPush(this.value)"
+><input	type=button
+	name=skb02
+	id=skb02
+	value="2"
+	title="2"
+	style="	width:1.8em;"
+	onclick="skbPush(this.value)"
+><input	type=button
+	name=skb03
+	id=skb03
+	value="3"
+	title="3"
+	style="	width:1.8em;"
+	onclick="skbPush(this.value)"
+><input	type=button
+	name=skb04
+	id=skb04
+	value="4"
+	title="4"
+	style="	width:1.8em;"
+	onclick="skbPush(this.value)"
+><input	type=button
+	name=skb05
+	id=skb05
+	value="5"
+	title="5"
+	style="	width:1.8em;"
+	onclick="skbPush(this.value)"
+><input	type=button
+	name=skb06
+	id=skb06
+	value="6"
+	title="6"
+	style="	width:1.8em;"
+	onclick="skbPush(this.value)"
+><input	type=button
+	name=skb07
+	id=skb07
+	value="7"
+	title="7"
+	style="	width:1.8em;"
+	onclick="skbPush(this.value)"
+><input	type=button
+	name=skb08
+	id=skb08
+	value="8"
+	title="8"
+	style="	width:1.8em;"
+	onclick="skbPush(this.value)"
+><input	type=button
+	name=skb09
+	id=skb09
+	value="9"
+	title="9"
+	style="	width:1.8em;"
+	onclick="skbPush(this.value)"
+><input	type=button
+	name=skb10
+	id=skb10
+	value="."
+	title="."
+	style="	width:1.8em;"
+	onclick="skbPush(this.value)"
+><input	type=button
+	name=skb11
+	id=skb11
+	value="-"
+	title="-"
+	style="	width:1.8em;"
+	onclick="skbPush(this.value)"
+><input	type=button
+	name=skb12
+	id=skb12
+	value="("
+	title="("
+	style="	width:1.8em;"
+	onclick="skbPush(this.value)"
+><input	type=button
+	name=skb13
+	id=skb13
+	value=")"
+	title=")"
+	style="	width:1.8em;"
+	onclick="skbPush(this.value)"
+>
+	<!-- skb -->
+	<!-- スピン -->
+<input	type=button
+	name=spin_Vdn
+	id=v_dn
+	value=▽
+	onclick="chkValue(this.id);"
+	style="width:24px;
+	"
+	onclick="chkValue(this.id);"
+	title="ひとつさげる"
+><input	type=text
+	name=spin_V
+	id=spin_V
+	value=3
+	style="width:24px;
+		text-align:center;
+	"
+	onChange="chkValue(this.id);"
+	title="スピン値"
+><input	type=button
+	name=spin_Vup
+	id=v_up
+	value=△
+	style="width:24px;
+	"
+	onclick="chkValue(this.id);"
+	title="ひとつあげる"
+><input type=checkbox
+	name=spinCk
+	id=spinCk
+	onChange="chkValue(this.id);"
+	title"選択範囲をスピン指定にする"
+><a	href="javascript:void(0);"
+	onClick='return chg("spinCk");'
+	title"選択範囲をスピン指定にする"
+
+>Spin</a>
+	<!-- スピン -->
+<input	name=iNputbOx
+	id=iNputbOx
+	type=text
+	size=20
+	style='text-align:right'
+	onKeyDown="return keyDown(event)"
+	onKeyPress="return keyPress(event)"
+	onKeyUp="return keyUp(event)"
+	onFocus='xUI.activate("headline")'
+	title="シートにデータを入力します。"
+> 
+<input	type=button
+	name=ok
+	id=ok
+	value=○
+	style='width:24px;'
+	onclick="chkValue(this.id);"
+	title="確定[Enter]"
+><input	type=button
+	name=ng
+	id=ng
+	value=×
+	style='width:24px;'
+	onclick="chkValue(this.id);"
+	title="取り消し[esc]"
+>
+</td>
+</tr>
+</table>
+<table class=info border=0 >
+<tr><td id=edchg style="width:75px;">
+	編集中
+</td><th>
+	No
+</th><th>
+	TITLE
+</th><th>
+	subTITLE
+</th><th>
+	S-C
+</th><th colspan=3>
+	TIME
+</th><th>
+	name
+</th></tr>
+<tr><td><!--<select name=stageSelect id=stageSelect onChange='xUI.switchStage(this.value);' style="width:100%;margin:0;padding:0;">
+					<OPTION VALUE=rough>ラフスケッチ
+					<OPTION VALUE=action>アクション
+					<OPTION VALUE=cell>セルシート
+				</select
+>--></td><td id=opus ondblclick='rewriteValue(this.id);'>
+	#00
+</td><td id=title ondblclick='rewriteValue(this.id);'>
+	TITLE-TEXT
+</td><td id=subtitle ondblclick='rewriteValue(this.id);'>
+	subTITLE
+</td><td id=scene_cut ondblclick='rewriteValue(this.id);'>
+	S-C
+</td><td id=time ondblclick='rewriteValue(this.id);'>
+	(00+00)
+</td><td id=trin ondblclick='rewriteValue(this.id);'>
+	---
+</td><td id=trout ondblclick='rewriteValue(this.id);'>
+	---
+</td><td id=update_user ondblclick='rewriteValue(this.id);'>
+	name
+</td></tr></table>
+<!-- 固定ヘッダ ここまで 以下は表示切り換えのパネル群-->
+<!--	ユーティリティーパネル	最上段に配置-->
+<div class=optionPanel id=optionPanelUtl >
+<hr>
+ <input type=checkbox
+	id=tbLock
+	title="toolbar-lock"
+	checked=false
+> 
+<input type=button
+	title="列消去"
+	value="クリア"
+	onclick='clearTL();'
+	style="width:100px;"
+>
+<!--<input type=button
+	title="全データ消去"
+	value="clearAll"
+	onclick='clearTL("all");'
+	style="width:100px;"
+>-->
+<input type=button
+	title="シート整形"
+	value="整形"
+	onclick="reformatTimeline();"
+	style="width:100px;"
+>
+
+<input type=button
+	title="フットスタンプをクリアします"
+	value="フットスタンプクリア"
+	onclick='clearFS();'
+	style="width:100px;"
+>
+<input type=button
+	title="タイムラインを挿入します"
+	value="列挿入"
+	onclick="insertColumns();"
+	style="width:100px;"
+>
+<input type=button
+	title="タイムラインを削除します"
+	value="列削除"
+	onclick="deleteColumns();"
+	style="width:100px;"
+>
+<input type=button
+	title="空白データを挿入して以降後ろ送り"
+	value="カラデータ挿入"
+	onclick="insertBlank();"
+	style="width:100px;"
+>
+<input type=button
+	title="選択範囲を削除して間を詰める"
+	value="ブロック削除"
+	onclick="deleteBlank();"
+	style="width:100px;"
+>
+<!--
+<input type=button
+	title="ユーザ設定ボタン(未設定)"
+	value=""
+	onclick="alert(this.title);"
+	style="width:100px;"
+>-->
+<hr><br></div>
+<!--	ユーティリティーパネル	-->
+<!--	プログレスパネル	-->
+<div class=optionPanel id=optionPanelProg >
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+		<center><b>しばらくお待ちください</b></center><br>
+		<center><img src=../images/ui/wait.gif width=320 height=20></center><br>
+<br>
+<br>
+<br>
+<br>
+<br><hr><div align=right>Nekomataya/2007</div>
+</div>
+<!--	プログレスパネル	-->
+<!--	コメント編集	-->
+<div class=optionPanel id=optionPanelMemo >
+<table>
+<tr>
+<td>タイムシートコメントを編集します。<br>
+<textarea name=rEsult id=rEsult rows=6 style="width:480px;" onFocus="select();">
+</textarea></td>
+<td>
+<input type=button class=toolTip value="全選択"
+	onClick='document.getElementById("rEsult").select();' /><br>
+<input type=button class=toolTip value="消去"
+	onClick='document.getElementById("rEsult").value="";' /><br>
+<input type=button class=toolTip value="TAB"
+	onClick='document.getElementById("rEsult").value+="\t";' /><br>
+<input type=button class=toolTip value="改行"
+	onClick='document.getElementById("rEsult").value+="\n";' /><br>
+<input type=button class=toolTip value="リセット"
+	onClick='document.getElementById("rEsult").value=XPS.memo;' /><br>
+<input type=button class=toolTip value="更新"
+	onClick='XPS.memo=document.getElementById("rEsult").value;sync("memo");' /><br>
+<input type=button class=toolTip value="閉じる"
+	onClick='if(XPS.memo!=document.getElementById("rEsult").value){if(confirm("内容が変更されています。\n更新しますか?")){XPS.memo=document.getElementById("rEsult").value;sync("memo");}};sWitchPanel("clear");' /><br>
+</td><td>
+<span id=myWords
+	onClick="editMemo(event)";
+>word table</span>
+</td>
+</tr></table>
+</div>
+<!--	コメント編集	-->
+<!--	AEキー変換	-->
+<div class=optionPanel id=optionPanelAEK >
+<table>
+<tr>
+<td>AE keyペースト用データ<br>
+<textarea name=AEKrEsult id=AEKrEsult rows=6 style="width:480px;" onFocus="select();">
+</textarea><td>
+<td>
+<input type=button class=toolTip value="全選択"
+	onClick='document.getElementById("AEKrEsult").select();' /><br>
+<input type=button class=toolTip value="消去"
+	onClick='document.getElementById("AEKrEsult").value="";' /><br>
+<input type=button class=toolTip value="更新"
+	onClick='writeAEKey(xUI.Select[0]);'
+	 /><br>
+<input type=button class=toolTip value="閉じる"
+	onClick='sWitchPanel("clear");' /><br>
+</td>
+<td>
+<strong>キー変換方式を選択</strong><br>
+<SELECT	NAME=blmtd
+		id=blmtd
+		title="カラセルの方式"
+		onChange="chgValue(this.id)"
+		style="width:100%;"
+>
+	<OPTION VALUE=file > ファイル 
+	<OPTION VALUE=opacity > 不透明度 
+	<OPTION VALUE=wipe > リニアワイプ 
+	<OPTION VALUE=expression1 > エクスプレッション1
+	<OPTION VALUE=expression2 > エクスプレッション2
+</SELECT><br>
+<SELECT	NAME=blpos
+		id=blpos
+		title="カラセルの位置"
+		onChange="chgValue(this.id)"
+		style="width:100%;"
+>
+	<OPTION VALUE=build >--------
+	<OPTION VALUE=first >最初の絵を使う
+	<OPTION VALUE=end >最後の絵を使う
+	<OPTION VALUE=none >カラセルなし
+</SELECT><br><hr>
+<strong>AEバージョンを選択</strong><br>
+<SELECT	NAME=aeVersion
+		id=aeVersion
+		title="AEバージョン"
+		onChange="chgValue(this.id)"
+		style="width:100%;"
+>
+	<OPTION VALUE=4.0>AE4.0
+	<OPTION VALUE=5.0>AE5-5.5
+	<OPTION VALUE=6.5>AE6.5-
+</SELECT><br>
+<strong>キータイプを選択</strong><br>
+<SELECT NAME=keyMethod
+		id=keyMethod
+		title="キータイプ"
+		onChange="chgValue(this.id)"
+		style="width:100%;"
+>
+			<OPTION VALUE=min>最少フレーム
+			<OPTION VALUE=opt>最適化フレーム
+			<OPTION VALUE=max>全フレーム
+		</SELECT>
+</td>
+</tr></table>
+</div>
+<!--	AEキー変換	-->
+<!--	XPS書き出し	-->
+<!--	XPS書き出し	-->
+<!--	シート取り込み	-->
+<div class=optionPanel id=optionPanelData>
+<strong>データ入出力</strong> (このウェルにデータをコピーペーストします)
+<div><a href="javascript:void(0);" onclick="return writeXPS(XPS)" title="保存用に書き出し"
+>別ウィンドウに書き出し</a> <span id=TSXUi></span>
+
+
+<a href="javascript:getSample(1);"
+	id=sample1 title="xps">sample1</a> | <a href="javascript:getSample(2);"
+	id=sample2 title="xps(修飾メモ付き)">sample2</a> | <a href="javascript:getSample(3);"
+	id=sample3 title="AE-Key">sample3</a> | <a href="javascript:getSample(4);"
+	id=sample4 title="AE-Remap">sample4</a> | <a href="javascript:getSample(5);"
+	id=sample5 title="T-Sheet">sample5</a></div>
+<hr>
+<div align=right></div>
+<span style="text-align:center"><form action="void(0);"><!-- 
+/*
+暫定的に動作可能にナリマシタ。2005/03/30
+	このテキストエリアにXPSデータをペーストして
+	[取り込み]ボタンをクリックすると、シートに
+	取り込むことができます。
+
+	このエリア上で直接編集してもかまいません。
+	…[tab]は、入力できないかもしれませんが。
+*/
+-->
+<input type=button id=select value="書き出し" style="width:40%"
+	onClick="document.getElementById('data_well').value=XPS.toString();"><input type=button id=select value="取り込み" style="width:40%"
+	onClick="if(XPS.readIN(document.getElementById('data_well').value)){xUI.init(XPS);nas_Rmp_Init();}"><br />
+
+<input type=button id=select value="全選択" style="width:20%"
+	onClick="document.getElementById('data_well').select()"><input
+	type=reset id=reset value="リセット" style="width:20%"><input type=button
+	id=select value="消去" style="width:20%"
+	onClick="document.getElementById('data_well').value=''"><input
+	type=button id=option value="閉じる" style="width:20%"
+	onClick='sWitchPanel("clear")'><br />
+<textarea nema=data_well id=data_well style="width:80%;height:192px"></textarea>
+</form>
+</span>
+</div>
+
+<!--	シート取り込み	-->
+<!--	タイムシート情報(scene)	-->
+<div class=optionPanel id=optionPanelScn>
+
+<table id=uiTable>
+<tr>
+<th>
+	新規タイムシート/タイムシート内容の編集 
+
+
+<input	type=checkbox
+	id="scnNewSheet"
+	onChange=myScenePref.chgNewSheet()
+><a	href="javascript:void(0);"
+	onClick='myScenePref.chg("scnNewSheet");return false'
+> 新規作成</a>
+</th>
+
+<td nowrap rowspan=2 style="text-align:left;vertical-align:top;">
+<div id=scnCellTable style="display:none"> 
+<span id=scnLayerBrouser ></span>
+</div>
+</td>
+
+</tr>
+<tr><td colspan=3 style="text-align:left">
+<hr>
+<input type=button value="更新/作成" style="width:100px" onClick="myScenePref.putProp();">
+<input type=button value="新規シート" style="width:100px" onClick="myScenePref.newProp();">
+<input type=button value="リセット" style="width:100px" onClick="myScenePref.getProp();">
+<input type=button value="閉じる" style="width:100px" onClick="myScenePref.close();">
+</td></tr>
+<tr>
+<td class=menu>
+	<table style='width:30em;text-align:center;font-size:9pt'>
+
+	<tr>
+	<th width=30%>	MAP-file
+	</th>
+	<td colspan=2 width=70%>
+	<input type=text id=scnMapfile style="width:100%" value="---" onChange="myScenePref.rewrite(this.id)"/>
+	</td>
+
+	<tr><th>	Title.
+	</th><td colspan=2>
+	<input	type=text
+		id=scnTitle
+		style="width:100%"
+		value="---" 
+		onChange="myScenePref.rewrite(this.id)"
+	/>
+	</td>
+
+	</tr>
+	<tr><th>	sub title.
+	</th><td colspan=2>
+	<input type=text
+		id=scnSubtitle
+		style="width:100%"
+		value="---"
+		onChange="myScenePref.rewrite(this.id)"
+	/>
+
+	</td>
+	</tr>
+	<tr><th>	No.
+	</th><td width=35%>
+		<input	type=text
+			id=scnOpus
+			style="width:100%"
+			value="---"
+			onChange="myScenePref.rewrite(this.id)"
+	/>
+	</td>
+	<td width=35%></td>
+
+	</tr>
+	<tr><th>	S - C
+	</th><td>
+		<input	type=text
+			id=scnScene
+			style="width:100%"
+			value="---"
+			onChange="myScenePref.rewrite(this.id)"
+		/>
+	</td><td width=35%>
+		<input	type=text
+			id=scnCut
+			style="width:100%"
+			value="---"
+			onChange="myScenePref.rewrite(this.id)"
+	/>
+	</td></tr>
+	<tr><th>	レイヤ数
+	</th><td colspan=2 nowrap>
+		<input	type=text
+			id=scnLayers
+			style="width:2em"
+			value="---"
+			onChange=myScenePref.chglayers(this.id)
+	title="重ね数の変更を行います"
+		/>
+		<input	type=text
+			id=scnLayersLbls
+			style="width:16em"
+			value="---"
+			onChange=myScenePref.chglayers(this.id)
+	title="ラベルを指定します"
+		/>
+		<input	type=button
+			id=scnLayerUpdate
+			value="< 詳細 >"
+			onClick=myScenePref.openTable()
+	title="セルの詳細が編集できます"
+		/>
+<!--
+		<input	type=button
+			id=scnDel_layer
+			value="DEL_LAYER"
+		/>
+-->
+	</td></tr>
+	<tr><th nowrap rowspan=2>	Time.
+	</th><td nowrap colspan=2>
+
+		<input	type=text
+			id=scnTime
+			style="width:8em"
+			value="---" 
+			onChange="myScenePref.rewrite(this.id)"
+		/>
+		<INPUT	type=text
+			id=scnFramerate
+			style="width:3em"
+			VALUE="---"
+			onChange="myScenePref.chgFRATE(this.id)"
+		>fps
+		<SELECT
+			id=scnSetFps
+			onChange="myScenePref.chgFRATE(this.id)"
+			style="	text-align:center;
+				width:8em
+">
+<OPTION VALUE=0 >=CUSTOM=
+<OPTION VALUE=1 >FILM(24)
+<OPTION VALUE=2 >NTSC(30)
+<OPTION VALUE=3 >PAL(25)
+<OPTION VALUE=4 >WEB(15)
+		</SELECT>
+	</td></tr>
+	<tr>
+	<td nowrap>	transit IN<br />
+		<input type=text id=scnTrin style="width:5em" value="tr-in" onChange="myScenePref.rewrite(this.id)"/>
+		<input type=text id=scnTrinT style="width:5em" value="---" onChange="myScenePref.rewrite(this.id)"/>
+
+	</td>
+	<td nowrap>	transit OUT<br />
+		<input type=text id=scnTrot style="width:5em" value="tr-out" onChange="myScenePref.rewrite(this.id)"/>
+		<input type=text id=scnTrotT style="width:5em" value="---" onChange="myScenePref.rewrite(this.id)"/>
+	</td></tr>
+	<tr><th nowrap>	シート作成
+		<input	type=hidden id=scnCreate_time value=""/>
+		<input	type=hidden id=scnCreate_user value=""/>
+		<input	type=hidden id=scnUpdate_time value=""/>
+	</th><td id=scnCreate_timeTD >	日付(自動)
+	</td><td id=scnCreate_userTD >	名前(自動)
+	</td></tr>
+
+	<tr><th>	シート更新
+	</th><td id=scnUpdate_timeTD >	日付(自動)
+	</td><td>
+		<input	type=text
+			id=scnUpdate_user
+			style="width:11em"
+			value="---"
+			onChange="myScenePref.rewrite(this.id)"
+		/>
+	</td></tr>
+	<tr>
+	<th colspan=3>	memo:<br />
+		<textarea id=scnMemo rows=4 style="width:100%" onChange="myScenePref.rewrite(this.id)">
+---
+		</textarea>
+	</th><tr>
+
+	</table>
+</td>
+
+</tr>
+
+</table>
+
+
+</div>
+<!--	タイムシート情報(scene)	-->
+<!--	各種設定	-->
+<div class=optionPanel id=optionPanelPref>
+
+<table
+	style="	border-style:solid;
+		border-width:1px;
+		width:360px;
+	">
+	<tr>
+		<td class=menu><b>各種設定.</b> name. / <span id=myName></span></td>
+		<td class=toolbar>りまぴん</td>
+	</tr>
+	<tr>
+		<td colspan=2 style="text-align:center"><input type=button value="設定反映"
+			style="width:100px;" onClick="myPref.putProp();"> <input type=button
+			value="リセット" style="width:100px;" onClick="myPref.getProp();"> <input
+			type=button value="閉じる" style="width:100px;" onClick="myPref.close();">
+		</td>
+	</tr>
+	<tr>
+		<td colspan=2 style="text-align:center"><input type=button
+			value="クッキーで保存" style="width:150px;" onClick="myPref.targetObj.writeCk();">
+		<input type=button value="クッキーを削除" style="width:150px;"
+			onClick="myPref.targetObj.dlCk();"></td>
+	</tr>
+	<tr>
+		<td colspan=2 class=logo>
+		<hr>
+		</td>
+	</tr>
+	<tr>
+		<td colspan=2 class=toolbar>キーデータオプション<br />
+		blank method. <SELECT NAME=blmtd id=prefBlmtd onChange="myPref.chgblk(this.id)">
+			<OPTION VALUE=0>ファイル
+			<OPTION VALUE=1>不透明度
+			<OPTION VALUE=2>リニアワイプ
+			<OPTION VALUE=3>エクスプレッション1
+			<OPTION VALUE=4>エクスプレッション2
+		</SELECT><SELECT NAME=blpos id=prefBlpos onChange="myPref.chgblk(this.id)">
+			<OPTION VALUE=0>最初の絵を使う
+			<OPTION VALUE=1>最後の絵を使う
+			<OPTION VALUE=2>カラセルなし
+		</SELECT><br />
+
+
+		AE Version<SELECT NAME=AEver id=prefAeVersion>
+			<OPTION VALUE=0>4.0
+			<OPTION VALUE=1>5.0
+			<OPTION VALUE=2>6.5
+<!--
+			<OPTION VALUE=2>6.0
+	-->
+		</SELECT><SELECT NAME=keyMethod id=prefKeyMethod>
+			<OPTION VALUE=0>最少フレーム
+			<OPTION VALUE=1>最適化フレーム
+			<OPTION VALUE=2>全フレーム
+		</SELECT><br />
+		フーテージのフレームレート:<INPUT TYPE=text SIZE=6 NAME=fpsF id=prefFpsF VALUE=--
+			onChange="myPref.chgfpsF(this.id)"> fps<SELECT NAME=SetFpsF id=SetFpsF
+			onChange="myPref.chgfpsF(this.id)"
+			style="text-align:center;width:100px;font-size:12px">
+			<OPTION VALUE=0>=CUSTOM=
+			<OPTION VALUE=1>コンポと同じ
+			<OPTION VALUE=2>FILE(24)
+			<OPTION VALUE=3>NTSC(29.97)
+			<OPTION VALUE=4>NDF(30)
+			<OPTION VALUE=5>PAL(25)
+			<OPTION VALUE=6>WEB(15)
+		</SELECT><br />
+		<a href="javascript:" onClick='return myPref.chg("timeShift")'>取り込み自動補正</a>:<INPUT
+			TYPE=CheckBox NAME=timeShift id=timeShift><br />
+		省略時サイズ:<input type=text SIZE=4 NAME=dfX id=prefDfX VALUE="---"
+			onChange="myPref.chgdfSIZE(this.id)">x<input type=text SIZE=4 NAME=dfY
+			
+id=prefDfY VALUE="---" onChange="myPref.chgdfSIZE(this.id)">:<input type=text
+			SIZE=3 NAME=dfA id=prefDfA VALUE="---" onChange="myPref.chgdfSIZE(this.id)"><SELECT
+			NAME=dfSizeSet id=prefDfSizeSet onChange="myPref.chgdfSIZE(this.id)"
+			style="text-align:center;width:170px;font-size:12px">
+			<OPTION VALUE=0>=CUSTOM=
+			<OPTION VALUE=1>VGA(640x480,1.0)
+			<OPTION VALUE=2>DV(720x480,0.9)
+			<OPTION VALUE=3>D1(720x486,0.9)
+			<OPTION VALUE=4>D1sq(720x540,1.0)
+			<OPTION VALUE=5>D4(1440x1024,1.0)
+			<OPTION VALUE=6>D16(2880x2048,1.0)
+			<OPTION VALUE=7>std-200dpi(1772x1329,1.0)
+			<OPTION VALUE=8>std-144dpi(1276x957,1.0)
+			<OPTION VALUE=9>HD720(1280x720,1.0)
+			<OPTION VALUE=10>HDTV(1980x1080,1.0)
+			<OPTION VALUE=11>HDV(1440x1080,1.333)
+		</SELECT></td>
+	</tr>
+	<tr>
+		<td colspan=2 align=right>
+		<TABLE BORDER=0>
+			<TR>
+
+				<TD VALIGN=top NOWRAP ALIGN=right></TD>
+				<TD VALIGN=top NOWRAP ALIGN=right style="font-size:12px">シート情報<br />
+				1枚の秒数<INPUT TYPE=TEXT NAME=SheetLength id=prefSheetLength VALUE=6 SIZE=2>秒<br />
+				<a href="javascript:" onClick='return myPref.chg("prefPageCol")'>1ページ2列</a>:<INPUT
+					TYPE=CheckBox NAME=PageCol id=prefPageCol checked><br />
+				<a href="javascript:" onClick='return myPref.chg("prefFootMark")'>フットスタンプ機能</a>:<INPUT
+					TYPE=CheckBox NAME=footMark id=prefFootMark checked><br />
+
+				</TD>
+				<TD ALIGN=right NOWRAP style="font-size:12px">カウンタのタイプ<br />
+				0.<SELECT NAME=FCTo0 id=FCTo0>
+					<OPTION VALUE=10>00000 .
+					<OPTION VALUE=20>0:00:00 .
+					<OPTION VALUE=30>000 + 00 .
+					<OPTION VALUE=40>p 1 / 0 + 00 .
+					<OPTION VALUE=50>p 1 / + 000 .
+					<OPTION VALUE=11>00001 _
+					<OPTION VALUE=21>0:00:01 _
+					<OPTION VALUE=31>000 + 01 _
+					<OPTION VALUE=41>p 1 / 0 + 01 _
+					<OPTION VALUE=51>p 1 / + 001 _
+				</SELECT><br />
+				1.<SELECT NAME=FCTo1 id=FCTo1>
+					<OPTION VALUE=10>00000 .
+					<OPTION VALUE=20>0:00:00 .
+					<OPTION VALUE=30>000 + 00 .
+					<OPTION VALUE=40>p 1 / 0 + 00 .
+					<OPTION VALUE=50>p 1 / + 000 .
+					<OPTION VALUE=11>00001 _
+					<OPTION VALUE=21>0:00:01 _
+					<OPTION VALUE=31>000 + 01 _
+					<OPTION VALUE=41>p 1 / 0 + 01 _
+					<OPTION VALUE=51>p 1 / + 001 _
+				</SELECT><br />
+				</TD>
+				<TD ALIGN=right NOWRAP></TD>
+				<TD ALIGN=right NOWRAP style="font-size:12px">ループアクション<br />
+				<a href="javascript:" onClick='return myPref.chg("cLoop")'>カーソル</a>:<INPUT
+					TYPE=checkbox NAME=cLoop id=cLoop checked><br />
+				<a href="javascript:" onClick='return myPref.chg("sLoop")'>スピン</a>:<INPUT
+					TYPE=checkbox NAME=sLoop id=sLoop><br />
+				<a href="javascript:" onClick='return myPref.chg("autoScroll")'>自動スクロール</a>:<INPUT
+					TYPE=CheckBox NAME=autoScroll id=autoScroll checked><br />
+				<a href="javascript:" onClick='return myPref.chg("tabSpin")'>TABで確定</a>:<INPUT
+					TYPE=CheckBox NAME=tabSpin id=tabSpin checked><br />
+				<a href="javascript:" onClick='return myPref.chg("noSync")'>入力同期停止</a>:<INPUT
+					TYPE=CheckBox NAME=noSync id=noSync checked><br />
+
+				</TD>
+			</TR>
+		</TABLE>
+
+		</td>
+	</tr>
+</table>
+<hr />
+
+
+</div>
+<!--	各種設定	-->
+<!--	バージョン情報	-->
+<div class=optionPanel id=optionPanelVer >
+<div align=center>
+このコンテンツは、Javascriptによるアプリケーションです。<br />
+Javascriptを有効にした状態でご使用ください。<br />
+<br /><hr />
+<B>Adobe After Effects<br>タイムリマップキー入力支援 AIR動作試験</B><br />
+<img src=../images/remaping.gif border=0 width=256 height=127 onClick='document.getElementById("optionPanelVer").style.display="none";'/><br />
+<span 
+	style="font-size:x-small;color:red"
+> アニメ業界どこへ流れて往くのかしら? </span><br />
+<span style="font-size:small" id=versionString>
+ $Id: remaping.html,v 1.22 2010/09/13 12:48:39 kiyo Exp $ <br />
+<span id=myVer0></span> <span id=myServer0>[no-server]</span><br />
+
+XPS File Ver. :nasTIME-SHEET 0.4<br />
+</span>
+<input	type=button
+	value="OK"
+	style="width:36%"
+	onClick='document.getElementById("optionPanelVer").style.display="none";'
+><br />
+質問やバグの通報は<a href="http://www.nekomataya.info/bbs2/index.html" target=_balnk>NEKOMATAYA</a>まで。
+<hr></div>
+<div align=right>Nekomataya/2010</div>
+</div>
+<!--	バージョン情報	-->
+<!--	デバッグパネル	-->
+<div class=optionPanel id=optionPanelDbg>
+<span>
+<form action="void()">
+<!-- 
+/*
+やっと作るデバッグツール
+遅いよな 4・25
+*/
+-->
+<textarea	
+	nema=msg_well
+	id=msg_well
+	style="width:640px;height:96px"
+></textarea><br /><input	type=button
+	id=action
+	value="Do"
+	style="width:190px"
+	onClick="document.getElementById('msg_well').value+=(eval(document.getElementById('cmd').value)+'\n');"
+><input	type=button
+	id=select
+	value="全選択"
+	style="width:90px"
+	onClick="document.getElementById('msg_well').select()"
+><input	type=reset
+	id=reset
+	value="リセット"
+	style="width:90px"
+><input	type=button
+	id=select
+	value="消去↑"
+	style="width:90px"
+	onClick="document.getElementById('msg_well').value=''"
+><input	type=button
+	id=select
+	value="消去↓"
+	style="width:90px"
+	onClick="document.getElementById('cmd').value=''"
+><input	type=button
+	id=option
+	value="閉じる"
+	style="width:90px"
+	onClick="sWitchPanel('Dbg')"
+><br/>
+<!--
+<input	type=button
+	id=select
+	value="取り込み"
+	style="width:240"
+	onClick="
+	if(window.opener.XPS.readIN(document.getElementById('msg_well').value))	window.opener.nas_Rmp_Startup();
+	"
+>-->
+<textarea	
+	nema=cmd
+	id=cmd
+	style="width:640px;height:64px"
+>dbg=true</textarea></form></span><hr />
+Nekomataya / Kiyo 2010
+</div>
+<!--	デバッグパネル	-->
+<!--	ツールボックス	-->
+<div class=optionPanel id=optionPanelTbx>
+
+<form name=test action="javascript:void();">
+<!-- りまぴん ツールボックスインターフェース-->
+<table
+	class=toolbox
+	id=uiTable
+>
+
+
+<tr>
+	<th>レベル</th>
+	<th>セル</th>
+	<th>よく使う文字</th>
+</tr>
+<tr>
+
+<td	id=l_select
+	align=rigth
+	valign=top
+><select
+	name="map_labels"
+	id="layer"
+	title="レイヤを選択"
+	size= 6
+style="width:7em;text-align:center;font-size:12pt"
+onClick='if(document.getElementById("single").checked) chkValue(this.id)'
+onDblClick='if (! document.getElementById("single").checked) chkValue(this.id)'
+>
+<option>A
+<option>B
+<option>C
+<option>D
+<option>E
+<option>F
+</select>
+</td>
+<td	id=c_select
+	align=rigth
+	valign=top
+><select
+	name="cell_numbers"
+	id="cell"
+	size=6
+style="width:7em;text-align:center;font-size:12pt"
+onClick='if(document.getElementById("single").checked) chkValue(this.id)'
+onDblClick='if (! document.getElementById("single").checked) chkValue(this.id)'
+>
+<option>---
+<option>---
+<option>---
+<option>---
+</select></td>
+<td	id=u_select
+	align=rigth
+	valign=top
+><select
+	name="fav"
+	id="fav"
+	size=6
+style="width:7em;text-align:center;font-size:12pt"
+onClick='if(document.getElementById("single").checked) chkValue(this.id)'
+onDblClick='if (! document.getElementById("single").checked) chkValue(this.id)'
+>
+<option>X
+<option>カラ
+<option>｜
+<option>___
+<option>----
+<option>[ * ]
+<option>( * )
+<option>< * >
+</select></td>
+
+<td>
+<input	type=checkbox
+	naem=single
+	id=single
+	checked=true
+><a href="javascript:void()" onClick='return chg("single")'>single-click</a>
+<!--<input	type=button
+	value=clearFS
+	id=clearFS
+	style="width:100%"
+	onclick="chkValue(this.id);"
+>
+-->
+</td>
+<td
+	class=logo
+><div align=center><table><tr><td
+	border=0
+></td></tr></table></div></td></tr>
+</table></form>
+</div>
+<!--	ツールボックス	-->
+<!--	ファイルブラウザ試験中	-->
+<div class=optionPanel id=optionPanelFile >
+<!-- <form name=test action="javascript:void();"> -->
+<!-- りまぴん(新) ファイルブラウザインターフェース -->
+<table	class=File-
+	id=fbTable
+>
+<tr><!-- メニューバー と ロゴ -->
+<td	colspan=6
+	class=menu-
+>
+<input type=button onClick='alert(this.name);' name="button" value="最新の情報に更新"
+><input type=button onClick='alert(this.name);' name="button" value="読み込み"
+><input type=button onClick='alert(this.name);' name="button" value=" 保 存 "
+><input type=button onClick='alert(this.name);' name="button" value=" 検 索 "
+><input type=button onClick='alert(this.name);' name="button" value=" 閉じる "
+> 
+</td>
+<td
+	class=logo colspan=2
+><b>りまぴん</b></td>
+</tr>
+<tr>
+<td	
+	colspan=8
+	class=toolbar
+>
+<br />
+</td>
+</tr>
+<tr>
+	<th>
+<img src="../images/icons/nasu.gif" /><br />NAS(U)
+	</th>
+<th><img src="../images/icons/right.gif" /></th>
+	<th>
+<img src="../images/icons/close_f.gif" /><br />Folder
+	</th>
+<th><img src="../images/icons/right.gif" /></th>
+	<th>
+<img src="../images/icons/open_f.gif" /><br />FolderOpen
+	</th>
+<th><img src="../images/icons/right.gif" /></th>
+	<th colspan=2>
+<img src="../images/icons/chip.gif" /><br />FileName
+	</th>
+
+</tr>
+<tr>
+
+<td	id=l_select
+	align=rigth
+	colspan=2
+	valign=top
+><select
+	name="map_labels"
+	id="layer"
+	title="レイヤを選択"
+	size= 6
+onClick='if(document.getElementById("single").checked) chkValue(this.id)'
+onDblClick='if (! document.getElementById("single").checked) chkValue(this.id)'
+>
+<option>-------A
+<option>-------B
+<option>-------C
+<option>-------D
+<option>-------E
+<option>-------F
+</select>
+</td>
+<td	id=c_select
+	align=rigth
+	colspan=2
+	valign=top
+><select
+	name="cell_numbers"
+	id="cell"
+	size=6
+onClick='if(document.getElementById("single").checked) chkValue(this.id)'
+onDblClick='if (! document.getElementById("single").checked) chkValue(this.id)'
+>
+<option >----------
+<option >----------
+<option >----------
+<option >----------
+</select></td>
+<td	id=u_select
+	align=rigth
+	colspan=2
+	valign=top
+><select
+	name="fav"
+	id="fav"
+	size=6
+onClick='if(document.getElementById("single").checked) chkValue(this.id)'
+onDblClick='if (! document.getElementById("single").checked) chkValue(this.id)'
+>
+<option >-------X
+<option >-------カラ
+<option >-------｜
+<option >-------___
+<option >-----------
+<option >-------[ * ]
+<option >-------( * )
+<option >-------< * >
+</select></td><td	id=u_select
+	align=rigth
+	colspan=2
+	valign=top
+>
+<strong>[ID] Infomation </strong><br />
+size:<br />
+class:<br />
+width:<br />
+height:<br />
+・・・・<br />
+</td></tr>
+
+<tr>
+	<td colspan=8>
+スクロールバー領域<br />
+	</td>
+</tr>
+
+<tr>
+<td	colspan=8
+	style="text-align:right;"
+>file name
+<input	type=text
+	name=fileTest
+	id=fileTest
+	size=16
+	value='fileName choice'
+	onChange="chkValue(this.id);"
+	style="width:65%"
+> <input type=button
+	value=OK
+	id=pgdn
+	onclick="chkValue(this.id);"
+	style="width:15%"
+><br />file type
+<input	type=text
+	name=fileType
+	id=fileType
+	size=16
+	value='p00 / 000+00_'
+	onChange="chkValue(this.id);"
+	style="width:65%"
+> <input type=button
+	value=Cancel
+	id=pgdn
+	onclick='sWitchPanel("clear");'
+	style="width:15%"
+>
+</td></tr><tr>
+<td	id=rEsult_bOx
+	colspan=8
+><br /></td></tr></table>
+<!-- </form> -->
+</div>
+<!--	ファイルブラウザ試験中	-->
+</div>
+</div>
+
+<div  class="footerTool" id="fixed"><div id="fixedFooter">
+<!-- 固定フッタ -->
+<!-- <form name=toolfooter action="javascript:void(0);"> -->
+<table class=toolTable >
+<tr>
+<td class=toolbar>
+	<!-- カウンタ -->
+<input	type=button
+	name=activeLvl
+	id=activeLvl
+	value=A
+	style="width:72px;
+	"
+	onclick="chkValue(this.id);"
+	title="AEキー変換"
+> 
+<input	type=text
+	name=fct0
+	id=fct0
+	value='00:00:00+00_'
+	style='width:96px;text-align:center;'
+	onChange='chkValue(this.id);'
+	title="変更するとジャンプ"
+><input	type=text
+	name=fct1
+	id=fct1
+	value='p00 / 000+00_'
+	style='width:96px;text-align:center;'
+	onChange='chkValue(this.id);'
+	title="数字だけはコマ数"
+>
+	<!-- カウンタ -->
+<!-- toolbars -->
+
+<input	type=button
+	name=selall
+	id=selall
+	value=Ａ
+	style='width:24px;'
+	onclick="chkValue(this.id);"
+	title="一列選択"
+><input	type=button
+	name=copy
+	id=copy
+	value=Ｃ
+	style='width:24px;'
+	onclick="chkValue(this.id);"
+	title="複写"
+><input	type=button
+	name=cut
+	id=cut
+	value=Ｘ
+	style='width:24px;'
+	onclick="chkValue(this.id);"
+	title="切り取り"
+><input	type=button
+	name=paste
+	id=paste
+	value=Ｖ
+	style='width:24px;'
+	onclick="chkValue(this.id);"
+	title="貼り付け"
+> 
+<input	type=button
+	name=undo
+	id=undo
+	value=Ｚ
+	style='width:24px;'
+	onclick="chkValue(this.id);"
+	title="やり直し[ctr]+[Z]"
+><input	type=button
+	name=redo
+	id=redo
+	value=Ｙ
+	style='width:24px;'
+	onclick="chkValue(this.id);"
+	title="やり直しのやり直し[ctr]+[Y]"
+> 
+
+
+
+<input	type=button
+	name=home
+	id=home
+	value=HOME
+	onclick="chkValue(this.id);"
+	title="先頭へ"
+><input	type=button
+	name=end
+	id=end
+	value=END
+	onclick="chkValue(this.id);"
+	title="カット尻へ"
+> 
+<input	type=button
+	name=pgdn
+	id=pgdn
+	value=Pgdn
+	onclick="chkValue(this.id);"
+	title="１ページ進む"
+><input	type=button
+	name=pgup
+	id=pgup
+	value=Pgup
+	onclick="chkValue(this.id);"
+	title="１ページもどる"
+>
+</td><td class=logo>
+	<!-- logo -->
+<span id=headerLogo >
+<b>りまぴん</b>
+	<!-- logo -->
+</span>
+
+</td>
+</tr>
+<tr><td colspan=2><hr><div align=right>Nekomataya/2010</div></td></tr>
+</table>
+
+<!-- </form> -->
+</div></div>
+<div id=sheet_view>
+<div class="screenSpace"><br><br><br><br><br><br></div>
+<div id=memo_header>
+<a	href="javascript:void(0);"
+	onclick='sWitchPanel("memo");return false;'
+>MEMO :</a></div>
+<div id=memo></div>
+<div id=sheet_body
+	onMouseDown =" return xUI.Mouse(event)"
+	onMouseUp =" return xUI.Mouse(event)"
+	onDblClick =" return xUI.Mouse(event)"
+	onMouseOver =" xUI.Mouse(event)"
+>
+
+<div align=center>
+<br><br><br><br><br><br>ただいま準備中…ちょっぴりお待ちください<br>
+<h3>Adobe After Effectsタイムリマップキー入力支援 </h3><img src=../images/remaping.gif border=0 /><br /><img src=../images/ui/wait.gif width=320 height=20><br>
+$Id: remaping.html,v 1.22 2010/09/13 12:48:39 kiyo Exp $<br />
+<span id=myVer1></span> <span id=myServer1>[no-server]</span>
+<br></div><hr>
+
+
+<!-- <form> -->
+<!--	<input id=startupXPS value=false>	-->
+<textarea id="startupXPS" style='width:75%;'>nasTIME-SHEET 0.4
+##MAPPING_FILE=
+##TITLE=読み出し試験
+##SUB_TITLE=このデータは、試験データです。
+##OPUS=第  話
+##SCENE=
+##CUT=C# 
+##TIME=3 + 00 .
+##TRIN=0 + 00 .,trin
+##TROUT=0 + 00 .,trout
+##CREATE_USER=わしじゃ
+##UPDATE_USER=(未設定)
+##CREATE_TIME=2006/4/10 0:24:13
+##UPDATE_TIME=2007/7/4 13:16:4
+##FRAME_RATE=24
+#
+#================================================================
+[sizeX		640	640	640	640	640	640	]
+[sizeY		480	480	480	480	480	480	]
+[aspect		1	1	1	1	1	1	]
+[lot		=AUTO=	=AUTO=	=AUTO=	=AUTO=	=AUTO=	=AUTO=	]
+[blmtd		wipe	wipe	wipe	wipe	wipe	wipe	]
+[blpos		end	end	end	end	end	end	]
+[option		timing	timing	timing	timing	timing	timing	]
+[link		.	.	.	.	.	.	]
+[CELL	N	A	A↑	B	C	D	E	]
+#================================================================
+.		1	1	1	1	1	1	
+.							2	
+.						2	3	
+.	ねこ				2		4	
+.				2		3	5	
+.	---		2				6	
+#----------------------------------------------------------------
+.	に	2			3	4	7	
+.							8	
+.				3		5	9	
+.	ゃ				4		10	
+.			3			6	11	
+.							12	
+#----------------------------------------------------------------
+.	｜	3		1	5	7	13	
+.							14	
+.						8	15	
+.	に		4		6		16	
+.				2		9	17	
+.							18	
+#----------------------------------------------------------------
+.	ゃ	4			7	10	19	
+.							20	
+.			5	3		11	21	
+.	｜				8		22	
+.						12	23	
+.							24	
+#================================================================
+.	---	5		1	9	13	25	
+.			6				26	
+.						14	27	
+.	いぬ				10		28	
+.				2		15	29	
+.	---						30	
+#----------------------------------------------------------------
+.	わ	6	7		11	16	31	
+.							32	
+.				3		17	33	
+.	ん				12		34	
+.						18	35	
+.			8				36	
+#----------------------------------------------------------------
+.	わ	7		1	13	19	37	
+.							38	
+.						20	39	
+.	ん				14		40	
+.			9	2		21	41	
+.							42	
+#----------------------------------------------------------------
+.	---	8			15	22	43	
+.							44	
+.				3		23	45	
+.			10		16		46	
+.						24	47	
+.							48	
+#================================================================
+.		9		1	17	25	49	
+.							50	
+.			11			26	51	
+.					18		52	
+.				2		27	53	
+.							54	
+#----------------------------------------------------------------
+.		10			19	28	55	
+.			12				56	
+.				3		29	57	
+.					20		58	
+.						30	59	
+.							60	
+#----------------------------------------------------------------
+.		11	13	1	21	31	61	
+.							62	
+.						32	63	
+.					22		64	
+.				2		33	65	
+.			14				66	
+#----------------------------------------------------------------
+.		12			23	34	67	
+.							68	
+.				3		35	69	
+.					24		70	
+.			15			36	71	
+.							72	
+#================================================================
+#================================================================
+[END]
+お試しなのです。
+</textarea>
+<!-- </form> -->
+
+<div onClick="javascript:alert('test')">Nekomataya/2007</div>
+
+</div><div class=\"screenSpace\"><br><br></div></div>
+</body></html>

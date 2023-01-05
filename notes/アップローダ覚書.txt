@@ -1,0 +1,166 @@
+﻿ローカルにセットアップしたXPS（将来的にはMAPも含む）データを格納したフォルダからリポジトリ内のエピソードを作成する手続を作成する
+
+
+以下の構造である
+[リポジトリ]
+　   [タイトル]
+　       　[エピソード]
+　       　  ###.xps
+　       　  ###.xps
+　       　  ###.xps
+　       　  ###.xps
+　       　  ###.xps
+　       　  ###.xps
+　       　  ###.xps
+　       　  ###.xps
+　       　  ###.xps
+　       　  ###.xps
+　       　  ###.xps
+　       　  ###.xps
+　       　  ###.xps
+　       　  ###.xps
+
+今回の実装では、あらかじめエピソードを作成してそこにデータをまとめてアップロードする
+    エピソードまでは、サーバ上で作成する
+    処理対象エピソードを選択する（エピソードはカラである必要がある）
+    ローカルの複数のファイルを選択して処理を決定する
+    再確認
+    実行
+    
+スタートアップ用データアップローダ
+    ローカルのフォルダを選択してフォルダ内のカットをすべて特定のOPUSに対してアップロードする機能。
+    
+    ○空のOPUSである必要がある（既存のカットを書き換えてはならない）
+    ○アップロード時にLine/Stage/Job情報はすべてリセットされる
+    ○タイトル及びOPUSはアップロード先の情報に合わせて調整される
+    
+バルクダウンローダ
+    フォルダを指定して、特定のリポジトリのOPUS（エピソード）内のデータを一括ダウンロードする
+    ○特に指定がなければ、最新のデータのみを取得する（今回は固定でOK）
+    ○データ編集は行わないがカレントユーザを作業ユーザに置き換える？（不用）
+
+documentDepotの機能にする？
+選択されたOPUSを引数に起動
+OPUS内のすべてのエントリを順次処理
+中間ファイルを作らずにオンメモリですべてのキューを処理する？
+
+処理対象リスト取得
+
+キューを作成して順次
+    読み込み　＞　ダウンロード
+を行う
+
+//カレントのエントリリストを取得してキューを作る
+/*
+    マネジメントキューの内容はListEntryオブジェクトなので注意
+*/
+xUI.managementQueue=documentDepot.getEntriesByOpusid();
+
+autoDL = function(){  
+    if(xUI.managementQueue.length){
+//キューの先頭を読み出してバッファにとる
+        var myDoc = xUI.managementQueue.shift();
+//データ取得に成功したらファイル名をつけてcallEchoでダウンロード保存
+//エントリオブジェクトを識別子としてアクセスするために明示的にtoStringを使う
+        serviceAgent.getEntry(
+            myDoc.toString(),false,
+            function(){
+                var fName=xUI.getFileName();
+                callEcho(fName,autoDL);//自分自身を呼ぶ
+            }
+        )
+    }else{
+        alert("There are no downloadable entries");
+    }
+}
+//Test  autoDL();
+
+/**
+    アップロード用手順
+ガイドを作成
+    あらかじめ作成したタイトルとOPUSを選択
+    ユーザ名をカレントユーザに設定
+    Line/Stage/Jobはすべて初期化
+
+FileAPIで複数のエントリリストを作成する
+1回のみの処理と想定
+
+リストをキュー
+キューを読み込み　あらかじめ設定したガイドに従って変換して送出（エントリ作成＋データ転送）
+キューはダウンロードキューを共用？ファイルリストを配列に変換して使う
+
+指定ファイルが単独でかつcsvであった場合、ファイル内容パースしてドキュメントリストを作成してこれを元にバルクファイルを登録する。
+
+*/
+//キューを作る
+//Fileコレクションが配列では無いので配列化しておく
+        xUI.managementQueue=[];
+    if(
+        (document.getElementById('myCurrentOpus').files.length==1)&&
+        (document.getElementById('myCurrentOpus').files[0].name.match(/\.csv$/i))
+    ){
+        var input = document.getElementById('myCurrentOpus').files[0];
+	    var myEncode=(input.name.match(/\.(ard|csv|tsh)$/))?"Shift-JIS":"UTF-8";
+
+    }else{
+        for (var ix=0 ;ix <document.getElementById('myCurrentOpus').files.length ;ix ++){
+            xUI.managementQueue[ix]=document.getElementById('myCurrentOpus').files[ix];
+        }
+    }
+
+buildUL = function(){
+  if(xUI.managementQueue.length){
+    // メモリ上に読み込む
+    // File APIを利用できるかをチェック（再チェックは必要？）
+    if (window.File) {
+    // キューの先頭を読み出してバッファにとる
+    var input = xUI.managementQueue.shift();;
+	var myEncode=(input.name.match(/\.(ard|csv|tsh)$/))?"Shift-JIS":"UTF-8";
+  if(window.FileReader){
+    // ファイルリーダーオブジェクト初期化(Chrome/Firefoxのみ)
+    var reader = new FileReader();
+    // ファイルの読み込みに成功したら、その内容の処理をイベントリスナーに設定
+    reader.addEventListener('load', function(e) {
+        var output = reader.result;//
+        var myXps = new Xps();
+    //そのまま読み込むXpsフォーマットのみ（コンバート不可）
+	    if(myXps.readIN(output)){
+	//ドキュメントの属性をオプションに従って変更
+            //myXps.prop = optProp;
+        //管理プロパティリセット
+            myXps.line  = (new XpsLine(nas.pmdb.pmTemplate[0].line.toString())).toString(true);
+            myXps.stage = (new XpsStage(nas.pmdb.stages.getStage(myXps.line.stages.getStage()).toString())).toString(true);
+            myXps.job   = (new XpsStage(nas.pmdb.jobNames.getTemplate(myXps.job,"init").toString())).toString(true);
+            myXps.currentStatus = 'Startup';
+        //タイムスタンプ更新・作成ユーザ／更新ユーザともに現在のユーザをセット
+    var Now = new Date();
+            myXps.create_time = (!nas) ? Now.toString() : Now.toNASString();
+            myXps.create_user = (xUI.currentUser)? xUI.currentUser:new nas.UserInfo(myName);
+            myXps.update_time = (!nas) ? Now.toString() : Now.toNASString();
+            myXps.update_user = (xUI.currentUser)? xUI.currentUser:new nas.UserInfo(myName);
+        //タイトル・話数を現在のドキュメントに同期
+            myXps.title = xUI.XPS.title;
+            myXps.opus  = xUI.XPS.opus;
+        //カット番号を確認
+        //
+	//ターゲットのリポジトリに対してアップロードする
+	//保存成功時は自分自身を呼び出しして次のキューを処理
+	        serviceAgent.currentRepository.pushEntry(myXps,buildUL);
+	    }else{
+	//ファイルリード失敗　キューをクリアして終了
+	        alert("reading-Body : "+localize(xUI.errorMsg[xUI.errorCode]) );
+	        console.log(xUI.managementQueue)
+	    };
+    }, true);
+    // ファイルの内容をテキストとして取得して処理開始
+    reader.readAsText(input, myEncode);
+  }
+    }
+  }else{
+	//キューの残り数が0なので終了
+            alert("There are no uploadable entries");
+  }
+}
+//TEST:
+    buildUL();
+    

@@ -1,0 +1,585 @@
+# API仕様書 V2
+
+## サンプル用スクリプト
+[api_sample_20171017.zip](/uploads/519a4f0c965c6c82196f38a258a56a62/api_sample_20171017.zip)
+
+## 概要
+本仕様書では主にJavascariptベースのりまぴんのフロントエンドにデータの永続性を与えるためにDBを保持するためのバックエンドとやり取りするためのAPIの仕様書をまとめます。やり取りするデータはすべてJSONで行います。
+
+## API一覧
+
+### ヘッダー
+
+認証系を除く全てのAPIについてヘッダーを設定する必要があります。
+チーム系においてのみ、「OrganizationToken」は空にする必要があります。
+
+| 名前 | 値 | 説明 |
+|:-:|:-:|:------------|
+|Access-Control-Allow-Origin       |   "*"  |     |
+|Authorization       |   "Bearer "　＋ 認証系で取得したアクセスキー  | 　ユーザーを特定するためのAuthキー    |
+|OrganizationToken       |   チーム系APIで取得したチームトークン |   複数所属することができるチームを特定するためのキー     |
+
+
+
+## :zap: **認証系API**  
+
+### :anchor: **Oauthトークン取得**  
+
+#### URL (POST)
+http://remaping.scivone-dev.com/oauth/token
+
+#### リクエストデータ項目
+| 名前 | データ種 | 説明 |
+|:-:|:-:|:------------|
+|grant_type    |   string  |   認証方式、"password" に設定  |
+|client_id    |   string  |   サーバーのクライアントID、サーバー側で設定される   |
+|client_secret    |   string  |   サーバーのクライアントシークレット、サーバー側で設定される   |
+|username   |   string  |   ユーザーのメールアドレス   |
+|password    |   string  |   ユーザーのパスワード   |
+
+
+
+#### 応答データ項目
+| 名前 | データ種 | 説明 |
+|:-:|:-:|:------------|
+|access_token       |   string  |   アクセスキー   |
+|created_at       |   string  |   キー作成日   |
+|expires_in       |   string  |   キー有効期限   |
+|token_type       |   string  |   キータイプ   |
+
+## :zap: **チーム系API**  
+
+### :anchor: **チーム一覧取得**  
+
+#### URL (GET)
+http://remaping.scivone-dev.com/api/v2/organizations.json
+
+#### 応答データ項目（配列）
+| 名前 | データ種 | 説明 |
+|:-:|:-:|:------------|
+|name       |   string  |   チーム名   |
+|token       |   string  |   チームトークン   |
+
+
+#### JSON例
+```json
+
+[
+    {
+        name: "xxxxx",
+        token: "xxxxxxxxxxx"    
+    },
+    {
+        name: "xxxxx",
+        token: "xxxxxxxxxxx"    
+    }
+]
+```
+
+## :zap: **タイトル系API**  
+
+### :anchor: **タイトル一覧取得**  
+
+#### URL例 (GET)
+http://remaping.scivone-dev.com/api/v2/products.json
+
+
+
+#### 応答データ項目（配列）
+| 名前 | データ種 | 説明 |
+|:-:|:-:|:------------|
+|token       |   int  |   作品の一意なID     |
+|name       |   string  |   作品の名前    |
+|description       |  text  |   作品の説明     |
+
+#### JSON例
+```json
+[
+
+    {
+        token: "xxxxxxxxx",
+        name: "xxxxx",
+        description: "fdasd"
+    },
+    {
+        token: "xxxxxxxxx",
+        name: "xxxxx",
+        description: "fdasd"
+    }    
+
+]
+```
+
+### :anchor: **タイトル詳細**  
+
+#### URL例 (GET)
+http://remaping.scivone-dev.com/api/v2/products/:product_token.json
+
+#### 応答データ項目
+| 名前 | データ種 | 説明 |
+|:-:|:-:|:------------|
+|token       |   string  |   作品の一意なID     |
+|name       |   string  |   作品の名前    |
+|description       |  text  |   作品の説明     |
+|created_at       |  datetime  |    作品の作成日時   |
+|updated_at       |  datetime  |    作品の更新日時   |
+|episodes       | Array  |   作品内のエピソード一覧   |
+
+
+##### episodes（配列）
+| 名前 | データ種 | 説明 |
+|:-:|:-:|:------------|
+|token       |   string  |   作品の一意なID     |
+|name       |   string  |   作品の名前    |
+
+
+
+#### JSON例
+```json
+{
+
+    token: 1,
+    name: "ddd",
+    description: "fdasd",
+    created_at: "2016-07-14T10:33:49.000+09:00",
+    updated_at: "2016-07-14T10:33:49.000+09:00",
+    episodes: [
+        [
+            {
+               token: "xxxxxxxx",
+               name: "xxxxxxx",
+            }
+        ]
+    ]
+
+}
+```
+
+
+### :anchor: **タイトル作成**  
+
+#### URL例 (POST)
+http://remaping.scivone-dev.com/api/v2/products.json
+
+
+#### POST項目
+| 名前 | データ種 | 必須 | 説明 |
+|:-:|:-:|:------------|
+|name       |   string  |◯|  作品名     |
+|description       |   string  |   タイトルの備考    |
+
+#### 応答データ項目
+| 名前 | データ種 | 説明 |
+|:-:|:-:|:------------|
+|res       |   int  |   リクエストの結果     |
+|product       |   object  |   成功時のタイトルオブジェクト     |
+
+##### product　オブジェクト
+| 名前 | データ種 | 説明 |
+|:-:|:-:|:------------|
+|token       |   string  |   タイトルの一意なID     |
+|name       |   string  |   タイトルの名前    |
+|description       |   string  |   タイトルの備考    |
+
+
+#### JSON例
+```json
+
+```
+
+### :anchor: **タイトル更新**  
+
+#### URL例 (PUT)
+http://remaping.scivone-dev.com/api/v2/products/:product_token.json
+
+
+#### payload項目
+| 名前 | データ種 | 必須 | 説明 |
+|:-:|:-:|:-:|:------------|
+|name       |   string  |◯|  作品名     |
+|description       |   string  |   タイトルの備考    |
+
+#### 応答データ項目
+| 名前 | データ種 | 説明 |
+|:-:|:-:|:------------|
+|res       |   int  |   リクエストの結果     |
+|product       |   object  |   成功時のタイトルオブジェクト     |
+
+##### product　オブジェクト
+| 名前 | データ種 | 説明 |
+|:-:|:-:|:------------|
+|token       |   string  |   タイトルの一意なID     |
+|name       |   string  |   タイトルの名前    |
+|description       |   string  |   タイトルの備考    |
+
+
+#### JSON例
+```json
+
+```
+
+
+## :zap: **エピソード系API**  
+
+### :anchor: **エピソード一覧取得**  
+
+#### URL例 (GET)
+http://remaping.scivone-dev.com/api/v2/episodes?product_token=:product_token.json
+
+
+
+#### 応答データ項目（配列）
+| 名前 | データ種 | 説明 |
+|:-:|:-:|:------------|
+|token       |   int  |   エピソード一意なID     |
+|name       |   string  |   エピソードの名前    |
+|description       |  text  |   エピソードの説明     |
+
+#### JSON例
+```json
+[
+
+    {
+        token: "xxxxxxxxx",
+        name: "xxxxx",
+        description: "fdasd"
+    },
+    {
+        token: "xxxxxxxxx",
+        name: "xxxxx",
+        description: "fdasd"
+    }    
+
+]
+```
+
+### :anchor: **エピソード詳細**  
+
+#### URL例 (GET)
+http://remaping.scivone-dev.com/api/v2/episodes/:episode_token.json
+
+#### 応答データ項目
+| 名前 | データ種 | 説明 |
+|:-:|:-:|:------------|
+|token       |   string  |   エピソードの一意なID     |
+|name       |   string  |   エピソードの名前    |
+|description       |  text  |   エピソードの説明     |
+|created_at       |  datetime  |    エピソードの作成日時   |
+|updated_at       |  datetime  |    エピソードの更新日時   |
+|cuts       | Array  |   エピソード内のカット一覧   |
+
+
+##### cuts（配列）
+| 名前 | データ種 | 説明 |
+|:-:|:-:|:------------|
+|token       |   string  |   カットの一意なID     |
+|name       |   string  |   カットの名前    |
+
+
+
+#### JSON例
+```json
+{
+
+    token: 'xxxxxxxxxxxxxx',
+    name: "ddd",
+    description: "fdasd",
+    created_at: "2016-07-14T10:33:49.000+09:00",
+    updated_at: "2016-07-14T10:33:49.000+09:00",
+    cuts: [
+        [
+            {
+               token: "xxxxxxxx",
+               name: "xxxxxxx",
+            }
+        ]
+    ]
+
+}
+```
+
+
+### :anchor: **エピソード一新規作成**  
+
+#### URL例 (POST)
+http://remaping.scivone-dev.com/api/v2/episodes.json
+
+
+#### POST項目
+| 名前 | データ種 | 必須 | 説明 |
+|:-:|:-:|:-:|:------------|
+|product_token       |   string  |◯|  所属するタイトルのトークン     |
+|name       |   string  ||  作品名     |
+|description       |   string  |   タイトルの備考    |
+
+#### 応答データ項目
+| 名前 | データ種 | 説明 |
+|:-:|:-:|:------------|
+|res       |   int  |   リクエストの結果     |
+|   episode    |   object  |   成功時のエピソードオブジェクト     |
+
+##### episode　オブジェクト
+| 名前 | データ種 | 説明 |
+|:-:|:-:|:------------|
+|token       |   string  |   エピソードの一意なID     |
+|name       |   string  |   エピソードの名前    |
+|description       |   string  |   エピソードの備考    |
+
+
+#### JSON例
+```json
+
+```
+
+### :anchor: **エピソード一更新**  
+
+
+#### URL例 (PUT)
+http://remaping.scivone-dev.com/api/v2/episodes/:episode_token.json
+
+
+#### payload項目
+| 名前 | データ種 | 必須 | 説明 |
+|:-:|:-:|:-:|:------------|
+|name       |   string  |◯|  作品名     |
+|description       |   string  |   タイトルの備考    |
+
+#### 応答データ項目
+| 名前 | データ種 | 説明 |
+|:-:|:-:|:------------|
+|res       |   int  |   リクエストの結果     |
+|   episode    |   object  |   成功時のエピソードオブジェクト     |
+
+##### episode　オブジェクト
+| 名前 | データ種 | 説明 |
+|:-:|:-:|:------------|
+|token       |   string  |   エピソードの一意なID     |
+|name       |   string  |   エピソードの名前    |
+|description       |   string  |   エピソードの備考    |
+
+#### JSON例
+```json
+
+```
+
+
+
+## :zap: **カット系API**  
+
+### :anchor: **カット一覧取得**  
+
+#### URL例 (GET)
+http://remaping.scivone-dev.com/api/v2/cuts?episode_token=:episode_token.json
+
+
+
+#### 応答データ項目（配列）
+| 名前 | データ種 | 説明 |
+|:-:|:-:|:------------|
+|token       |   int  |   カット一意なID     |
+|name       |   string  |   カットの名前    |
+|description       |  text  |   カットの説明     |
+
+#### JSON例
+```json
+[
+
+    {
+        token: "xxxxxxxxx",
+        name: "xxxxx",
+        description: "fdasd"
+    },
+    {
+        token: "xxxxxxxxx",
+        name: "xxxxx",
+        description: "fdasd"
+    }    
+
+]
+```
+
+### :anchor: **カット詳細**  
+
+#### URL例 (GET)
+http://remaping.scivone-dev.com/api/v2/cuts/:cut_token.json
+
+#### 応答データ項目
+| 名前 | データ種 | 説明 |
+|:-:|:-:|:------------|
+|token       |   string  |   カットの一意なID     |
+|name       |   string  |   カットの名前    |
+|description       |  text  |   カットの説明     |
+|created_at       |  datetime  |    カットの作成日時   |
+|updated_at       |  datetime  |    カットの更新日時   |
+|versions       | Array  |   カット内の差分一覧   |
+
+
+##### versions
+| 名前 | データ種 | 説明 |
+|:-:|:-:|:------------|
+|version_token       |   string  |   差分の一意なID     |
+|updated_at       |   string  |   差分更新日    |
+
+
+
+#### JSON例
+```json
+{
+
+    token: 'xxxxxxxxxxxx',
+    name: "ddd",
+    description: "fdasd",
+    created_at: "2016-07-14T10:33:49.000+09:00",
+    updated_at: "2016-07-14T10:33:49.000+09:00",
+    versions: [
+        [
+            {
+               version_token: "xxxxxxxx",
+               updated_at: "xxxxxxx",
+            }
+        ]
+    ]
+
+}
+```
+
+
+### :anchor: **カット新規作成**  
+
+#### URL例 (POST)
+http://remaping.scivone-dev.com/api/v2/cuts.json
+
+
+#### POST項目
+| 名前 | データ種 | 必須 | 説明 |
+|:-:|:-:|:-:|:------------|
+|episode_token       |   string  |◯|  所属するタイトルのトークン     |
+|line_id       |   string  |◯||       |
+|stage_id       |   string  |◯||       |
+|job_id       |   string  |◯||       |
+|name       |   string  |◯|  カット名     |
+|content       |   text  ||  カット内容（りまぴんフォーマット）     |
+
+
+#### 応答データ項目
+| 名前 | データ種 | 説明 |
+|:-:|:-:|:------------|
+|res       |   int  |   リクエストの結果     |
+|   cut    |   object  |   成功時のエピソードオブジェクト     |
+
+##### cut　オブジェクト
+| 名前 | データ種 | 説明 |
+|:-:|:-:|:------------|
+|token       |   string  |   カットの一意なID     |
+|name       |   string  |   カットの名前    |
+
+
+#### JSON例
+```json
+
+```
+
+### :anchor: **カット更新**  
+
+
+#### URL例 (PUT)
+http://remaping.scivone-dev.com/api/v2/cuts/:cut_token.json
+
+
+#### payload項目
+| 名前 | データ種 | 必須 | 説明 |
+|:-:|:-:|:-:|:------------|
+|content       |   text  ||  カット内容（りまぴんフォーマット）     |
+
+#### 応答データ項目
+| 名前 | データ種 | 説明 |
+|:-:|:-:|:------------|
+|res       |   int  |   リクエストの結果     |
+|   cut    |   object  |   成功時のカットオブジェクト     |
+
+##### cut　オブジェクト
+| 名前 | データ種 | 説明 |
+|:-:|:-:|:------------|
+|token       |   string  |   カットの一意なID     |
+|name       |   string  |   カットの名前    |
+|description       |   string  |   カットの備考    |
+
+#### JSON例
+```json
+```
+
+
+### :anchor: **カット差分詳細**  
+
+保存された差分のコンテンツを表示します。
+
+#### URL例 (GET)
+http://remaping.scivone-dev.com/api/v2/cuts/:cut_token/:version_token.json
+
+
+#### 応答データ項目
+| 名前 | データ種 | 説明 |
+|:-:|:-:|:------------|
+|token       |   string  |   カットの一意なID     |
+|content       |   string  |   カットの名前    |
+|description       |   string  |   カットの備考    |
+
+#### JSON例
+```json
+
+```
+
+
+### :anchor: **カット差分巻き戻し**  
+
+直近の差分へ巻き戻します。巻き戻された最新の差分は失われます。
+
+#### URL例 (PUT)
+http://remaping.scivone-dev.com/api/v2/cuts/:cut_token/discard.json
+
+
+#### 応答データ項目
+| 名前 | データ種 | 説明 |
+|:-:|:-:|:------------|
+|res       |   int  |   リクエストの結果     |
+|   cut    |   object  |   成功時のカットオブジェクト     |
+
+##### cut　オブジェクト
+| 名前 | データ種 | 説明 |
+|:-:|:-:|:------------|
+|token       |   string  |   カットの一意なID     |
+|content       |   string  |   カットの名前    |
+|description       |   string  |   カットの備考    |
+
+#### JSON例
+```json
+
+```
+
+
+### :anchor: **カット申し送り**  
+
+
+#### URL例 (POST)
+http://remaping.scivone-dev.com/api/v2/cuts/send/:cut_token.json
+
+
+#### payload項目
+| 名前 | データ種 | 必須 | 説明 |
+|:-:|:-:|:-:|:------------|
+| next_owner_token       |   string  ||  次の担当者     |
+
+#### 応答データ項目
+| 名前 | データ種 | 説明 |
+|:-:|:-:|:------------|
+|res       |   int  |   リクエストの結果     |
+
+##### cut　オブジェクト
+| 名前 | データ種 | 説明 |
+|:-:|:-:|:------------|
+|token       |   string  |   カットの一意なID     |
+
+#### JSON例
+```json
+
+```

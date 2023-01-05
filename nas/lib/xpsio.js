@@ -750,27 +750,6 @@ XpsTrackCollection = function(parent,index,duration,scope){
 //        return [writeRange[0], this.getRange(writeRange), currentData, writeRange];
         
     };//put
-/**
- * XpsTrackCollection.getSpec()
- * 初期化指定用のスペックオブジェクトを戻す
- * オブジェクトは配列であり、メソッドは持たない
- * @returns {Array}
- *      [<Array:writeRange>, <String:currentDataStream>,<String:oldDataStream>]
-*/
-    this.getSpec = function(){
-        var result = [];
-        var currentOpt = null;
-        
-        this.forEach(function(elm){
-            if(elm.option == currentOpt){
-                result[result.length - 1][1] ++;
-            }else{
-                currentOpt = elm.option;
-                result.push([currentOpt,1]);
-            };
-        });
-        return result;
-    }
 }
 XpsTrackCollection.prototype = Array.prototype;
 
@@ -1768,28 +1747,26 @@ XpsTimelineSubSection.prototype.strtOffset = _getSectionStartOffset;
  * 配列長が1の場合は、特例でリプレースメントトラック数とする
  * ダイアログトラック数は、1以上とする1以下の値が与えられた際は1として初期化される。
  * 
- * 完全な指定を行う場合は、引数として専用の指定オブジェクトを渡す
- * 例:
- * {
- *     dialog     :1,
- *     still      :1,
- *     replacement:2,
- *     still      :1,
- *     replacement:2,
- *     camera     :1,
- *     replacement:2,
- *     effects    :1,
- *     stage      :2,
- *     sound      :2
- * }
+完全な指定を行う場合は、引数として専用の指定オブジェクトを渡す
+例:
+{
+    dialog:1,
+    still:1,
+    replacement:2,
+    still:1,
+    replacement:2,
+    camera:1,
+    replacement:2,
+    effects:1,
+    stage:2,
+    sound:2
+}
  *  各プロパティの出現順位置・回数は任意
  *  冒頭は基本的にdialigで1以上の値にすること。そうでない場合は{dialog:1}が補われる。
  *  末尾プロパティはcommentで値1とすること
  *  冒頭プロパティがdialogでない場合は、{dialog:1} が補われる
  *  末尾プロパティがcommentでない場合にはデフォルトの{comment:1}が補われる
  * 
- *  headMargin,tailMargin を実装
- *  sheetImage noteImage を実装
  */
 function Xps(Layers, Length, Framerate) {
     if (typeof Framerate == 'undefined'){
@@ -1884,13 +1861,9 @@ console.log(Layers);
 	CSInfoオブジェクトがコンテの内容を保持しているのでそこから作成
 	XPSの記録自体はオブジェクトプロパティとしての保持のみでOKか？
  */
-    this.trin       = [0, "trin"];
-    this.trout      = [0, "trout"];
-    this.headMargin = 0;//frames 内部的にはフレーム数で保持
-    this.tailMargin = 0;//frames
-
+    this.trin = [0, "trin"];
+    this.trout = [0, "trout"];
     this.framerate = nas.newFramerate(Framerate.toString());
-
     this.rate = this.framerate.toString(true); //互換維持のため残置順次削除
 
     var Now = new Date();
@@ -1899,48 +1872,18 @@ console.log(Layers);
     this.update_time = Now.toNASString();
     this.update_user = (xUI.currentUser)? xUI.currentUser:new nas.UserInfo(myName);
 
-//  this.memo = "";//メモはトラックコレクションのプロパティへ移行プロパティ名はXps.xpsTracks.noteText
-/* 2022 12拡張
-マスターデータとして画像を記録可能にする拡張に伴い Xpstデータに タイムシートの外見を記録するように変更
-プロパティ名称は Xps.sheetLooks
-これはタイムシートの外見を保持するプロパティとなる
-クラスを初期化の際は
- */
-    this.sheetLooks = {
-        
-    }
-/*
-* タイムシート画像コレクション配列
-* 画像数0で初期化
-*/
-    this.xpsImages = [];//new XpsImages();
-/**
-* タイムライントラックコレクション配列
-*/
+//  this.memo = "";
+    //メモはトラックコレクションのプロパティへ移行プロパティ名はXps.xpsTracks.noteText
+
+    /**
+     * タイムライントラックコレクション配列
+     */
+//    this.xpsTracks = this.newTracks(Layers, Length);
     this.xpsTracks = this.newTracks(trackSpec, Length);
 //if(dbg) console.log(this.xpsTracks);
     //コレクションの初期化で同時にシートメモが空文字列で初期化される
 }
-//==================== Object Xps//
-/**
- *  タイムシート画像クラス
- * タイムシート画像は、データ入力参照&&代用ドキュメント|ドキュメント注釈|手書き記述として機能する
- * データはドキュメントの本体の画像コレクションに格納
- * 1ページあたり1点の画像を、インデックス付きで保持することが可能
- * 比較参照のために画像の 解像度|サイズ ,表示オフセット,スケールなどの補助情報を保持する
- */
-function XpsImage(index){
-	this.index      = ""        ;//string
-	this.type       = "page"    ;//page|note|description
-	this.link       = "cell:0_0";//アタッチ座標 (座標タイプ):(値) cell|page|document|
-	this.url        = "./kt#Otameshi__s-c010.jpeg";//画像パス,URL
-	this.content    = "";//シリアライズされた内容データ(初期値はnull)
-	this.size       = "";
-	this.resolution = "96ppi";
-	this.offset     = {x:0 ,y:0};//UnitValue
-	this.scale      = {x:1 ,y:1};//UnitValue
-	
-}
+
 /**
  * 新規タイムライントレーラを作成
  * 固定のダイアログタイムライン及びフレームコメントタイムラインがある。
@@ -2082,8 +2025,7 @@ Xps.prototype.timeline = function (idx) {
 /**
  * 再初期化
  
- 現状旧オブジェクトの影響でレイヤ数(==トラック数-2)で初期化されるようになっている
- トラック数で初期化に変更する準備中
+ 現状旧オブジェクトの影響でレイヤ数(==トラック数-2)で初期化されるようになっているトラック数で初期化に変更する準備中
 
  * @param Tracks
  * @param Length
@@ -2132,10 +2074,9 @@ Xps.prototype.init = function (Tracks, Length, Framerate) {
     this.scene = myScene;
     this.cut = myCut;
 
-    this.trin  = [0, "trin"];
+    this.trin = [0, "trin"];
     this.trout = [0, "trout"];
-    this.headMargin = 0;
-    this.tailMargin = 0;
+
 //    this.framerate = nas.newFramerate(nas.FRATE.toString());//初期パラメータのチェックで更新済
     this.rate = this.framerate.name;
     var Now = new Date();
@@ -2147,7 +2088,7 @@ Xps.prototype.init = function (Tracks, Length, Framerate) {
 //    this.memo = "";
 
     /**
-     * タイムライントレーラー作成(トラックコレクション)
+     * タイムライントレーラー作成
      * @type {Array}
      */
 //    this.xpsTracks = this.newTracks(Tracks, Length);
@@ -2314,8 +2255,7 @@ Xps.prototype.syncIdentifier =function(myIdentifier,withoutTime){
         this.currentStatus = parseData.currentStatus;
     }
     if (! withoutTime){
-//        var newTime = nas.FCT2Frm(parseData.sci[0].time)+Math.ceil((this.trin[0]+this.trout[0])/2);
-        var newTime = nas.FCT2Frm(parseData.sci[0].time) + this.headMargin + this.tailMargin;
+        var newTime = nas.FCT2Frm(parseData.sci[0].time)+Math.ceil((this.trin[0]+this.trout[0])/2);
     }
 return parseData;
 }
@@ -2343,8 +2283,7 @@ Xps.prototype.getDuration =function () { return this.xpsTracks.duration; }
  * @returns {number}
  */
 Xps.prototype.time = function () {
-    return (this.duration() - this.headMargin - this.tailMargin);
-//        -(Math.ceil((this.trin[0] + this.trout[0]) / 2));
+    return (this.duration() - Math.ceil((this.trin[0] + this.trout[0]) / 2));
 };
 /**
  * フレーム数からTCを返す
@@ -2354,12 +2293,6 @@ Xps.prototype.time = function () {
 Xps.prototype.getTC = function (mtd) {
     return (nas) ? nas.Frm2FCT(mtd, 3, 0, this.framerate) : Math.floor(mtd / this.framerate) + "+" + mtd % this.framerate + ".";
 };
-/**
- *  トラックスペックを引数のタイプで返す
- */
-Xps.prototype.getSheetLooks = function (type) {
-    return (this.masterType == 'image')? xUI.xpsTrackSpec:Xps.getTrackSpec(this.xpsTracks) 
-}
 /**
  * @todo 仮メソッドアトでキチンとカケ
  * 編集関連メソッド
@@ -2698,14 +2631,18 @@ Xps.prototype.readIN = function (datastream) {
  * パーサにフラグを与えて、フレームレートが確定するまでフレーム計算を行わないように修正
  */
 Xps.prototype.parseXps = function (datastream) {
-// マルチステージ拡張を行うため以前のコードに存在したエラーハンドリングは全廃
-
+/**
+ *  マルチステージ拡張を行うため以前のコードに存在したエラーハンドリングは全廃
+ */
     if ((! datastream)||(!(datastream.match))) {
 //console.log('bad datestream:') ;console.log(datastream);
 //console.log(datastream instanceof String);
         return false;
-    };
-// ラインで分割して配列に取り込み
+    }
+    /**
+     * ラインで分割して配列に取り込み
+     * @type {Array}
+     */
     var SrcData = [];
     if (datastream.match(/\r/)) {
         datastream = datastream.replace(/\r\n?/g, ("\n"))
@@ -2731,7 +2668,7 @@ Xps.prototype.parseXps = function (datastream) {
     SrcData.frameCount = 0;//読み取りフレーム数
     SrcData.framerate = this.framerate ;//フレームレート（現ドキュメントの値）
     
-    /*
+    /**
      * 第一パス
      * データ冒頭の空白行を無視して、データ開始行を取得
      * 識別行の確認
@@ -2800,8 +2737,6 @@ Xps.prototype.parseXps = function (datastream) {
         "TIME",
         "TRIN",
         "TROUT",
-        "HEAD_MARGIN",
-        "TAIL_MARGIN",
         "FRAME_RATE",
         "CREATE_USER",
         "UPDATE_USER",
@@ -2831,8 +2766,6 @@ Xps.prototype.parseXps = function (datastream) {
         "time",
         "trin",
         "trout",
-        "headMargin",
-        "tailMargin",
         "framerate",
         "create_user",
         "update_user",
@@ -2863,8 +2796,6 @@ Xps.prototype.parseXps = function (datastream) {
 //		SrcData.time="6+0";
     SrcData.trin = [0, "trin"];
     SrcData.trout = [0, "trout"];
-    SrcData.headMargin = 0;
-    SrcData.tailMargin = 0;
 
     for (line = SrcData.startLine; line < SrcData.length; line++) {
         /**
@@ -2906,14 +2837,15 @@ Xps.prototype.parseXps = function (datastream) {
              */
             switch (nAme) {
                 case    "FRAME_RATE":
-                    //フレームレートは第一パスで取得済
+                    //フレームレートは第一パスで取得
                 break;
                 case    "TRIN":
                 case    "TROUT":
-/*
- * トランシットイン
- * トランシットアウト
- */
+                /**
+                 * トランシットイン
+                 * トランシットアウト
+                 * @type {*}
+                 */
                     var tm = nas.FCT2Frm(vAlue.split(",")[0],SrcData.framerate.rate);
                     if (isNaN(tm)) {
                         tm = 0
@@ -2923,16 +2855,6 @@ Xps.prototype.parseXps = function (datastream) {
                         nm = props[nAme]
                     }
                     SrcData[props[nAme]] = [tm, nm];
-                    break;
-                case    "HEAD_MARGIN":
-                case    "TAIL_MARGIN":
-/*
- * ヘッドマージン
- * テールマージン
- */
-                    var frm = nas.FCT2Frm(vAlue,SrcData.framerate.rate);
-                    if (isNaN(tm)) frm = 0;
-                    SrcData[props[nAme]] = frm;
                     break;
                 case    "TIME":
                     /**
@@ -3202,18 +3124,18 @@ Xps.prototype.parseXps = function (datastream) {
         if (!this.update_time) this.update_time = '';
         if (!this.update_user) this.update_user = '';
 //FRAME_RATE=24//
-/**
- * フレームレート読み取れてなければ、現在の値で初期化(組み込み注意)
- */
+        /**
+         * フレームレート読み取れてなければ、現在の値で初期化(組み込み注意)
+         */
         if (!this.framerate) {
             this.framerate = nas.FRATE;
         } else {
             nas.FRATE = this.framerate;
         }
-/*
- * トランジションを展開
- * TRIN=(時間文字列),(トランシット種別)
- */
+        /**
+         * トランシット展開しておく
+         * TRIN=(時間文字列),(トランシット種別)
+         */
         if (!this.trin) {
             this.trin = [0, "trin"]
         } else {
@@ -3224,9 +3146,9 @@ Xps.prototype.parseXps = function (datastream) {
             name = (this.trin[1]) ? this.trin[1] : "trin";
             this.trin = [time, name];
         }
-/*
- * TROUT=(時間文字列),(トランシット種別)
- */
+        /**
+         * TROUT=(時間文字列),(トランシット種別)
+         */
         if (!this.trout) {
             this.trout = [0, "trout"];
         } else {
@@ -3237,26 +3159,26 @@ Xps.prototype.parseXps = function (datastream) {
             name = (this.trout[1]) ? this.trout[1] : "trout";
             this.trout = [time, name];
         }
-/*
- *  トランジット時間と前後マージンを比較してマージンを確定
- */
-        if(this.headMargin < this.trin[0])  this.headMargin = this.trin[0];
-        if(this.tailMargin < this.trout[0]) this.tailMargin = this.trout[0];
-/*
- * 記述上のTIME情報を一応取り込む
- * 実際のデータの継続時間とこの情報の「長いほう」を採る
- * TIME=(時間文字列)
- *            this.time=nas.FCT2Frm(this.time);
- *            if(isNaN(this.time)){this.time=0*} 
- * 作品データ
- * 情報が無い場合は、空白で初期化。マップをみるようになったら。
- * マップの情報を参照
- * 最終作業情報(クッキー)を参照
- * ユーザ設定によるデフォルトを参照 などから選択
- */
-// TITLE=(未設定とかのほうが良いかも)
+        /**
+         * TIMEも一応取り込んでおく。
+         * 実際のデータの継続時間とこの情報の「長いほう」を採る
+         * TIME=(時間文字列)
+         *            this.time=nas.FCT2Frm(this.time);
+         *            if(isNaN(this.time)){this.time=0*} 
+         * 作品データ
+         * 情報が無い場合は、空白で初期化。マップをみるようになったら。
+         * マップの情報を参照
+         * 最終作業情報(クッキー)を参照
+         * ユーザ設定によるデフォルトを参照 などから選択
+         */
+
+        /**
+         * TITLE=(未設定とかのほうが良いかも)
+         */
         if (!this.title) this.title = '';
-// SUB_TITLE=(未設定とかのほうが良いかも)
+        /**
+         * SUB_TITLE=(未設定とかのほうが良いかも)
+         */
         if (!this.subtitle) this.subtitle = '';
         /**
          * OPUS=()

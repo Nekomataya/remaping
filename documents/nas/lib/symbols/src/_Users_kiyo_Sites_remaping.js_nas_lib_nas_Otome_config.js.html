@@ -1,0 +1,364 @@
+<html><head><meta http-equiv="content-type" content="text/html; charset=utf-8"> <style>
+	.KEYW {color: #933;}
+	.COMM {color: #bbb; font-style: italic;}
+	.NUMB {color: #393;}
+	.STRN {color: #393;}
+	.REGX {color: #339;}
+	.line {border-right: 1px dotted #666; color: #666; font-style: normal;}
+	</style></head><body><pre><span class='line'>  1</span> <span class="TOKN">﻿</span><span class="COMM">/**
+<span class='line'>  2</span>  * @file nas_Otome_config.js
+<span class='line'>  3</span>  * @overview オートビルド機能のためにＸＰＳ関連の初期化を行なう
+<span class='line'>  4</span>  *
+<span class='line'>  5</span>  * この設定ファイルは実行コードの一部です。
+<span class='line'>  6</span>  * 編集時は十分にご注意ください
+<span class='line'>  7</span>  * 2009.10.24
+<span class='line'>  8</span>  * @author Nekomataya/kiyo
+<span class='line'>  9</span>  */</span><span class="WHIT">
+<span class='line'> 10</span> 
+<span class='line'> 11</span> 
+<span class='line'> 12</span> </span><span class="COMM">/**
+<span class='line'> 13</span>  * デフォルトのXPSオブジェクト作成
+<span class='line'> 14</span>  * @type {number}
+<span class='line'> 15</span>  */</span><span class="WHIT">
+<span class='line'> 16</span> </span><span class="KEYW">var</span><span class="WHIT"> </span><span class="NAME">myLayers</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NUMB">4</span><span class="PUNC">;</span><span class="COMM">//４レイヤ</span><span class="WHIT">
+<span class='line'> 17</span> </span><span class="KEYW">var</span><span class="WHIT"> </span><span class="NAME">myLength</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">Math.ceil</span><span class="PUNC">(</span><span class="NAME">nas.FRATE</span><span class="WHIT"> </span><span class="PUNC">*</span><span class="WHIT"> </span><span class="NUMB">3</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="COMM">//3秒</span><span class="WHIT">
+<span class='line'> 18</span> </span><span class="NAME">XPS</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="KEYW">new</span><span class="WHIT"> </span><span class="NAME">Xps</span><span class="PUNC">(</span><span class="NAME">myLayers</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">myLength</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 19</span> 
+<span class='line'> 20</span> </span><span class="COMM">/**
+<span class='line'> 21</span>  * @desc オートビルダ用振り分けシステム変数
+<span class='line'> 22</span>  *
+<span class='line'> 23</span>  * プロジェクト内のファイルフッテ‐ジを検索して条件にマッチしたフッテージをフォルダに分類する
+<span class='line'> 24</span>  *
+<span class='line'> 25</span>  * システム変数nas.ftgFoldersはアイテム振り分け用の変数です
+<span class='line'> 26</span>  * リストにあるフォルダ名のフォルダにあるフッテージは自動で振り分けが行なわれます。
+<span class='line'> 27</span>  * ユーザごとにこの変数を追加変更することでサイトごとのチューニングが可能
+<span class='line'> 28</span>  *
+<span class='line'> 29</span>  * フッテージアイテムフォルダの名称
+<span class='line'> 30</span>  * システム予約名である
+<span class='line'> 31</span>  * 重複時は先にマッチしたフォルダが処理対象
+<span class='line'> 32</span>  * ユーザ変更は可能　ただし各フォルダ名のリストにある先頭の名前がプロジェクト内でのフォルダ名になるので注意
+<span class='line'> 33</span>  *    ftgBase    [footages]     フッテージ分類フォルダを格納するフォルダ名。ファイルシステムにこの名前のフォルダがある必要はない。
+<span class='line'> 34</span>  *    bg        |- _bg    背景フォルダ "_bg/(BGフォルダ)" 配下にあれば自動登録
+<span class='line'> 35</span>  *    etc        |- _etc    各種素材フォルダ。タイムシートはこのフォルダに
+<span class='line'> 36</span>  *    frame        |- _frame    フレーム設定フォルダ
+<span class='line'> 37</span>  *    lo        |- _lo    レイアウト格納フォルダ　"_lo/(レイアウトフォルダ)"配下にあれば自動登録
+<span class='line'> 38</span>  *    paint        |- _paint    セル格納フォルダ　"_paint/(セルフォルダ)"配下にあれば自動登録
+<span class='line'> 39</span>  *    sound        |- _sound    (予約)
+<span class='line'> 40</span>  *    system        |- _system    (予約)
+<span class='line'> 41</span>  *    rough        |- _rough    (予約)ラフ原用
+<span class='line'> 42</span>  *    key            |- _key　    (予約)原画用
+<span class='line'> 43</span>  *    draw        |- _drawing    (予約)動画用
+<span class='line'> 44</span>  *
+<span class='line'> 45</span>  * @type {{ftgBase: string[], bg: string[], etc: string[], frame: string[], lo: string[], paint: string[], sound: string[], rough: string[], key: string[], drawing: string[], unknown: string[]}}
+<span class='line'> 46</span>  */</span><span class="WHIT">
+<span class='line'> 47</span> </span><span class="NAME">nas.ftgFolders</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'> 48</span> </span><span class="WHIT">    </span><span class="STRN">"ftgBase"</span><span class="PUNC">:</span><span class="WHIT"> </span><span class="PUNC">[</span><span class="STRN">"[footages]"</span><span class="PUNC">]</span><span class="WHIT">
+<span class='line'> 49</span> </span><span class="WHIT">    </span><span class="PUNC">,</span><span class="WHIT"> </span><span class="STRN">"bg"</span><span class="PUNC">:</span><span class="WHIT"> </span><span class="PUNC">[</span><span class="STRN">"_bg"</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="STRN">"_背景"</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="STRN">"BG"</span><span class="PUNC">]</span><span class="WHIT">
+<span class='line'> 50</span> </span><span class="WHIT">    </span><span class="PUNC">,</span><span class="WHIT"> </span><span class="STRN">"etc"</span><span class="PUNC">:</span><span class="WHIT"> </span><span class="PUNC">[</span><span class="STRN">"_etc"</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="STRN">"_timesheet"</span><span class="PUNC">]</span><span class="WHIT">
+<span class='line'> 51</span> </span><span class="WHIT">    </span><span class="PUNC">,</span><span class="WHIT"> </span><span class="STRN">"frame"</span><span class="PUNC">:</span><span class="WHIT"> </span><span class="PUNC">[</span><span class="STRN">"_frame"</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="STRN">"_フレーム"</span><span class="PUNC">]</span><span class="WHIT">
+<span class='line'> 52</span> </span><span class="WHIT">    </span><span class="PUNC">,</span><span class="WHIT"> </span><span class="STRN">"lo"</span><span class="PUNC">:</span><span class="WHIT"> </span><span class="PUNC">[</span><span class="STRN">"_lo"</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="STRN">"_レイアウト"</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="STRN">"Layout"</span><span class="PUNC">]</span><span class="WHIT">
+<span class='line'> 53</span> </span><span class="WHIT">    </span><span class="PUNC">,</span><span class="WHIT"> </span><span class="STRN">"paint"</span><span class="PUNC">:</span><span class="WHIT"> </span><span class="PUNC">[</span><span class="STRN">"_paint"</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="STRN">"_セル"</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="STRN">"CELL"</span><span class="PUNC">]</span><span class="WHIT">
+<span class='line'> 54</span> </span><span class="WHIT">    </span><span class="PUNC">,</span><span class="WHIT"> </span><span class="STRN">"sound"</span><span class="PUNC">:</span><span class="WHIT"> </span><span class="PUNC">[</span><span class="STRN">"_sound"</span><span class="PUNC">]</span><span class="WHIT">
+<span class='line'> 55</span> </span><span class="WHIT">    </span><span class="PUNC">,</span><span class="WHIT"> </span><span class="STRN">"rough"</span><span class="PUNC">:</span><span class="WHIT"> </span><span class="PUNC">[</span><span class="STRN">"_rough"</span><span class="PUNC">]</span><span class="WHIT">
+<span class='line'> 56</span> </span><span class="WHIT">    </span><span class="PUNC">,</span><span class="WHIT"> </span><span class="STRN">"key"</span><span class="PUNC">:</span><span class="WHIT"> </span><span class="PUNC">[</span><span class="STRN">"_key"</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="STRN">"Key\ Animation"</span><span class="PUNC">]</span><span class="WHIT">
+<span class='line'> 57</span> </span><span class="WHIT">    </span><span class="PUNC">,</span><span class="WHIT"> </span><span class="STRN">"drawing"</span><span class="PUNC">:</span><span class="WHIT"> </span><span class="PUNC">[</span><span class="STRN">"_drawing"</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="STRN">"_draw"</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="STRN">"Inbetween"</span><span class="PUNC">]</span><span class="WHIT">
+<span class='line'> 58</span> </span><span class="WHIT">    </span><span class="PUNC">,</span><span class="WHIT"> </span><span class="STRN">"unknown"</span><span class="PUNC">:</span><span class="WHIT"> </span><span class="PUNC">[</span><span class="STRN">"_other"</span><span class="PUNC">]</span><span class="WHIT">
+<span class='line'> 59</span> </span><span class="PUNC">}</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 60</span> 
+<span class='line'> 61</span> </span><span class="COMM">/**
+<span class='line'> 62</span>  * @desc ftgFolderを初期化する
+<span class='line'> 63</span>  * 順次以前のコードを修正すること
+<span class='line'> 64</span>  */</span><span class="WHIT">
+<span class='line'> 65</span> </span><span class="NAME">nas.ftgFolders.init</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="KEYW">function</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'> 66</span> </span><span class="WHIT">    </span><span class="NAME">this.length</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="PUNC">-</span><span class="NUMB">1</span><span class="PUNC">;</span><span class="COMM">//ftgBaseを除外するために-1から開始</span><span class="WHIT">
+<span class='line'> 67</span> </span><span class="WHIT">    </span><span class="NAME">this.cpRx</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="PUNC">[</span><span class="PUNC">]</span><span class="PUNC">;</span><span class="COMM">//比較配列を作る</span><span class="WHIT">
+<span class='line'> 68</span> </span><span class="WHIT">    </span><span class="NAME">this.names</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="PUNC">[</span><span class="PUNC">]</span><span class="PUNC">;</span><span class="COMM">//比較現状のフォルダ名配列</span><span class="WHIT">
+<span class='line'> 69</span> </span><span class="WHIT">    </span><span class="KEYW">for</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="KEYW">var</span><span class="WHIT"> </span><span class="NAME">prp</span><span class="WHIT"> </span><span class="KEYW">in</span><span class="WHIT"> </span><span class="KEYW">this</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'> 70</span> </span><span class="WHIT">        </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="PUNC">!</span><span class="PUNC">(</span><span class="WHIT"> </span><span class="NAME">prp.match</span><span class="PUNC">(</span><span class="REGX">/(init|length|cpRx|names)/</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">)</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'> 71</span> </span><span class="WHIT">            </span><span class="COMM">//各プロパティの正規表現を先に組んでおく</span><span class="WHIT">
+<span class='line'> 72</span> </span><span class="WHIT">            </span><span class="KEYW">var</span><span class="WHIT"> </span><span class="NAME">myRegStr</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="KEYW">this</span><span class="PUNC">[</span><span class="NAME">prp</span><span class="PUNC">]</span><span class="PUNC">.</span><span class="NAME">join</span><span class="PUNC">(</span><span class="STRN">"|"</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 73</span> </span><span class="WHIT">            </span><span class="NAME">this.cpRx.push</span><span class="PUNC">(</span><span class="KEYW">new</span><span class="WHIT"> </span><span class="NAME">RegExp</span><span class="PUNC">(</span><span class="STRN">"\("</span><span class="WHIT"> </span><span class="PUNC">+</span><span class="WHIT"> </span><span class="NAME">myRegStr</span><span class="WHIT"> </span><span class="PUNC">+</span><span class="WHIT"> </span><span class="STRN">"\)"</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="STRN">"i"</span><span class="PUNC">)</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="COMM">//正規表現を要素にする</span><span class="WHIT">
+<span class='line'> 74</span> </span><span class="WHIT">            </span><span class="NAME">this.names.push</span><span class="PUNC">(</span><span class="KEYW">this</span><span class="PUNC">[</span><span class="NAME">prp</span><span class="PUNC">]</span><span class="PUNC">[</span><span class="NUMB">0</span><span class="PUNC">]</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="COMM">//アイテム名をリストしておく</span><span class="WHIT">
+<span class='line'> 75</span> </span><span class="WHIT">            </span><span class="NAME">this.length</span><span class="PUNC">++</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 76</span> </span><span class="WHIT">        </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'> 77</span> </span><span class="WHIT">    </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'> 78</span> </span><span class="PUNC">}</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 79</span> 
+<span class='line'> 80</span> </span><span class="NAME">nas.ftgFolders.init</span><span class="PUNC">(</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 81</span> 
+<span class='line'> 82</span> </span><span class="COMM">/**
+<span class='line'> 83</span>  * タイムシート保持用コンポの識別名称
+<span class='line'> 84</span>  * @type {string}
+<span class='line'> 85</span>  */</span><span class="WHIT">
+<span class='line'> 86</span> </span><span class="NAME">nas.sheetBinder</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="STRN">"[timeSheetBinder]"</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 87</span> </span><span class="COMM">/**
+<span class='line'> 88</span>  * アイテム識別用マーカー
+<span class='line'> 89</span>  * @type {{stage: string[], clipWindow: string[], outputMedia: string[]}}
+<span class='line'> 90</span>  */</span><span class="WHIT">
+<span class='line'> 91</span> </span><span class="NAME">nas.itmFootStamps</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'> 92</span> </span><span class="WHIT">    </span><span class="STRN">"stage"</span><span class="PUNC">:</span><span class="WHIT"> </span><span class="PUNC">[</span><span class="STRN">"(stg)"</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="STRN">"//nas-mkStage;"</span><span class="PUNC">]</span><span class="WHIT">
+<span class='line'> 93</span> </span><span class="WHIT">    </span><span class="PUNC">,</span><span class="WHIT"> </span><span class="STRN">"clipWindow"</span><span class="PUNC">:</span><span class="WHIT"> </span><span class="PUNC">[</span><span class="STRN">"(clp)"</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="STRN">"##nas-mkClipWndow"</span><span class="PUNC">]</span><span class="WHIT">
+<span class='line'> 94</span> </span><span class="WHIT">    </span><span class="PUNC">,</span><span class="WHIT"> </span><span class="STRN">"outputMedia"</span><span class="PUNC">:</span><span class="WHIT"> </span><span class="PUNC">[</span><span class="STRN">"(opm)"</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="STRN">"##nas-mkOutputMedia"</span><span class="PUNC">]</span><span class="WHIT">
+<span class='line'> 95</span> </span><span class="PUNC">}</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 96</span> 
+<span class='line'> 97</span> 
+<span class='line'> 98</span> </span><span class="COMM">/**
+<span class='line'> 99</span>  * @desc ユーザ変更時は上のテーブルに値を加えてください
+<span class='line'>100</span>  *
+<span class='line'>101</span>  * プロパティ名はそれぞれの素材を分類するこのライブラリ上の識別名です。
+<span class='line'>102</span>  * ｆｔｇFolder    プロジェクト内でフッテージを格納するフォルダアイテム名称（変更非推奨）最後に設定したデータのみ有効
+<span class='line'>103</span>  * 上記以外はそれぞれの素材を格納するファイルシステム上の識別用フォルダ名　ソースファイルの上位フォルダの名前がこの設定と一致していた場合
+<span class='line'>104</span>  * それぞれの素材種別として認識する
+<span class='line'>105</span>  * ｂｇ=背景
+<span class='line'>106</span>  * etc=タイムシート等の画像外リソース
+<span class='line'>107</span>  * frame=撮影指定フレーム
+<span class='line'>108</span>  * lo=レイアウト
+<span class='line'>109</span>  * paint=彩色済みセル（通常フッテージ）
+<span class='line'>110</span>  * sound=音響ファイル（または字幕ファイル？）
+<span class='line'>111</span>  * rough=ラフ原画等モーションスケッチ
+<span class='line'>112</span>  * key=原画
+<span class='line'>113</span>  * drawing=動画
+<span class='line'>114</span>  * フォルダによる分類に失敗したフッテージは彩色済みセルとして扱います
+<span class='line'>115</span>  * プロジェクト内部では配列のもっとも左の名称でフッテージ格納用フォルダアイテムが作成されます。
+<span class='line'>116</span>  */</span><span class="WHIT">
+<span class='line'>117</span> 
+<span class='line'>118</span> </span><span class="COMM">/**
+<span class='line'>119</span>  * @desc MAPフォルダアイテムの名称
+<span class='line'>120</span>  * システム予約名である
+<span class='line'>121</span>  * プロジェクト内に同名のフォルダか複数ある時は先にマッチしたフォルダが処理対象
+<span class='line'>122</span>  * ユーザ変更は（設定は可能ですが）非推奨
+<span class='line'>123</span>  *        [MAP]
+<span class='line'>124</span>  *            |- [CAMERAWORK]    カメラワークフォルダ（将来の拡張用）
+<span class='line'>125</span>  *            |- [CELL]    セルグループフォルダ
+<span class='line'>126</span>  *            |- [EFFECT]    撮影効果フォルダ（将来の拡張用）
+<span class='line'>127</span>  *            |- [SOUND]    サウンドフォルダ（将来の拡張用）
+<span class='line'>128</span>  *            |- [SYSTEM]    タイムシート（将来の拡張用）
+<span class='line'>129</span>  *
+<span class='line'>130</span>  * @desc システムフォルダデータベース
+<span class='line'>131</span>  * @type {{mapBase: string, cameraWork: string, cell: string, effect: string, sound: string, system: string}}
+<span class='line'>132</span>  */</span><span class="WHIT">
+<span class='line'>133</span> </span><span class="NAME">nas.mapFolders</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>134</span> </span><span class="WHIT">    </span><span class="STRN">"mapBase"</span><span class="PUNC">:</span><span class="WHIT"> </span><span class="STRN">"[MAP]"</span><span class="WHIT">
+<span class='line'>135</span> </span><span class="WHIT">    </span><span class="PUNC">,</span><span class="WHIT"> </span><span class="STRN">"cameraWork"</span><span class="PUNC">:</span><span class="WHIT"> </span><span class="STRN">"[CAMERAWORK]"</span><span class="WHIT">
+<span class='line'>136</span> </span><span class="WHIT">    </span><span class="PUNC">,</span><span class="WHIT"> </span><span class="STRN">"cell"</span><span class="PUNC">:</span><span class="WHIT"> </span><span class="STRN">"[CELL]"</span><span class="WHIT">
+<span class='line'>137</span> </span><span class="WHIT">    </span><span class="PUNC">,</span><span class="WHIT"> </span><span class="STRN">"effect"</span><span class="PUNC">:</span><span class="WHIT"> </span><span class="STRN">"[EFFECT]"</span><span class="WHIT">
+<span class='line'>138</span> </span><span class="WHIT">    </span><span class="PUNC">,</span><span class="WHIT"> </span><span class="STRN">"sound"</span><span class="PUNC">:</span><span class="WHIT"> </span><span class="STRN">"[SOUND]"</span><span class="WHIT">
+<span class='line'>139</span> </span><span class="WHIT">    </span><span class="PUNC">,</span><span class="WHIT"> </span><span class="STRN">"system"</span><span class="PUNC">:</span><span class="WHIT"> </span><span class="STRN">"[SYSTEM]"</span><span class="WHIT">
+<span class='line'>140</span> </span><span class="PUNC">}</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>141</span> 
+<span class='line'>142</span> </span><span class="COMM">/**
+<span class='line'>143</span>  * @desc データマッピングを抽象化してnasシステムと整合化するために
+<span class='line'>144</span>  * プリコンポを作成してMapデータを実装するための格納用フォルダ名です。
+<span class='line'>145</span>  * 可能な限り変更は避けてください。
+<span class='line'>146</span>  */</span><span class="WHIT">
+<span class='line'>147</span> 
+<span class='line'>148</span> </span><span class="COMM">/**
+<span class='line'>149</span>  * インポートフィルタ
+<span class='line'>150</span>  * @type {RegExp}
+<span class='line'>151</span>  */</span><span class="WHIT">
+<span class='line'>152</span> </span><span class="NAME">nas.importFilter</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="KEYW">new</span><span class="WHIT"> </span><span class="NAME">RegExp</span><span class="PUNC">(</span><span class="STRN">".*\.(mov|mpg|avi|tiff?|tga|psd|png|jpe?g|gif|sgi|eps)$"</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="STRN">"i"</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>153</span> </span><span class="COMM">/**
+<span class='line'>154</span>  * タイムシート判別フィルタ
+<span class='line'>155</span>  * @type {RegExp}
+<span class='line'>156</span>  */</span><span class="WHIT">
+<span class='line'>157</span> </span><span class="NAME">nas.xpSheetRegex</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="KEYW">new</span><span class="WHIT"> </span><span class="NAME">RegExp</span><span class="PUNC">(</span><span class="STRN">".*\.(xps|ard|tsh|sts)$"</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="STRN">"i"</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>158</span> </span><span class="COMM">/**
+<span class='line'>159</span>  * セルシーケンス判定(レイヤソース名に対して適用。
+<span class='line'>160</span>  * $1 がセルラベルになる)これはレイヤ名に対するフィルタ(またはシーケンス名)
+<span class='line'>161</span>  * @type {RegExp}
+<span class='line'>162</span>  */</span><span class="WHIT">
+<span class='line'>163</span> </span><span class="NAME">nas.cellRegex</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="KEYW">new</span><span class="WHIT"> </span><span class="NAME">RegExp</span><span class="PUNC">(</span><span class="STRN">"[\-_\/\s0-9]?([^\-_\/\s\[]*)[\-_\/]?\[[0-9]+\-[0-9]+\]\.(tga|tiff?|png|gif|jpe?g|eps|sgi|bmp)$"</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="STRN">"i"</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>164</span> </span><span class="COMM">/**
+<span class='line'>165</span>  * 背景・下絵判定
+<span class='line'>166</span>  * @type {RegExp}
+<span class='line'>167</span>  */</span><span class="WHIT">
+<span class='line'>168</span> </span><span class="NAME">nas.bgRegex</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="KEYW">new</span><span class="WHIT"> </span><span class="NAME">RegExp</span><span class="PUNC">(</span><span class="STRN">"(bg|back|背景?|下絵?)"</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="STRN">"i"</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>169</span> </span><span class="COMM">/**
+<span class='line'>170</span>  * レイアウト、参照画
+<span class='line'>171</span>  * @type {RegExp}
+<span class='line'>172</span>  */</span><span class="WHIT">
+<span class='line'>173</span> </span><span class="NAME">nas.mgRegex</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="KEYW">new</span><span class="WHIT"> </span><span class="NAME">RegExp</span><span class="PUNC">(</span><span class="STRN">"book|fg|mid|mg|fore|fg|[前中]景?|[中上]絵"</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="STRN">"i"</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>174</span> </span><span class="NAME">nas.loRegex</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="KEYW">new</span><span class="WHIT"> </span><span class="NAME">RegExp</span><span class="PUNC">(</span><span class="STRN">"lo|cf|z\.[io]|t\.?[ub]|sl(ide)?|cam(era)?|fr(ame)?|pan|mill?|(キャ|カ)メラ|フレーム|引き|ヒキ|スライド|組|クミ|くみ"</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="STRN">"i"</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>175</span> 
+<span class='line'>176</span> </span><span class="COMM">/**
+<span class='line'>177</span>  * @desc 作画フレームDB
+<span class='line'>178</span>  */</span><span class="WHIT">
+<span class='line'>179</span> 
+<span class='line'>180</span> </span><span class="COMM">/**
+<span class='line'>181</span>  * PegBarDB(ダミー)
+<span class='line'>182</span>  * "識別名",[[配置座標],テンプレート画像パス,ポイント数,]
+<span class='line'>183</span>  * 作画用紙DB
+<span class='line'>184</span>  */</span><span class="WHIT">
+<span class='line'>185</span> 
+<span class='line'>186</span> </span><span class="NAME">nas.paperSizes</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="KEYW">new</span><span class="WHIT"> </span><span class="NAME">nTable</span><span class="PUNC">(</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>187</span> </span><span class="NAME">nas.paperSizes.onChange</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="KEYW">function</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>188</span> </span><span class="PUNC">}</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>189</span> 
+<span class='line'>190</span> 
+<span class='line'>191</span> </span><span class="NAME">nas.paperSizes.push</span><span class="PUNC">(</span><span class="STRN">"A4横(297x210)"</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="PUNC">[</span><span class="NUMB">297</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NUMB">210</span><span class="PUNC">]</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>192</span> </span><span class="NAME">nas.paperSizes.push</span><span class="PUNC">(</span><span class="STRN">"A3横(420x297)"</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="PUNC">[</span><span class="NUMB">420</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NUMB">297</span><span class="PUNC">]</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>193</span> </span><span class="NAME">nas.paperSizes.push</span><span class="PUNC">(</span><span class="STRN">"A3縦(297x420)"</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="PUNC">[</span><span class="NUMB">297</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NUMB">420</span><span class="PUNC">]</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>194</span> </span><span class="NAME">nas.paperSizes.push</span><span class="PUNC">(</span><span class="STRN">"B4横(353x250)"</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="PUNC">[</span><span class="NUMB">353</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NUMB">250</span><span class="PUNC">]</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>195</span> </span><span class="NAME">nas.paperSizes.push</span><span class="PUNC">(</span><span class="STRN">"B3横(500x353)"</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="PUNC">[</span><span class="NUMB">500</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NUMB">353</span><span class="PUNC">]</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>196</span> </span><span class="NAME">nas.paperSizes.push</span><span class="PUNC">(</span><span class="STRN">"OLD-STD(268x244)"</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="PUNC">[</span><span class="NUMB">268</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NUMB">244</span><span class="PUNC">]</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>197</span> </span><span class="NAME">nas.paperSizes.push</span><span class="PUNC">(</span><span class="STRN">"OLD-横x2(536x244)"</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="PUNC">[</span><span class="NUMB">536</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NUMB">244</span><span class="PUNC">]</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>198</span> </span><span class="NAME">nas.paperSizes.push</span><span class="PUNC">(</span><span class="STRN">"OLD-縦x2(268x488)"</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="PUNC">[</span><span class="NUMB">268</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NUMB">488</span><span class="PUNC">]</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>199</span> 
+<span class='line'>200</span> </span><span class="COMM">/**
+<span class='line'>201</span>  * @desc 作画用レジスターマークDB
+<span class='line'>202</span>  * 実際の描画はテンプレート画像を配置して行うので、対照に注意　テンプレート画像の配置は現在システム固定で lib/resource/Pegs/
+<span class='line'>203</span>  * 各レジスタの原点は画像中央なのでテンプレート画像を作成する場合はその点に注意
+<span class='line'>204</span>  */</span><span class="WHIT">
+<span class='line'>205</span> </span><span class="NAME">nas.registerMarks</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="KEYW">new</span><span class="WHIT"> </span><span class="NAME">nTable</span><span class="PUNC">(</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>206</span> </span><span class="NAME">nas.registerMarks.onChange</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="KEYW">function</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>207</span> </span><span class="PUNC">}</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>208</span> 
+<span class='line'>209</span> </span><span class="NAME">nas.registerMarks.push</span><span class="PUNC">(</span><span class="STRN">"3穴トンボ"</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="PUNC">[</span><span class="STRN">"peg3p1.eps"</span><span class="PUNC">]</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="COMM">//0</span><span class="WHIT">
+<span class='line'>210</span> </span><span class="NAME">nas.registerMarks.push</span><span class="PUNC">(</span><span class="STRN">"3穴白抜き"</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="PUNC">[</span><span class="STRN">"peg3p2.eps"</span><span class="PUNC">]</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="COMM">//1</span><span class="WHIT">
+<span class='line'>211</span> </span><span class="NAME">nas.registerMarks.push</span><span class="PUNC">(</span><span class="STRN">"3穴ベタ"</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="PUNC">[</span><span class="STRN">"peg3p3.eps"</span><span class="PUNC">]</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="COMM">//2</span><span class="WHIT">
+<span class='line'>212</span> </span><span class="NAME">nas.registerMarks.push</span><span class="PUNC">(</span><span class="STRN">"2穴トンボ"</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="PUNC">[</span><span class="STRN">"peg2p1.eps"</span><span class="PUNC">]</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="COMM">//3</span><span class="WHIT">
+<span class='line'>213</span> </span><span class="NAME">nas.registerMarks.push</span><span class="PUNC">(</span><span class="STRN">"2穴白抜き"</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="PUNC">[</span><span class="STRN">"peg2p2.eps"</span><span class="PUNC">]</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="COMM">//4</span><span class="WHIT">
+<span class='line'>214</span> </span><span class="NAME">nas.registerMarks.push</span><span class="PUNC">(</span><span class="STRN">"2穴ベタ"</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="PUNC">[</span><span class="STRN">"peg2p3.eps"</span><span class="PUNC">]</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="COMM">//5</span><span class="WHIT">
+<span class='line'>215</span> 
+<span class='line'>216</span> 
+<span class='line'>217</span> </span><span class="COMM">/**
+<span class='line'>218</span>  * @desc 入力メディアDBの本質は作画情報
+<span class='line'>219</span>  *
+<span class='line'>220</span>  * 作画(ソース)データの標準フレーム
+<span class='line'>221</span>  * "識別名",[横幅(mm),フレーム縦横比(文字列),基準解像度(dpi),フレームレート]
+<span class='line'>222</span>  * 何センチのフレームに対してどのくらいの解像度で処理を行なうかが情報のポイント
+<span class='line'>223</span>  * ピクセルアスペクトは入力ファイルごとにことなる可能性があるのでDB上では標準値を1と置き、
+<span class='line'>224</span>  * フッテージに記録のない場合のみ仮の値として使用する
+<span class='line'>225</span>  */</span><span class="WHIT">
+<span class='line'>226</span> 
+<span class='line'>227</span> </span><span class="NAME">nas.inputMedias</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="KEYW">new</span><span class="WHIT"> </span><span class="NAME">nTable</span><span class="PUNC">(</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>228</span> </span><span class="NAME">nas.inputMedias.onChange</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="KEYW">function</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>229</span> </span><span class="WHIT">    </span><span class="COMM">/**
+<span class='line'>230</span>      * メディアがセレクトされたらシステムの解像度とフレームレートを変更する
+<span class='line'>231</span>      */</span><span class="WHIT">
+<span class='line'>232</span> </span><span class="WHIT">    </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">nas.LENGTH</span><span class="WHIT"> </span><span class="PUNC">!=</span><span class="WHIT"> </span><span class="NAME">this.selectedRecord</span><span class="PUNC">[</span><span class="NUMB">1</span><span class="PUNC">]</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>233</span> </span><span class="WHIT">        </span><span class="NAME">nas.LENGTH</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">this.selectedRecord</span><span class="PUNC">[</span><span class="NUMB">1</span><span class="PUNC">]</span><span class="WHIT">
+<span class='line'>234</span> </span><span class="WHIT">    </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>235</span> </span><span class="WHIT">    </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">nas.ASPECT</span><span class="WHIT"> </span><span class="PUNC">!=</span><span class="WHIT"> </span><span class="NAME">this.selectedRecord</span><span class="PUNC">[</span><span class="NUMB">2</span><span class="PUNC">]</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>236</span> </span><span class="WHIT">        </span><span class="NAME">nas.ASPECT</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">this.selectedRecord</span><span class="PUNC">[</span><span class="NUMB">2</span><span class="PUNC">]</span><span class="WHIT">
+<span class='line'>237</span> </span><span class="WHIT">    </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>238</span> </span><span class="WHIT">    </span><span class="KEYW">var</span><span class="WHIT"> </span><span class="NAME">myDPC</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">this.selectedRecord</span><span class="PUNC">[</span><span class="NUMB">3</span><span class="PUNC">]</span><span class="WHIT"> </span><span class="PUNC">/</span><span class="WHIT"> </span><span class="NUMB">2.540</span><span class="PUNC">;</span><span class="COMM">//解像度をDPCに変換</span><span class="WHIT">
+<span class='line'>239</span> </span><span class="WHIT">    </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">nas.RESOLUTION</span><span class="WHIT"> </span><span class="PUNC">!=</span><span class="WHIT"> </span><span class="NAME">myDPC</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>240</span> </span><span class="WHIT">        </span><span class="NAME">nas.RESOLUTION</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">myDPC</span><span class="WHIT">
+<span class='line'>241</span> </span><span class="WHIT">    </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>242</span> </span><span class="WHIT">    </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">nas.FRATE.rate</span><span class="WHIT"> </span><span class="PUNC">!=</span><span class="WHIT"> </span><span class="NAME">this.selectedRecord</span><span class="PUNC">[</span><span class="NUMB">4</span><span class="PUNC">]</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>243</span> </span><span class="WHIT">        </span><span class="NAME">nas.FRATE</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">nas.newFramerate</span><span class="PUNC">(</span><span class="STRN">""</span><span class="PUNC">,</span><span class="NAME">this.selectedRecord</span><span class="PUNC">[</span><span class="NUMB">4</span><span class="PUNC">]</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>244</span> </span><span class="WHIT">    </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>245</span> 
+<span class='line'>246</span> </span><span class="WHIT">    </span><span class="NAME">nas.registerMarks.select</span><span class="PUNC">(</span><span class="NAME">this.selectedRecord</span><span class="PUNC">[</span><span class="NUMB">5</span><span class="PUNC">]</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>247</span> </span><span class="PUNC">}</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>248</span> 
+<span class='line'>249</span> </span><span class="NAME">nas.inputMedias.push</span><span class="PUNC">(</span><span class="STRN">"254mm/16:9/200dpi"</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="PUNC">[</span><span class="NUMB">254</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="STRN">"16/9"</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NUMB">200</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NUMB">24</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NUMB">2</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NUMB">0</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NUMB">105</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NUMB">0</span><span class="PUNC">]</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="COMM">//(AJA)index=0</span><span class="WHIT">
+<span class='line'>250</span> </span><span class="NAME">nas.inputMedias.push</span><span class="PUNC">(</span><span class="STRN">"225mm/4:3/144dpi"</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="PUNC">[</span><span class="NUMB">225</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="STRN">"4/3"</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NUMB">144</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NUMB">24</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NUMB">2</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NUMB">0</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NUMB">115</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NUMB">0</span><span class="PUNC">]</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="COMM">//(NA) index 1 以下順に増加</span><span class="WHIT">
+<span class='line'>251</span> </span><span class="NAME">nas.inputMedias.push</span><span class="PUNC">(</span><span class="STRN">"240mm/4:3/150dpi"</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="PUNC">[</span><span class="NUMB">240</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="STRN">"4/3"</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NUMB">150</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NUMB">24</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NUMB">2</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NUMB">0</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NUMB">120</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NUMB">0</span><span class="PUNC">]</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="COMM">//(I.G)</span><span class="WHIT">
+<span class='line'>252</span> </span><span class="NAME">nas.inputMedias.push</span><span class="PUNC">(</span><span class="STRN">"265mm/16:9/144dpi"</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="PUNC">[</span><span class="NUMB">265</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="STRN">"16/9"</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NUMB">144</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NUMB">24</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NUMB">2</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NUMB">0</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NUMB">105</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NUMB">0</span><span class="PUNC">]</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="COMM">//max</span><span class="WHIT">
+<span class='line'>253</span> </span><span class="NAME">nas.inputMedias.push</span><span class="PUNC">(</span><span class="STRN">"240mm/16:9/150dpi"</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="PUNC">[</span><span class="NUMB">240</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="STRN">"16/9"</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NUMB">150</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NUMB">34</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NUMB">2</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NUMB">0</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NUMB">105</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NUMB">0</span><span class="PUNC">]</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="COMM">//</span><span class="WHIT">
+<span class='line'>254</span> </span><span class="NAME">nas.inputMedias.push</span><span class="PUNC">(</span><span class="STRN">"203mm/16:9/200dpi"</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="PUNC">[</span><span class="NUMB">203</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="STRN">"16/9"</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NUMB">200</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NUMB">24</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NUMB">2</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NUMB">0</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NUMB">105</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NUMB">0</span><span class="PUNC">]</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="COMM">//pocopoco</span><span class="WHIT">
+<span class='line'>255</span> </span><span class="NAME">nas.inputMedias.push</span><span class="PUNC">(</span><span class="STRN">"260mm/16:9/200dpi"</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="PUNC">[</span><span class="NUMB">260</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="STRN">"16/9"</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NUMB">200</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NUMB">24</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NUMB">2</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NUMB">0</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NUMB">105</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NUMB">0</span><span class="PUNC">]</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="COMM">//</span><span class="WHIT">
+<span class='line'>256</span> </span><span class="NAME">nas.inputMedias.push</span><span class="PUNC">(</span><span class="STRN">"263mm/16:9/200dpi"</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="PUNC">[</span><span class="NUMB">263</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="STRN">"16/9"</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NUMB">200</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NUMB">24</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NUMB">2</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NUMB">0</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NUMB">104</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NUMB">0</span><span class="PUNC">]</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="COMM">//A-1/BONES</span><span class="WHIT">
+<span class='line'>257</span> </span><span class="NAME">nas.inputMedias.push</span><span class="PUNC">(</span><span class="STRN">"260mm/16:9/150dpi"</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="PUNC">[</span><span class="NUMB">260</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="STRN">"16/9"</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NUMB">150</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NUMB">24</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NUMB">2</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NUMB">0</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NUMB">105</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NUMB">0</span><span class="PUNC">]</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="COMM">//</span><span class="WHIT">
+<span class='line'>258</span> 
+<span class='line'>259</span> 
+<span class='line'>260</span> </span><span class="COMM">/**
+<span class='line'>261</span>  * @desc 出力メディアDBの本質はムービー情報
+<span class='line'>262</span>  *
+<span class='line'>263</span>  * 出力メディアDB(ダミー)
+<span class='line'>264</span>  * "識別名",[横幅(px),ライン数,ピクセルアスペクト,フレームレート]
+<span class='line'>265</span>  * どのメディアに対して処理を行なうかが情報のポイント
+<span class='line'>266</span>  * ピクセルアスペクトはメディア限定なので標準値を指定する
+<span class='line'>267</span>  * 逆に線密度には意味がなくなるので記載がない
+<span class='line'>268</span>  */</span><span class="WHIT">
+<span class='line'>269</span> </span><span class="NAME">nas.outputMedias</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="KEYW">new</span><span class="WHIT"> </span><span class="NAME">nTable</span><span class="PUNC">(</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>270</span> </span><span class="NAME">nas.outputMedias.onChange</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="KEYW">function</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>271</span> 
+<span class='line'>272</span> </span><span class="WHIT">    </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">nas.COMP_W</span><span class="WHIT"> </span><span class="PUNC">!=</span><span class="WHIT"> </span><span class="NAME">this.selectedRecord</span><span class="PUNC">[</span><span class="NUMB">1</span><span class="PUNC">]</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>273</span> </span><span class="WHIT">        </span><span class="NAME">nas.COMP_W</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">this.selectedRecord</span><span class="PUNC">[</span><span class="NUMB">1</span><span class="PUNC">]</span><span class="WHIT">
+<span class='line'>274</span> </span><span class="WHIT">    </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>275</span> </span><span class="WHIT">    </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">nas.COMP_H</span><span class="WHIT"> </span><span class="PUNC">!=</span><span class="WHIT"> </span><span class="NAME">this.selectedRecord</span><span class="PUNC">[</span><span class="NUMB">2</span><span class="PUNC">]</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>276</span> </span><span class="WHIT">        </span><span class="NAME">nas.COMP_H</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">this.selectedRecord</span><span class="PUNC">[</span><span class="NUMB">2</span><span class="PUNC">]</span><span class="WHIT">
+<span class='line'>277</span> </span><span class="WHIT">    </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>278</span> </span><span class="WHIT">    </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">nas.COMP_A</span><span class="WHIT"> </span><span class="PUNC">!=</span><span class="WHIT"> </span><span class="NAME">this.selectedRecord</span><span class="PUNC">[</span><span class="NUMB">3</span><span class="PUNC">]</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>279</span> </span><span class="WHIT">        </span><span class="NAME">nas.COMP_A</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">this.selectedRecord</span><span class="PUNC">[</span><span class="NUMB">3</span><span class="PUNC">]</span><span class="WHIT">
+<span class='line'>280</span> </span><span class="WHIT">    </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>281</span> </span><span class="WHIT">    </span><span class="COMM">// if(nas.FRATE!=this.selectedRecord[4]){nas.FRATE=this.selectedRecord[4]};//出力は一般系を切り替えない</span><span class="WHIT">
+<span class='line'>282</span> </span><span class="PUNC">}</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>283</span> 
+<span class='line'>284</span> </span><span class="NAME">nas.outputMedias.push</span><span class="PUNC">(</span><span class="STRN">"wideSD/24p"</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="PUNC">[</span><span class="NUMB">950</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NUMB">540</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NUMB">1</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NUMB">24</span><span class="PUNC">]</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>285</span> </span><span class="NAME">nas.outputMedias.push</span><span class="PUNC">(</span><span class="STRN">"DV"</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="PUNC">[</span><span class="NUMB">720</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NUMB">480</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NUMB">0.9</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NUMB">29.97</span><span class="PUNC">]</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>286</span> </span><span class="NAME">nas.outputMedias.push</span><span class="PUNC">(</span><span class="STRN">"DV(wide)"</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="PUNC">[</span><span class="NUMB">720</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NUMB">480</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NUMB">1.2</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NUMB">29.97</span><span class="PUNC">]</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>287</span> </span><span class="NAME">nas.outputMedias.push</span><span class="PUNC">(</span><span class="STRN">"HD720/24p"</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="PUNC">[</span><span class="NUMB">1280</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NUMB">720</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NUMB">1</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NUMB">24</span><span class="PUNC">]</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>288</span> </span><span class="NAME">nas.outputMedias.push</span><span class="PUNC">(</span><span class="STRN">"HD1080/24p"</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="PUNC">[</span><span class="NUMB">1920</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NUMB">1080</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NUMB">1</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NUMB">24</span><span class="PUNC">]</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>289</span> </span><span class="NAME">nas.outputMedias.push</span><span class="PUNC">(</span><span class="STRN">"SD486/24p"</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="PUNC">[</span><span class="NUMB">720</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NUMB">486</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NUMB">0.9</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NUMB">24</span><span class="PUNC">]</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>290</span> </span><span class="NAME">nas.outputMedias.push</span><span class="PUNC">(</span><span class="STRN">"SD540/24p"</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="PUNC">[</span><span class="NUMB">720</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NUMB">540</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NUMB">1</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NUMB">24</span><span class="PUNC">]</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>291</span> </span><span class="NAME">nas.outputMedias.push</span><span class="PUNC">(</span><span class="STRN">"SD486"</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="PUNC">[</span><span class="NUMB">720</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NUMB">486</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NUMB">0.9</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NUMB">29.97</span><span class="PUNC">]</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>292</span> </span><span class="NAME">nas.outputMedias.push</span><span class="PUNC">(</span><span class="STRN">"SD540"</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="PUNC">[</span><span class="NUMB">720</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NUMB">540</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NUMB">1</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NUMB">29.97</span><span class="PUNC">]</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>293</span> </span><span class="NAME">nas.outputMedias.push</span><span class="PUNC">(</span><span class="STRN">"VGA/24p"</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="PUNC">[</span><span class="NUMB">640</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NUMB">480</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NUMB">1</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NUMB">24</span><span class="PUNC">]</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>294</span> </span><span class="NAME">nas.outputMedias.push</span><span class="PUNC">(</span><span class="STRN">"VGA/30p"</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="PUNC">[</span><span class="NUMB">640</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NUMB">480</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NUMB">1</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NUMB">30</span><span class="PUNC">]</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>295</span> 
+<span class='line'>296</span> 
+<span class='line'>297</span> </span><span class="COMM">/**
+<span class='line'>298</span>  * とりあえず暫定
+<span class='line'>299</span>  * 作業タイトルDB(ダミー)
+<span class='line'>300</span>  * @type {nTable}
+<span class='line'>301</span>  */</span><span class="WHIT">
+<span class='line'>302</span> </span><span class="NAME">nas.workTitles</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="KEYW">new</span><span class="WHIT"> </span><span class="NAME">nTable</span><span class="PUNC">(</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>303</span> 
+<span class='line'>304</span> </span><span class="NAME">nas.workTitles.push</span><span class="PUNC">(</span><span class="STRN">"testTitle"</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="PUNC">[</span><span class="STRN">"test"</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="STRN">"tt"</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NUMB">0</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NUMB">0</span><span class="PUNC">]</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>305</span> </span><span class="NAME">nas.workTitles.push</span><span class="PUNC">(</span><span class="STRN">"ぽこあぽこられんたんど"</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="PUNC">[</span><span class="STRN">"poco a poco rallentando"</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="STRN">"PP"</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NUMB">5</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NUMB">3</span><span class="PUNC">]</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>306</span> </span><span class="NAME">nas.workTitles.push</span><span class="PUNC">(</span><span class="STRN">"かちかち山"</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="PUNC">[</span><span class="STRN">"KachiKachi"</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="STRN">"KT"</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NUMB">1</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NUMB">4</span><span class="PUNC">]</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>307</span> </span><span class="NAME">nas.workTitles.push</span><span class="PUNC">(</span><span class="STRN">"かちかち山Max"</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="PUNC">[</span><span class="STRN">"KachiMax"</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="STRN">"ktM"</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NUMB">2</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NUMB">5</span><span class="PUNC">]</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>308</span> 
+<span class='line'>309</span> </span><span class="NAME">nas.workTitles.onChange</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="KEYW">function</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>310</span> </span><span class="WHIT">    </span><span class="NAME">nas.inputMedias.select</span><span class="PUNC">(</span><span class="NAME">this.selectedRecord</span><span class="PUNC">[</span><span class="NUMB">3</span><span class="PUNC">]</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>311</span> </span><span class="WHIT">    </span><span class="NAME">nas.outputMedias.select</span><span class="PUNC">(</span><span class="NAME">this.selectedRecord</span><span class="PUNC">[</span><span class="NUMB">4</span><span class="PUNC">]</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>312</span> </span><span class="PUNC">}</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>313</span> 
+<span class='line'>314</span> </span><span class="NAME">nas.workTitles.select</span><span class="PUNC">(</span><span class="NUMB">0</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>315</span> </span><span class="COMM">//			nas.inputMedias.select(nas.workTitles.selectedRecord[3]);</span><span class="WHIT">
+<span class='line'>316</span> </span><span class="COMM">//			nas.outputMedias.select(nas.workTitles.selectedRecord[4]);</span><span class="WHIT">
+<span class='line'>317</span> 
+<span class='line'>318</span> </span><span class="COMM">/**
+<span class='line'>319</span>  * @desc セレクトメソッドで選択
+<span class='line'>320</span>  *
+<span class='line'>321</span>  * 上記のDBは最後に登録したものがカレントになっています。
+<span class='line'>322</span>  * 自分の必要なものを追加してご使用ください
+<span class='line'>323</span>  */</span><span class="WHIT">
+<span class='line'>324</span> 
+<span class='line'>325</span> </span><span class="COMM">/**
+<span class='line'>326</span>  * 振り分けフラグ　スイッチがオンのときは不明フッテージを不明フォルダに仕分ける
+<span class='line'>327</span>  * @type {boolean}
+<span class='line'>328</span>  */</span><span class="WHIT">
+<span class='line'>329</span> </span><span class="NAME">nas.dividerOptionUnknown</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="KEYW">true</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>330</span> </span><span class="COMM">/**
+<span class='line'>331</span>  * レイアウトの表示方法
+<span class='line'>332</span>  * @type {Object}
+<span class='line'>333</span>  */</span><span class="WHIT">
+<span class='line'>334</span> </span><span class="NAME">nas.viewLayout</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="PUNC">}</span><span class="PUNC">;</span><span class="COMM">//あとで配置を考えるこのオブジェクトは仮</span><span class="WHIT">
+<span class='line'>335</span> </span><span class="NAME">nas.viewLayout.MODE</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">BlendingMode.MULTIPLY</span><span class="PUNC">;</span><span class="COMM">//列挙子を記入</span><span class="WHIT">
+<span class='line'>336</span> </span><span class="NAME">nas.viewLayout.RATIO</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NUMB">75</span><span class="PUNC">;</span><span class="COMM">// (%)</span><span class="WHIT">
+<span class='line'>337</span> </span><span class="NAME">nas.viewLayout.visible</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="KEYW">false</span><span class="PUNC">;</span><span class="COMM">//</span><span class="WHIT">
+<span class='line'>338</span> </span><span class="NAME">nas.viewLayout.guideLayer</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="KEYW">true</span><span class="PUNC">;</span><span class="COMM">//</span><span class="WHIT">
+<span class='line'>339</span> 
+<span class='line'>340</span> </span><span class="COMM">/**
+<span class='line'>341</span>  * セルの自動処理オプション
+<span class='line'>342</span>  * @type {boolean}
+<span class='line'>343</span>  */</span><span class="WHIT">
+<span class='line'>344</span> </span><span class="NAME">nas.goClip</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="KEYW">true</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>345</span> </span><span class="NAME">nas.killAlpha</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="KEYW">false</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>346</span> </span><span class="NAME">nas.goSmooth</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="KEYW">false</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>347</span> </span><span class="NAME">nas.smoothClip</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="KEYW">false</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>348</span> 
+<span class='line'>349</span> </span><span class="NAME">nas.cellOptions</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="KEYW">new</span><span class="WHIT"> </span><span class="NAME">nTable</span><span class="PUNC">(</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>350</span> </span><span class="NAME">nas.cellOptions.push</span><span class="PUNC">(</span><span class="STRN">"OLM-smoother"</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="PUNC">[</span><span class="STRN">"OLM Smoother"</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="PUNC">[</span><span class="STRN">"Use Color Key"</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="STRN">"\/\/\-\-otome\ cellClip\-\-\n1;"</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="STRN">"Color Key"</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="STRN">"\/\/\-\-otome\ cellClip\-\-\nthis.value;"</span><span class="PUNC">]</span><span class="PUNC">]</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>351</span> </span><span class="NAME">nas.cellOptions.push</span><span class="PUNC">(</span><span class="STRN">"kp-smooth"</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="PUNC">[</span><span class="STRN">"smooth"</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="PUNC">[</span><span class="STRN">"range"</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="STRN">"\/\/\-\-otome\ cellClip\-\-\n1.0;"</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="STRN">"white option"</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="STRN">"\/\/\-\-otome\ cellClip\-\-\n1;"</span><span class="PUNC">]</span><span class="PUNC">]</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>352</span> </span><span class="NAME">nas.cellOptions.push</span><span class="PUNC">(</span><span class="STRN">"kp-antiAlias"</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="PUNC">[</span><span class="STRN">"KP AntiAliasing"</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="PUNC">[</span><span class="STRN">"Range"</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="STRN">"\/\/\-\-otome\ cellClip\-\-\n20;"</span><span class="PUNC">]</span><span class="PUNC">]</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>353</span> 
+<span class='line'>354</span> </span><span class="NAME">nas.cellOptions.select</span><span class="PUNC">(</span><span class="NUMB">0</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="COMM">//初期値</span><span class="WHIT">
+<span class='line'>355</span> 
+<span class='line'>356</span> </span><span class="COMM">//=============================================================以上オートビルダのための変数ユーザ編集可能</span><span class="WHIT">
+<span class='line'>357</span> </span></pre></body></html>

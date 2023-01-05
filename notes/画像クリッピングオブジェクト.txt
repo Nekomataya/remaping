@@ -1,0 +1,17 @@
+﻿/**
+    クリップフレーム情報
+    このオブジェクト自体は画像ピクセルまたは画像そのもののデータを持たない
+    オリジナルの画像オブジェクトをポイントする　この場はHTMLImagを利用
+    解像度は、オリジナルの解像度を基本とするが、それをオーバーライド可能なデータをもたせ　拡縮計算の基礎にする
+    オフセットは、画像原点のオフセットをも持たせる。オフセットローテーションを含む
+    クリップはクリッピングサイズ
+    
+    commonHTML扱いのWEBでの表示機能の一部
+*/
+picture={
+    image:Object HTMLImage,
+    resolution:Number or nas.UnitResolution,
+    offset:{left:nas.UnitValue,top:nas.UnitValue},
+    clip:{width:nas.UnitValue,height:nas.UnitValue},
+    rotation:{x:nas.UnitAngle,y:nas.UnitAngle,z:nas.UnitAngle},
+}

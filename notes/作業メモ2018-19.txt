@@ -1,0 +1,236 @@
+﻿psAxe マルチステージ出力対応
+	マルチステージドキュメントは以下の条件で判定
+	ドキュメント第一階層のフォルダがステージ識別条件に沿っている場合は、ステージ指定が無い限り最終ステージのデータ展開を行う
+	レイヤーセット（フォルダ）がステージ識別条件に沿わないものは共用の素材とみなす
+	
+
+りまぴん
+	◎アクションシート印刷ユーティリティー
+	オーバーレイグラフィック対応
+	ストップウオッチ機能実装
+	ツールバー群のドッキングパネル化　カスタム化程度で抑えるか？
+	
+	iFrame 表示対応
+	
+		ドロップダウンメニューの独立出力とオブジェクト化
+	タイムライントラックの前後マージンのサポート（IN点とOUT点の概念の実装）
+
+	
+
+ｘMap　ライブラリコーディング
+
+
+node.js学習
+bracket学習
+
+
+xpsTimeline
+    .sections[sectionID]
+XpsTimelineSectionCollecrtion[
+    
+    parent: XpsTimelineTrack
+    mapElement:
+    value:
+    subSections:
+]
+
+XpsTimelineSection{
+    parent: Object XpsTimelineSectionCollecrtion
+    duration: sectionlength
+    mapElement: Object xMapElement or null
+    value:
+    subSections:
+}
+
+xMap
+    .elementGroups[groupID].elements[elementID]
+        
+xMapElement{
+    comment:
+    content:
+    link:
+    name:
+    parent:
+    type:
+}
+
+
+トラックの延長
+xpsTarcks(トラックコレクション)の新規プロパティとして
+startOffset(inPoint)を増設
+duration
+lnegth
+別立てで管理
+
+
+
+値は、nasAnimationXXXXシリーズ
+タイムラインのパーサが　MapGroup,ContentString を引数にして値を初期化する
+
+    MapGroupは
+
+Track.xParent.parentXps.xMap.getElementByName(
+    トラックID
+)
+　で取得する。既存グループが無い場合は
+
+Track.xParent.parentXps.xMap.new_xMapElement(
+    グループ名,
+    typeString,
+    Track.xParent.parentXps.xMap.currentJob,
+    ""
+)
+　で作成する戻り値がMapGroup
+
+ContentString
+セリフ
+    "名前「セリフ内容」"
+
+通常セル
+    "^トラックID\tセル記述$"
+    [trackID,cellDescription].join('\t');
+eg.
+A	1
+B	23
+
+カラセル
+    'blank-cell'
+
+ステージワーク
+    "^トラックID\tセル記述$"
+    [trackID,cellDescription].join('\t');
+eg.
+PAN	[A]
+CAM1	[B]    
+
+
+コンポジットワーク
+    "^トラックID\tセル記述$"
+    [trackID,cellDescription].join('\t');
+eg.
+FI	<100%>
+
+
+manipulator
+
+ショット間トランジションの拡張
+
+ダブルノード
+
+    ストップウオッチ画面の作成
+最小のトラック構成のXPSで長めのドキュメントを作って対応
+
+リファレンスエリアの非表示機能を実装　別用途でも使用するのでこれは独立で作って呼び出し
+
+
+
+
+
+カメラワークオブジェクトのgetStream調整
+    
+
+展示会ポスター図案
+
+リーフレット調整
+
+右クリックコンテキストメニュー実装
+
+ツールバーブロック化実装
+
+
+geometryトラック新設
+
+
+
+高木氏
+
+UAT技術説明会？
+
+
+
+LocalStrageStore
+データ登録直後のデータブラウザ更新
+
+さいとう
+つーじー
+
+たかぎ
+みさき
+
+大上
+山川
+セクション編集中のマウス操作調整
+
+ピンク色の選択中のセクション
+
+トラック外をクリックで　セクション編集解除
+
+同トラックセクション外をクリック　移動＞セクション編集解除
+
+同トラックセクション外を　修飾キー＋クリック
+    [ctrl]+clilck   近接端点延伸
+    [shift]+click   近接端点移動
+
+トラック端をクリックドラッグ  延伸
+トラック端を    [shift]+クリックドラッグ    移動
+
+トラック内をクリックドラッグ  移動
+トラック内を [ctrl]+クリックドラッグ  近接端点延伸
+
+キーアサインをつける
+
+[ctrl]+[c] 複製   現状はセルの複製
+[ctrl]+[v] 貼付   セル
+
+UI調整
+    UATフレームを認識して　UI画面内で重複するデータを非表示に
+    
+  別ウインドウで　カット（カット袋）をオープンする際もUATフレームを付けたほうが望ましい。
+  ユーザの感覚の統一のため 
+  
+ 
+    モーダル状態の操作ロック表示UIが欲しい
+    プログレスバーまたはモーダルホイール
+    
+カット一覧表示で、下の画面モード（内容に従ってボタンサイズが変わる）への遷移前に　表示乱れるケースがありました。
+この状態を抑制するために、メモのように右寄せ追い出しのスタイルにする等　何らかの処置が必要かと思います。
+  
+  
+ACTF申込み
+清積 紀文 kiyo@nekopmataya.info 070-6529-2393
+大上 裕真 oue@hama-ani.co.jp　080-6553-0519 045-315-2355
+速水 直人 hayamizu@scivone.jp 0422-53-9523
+
+郵便番号　〒791-0204
+愛媛県東温市志津川154-1　サントノーレ愛大医学部前603
+
+
+
+
+カメラワークトラックとエフェクトトラックをシンボルを扱う抽象トラックに変更
+抽象トラックの内容は、オーダーに従って具体的なジオメトリトラックとコンポジットトラックに変換される
+
+
+    抽象化シンボル群
+オブジェクトを作成
+FI
+カメラワークとエフェクトはどちらも同じ「撮影処理シンボル」として扱う
+
+名前　別名　ジオメトリック　コンポジット
+
+トラック挿入時の命名規則変更
+CAM1  2  3 ~
+S1 2 3
+N1 2 3
+A,B,C,D ~
+comp1 2 3~
+peg1 2 3~
+
+コンポジットトラックパーサ修正
+    これはやや注意　<値>の扱い次第となる
+    
+セクションマニピュレータの動作調整
+条件分岐でカット頭とカット尻の空白セクションを削除可能にすること
+サイズ−１の空白セクションの扱いをコントローすること
+
+

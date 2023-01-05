@@ -153,10 +153,8 @@ table.info	{
 	table-layout:fixed;
 }
 table.sheet	{
-		margin-top:296px;
-		margin-left:57px;
 		z-index: 1;
-		transform: {matrix(1, 0, 0, 1, 0, 0)};
+transform: {matrix(1, 0, 0, 1, 0, 0)};
 }
 table.toolbox {	
 	margin:0 0 0 0;
@@ -989,17 +987,12 @@ button.spinCtl {
 	text-align:center;
 	vertical-align:middle;
 	padding:0;
-	border:1px solid #aaa;
+	border:1px solid #888;
 	position:relative;
 	background-color:gray;
 	color:white;
 }
-button.spinCtl:hover {
-	background-color:#444;
-}
-button.spinCtl:active {
-	background-color:#ccc;
-}/*
+/*
     background-image:-moz-linear-gradient(top,#fff 0%,
     #000);
     background-image:-webkit-gradient(linear,left top,left bottom,from(#fff),
@@ -1598,25 +1591,6 @@ div#underlay {
 /**
 	参照用画像オーバーレイ
 */
-.overlayDocmentImage{
-	display        : inline;
-	mix-blend-mode : normal;
-	width          : 1122px;
-	height         : 1622px;
-	position       : absolute;
-	top            : 4px;
-	left           : 34px;
-	opacity        : 0.4;
-	z-index        : 3;
-	pointer-events : none;
-}
-div.timesheetimage{
-	opacity:.25;
-	background-blend-mode: normal;
-	background-color:green;
-	overflow:hidden;
-	position:absolute;
-}
 div.imageOverlay {
 	opacity:.25;
 	background-blend-mode: normal; 
@@ -2141,6 +2115,7 @@ div.documentStatusOverlay {
 .timerButton-wide {
 	width:27px;
 }
+<<<<<<< HEAD
 /*
 	署名欄
 */
@@ -2174,11 +2149,9 @@ div.documentStatusOverlay {
 .signature-check-ok { background-position: -144px 8px; }
 .signature-check-ng { background-position: -216px 8px; }
 .signature-finished { background-position: -288px 8px; }
+=======
+>>>>>>> parent of 3dbc987 (ライブラリを最新共用バージョンに置換前のバックアップ)
 
-
-.signdate {
-	font-size:11px;
-}
 /*
 	タイムシートマーカー
 */

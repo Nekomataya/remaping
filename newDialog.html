@@ -1,0 +1,107 @@
+<html>
+<head>
+<link href="template/jquery-ui.css" type="text/css" rel="stylesheet">
+
+<link REL=stylesheet TYPE="text/css" HREF="template/remaping.css" media="screen,tv">
+<link REL=stylesheet TYPE="text/css" HREF="template/printout.css" media="print">
+
+<style type="text/css">
+ * {
+  margin: 0; padding: 0;
+ }
+ #fixed {
+  position: fixed;
+ }
+ #sheet_view {
+  margin:0;
+ }
+ .ui-tooltip {	font-size: 9pt;}
+
+.mapButton {width:96px;}
+.note {color:#d0d0d0;}
+.thumbnail {width:320px;}
+.thumbnailS {width:128px;}
+</style>
+</head>
+<body>
+
+<div>
+	<span>
+現在のタイムシートを新規に登録します
+	</span><br>
+<hr>
+
+	<span>
+リポジトリ（共有）を選択してください<br>
+書込み権限のないリポジトリには登録できません
+	</span><br>
+<select name=repositorySelect id=repository_select>
+	<option value=localRepository>ローカルリポジトリ（ブラウザ）</option>
+	<option value=repo01>共有 1</option>
+	<option value=repo02>共有 2</option>
+	<option value=repo03>共有 3</option>
+</select>
+<br>
+<hr>
+
+	<span>
+登録するタイトルを選択してください
+	</span><br>
+<input type=text autocomplete=on list=title_select size=50><br>
+<datalist id=title_select>
+	<option value=title01>タイトル①</option>
+	<option value=title02>タイトル②</option>
+	<option value=title03>タイトル③</option>
+	<option value=title04>タイトル④</option>
+</datalist>
+<hr>
+
+	<span>
+
+登録するエピソードを選択してください
+	</span><br>
+<input type=text autocomplete=on list=ep_select size=50><br>
+<datalist id=ep_select>
+	<option value=episode01>EP①</option>
+	<option value=episode02>EP②</option>
+	<option value=episode03>EP③</option>
+	<option value=episode04>EP④</option>
+</datalist>
+<hr>
+
+	<span>
+
+
+カット番号を指定してください
+シーン番号を使用しない場合はシーン番号欄は空欄でOKしてください
+	</span><br>
+ s# <input type=text autocomplete=on list=scn_select size=20>
+<datalist id=scn_select>
+	<option value=01></option>
+	<option value=02></option>
+	<option value=03></option>
+	<option value=04></option>
+</datalist>
+-c# <input  type=text autocomplete=on list=cut_select size=20>
+<datalist id=cut_select>
+	<option value=001></option>
+	<option value=002></option>
+	<option value=053></option>
+	<option value=104></option>
+</datalist>
+<br>
+<hr>
+function updt(){
+	var newIdf = nas.Pm.
+	$("#newIdf").text()
+}
+<span id=newIdf></span><br>
+<hr>
+<button> ＯＫ</button>
+<button> キャンセル</button>
+</div>
+<div>
+	
+</div>
+</body></html>
+

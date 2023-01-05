@@ -132,48 +132,28 @@
 //編集用区間ノード色
 //	SectionNodeColor ="#ccffcc"	;//上に移行して削除
 
-// UI上のドキュメントデザインを記録するため以下をこのオブジェクト内に記録する
-// config内の情報と重複しないようにこちらに移動
-// 個別ドキュメントの情報を優先する
-// page|scroll|restriction
-	Restriction  ="true"     ;//true|false
-	ViewMode     ="page"     ;//page|scroll
-	TrackAlign   ="left"     ;//セル重ね方向 left(日本型)right(欧米型)
-	PageLength   ="6+0"      ;//タイムシート1枚の記述時間 FCT記述
-	FrameRate    ="24fps(24)";//フレームレート
-	SheetColumn  =2          ;//ドキュメントのカラム数
 
-//スタイルシートで使用する単位を指定 em,px,pt,...etc
-//WEBスタイルなので pxは96ppiの指定に相当することに注意
+//スタイルシートで使用する単位を指定してください em,px,pt,...etc
 	CellWidthUnit	="px";
 //インターフェースのサイズ
 
-	SheetHeadMargin     =346;//
-	SheetLeftMargin     =20 ;//
-	TimeGuideWidth	    =36 ;//時間表示
-	ActionWidth         =20 ;//アクションシートの幅
-	DialogWidth	        =36 ;//台詞欄の幅
-	SheetCellWidth	    =42 ;//通常のセルの表示幅
-	SheetCellNarrow	    =4  ;//折りたたみ時のセルの表示幅
-	StillCellWidth	    =12 ;//静止画欄の幅
-	GeometryCellWidth   =52 ;//ジオメトリトラック幅
-	SfxCellWidth	    =46 ;//効果指定欄の幅
-	CameraCellWidth     =72 ;//カメラワーク指定欄の幅
+	TimeGuideWidth	    =36; //時間表示
+	ActionWidth         =20; //アクションシートの幅
+	DialogWidth	        =36; //台詞欄の幅
+	SheetCellWidth	    =42; //通常のセルの表示幅
+	SheetCellNarrow	    =4;  //折りたたみ時のセルの表示幅
+	StillCellWidth	    =12; //静止画欄の幅
+    GeometryCellWidth   =52; //ジオメトリトラック幅
+	SfxCellWidth	    =46; //効果指定欄の幅
+	CameraCellWidth     =72; //カメラワーク指定欄の幅
 	CommentWidth        =120;//コメント欄の幅
-	ColumnSeparatorWidth=4  ;//カラムセパレータの幅
-	trackSpec           =[
-		["dialog"     ,   1],
-		["replacement",   8],
-		["camera"     ,   3],
-		["comment"    ,   1]
-	];// ドキュメントのトラック並びを記録
+	ColumnSeparatorWidth=4;　//カラムセパレータの幅
 */
 // ルック設定のオブジェクト化中
 // 後からルックを変更する手続は　xUI.setSheetLook(SheetLooks);xUI.footstampPaint();
 // 後方のペイント更新が重要
-
 SheetLooks = {
-	SheetTextColor  :"#111111",
+    SheetTextColor  :"#111111",
 	SheetBaseColor	:"#efffff",
 	SelectedColor	:"#9999ff",
 	RapidModeColor	:"#ff4444",
@@ -183,32 +163,18 @@ SheetLooks = {
 	FootStampColor	:"#ffffff",
 	EditingColor	:"#eebbbb",
 	SelectingColor	:"#ccccaa",
-	Restriction     :false,
-	ViewMode        :"page",
-	TrackAlign      :"left",
-	PageLength      :"6+0",
-	FrameRate       :"24fps(24)",
-	SheetColumn     :2,
-	CellWidthUnit       :"px",
-	SheetHeadMargin     :346,
-	SheetLeftMargin     :20,
-	TimeGuideWidth	    :16.125,
-	ActionWidth         :16.125,
-	DialogWidth	        :53,
-	SheetCellWidth	    :25.125,
+	CellWidthUnit	:"px",
+	TimeGuideWidth	    :36,
+	ActionWidth         :20,
+	DialogWidth	        :36,
+	SheetCellWidth	    :42,
 	SheetCellNarrow	    :4,
 	StillCellWidth	    :12,
-	GeometryCellWidth   :52,
+    GeometryCellWidth   :52,
 	SfxCellWidth	    :46,
-	CameraCellWidth     :34,
-	CommentWidth        :34,
-	ColumnSeparatorWidth:22,
-	TrackSpec :[
-		["dialog"     ,   1],
-		["replacement",   8],
-		["camera"     ,   3],
-		["comment"    ,   1]
-	]
+	CameraCellWidth     :72,
+	CommentWidth        :120,
+	ColumnSeparatorWidth:4
 };
 
 //メモ編集時の単語一覧
@@ -253,23 +219,20 @@ var mySubTitle=""	;
 			//サブタイトル 同上
 var myOpus=""	;
 			//制作話数等
-
-/* 以下 SheetLooksに移行 */
 var myFrameRate="24fps";
-			//初期フレームレートを置いてください。フレーム毎秒 
+			//初期フレームレートを置いてください。フレーム毎秒
 var Sheet="6+0"	;
-			//カット尺初期値初期タイムシートの長さをタイムコードで　sheetLooksに移行
+			//カット尺初期値初期タイムシートの長さをタイムコードで
 var SoundColumns=1;
-			//セリフ欄の数 初期値を整数で(必要に従って増やせる。最低で1つはルック維持のため予約)　sheetLooksに移行
-var SheetLayers=9;
-			//セル重ねの数 初期値を整数で A~D　ならば　4　sheetLooksに移行
-var CameraworkColumns=3;
-			//カメラワーク欄の数 初期値を整数で　sheetLooksに移行
+			//セリフ欄の数 初期値を整数で(必要に従って増やせる。最低で1つはルック維持のため予約)
+var SheetLayers=7;
+			//セル重ねの数 初期値を整数で A~D　ならば　4
+var CameraworkColumns=0;
+			//カメラワーク欄の数 初期値を整数で
 var StageworkColumns=0;
-			//ステージワーク欄の数 初期値を整数で　sheetLooksに移行
+			//ステージワーク欄の数 初期値を整数で
 var SfxColumns=0;
-			//カメラワーク欄の数 初期値を整数で　sheetLooksに移行
-//  */
+			//カメラワーク欄の数 初期値を整数で
 //---
 
 var myScene=""	;
@@ -277,7 +240,7 @@ var myScene=""	;
 var myCut=""	;
 			//カット番号
 
-var myFileName= "$TITLE#$OPUS[$SUBTITLE]__s$SCENE-c$CUT($TC)";
+var myFileName= "$TITLE#$OPUS[$SUBTITLE]_s-c$CUT($TC)";
 /*	デフォルトのファイル名 以下のワードはそれぞれのカットの値と置換されます
 	$TITLE $OPUS $SUBTITLE $SCENE $CUT $TIME $TC
 

@@ -1,0 +1,81 @@
+﻿====================================================== localRepository上のキー値
+
+localStrage
+info.nekomataya.pmdb
+info.nekomataya.remaping.backupData
+info.nekomataya.remaping.referenceData
+info.nekomataya.remaping.dataStore.[カット識別子] ←旧データストア　　利用可能
+	＊＊＊　新規対応後新しいストレージに転換可能
+
+
+
+
+ローカルストレージのキー体系の見直し
+|----domain----|-app-|-data function -->
+info.nekomataya.pmdb.config	masterDB
+info.nekomataya.pmdb.
+info.nekomataya.xmap.dataStore
+info.nekomataya.xpst.dataStore
+
+
+pmDomainTree
+Organization/Repository
+	title
+		opus
+			PMU
+				cut
+					line
+						stage
+							job
+							
+
+info.nekomataya.pmdb.config.<identifier>
+
+<identifier>	PMNodeName Identifier
+
+eg.　pmdb.title#ep
+
+
+
+info.nekomataya.pmdb.config.default
+	ローカルリポジトリ基底情報　エントリが存在すれば読み込む
+	なければ、デフォルトの設定データからオブジェクトを作成して
+	組織情報ダイアログを出し、修正を促す
+	少なくともオーナーユーザの情報を預かってパスワードの登録を行う
+	作成時にローカルストレージ上に複製をつくる
+	編集時は常にローカルストレージに保存を行う
+	一定のタイミングで更新
+	終了時も更新確認
+	（＊ローカルストレージでは。動作中の変更を気にする必用はないが、ネットワークリポジトリのプロトコルと一致させる）
+
+info.nekomataya.pmdb.config.title1
+	タイトルノード以下の修正情報　あれば読み込んで上書きを行う
+	タイトル切替時には基底情報の再読込が必用
+info.nekomataya.pmdb.config.title1#ep1
+	エピソードノード以下の修正情報　あれば読み込んで上書きを行う
+	エピソード切替時には基底情報の再読込が必用？
+
+info.nekomataya.xpst.dataStore.<識別子>
+info.nekomataya.xmap.dataStore.<識別子>
+====================================================== プログラム内部の情報配置
+
+{<Repository>}.organization = {<Repository>}.pmdb.organizations.entry();
+
+{<Repository>}.pmdb.organizations
+{<Repository>}.pmdb.users
+{<Repository>}.pmdb.staff
+{<Repository>}.pmdb.medias
+{<Repository>}.pmdb.assets
+{<Repository>}.pmdb.stages
+{<Repository>}.pmdb.line
+{<Repository>}.pmdb.pmTempaltes
+{<Repository>}.pmdb.jobNames
+{<Repository>}.pmdb.wrkTitles
+{<Repository>}.pmdb.opuses
+
+上記のオブジェクトに格納
+各コレクションのparentオブジェクトは pmdb
+
+
+
+

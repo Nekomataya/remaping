@@ -1,0 +1,640 @@
+<html><head><meta http-equiv="content-type" content="text/html; charset=utf-8"> <style>
+	.KEYW {color: #933;}
+	.COMM {color: #bbb; font-style: italic;}
+	.NUMB {color: #393;}
+	.STRN {color: #393;}
+	.REGX {color: #339;}
+	.line {border-right: 1px dotted #666; color: #666; font-style: normal;}
+	</style></head><body><pre><span class='line'>  1</span> <span class="TOKN">﻿</span><span class="COMM">/**
+<span class='line'>  2</span>  * @overview MAPping配列の初期化() りまぴん用仮オブジェクト
+<span class='line'>  3</span>  *
+<span class='line'>  4</span>  * var MAP= new_MAP(SheetLayers);
+<span class='line'>  5</span>  * var MAP= new Array(SheetLayers+2);//0番・レイヤ最大番号+1 はシステム予約
+<span class='line'>  6</span>  */</span><span class="WHIT">
+<span class='line'>  7</span> 
+<span class='line'>  8</span> 
+<span class='line'>  9</span> </span><span class="COMM">/**
+<span class='line'> 10</span>  * xMapオブジェクトは、ProductionTitel/ProductionUnit　の配下に入り基礎データの継承を行う
+<span class='line'> 11</span>  *
+<span class='line'> 12</span>  * 実装上の継承はプロトタイプチェーンではなく、プロパティの複製で処理する
+<span class='line'> 13</span>  *
+<span class='line'> 14</span>  * これは、xMapの配下に入りプロダクション中及びプロダクション後のリソース流用に対してデータの独立性を保つための処置である
+<span class='line'> 15</span>  *
+<span class='line'> 16</span>  * 製作期間中は、タイトル・管理単位の間では同じプロパティを共有
+<span class='line'> 17</span>  *
+<span class='line'> 18</span>  * xMapを初期化する手順（2015 12 19）
+<span class='line'> 19</span>  *
+<span class='line'> 20</span>  * コンストラクタでxMapオブジェクトを初期化
+<span class='line'> 21</span>  * new xMap([リプレースメントセルグループ数])
+<span class='line'> 22</span>  * 戻り値は空のマップオブジェクト
+<span class='line'> 23</span>  *
+<span class='line'> 24</span>  * 引数は、セルのグループ数。省略可能。省略時は、グループ数1で初期化?
+<span class='line'> 25</span>  * (0でも良さそう)
+<span class='line'> 26</span>  *
+<span class='line'> 27</span>  * 実際のデータの初期化は、マップオブジェクト自身の初期化メソッドを
+<span class='line'> 28</span>  * コールして行う。
+<span class='line'> 29</span>  * 初期化は、実装により異なるかもしれない。それで良いのだ。
+<span class='line'> 30</span>  *
+<span class='line'> 31</span>  * マップは基本的には、マップエントリグループとその配下のマップエントリを格納するトレーラです。
+<span class='line'> 32</span>  *
+<span class='line'> 33</span>  * エントリグループ毎に実際のセル・撮影指定等がエントリされます。
+<span class='line'> 34</span>  *
+<span class='line'> 35</span>  * エントリグループは、セルグループに加えて4種類(計5種)のグループがあります。
+<span class='line'> 36</span>  *
+<span class='line'> 37</span>  * グループ[ID.timig]/[ID.replacement]は、
+<span class='line'> 38</span>  * セル置きかえを記述するグループ　実際の画像エントリ（カラエントリ。未成画像エントリはOK）を記述
+<span class='line'> 39</span>  *
+<span class='line'> 40</span>  * グループ[ID.camerawork]/[ID.camera]は、
+<span class='line'> 41</span>  * 撮影情報に対して名前をつけて管理する(実体のファイルが存在しない)エントリが
+<span class='line'> 42</span>  * 属するグループ。
+<span class='line'> 43</span>  *
+<span class='line'> 44</span>  * グループ[ID.dialog]/[ID.sound]は、音響効果指定
+<span class='line'> 45</span>  *
+<span class='line'> 46</span>  * グループ[ID.effect]/[ID.compsit]は、合成効果指定
+<span class='line'> 47</span>  *
+<span class='line'> 48</span>  * グループ[ID.system]は、
+<span class='line'> 49</span>  * システムによって生成された(ユーザが管理しない)画像・要素が属するグループ
+<span class='line'> 50</span>  * (カラセル等・今回の実装では配列の添字は0)
+<span class='line'> 51</span>  *
+<span class='line'> 52</span>  *
+<span class='line'> 53</span>  * それぞれのエントリグループは任意の数を設定できるが、デフォルトで以下のグループが作成されます。
+<span class='line'> 54</span>  * camerawork    /0
+<span class='line'> 55</span>  * cell    /1(初期化時点で設定可能)
+<span class='line'> 56</span>  * dialog    /1
+<span class='line'> 57</span>  * effect    /0
+<span class='line'> 58</span>  * system    /1
+<span class='line'> 59</span>  *
+<span class='line'> 60</span>  * したがってマップ配列の要素数は、作成時点でセルグループ数+2 となる。
+<span class='line'> 61</span>  *
+<span class='line'> 62</span>  * AEの場合のMAPに望まれる機能
+<span class='line'> 63</span>  * 名前で指定されたXPSのエントリーを適切なタイムリマップ値に変換すること
+<span class='line'> 64</span>  * XPS側からは タイムラインラベルおよびエントリ文字列を与える
+<span class='line'> 65</span>  * MAPサイドでは、
+<span class='line'> 66</span>  * ラベルからエントリグループ(コンポジション)を特定
+<span class='line'> 67</span>  * エントリ文字列からグループ内のエントリ(タイムリマップ値)を特定して戻す
+<span class='line'> 68</span>  *
+<span class='line'> 69</span>  * コンポ内でブランク対応している場合(ファイルモード)は、ブランクに相当するタイムリマップ値を返す
+<span class='line'> 70</span>  * それ以外の場合は、特定のキーワード"blank"を返す。
+<span class='line'> 71</span>  * エントリに該当しない場合は、nullを返す。
+<span class='line'> 72</span>  * this.trailer=targetFolder;//ターゲットフォルダアイテムを指定して初期化
+<span class='line'> 73</span>  *
+<span class='line'> 74</span>  * (元設計)
+<span class='line'> 75</span>  * xMap.getElementByName("ラベル","エントリ")    戻り値：Number(整数)or "blank" or null
+<span class='line'> 76</span>  *
+<span class='line'> 77</span>  * (拡張新設計)
+<span class='line'> 78</span>  * 以前の置きかえタイミングのみのサポートでなく全種のトラックに対応するために拡張を行う。
+<span class='line'> 79</span>  * xMapに対してのエントリ要求は、同名のメソッドで行われる。
+<span class='line'> 80</span>  * xMap.getElementByName(name,group[,[job]][,stage])    戻り値：Object or Null
+<span class='line'> 81</span>  *
+<span class='line'> 82</span>  * 要求されたエントリが、リプレースメントの場合は当該のオブジェクトまたはNull
+<span class='line'> 83</span>  * 要求されたエントリが、カメラワークの場合は当該のオブジェクトまたはNull
+<span class='line'> 84</span>  * 要求されたエントリが、コンポジットの場合は当該のオブジェクトまたはNull
+<span class='line'> 85</span>  * 要求されたエントリが、サウンドの場合は当該のオブジェクトまたはNull
+<span class='line'> 86</span>  *
+<span class='line'> 87</span>  * 前設計では置きかえタイミングで存在しないエントリが要求された場合はブランクが戻るが、今設計ではNullとなる
+<span class='line'> 88</span>  * ブランクの置き換えはxMapへの問い合わせでなくタイムシートを制御する側で行われるように
+<span class='line'> 89</span>  *
+<span class='line'> 90</span>  * トラックの基底データとして持つオブジェクトをシステムオブジェクトでxMap内に持つことは従来のまま
+<span class='line'> 91</span>  *
+<span class='line'> 92</span>  * *****ステージ拡張
+<span class='line'> 93</span>  * 制作進捗状況の把握管理のためにステージとステージ内のジョブを拡張実装する
+<span class='line'> 94</span>  * 各エレメントグループのエントリは必ずいずれかのステージに属するものとする
+<span class='line'> 95</span>  *
+<span class='line'> 96</span>  * グループの上位構造ではなく、エレメントごとのプロパティとして実装？
+<span class='line'> 97</span>  * 　＞記述上はグループの上位構造に見えるが、グループ記述を一か所にまとめる必要はなく、複数の重複したエントリが認められる。
+<span class='line'> 98</span>  * 記述順で後から指定されたものが優先であるが、ステージ・ジョブレベルが異なる場合は別のエントリとなる。
+<span class='line'> 99</span>  * 各エントリの識別子は同一ステージ内で一意性を要求されるが、　ステージが異なる場合はその限りでない。
+<span class='line'>100</span>  * 同一ステージ内の同名の複数のエントリは、タイムシート上の同名のエントリを示す。
+<span class='line'>101</span>  *
+<span class='line'>102</span>  * また、ステージ内でジョブレベルが異なれば、フルネームで指定されないかぎりジョブの並びにしたがって最後にエントリされたモノが有効となる。
+<span class='line'>103</span>  *
+<span class='line'>104</span>  * 要素のフルネームは StageID.JobID.GroupID.Name となるが、特にフルネームで指定されないかぎりは Name のみで指定される。
+<span class='line'>105</span>  * その際に戻されるエレメントは (最後尾ステージ).(最終ジョブ).(アクティブタイムライントラックのグループ).Name である。
+<span class='line'>106</span>  * ステージの指定のみが行われると、当該ステージの最終ジョブの値が戻る。
+<span class='line'>107</span>  * ジョブのみの指定が行われれば、カレントのステージで当該ジョブに対応する値を返す。
+<span class='line'>108</span>  *
+<span class='line'>109</span>  * そういう仕様で設計するが、要求側で同設計のもとフルネームをビルドして要素を指定するものとしたほうが良い
+<span class='line'>110</span>  * 要求された要素が存在しない場合は、
+<span class='line'>111</span>  * xMap側で「要求された要素」＞「要求された要素に近い代替要素」＞「前ステージにさかのぼって推定される同名の要素」＞Null　
+<span class='line'>112</span>  * と戻り値をフォールダウンさせることができるように作りたい
+<span class='line'>113</span>  */</span><span class="WHIT">
+<span class='line'>114</span> 
+<span class='line'>115</span> </span><span class="COMM">/**
+<span class='line'>116</span>  * @param myParent
+<span class='line'>117</span>  * @param cellCount
+<span class='line'>118</span>  * @constructor
+<span class='line'>119</span>  */</span><span class="WHIT">
+<span class='line'>120</span> </span><span class="KEYW">function</span><span class="WHIT"> </span><span class="NAME">xMap</span><span class="PUNC">(</span><span class="NAME">myParent</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">cellCount</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>121</span> </span><span class="WHIT">    </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="PUNC">!</span><span class="NAME">cellCount</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="NAME">cellCount</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NUMB">1</span><span class="PUNC">;</span><span class="COMM">//引数無ければ 1</span><span class="WHIT">
+<span class='line'>122</span> </span><span class="WHIT">    </span><span class="NAME">cellCount</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">parseInt</span><span class="PUNC">(</span><span class="NAME">cellCount</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="COMM">//数値にしておく</span><span class="WHIT">
+<span class='line'>123</span> </span><span class="WHIT">    </span><span class="COMM">/**
+<span class='line'>124</span>      * 基本要素設定
+<span class='line'>125</span>      * システム配列要素を2つ追加する。ダイアログとシステム
+<span class='line'>126</span>      * @type {Array}
+<span class='line'>127</span>      */</span><span class="WHIT">
+<span class='line'>128</span> </span><span class="WHIT">    </span><span class="NAME">this.mapBody</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="KEYW">new</span><span class="WHIT"> </span><span class="NAME">Array</span><span class="PUNC">(</span><span class="NAME">cellCount</span><span class="WHIT"> </span><span class="PUNC">+</span><span class="WHIT"> </span><span class="NUMB">2</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>129</span> 
+<span class='line'>130</span> </span><span class="WHIT">    </span><span class="COMM">/**
+<span class='line'>131</span>      * @desc プロパティを標準値で設定
+<span class='line'>132</span>      */</span><span class="WHIT">
+<span class='line'>133</span> 
+<span class='line'>134</span> </span><span class="WHIT">    </span><span class="COMM">/**
+<span class='line'>135</span>      *
+<span class='line'>136</span>      * 標準値は、現在の実装ではconfig.jsから読み込んでいるが
+<span class='line'>137</span>      * これはProductionParams等の親オブジェクトから継承する形にできるようにしておく
+<span class='line'>138</span>      * 具体的には、参照用のプロパティを置いてそこから取得する？
+<span class='line'>139</span>      * xMapの親プロパティSubTitel.Title.Production
+<span class='line'>140</span>      *
+<span class='line'>141</span>      * @type {Window}
+<span class='line'>142</span>      */</span><span class="WHIT">
+<span class='line'>143</span> </span><span class="WHIT">    </span><span class="NAME">this.productinUnit</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">parent</span><span class="PUNC">;</span><span class="WHIT">	</span><span class="COMM">//ProductionUnit</span><span class="WHIT">
+<span class='line'>144</span> </span><span class="WHIT">    </span><span class="NAME">this.cut</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">myCut</span><span class="PUNC">;</span><span class="COMM">//</span><span class="WHIT">
+<span class='line'>145</span> </span><span class="WHIT">    </span><span class="NAME">this.scene</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">myScene</span><span class="PUNC">;</span><span class="COMM">//</span><span class="WHIT">
+<span class='line'>146</span> </span><span class="WHIT">    </span><span class="NAME">this.subtitle</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">mySubTitle</span><span class="PUNC">;</span><span class="COMM">//object SubTitle</span><span class="WHIT">
+<span class='line'>147</span> </span><span class="WHIT">    </span><span class="NAME">this.opus</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">myOpus</span><span class="PUNC">;</span><span class="COMM">//</span><span class="WHIT">
+<span class='line'>148</span> </span><span class="WHIT">    </span><span class="NAME">this.title</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">myTitle</span><span class="PUNC">;</span><span class="COMM">//</span><span class="WHIT">
+<span class='line'>149</span> </span><span class="WHIT">    </span><span class="KEYW">var</span><span class="WHIT"> </span><span class="NAME">Now</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="KEYW">new</span><span class="WHIT"> </span><span class="NAME">Date</span><span class="PUNC">(</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>150</span> </span><span class="WHIT">    </span><span class="NAME">this.create_time</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">Now.toNASString</span><span class="PUNC">(</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="COMM">//</span><span class="WHIT">
+<span class='line'>151</span> </span><span class="WHIT">    </span><span class="NAME">this.create_user</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">myName</span><span class="PUNC">;</span><span class="COMM">//</span><span class="WHIT">
+<span class='line'>152</span> </span><span class="WHIT">    </span><span class="NAME">this.update_time</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="STRN">""</span><span class="PUNC">;</span><span class="COMM">//</span><span class="WHIT">
+<span class='line'>153</span> </span><span class="WHIT">    </span><span class="NAME">this.update_user</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">myName</span><span class="PUNC">;</span><span class="COMM">//</span><span class="WHIT">
+<span class='line'>154</span> </span><span class="WHIT">    </span><span class="NAME">this.standerd_frame</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="PUNC">[</span><span class="NUMB">22.5</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NUMB">4</span><span class="WHIT"> </span><span class="PUNC">/</span><span class="WHIT"> </span><span class="NUMB">3.144</span><span class="WHIT"> </span><span class="PUNC">/</span><span class="WHIT"> </span><span class="NUMB">2.54</span><span class="PUNC">]</span><span class="PUNC">;</span><span class="COMM">//width(cm),aspect(w/h),Resolution(dpc)//Frameに置き換え予定</span><span class="WHIT">
+<span class='line'>155</span> </span><span class="WHIT">    </span><span class="NAME">this.standerd_peg</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="PUNC">[</span><span class="STRN">"3P"</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NUMB">0</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NUMB">19.875</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NUMB">0</span><span class="PUNC">]</span><span class="PUNC">;</span><span class="COMM">//type,x,y,0];//pegType,posX,posY,rotation//Pegに置き換え予定</span><span class="WHIT">
+<span class='line'>156</span> </span><span class="WHIT">    </span><span class="NAME">this.resolution</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">nas.RESOLUTION</span><span class="PUNC">;</span><span class="COMM">//(dpc)</span><span class="WHIT">
+<span class='line'>157</span> 
+<span class='line'>158</span> </span><span class="WHIT">    </span><span class="COMM">/**
+<span class='line'>159</span>      * @desc グループ情報の設定
+<span class='line'>160</span>      * グループの持つジオメトリ情報は、各エントリのジオメトリと独立している。
+<span class='line'>161</span>      * これは、グループ内のセルの持つ情報の省略値ではなく、グループ全体の持つ
+<span class='line'>162</span>      * トリミング情報となる。要するにタップとフレームだ。
+<span class='line'>163</span>      *
+<span class='line'>164</span>      * @type {Array}
+<span class='line'>165</span>      */</span><span class="WHIT">
+<span class='line'>166</span> </span><span class="WHIT">    </span><span class="NAME">this.groups</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="KEYW">new</span><span class="WHIT"> </span><span class="NAME">Array</span><span class="PUNC">(</span><span class="NAME">cellCount</span><span class="WHIT"> </span><span class="PUNC">+</span><span class="WHIT"> </span><span class="NUMB">2</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>167</span> </span><span class="WHIT">    </span><span class="COMM">/**初期値
+<span class='line'>168</span>      * @type {string}
+<span class='line'>169</span>      */</span><span class="WHIT">
+<span class='line'>170</span> </span><span class="WHIT">    </span><span class="KEYW">var</span><span class="WHIT"> </span><span class="NAME">name</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="STRN">""</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>171</span> </span><span class="WHIT">    </span><span class="KEYW">var</span><span class="WHIT"> </span><span class="NAME">geometry</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="STRN">"640,480,72/2.54,1,0,300,0"</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>172</span> </span><span class="WHIT">    </span><span class="COMM">//デフォルト値としては妥当な気がする?</span><span class="WHIT">
+<span class='line'>173</span> </span><span class="WHIT">    </span><span class="COMM">//"X,Y,dpc,par,offsetX,offsetY,rotation"</span><span class="WHIT">
+<span class='line'>174</span> </span><span class="WHIT">    </span><span class="KEYW">var</span><span class="WHIT"> </span><span class="NAME">comment</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="STRN">""</span><span class="PUNC">;</span><span class="COMM">//未設定</span><span class="WHIT">
+<span class='line'>175</span> 
+<span class='line'>176</span> </span><span class="WHIT">    </span><span class="NAME">this.groups</span><span class="PUNC">[</span><span class="NUMB">0</span><span class="PUNC">]</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="PUNC">[</span><span class="STRN">"system"</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">geometry</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">comment</span><span class="PUNC">]</span><span class="PUNC">;</span><span class="COMM">//0番要素はシステム固定</span><span class="WHIT">
+<span class='line'>177</span> </span><span class="WHIT">    </span><span class="COMM">/**
+<span class='line'>178</span>      * ループしてデフォルト値を設定
+<span class='line'>179</span>      */</span><span class="WHIT">
+<span class='line'>180</span> </span><span class="WHIT">    </span><span class="KEYW">for</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">id</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NUMB">1</span><span class="PUNC">;</span><span class="WHIT"> </span><span class="NAME">id</span><span class="WHIT"> </span><span class="PUNC">&lt;</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">cellCount</span><span class="WHIT"> </span><span class="PUNC">+</span><span class="WHIT"> </span><span class="NUMB">1</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT"> </span><span class="NAME">id</span><span class="PUNC">++</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>181</span> </span><span class="WHIT">        </span><span class="NAME">name</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="STRN">"ABCDEFGHIJKLMNOPQRSTUVWXYZ"</span><span class="PUNC">.</span><span class="NAME">charAt</span><span class="PUNC">(</span><span class="NAME">id</span><span class="WHIT"> </span><span class="PUNC">-</span><span class="WHIT"> </span><span class="NUMB">1</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>182</span> </span><span class="WHIT">        </span><span class="COMM">//geometry	="640,480,72,1,0,300,0";</span><span class="WHIT">
+<span class='line'>183</span> </span><span class="WHIT">        </span><span class="COMM">//comment	="";</span><span class="WHIT">
+<span class='line'>184</span> </span><span class="WHIT">        </span><span class="NAME">this.groups</span><span class="PUNC">[</span><span class="NAME">id</span><span class="PUNC">]</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="PUNC">[</span><span class="NAME">name</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">geometry</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">comment</span><span class="PUNC">]</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>185</span> </span><span class="WHIT">    </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>186</span> 
+<span class='line'>187</span> </span><span class="WHIT">    </span><span class="NAME">this.groups</span><span class="PUNC">[</span><span class="NAME">cellCount</span><span class="WHIT"> </span><span class="PUNC">+</span><span class="WHIT"> </span><span class="NUMB">1</span><span class="PUNC">]</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="PUNC">[</span><span class="STRN">"camera"</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">geometry</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">comment</span><span class="PUNC">]</span><span class="PUNC">;</span><span class="COMM">//最終要素はシステム予約(1番でも良いかもその方が計算が減る?)</span><span class="WHIT">
+<span class='line'>188</span> </span><span class="WHIT">    </span><span class="COMM">/**
+<span class='line'>189</span>      * エントリ情報の設定
+<span class='line'>190</span>      */</span><span class="WHIT">
+<span class='line'>191</span> </span><span class="WHIT">    </span><span class="KEYW">for</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">id</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NUMB">0</span><span class="PUNC">;</span><span class="WHIT"> </span><span class="NAME">id</span><span class="WHIT"> </span><span class="PUNC">&lt;</span><span class="WHIT"> </span><span class="NAME">SheetLayers</span><span class="WHIT"> </span><span class="PUNC">+</span><span class="WHIT"> </span><span class="NUMB">2</span><span class="PUNC">;</span><span class="WHIT"> </span><span class="NAME">id</span><span class="PUNC">++</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>192</span> </span><span class="WHIT">        </span><span class="NAME">this.mapBody</span><span class="PUNC">[</span><span class="NAME">id</span><span class="PUNC">]</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="STRN">"=AUTO="</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>193</span> </span><span class="WHIT">    </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>194</span> </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>195</span> </span><span class="COMM">/**
+<span class='line'>196</span>  * 各メソッド
+<span class='line'>197</span>  * @returns {string}
+<span class='line'>198</span>  */</span><span class="WHIT">
+<span class='line'>199</span> </span><span class="NAME">xMap.prototype.init</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="KEYW">function</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>200</span> </span><span class="WHIT">    </span><span class="KEYW">return</span><span class="WHIT"> </span><span class="STRN">"ここで初期化するぞー!(してないけど)"</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>201</span> </span><span class="PUNC">}</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>202</span> 
+<span class='line'>203</span> </span><span class="COMM">/**
+<span class='line'>204</span>  * @param id
+<span class='line'>205</span>  * @param prop
+<span class='line'>206</span>  * @returns {*}
+<span class='line'>207</span>  */</span><span class="WHIT">
+<span class='line'>208</span> </span><span class="NAME">xMap.prototype.getgeometry</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="KEYW">function</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">id</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">prop</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>209</span> </span><span class="WHIT">    </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="PUNC">!</span><span class="NAME">id</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="NAME">id</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NUMB">0</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>210</span> </span><span class="WHIT">    </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="PUNC">!</span><span class="NAME">prop</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="NAME">prop</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="STRN">"all"</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>211</span> </span><span class="WHIT">    </span><span class="KEYW">switch</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">prop</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>212</span> </span><span class="WHIT">        </span><span class="KEYW">case</span><span class="WHIT"> </span><span class="STRN">"sizeX"</span><span class="PUNC">:</span><span class="WHIT">
+<span class='line'>213</span> </span><span class="WHIT">            </span><span class="KEYW">return</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="PUNC">(</span><span class="WHIT"> </span><span class="KEYW">this</span><span class="PUNC">[</span><span class="STRN">"groups"</span><span class="PUNC">]</span><span class="PUNC">[</span><span class="NAME">id</span><span class="PUNC">]</span><span class="PUNC">[</span><span class="NUMB">1</span><span class="PUNC">]</span><span class="PUNC">.</span><span class="NAME">split</span><span class="PUNC">(</span><span class="STRN">","</span><span class="PUNC">)</span><span class="PUNC">[</span><span class="NUMB">0</span><span class="PUNC">]</span><span class="WHIT"> </span><span class="PUNC">/</span><span class="WHIT"> </span><span class="NUMB">72</span><span class="WHIT"> </span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">*</span><span class="WHIT">
+<span class='line'>214</span> </span><span class="WHIT">            </span><span class="KEYW">this</span><span class="PUNC">[</span><span class="STRN">"groups"</span><span class="PUNC">]</span><span class="PUNC">[</span><span class="NAME">id</span><span class="PUNC">]</span><span class="PUNC">[</span><span class="NUMB">1</span><span class="PUNC">]</span><span class="PUNC">.</span><span class="NAME">split</span><span class="PUNC">(</span><span class="STRN">","</span><span class="PUNC">)</span><span class="PUNC">[</span><span class="NUMB">2</span><span class="PUNC">]</span><span class="WHIT"> </span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>215</span> </span><span class="WHIT">            </span><span class="KEYW">break</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>216</span> </span><span class="WHIT">        </span><span class="KEYW">case</span><span class="WHIT"> </span><span class="STRN">"sizeY"</span><span class="PUNC">:</span><span class="WHIT">
+<span class='line'>217</span> </span><span class="WHIT">            </span><span class="KEYW">return</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="PUNC">(</span><span class="WHIT"> </span><span class="KEYW">this</span><span class="PUNC">[</span><span class="STRN">"groups"</span><span class="PUNC">]</span><span class="PUNC">[</span><span class="NAME">id</span><span class="PUNC">]</span><span class="PUNC">[</span><span class="NUMB">1</span><span class="PUNC">]</span><span class="PUNC">.</span><span class="NAME">split</span><span class="PUNC">(</span><span class="STRN">","</span><span class="PUNC">)</span><span class="PUNC">[</span><span class="NUMB">1</span><span class="PUNC">]</span><span class="WHIT"> </span><span class="PUNC">/</span><span class="WHIT"> </span><span class="NUMB">72</span><span class="WHIT"> </span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">*</span><span class="WHIT">
+<span class='line'>218</span> </span><span class="WHIT">            </span><span class="PUNC">(</span><span class="KEYW">this</span><span class="PUNC">[</span><span class="STRN">"groups"</span><span class="PUNC">]</span><span class="PUNC">[</span><span class="NAME">id</span><span class="PUNC">]</span><span class="PUNC">[</span><span class="NUMB">1</span><span class="PUNC">]</span><span class="PUNC">.</span><span class="NAME">split</span><span class="PUNC">(</span><span class="STRN">","</span><span class="PUNC">)</span><span class="PUNC">[</span><span class="NUMB">2</span><span class="PUNC">]</span><span class="WHIT"> </span><span class="PUNC">/</span><span class="WHIT"> </span><span class="KEYW">this</span><span class="PUNC">[</span><span class="STRN">"groups"</span><span class="PUNC">]</span><span class="PUNC">[</span><span class="NAME">id</span><span class="PUNC">]</span><span class="PUNC">[</span><span class="NUMB">1</span><span class="PUNC">]</span><span class="PUNC">.</span><span class="NAME">split</span><span class="PUNC">(</span><span class="STRN">","</span><span class="PUNC">)</span><span class="PUNC">[</span><span class="NUMB">3</span><span class="PUNC">]</span><span class="PUNC">)</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>219</span> </span><span class="WHIT">            </span><span class="KEYW">break</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>220</span> </span><span class="WHIT">        </span><span class="KEYW">case</span><span class="WHIT"> </span><span class="STRN">"resX"</span><span class="PUNC">:</span><span class="WHIT">
+<span class='line'>221</span> </span><span class="WHIT">            </span><span class="KEYW">return</span><span class="WHIT"> </span><span class="KEYW">this</span><span class="PUNC">[</span><span class="STRN">"groups"</span><span class="PUNC">]</span><span class="PUNC">[</span><span class="NAME">id</span><span class="PUNC">]</span><span class="PUNC">[</span><span class="NUMB">1</span><span class="PUNC">]</span><span class="PUNC">.</span><span class="NAME">split</span><span class="PUNC">(</span><span class="STRN">","</span><span class="PUNC">)</span><span class="PUNC">[</span><span class="NUMB">2</span><span class="PUNC">]</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>222</span> </span><span class="WHIT">            </span><span class="KEYW">break</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>223</span> </span><span class="WHIT">        </span><span class="KEYW">case</span><span class="WHIT"> </span><span class="STRN">"aspect"</span><span class="PUNC">:</span><span class="WHIT">
+<span class='line'>224</span> </span><span class="WHIT">            </span><span class="KEYW">return</span><span class="WHIT"> </span><span class="KEYW">this</span><span class="PUNC">[</span><span class="STRN">"groups"</span><span class="PUNC">]</span><span class="PUNC">[</span><span class="NAME">id</span><span class="PUNC">]</span><span class="PUNC">[</span><span class="NUMB">1</span><span class="PUNC">]</span><span class="PUNC">.</span><span class="NAME">split</span><span class="PUNC">(</span><span class="STRN">","</span><span class="PUNC">)</span><span class="PUNC">[</span><span class="NUMB">3</span><span class="PUNC">]</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>225</span> </span><span class="WHIT">            </span><span class="KEYW">break</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>226</span> </span><span class="WHIT">        </span><span class="KEYW">case</span><span class="WHIT"> </span><span class="STRN">"resY"</span><span class="WHIT">    </span><span class="PUNC">:</span><span class="WHIT">
+<span class='line'>227</span> </span><span class="WHIT">            </span><span class="KEYW">return</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="KEYW">this</span><span class="PUNC">[</span><span class="STRN">"groups"</span><span class="PUNC">]</span><span class="PUNC">[</span><span class="NAME">id</span><span class="PUNC">]</span><span class="PUNC">[</span><span class="NUMB">1</span><span class="PUNC">]</span><span class="PUNC">.</span><span class="NAME">split</span><span class="PUNC">(</span><span class="STRN">","</span><span class="PUNC">)</span><span class="PUNC">[</span><span class="NUMB">2</span><span class="PUNC">]</span><span class="WHIT"> </span><span class="PUNC">/</span><span class="WHIT"> </span><span class="KEYW">this</span><span class="PUNC">[</span><span class="NAME">id</span><span class="PUNC">]</span><span class="PUNC">[</span><span class="NUMB">1</span><span class="PUNC">]</span><span class="PUNC">.</span><span class="NAME">split</span><span class="PUNC">(</span><span class="STRN">","</span><span class="PUNC">)</span><span class="PUNC">[</span><span class="NUMB">3</span><span class="PUNC">]</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>228</span> </span><span class="WHIT">            </span><span class="KEYW">break</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>229</span> </span><span class="WHIT">        </span><span class="KEYW">case</span><span class="WHIT"> </span><span class="STRN">"offsetX"</span><span class="WHIT">    </span><span class="PUNC">:</span><span class="WHIT">
+<span class='line'>230</span> </span><span class="WHIT">            </span><span class="KEYW">return</span><span class="WHIT"> </span><span class="KEYW">this</span><span class="PUNC">[</span><span class="STRN">"groups"</span><span class="PUNC">]</span><span class="PUNC">[</span><span class="NAME">id</span><span class="PUNC">]</span><span class="PUNC">[</span><span class="NUMB">1</span><span class="PUNC">]</span><span class="PUNC">.</span><span class="NAME">split</span><span class="PUNC">(</span><span class="STRN">","</span><span class="PUNC">)</span><span class="PUNC">[</span><span class="NUMB">4</span><span class="PUNC">]</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>231</span> </span><span class="WHIT">            </span><span class="KEYW">break</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>232</span> </span><span class="WHIT">        </span><span class="KEYW">case</span><span class="WHIT"> </span><span class="STRN">"offsetY"</span><span class="WHIT">    </span><span class="PUNC">:</span><span class="WHIT">
+<span class='line'>233</span> </span><span class="WHIT">            </span><span class="KEYW">return</span><span class="WHIT"> </span><span class="KEYW">this</span><span class="PUNC">[</span><span class="STRN">"groups"</span><span class="PUNC">]</span><span class="PUNC">[</span><span class="NAME">id</span><span class="PUNC">]</span><span class="PUNC">[</span><span class="NUMB">1</span><span class="PUNC">]</span><span class="PUNC">.</span><span class="NAME">split</span><span class="PUNC">(</span><span class="STRN">","</span><span class="PUNC">)</span><span class="PUNC">[</span><span class="NUMB">5</span><span class="PUNC">]</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>234</span> </span><span class="WHIT">            </span><span class="KEYW">break</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>235</span> </span><span class="WHIT">        </span><span class="KEYW">case</span><span class="WHIT"> </span><span class="STRN">"rotation"</span><span class="WHIT">    </span><span class="PUNC">:</span><span class="WHIT">
+<span class='line'>236</span> </span><span class="WHIT">            </span><span class="KEYW">return</span><span class="WHIT"> </span><span class="KEYW">this</span><span class="PUNC">[</span><span class="STRN">"groups"</span><span class="PUNC">]</span><span class="PUNC">[</span><span class="NAME">id</span><span class="PUNC">]</span><span class="PUNC">[</span><span class="NUMB">1</span><span class="PUNC">]</span><span class="PUNC">.</span><span class="NAME">split</span><span class="PUNC">(</span><span class="STRN">","</span><span class="PUNC">)</span><span class="PUNC">[</span><span class="NUMB">6</span><span class="PUNC">]</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>237</span> </span><span class="WHIT">            </span><span class="KEYW">break</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>238</span> </span><span class="WHIT">        </span><span class="KEYW">default</span><span class="WHIT">    </span><span class="PUNC">:</span><span class="WHIT">
+<span class='line'>239</span> </span><span class="WHIT">            </span><span class="KEYW">return</span><span class="WHIT"> </span><span class="KEYW">this</span><span class="PUNC">[</span><span class="STRN">"groups"</span><span class="PUNC">]</span><span class="PUNC">[</span><span class="NAME">id</span><span class="PUNC">]</span><span class="PUNC">[</span><span class="NUMB">1</span><span class="PUNC">]</span><span class="PUNC">.</span><span class="NAME">split</span><span class="PUNC">(</span><span class="STRN">","</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>240</span> </span><span class="WHIT">    </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>241</span> </span><span class="PUNC">}</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>242</span> 
+<span class='line'>243</span> </span><span class="COMM">/**
+<span class='line'>244</span>  * @param id
+<span class='line'>245</span>  * @returns {*}
+<span class='line'>246</span>  */</span><span class="WHIT">
+<span class='line'>247</span> </span><span class="NAME">xMap.prototype.getmaxlot</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="KEYW">function</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">id</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>248</span> </span><span class="WHIT">    </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">this.mapBody</span><span class="PUNC">[</span><span class="NAME">id</span><span class="PUNC">]</span><span class="WHIT"> </span><span class="PUNC">==</span><span class="WHIT"> </span><span class="STRN">"=AUTO="</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>249</span> </span><span class="WHIT">        </span><span class="KEYW">return</span><span class="WHIT"> </span><span class="STRN">"=AUTO="</span><span class="WHIT">
+<span class='line'>250</span> </span><span class="WHIT">    </span><span class="PUNC">}</span><span class="WHIT"> </span><span class="KEYW">else</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>251</span> </span><span class="WHIT">        </span><span class="KEYW">return</span><span class="WHIT"> </span><span class="NAME">this.mapBody</span><span class="PUNC">[</span><span class="NAME">id</span><span class="PUNC">]</span><span class="PUNC">.</span><span class="NAME">length</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>252</span> </span><span class="WHIT">    </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>253</span> </span><span class="PUNC">}</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>254</span> 
+<span class='line'>255</span> </span><span class="COMM">/**
+<span class='line'>256</span>  * @desc xMapコンストラクタ終了
+<span class='line'>257</span>  */</span><span class="WHIT">
+<span class='line'>258</span> 
+<span class='line'>259</span> </span><span class="COMM">/**
+<span class='line'>260</span>  * @returns {string}
+<span class='line'>261</span>  */</span><span class="WHIT">
+<span class='line'>262</span> </span><span class="KEYW">function</span><span class="WHIT"> </span><span class="NAME">initMAP</span><span class="PUNC">(</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>263</span> </span><span class="WHIT">    </span><span class="COMM">/**
+<span class='line'>264</span>      * マップオブジェクトの初期化は、ファイルを指定するか、または 導入済のFolderItemを指定して行う
+<span class='line'>265</span>      * ファイルが指定された場合は、AEの環境下では、マップのファイルをインポートしてフォルダアイテムに展開し
+<span class='line'>266</span>      * さらにそのフォルダアイテム自身を登録して行うこと。
+<span class='line'>267</span>      *
+<span class='line'>268</span>      * Photoshop環境下では、アクティブドキュメントをMAP展開して利用する
+<span class='line'>269</span>      * または、指定ファイルをドキュメントとして読み込み展開する
+<span class='line'>270</span>      * アイテムのサイズは、ドキュメント内で不定
+<span class='line'>271</span>      *
+<span class='line'>272</span>      * XPSエディタ(りまぴん)側では、読み込んでデータテーブルを配置するだけでおしまい。
+<span class='line'>273</span>      *  すなわち、動作仕様が変わるので注意
+<span class='line'>274</span>      *
+<span class='line'>275</span>      * MAPファイルを指定されればインポートおよび環境形成（未実装）
+<span class='line'>276</span>      * それ以外は導入済みデータを使用してエージェントの初期化を行う
+<span class='line'>277</span>      * AE以外の環境はあとまわし
+<span class='line'>278</span>      */</span><span class="WHIT">
+<span class='line'>279</span> 
+<span class='line'>280</span> 
+<span class='line'>281</span> </span><span class="WHIT">    </span><span class="COMM">/**
+<span class='line'>282</span>      * MAP各プロパティ
+<span class='line'>283</span>      */</span><span class="WHIT">
+<span class='line'>284</span> </span><span class="WHIT">    </span><span class="COMM">/*
+<span class='line'>285</span>      var cellCount=app.project.items.getByName(nas.otome.mapFolders.mapBase).items.getByName(nas.otome.mapFolders.cell).length;//グループアイテムフォルダのエントリ数をみる
+<span class='line'>286</span>      ////////////////////// 基本要素設定
+<span class='line'>287</span>      this.mapBody = new Array(cellCount+2);//システム配列要素を2つ追加する。ダイアログとシステム
+<span class='line'>288</span> 
+<span class='line'>289</span>      //	プロパティを空で設定
+<span class='line'>290</span>      this.opus	=	myOpus;//
+<span class='line'>291</span>      this.title	=	myTitle;//
+<span class='line'>292</span>      this.subtitle	=	mySubTitle;//
+<span class='line'>293</span>      this.scene	=	myScene;//
+<span class='line'>294</span>      this.cut	=	myCut;//
+<span class='line'>295</span>      var Now =new Date();
+<span class='line'>296</span>      this.create_time	=	Now.toNASString();//
+<span class='line'>297</span>      this.create_user	=	myName;//
+<span class='line'>298</span>      this.update_time	=	"";//
+<span class='line'>299</span>      this.update_user	=	myName;//
+<span class='line'>300</span>      */</span><span class="WHIT">
+<span class='line'>301</span> 
+<span class='line'>302</span> </span><span class="WHIT">    </span><span class="KEYW">return</span><span class="WHIT"> </span><span class="STRN">"代用マップデータの初期化をしました"</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>303</span> </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>304</span> 
+<span class='line'>305</span> </span><span class="COMM">/**
+<span class='line'>306</span>  * xMap用各種メソッド
+<span class='line'>307</span>  * @returns {string}
+<span class='line'>308</span>  */</span><span class="WHIT">
+<span class='line'>309</span> </span><span class="NAME">xMap.prototype.toString</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="KEYW">function</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>310</span> </span><span class="WHIT">    </span><span class="COMM">/**
+<span class='line'>311</span>      * xMapデータを保存形式で
+<span class='line'>312</span>      * @type {Date}
+<span class='line'>313</span>      */</span><span class="WHIT">
+<span class='line'>314</span> </span><span class="WHIT">    </span><span class="KEYW">var</span><span class="WHIT"> </span><span class="NAME">Now</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="KEYW">new</span><span class="WHIT"> </span><span class="NAME">Date</span><span class="PUNC">(</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>315</span> </span><span class="WHIT">    </span><span class="COMM">/**
+<span class='line'>316</span>      * セパレータ文字列調整
+<span class='line'>317</span>      * @type {string}
+<span class='line'>318</span>      */</span><span class="WHIT">
+<span class='line'>319</span> </span><span class="WHIT">    </span><span class="KEYW">var</span><span class="WHIT"> </span><span class="NAME">bold_sep</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="STRN">'\n#'</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>320</span> </span><span class="WHIT">    </span><span class="KEYW">for</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">n</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">this.layers.length</span><span class="WHIT"> </span><span class="PUNC">+</span><span class="WHIT"> </span><span class="NUMB">2</span><span class="PUNC">;</span><span class="WHIT"> </span><span class="NAME">n</span><span class="WHIT"> </span><span class="PUNC">></span><span class="WHIT"> </span><span class="NUMB">0</span><span class="PUNC">;</span><span class="WHIT"> </span><span class="NAME">n</span><span class="PUNC">--</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="NAME">bold_sep</span><span class="WHIT"> </span><span class="PUNC">+</span><span class="PUNC">=</span><span class="WHIT"> </span><span class="STRN">'========'</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>321</span> </span><span class="WHIT">    </span><span class="KEYW">var</span><span class="WHIT"> </span><span class="NAME">thin_sep</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="STRN">'\n#'</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>322</span> </span><span class="WHIT">    </span><span class="KEYW">for</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">n</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">this.layers.length</span><span class="WHIT"> </span><span class="PUNC">+</span><span class="WHIT"> </span><span class="NUMB">2</span><span class="PUNC">;</span><span class="WHIT"> </span><span class="NAME">n</span><span class="WHIT"> </span><span class="PUNC">></span><span class="WHIT"> </span><span class="NUMB">0</span><span class="PUNC">;</span><span class="WHIT"> </span><span class="NAME">n</span><span class="PUNC">--</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="NAME">thin_sep</span><span class="WHIT"> </span><span class="PUNC">+</span><span class="PUNC">=</span><span class="WHIT"> </span><span class="STRN">'--------'</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>323</span> </span><span class="WHIT">    </span><span class="COMM">/**
+<span class='line'>324</span>      * ヘッダで初期化
+<span class='line'>325</span>      * @type {string}
+<span class='line'>326</span>      */</span><span class="WHIT">
+<span class='line'>327</span> </span><span class="WHIT">    </span><span class="KEYW">var</span><span class="WHIT"> </span><span class="NAME">result</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="STRN">'nasMAP-FILE 2.0'</span><span class="PUNC">;</span><span class="COMM">//出力変数初期化</span><span class="WHIT">
+<span class='line'>328</span> </span><span class="WHIT">    </span><span class="COMM">/**
+<span class='line'>329</span>      * ##共通プロパティ変数設定
+<span class='line'>330</span>      * @type {string}
+<span class='line'>331</span>      */</span><span class="WHIT">
+<span class='line'>332</span> </span><span class="WHIT">    </span><span class="NAME">result</span><span class="WHIT"> </span><span class="PUNC">+</span><span class="PUNC">=</span><span class="WHIT"> </span><span class="STRN">'\n##CREATE_USER='</span><span class="WHIT"> </span><span class="PUNC">+</span><span class="WHIT"> </span><span class="NAME">this.create_user</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>333</span> </span><span class="WHIT">    </span><span class="NAME">result</span><span class="WHIT"> </span><span class="PUNC">+</span><span class="PUNC">=</span><span class="WHIT"> </span><span class="STRN">'\n##UPDATE_USER='</span><span class="WHIT"> </span><span class="PUNC">+</span><span class="WHIT"> </span><span class="NAME">this.update_user</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>334</span> </span><span class="WHIT">    </span><span class="NAME">result</span><span class="WHIT"> </span><span class="PUNC">+</span><span class="PUNC">=</span><span class="WHIT"> </span><span class="STRN">'\n##CREATE_TIME='</span><span class="WHIT"> </span><span class="PUNC">+</span><span class="WHIT"> </span><span class="NAME">this.create_time</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>335</span> </span><span class="WHIT">    </span><span class="NAME">result</span><span class="WHIT"> </span><span class="PUNC">+</span><span class="PUNC">=</span><span class="WHIT"> </span><span class="STRN">'\n##UPDATE_TIME='</span><span class="WHIT"> </span><span class="PUNC">+</span><span class="WHIT"> </span><span class="NAME">Now.toNASString</span><span class="PUNC">(</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>336</span> 
+<span class='line'>337</span> </span><span class="WHIT">    </span><span class="NAME">result</span><span class="WHIT"> </span><span class="PUNC">+</span><span class="PUNC">=</span><span class="WHIT"> </span><span class="STRN">'\n##TITLE='</span><span class="WHIT"> </span><span class="PUNC">+</span><span class="WHIT"> </span><span class="NAME">this.title</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>338</span> </span><span class="WHIT">    </span><span class="NAME">result</span><span class="WHIT"> </span><span class="PUNC">+</span><span class="PUNC">=</span><span class="WHIT"> </span><span class="STRN">'\n##SUB_TITLE='</span><span class="WHIT"> </span><span class="PUNC">+</span><span class="WHIT"> </span><span class="NAME">this.subtitle</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>339</span> </span><span class="WHIT">    </span><span class="NAME">result</span><span class="WHIT"> </span><span class="PUNC">+</span><span class="PUNC">=</span><span class="WHIT"> </span><span class="STRN">'\n##OPUS='</span><span class="WHIT"> </span><span class="PUNC">+</span><span class="WHIT"> </span><span class="NAME">this.opus</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>340</span> </span><span class="WHIT">    </span><span class="NAME">result</span><span class="WHIT"> </span><span class="PUNC">+</span><span class="PUNC">=</span><span class="WHIT"> </span><span class="STRN">'\n##SCENE='</span><span class="WHIT"> </span><span class="PUNC">+</span><span class="WHIT"> </span><span class="NAME">this.scene</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>341</span> </span><span class="WHIT">    </span><span class="NAME">result</span><span class="WHIT"> </span><span class="PUNC">+</span><span class="PUNC">=</span><span class="WHIT"> </span><span class="STRN">'\n##CUT='</span><span class="WHIT"> </span><span class="PUNC">+</span><span class="WHIT"> </span><span class="NAME">this.cut</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>342</span> 
+<span class='line'>343</span> </span><span class="COMM">//result+='\n##TIME='	+ nas.Frm2FCT(this.time(),3,0)	;</span><span class="WHIT">
+<span class='line'>344</span> </span><span class="COMM">//result+='\n##TRIN='	+nas.Frm2FCT(this.trin[0],3,0)+","+ this.trin[1];</span><span class="WHIT">
+<span class='line'>345</span> </span><span class="COMM">//result+='\n##TROUT='	+nas.Frm2FCT(this.trout[0],3,0)+","+ this.trout[1];</span><span class="WHIT">
+<span class='line'>346</span> </span><span class="COMM">//result+='\n##FRAME_RATE='	+ this.framerate	;</span><span class="WHIT">
+<span class='line'>347</span> </span><span class="COMM">//result+='\n##FOCUS='	+11//</span><span class="WHIT">
+<span class='line'>348</span> </span><span class="COMM">//result+='\n##SPIN='	+S3//</span><span class="WHIT">
+<span class='line'>349</span> </span><span class="COMM">//result+='\n##BLANK_SWITCH='	+File//</span><span class="WHIT">
+<span class='line'>350</span> </span><span class="WHIT">    </span><span class="NAME">result</span><span class="WHIT"> </span><span class="PUNC">+</span><span class="PUNC">=</span><span class="WHIT"> </span><span class="STRN">'\n#'</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>351</span> </span><span class="WHIT">    </span><span class="NAME">result</span><span class="WHIT"> </span><span class="PUNC">+</span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">bold_sep</span><span class="PUNC">;</span><span class="COMM">//セパレータ####################################</span><span class="WHIT">
+<span class='line'>352</span> </span><span class="WHIT">    </span><span class="COMM">/**
+<span class='line'>353</span>      * レイヤ別プロパティをストリームに追加
+<span class='line'>354</span>      * @type {string[]}
+<span class='line'>355</span>      */</span><span class="WHIT">
+<span class='line'>356</span> </span><span class="WHIT">    </span><span class="KEYW">var</span><span class="WHIT"> </span><span class="NAME">Lprops</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="PUNC">[</span><span class="STRN">"sizeX"</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="STRN">"sizeY"</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="STRN">"aspect"</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="STRN">"lot"</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="STRN">"blmtd"</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="STRN">"blpos"</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="STRN">"option"</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="STRN">"link"</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="STRN">"name"</span><span class="PUNC">]</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>357</span> </span><span class="COMM">//	var Lprops=["sizeX","sizeY","aspect","lot","blmtd","blpos","option","link","CELL"];</span><span class="WHIT">
+<span class='line'>358</span> </span><span class="WHIT">    </span><span class="KEYW">for</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="KEYW">var</span><span class="WHIT"> </span><span class="NAME">prop</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NUMB">0</span><span class="PUNC">;</span><span class="WHIT"> </span><span class="NAME">prop</span><span class="WHIT"> </span><span class="PUNC">&lt;</span><span class="WHIT"> </span><span class="NAME">Lprops.length</span><span class="PUNC">;</span><span class="WHIT"> </span><span class="NAME">prop</span><span class="PUNC">++</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>359</span> </span><span class="WHIT">        </span><span class="KEYW">var</span><span class="WHIT"> </span><span class="NAME">propName</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">Lprops</span><span class="PUNC">[</span><span class="NAME">prop</span><span class="PUNC">]</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>360</span> </span><span class="WHIT">        </span><span class="KEYW">var</span><span class="WHIT"> </span><span class="NAME">lineHeader</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">propName</span><span class="WHIT"> </span><span class="PUNC">==</span><span class="WHIT"> </span><span class="STRN">"name"</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">?</span><span class="WHIT">
+<span class='line'>361</span> </span><span class="WHIT">            </span><span class="STRN">'\n[CELL\tN'</span><span class="WHIT"> </span><span class="PUNC">:</span><span class="WHIT"> </span><span class="STRN">'\n['</span><span class="WHIT"> </span><span class="PUNC">+</span><span class="WHIT"> </span><span class="NAME">propName</span><span class="WHIT"> </span><span class="PUNC">+</span><span class="WHIT"> </span><span class="STRN">'\t'</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>362</span> </span><span class="WHIT">        </span><span class="NAME">result</span><span class="WHIT"> </span><span class="PUNC">+</span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">lineHeader</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>363</span> </span><span class="WHIT">        </span><span class="KEYW">for</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">id</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NUMB">0</span><span class="PUNC">;</span><span class="WHIT"> </span><span class="NAME">id</span><span class="WHIT"> </span><span class="PUNC">&lt;</span><span class="WHIT"> </span><span class="NAME">this.layers.length</span><span class="PUNC">;</span><span class="WHIT"> </span><span class="NAME">id</span><span class="PUNC">++</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>364</span> </span><span class="WHIT">            </span><span class="NAME">result</span><span class="WHIT"> </span><span class="PUNC">+</span><span class="PUNC">=</span><span class="WHIT"> </span><span class="STRN">"\t"</span><span class="WHIT"> </span><span class="PUNC">+</span><span class="WHIT"> </span><span class="KEYW">this</span><span class="PUNC">[</span><span class="STRN">"layers"</span><span class="PUNC">]</span><span class="PUNC">[</span><span class="NAME">id</span><span class="PUNC">]</span><span class="PUNC">[</span><span class="NAME">propName</span><span class="PUNC">]</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>365</span> </span><span class="WHIT">        </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>366</span> </span><span class="WHIT">        </span><span class="NAME">result</span><span class="WHIT"> </span><span class="PUNC">+</span><span class="PUNC">=</span><span class="WHIT"> </span><span class="STRN">'\t]'</span><span class="PUNC">;</span><span class="COMM">//</span><span class="WHIT">
+<span class='line'>367</span> </span><span class="WHIT">    </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>368</span> </span><span class="WHIT">    </span><span class="COMM">/**
+<span class='line'>369</span>      * セパレータ
+<span class='line'>370</span>      * @type {string}
+<span class='line'>371</span>      */</span><span class="WHIT">
+<span class='line'>372</span> </span><span class="WHIT">    </span><span class="NAME">result</span><span class="WHIT"> </span><span class="PUNC">+</span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">bold_sep</span><span class="PUNC">;</span><span class="COMM">//セパレータ####################################</span><span class="WHIT">
+<span class='line'>373</span> </span><span class="WHIT">    </span><span class="COMM">/**
+<span class='line'>374</span>      * シートボディ
+<span class='line'>375</span>      */</span><span class="WHIT">
+<span class='line'>376</span> </span><span class="WHIT">    </span><span class="KEYW">for</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">line</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NUMB">0</span><span class="PUNC">;</span><span class="WHIT"> </span><span class="NAME">line</span><span class="WHIT"> </span><span class="PUNC">&lt;</span><span class="WHIT"> </span><span class="NAME">this.duration</span><span class="PUNC">(</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT"> </span><span class="NAME">line</span><span class="PUNC">++</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>377</span> </span><span class="WHIT">        </span><span class="NAME">result</span><span class="WHIT"> </span><span class="PUNC">+</span><span class="PUNC">=</span><span class="WHIT"> </span><span class="STRN">'\n.'</span><span class="PUNC">;</span><span class="COMM">//改行＋ラインヘッダ</span><span class="WHIT">
+<span class='line'>378</span> </span><span class="WHIT">        </span><span class="KEYW">for</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">column</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NUMB">0</span><span class="PUNC">;</span><span class="WHIT"> </span><span class="NAME">column</span><span class="WHIT"> </span><span class="PUNC">&lt;</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">this.layers.length</span><span class="WHIT"> </span><span class="PUNC">+</span><span class="WHIT"> </span><span class="NUMB">2</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT"> </span><span class="NAME">column</span><span class="PUNC">++</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>379</span> </span><span class="WHIT">            </span><span class="NAME">address</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">column</span><span class="WHIT"> </span><span class="PUNC">+</span><span class="WHIT"> </span><span class="STRN">'_'</span><span class="WHIT"> </span><span class="PUNC">+</span><span class="WHIT"> </span><span class="NAME">line</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>380</span> </span><span class="COMM">//			if(! Separator){}else{};</span><span class="WHIT">
+<span class='line'>381</span> 
+<span class='line'>382</span> </span><span class="WHIT">            </span><span class="NAME">result</span><span class="WHIT"> </span><span class="PUNC">+</span><span class="PUNC">=</span><span class="WHIT"> </span><span class="STRN">'\t'</span><span class="WHIT"> </span><span class="PUNC">+</span><span class="WHIT"> </span><span class="NAME">this.xpsBody</span><span class="PUNC">[</span><span class="NAME">column</span><span class="PUNC">]</span><span class="PUNC">[</span><span class="NAME">line</span><span class="PUNC">]</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>383</span> </span><span class="COMM">//				result+=Separator+this.xpsBody[column][line];</span><span class="WHIT">
+<span class='line'>384</span> 
+<span class='line'>385</span> </span><span class="WHIT">        </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>386</span> </span><span class="WHIT">        </span><span class="COMM">/**
+<span class='line'>387</span>          * 1/4秒おきにサブセパレータ/秒セパレータを出力
+<span class='line'>388</span>          */</span><span class="WHIT">
+<span class='line'>389</span> </span><span class="WHIT">        </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="PUNC">(</span><span class="NAME">line</span><span class="WHIT"> </span><span class="PUNC">+</span><span class="WHIT"> </span><span class="NUMB">1</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">%</span><span class="WHIT"> </span><span class="NAME">Math.round</span><span class="PUNC">(</span><span class="NAME">this.framerate</span><span class="WHIT"> </span><span class="PUNC">/</span><span class="WHIT"> </span><span class="NUMB">4</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">==</span><span class="WHIT"> </span><span class="NUMB">0</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>390</span> </span><span class="WHIT">            </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="PUNC">(</span><span class="NAME">line</span><span class="WHIT"> </span><span class="PUNC">+</span><span class="WHIT"> </span><span class="NUMB">1</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">%</span><span class="WHIT"> </span><span class="NAME">Math.round</span><span class="PUNC">(</span><span class="NAME">this.framerate</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">==</span><span class="WHIT"> </span><span class="NUMB">0</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>391</span> </span><span class="WHIT">                </span><span class="NAME">result</span><span class="WHIT"> </span><span class="PUNC">+</span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">bold_sep</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>392</span> </span><span class="WHIT">            </span><span class="PUNC">}</span><span class="WHIT"> </span><span class="KEYW">else</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>393</span> </span><span class="WHIT">                </span><span class="NAME">result</span><span class="WHIT"> </span><span class="PUNC">+</span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">thin_sep</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>394</span> </span><span class="WHIT">            </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>395</span> </span><span class="WHIT">        </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>396</span> </span><span class="WHIT">    </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>397</span> </span><span class="WHIT">    </span><span class="COMM">/**
+<span class='line'>398</span>      * ボディ終了セパレータ
+<span class='line'>399</span>      * @type {string}
+<span class='line'>400</span>      */</span><span class="WHIT">
+<span class='line'>401</span> </span><span class="WHIT">    </span><span class="NAME">result</span><span class="WHIT"> </span><span class="PUNC">+</span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">bold_sep</span><span class="PUNC">;</span><span class="COMM">//セパレータ####################################</span><span class="WHIT">
+<span class='line'>402</span> </span><span class="WHIT">    </span><span class="COMM">/**
+<span class='line'>403</span>      * ENDマーク
+<span class='line'>404</span>      * @type {string}
+<span class='line'>405</span>      */</span><span class="WHIT">
+<span class='line'>406</span> </span><span class="WHIT">    </span><span class="NAME">result</span><span class="WHIT"> </span><span class="PUNC">+</span><span class="PUNC">=</span><span class="WHIT"> </span><span class="STRN">'\n[END]\n'</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>407</span> </span><span class="WHIT">    </span><span class="COMM">/**
+<span class='line'>408</span>      * メモ
+<span class='line'>409</span>      */</span><span class="WHIT">
+<span class='line'>410</span> </span><span class="WHIT">    </span><span class="NAME">result</span><span class="WHIT"> </span><span class="PUNC">+</span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">this.memo</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>411</span> 
+<span class='line'>412</span> </span><span class="COMM">// // // // //返す(とりあえず)</span><span class="WHIT">
+<span class='line'>413</span> 
+<span class='line'>414</span> </span><span class="WHIT">    </span><span class="COMM">/**
+<span class='line'>415</span>      * 引数を認識していくつかの形式で返すように拡張予定
+<span class='line'>416</span>      * セパレータを空白に変換したものは必要
+<span class='line'>417</span>      * 変更前(開始時点)のバックアップを返すモード必要/ゼロスクラッチの場合は、カラシートを返す。
+<span class='line'>418</span>      */</span><span class="WHIT">
+<span class='line'>419</span> </span><span class="WHIT">    </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">xUI.errorCode</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>420</span> </span><span class="WHIT">        </span><span class="NAME">xUI.errorCode</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NUMB">0</span><span class="WHIT">
+<span class='line'>421</span> </span><span class="WHIT">    </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>422</span> </span><span class="WHIT">    </span><span class="KEYW">return</span><span class="WHIT"> </span><span class="NAME">result</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>423</span> </span><span class="WHIT">    </span><span class="KEYW">return</span><span class="WHIT"> </span><span class="NAME">result</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>424</span> </span><span class="PUNC">}</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>425</span> 
+<span class='line'>426</span> </span><span class="COMM">// var MAP= new_MAP(SheetLayers);</span><span class="WHIT">
+<span class='line'>427</span> </span><span class="COMM">//if (dbg) {alert(initMAP())};	//マップダミー初期化</span><span class="WHIT">
+<span class='line'>428</span> 
+<span class='line'>429</span> </span><span class="COMM">/**
+<span class='line'>430</span>  * まだ腐っているけどmap関連一応分離 2005.03.22
+<span class='line'>431</span>  */</span><span class="WHIT">
+<span class='line'>432</span> 
+<span class='line'>433</span> </span><span class="COMM">/**
+<span class='line'>434</span> =============== 以下は、古いスタイルのデータパーサのための後方互換関数　新規の使用は禁止
+<span class='line'>435</span>                 　古いスタイルのパーサが無くなったら削除予定 2016 - 12.24
+<span class='line'>436</span> 
+<span class='line'>437</span>  * NAS(U) りまぴん専用データチェック関数
+<span class='line'>438</span>  * マップ処理ができるようになったら汎用関数に
+<span class='line'>439</span>  * マップオブジェクトのメソッドに切り換え予定
+<span class='line'>440</span>  * 2005/12/19 mapサイドに移動
+<span class='line'>441</span>  *
+<span class='line'>442</span>  * 2015/10/05 判定対象を拡張
+<span class='line'>443</span>  * timing        :null/"blank"/"interp"/Number Init
+<span class='line'>444</span>  * effect        :null/"fixed"/"interp"/Label String
+<span class='line'>445</span>  * camerawork    :null/"fixed"/"interp"/Label String
+<span class='line'>446</span>  * dialog        :null/"blank"/"sound"/"nodeOpen"/"nodeClose"/Label String
+<span class='line'>447</span>  * still        :null/"blank"/("interp")/Number Init
+<span class='line'>448</span>  *
+<span class='line'>449</span>  * 各トークンの意味
+<span class='line'>450</span>  * timing
+<span class='line'>451</span>  * null    不定記述基本的に先行値の複製＝変化なしのサイン
+<span class='line'>452</span>  * blank    カラ
+<span class='line'>453</span>  * interp    補間サイン　前後の値を持つキーから計算されるためこれ自身は直接値を持たない
+<span class='line'>454</span>  *
+<span class='line'>455</span>  * effect
+<span class='line'>456</span>  * fixed
+<span class='line'>457</span>  * null    不定記述 基本的に先行値の複製＝変化なしのサイン
+<span class='line'>458</span>  * blank    カラ
+<span class='line'>459</span>  * interp    補間サイン　前後の値を持つキーから計算されるためこれ自身は直接値を持たない
+<span class='line'>460</span>  * dataCheck = function (str,label,bflag)
+<span class='line'>461</span>  *
+<span class='line'>462</span>  * @param str
+<span class='line'>463</span>  * @param label
+<span class='line'>464</span>  * @param bflag
+<span class='line'>465</span>  * @returns {*}
+<span class='line'>466</span>  */</span><span class="WHIT">
+<span class='line'>467</span> </span><span class="KEYW">function</span><span class="WHIT"> </span><span class="NAME">dataCheck</span><span class="PUNC">(</span><span class="NAME">str</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">label</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">bflag</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>468</span> 
+<span class='line'>469</span> </span><span class="WHIT">    </span><span class="COMM">/**
+<span class='line'>470</span>      * 準備的にPSのみで動作するデータチェック部分を追加
+<span class='line'>471</span>      */</span><span class="WHIT">
+<span class='line'>472</span> 
+<span class='line'>473</span> </span><span class="COMM">//	if(str.length){alert([str,label,bflag].join()+":"+[label,str].join("-")+":"+_getIdx([label,str].join("-")))};</span><span class="WHIT">
+<span class='line'>474</span> 
+<span class='line'>475</span> </span><span class="WHIT">    </span><span class="COMM">/**
+<span class='line'>476</span>      * 与えられたトークンを有効データか否か検査して有効な場合に数値もしくは、
+<span class='line'>477</span>      * キーワード"blank"/"interp"/"fixed" を返す。それ以外はnullを返す。
+<span class='line'>478</span>      * 今のところりまぴん専用05/03/05
+<span class='line'>479</span>      *    すっかり忘れていた、
+<span class='line'>480</span>      *    ブランクメソッドがファイルでかつカラセルなしの場合は、
+<span class='line'>481</span>      *    ブランク自体が無効データになるように修正 05/05/02
+<span class='line'>482</span>      * 汎用関数になる場合は、有効データに対して
+<span class='line'>483</span>      * 「MAP上の正しいエントリに対応するエントリID」で返すこと。
+<span class='line'>484</span>      *
+<span class='line'>485</span>      * エントリIDよりも、オブジェクトを返すのが望ましい。
+<span class='line'>486</span>      * このシステム内ではオブジェクトは大きなデータにはならない
+<span class='line'>487</span>      * 大容量のデータを必要とする素材は全て外部へのリンク情報である
+<span class='line'>488</span>      *
+<span class='line'>489</span>      * オブジェクトが自律的に自身のリンク解決ができる方が良いか？
+<span class='line'>490</span>      * この関数を利用しているポイント自体を xMap.getElementByName()に置き換える方向で
+<span class='line'>491</span>      */</span><span class="WHIT">
+<span class='line'>492</span> </span><span class="WHIT">    </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="PUNC">!</span><span class="NAME">label</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>493</span> </span><span class="WHIT">        </span><span class="NAME">label</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="KEYW">null</span><span class="WHIT">
+<span class='line'>494</span> </span><span class="WHIT">    </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>495</span> </span><span class="WHIT">    </span><span class="COMM">/**
+<span class='line'>496</span>      * ラベルなしの場合、ヌルで
+<span class='line'>497</span>      */</span><span class="WHIT">
+<span class='line'>498</span> </span><span class="WHIT">    </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">xUI</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>499</span> </span><span class="WHIT">        </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="PUNC">!</span><span class="NAME">bflag</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>500</span> </span><span class="WHIT">            </span><span class="NAME">bflag</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">xUI.blpos</span><span class="WHIT"> </span><span class="PUNC">==</span><span class="WHIT"> </span><span class="STRN">"none"</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">?</span><span class="WHIT"> </span><span class="KEYW">false</span><span class="WHIT"> </span><span class="PUNC">:</span><span class="WHIT"> </span><span class="KEYW">true</span><span class="WHIT">
+<span class='line'>501</span> </span><span class="WHIT">        </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>502</span> </span><span class="WHIT">    </span><span class="PUNC">}</span><span class="WHIT"> </span><span class="KEYW">else</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>503</span> </span><span class="WHIT">        </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="PUNC">!</span><span class="NAME">bflag</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>504</span> </span><span class="WHIT">            </span><span class="NAME">Blank</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">BlankPosition</span><span class="WHIT"> </span><span class="PUNC">==</span><span class="WHIT"> </span><span class="STRN">"none"</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">?</span><span class="WHIT"> </span><span class="KEYW">false</span><span class="WHIT"> </span><span class="PUNC">:</span><span class="WHIT"> </span><span class="KEYW">true</span><span class="WHIT">
+<span class='line'>505</span> </span><span class="WHIT">        </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>506</span> </span><span class="WHIT">    </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>507</span> </span><span class="WHIT">    </span><span class="COMM">/**
+<span class='line'>508</span>      * カラセルフラグなしの場合はデフォルト位置から取得
+<span class='line'>509</span>      */</span><span class="WHIT">
+<span class='line'>510</span> </span><span class="WHIT">    </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="PUNC">!</span><span class="NAME">str</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>511</span> </span><span class="WHIT">        </span><span class="KEYW">return</span><span class="WHIT"> </span><span class="KEYW">null</span><span class="WHIT">
+<span class='line'>512</span> </span><span class="WHIT">    </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>513</span> </span><span class="WHIT">    </span><span class="COMM">/**
+<span class='line'>514</span>      * ブランクキーワードならば、ブランクを返す。
+<span class='line'>515</span>      * @type {RegExp}
+<span class='line'>516</span>      */</span><span class="WHIT">
+<span class='line'>517</span> </span><span class="WHIT">    </span><span class="KEYW">var</span><span class="WHIT"> </span><span class="NAME">blankRegex</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="KEYW">new</span><span class="WHIT"> </span><span class="NAME">RegExp</span><span class="PUNC">(</span><span class="STRN">"^("</span><span class="WHIT"> </span><span class="PUNC">+</span><span class="WHIT"> </span><span class="NAME">label</span><span class="WHIT"> </span><span class="PUNC">+</span><span class="WHIT"> </span><span class="STRN">")?\[?[\-_\]?[(\&lt;]?\s?[ｘＸxX×〆0０]{1}\s?[\)\>]?\]?$"</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>518</span> </span><span class="WHIT">    </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">str.toString</span><span class="PUNC">(</span><span class="PUNC">)</span><span class="PUNC">.</span><span class="NAME">match</span><span class="PUNC">(</span><span class="NAME">blankRegex</span><span class="PUNC">)</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>519</span> </span><span class="WHIT">        </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">bflag</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>520</span> </span><span class="WHIT">            </span><span class="KEYW">return</span><span class="WHIT"> </span><span class="STRN">"blank"</span><span class="WHIT">
+<span class='line'>521</span> </span><span class="WHIT">        </span><span class="PUNC">}</span><span class="WHIT"> </span><span class="KEYW">else</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>522</span> </span><span class="WHIT">            </span><span class="KEYW">return</span><span class="WHIT"> </span><span class="KEYW">null</span><span class="WHIT">
+<span class='line'>523</span> </span><span class="WHIT">        </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>524</span> </span><span class="WHIT">    </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>525</span> </span><span class="WHIT">    </span><span class="COMM">/**
+<span class='line'>526</span>      * 中間値生成記号の場合"interp"を返す.
+<span class='line'>527</span>      * @type {RegExp}
+<span class='line'>528</span>      */</span><span class="WHIT">
+<span class='line'>529</span> </span><span class="WHIT">    </span><span class="KEYW">var</span><span class="WHIT"> </span><span class="NAME">interpRegex</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="KEYW">new</span><span class="WHIT"> </span><span class="NAME">RegExp</span><span class="PUNC">(</span><span class="STRN">"^[\-\+=○●*・]$"</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>530</span> </span><span class="WHIT">    </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">str.toString</span><span class="PUNC">(</span><span class="PUNC">)</span><span class="PUNC">.</span><span class="NAME">match</span><span class="PUNC">(</span><span class="NAME">interpRegex</span><span class="PUNC">)</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>531</span> </span><span class="WHIT">        </span><span class="KEYW">return</span><span class="WHIT"> </span><span class="STRN">"interp"</span><span class="WHIT">
+<span class='line'>532</span> </span><span class="WHIT">    </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>533</span> </span><span class="WHIT">    </span><span class="COMM">/**
+<span class='line'>534</span>      * 全角英数字記号類を半角に変換
+<span class='line'>535</span>      */</span><span class="WHIT">
+<span class='line'>536</span> </span><span class="WHIT">    </span><span class="NAME">str</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">nas.normalizeStr</span><span class="PUNC">(</span><span class="NAME">str</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>537</span> </span><span class="WHIT">    </span><span class="COMM">/**
+<span class='line'>538</span>      * 数値のみの場合は、数値化して返す。ゼロ捨てなくても良いみたい?
+<span class='line'>539</span>      * @todo 記述指定による有効記述はXPS側での解釈に変更する　このルーチンは近い将来　配置を移動してこのメソッドからは消失させる　20160101
+<span class='line'>540</span>      */</span><span class="WHIT">
+<span class='line'>541</span> </span><span class="WHIT">    </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="PUNC">!</span><span class="NAME">isNaN</span><span class="PUNC">(</span><span class="NAME">str</span><span class="PUNC">)</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>542</span> 
+<span class='line'>543</span> </span><span class="WHIT">        </span><span class="COMM">/**
+<span class='line'>544</span>          * ホストアプリケーションがPSでかつLayerSetにgetIdxが拡張されている場合のみ数値を更に確認
+<span class='line'>545</span>          * エラーが出たらヌル扱い
+<span class='line'>546</span>          */</span><span class="WHIT">
+<span class='line'>547</span> </span><span class="WHIT">        </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">appHost.ESTK</span><span class="PUNC">)</span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>548</span> </span><span class="WHIT">        </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">app.name.indexOf</span><span class="PUNC">(</span><span class="STRN">"Photoshop"</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">></span><span class="WHIT"> </span><span class="NUMB">0</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>549</span> </span><span class="WHIT">            </span><span class="NAME">str</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">_getIdx</span><span class="PUNC">(</span><span class="PUNC">[</span><span class="NAME">label</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">str</span><span class="PUNC">]</span><span class="PUNC">.</span><span class="NAME">join</span><span class="PUNC">(</span><span class="STRN">"-"</span><span class="PUNC">)</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>550</span> </span><span class="WHIT">            </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="PUNC">!</span><span class="NAME">str</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="KEYW">return</span><span class="WHIT"> </span><span class="KEYW">null</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>551</span> </span><span class="WHIT">        </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>552</span> </span><span class="WHIT">        </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>553</span> </span><span class="WHIT">        </span><span class="KEYW">return</span><span class="WHIT"> </span><span class="NAME">parseInt</span><span class="PUNC">(</span><span class="NAME">str</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>554</span> </span><span class="WHIT">    </span><span class="PUNC">}</span><span class="WHIT"> </span><span class="KEYW">else</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>555</span> </span><span class="WHIT">        </span><span class="COMM">/**
+<span class='line'>556</span>          * レベルを判別してラベル文字列を取得。ラベル付き数値ならば、数値化して返す。
+<span class='line'>557</span>          * @type {RegExp}
+<span class='line'>558</span>          */</span><span class="WHIT">
+<span class='line'>559</span> </span><span class="WHIT">        </span><span class="KEYW">var</span><span class="WHIT"> </span><span class="NAME">labelRegex</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="KEYW">new</span><span class="WHIT"> </span><span class="NAME">RegExp</span><span class="PUNC">(</span><span class="STRN">"^("</span><span class="WHIT"> </span><span class="PUNC">+</span><span class="WHIT"> </span><span class="NAME">label</span><span class="WHIT"> </span><span class="PUNC">+</span><span class="WHIT"> </span><span class="STRN">")?[\-_\]?\[?[\(\&lt;]?\s?([0-9]+)\s?[\)\>]?$"</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>560</span> </span><span class="WHIT">        </span><span class="COMM">//↑ラベル付きおよび付いてないセル名にヒットする正規表現</span><span class="WHIT">
+<span class='line'>561</span> </span><span class="WHIT">        </span><span class="COMM">//…のつもりだけど大丈夫かしら?</span><span class="WHIT">
+<span class='line'>562</span> </span><span class="WHIT">        </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">str.toString</span><span class="PUNC">(</span><span class="PUNC">)</span><span class="PUNC">.</span><span class="NAME">match</span><span class="PUNC">(</span><span class="NAME">labelRegex</span><span class="PUNC">)</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>563</span> </span><span class="WHIT">            </span><span class="NAME">str</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">RegExp.$2</span><span class="WHIT"> </span><span class="PUNC">*</span><span class="WHIT"> </span><span class="NUMB">1</span><span class="PUNC">;</span><span class="WHIT"> </span><span class="COMM">//部分ヒットを数値化</span><span class="WHIT">
+<span class='line'>564</span> </span><span class="WHIT">            </span><span class="COMM">/**
+<span class='line'>565</span>              * ホストアプリケーションがPSでかつLayerSetにgetIdxが拡張されている場合のみ数値を更に確認
+<span class='line'>566</span>              * エラーが出たらヌル扱い
+<span class='line'>567</span>              */</span><span class="WHIT">
+<span class='line'>568</span> </span><span class="WHIT">             </span><span class="WHIT">
+<span class='line'>569</span> </span><span class="WHIT">        </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">appHost.ESTK</span><span class="PUNC">)</span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>570</span> </span><span class="WHIT">            </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="PUNC">(</span><span class="NAME">app</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">&&</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">app.name.indexOf</span><span class="PUNC">(</span><span class="STRN">"Photoshop"</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">></span><span class="WHIT"> </span><span class="NUMB">0</span><span class="PUNC">)</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>571</span> </span><span class="WHIT">                </span><span class="NAME">str</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">_getIdx</span><span class="PUNC">(</span><span class="PUNC">[</span><span class="NAME">label</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">str</span><span class="PUNC">]</span><span class="PUNC">.</span><span class="NAME">join</span><span class="PUNC">(</span><span class="STRN">"-"</span><span class="PUNC">)</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>572</span> </span><span class="WHIT">                </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="PUNC">!</span><span class="NAME">str</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="KEYW">return</span><span class="WHIT"> </span><span class="KEYW">null</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>573</span> </span><span class="WHIT">            </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>574</span> </span><span class="WHIT">        </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>575</span> </span><span class="WHIT">            </span><span class="KEYW">return</span><span class="WHIT"> </span><span class="NAME">str</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>576</span> </span><span class="WHIT">        </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>577</span> </span><span class="WHIT">    </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>578</span> </span><span class="WHIT">    </span><span class="COMM">/**
+<span class='line'>579</span>      * あとは無効データなのでヌルを返す。
+<span class='line'>580</span>      */</span><span class="WHIT">
+<span class='line'>581</span> </span><span class="WHIT">    </span><span class="KEYW">return</span><span class="WHIT"> </span><span class="KEYW">null</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>582</span> </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>583</span> 
+<span class='line'>584</span> </span><span class="COMM">/**
+<span class='line'>585</span>  * 一時利用メソッドPS環境のみで実行
+<span class='line'>586</span>  * レイヤ名／トレーラーを引数にその名前のレイヤーのレイヤセット内での順位（タイミング）を戻す
+<span class='line'>587</span>  * @param Lname
+<span class='line'>588</span>  * @param targetTrailer
+<span class='line'>589</span>  * @returns {*}
+<span class='line'>590</span>  * @private
+<span class='line'>591</span>  トレーラーは
+<span class='line'>592</span>  ps > activeDocumentのレイヤセット　未指定の場合はrootならapp.activeDocument.layers
+<span class='line'>593</span>  ae > 
+<span class='line'>594</span>  */</span><span class="WHIT">
+<span class='line'>595</span> </span><span class="NAME">_getIdx</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="KEYW">function</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">Lname</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">targetTrailer</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>596</span> </span><span class="WHIT">    </span><span class="COMM">/**
+<span class='line'>597</span>      * レイヤ全あたりでチェック
+<span class='line'>598</span>      */</span><span class="WHIT">
+<span class='line'>599</span> </span><span class="WHIT">    </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="KEYW">typeof</span><span class="WHIT"> </span><span class="NAME">targetTrailer</span><span class="WHIT"> </span><span class="PUNC">==</span><span class="WHIT"> </span><span class="STRN">"undefined"</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="NAME">targetTrailer</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">app.activeDocument.layers</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>600</span> </span><span class="WHIT">    </span><span class="KEYW">for</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="KEYW">var</span><span class="WHIT"> </span><span class="NAME">lix</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">targetTrailer.length</span><span class="WHIT"> </span><span class="PUNC">-</span><span class="WHIT"> </span><span class="NUMB">1</span><span class="PUNC">;</span><span class="WHIT"> </span><span class="NAME">lix</span><span class="WHIT"> </span><span class="PUNC">>=</span><span class="WHIT"> </span><span class="NUMB">0</span><span class="PUNC">;</span><span class="WHIT"> </span><span class="NAME">lix</span><span class="PUNC">--</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>601</span> </span><span class="WHIT">        </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">targetTrailer</span><span class="PUNC">[</span><span class="NAME">lix</span><span class="PUNC">]</span><span class="PUNC">.</span><span class="NAME">name</span><span class="WHIT"> </span><span class="PUNC">==</span><span class="WHIT"> </span><span class="NAME">Lname</span><span class="PUNC">)</span><span class="WHIT">  </span><span class="KEYW">return</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">targetTrailer.length</span><span class="WHIT"> </span><span class="PUNC">-</span><span class="WHIT"> </span><span class="NAME">lix</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>602</span> </span><span class="WHIT">    </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>603</span> </span><span class="WHIT">    </span><span class="COMM">/**
+<span class='line'>604</span>      * 該当レイヤがないのでサブレイヤを掘る
+<span class='line'>605</span>      */</span><span class="WHIT">
+<span class='line'>606</span> </span><span class="WHIT">    </span><span class="KEYW">var</span><span class="WHIT"> </span><span class="NAME">result</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>607</span> </span><span class="WHIT">    </span><span class="KEYW">for</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="KEYW">var</span><span class="WHIT"> </span><span class="NAME">lix</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">targetTrailer.length</span><span class="WHIT"> </span><span class="PUNC">-</span><span class="WHIT"> </span><span class="NUMB">1</span><span class="PUNC">;</span><span class="WHIT"> </span><span class="NAME">lix</span><span class="WHIT"> </span><span class="PUNC">>=</span><span class="WHIT"> </span><span class="NUMB">0</span><span class="PUNC">;</span><span class="WHIT"> </span><span class="NAME">lix</span><span class="PUNC">--</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>608</span> </span><span class="WHIT">        </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">targetTrailer</span><span class="PUNC">[</span><span class="NAME">lix</span><span class="PUNC">]</span><span class="WHIT"> </span><span class="KEYW">instanceof</span><span class="WHIT"> </span><span class="NAME">LayerSet</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="NAME">result</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">_getIdx</span><span class="PUNC">(</span><span class="NAME">Lname</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">targetTrailer</span><span class="PUNC">[</span><span class="NAME">lix</span><span class="PUNC">]</span><span class="PUNC">.</span><span class="NAME">layers</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>609</span> </span><span class="WHIT">        </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">result</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="KEYW">return</span><span class="WHIT"> </span><span class="NAME">result</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>610</span> </span><span class="WHIT">    </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>611</span> </span><span class="WHIT">    </span><span class="KEYW">return</span><span class="WHIT"> </span><span class="KEYW">null</span><span class="WHIT">
+<span class='line'>612</span> </span><span class="PUNC">}</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>613</span> 
+<span class='line'>614</span> </span><span class="COMM">//以下は 上のエントリの置換え用関数</span><span class="WHIT">
+<span class='line'>615</span> 
+<span class='line'>616</span> </span><span class="COMM">/**
+<span class='line'>617</span>  * xMap.dataCheck(myStr,tlLabel[,blFlag])
+<span class='line'>618</span>  *
+<span class='line'>619</span>  * 引数    : セルエントリ,タイムラインラベル,ブランクフラグ
+<span class='line'>620</span>  * 戻り値    : 有効エントリID　/"blank"/ null
+<span class='line'>621</span>  *
+<span class='line'>622</span>  * セルエントリを　文字列　タイムラインラベル　[カラセルフラグ]で与えて有効エントリの検査を行う
+<span class='line'>623</span>  * MAP内部を走査して有効エントリにマッチした場合は有効エントリを示す固有のIDを返す
+<span class='line'>624</span>  * （AE版では　グループ相当のコンポオブジェクトおよびフレームIDで返す）
+<span class='line'>625</span>  * カラセルフラグが与えられた場合は、本来のカラセルメソッドを上書きして強制的にカラセルメソッドを切り替える
+<span class='line'>626</span>  * AE版の旧版タイムシートリンカとの互換機能
+<span class='line'>627</span>  
+<span class='line'>628</span>  この関数は後方互換のために存在するので新規の利用は禁止
+<span class='line'>629</span>  
+<span class='line'>630</span>  調整的には、dataChaeck関数はこのまま残置してxMapに順次移行
+<span class='line'>631</span>  xMap.dataChaeck は設定しない（他のスタイルで実装）
+<span class='line'>632</span>  
+<span class='line'>633</span>  */</span></pre></body></html>

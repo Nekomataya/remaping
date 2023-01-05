@@ -1,0 +1,565 @@
+<html><head><meta http-equiv="content-type" content="text/html; charset=utf-8"> <style>
+	.KEYW {color: #933;}
+	.COMM {color: #bbb; font-style: italic;}
+	.NUMB {color: #393;}
+	.STRN {color: #393;}
+	.REGX {color: #339;}
+	.line {border-right: 1px dotted #666; color: #666; font-style: normal;}
+	</style></head><body><pre><span class='line'>  1</span> <span class="TOKN">﻿</span><span class="COMM">/**
+<span class='line'>  2</span>  * @overview object nas.otome.systemWatcher(myCommand)
+<span class='line'>  3</span>  * 
+<span class='line'>  4</span>  * systemWatcherオブジェクトはシステムのクリップボードと特定のフォルダを監視するシステムを提供する。
+<span class='line'>  5</span>  * 設定されたインターバルで指定フォルダおよびクリップボードの監視を行うことができる。
+<span class='line'>  6</span>  * 外部プログラムをエージェントとしてAE（乙女）に変更を通知することも可能。
+<span class='line'>  7</span>  * これらをトリガーにしてコマンドキューに登録したアクションを実行することができる
+<span class='line'>  8</span>  * 
+<span class='line'>  9</span>  * アクションにはFunction またはFileオブジェクトを指定する。
+<span class='line'> 10</span>  * アクションはキューに複数登録しておくことが可能
+<span class='line'> 11</span>  * 
+<span class='line'> 12</span>  * 引数:myComamnd にはコマンド文字列としてステータスを表す文字列または設定するインターバルを与える
+<span class='line'> 13</span>  * [整数]	監視インターバルをミリ秒で指定。デフォルトは　60000 (1分間隔)
+<span class='line'> 14</span>  * start	監視を開始する。初期化手順が終了するとこのステータスは自動消滅する。
+<span class='line'> 15</span>  * stop	ステータスフラグを停止にする。AEは呼び出されてもアクションを行なわない。このフラグを認識したエージェントは動作を停止することが望まれる（　停止しなくても良い　）AEの動作はsleepとほぼ同じ
+<span class='line'> 16</span>  * sleep	ステータスフラグを休止にする。監視継続中だがAEは呼び出されてもアクションを行なわない。エージェントはAEを呼び出さないことが望まれる。外部から呼び出しを行う前にステータスを確認して必要なら変更をトライすること。トライした変更は保証されない。
+<span class='line'> 17</span>  * wakeup	ステータスフラグを活動中にする。エージェントはターゲットを監視してクリップボードやファイルが更新されたらAEを呼び出す。AEは呼び出しを受けるとキューのコマンドを逐次実行する。
+<span class='line'> 18</span>  * 
+<span class='line'> 19</span>  * 監視プロセス実行中は、ステータス遷移コマンドは、以下のように働く
+<span class='line'> 20</span>  * start	監視プロセスを初期化する。初期化終了後は自身のステータスを動作設定にしたがってsleep/wakeupのいずれかに変更する。
+<span class='line'> 21</span>  * stop	監視プロセスを終了ステータスへ遷移する。監視インターバルは停止する。外部からの呼び出しは無視する。startupコマンドのみがこの状態を稼動状態へ遷移させる
+<span class='line'> 22</span>  * sleep	wakeup状態の監視プロセスがこのコマンドを受け取ると、sleep状態に遷移する。インターバル監視は停止。外部からの呼び出しはwakup/stop以外のコマンドを受け取らない
+<span class='line'> 23</span>  * wakeup	sleep状態の監視プロセスはこのコマンドを受け取ると、wakeup状態に遷移する。監視インターバルは設定された間隔でクリップボードとフォルダの監視を行う。外部呼出しはすべてのコマンドを受信する。
+<span class='line'> 24</span>  * 
+<span class='line'> 25</span>  * 
+<span class='line'> 26</span>  * 監視エージェントの起動は別プロセスにゆだねる。ステータスと一元管理をしない
+<span class='line'> 27</span>  * 手作業でエージェントを起動しても良い。
+<span class='line'> 28</span>  * 
+<span class='line'> 29</span>  * エージェント監視フォルダにあるコマンドフォルダを参照されたし。このフォルダの名前をトリガーにしてエージェントは動作をコントロールすることを期待されている。
+<span class='line'> 30</span>  * 指定できるコマンド（フォルダ名）は以下の三つのうちいずれか。
+<span class='line'> 31</span>  * 上から順に優先でそのフォルダが存在すればＡＥ側のステータスがその状態である
+<span class='line'> 32</span>  * stop.cmd 	エージェント終了
+<span class='line'> 33</span>  * sleep.cmd	通知停止
+<span class='line'> 34</span>  * wakeup.cmd	通知開始
+<span class='line'> 35</span>  * 
+<span class='line'> 36</span>  * エージェントは自己の希望する動作状態をotomeに通知する。　この通知を受けたAEは、可能な限りステータスを変更してコマンドフォルダを名称変更する。
+<span class='line'> 37</span>  * フォルダの名前を外部から手作業で変更することでエージェントの動作をコントロールすることも可能だが、エージェントはAEに対して変更リクエストを出すことを望まれる。
+<span class='line'> 38</span>  * エージェントはAEに問い合わせを行なって現在の監視フォルダのロケーションを得ることが出来るようにする（固定コーディングしない）
+<span class='line'> 39</span>  * 
+<span class='line'> 40</span>  * @param myStatus
+<span class='line'> 41</span>  * @returns {*}
+<span class='line'> 42</span>  */</span><span class="WHIT">
+<span class='line'> 43</span> </span><span class="NAME">nas.otome.systemWatcher</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="KEYW">function</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">myStatus</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'> 44</span> </span><span class="WHIT">    </span><span class="NAME">this.systemWatcher.checkStatus</span><span class="PUNC">(</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 45</span> </span><span class="WHIT">    </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="KEYW">false</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'> 46</span> </span><span class="WHIT">        </span><span class="COMM">/**
+<span class='line'> 47</span>          * @desc コマンドステータスが存在しない場合は{stop}（初回込み）
+<span class='line'> 48</span>          */</span><span class="WHIT">
+<span class='line'> 49</span> </span><span class="WHIT">        </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">this.systemWatcher.commandStatus</span><span class="WHIT"> </span><span class="KEYW">instanceof</span><span class="WHIT"> </span><span class="NAME">Folder</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'> 50</span> </span><span class="WHIT">            </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="PUNC">!</span><span class="NAME">this.systemWatcher.commandStatus.exists</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'> 51</span> </span><span class="WHIT">                </span><span class="NAME">this.systemWatcher.status</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="STRN">"stop"</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 52</span> </span><span class="WHIT">                </span><span class="NAME">this.systemWatcher.commandStatus</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="KEYW">null</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 53</span> </span><span class="WHIT">                </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="PUNC">(</span><span class="NAME">this.systemWatcher.watchID</span><span class="PUNC">)</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'> 54</span> </span><span class="WHIT">                    </span><span class="NAME">app.cancelTask</span><span class="PUNC">(</span><span class="NAME">this.systemWatcher.watchID</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 55</span> </span><span class="WHIT">                    </span><span class="NAME">this.systemWatcher.watchID</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NUMB">0</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 56</span> </span><span class="WHIT">                </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'> 57</span> </span><span class="WHIT">            </span><span class="PUNC">}</span><span class="WHIT"> </span><span class="KEYW">else</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'> 58</span> </span><span class="WHIT">                </span><span class="KEYW">switch</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">this.systemWatcher.commandStatus.name</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'> 59</span> </span><span class="WHIT">                    </span><span class="KEYW">case</span><span class="WHIT"> </span><span class="STRN">"stop.cmd"</span><span class="WHIT"> </span><span class="PUNC">:</span><span class="WHIT">
+<span class='line'> 60</span> </span><span class="WHIT">                        </span><span class="NAME">this.systemWatcher.status</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="STRN">"stop"</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 61</span> </span><span class="WHIT">                        </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">this.systemWatcher.watchID</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'> 62</span> </span><span class="WHIT">                            </span><span class="NAME">this.app.cancelTask</span><span class="PUNC">(</span><span class="NAME">this.systemWatcher.watchID</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 63</span> </span><span class="WHIT">                            </span><span class="NAME">this.systemWatcher.watchID</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NUMB">0</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 64</span> </span><span class="WHIT">                        </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'> 65</span> </span><span class="WHIT">                        </span><span class="KEYW">break</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 66</span> </span><span class="WHIT">                    </span><span class="KEYW">case</span><span class="WHIT"> </span><span class="STRN">"sleep.cmd"</span><span class="WHIT"> </span><span class="PUNC">:</span><span class="WHIT">
+<span class='line'> 67</span> </span><span class="WHIT">                        </span><span class="NAME">this.systemWatcher.status</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="STRN">"sleep"</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 68</span> </span><span class="WHIT">                        </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="PUNC">!</span><span class="NAME">this.systemWatcher.watchID</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'> 69</span> </span><span class="WHIT">                            </span><span class="NAME">systemWatcher.watchID</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">app.scheduleTask</span><span class="PUNC">(</span><span class="STRN">"nas.otome.systemWatcher.notice(\"all\");"</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">this.systemWatcher.watchInterval</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="KEYW">true</span><span class="PUNC">)</span><span class="WHIT">
+<span class='line'> 70</span> </span><span class="WHIT">                        </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'> 71</span> </span><span class="WHIT">                        </span><span class="KEYW">break</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 72</span> </span><span class="WHIT">                    </span><span class="KEYW">case</span><span class="WHIT"> </span><span class="STRN">"wakeup.cmd"</span><span class="PUNC">:</span><span class="WHIT">
+<span class='line'> 73</span> </span><span class="WHIT">                        </span><span class="NAME">this.systemWatcher.status</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="STRN">"wakeup"</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 74</span> </span><span class="WHIT">                        </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="PUNC">!</span><span class="NAME">this.systemWatcher.watchID</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'> 75</span> </span><span class="WHIT">                            </span><span class="NAME">systemWatcher.watchID</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">app.scheduleTask</span><span class="PUNC">(</span><span class="STRN">"nas.otome.systemWatcher.notice(\"all\");"</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">this.systemWatcher.watchInterval</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="KEYW">true</span><span class="PUNC">)</span><span class="WHIT">
+<span class='line'> 76</span> </span><span class="WHIT">                        </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'> 77</span> </span><span class="WHIT">                        </span><span class="KEYW">break</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 78</span> </span><span class="WHIT">                </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'> 79</span> </span><span class="WHIT">            </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'> 80</span> </span><span class="WHIT">        </span><span class="PUNC">}</span><span class="WHIT"> </span><span class="KEYW">else</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'> 81</span> </span><span class="WHIT">            </span><span class="COMM">/**
+<span class='line'> 82</span>              * @desc commandStatusが無いので作成
+<span class='line'> 83</span>              * コマンド指定フォルダがあるかどうか確認する。すでに存在した場合は優先順位に従ってステータスを設定　存在しない場合は新規作成
+<span class='line'> 84</span>              */</span><span class="WHIT">
+<span class='line'> 85</span> </span><span class="WHIT">            </span><span class="KEYW">var</span><span class="WHIT"> </span><span class="NAME">folderContent</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">this.systemWatcher.watchFolder.getFiles</span><span class="PUNC">(</span><span class="STRN">"*.cmd"</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 86</span> </span><span class="WHIT">            </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">folderContent.length</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'> 87</span> </span><span class="WHIT">                </span><span class="KEYW">for</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="KEYW">var</span><span class="WHIT"> </span><span class="NAME">idf</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NUMB">0</span><span class="PUNC">;</span><span class="WHIT"> </span><span class="NAME">idf</span><span class="WHIT"> </span><span class="PUNC">&lt;</span><span class="WHIT"> </span><span class="NAME">folderContent.length</span><span class="PUNC">;</span><span class="WHIT"> </span><span class="NAME">idf</span><span class="PUNC">++</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'> 88</span> 
+<span class='line'> 89</span> </span><span class="WHIT">                    </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="PUNC">(</span><span class="NAME">folderContent</span><span class="PUNC">[</span><span class="NAME">idf</span><span class="PUNC">]</span><span class="WHIT"> </span><span class="KEYW">instanceof</span><span class="WHIT"> </span><span class="NAME">Folder</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">&&</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">folderContent</span><span class="PUNC">[</span><span class="NAME">idf</span><span class="PUNC">]</span><span class="PUNC">.</span><span class="NAME">name.match</span><span class="PUNC">(</span><span class="REGX">/(stop|sleep|wakeup)\.cmd/i</span><span class="PUNC">)</span><span class="PUNC">)</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'> 90</span> </span><span class="WHIT">                        </span><span class="NAME">this.systemWatcher.status</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">RegExp.$1</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 91</span> </span><span class="WHIT">                        </span><span class="NAME">this.systemWatcher.commandStatus</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="KEYW">new</span><span class="WHIT"> </span><span class="NAME">Folder</span><span class="PUNC">(</span><span class="NAME">folderContent</span><span class="PUNC">[</span><span class="NAME">idf</span><span class="PUNC">]</span><span class="PUNC">.</span><span class="NAME">fsName</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 92</span> </span><span class="WHIT">                        </span><span class="KEYW">break</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 93</span> </span><span class="WHIT">                    </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'> 94</span> </span><span class="WHIT">                </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'> 95</span> </span><span class="WHIT">            </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'> 96</span> </span><span class="WHIT">        </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'> 97</span> </span><span class="WHIT">        </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="PUNC">!</span><span class="NAME">this.systemWatcher.commandStatus</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'> 98</span> </span><span class="WHIT">            </span><span class="NAME">this.systemWatcher.commandStatus</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="KEYW">new</span><span class="WHIT"> </span><span class="NAME">Folder</span><span class="PUNC">(</span><span class="PUNC">[</span><span class="NAME">this.systemWatcher.watchFolder.path</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">this.systemWatcher.watchFolder.name</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">this.systemWatcher.status</span><span class="WHIT"> </span><span class="PUNC">+</span><span class="WHIT"> </span><span class="STRN">".cmd"</span><span class="PUNC">]</span><span class="PUNC">.</span><span class="NAME">join</span><span class="PUNC">(</span><span class="STRN">"/"</span><span class="PUNC">)</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 99</span> </span><span class="WHIT">            </span><span class="KEYW">try</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>100</span> </span><span class="WHIT">                </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="PUNC">!</span><span class="PUNC">(</span><span class="NAME">this.systemWatcher.commandStatus.exists</span><span class="PUNC">)</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>101</span> </span><span class="WHIT">                    </span><span class="NAME">this.systemWatcher.commandStatus.create</span><span class="PUNC">(</span><span class="PUNC">)</span><span class="WHIT">
+<span class='line'>102</span> </span><span class="WHIT">                </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>103</span> </span><span class="WHIT">            </span><span class="PUNC">}</span><span class="WHIT"> </span><span class="KEYW">catch</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">er</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>104</span> </span><span class="WHIT">                </span><span class="NAME">alert</span><span class="PUNC">(</span><span class="NAME">er</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>105</span> </span><span class="WHIT">                </span><span class="KEYW">return</span><span class="WHIT"> </span><span class="KEYW">false</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>106</span> </span><span class="WHIT">            </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>107</span> </span><span class="WHIT">        </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>108</span> </span><span class="WHIT">    </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>109</span> 
+<span class='line'>110</span> 
+<span class='line'>111</span> </span><span class="WHIT">    </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="PUNC">!</span><span class="NAME">myStatus</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>112</span> </span><span class="WHIT">        </span><span class="KEYW">return</span><span class="WHIT"> </span><span class="NAME">this.systemWatcher.status</span><span class="WHIT">
+<span class='line'>113</span> </span><span class="WHIT">    </span><span class="PUNC">}</span><span class="COMM">//指定がなければ現状をリターン</span><span class="WHIT">
+<span class='line'>114</span> 
+<span class='line'>115</span> </span><span class="WHIT">    </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">myStatus.match</span><span class="PUNC">(</span><span class="REGX">/(stop|sleep|wakeup)/i</span><span class="PUNC">)</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>116</span> </span><span class="WHIT">        </span><span class="NAME">this.systemWatcher.status</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">myStatus</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>117</span> </span><span class="WHIT">        </span><span class="NAME">this.systemWatcher.commandStatus.rename</span><span class="PUNC">(</span><span class="NAME">myStatus</span><span class="WHIT"> </span><span class="PUNC">+</span><span class="WHIT"> </span><span class="STRN">".cmd"</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>118</span> </span><span class="WHIT">    </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>119</span> 
+<span class='line'>120</span> </span><span class="WHIT">    </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="PUNC">!</span><span class="PUNC">(</span><span class="NAME">isNaN</span><span class="PUNC">(</span><span class="NAME">myStatus</span><span class="PUNC">)</span><span class="PUNC">)</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>121</span> </span><span class="WHIT">        </span><span class="NAME">this.systemWatcher.watchInterval</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">myStatus</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>122</span> </span><span class="WHIT">        </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">this.systemWatcher.watchID</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>123</span> </span><span class="WHIT">            </span><span class="NAME">app.cancelTask</span><span class="PUNC">(</span><span class="NAME">this.systemWatcher.watchID</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="COMM">//タスクがあれば更新</span><span class="WHIT">
+<span class='line'>124</span> </span><span class="WHIT">            </span><span class="NAME">this.systemWatcher.watchID</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">app.scheduleTask</span><span class="PUNC">(</span><span class="STRN">"nas.otome.systemWatcher.notice(\"all\");"</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">this.systemWatcher.watchInterval</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="KEYW">true</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>125</span> </span><span class="WHIT">        </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>126</span> </span><span class="WHIT">    </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>127</span> 
+<span class='line'>128</span> </span><span class="WHIT">    </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="PUNC">(</span><span class="NAME">this.systemWatcher.status.match</span><span class="PUNC">(</span><span class="REGX">/stop/i</span><span class="PUNC">)</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">&&</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">this.systemWatcher.watchID</span><span class="PUNC">)</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>129</span> </span><span class="WHIT">        </span><span class="NAME">this.app.cancelTask</span><span class="PUNC">(</span><span class="NAME">this.systemWatcher.watchID</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>130</span> </span><span class="WHIT">        </span><span class="NAME">this.systemWatcher.watchID</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NUMB">0</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>131</span> </span><span class="WHIT">    </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>132</span> 
+<span class='line'>133</span> </span><span class="WHIT">    </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="PUNC">(</span><span class="NAME">this.systemWatcher.status.match</span><span class="PUNC">(</span><span class="REGX">/(sleep|wakeup)/i</span><span class="PUNC">)</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">&&</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">this.systemWatcher.watchID</span><span class="WHIT"> </span><span class="PUNC">==</span><span class="WHIT"> </span><span class="NUMB">0</span><span class="PUNC">)</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>134</span> </span><span class="WHIT">        </span><span class="NAME">this.systemWatcher.watchID</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">app.scheduleTask</span><span class="PUNC">(</span><span class="STRN">"nas.otome.systemWatcher.notice(\"all\");"</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">this.systemWatcher.watchInterval</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="KEYW">true</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>135</span> </span><span class="WHIT">    </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>136</span> 
+<span class='line'>137</span> </span><span class="WHIT">    </span><span class="KEYW">return</span><span class="WHIT"> </span><span class="NAME">this.systemWatcher.status</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>138</span> 
+<span class='line'>139</span> </span><span class="WHIT">    </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">myStatus</span><span class="WHIT"> </span><span class="PUNC">!=</span><span class="WHIT"> </span><span class="NAME">this.systemWatcher.status</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>140</span> </span><span class="WHIT">        </span><span class="KEYW">switch</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">myStatus</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>141</span> </span><span class="WHIT">            </span><span class="KEYW">case</span><span class="WHIT"> </span><span class="STRN">"sleep"</span><span class="PUNC">:</span><span class="WHIT">
+<span class='line'>142</span> </span><span class="WHIT">            </span><span class="KEYW">case</span><span class="WHIT"> </span><span class="STRN">"wakeup"</span><span class="PUNC">:</span><span class="WHIT">
+<span class='line'>143</span> </span><span class="WHIT">                </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">this.systemWatcher.status</span><span class="WHIT"> </span><span class="PUNC">==</span><span class="WHIT"> </span><span class="STRN">"stop"</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>144</span> </span><span class="WHIT">                    </span><span class="KEYW">return</span><span class="WHIT"> </span><span class="NAME">this.systemWatcher.status</span><span class="WHIT">
+<span class='line'>145</span> </span><span class="WHIT">                </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>146</span> </span><span class="WHIT">                </span><span class="NAME">this.systemWatcher.commandStatus.rename</span><span class="PUNC">(</span><span class="NAME">myStatus</span><span class="WHIT"> </span><span class="PUNC">+</span><span class="WHIT"> </span><span class="STRN">".cmd"</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>147</span> </span><span class="WHIT">                </span><span class="KEYW">break</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>148</span> </span><span class="WHIT">            </span><span class="KEYW">case</span><span class="WHIT"> </span><span class="STRN">"stop"</span><span class="PUNC">:</span><span class="WHIT">
+<span class='line'>149</span> </span><span class="WHIT">                </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">this.systemWatcher.commandStatus</span><span class="WHIT"> </span><span class="PUNC">!=</span><span class="WHIT"> </span><span class="KEYW">null</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>150</span> </span><span class="WHIT">                    </span><span class="NAME">this.systemWatcher.commandStatus.rename</span><span class="PUNC">(</span><span class="NAME">myStatus</span><span class="WHIT"> </span><span class="PUNC">+</span><span class="WHIT"> </span><span class="STRN">".cmd"</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>151</span> </span><span class="WHIT">                </span><span class="PUNC">}</span><span class="WHIT"> </span><span class="KEYW">else</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>152</span> </span><span class="WHIT">                    </span><span class="NAME">this.systemWatcher.commandStatus</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="KEYW">null</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>153</span> </span><span class="WHIT">                </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>154</span> </span><span class="WHIT">                </span><span class="KEYW">break</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>155</span> </span><span class="WHIT">            </span><span class="KEYW">case</span><span class="WHIT"> </span><span class="STRN">"start"</span><span class="PUNC">:</span><span class="WHIT">
+<span class='line'>156</span> </span><span class="WHIT">                </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">this.systemWatcher.status</span><span class="WHIT"> </span><span class="PUNC">!=</span><span class="WHIT"> </span><span class="STRN">"stop"</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>157</span> </span><span class="WHIT">                    </span><span class="KEYW">return</span><span class="WHIT"> </span><span class="NAME">this.systemWatcher.status</span><span class="WHIT">
+<span class='line'>158</span> </span><span class="WHIT">                </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>159</span> 
+<span class='line'>160</span> </span><span class="WHIT">                </span><span class="COMM">/**
+<span class='line'>161</span>                  * @desc 起動失敗した場合はステータスファイルがそのままで残る。　ステータスも変更なし
+<span class='line'>162</span>                  * 呼び出されてオブジェクトがなければ作成（イニシエーション）
+<span class='line'>163</span>                  */</span><span class="WHIT">
+<span class='line'>164</span> </span><span class="WHIT">                </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="PUNC">!</span><span class="NAME">this.commandStatus</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>165</span> </span><span class="WHIT">                    </span><span class="NAME">this.systemWatcher.commandStatus</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="KEYW">new</span><span class="WHIT"> </span><span class="NAME">Folder</span><span class="PUNC">(</span><span class="PUNC">[</span><span class="NAME">this.systemWatcher.watchFolder.path</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">this.systemWatcher.watchFolder.name</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="STRN">"start.cmd"</span><span class="PUNC">]</span><span class="PUNC">.</span><span class="NAME">join</span><span class="PUNC">(</span><span class="STRN">"/"</span><span class="PUNC">)</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>166</span> </span><span class="WHIT">                    </span><span class="KEYW">try</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>167</span> </span><span class="WHIT">                        </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="PUNC">!</span><span class="PUNC">(</span><span class="NAME">this.systemWatcher.commandStatus.exists</span><span class="PUNC">)</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>168</span> </span><span class="WHIT">                            </span><span class="NAME">this.systemWatcher.commandStatus.create</span><span class="PUNC">(</span><span class="PUNC">)</span><span class="WHIT">
+<span class='line'>169</span> </span><span class="WHIT">                        </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>170</span> </span><span class="WHIT">                    </span><span class="PUNC">}</span><span class="WHIT"> </span><span class="KEYW">catch</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">er</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>171</span> </span><span class="WHIT">                        </span><span class="NAME">alert</span><span class="PUNC">(</span><span class="NAME">er</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>172</span> </span><span class="WHIT">                        </span><span class="KEYW">return</span><span class="WHIT"> </span><span class="KEYW">false</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>173</span> </span><span class="WHIT">                    </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>174</span> </span><span class="WHIT">                </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>175</span> </span><span class="WHIT">                </span><span class="COMM">/**
+<span class='line'>176</span>                  * @desc agent呼び出し　
+<span class='line'>177</span>                  * エージェントがステータスファイル名を変更してステータスを更新する
+<span class='line'>178</span>                  */</span><span class="WHIT">
+<span class='line'>179</span> </span><span class="WHIT">                </span><span class="NAME">this.systemWatcher.startup</span><span class="PUNC">(</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>180</span> </span><span class="WHIT">                </span><span class="KEYW">break</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>181</span> </span><span class="WHIT">            </span><span class="KEYW">default</span><span class="WHIT"> </span><span class="PUNC">:</span><span class="WHIT">
+<span class='line'>182</span> </span><span class="WHIT">                </span><span class="KEYW">return</span><span class="WHIT"> </span><span class="NAME">this.systemWatcher.status</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>183</span> </span><span class="WHIT">        </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>184</span> </span><span class="WHIT">    </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>185</span> </span><span class="WHIT">    </span><span class="KEYW">return</span><span class="WHIT"> </span><span class="NAME">myStatus</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>186</span> </span><span class="PUNC">}</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>187</span> 
+<span class='line'>188</span> 
+<span class='line'>189</span> </span><span class="NAME">nas.otome.systemWatcher.commandStatus</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="KEYW">new</span><span class="WHIT"> </span><span class="NAME">Folder</span><span class="PUNC">(</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="COMM">//空フォルダ　で初期化する</span><span class="WHIT">
+<span class='line'>190</span> </span><span class="COMM">/**
+<span class='line'>191</span>  * nas.otome.systemWatcher.commandStatus
+<span class='line'>192</span>  * null または　Folder オブジェクト　ケースによっては認識できない場合があるので注意
+<span class='line'>193</span>  */</span><span class="WHIT">
+<span class='line'>194</span> 
+<span class='line'>195</span> </span><span class="COMM">/**
+<span class='line'>196</span>  * nas.otome.systemWatcher.status
+<span class='line'>197</span>  * 
+<span class='line'>198</span>  * @desc エージェントの動作を表す内部変数
+<span class='line'>199</span>  * プログラムによる更新は禁止される（変更した場合の動作は保証されない）
+<span class='line'>200</span>  * エージェントが外部から自分の状態をセットする　参照可能
+<span class='line'>201</span>  */</span><span class="WHIT">
+<span class='line'>202</span> </span><span class="NAME">nas.otome.systemWatcher.status</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="STRN">"stop"</span><span class="PUNC">;</span><span class="COMM">//"stop"で初期化（必ず）</span><span class="WHIT">
+<span class='line'>203</span> 
+<span class='line'>204</span> </span><span class="COMM">/*nas.otome.systemWatcher.watchFolder
+<span class='line'>205</span>  watchFolder 　には、システム監視オブジェクトの受信ステータスファイルが置かれる。任意の位置に設定可能だが、規定位置を推奨。
+<span class='line'>206</span>  規定位置は　レンダー乙女のライブラリ内の　/nas/(temp)/
+<span class='line'>207</span>  サイトによってはこの場所の変更に対して管理権限が必要な場合があるので、その場合は設定を変更することも出来る。
+<span class='line'>208</span>  エージェントはこの場所にある管理ステータスを参照する必要があるのでエージェントの設定に注意されたし。
+<span class='line'>209</span>  変更先の候補
+<span class='line'>210</span>  Folder.userData.path+"/"+Folder.userData.name+"/nas/lib/(temp)"
+<span class='line'>211</span>  */</span><span class="WHIT">
+<span class='line'>212</span> </span><span class="NAME">nas.otome.systemWatcher.watchFolder</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">Folder</span><span class="PUNC">(</span><span class="NAME">Folder.userData.path</span><span class="WHIT"> </span><span class="PUNC">+</span><span class="WHIT"> </span><span class="STRN">"/"</span><span class="WHIT"> </span><span class="PUNC">+</span><span class="WHIT"> </span><span class="NAME">Folder.userData.name</span><span class="WHIT"> </span><span class="PUNC">+</span><span class="WHIT"> </span><span class="STRN">"/nas/lib/(temp)"</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>213</span> </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="PUNC">!</span><span class="NAME">nas.otome.systemWatcher.watchFolder.exists</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>214</span> </span><span class="WHIT">    </span><span class="NAME">nas.otome.systemWatcher.watchFolder.create</span><span class="PUNC">(</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>215</span> </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>216</span> </span><span class="COMM">/**
+<span class='line'>217</span>  * nas.otome.sysyemWatcher.commandQueue
+<span class='line'>218</span>  * 
+<span class='line'>219</span>  * コマンドキュー
+<span class='line'>220</span>  * 監視オブジェクトのコマンドコレクション
+<span class='line'>221</span>  * コマンドコレクションに登録するのはコマンドオブジェクト
+<span class='line'>222</span>  * コマンドの比較メソッドが必要かも。重複したコマンドを削除する必要がありそう　何しろ同じ操作をみなおこないがち。
+<span class='line'>223</span>  * ボタン二回クリックとか
+<span class='line'>224</span>  * 基本的には、システムとしては完全に重複したものだけを削除する機能を提供する。
+<span class='line'>225</span>  * それ以外はユーザ判断で処理
+<span class='line'>226</span>  * 比較メソッドはコマンドオブジェクトのメンバ関数
+<span class='line'>227</span>  *
+<span class='line'>228</span>  * @param myTarget
+<span class='line'>229</span>  * @param watchFile
+<span class='line'>230</span>  * @param isEnabled
+<span class='line'>231</span>  * @param myFunc
+<span class='line'>232</span>  */</span><span class="WHIT">
+<span class='line'>233</span> </span><span class="NAME">nas.watchCommand</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="KEYW">function</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">myTarget</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">watchFile</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">isEnabled</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">myFunc</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>234</span> </span><span class="WHIT">    </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="PUNC">!</span><span class="NAME">myTarget</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>235</span> </span><span class="WHIT">        </span><span class="NAME">myTarget</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="STRN">"none"</span><span class="WHIT">
+<span class='line'>236</span> </span><span class="WHIT">    </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>237</span> </span><span class="WHIT">    </span><span class="COMM">//"folder""clipboard""both"or"none"　任意の文字列でも可</span><span class="WHIT">
+<span class='line'>238</span> </span><span class="WHIT">    </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="PUNC">!</span><span class="NAME">watchFile</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>239</span> </span><span class="WHIT">        </span><span class="NAME">watchFile</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="KEYW">false</span><span class="WHIT">
+<span class='line'>240</span> </span><span class="WHIT">    </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>241</span> </span><span class="WHIT">    </span><span class="COMM">//FilePath(url) or File ?コマンド実行時のスキップ用</span><span class="WHIT">
+<span class='line'>242</span> </span><span class="WHIT">    </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="PUNC">!</span><span class="NAME">isEnabled</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>243</span> </span><span class="WHIT">        </span><span class="NAME">isEnabled</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="KEYW">false</span><span class="WHIT">
+<span class='line'>244</span> </span><span class="WHIT">    </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>245</span> </span><span class="WHIT">    </span><span class="COMM">//実行保留フラグ</span><span class="WHIT">
+<span class='line'>246</span> </span><span class="WHIT">    </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="PUNC">!</span><span class="NAME">myFunc</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>247</span> </span><span class="WHIT">        </span><span class="NAME">myFunc</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="KEYW">function</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>248</span> </span><span class="WHIT">            </span><span class="NAME">alert</span><span class="PUNC">(</span><span class="NAME">this.parent.watchFile</span><span class="PUNC">)</span><span class="WHIT">
+<span class='line'>249</span> </span><span class="WHIT">        </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>250</span> </span><span class="WHIT">    </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>251</span> </span><span class="WHIT">    </span><span class="COMM">//コマンド</span><span class="WHIT">
+<span class='line'>252</span> </span><span class="WHIT">    </span><span class="NAME">this.watchFile</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">watchFile</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>253</span> </span><span class="WHIT">    </span><span class="NAME">this.watchTarget</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">myTarget</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>254</span> </span><span class="WHIT">    </span><span class="NAME">this.enabled</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">isEnabled</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>255</span> </span><span class="WHIT">    </span><span class="NAME">this.targetCommand</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">myFunc</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>256</span> </span><span class="WHIT">    </span><span class="NAME">this.isSame</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="KEYW">function</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">myCommand</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>257</span> </span><span class="WHIT">        </span><span class="COMM">//コマンド同士の比較　完全一致の場合のみtrue enabledは一時変数の性格が強いので比較対象外に</span><span class="WHIT">
+<span class='line'>258</span> </span><span class="WHIT">        </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">this.watchFile.fsName</span><span class="WHIT"> </span><span class="PUNC">!=</span><span class="WHIT"> </span><span class="NAME">myCommand.watchFile.fsName</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>259</span> </span><span class="WHIT">            </span><span class="KEYW">return</span><span class="WHIT"> </span><span class="KEYW">false</span><span class="WHIT">
+<span class='line'>260</span> </span><span class="WHIT">        </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>261</span> </span><span class="WHIT">        </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">this.watchTarget</span><span class="WHIT"> </span><span class="PUNC">!=</span><span class="WHIT"> </span><span class="NAME">myCommand.watchTarget</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>262</span> </span><span class="WHIT">            </span><span class="KEYW">return</span><span class="WHIT"> </span><span class="KEYW">false</span><span class="WHIT">
+<span class='line'>263</span> </span><span class="WHIT">        </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>264</span> </span><span class="WHIT">        </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">this.targetCommand.toSource</span><span class="PUNC">(</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">!=</span><span class="WHIT"> </span><span class="NAME">myCommand.targetCommand.toSource</span><span class="PUNC">(</span><span class="PUNC">)</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>265</span> </span><span class="WHIT">            </span><span class="KEYW">return</span><span class="WHIT"> </span><span class="KEYW">false</span><span class="WHIT">
+<span class='line'>266</span> </span><span class="WHIT">        </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>267</span> </span><span class="WHIT">        </span><span class="KEYW">return</span><span class="WHIT"> </span><span class="KEYW">true</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>268</span> </span><span class="WHIT">    </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>269</span> </span><span class="PUNC">}</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>270</span> 
+<span class='line'>271</span> </span><span class="NAME">nas.otome.systemWatcher.commandQueue</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="PUNC">[</span><span class="PUNC">]</span><span class="PUNC">;</span><span class="COMM">//トレーラー配列</span><span class="WHIT">
+<span class='line'>272</span> </span><span class="COMM">/**
+<span class='line'>273</span>  * キュー追加 重複コマンドチェックあり　追加に失敗した場合はfalse
+<span class='line'>274</span>  * @param myTarget
+<span class='line'>275</span>  * @param watchFile
+<span class='line'>276</span>  * @param isEnabled
+<span class='line'>277</span>  * @param myFunc
+<span class='line'>278</span>  * @returns {*}
+<span class='line'>279</span>  */</span><span class="WHIT">
+<span class='line'>280</span> </span><span class="NAME">nas.otome.systemWatcher.addCommand</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="KEYW">function</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">myTarget</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">watchFile</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">isEnabled</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">myFunc</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>281</span> </span><span class="WHIT">    </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="PUNC">!</span><span class="NAME">myTarget</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>282</span> </span><span class="WHIT">        </span><span class="NAME">myTarget</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="STRN">"none"</span><span class="WHIT">
+<span class='line'>283</span> </span><span class="WHIT">    </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>284</span> </span><span class="WHIT">    </span><span class="COMM">//"folder""clipboard""both"</span><span class="WHIT">
+<span class='line'>285</span> </span><span class="WHIT">    </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="PUNC">!</span><span class="NAME">watchFile</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>286</span> </span><span class="WHIT">        </span><span class="NAME">watchFile</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="KEYW">false</span><span class="WHIT">
+<span class='line'>287</span> </span><span class="WHIT">    </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>288</span> </span><span class="WHIT">    </span><span class="COMM">//FilePath(url) or sigText ?コマンド実行時のスキップ用</span><span class="WHIT">
+<span class='line'>289</span> </span><span class="WHIT">    </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="PUNC">!</span><span class="NAME">isEnabled</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>290</span> </span><span class="WHIT">        </span><span class="NAME">isEnabled</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="KEYW">true</span><span class="WHIT">
+<span class='line'>291</span> </span><span class="WHIT">    </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>292</span> </span><span class="WHIT">    </span><span class="COMM">//待機(実行保留)フラグ(bool) true / false　フラグが立っている間はキューされても当該コマンドを実行しない　削除は削除メソッドを使用のこと</span><span class="WHIT">
+<span class='line'>293</span> </span><span class="WHIT">    </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="PUNC">!</span><span class="NAME">myFunc</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>294</span> </span><span class="WHIT">        </span><span class="NAME">myFunc</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="KEYW">false</span><span class="WHIT">
+<span class='line'>295</span> </span><span class="WHIT">    </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>296</span> </span><span class="WHIT">    </span><span class="COMM">//コマンド</span><span class="WHIT">
+<span class='line'>297</span> </span><span class="WHIT">    </span><span class="KEYW">var</span><span class="WHIT"> </span><span class="NAME">newCommand</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="KEYW">new</span><span class="WHIT"> </span><span class="NAME">nas.watchCommand</span><span class="PUNC">(</span><span class="NAME">myTarget</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">watchFile</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">isEnabled</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">myFunc</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>298</span> </span><span class="WHIT">    </span><span class="COMM">//現状のコマンド列と比較して同一内容のコマンドがあればエントリーしない</span><span class="WHIT">
+<span class='line'>299</span> </span><span class="WHIT">    </span><span class="KEYW">for</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="KEYW">var</span><span class="WHIT"> </span><span class="NAME">ix</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NUMB">0</span><span class="PUNC">;</span><span class="WHIT"> </span><span class="NAME">ix</span><span class="WHIT"> </span><span class="PUNC">&lt;</span><span class="WHIT"> </span><span class="NAME">this.commandQueue.length</span><span class="PUNC">;</span><span class="WHIT"> </span><span class="NAME">ix</span><span class="PUNC">++</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>300</span> </span><span class="WHIT">        </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">this.commandQueue</span><span class="PUNC">[</span><span class="NAME">ix</span><span class="PUNC">]</span><span class="PUNC">.</span><span class="NAME">isSame</span><span class="PUNC">(</span><span class="NAME">newCommand</span><span class="PUNC">)</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>301</span> </span><span class="WHIT">            </span><span class="KEYW">return</span><span class="WHIT"> </span><span class="KEYW">false</span><span class="WHIT">
+<span class='line'>302</span> </span><span class="WHIT">        </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>303</span> </span><span class="WHIT">    </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>304</span> </span><span class="WHIT">    </span><span class="NAME">this.commandQueue.push</span><span class="PUNC">(</span><span class="NAME">newCommand</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>305</span> </span><span class="WHIT">    </span><span class="KEYW">return</span><span class="WHIT"> </span><span class="NAME">this.commandQueue.length</span><span class="WHIT"> </span><span class="PUNC">-</span><span class="WHIT"> </span><span class="NUMB">1</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>306</span> </span><span class="PUNC">}</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>307</span> </span><span class="COMM">//キューの削除</span><span class="WHIT">
+<span class='line'>308</span> </span><span class="NAME">nas.otome.systemWatcher.removeCommand</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="KEYW">function</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">index</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>309</span> </span><span class="WHIT">    </span><span class="KEYW">var</span><span class="WHIT"> </span><span class="NAME">newQueue</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="PUNC">[</span><span class="PUNC">]</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>310</span> </span><span class="WHIT">    </span><span class="KEYW">for</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="KEYW">var</span><span class="WHIT"> </span><span class="NAME">idx</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NUMB">0</span><span class="PUNC">;</span><span class="WHIT"> </span><span class="NAME">idx</span><span class="WHIT"> </span><span class="PUNC">&lt;</span><span class="WHIT"> </span><span class="NAME">this.commandQueue.length</span><span class="PUNC">;</span><span class="WHIT"> </span><span class="NAME">idx</span><span class="PUNC">++</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>311</span> </span><span class="WHIT">        </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">idx</span><span class="WHIT"> </span><span class="PUNC">!=</span><span class="WHIT"> </span><span class="NAME">index</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>312</span> </span><span class="WHIT">            </span><span class="NAME">newQueue.push</span><span class="PUNC">(</span><span class="NAME">this.commandQueue</span><span class="PUNC">[</span><span class="NAME">idx</span><span class="PUNC">]</span><span class="PUNC">)</span><span class="WHIT">
+<span class='line'>313</span> </span><span class="WHIT">        </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>314</span> </span><span class="WHIT">    </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>315</span> </span><span class="WHIT">    </span><span class="NAME">this.commandQueue</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">newQueue</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>316</span> </span><span class="WHIT">    </span><span class="KEYW">return</span><span class="WHIT"> </span><span class="NAME">this.commandQueue.length</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>317</span> </span><span class="PUNC">}</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>318</span> 
+<span class='line'>319</span> 
+<span class='line'>320</span> </span><span class="COMM">/**
+<span class='line'>321</span>  * @desc 監視対象フォルダのステータスフラグをチェックしてstatusプロパティを更新する
+<span class='line'>322</span>  * @returns {boolean}
+<span class='line'>323</span>  */</span><span class="WHIT">
+<span class='line'>324</span> </span><span class="NAME">nas.otome.systemWatcher.checkStatus</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="KEYW">function</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>325</span> </span><span class="WHIT">    </span><span class="COMM">/**
+<span class='line'>326</span>      * @desc コマンド指定フォルダがあるかどうか確認する。
+<span class='line'>327</span>      * すでに存在した場合は優先順位に従ってステータスを設定　存在しない場合は新規作成
+<span class='line'>328</span>      */</span><span class="WHIT">
+<span class='line'>329</span> </span><span class="WHIT">    </span><span class="KEYW">var</span><span class="WHIT"> </span><span class="NAME">folderContent</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">this.watchFolder.getFiles</span><span class="PUNC">(</span><span class="STRN">"*.cmd"</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>330</span> </span><span class="WHIT">    </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">folderContent.length</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>331</span> </span><span class="WHIT">        </span><span class="KEYW">var</span><span class="WHIT"> </span><span class="NAME">count</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NUMB">0</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>332</span> </span><span class="WHIT">        </span><span class="KEYW">for</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="KEYW">var</span><span class="WHIT"> </span><span class="NAME">idf</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NUMB">0</span><span class="PUNC">;</span><span class="WHIT"> </span><span class="NAME">idf</span><span class="WHIT"> </span><span class="PUNC">&lt;</span><span class="WHIT"> </span><span class="NAME">folderContent.length</span><span class="PUNC">;</span><span class="WHIT"> </span><span class="NAME">idf</span><span class="PUNC">++</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>333</span> 
+<span class='line'>334</span> </span><span class="WHIT">            </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="PUNC">(</span><span class="NAME">folderContent</span><span class="PUNC">[</span><span class="NAME">idf</span><span class="PUNC">]</span><span class="WHIT"> </span><span class="KEYW">instanceof</span><span class="WHIT"> </span><span class="NAME">Folder</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">&&</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">folderContent</span><span class="PUNC">[</span><span class="NAME">idf</span><span class="PUNC">]</span><span class="PUNC">.</span><span class="NAME">name.match</span><span class="PUNC">(</span><span class="REGX">/(stop|sleep|wakeup)\.cmd/i</span><span class="PUNC">)</span><span class="PUNC">)</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>335</span> </span><span class="WHIT">                </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">count</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>336</span> </span><span class="WHIT">                    </span><span class="NAME">folderContent</span><span class="PUNC">[</span><span class="NAME">idf</span><span class="PUNC">]</span><span class="PUNC">.</span><span class="NAME">remove</span><span class="PUNC">(</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>337</span> </span><span class="WHIT">                </span><span class="PUNC">}</span><span class="WHIT"> </span><span class="KEYW">else</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>338</span> </span><span class="WHIT">                    </span><span class="NAME">this.commandStatus</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="KEYW">new</span><span class="WHIT"> </span><span class="NAME">Folder</span><span class="PUNC">(</span><span class="NAME">folderContent</span><span class="PUNC">[</span><span class="NAME">idf</span><span class="PUNC">]</span><span class="PUNC">.</span><span class="NAME">fsName</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>339</span> </span><span class="WHIT">                    </span><span class="NAME">count</span><span class="PUNC">++</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>340</span> </span><span class="WHIT">                </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>341</span> </span><span class="WHIT">            </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>342</span> </span><span class="WHIT">        </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>343</span> </span><span class="WHIT">    </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>344</span> </span><span class="WHIT">    </span><span class="COMM">/**
+<span class='line'>345</span>      * @desc コマンドステータスが存在しない場合は{stop}（初回込み）
+<span class='line'>346</span>      */</span><span class="WHIT">
+<span class='line'>347</span> </span><span class="WHIT">    </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="PUNC">!</span><span class="NAME">this.commandStatus.exists</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>348</span> </span><span class="WHIT">        </span><span class="NAME">this.status</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="STRN">"stop"</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>349</span> </span><span class="WHIT">        </span><span class="NAME">this.commandStatus</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="KEYW">null</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>350</span> </span><span class="WHIT">    </span><span class="PUNC">}</span><span class="WHIT"> </span><span class="KEYW">else</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>351</span> </span><span class="WHIT">        </span><span class="KEYW">switch</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">this.commandStatus.name</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>352</span> </span><span class="WHIT">            </span><span class="KEYW">case</span><span class="WHIT"> </span><span class="STRN">"stop.cmd"</span><span class="WHIT"> </span><span class="PUNC">:</span><span class="WHIT">
+<span class='line'>353</span> </span><span class="WHIT">                </span><span class="NAME">this.status</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="STRN">"stop"</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>354</span> </span><span class="WHIT">                </span><span class="KEYW">break</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>355</span> </span><span class="WHIT">            </span><span class="KEYW">case</span><span class="WHIT"> </span><span class="STRN">"sleep.cmd"</span><span class="WHIT"> </span><span class="PUNC">:</span><span class="WHIT">
+<span class='line'>356</span> </span><span class="WHIT">                </span><span class="NAME">this.status</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="STRN">"sleep"</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>357</span> </span><span class="WHIT">                </span><span class="KEYW">break</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>358</span> </span><span class="WHIT">            </span><span class="KEYW">case</span><span class="WHIT"> </span><span class="STRN">"wakeup.cmd"</span><span class="PUNC">:</span><span class="WHIT">
+<span class='line'>359</span> </span><span class="WHIT">                </span><span class="NAME">this.status</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="STRN">"wakeup"</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>360</span> </span><span class="WHIT">                </span><span class="KEYW">break</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>361</span> </span><span class="WHIT">        </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>362</span> </span><span class="WHIT">    </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>363</span> </span><span class="WHIT">    </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">this.commandStatus</span><span class="WHIT"> </span><span class="PUNC">==</span><span class="WHIT"> </span><span class="KEYW">null</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>364</span> </span><span class="WHIT">        </span><span class="NAME">alert</span><span class="PUNC">(</span><span class="STRN">"commandStatusFolder create! "</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>365</span> </span><span class="WHIT">        </span><span class="NAME">this.commandStatus</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="KEYW">new</span><span class="WHIT"> </span><span class="NAME">Folder</span><span class="PUNC">(</span><span class="PUNC">[</span><span class="NAME">this.watchFolder.path</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">this.watchFolder.name</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">this.status</span><span class="WHIT"> </span><span class="PUNC">+</span><span class="WHIT"> </span><span class="STRN">".cmd"</span><span class="PUNC">]</span><span class="PUNC">.</span><span class="NAME">join</span><span class="PUNC">(</span><span class="STRN">"/"</span><span class="PUNC">)</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>366</span> </span><span class="WHIT">        </span><span class="NAME">alert</span><span class="PUNC">(</span><span class="NAME">this.commandStatus.name</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>367</span> </span><span class="WHIT">        </span><span class="KEYW">try</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>368</span> </span><span class="WHIT">            </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="PUNC">!</span><span class="PUNC">(</span><span class="NAME">this.commandStatus.exists</span><span class="PUNC">)</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>369</span> </span><span class="WHIT">                </span><span class="NAME">this.commandStatus.create</span><span class="PUNC">(</span><span class="PUNC">)</span><span class="WHIT">
+<span class='line'>370</span> </span><span class="WHIT">            </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>371</span> </span><span class="WHIT">        </span><span class="PUNC">}</span><span class="WHIT"> </span><span class="KEYW">catch</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">er</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>372</span> </span><span class="WHIT">            </span><span class="NAME">alert</span><span class="PUNC">(</span><span class="NAME">er</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>373</span> </span><span class="WHIT">            </span><span class="KEYW">return</span><span class="WHIT"> </span><span class="KEYW">false</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>374</span> </span><span class="WHIT">        </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>375</span> </span><span class="WHIT">    </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>376</span> </span><span class="PUNC">}</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>377</span> </span><span class="COMM">/**
+<span class='line'>378</span>  * @desc nas.otome.systemWatcher.watchFolder.onChange()
+<span class='line'>379</span>  * 
+<span class='line'>380</span>  * メソッドは標準状態では 空の配列である。
+<span class='line'>381</span>  * クリップボードが更新された場合にこの配列内にあるfunctionが順次実行されるのでフォルダ監視を行ないたいプログラムがこの配列に必要な関数を加えること
+<span class='line'>382</span>  * nas.otome.systemWatcher.watchClipboard=new Object();
+<span class='line'>383</span>  * nas.otome.systemWatcher.watchClipboard.value="";
+<span class='line'>384</span>  * nas.otome.systemWatcher.watchClipboard.onChange=new Array();
+<span class='line'>385</span>  * nas.otome.systemWatcher.watchClipboard.change=function(){
+<span class='line'>386</span>  * for (var idx=0;idx&lt;this.onChange.length;idx++ ){if( this.onChange[idx] instanceof Function) {this.onChange[idx](this.value)}}
+<span class='line'>387</span>  * }
+<span class='line'>388</span>  * クリップボードはサービスしない
+<span class='line'>389</span>  */</span><span class="WHIT">
+<span class='line'>390</span> 
+<span class='line'>391</span> </span><span class="COMM">/**
+<span class='line'>392</span>  * @desc nas.otome.systemWatcher.watchClipboard.onChange
+<span class='line'>393</span>  * 
+<span class='line'>394</span>  * メソッドは標準状態では 空の配列である。
+<span class='line'>395</span>  * クリップボードが更新された場合にこの配列内にあるfunctionが順次実行されるのでフォルダ監視を行ないたいプログラムがこの配列に必要な関数を加えること
+<span class='line'>396</span>  * 変更後のクリップボードの内容は関数に引数として渡される
+<span class='line'>397</span>  * watchTargetを引数に与えることが出来る　watchTargetは文字列　"folder" "clip[board]"またはそれ以外の任意の文字列
+<span class='line'>398</span>  * コマンドのもつwatchTargetと一致した場合のみコマンドが実行される。
+<span class='line'>399</span>  * コマンドのwatchTargetが　予約語"all"の場合はターゲットがいかなる状態でも実行される。通常はfolder またはclipboardまたは””が渡される。
+<span class='line'>400</span>  */</span><span class="WHIT">
+<span class='line'>401</span> 
+<span class='line'>402</span> </span><span class="COMM">/**
+<span class='line'>403</span>  * @param myTarget
+<span class='line'>404</span>  */</span><span class="WHIT">
+<span class='line'>405</span> </span><span class="NAME">nas.otome.systemWatcher.notice</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="KEYW">function</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">myTarget</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>406</span> 
+<span class='line'>407</span> </span><span class="COMM">//notice 受信タイミングでフォルダのステータスを更新</span><span class="WHIT">
+<span class='line'>408</span> </span><span class="WHIT">    </span><span class="NAME">this.checkStatus</span><span class="PUNC">(</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>409</span> </span><span class="WHIT">    </span><span class="COMM">//ターゲット指定フォルダがあるかどうか確認する。</span><span class="WHIT">
+<span class='line'>410</span> </span><span class="WHIT">    </span><span class="KEYW">var</span><span class="WHIT"> </span><span class="NAME">folderContent</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">this.watchFolder.getFiles</span><span class="PUNC">(</span><span class="STRN">"*.notice"</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>411</span> </span><span class="WHIT">    </span><span class="KEYW">var</span><span class="WHIT"> </span><span class="NAME">myTargetOrder</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="KEYW">false</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>412</span> </span><span class="WHIT">    </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">folderContent.length</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>413</span> </span><span class="WHIT">        </span><span class="NAME">myTargetOrder</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">folderContent</span><span class="PUNC">[</span><span class="NUMB">0</span><span class="PUNC">]</span><span class="PUNC">.</span><span class="NAME">name.replace</span><span class="PUNC">(</span><span class="REGX">/\.notice$/</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="STRN">""</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>414</span> </span><span class="WHIT">        </span><span class="KEYW">for</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="KEYW">var</span><span class="WHIT"> </span><span class="NAME">idf</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NUMB">0</span><span class="PUNC">;</span><span class="WHIT"> </span><span class="NAME">idf</span><span class="WHIT"> </span><span class="PUNC">&lt;</span><span class="WHIT"> </span><span class="NAME">folderContent.length</span><span class="PUNC">;</span><span class="WHIT"> </span><span class="NAME">idf</span><span class="PUNC">++</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>415</span> </span><span class="WHIT">            </span><span class="NAME">folderContent</span><span class="PUNC">[</span><span class="NAME">idf</span><span class="PUNC">]</span><span class="PUNC">.</span><span class="NAME">remove</span><span class="PUNC">(</span><span class="PUNC">)</span><span class="WHIT">
+<span class='line'>416</span> </span><span class="WHIT">        </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>417</span> </span><span class="WHIT">    </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>418</span> </span><span class="WHIT">    </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">this.status.match</span><span class="PUNC">(</span><span class="REGX">/stop|sleep/i</span><span class="PUNC">)</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>419</span> </span><span class="WHIT">        </span><span class="KEYW">return</span><span class="WHIT">
+<span class='line'>420</span> </span><span class="WHIT">    </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>421</span> </span><span class="WHIT">    </span><span class="COMM">//notice を受信してもstatusがstop sleepならば無条件で処理中止</span><span class="WHIT">
+<span class='line'>422</span> </span><span class="WHIT">    </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="PUNC">!</span><span class="NAME">myTarget</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>423</span> </span><span class="WHIT">        </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">myTargetOrder</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>424</span> </span><span class="WHIT">            </span><span class="NAME">myTarget</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">myTargetOrder</span><span class="WHIT">
+<span class='line'>425</span> </span><span class="WHIT">        </span><span class="PUNC">}</span><span class="WHIT"> </span><span class="KEYW">else</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>426</span> </span><span class="WHIT">            </span><span class="NAME">myTarget</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="STRN">""</span><span class="WHIT">
+<span class='line'>427</span> </span><span class="WHIT">        </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>428</span> </span><span class="WHIT">    </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>429</span> </span><span class="WHIT">    </span><span class="COMM">//ターゲットオーダーファイルがあればターゲット未指定のターゲットを置き換え</span><span class="WHIT">
+<span class='line'>430</span> </span><span class="WHIT">    </span><span class="NAME">nas.otome.writeConsole</span><span class="PUNC">(</span><span class="NAME">myTarget</span><span class="WHIT"> </span><span class="PUNC">+</span><span class="WHIT"> </span><span class="STRN">" notice!"</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>431</span> </span><span class="WHIT">    </span><span class="WHIT">
+<span class='line'>432</span> </span><span class="COMM">//コマンドキューを逐次処理。相関はなし</span><span class="WHIT">
+<span class='line'>433</span> </span><span class="COMM">//呼び出された</span><span class="WHIT">
+<span class='line'>434</span> </span><span class="WHIT">    </span><span class="KEYW">for</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="KEYW">var</span><span class="WHIT"> </span><span class="NAME">xidx</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NUMB">0</span><span class="PUNC">;</span><span class="WHIT"> </span><span class="NAME">xidx</span><span class="WHIT"> </span><span class="PUNC">&lt;</span><span class="WHIT"> </span><span class="NAME">this.commandQueue.length</span><span class="PUNC">;</span><span class="WHIT"> </span><span class="NAME">xidx</span><span class="PUNC">++</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>435</span> </span><span class="WHIT">        </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="PUNC">!</span><span class="NAME">this.commandQueue</span><span class="PUNC">[</span><span class="NAME">xidx</span><span class="PUNC">]</span><span class="PUNC">.</span><span class="NAME">enabled</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>436</span> </span><span class="WHIT">            </span><span class="KEYW">continue</span><span class="WHIT">
+<span class='line'>437</span> </span><span class="WHIT">        </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>438</span> </span><span class="WHIT">        </span><span class="COMM">/**
+<span class='line'>439</span>          * 有効で無い場合は動作スキップ
+<span class='line'>440</span>          * @type {boolean}
+<span class='line'>441</span>          */</span><span class="WHIT">
+<span class='line'>442</span> </span><span class="WHIT">        </span><span class="KEYW">var</span><span class="WHIT"> </span><span class="NAME">exF</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="KEYW">false</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>443</span> </span><span class="WHIT">        </span><span class="COMM">/**
+<span class='line'>444</span>          * 監視ターゲットを比較　一致または"all"
+<span class='line'>445</span>          */</span><span class="WHIT">
+<span class='line'>446</span> </span><span class="WHIT">        </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="PUNC">(</span><span class="NAME">myTarget</span><span class="WHIT"> </span><span class="PUNC">==</span><span class="WHIT"> </span><span class="NAME">this.commandQueue</span><span class="PUNC">[</span><span class="NAME">xidx</span><span class="PUNC">]</span><span class="PUNC">.</span><span class="NAME">watchTarget</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">||</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">this.commandQueue</span><span class="PUNC">[</span><span class="NAME">xidx</span><span class="PUNC">]</span><span class="PUNC">.</span><span class="NAME">watchTarget</span><span class="WHIT"> </span><span class="PUNC">==</span><span class="WHIT"> </span><span class="STRN">"all"</span><span class="PUNC">)</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>447</span> </span><span class="WHIT">            </span><span class="NAME">exF</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="KEYW">true</span><span class="WHIT">
+<span class='line'>448</span> </span><span class="WHIT">        </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>449</span> </span><span class="WHIT">        </span><span class="COMM">/**
+<span class='line'>450</span>          * 監視対象ファイルが登録されていてファイルが存在しない場合は動作をスキップ
+<span class='line'>451</span>          */</span><span class="WHIT">
+<span class='line'>452</span> </span><span class="WHIT">        </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">this.commandQueue</span><span class="PUNC">[</span><span class="NAME">xidx</span><span class="PUNC">]</span><span class="PUNC">.</span><span class="NAME">watchFile</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>453</span> 
+<span class='line'>454</span> </span><span class="WHIT">            </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">this.commandQueue</span><span class="PUNC">[</span><span class="NAME">xidx</span><span class="PUNC">]</span><span class="PUNC">.</span><span class="NAME">watchFile</span><span class="WHIT"> </span><span class="KEYW">instanceof</span><span class="WHIT"> </span><span class="NAME">File</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>455</span> </span><span class="WHIT">                </span><span class="KEYW">var</span><span class="WHIT"> </span><span class="NAME">tempFile</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">this.commandQueue</span><span class="PUNC">[</span><span class="NAME">xidx</span><span class="PUNC">]</span><span class="PUNC">.</span><span class="NAME">watchFile</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>456</span> </span><span class="WHIT">            </span><span class="PUNC">}</span><span class="WHIT"> </span><span class="KEYW">else</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>457</span> </span><span class="WHIT">                </span><span class="KEYW">var</span><span class="WHIT"> </span><span class="NAME">tempFile</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="KEYW">new</span><span class="WHIT"> </span><span class="NAME">File</span><span class="PUNC">(</span><span class="NAME">this.commandQueue</span><span class="PUNC">[</span><span class="NAME">xidx</span><span class="PUNC">]</span><span class="PUNC">.</span><span class="NAME">watchFile</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>458</span> </span><span class="WHIT">            </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>459</span> </span><span class="WHIT">            </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="PUNC">!</span><span class="NAME">tempFile.exists</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>460</span> </span><span class="WHIT">                </span><span class="NAME">exF</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="KEYW">false</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>461</span> </span><span class="WHIT">            </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>462</span> </span><span class="WHIT">        </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>463</span> </span><span class="WHIT">        </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">exF</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>464</span> </span><span class="WHIT">            </span><span class="NAME">this.commandQueue</span><span class="PUNC">[</span><span class="NAME">xidx</span><span class="PUNC">]</span><span class="PUNC">.</span><span class="NAME">targetCommand</span><span class="PUNC">(</span><span class="PUNC">)</span><span class="WHIT">
+<span class='line'>465</span> </span><span class="WHIT">        </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>466</span> </span><span class="WHIT">        </span><span class="COMM">//コマンド実行</span><span class="WHIT">
+<span class='line'>467</span> </span><span class="WHIT">    </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>468</span> </span><span class="PUNC">}</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>469</span> </span><span class="COMM">/** nas.otome.systemWatcher.watchInterval インターバル間隔をミリ秒で
+<span class='line'>470</span>  * 
+<span class='line'>471</span>  * デフォルト値は1分(60000)
+<span class='line'>472</span>  * 監視プロセスIDは整数で現在監視プロセスを行っているタスクID 0は不稼動
+<span class='line'>473</span>  * @type {number}
+<span class='line'>474</span>  */</span><span class="WHIT">
+<span class='line'>475</span> </span><span class="NAME">nas.otome.systemWatcher.watchInterval</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NUMB">60000</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>476</span> </span><span class="NAME">nas.otome.systemWatcher.watchID</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NUMB">0</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>477</span> 
+<span class='line'>478</span> </span><span class="COMM">/**
+<span class='line'>479</span>  * 監視自体は無名関数
+<span class='line'>480</span>  * 表示のリフレッシュ
+<span class='line'>481</span>  * 
+<span class='line'>482</span>  * @param prop
+<span class='line'>483</span>  * @param oldval
+<span class='line'>484</span>  * @param newval
+<span class='line'>485</span>  */</span><span class="WHIT">
+<span class='line'>486</span> </span><span class="NAME">nas.otome.systemWatcher.reflesh</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="KEYW">function</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">prop</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">oldval</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">newval</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>487</span> </span><span class="WHIT">    </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">nas.Pref</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>488</span> </span><span class="WHIT">        </span><span class="NAME">nas.Pref.SaWtUpdate</span><span class="PUNC">(</span><span class="NAME">newval</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>489</span> </span><span class="WHIT">    </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>490</span> </span><span class="PUNC">}</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>491</span> </span><span class="COMM">/**
+<span class='line'>492</span>  * statusにwatch　貼り付け
+<span class='line'>493</span>  */</span><span class="WHIT">
+<span class='line'>494</span> </span><span class="NAME">nas.otome.systemWatcher.watch</span><span class="PUNC">(</span><span class="STRN">"status"</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">nas.otome.systemWatcher.reflesh</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>495</span> 
+<span class='line'>496</span> </span><span class="COMM">/**
+<span class='line'>497</span>  * @desc sysyemWatcherに待機オブジェクトを追加する一般メソッド
+<span class='line'>498</span>  * コマンドキュー
+<span class='line'>499</span>  * sysyemWatcher.commandQueue
+<span class='line'>500</span>  * systemWatcher.addCommand()
+<span class='line'>501</span>  * systemWatcher.removeCommand()
+<span class='line'>502</span>  * 
+<span class='line'>503</span>  * コマンドキューがコマンドの待機条件を確認して
+<span class='line'>504</span>  * 実行・スキップ・消去を行なう
+<span class='line'>505</span>  * コマンドオブジェクトのプロパティ
+<span class='line'>506</span>  * watchFile=ターゲットファイルのローカルパスまたはクリップボードシグネチャ(第一行目の文字列)
+<span class='line'>507</span>  * watchTarget=フォルダ監視かクリップボード監視かまたは両方かまたはなし"folder":"clip":"both":"none" 指定がなければ"none" コレが指定された場合は実質なにもしない
+<span class='line'>508</span>  * watchMethod=待機条件 "once"実行後に削除,"ever"保持,"stop"実行停止,"remove"実行せずに削除　省略時は"stop"
+<span class='line'>509</span>  * targetCommand=Function or keyword
+<span class='line'>510</span>  * 
+<span class='line'>511</span>  * 実行条件
+<span class='line'>512</span>  * 
+<span class='line'>513</span>  * noticeを受信するとコマンドキューを逐次実行
+<span class='line'>514</span>  * 各キューはまず
+<span class='line'>515</span>  * 待機ターゲットで分岐
+<span class='line'>516</span>  * 一時オブジェクトでターゲットファイルを作成
+<span class='line'>517</span>  * 呼び出し時点でファイルが喪失していたらなにもしない？またはコマンド削除？
+<span class='line'>518</span>  * コマンド待機条件を確認
+<span class='line'>519</span>  * 必要に従ってコマンドを実行
+<span class='line'>520</span>  * 必要に従って事後処理（キューを削除等）
+<span class='line'>521</span>  * ボディに比較テキストを持つと比較自体は楽になるが、なんだか嫌な感じ（後で困りそう）なので何か別の方法を考える
+<span class='line'>522</span>  * 更新比較はクリップボードシグネチャにタイムスタンプ？
+<span class='line'>523</span>  * コンペアはメソッドまかせにする…ファイルアクセスが減るかも？
+<span class='line'>524</span>  * クリップボードは、比較内容をどこかでもたないと無理だし、文字列のみの比較では誤判定の可能性があるので
+<span class='line'>525</span>  * やはりメソッドまかせか…
+<span class='line'>526</span>  * 
+<span class='line'>527</span>  * システム監視仕様
+<span class='line'>528</span>  * noticeを受信したら
+<span class='line'>529</span>  * 監視フォルダ内の　*.cmd　を検索する
+<span class='line'>530</span>  * stop.cmd sleep.cmd wakup.cmd があればステータスを更新して逐次処理する
+<span class='line'>531</span>  * 監視フォルダ内に *.notice　が存在しかつターゲットが空文字列だった場合は、その文字列をターゲットに設定する。
+<span class='line'>532</span>  * 同ファイルは消去する
+<span class='line'>533</span>  * 
+<span class='line'>534</span>  * 
+<span class='line'>535</span>  * nas.otome.systemWatcher.notice=function(myTarget){
+<span class='line'>536</span>  * if (! myTarget) myTarget="folder";
+<span class='line'>537</span>  * switch (myTarget){
+<span class='line'>538</span>  * case	"clip":
+<span class='line'>539</span>  * nas.otome.writeConsole("Clipboard Updated");
+<span class='line'>540</span>  * this.watchClipboard.value=nas.otome.getClipboardText();
+<span class='line'>541</span>  * this.watchClipboard.change();
+<span class='line'>542</span>  * break;
+<span class='line'>543</span>  * default :
+<span class='line'>544</span>  * nas.otome.writeConsole("FolderUpdated");
+<span class='line'>545</span>  * this.watchFolder.change();
+<span class='line'>546</span>  * }
+<span class='line'>547</span>  * for(var idx=0;idx&lt;this.commandQueue.length;idx++){
+<span class='line'>548</span>  * var currentCmd=this.commandQueue[idx];
+<span class='line'>549</span>  * currentCmd.watchTarget
+<span class='line'>550</span>  * }
+<span class='line'>551</span>  * }
+<span class='line'>552</span>  */</span><span class="WHIT">
+<span class='line'>553</span> 
+<span class='line'>554</span> </span><span class="COMM">/**
+<span class='line'>555</span>  * {osascript -e 'tell application "Adobe AfterEffects CS3" DoScript "nas.otome.noticeWatch(%kwd%)" end tell' }
+<span class='line'>556</span>  * tell application "Adobe After Effects CS3" DoScript "alert(\"You just sent an alert to After Effects\")" end tell
+<span class='line'>557</span>  */</span><span class="WHIT">
+<span class='line'>558</span> </span><span class="COMM">//nas.otome.systemWatcher("start");</span></pre></body></html>

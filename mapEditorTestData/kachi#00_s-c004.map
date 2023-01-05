@@ -1,0 +1,361 @@
+nasMAP-FILE 1.9x
+# 1.9xは試験用
+##CREATE_USER=kiyo
+##UPDATE_USER=kiyo
+##CREATE_TIME=2016/1/31 18:45:36
+##UPDATE_TIME=2016/4/14 8:20:27
+
+##TITLE=かちかちやま
+##SUB_TITLE=チュートリアルデータ
+##OPUS=00
+##RATE=24FPS
+##FRAME_RATE=24
+##STANDERD_FRAME=AJA.Fr01
+##STANDERD_PEG=ACME
+##BASE_RESOLUTION=200dpi
+
+# #SCENE=シーン記述はなくても良い　その場合は""で補われる
+##CUT=4
+##INHERIT=4,12
+#================================================================
+#	本線から外れた管理単位は複製が作成されるそれを識別する情報が必要
+#	払いだした本線（トランク）側の記述とチェックアウトされたデータの整合が必要なので払い出し側に対抗記述を記載
+#	現在のラインID（識別名と数値インデックス）を記録してトランクからの距離を出すこと
+#	発行記録が開始された後はラインの宣言が行われるまでの間は
+#	本線側
+##LINE_ID=(本線):0
+##currentStatus=Fixed
+##CHECK_OUT=(背景美術):1 / 2016.01.31 18:45:36 / kiyo@nekomataya.info;
+#	トランクから離れたタイミングを記述
+#  	##CHECK_IN=(背景美術):1 / 2016.02.23 16:21:32 / kiyo@nekomataya.info;	マージ情報
+#	##CHECK_OUT=(3DAnimation):2 / 2016.02.12 09:15:02 / kiyo@nekomataya.info;　列記
+#
+#	支線側:1
+#	##LINE_ID=(背景美術):1	こんな感じ
+#	##CHECK_OUT=2016.01.31 18:45:36/kiyo@nekomataya.info;	トランクから離れたタイミングを記述（本データ内に同内容の記述あり）
+#	支線側:2
+#	##LINE_ID=(3DAnimation):2	こんな感じ
+#	##CHECK_OUT=(3DAnimation):2 / 2016.02.12 09:15:02 / kiyo@nekomataya.info;
+#
+#	ブランチがブランチを出す場合は以下
+#	ブランチ側では必ずID>1 || CHECK_INが一つしかない>記述が発生した時点でラインが収束する
+#	支線側:
+#	##LINE_ID=(3DAnimation):2
+#	##CHECK_OUT=(3DAnimation):2 / 2016.02.12 09:15:02 / kiyo@nekomataya.info;
+#	##CHECK_OUT=(3DTexture):2:2 / 2016.02.13 12:53:11 / kiyo@nekomataya.info;<この分岐を本線は知らない
+#	＊本線の知らない分岐は、支線のコミット又はマージの際に本線側へ通知される
+#	＊支支線がフィックスするまで、支線はフィックしない。
+#	支支線側
+#	##LINE_ID=(3DTexture):2:2
+#	##CHECK_OUT=(3DTexture):2:2 / 2016.02.13 12:53:11 / kiyo@nekomataya.info;<本線の知らない分岐はコミット時に通知
+#----------------------------------------------------------------
+#	分岐時のグループ更新制限を列挙 この制限記述は不要になった　2016
+# #DENY=
+# #ALLOW=
+#----------------------------------------------------------------
+##currentStatus=Fixed
+#------ここまでの記述はライン記述開始に先立って行なわれること
+##<(本線)>
+##checkIn=kiyo
+##UPDATE_USER=kiyo
+##CREATE_TIME=2016/1/31 18:45:36
+##UPDATE_TIME=2016/4/14 8:20:27
+#======== SCIinfo Object Elements ===========
+#	この要素（アセット）は全制作工程で利用可能でなくてはならない
+#	制作のスターターオブジェクトである特殊なオブジェクトとなる
+#	所属は　ライン<(本線)>ステージ[init]ジョブは[[SCIinfo]]
+#	全てのステージの前に設定
+#	ステータス類は一切省略（全部親Mapを継承）
+#	_EXTRA_ の場合はグループ・エレメントの内容が空の場合もある
+#	通常は絵コンテの内容がそのまま格納される
+#	カットにつき画像１点シート１点以上
+#	ダイアログ・ト書き・等の情報も格納される
+##[init]
+##[[SCInfo]]
+[timesheet	xps]
+timesheet	s-c4	"./kachi#00_s-c004.xps"
+[picture	cell]
+picture s-c4-01	"./sample/_SCI/samplePic.png"
+
+[description	text]
+description	s-c4
+#----------------------------------------------------------------
+	カメラ背中側から
+	PAN↑UP
+	立てかけた猟銃　その他　猟師さん風荷物など見える
+	
+	バタバタとうちわであおぐ
+#----------------------------------------------------------------
+[台詞	SOUND]
+#----------------------------------------------------------------
+姐さん（セリフ　意味不明にブツブツと続く…）「あぢあぢ　うぇあおんがごげ」
+#----------------------------------------------------------------
+[time	text]
+timeText	s-c4	4+0
+##[LO]
+##[[作画打合せ]id:0]
+##created=2016.01.31 18:45:36/kiyo@nekomataya.info;
+##updated=2016.01.31 19:05:00/kiyo@nekomataya.info;
+##manager=kiyo@nekomataya.info;
+##worker=cat@animal.example.com;
+##slipNumber=0001020304087;
+##[[作画打合せ]]/
+##[[レイアウト]id:1]
+##created=2016.02.05 21:00:15/cat@animalexample.com;
+##updated=2016.02.06 17:23:34/cat@animalexample.com;
+##
+#================================================================
+#	ブラケットで各エントリー第一階層を記述
+#	空行は無視
+#	[ グループID	グループカテゴリ	グループに関する幾何情報(有れば) ]
+#
+#----------------------------------------------------------------
+[LO	CELL	]
+LO	BG	"./sample/LO/BG.png"
+LO	A1_B	"./sample/LO/CELL.png"
+LO	ML	"./sample/LO/ML.png"
+LO	PAN	"./sample/LO/PAN.png"
+#================================================================
+[PAN	CAMERAWORK　]
+		size=252mm,142.875mm
+		position=0mm,0mm,0mm
+		offset=0mm,104.875mm
+		rotation=0d
+		comment=10in/StanderdFrame/16:9/HDTV
+# 作品データの継承があるのでこのサンプルでは本来は記述不要
+#----------------------------------------------------------------
+PAN	<START>
+		position=0mm,-71mm
+		positionTiming=0, 0, 0, 0 #リニア相当 タイミングパラメタは単位なし
+
+PAN	<END>
+		position=0mm,0mm
+
+##[[レイアウト]]/
+##[[演出検査]id:2]
+##created=2016.02.7 13:00:30 / dog@animalexample.com;
+##updated=2016.02.7 17:12:45 / dog@animalexample.com;
+##
+[LO	CELL	]
+LO	A1_B+	"./sample/LO/CELL+.png"
+##[[演出検査]]/
+##[[監督チェック]id:3]
+##created=2016.02.7 17:12:45 / lion@animalexample.com;
+##updated=2016.02.7 17:12:45 / lion@animalexample.com;
+##
+##[[監督チェック]]/
+##[[作監チェック]id:4]
+##created=2016.02.09 19:45:12 / iwashi@fish.example.com;
+##updated=2016.02.10 12:30:00 / iwashi@fish.example.com;
+##
+##[[作監チェック]]/
+##[LO]/
+##[KD]
+##[[作画打合せ]id:0]
+##created=2016.01.31 18:45:36/kiyo@nekomataya.info;
+##updated=2016.02.10 17:12:67/cat@animal.example.com;
+##manager=kiyo@nekomataya.info;
+##worker=cat@animal.example.com;
+##slipNumber=0001020304087;
+##
+##[[作画打合せ]]/
+##[[原画]id:1]
+##created=2016.02.10 12:00:00/cat@animal.example.com;
+##updated=2016.02.17 12:00:00/cat@animal.example.com;
+##
+[A]
+A	A-1	"./sample/KD/A001.png"
+#
+[B]
+B	B-1	"./sample/KD/B001.png"
+B	B-2	"./sample/KD/B002.png"
+B	B-2◯	"./sample/KD/B002◯.png"
+#
+[C]
+C	C-1	"./sample/KD/C001.png"
+#
+##[[原画]]/
+##[[原画演出チェック]id:2]
+##created=2016.02.21 16:32:22/dog@animal.example.com;
+##updated=2016.02.21 16:45:23/dog@animal.example.com;
+##
+##[[原画演出チェック]]/
+##[[原画作監チェック]id:3]
+##created=2016.02.21 20:21:45/iwashi@fish.example.com;
+##updated=2016.02.21 20:29:54/iwashi@fish.example.com;
+##
+[B]
+B	B-1+	"./sample/KD/B001+.png"
+B	B-2+	"./sample/KD/B002+.png"
+##[[原画作監チェック]]/
+##[KD]/
+##[AD]
+##[[動画発注]]
+##created=2016.02.01 ::/@.example.com;
+##updated=2016.02.01 ::/@.example.com;
+##manager=kiyo@nekomataya.info;
+##worker=cat@animal.example.com;
+##slipNumber=0001020304087;
+##
+#==============
+#実質的に動画発注時に打合せは存在しないことが多い　ただし伝票は必ず発行する
+#他のイベントがない場合でも、「発注」イベントを登録する
+##[[動画発注]]/
+##[[動画]]
+##created=2016.02.1 ::/@.example.com;
+##updated=2016.02.1 ::/@.example.com;
+##
+#================================================================
+[A	CELL	841.32,841.32]
+#----------------------------------------------------------------
+A	A-1	"./sample/AD/A/A001.png",640,480	"第四フィールドにデータがあればコメント /無ければ無視"
+#================================================================
+[B	CELL	841.32,841.32]
+#----------------------------------------------------------------
+B	B-1	"./sample/AD/B/B001.png"
+B	B-2	"./sample/AD/B/B002.png"
+B	B-3	"./sample/AD/B/B003.png"
+B	B-4	"./sample/AD/B/B004.png"
+B	B-5	"./sample/AD/B/B005.png"
+B	B-6	"./sample/AD/B/B006.png"
+B	B-7	"./sample/AD/B/B007.png"
+B	B-8	"./sample/AD/B/B008.png"	end
+#================================================================
+[C	CELL	]
+#----------------------------------------------------------------
+C	C-1
+		path	=	"./sample/AD/C/C001.png"
+		size	=	841.23pt,841.23pt
+		offset	=	321pt,243.27890pt
+		rotation=	0.000d
+		comment	=	"手書きの場合はこの記法の方を推奨"
+
+#================================================================
+##[[動画]]/
+##[[動画検査]]
+##created=2016.02.1 ::/@.example.com;
+##updated=2016.02.1 ::/@.example.com;
+##
+##[[動画検査]]/
+##[AD]/
+##[CC]
+##[[色指定発注]]
+##created=2016.02.1 ::/@.example.com;
+##updated=2016.02.1 ::/@.example.com;
+##manager=kiyo@nekomataya.info;
+##worker=@.example.com;
+##slipNumber=;
+##
+##[[色指定発注]]/
+##[[色指定]]
+##created=2016.02.1 ::/@.example.com;
+##updated=2016.02.1 ::/@.example.com;
+##
+##[[色指定]]/
+##[CC]/
+
+##[PAINT]
+##[[彩色発注]id:0]
+##created=2016.02.1 ::/@.example.com;
+##updated=2016.02.1 ::/@.example.com;
+##manager=kiyo@nekomataya.info;
+##worker=@.example.com;
+##slipNumber=;
+#
+##[[彩色発注]]/
+##[[彩色]]
+##created=2016.02.1 ::/@.example.com;
+##updated=2016.02.1 ::/@.example.com;
+#
+#================================================================
+[Blank-CELL	SYSTEM]
+Blank	X	"./_blank/blank.tif"	デフォルトのカラセル
+Blank	D-X	"./_blank/D_blank.tif"	ブランクセルはブランクフォルダへ
+
+#	一般行はエントリーレコード
+#	第一フィールドは所属するグループID
+
+#================================================================
+[A	CELL	841.32,841.32]
+#----------------------------------------------------------------
+A	A-1	"./sample/CELL/A/A001.png",841.32,841.32	"第四フィールドにデータがあればコメント /無ければ無視/同じ値なら本来は記述不要"
+#================================================================
+[B	CELL	841.32,841.32]
+#----------------------------------------------------------------
+B	B-1	"./sample/CELL/B/B001.png"	"最低限のセル記述-寸法はグループの代表値を継承"
+B	B-2	"./sample/CELL/B/B002.png"	,640,483	"同グループ内で寸法の違うセルを許容します。"
+B	B-3	"./sample/CELL/B/B003.png"	,640,480,321,243.2789,-0.13d	"オフセットを同時指定可能"
+B	B-4	"./sample/CELL/B/B004.png"
+B	B-5	"./sample/CELL/B/B005.png"
+B	B-6	"./sample/CELL/B/B006.png"
+B	B-7	"./sample/CELL/B/B007.png"
+B	B-8	"./sample/CELL/B/B008.png"	end
+#================================================================
+[C	CELL	]
+#----------------------------------------------------------------
+C	C-1
+		path	=	"./sample/CELL/C/C001.png"
+		size	=	841.23pt,841.23pt
+		offset	=	420.615pt,420.615pt
+		rotation=	0.000d
+		comment	=	"手書きの場合はこの記法の方を推奨"
+
+#================================================================
+##[[彩色]]/
+##[PAINT]/
+##<(本線)>/
+##
+##<(背景美術)>
+#================================================================
+#	別ラインへグロス発注などの際に伝票が共有されないこともあるので注意
+#	切り分けでデータを出せるよう配慮が必要
+#
+#================================================================
+##[BG打合せ]
+#================================================================
+#	グロス等で工程全体へ伝票を切る際に伝票を切るためだけの
+#	ステージを設ける必要がある　グロス背景発注などがそれにあたる
+#	作業／打合せ等のイベントがなくてもステージを設ける
+#	この下の例はそのケース　１回めの全体の打合せがその作品のカット全てに転記される
+#================================================================
+##[[BG打合せ]id:0]
+##created=2016.01.31 18:45:36 / kiyo@nekomataya.info;
+##updated=2016.02.08 23:23:23/kiyo@nekomataya.info;
+##manager=kiyo@nekomataya.info;
+##worker=maguro@fish.example.com;
+##slipNumber=09089806743355;
+##[[BG打合せ]]/
+##[BG打合せ]/
+
+##[原図整理]
+##[[原図発注]id:0]
+##created=2016.0. ::/@.example.com;
+##updated=2016.0. ::/@.example.com;
+##manager=kiyo@nekomataya.info;
+##worker=@.example.com;
+#--------------伝票発行を伴わないジョブには伝票番号なし。ただし発注イベントは発生する
+##[[原図発注]]/
+##[[原図整理]id:1]
+##[[原図整理]]/
+##[[美術監督チェック]id:3]
+##[[美術監督チェック]]/
+##[原図整理]
+
+##[背景美術]
+##[[原図発注]id:0]
+##created=2016.0. ::/@.example.com;
+##updated=2016.0. ::/@.example.com;
+##manager=kiyo@nekomataya.info;
+##worker=@.example.com;
+##[[原図発注]]/
+##[[背景美術]id:2]
+##[[背景美術]]/
+##[[美術監督チェック]id:3]
+##[[美術監督チェック]]/
+TITLE/
+##<(背景美術)>/
+##
+[END]
+
+ENDマークの後方は自由記述です
+常にそう

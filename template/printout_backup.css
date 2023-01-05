@@ -1,0 +1,478 @@
+/*	remaping.css						*/
+/*	りまぴん のためのスタイルシート				*/
+/*	このスタイルシートを変更してデザインを調整できます。	*/
+/*	Nekomataya/kiyo 2013					*/
+/*		(新インターフェース調整)	(印刷用)	*/
+/*	$Id: printout.css,v 1.10 2013/06/23 08:45:09 kiyo Exp $	*/
+/*========== タイムシート全体 ============*/
+/*		基本デザイン
+	情報量が多くて密度が低いのでフォントは小さめ
+	user-selectは基本的に禁止
+*/
+@page { size: A3 }           /* A3タテ */
+
+body {
+	background-color:white;
+	color:black;
+	font-size:8pt;
+	margin:0;
+	padding:0;
+}
+/*========== リンク ============*/
+a:link {color:#000066}
+a:visited {color:green}
+a:hover {color:red;background-color:snow}
+a:active {color:gray;background-color:snow}
+a:focus {color:#880000;background-color:snow}
+
+svg {margin:0;padding:0;}
+/*		固定ヘッダ
+	ウインドウ全体をUIに割り付け、UIのマージン等を取得するエレメント
+*/
+#fixedHeader {
+	display:none;
+}
+/*		デバッグ
+	AIR専用エレメントは取リわけ
+*/
+#debug {
+	display:none;
+}
+#airDbg {
+	display:none;
+}
+/*		各種UIテーブル
+	各エレメントの値は設定ファイルを読み込んで更新されるので、この値は仮値
+*/
+div#UIheader {
+	display:none;
+}
+
+table {
+	border-color:#888888;
+	font-size:8pt;
+	margin:0px;
+	padding:0px;
+	border-width:2px 1px 0px 0px;
+	border-style:solid;
+	table-layout:fixed;
+}
+table.info	{
+	display:none;
+}
+table.sheet	{
+	display:inline;
+}
+table.toolbox {	
+	display:none;
+}
+/*		テーブル要素
+*/
+th {
+	text-align:center;
+	border-style:dashed;
+	border-width:4px 1px 1px 0px;
+	font-size:8pt;
+}
+
+/*		シート本体のビュー設定
+	時間スケール
+*/
+th.tcSpan {
+	border-width:1px 0px 0px 0px;
+	width:4em;
+}
+th.timelabel{
+	text-align:center;
+	border-style:dashed;
+	border-width:0px 1px 3px 1px;
+	font-size:8pt;
+	}
+
+/*		リファレンス
+
+*/
+th.referenceSpan {
+	border-width:1px 0px 0px 0px;
+	width:2em;
+}
+th.layerlabelR {
+	text-align:center;
+	border-style:dashed;
+	color:gray;
+	border-width:4px 1px 3px 0px;
+	font-size:8pt;
+}
+/*		ダイアログ
+*/
+th.dialogSpan {
+	border-width:1px 0px 0px 0px;
+	width:4em;
+}
+th.dialoglabel {
+	text-align:center;
+	border-style:dashed;
+	border-width:1px 1px 3px 0px;
+	font-size:8pt;
+}
+/*		編集エリア
+dialog/still/timing/sfx/camera
+*/
+th.editSpan {
+	border-width:1px 0px 0px 0px;
+	width:3em;
+}
+th.layerlabel {
+	text-align:center;
+	border-style:dashed;
+	border-width:4px 1px 3px 0px;
+	font-size:8pt;
+}
+//still
+th.stillSpan {
+	border-width:1px 0px 0px 0px;
+}
+th.stilllabel {
+	text-align:center;
+	border-style:dashed;
+	border-width:1px 1px 3px 0px;
+	font-size: 8pt;
+}
+//timing
+.timingSpan {
+	border-width:1px 0px 0px 0px;
+	width 4em;
+}
+th.timinglabel {
+	text-align:center;
+	border-style:dashed;
+	border-width:1px 1px 3px 0px;
+	font-size: 8pt;
+}
+//sfx
+th.sfxSpan {
+	border-width:1px 0px 0px 0px;
+	width:3em;
+}
+th.sfxlabel {
+	text-align:center;
+	border-style:dashed;
+	border-width:1px 1px 3px 0px;
+	font-size: 8pt;
+}
+//camera
+th.cameraSpan {
+	border-width:1px 0px 0px 0px;
+	width:4em;
+}
+th.cameralabel {
+	text-align:center;
+	border-style:dashed;
+	border-width:1px 1px 3px 0px;
+	font-size: 8pt;
+}
+/*		フレーム注釈
+	全体幅のクッションエリアとしても機能させるので
+	このエレメントは幅指定無し
+*/
+th.framenoteSpan {
+	border-width:1px 0px 0px 0px;
+}
+th.framenotelabel {
+	text-align:center;
+	border-style:dashed;
+	border-width:0px 1px 3px 1px;
+	font-size:8pt;
+}
+/*		テーブルデータ基本
+*/
+td {
+	text-align:center;
+	vertical-align:middle;
+	border-style:dashed;
+	border-width:0px 1px 1px 0px;
+	padding:0;
+	margin:0;
+	font-size:6pt;
+	white-space: nowrap;
+	height:1em;
+	width:3em;
+}
+
+td.menu {
+	display:none;
+}
+
+td.toolbar {
+	display:none;
+}
+
+td.toolbarR {
+	display:none;
+}
+td.logo	{
+	display:none;
+}
+
+td.header {
+	display:none;
+}
+td.footer {
+	display:none;
+}
+td.layerOption {
+	display:none;
+}
+/*		UI　グラフィックアイコンボタン
+*/
+button.iconButton {
+	display:none;
+}
+/*		UI　AEキー　コンバートスイッチ
+*/
+input.aekConvert {
+	display:none;
+}
+/*		UI　入力エリア
+*/
+input.iNputbOx {
+	display:none;
+}
+/*		UI　スピンコントロール
+*/
+input.spinCtl {
+	display:none;
+}
+/*========== ページヘッダーテーブル ============*/
+.pageHeader {
+	width:100%;
+	table-layout:fixed;
+	border-style:none;
+}
+.pgHeader {
+	border-style:solid;
+	border-width:1px;
+	font-size:10pt;
+}
+/*====スクロールスペーサーとしてブロックを確保する
+ */
+/*========== シートヘッダーテーブル ============
+	スクロールスペーサーを兼用をやめて分離
+ */
+.sheetHeader {
+	width:100%;
+	table-layout:fixed;
+	border-style:none;
+}
+
+/*	シートヘッダビュー設定	*/
+td#edchg {width:6em;}
+th.opusLabel{width:4em;}
+/* th.titleLabel{width:12em;} */
+th.scenecutLabel{width:8em;}
+th.timeLabel{width:6em;}
+th.nameLabel{width:8em;}
+th.pageLabel{width:6em;}
+
+
+/*	ツールボックスの部品*/
+input.toolTip	{
+	display:none;
+}
+/*		UI.表示プロパティ
+
+*/
+div.optionPanel{
+	display:none;
+}
+div.optionPanelModal{
+	display:none;
+}
+div.optionPanelFloat{
+	display:none;
+}
+/*	タイムシートの罫線　*/
+.Sep {background-color:red}
+/*タイムセパレータライン*/
+/*		左端*/
+.ltSep,.ltSep_Blank {
+	text-align:right;
+	border-style:solid;
+	vertical-align:bottom;
+	font-size:6pt;
+		border-width:0px 1px 3px 1px;
+}
+/*		通常データ*/
+.ntSep,.ntSep_Blank {
+		border-width:0px 1px 3px 0px;
+}
+/*		ダイアログ*/
+.dtSep,.dtSep_Blank {
+		border-width:0px 1px 3px 0px;
+}
+
+/*サブセパレータライン*/
+/*		左端*/
+.lsSep,.lsSep_Blank {
+	text-align:right;
+	border-style:solid;
+	vertical-align:bottom;
+	font-size:8pt;
+		border-width:0px 1px 2px 1px;
+}
+/*		通常データ*/
+.nsSep,.nsSep_Blank {
+		border-width:0px 1px 2px 0px;
+}
+/*		ダイアログ*/
+.dsSep,.dsSep_Blank {
+		border-width:0px 1px 0px 0px;
+}
+
+/*通常ライン*/
+/*		左端*/
+.lnSep,.lnSep_Blank {
+	text-align:right;
+	border-style:solid;
+	vertical-align:bottom;
+	font-size:8pt;
+	border-width:0px 1px 1px 1px;
+}
+/*		参照データ*/
+.rnSep,.rnSep_Blank {
+			border-width:0px 1px 1px 0px;
+			color:gray;
+}
+th.rnArea{
+		border-width:0px 1px 0px 0px;
+		width:144px;
+}
+/*		通常データ*/
+.nnSep,.nnSep_Blank {
+			border-width:0px 1px 1px 0px;
+}
+th.editArea {
+		border-width:0px 1px 0px 0px;
+}
+/*		ダイアログ*/
+.dnSep,.dnSep_Blank {
+		border-width:0px 1px 0px 0px;
+}
+.dialoglabel {
+		width:36px;
+}
+/*	カラムセパレータ	*/
+td.colSep {
+	border-style:none;
+	height:2px;
+}
+/*	border-width:1px 1px 1px 1px; */
+/*エンドセパレータ（未使用）*/
+/*		左端*/
+.leSep,.leSep_Blank {
+		border-width:0px 1px 4px 1px;
+}
+/*		通常データ*/
+.neSep,.neSep_Blank {
+		border-width:0px 1px 4px 0px;
+}
+/*		ダイアログ*/
+.deSep,.deSep_Blank {
+		border-width:0px 1px 4px 0px;
+}
+/*	時間表示	*/
+.timeguide {
+	text-align:left;
+	font-size:8pt;
+}
+/*	タイムシート上の入力ボックス	*/
+.IptBox {
+	display:none;
+}
+/*	ページノンブル	*/
+.pgNm {
+	display:none;
+}
+
+.infoTable {
+	display:none;
+}
+
+.headerTool {
+	display:none;
+}
+.footerTool {
+	display:none;
+}
+.toolTable {
+	display:none;
+
+}
+.screenSpace{
+	display:none;
+}
+.printSpace {
+	display:inline;
+}
+.pageBreak {
+	page-break-before:always;
+}
+/*form view*/
+
+input	{
+	display:none;
+}
+select	{
+	display:none;
+}
+/*
+ * {
+  margin: 0; padding: 0;
+ }
+ #fixed {
+  position: fixed;
+ }
+ #sheet_view p {
+  margin:0;
+ }
+	*/
+
+/*タイムシートの文字飾り (例)*/
+.v_bar	{ height:13px ;font-size:8pt;color:blue;border-style:solid;border-color:gray;border-width:0px 1px 0px 0px;padding:0;margin:0;}
+.v_wave	{ height:11px;font-size:8pt;padding:0;margin:0;}
+line  {margin:0;padding:0;}
+img  {margin:0;padding:0;}
+/* */
+td#title {
+	font-weight:900;
+	font-size:24px;
+}
+td#scene_cut {
+	font-weight:900;
+	font-size:20px;
+}
+
+/*
+その他のエレメントid は、ソースを直接読むか、取扱説明書をご覧ください。
+*/
+
+
+#optionPanelTbx{
+    display:none;
+}
+
+#optionPanelVer {
+    display:none;
+}
+#optionPanelPref {
+    display:none;
+}
+/*---------------- ドロップダウンメニュー*/
+
+div#pMenu {
+	display:none;
+}
+
+li#pMenu {
+	display:none;
+}

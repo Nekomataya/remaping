@@ -1,0 +1,42 @@
+﻿1801    opusトークン取得
+1857    同上
+3158    識別
+
+ローカルリポジトリにcutエントリ以外のOPUSエントリTITLEエントリを作成する
+title#
+title#opus[subtitle]//
+title#opus[subtitle]//cutNumber(tc)//line//stage//job//status//
+0:(本線)
+1:レイアウト
+3:演出チェック
+fixed:assign:Nekomataya:kiyo@nekomataya.info
+
+Xps.parseIdentifierの戻り値
+
+    product
+    sci
+
+title
+opus
+subtitle
+cut
+time
+
+    line
+    stage
+    job
+    status
+
+currentStatus
+
+プロダクト情報としてプロダクトのオーナー情報が必用
+info.nekomataya.pmdb.config
+    *プライマリorganization
+    *organizations(組織コレクション)を保持
+    *users
+    staff
+    asetts
+    stages
+pmdb.title
+pmdb.title#opus
+pmdb.title

@@ -1,0 +1,171 @@
+<html><head>
+	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>File</title>
+<style type="text/css">
+<!--
+@import url("remaping.css") ;
+-->
+</style>
+	<script src=../javascript/nas_common.js></script>
+	<script src=../javascript/nas_common_HTML.js></script>
+	<script src=../javascript/game.js></script>
+</head>
+<body >
+<form name=test action="javascript:void();">
+<!-- りまぴん(新) ファイルブラウザインターフェース -->
+<table	class=File
+	id=fbTable
+>
+<tr><!-- メニューバー と ロゴ -->
+<td	colspan=6
+	class=menu
+>
+<input type=button onClick='alert(this.name);' name="button" value="BUTONN"
+><input type=button onClick='alert(this.name);' name="button" value="BUTONN"
+><input type=button onClick='alert(this.name);' name="button" value="BUTONN"
+><input type=button onClick='alert(this.name);' name="button" value="BUTONN"
+><input type=button onClick='alert(this.name);' name="button" value="BUTONN"
+> 
+</td>
+<td
+	class=logo colspan=2
+><b>りまぴん</b></td>
+</tr>
+<tr>
+<td	
+	colspan=8
+	class=toolbar
+>
+<br />
+</td>
+</tr>
+<tr>
+	<th>
+<img src="../images/icons/nasu.gif" /><br />NAS(U)
+	</th>
+<th><img src="../images/icons/right.gif" /></th>
+	<th>
+<img src="../images/icons/close_f.gif" /><br />Folder
+	</th>
+<th><img src="../images/icons/right.gif" /></th>
+	<th>
+<img src="../images/icons/open_f.gif" /><br />FolderOpen
+	</th>
+<th><img src="../images/icons/right.gif" /></th>
+	<th colspan=2>
+<img src="../images/icons/chip.gif" /><br />FileName
+	</th>
+
+</tr>
+<tr>
+
+<td	id=l_select
+	align=rigth
+	colspan=2
+	valign=top
+><select
+	name="map_labels"
+	id="layer"
+	title="レイヤを選択"
+	size= 6
+onClick='if(document.getElementById("single").checked) chkValue(this.id)'
+onDblClick='if (! document.getElementById("single").checked) chkValue(this.id)'
+>
+<option />-------A
+<option />-------B
+<option />-------C
+<option />-------D
+<option />-------E
+<option />-------F
+</select>
+</td>
+<td	id=c_select
+	align=rigth
+	colspan=2
+	valign=top
+><select
+	name="cell_numbers"
+	id="cell"
+	size=6
+onClick='if(document.getElementById("single").checked) chkValue(this.id)'
+onDblClick='if (! document.getElementById("single").checked) chkValue(this.id)'
+>
+<option >----------
+<option >----------
+<option >----------
+<option >----------
+</select></td>
+<td	id=u_select
+	align=rigth
+	colspan=2
+	valign=top
+><select
+	name="fav"
+	id="fav"
+	size=6
+onClick='if(document.getElementById("single").checked) chkValue(this.id)'
+onDblClick='if (! document.getElementById("single").checked) chkValue(this.id)'
+>
+<option >-------X
+<option >-------カラ
+<option >-------｜
+<option >-------___
+<option >-----------
+<option >-------[ * ]
+<option >-------( * )
+<option >-------< * >
+</select></td><td	id=u_select
+	align=rigth
+	colspan=2
+	valign=top
+>
+<strong>[ID] Infomation </strong><br />
+size:<br />
+class:<br />
+width:<br />
+height:<br />
+・・・・<br />
+</td></tr>
+
+<tr>
+	<td colspan=8>
+スクロールバー領域<br />
+	</td>
+</tr>
+
+<tr>
+<td	colspan=8
+	style="text-align:right;"
+>file name
+<input	type=text
+	name=fct1
+	id=fct1
+	size=16
+	value='p00 / 000+00_'
+	onChange="chkValue(this.id);"
+	style="width:65%"
+> <input type=button
+	alt="次のページへ"
+	value=OK
+	id=pgdn
+	onclick="chkValue(this.id);"
+	style="width:15%"
+><br />file type
+<input	type=text
+	name=fct1
+	id=fct1
+	size=16
+	value='p00 / 000+00_'
+	onChange="chkValue(this.id);"
+	style="width:65%"
+> <input type=button
+	alt="次のページへ"
+	value=Cancel
+	id=pgdn
+	onclick="chkValue(this.id);"
+	style="width:15%"
+>
+</td></tr><tr>
+<td	id=rEsult_bOx
+	colspan=8
+><br /></td></tr></table></form></body></html>

@@ -1,0 +1,51 @@
+﻿/**
+    new Xps Template
+    以下のテキストが最低限のシート情報です。
+    このままエディタに渡してパースすることが可能です
+    %~%の部分は何らかのデータで置換してください。
+    空白部分は空白のままで動作に問題ありません
+*/
+
+nasTIME-SHEET 0.4
+##TITLE=%title%
+##OPUS=%epsode%
+##SUB_TITLE=
+##SCENE=
+##CUT=%cutNo%
+##TIME=%cutTime%
+##CREATE_USER=%userName%
+##UPDATE_USER=
+##CREATE_TIME=
+##UPDATE_TIME=
+##FRAME_RATE=%frameRate%
+#
+#================================================
+[option	dialog	timing	timing	timing	timing	comment]
+[link	.	.	.	.	.	.]
+[CELL	N	A	B	C	D	]
+[END]
+
+/*
+    以下注釈
+
+nasTIME-SHEET 0.4   　//現状のバージョン番号です近々にバージョン上がります
+##TITLE=%title% //DBのタイトル文字列と置換
+##OPUS=%epsode% //エピソード名（番号）と置換
+##SUB_TITLE=　//エピソードの　descriptionがあればここに
+##SCENE=　　//TVシリーズでは通常使用されないので空白でOKです
+##CUT=%cutNo% //カット番号で置換
+##TIME=%cutTime%　//フレーム数、秒＋コマ　又はタイムコードで
+##CREATE_USER=%userName%　//最初のユーザIDを
+##UPDATE_USER=  //上と同じデータを
+##CREATE_TIME=  //空白OK
+##UPDATE_TIME=　//空白OK
+##FRAME_RATE=%frameRate%　//特に指定がなければ　24
+#
+#================================================
+# 以下は各トラックの種別とラベルの最低限の情報です
+# タイムシート本体の記述は無くてもアプリケーションが空白で初期化します。
+[option	dialog	timing	timing	timing	timing	comment]
+[link	.	.	.	.	.	.]
+[CELL	N	A	B	C	D	]
+[END]
+*/

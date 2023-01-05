@@ -1,0 +1,199 @@
+<html><head><meta http-equiv="content-type" content="text/html; charset=utf-8"> <style>
+	.KEYW {color: #933;}
+	.COMM {color: #bbb; font-style: italic;}
+	.NUMB {color: #393;}
+	.STRN {color: #393;}
+	.REGX {color: #339;}
+	.line {border-right: 1px dotted #666; color: #666; font-style: normal;}
+	</style></head><body><pre><span class='line'>  1</span> <span class="TOKN">﻿</span><span class="COMM">/**
+<span class='line'>  2</span>  * @fileoverview 簡易マップオブジェクト
+<span class='line'>  3</span>  
+<span class='line'>  4</span> このコードはすでに使用されていないので　削除予定　2016 09
+<span class='line'>  5</span>  */</span><span class="WHIT">
+<span class='line'>  6</span> 
+<span class='line'>  7</span> </span><span class="COMM">/**
+<span class='line'>  8</span>  * psMapElement
+<span class='line'>  9</span>  * マップ要素の親クラス
+<span class='line'> 10</span>  * このファイルの上方の記述はps専用なので注意
+<span class='line'> 11</span>  *
+<span class='line'> 12</span>  * @param myParentGroup
+<span class='line'> 13</span>  * @param myName
+<span class='line'> 14</span>  * @param myLayer
+<span class='line'> 15</span>  */</span><span class="WHIT">
+<span class='line'> 16</span> </span><span class="NAME">psMapElement</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="KEYW">function</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">myParentGroup</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">myName</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">myLayer</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'> 17</span> </span><span class="WHIT">    </span><span class="NAME">this.parent</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">myParentGroup</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 18</span> </span><span class="WHIT">    </span><span class="NAME">this.name</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">myName</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 19</span> </span><span class="WHIT">    </span><span class="NAME">this.body</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">myLayer</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 20</span> </span><span class="WHIT">    </span><span class="NAME">this.index</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">this.parent.elements.length</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 21</span> </span><span class="PUNC">}</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 22</span> 
+<span class='line'> 23</span> </span><span class="COMM">/**
+<span class='line'> 24</span>  psMapGroup = function (myMap, nameLabel, lot, myLayer) {
+<span class='line'> 25</span>     this.parent = myMap;
+<span class='line'> 26</span>     this.body = myLayer;
+<span class='line'> 27</span>     if (!nameLabel) {
+<span class='line'> 28</span>         nameLabel = "";
+<span class='line'> 29</span>     }
+<span class='line'> 30</span>     ;//明示的に
+<span class='line'> 31</span>     this.name = nameLabel;
+<span class='line'> 32</span>     if (!lot) {
+<span class='line'> 33</span>         lot = 0;
+<span class='line'> 34</span>     }
+<span class='line'> 35</span>     ;//最低0枚
+<span class='line'> 36</span>     this.elements = new Array();//エレメントトレーラ
+<span class='line'> 37</span>     if (lot) {
+<span class='line'> 38</span>         for (var idx = lot - 1; idx >= 0; idx--) {
+<span class='line'> 39</span>             this.elements.push(new psMapElement(this, this.body.layers[idx].name, this.body.layers[idx]))
+<span class='line'> 40</span>         }
+<span class='line'> 41</span>     }
+<span class='line'> 42</span> }
+<span class='line'> 43</span> 
+<span class='line'> 44</span>  var myPsMap = new Object();
+<span class='line'> 45</span>  myPsMap.body = app.activeDocument;
+<span class='line'> 46</span>  myPsMap.groups = new Array;//mapトレーラ
+<span class='line'> 47</span>  //トレーラにグループを登録　グループ自身がエレメントを登録する
+<span class='line'> 48</span>  for (var gIdx = myPsMap.body.layers.length - 1; gIdx >= 0; gIdx--) {
+<span class='line'> 49</span>     myPsMap.groups.push(new psMapGroup(myPsMap, myPsMap.body.layers[gIdx].name, myPsMap.body.layers[gIdx].layers.length, myPsMap.body.layers[gIdx]));
+<span class='line'> 50</span> }
+<span class='line'> 51</span> 
+<span class='line'> 52</span> 
+<span class='line'> 53</span>  //myPsMap.groups[2].elements[0].body.visible=true;
+<span class='line'> 54</span> 
+<span class='line'> 55</span>  for (var gidx = 0; gidx &lt; myPsMap.body.layers.length; gidx++) {
+<span class='line'> 56</span>     for (var eidx = 0; eidx &lt; myPsMap.groups[gidx].elements.length; eidx++) {
+<span class='line'> 57</span>         var myLayer = myPsMap.groups[gidx].elements[eidx].body;
+<span class='line'> 58</span>         var myName = [myPsMap.groups[gidx].body.name, eidx + 1].join("-")
+<span class='line'> 59</span>         if (myLayer.name != myName) {
+<span class='line'> 60</span>             myLayer.name = myName
+<span class='line'> 61</span>         }
+<span class='line'> 62</span>     }
+<span class='line'> 63</span> }
+<span class='line'> 64</span>  //メンバーに設定　メンバー自身のレイヤ内順位を戻すメソッド
+<span class='line'> 65</span>  ArtLayer.prototype.getIdx = function () {
+<span class='line'> 66</span>     for (var id = 0; id &lt; this.parent.layers.length; id++) {
+<span class='line'> 67</span>         if (this.parent.layers[id].name == this.name) {
+<span class='line'> 68</span>             return this.parent.layers.length - id - 1
+<span class='line'> 69</span>         }
+<span class='line'> 70</span>         ;
+<span class='line'> 71</span>     }
+<span class='line'> 72</span> };
+<span class='line'> 73</span>  //    app.activeDocument.activeLayer.getIdx();
+<span class='line'> 74</span>  //レイヤーセットに設定　セット内を名前でアクセスしてセット内順位を返す
+<span class='line'> 75</span>  LayerSet.prototype.getIdx = function (Lname) {
+<span class='line'> 76</span>     for (var id = 0; id &lt; this.layers.length; id++) {
+<span class='line'> 77</span>         if (this.layers[id].name == Lname) {
+<span class='line'> 78</span>             return this.layers.length - id
+<span class='line'> 79</span>         }
+<span class='line'> 80</span>         ;
+<span class='line'> 81</span>     }
+<span class='line'> 82</span> };
+<span class='line'> 83</span>  //    app.activeDocument.activeLayer.parent.getIdx("B-1");
+<span class='line'> 84</span> 
+<span class='line'> 85</span> 
+<span class='line'> 86</span> 
+<span class='line'> 87</span> 
+<span class='line'> 88</span> 
+<span class='line'> 89</span>  /**
+<span class='line'> 90</span>  * マップオブジェクト
+<span class='line'> 91</span>  * Mapオブジェクト及びXpsオブジェクト内部で利用されるオブジェクト
+<span class='line'> 92</span>  * 或る程度の独立性を持って、戻しデータをコントロールするための中間オブジェクト
+<span class='line'> 93</span>  */</span><span class="WHIT">
+<span class='line'> 94</span> 
+<span class='line'> 95</span> </span><span class="COMM">/**
+<span class='line'> 96</span>  * MapElement
+<span class='line'> 97</span>  * マップ要素の親クラス
+<span class='line'> 98</span>  * グループID
+<span class='line'> 99</span>  * ラベル
+<span class='line'>100</span>  * ポイントするオブジェクト
+<span class='line'>101</span>  * @param myParentGroup
+<span class='line'>102</span>  * @param myName
+<span class='line'>103</span>  * @param myObject
+<span class='line'>104</span>  * @constructor
+<span class='line'>105</span>  */</span><span class="WHIT">
+<span class='line'>106</span> </span><span class="NAME">nas.MapElement</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="KEYW">function</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">myParentGroup</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">myName</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">myObject</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>107</span> </span><span class="WHIT">    </span><span class="NAME">this.parent</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">myParentGroup</span><span class="PUNC">;</span><span class="COMM">//</span><span class="WHIT">
+<span class='line'>108</span> </span><span class="WHIT">    </span><span class="NAME">this.name</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">myName</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>109</span> </span><span class="WHIT">    </span><span class="NAME">this.value</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">myObject</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>110</span> </span><span class="WHIT">    </span><span class="NAME">this.index</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">this.parent.elements.length</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>111</span> </span><span class="PUNC">}</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>112</span> 
+<span class='line'>113</span> </span><span class="COMM">/**
+<span class='line'>114</span>  * MapGroup
+<span class='line'>115</span>  * マップグループ
+<span class='line'>116</span>  * デフォルトのグループを含み各グループの情報を保持するオブジェクト
+<span class='line'>117</span>  * グループトレーラーに格納される
+<span class='line'>118</span>  * （ps環境ではグループに相当するレイヤセットを参照する）
+<span class='line'>119</span>  * ジオメトリックプロパティは、valueプロパティで保持する
+<span class='line'>120</span>  * @param myType
+<span class='line'>121</span>  * @param myMap
+<span class='line'>122</span>  * @param nameLabel
+<span class='line'>123</span>  * @constructor
+<span class='line'>124</span>  */</span><span class="WHIT">
+<span class='line'>125</span> </span><span class="NAME">nas.MapGroup</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="KEYW">function</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">myType</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">myMap</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">nameLabel</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>126</span> </span><span class="WHIT">    </span><span class="NAME">this.type</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">myType</span><span class="WHIT"> </span><span class="PUNC">==</span><span class="WHIT"> </span><span class="NAME">undefined</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">?</span><span class="WHIT"> </span><span class="NAME">myType</span><span class="WHIT"> </span><span class="PUNC">:</span><span class="WHIT"> </span><span class="STRN">"cell"</span><span class="PUNC">;</span><span class="COMM">//cell/camerawork/system/sound/effect/composit/</span><span class="WHIT">
+<span class='line'>127</span> </span><span class="WHIT">    </span><span class="NAME">this.parent</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">myMap</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>128</span> </span><span class="COMM">//	this.body=myLayer;</span><span class="WHIT">
+<span class='line'>129</span> </span><span class="WHIT">    </span><span class="KEYW">switch</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">this.type</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>130</span> </span><span class="WHIT">        </span><span class="KEYW">case</span><span class="WHIT"> </span><span class="STRN">"system"</span><span class="PUNC">:</span><span class="WHIT">
+<span class='line'>131</span> </span><span class="WHIT">            </span><span class="NAME">this.value</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">nas.defaultValues.system</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>132</span> </span><span class="WHIT">            </span><span class="KEYW">break</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>133</span> </span><span class="WHIT">        </span><span class="KEYW">case</span><span class="STRN">"camerawork"</span><span class="PUNC">:</span><span class="WHIT">
+<span class='line'>134</span> </span><span class="WHIT">            </span><span class="NAME">this.value</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">nas.dafaultValues.camerawork</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>135</span> </span><span class="WHIT">            </span><span class="KEYW">break</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>136</span> </span><span class="WHIT">        </span><span class="KEYW">case</span><span class="WHIT"> </span><span class="STRN">"sound"</span><span class="PUNC">:</span><span class="WHIT">
+<span class='line'>137</span> </span><span class="WHIT">            </span><span class="NAME">this.value</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">nas.defaultValues.soundtrack</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>138</span> </span><span class="WHIT">            </span><span class="KEYW">break</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>139</span> </span><span class="WHIT">        </span><span class="KEYW">case</span><span class="STRN">"effect"</span><span class="PUNC">:</span><span class="WHIT">
+<span class='line'>140</span> </span><span class="WHIT">        </span><span class="KEYW">case</span><span class="STRN">"composit"</span><span class="PUNC">:</span><span class="WHIT">
+<span class='line'>141</span> </span><span class="WHIT">            </span><span class="NAME">this.value</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">nas.defaultValue.composit</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>142</span> </span><span class="WHIT">            </span><span class="KEYW">break</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>143</span> </span><span class="WHIT">        </span><span class="KEYW">case</span><span class="WHIT"> </span><span class="STRN">"cell"</span><span class="PUNC">:</span><span class="WHIT">
+<span class='line'>144</span> </span><span class="WHIT">        </span><span class="KEYW">default</span><span class="PUNC">:</span><span class="WHIT">
+<span class='line'>145</span> </span><span class="WHIT">            </span><span class="NAME">this.value</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">nas.defaultValue.cell</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>146</span> </span><span class="WHIT">    </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>147</span> </span><span class="WHIT">    </span><span class="NAME">this.scale</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>148</span> 
+<span class='line'>149</span> </span><span class="WHIT">    </span><span class="NAME">this.if</span><span class="PUNC">(</span><span class="PUNC">!</span><span class="NAME">nameLabel</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>150</span> </span><span class="WHIT">    </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>151</span> </span><span class="WHIT">        </span><span class="NAME">nameLabel</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="STRN">""</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>152</span> </span><span class="WHIT">    </span><span class="PUNC">}</span><span class="COMM">//明示的に</span><span class="WHIT">
+<span class='line'>153</span> 
+<span class='line'>154</span> </span><span class="WHIT">    </span><span class="NAME">this.name</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">nameLabel</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>155</span> </span><span class="WHIT">    </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="PUNC">!</span><span class="NAME">lot</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>156</span> </span><span class="WHIT">        </span><span class="NAME">lot</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NUMB">0</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>157</span> </span><span class="WHIT">    </span><span class="PUNC">}</span><span class="COMM">//最低0枚</span><span class="WHIT">
+<span class='line'>158</span> 
+<span class='line'>159</span> </span><span class="COMM">//	this.elements=new Array();//エレメントトレーラはない グループごとに参照を保持はしない</span><span class="WHIT">
+<span class='line'>160</span> </span><span class="WHIT">    </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">lot</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>161</span> </span><span class="WHIT">        </span><span class="KEYW">for</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="KEYW">var</span><span class="WHIT"> </span><span class="NAME">idx</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">lot</span><span class="WHIT"> </span><span class="PUNC">-</span><span class="WHIT"> </span><span class="NUMB">1</span><span class="PUNC">;</span><span class="WHIT"> </span><span class="NAME">idx</span><span class="WHIT"> </span><span class="PUNC">>=</span><span class="WHIT"> </span><span class="NUMB">0</span><span class="PUNC">;</span><span class="WHIT"> </span><span class="NAME">idx</span><span class="PUNC">--</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>162</span> </span><span class="WHIT">            </span><span class="NAME">this.elements.push</span><span class="PUNC">(</span><span class="KEYW">new</span><span class="WHIT"> </span><span class="NAME">psMapElement</span><span class="PUNC">(</span><span class="KEYW">this</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">this.body.layers</span><span class="PUNC">[</span><span class="NAME">idx</span><span class="PUNC">]</span><span class="PUNC">.</span><span class="NAME">name</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">this.body.layers</span><span class="PUNC">[</span><span class="NAME">idx</span><span class="PUNC">]</span><span class="PUNC">)</span><span class="PUNC">)</span><span class="WHIT">
+<span class='line'>163</span> </span><span class="WHIT">        </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>164</span> </span><span class="WHIT">    </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>165</span> </span><span class="PUNC">}</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>166</span> 
+<span class='line'>167</span> </span><span class="KEYW">var</span><span class="WHIT"> </span><span class="NAME">Map</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="PUNC">}</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>168</span> </span><span class="NAME">myPsMap.body</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">app.activeDocument</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>169</span> </span><span class="COMM">/**
+<span class='line'>170</span>  * mapトレーラ
+<span class='line'>171</span>  * @type {Array}
+<span class='line'>172</span>  */</span><span class="WHIT">
+<span class='line'>173</span> </span><span class="NAME">myPsMap.groups</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="PUNC">[</span><span class="PUNC">]</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>174</span> 
+<span class='line'>175</span> </span><span class="COMM">/**
+<span class='line'>176</span>  * トレーラにグループを登録　グループ自身がエレメントを登録する
+<span class='line'>177</span>  */</span><span class="WHIT">
+<span class='line'>178</span> </span><span class="KEYW">for</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="KEYW">var</span><span class="WHIT"> </span><span class="NAME">gIdx</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">myPsMap.body.layers.length</span><span class="WHIT"> </span><span class="PUNC">-</span><span class="WHIT"> </span><span class="NUMB">1</span><span class="PUNC">;</span><span class="WHIT"> </span><span class="NAME">gIdx</span><span class="WHIT"> </span><span class="PUNC">>=</span><span class="WHIT"> </span><span class="NUMB">0</span><span class="PUNC">;</span><span class="WHIT"> </span><span class="NAME">gIdx</span><span class="PUNC">--</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>179</span> </span><span class="WHIT">    </span><span class="NAME">myPsMap.groups.push</span><span class="PUNC">(</span><span class="KEYW">new</span><span class="WHIT"> </span><span class="NAME">psMapGroup</span><span class="PUNC">(</span><span class="NAME">myPsMap</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">myPsMap.body.layers</span><span class="PUNC">[</span><span class="NAME">gIdx</span><span class="PUNC">]</span><span class="PUNC">.</span><span class="NAME">name</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">myPsMap.body.layers</span><span class="PUNC">[</span><span class="NAME">gIdx</span><span class="PUNC">]</span><span class="PUNC">.</span><span class="NAME">layers.length</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">myPsMap.body.layers</span><span class="PUNC">[</span><span class="NAME">gIdx</span><span class="PUNC">]</span><span class="PUNC">)</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>180</span> </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>181</span> 
+<span class='line'>182</span> 
+<span class='line'>183</span> </span><span class="COMM">//myPsMap.groups[2].elements[0].body.visible=true;</span><span class="WHIT">
+<span class='line'>184</span> </span><span class="KEYW">for</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="KEYW">var</span><span class="WHIT"> </span><span class="NAME">gidx</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NUMB">0</span><span class="PUNC">;</span><span class="WHIT"> </span><span class="NAME">gidx</span><span class="WHIT"> </span><span class="PUNC">&lt;</span><span class="WHIT"> </span><span class="NAME">myPsMap.body.layers.length</span><span class="PUNC">;</span><span class="WHIT"> </span><span class="NAME">gidx</span><span class="PUNC">++</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>185</span> </span><span class="WHIT">    </span><span class="KEYW">for</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="KEYW">var</span><span class="WHIT"> </span><span class="NAME">eidx</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NUMB">0</span><span class="PUNC">;</span><span class="WHIT"> </span><span class="NAME">eidx</span><span class="WHIT"> </span><span class="PUNC">&lt;</span><span class="WHIT"> </span><span class="NAME">myPsMap.groups</span><span class="PUNC">[</span><span class="NAME">gidx</span><span class="PUNC">]</span><span class="PUNC">.</span><span class="NAME">elements.length</span><span class="PUNC">;</span><span class="WHIT"> </span><span class="NAME">eidx</span><span class="PUNC">++</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>186</span> </span><span class="WHIT">        </span><span class="KEYW">var</span><span class="WHIT"> </span><span class="NAME">myLayer</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">myPsMap.groups</span><span class="PUNC">[</span><span class="NAME">gidx</span><span class="PUNC">]</span><span class="PUNC">.</span><span class="NAME">elements</span><span class="PUNC">[</span><span class="NAME">eidx</span><span class="PUNC">]</span><span class="PUNC">.</span><span class="NAME">body</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>187</span> </span><span class="WHIT">        </span><span class="KEYW">var</span><span class="WHIT"> </span><span class="NAME">myName</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="PUNC">[</span><span class="NAME">myPsMap.groups</span><span class="PUNC">[</span><span class="NAME">gidx</span><span class="PUNC">]</span><span class="PUNC">.</span><span class="NAME">body.name</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">eidx</span><span class="WHIT"> </span><span class="PUNC">+</span><span class="WHIT"> </span><span class="NUMB">1</span><span class="PUNC">]</span><span class="PUNC">.</span><span class="NAME">join</span><span class="PUNC">(</span><span class="STRN">"-"</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'>188</span> </span><span class="WHIT">        </span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="NAME">myLayer.name</span><span class="WHIT"> </span><span class="PUNC">!=</span><span class="WHIT"> </span><span class="NAME">myName</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'>189</span> </span><span class="WHIT">            </span><span class="NAME">myLayer.name</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">myName</span><span class="WHIT">
+<span class='line'>190</span> </span><span class="WHIT">        </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>191</span> </span><span class="WHIT">    </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>192</span> </span><span class="PUNC">}</span></pre></body></html>

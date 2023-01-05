@@ -1,0 +1,74 @@
+﻿データ初回立ち上げ時の挙動
+
+初回作成時のアプリケーション側から見た　ドキュメント（データ）の状態をまとめます。
+
+    データ本体(空)
+html内部の以下のテキストエリアの内容がヌルストリング
+<textarea id="startupXPS" ></textarea>
+
+＊＊リファレンスの内容は、任意です。
+（あっても良い。無くとも良い）
+<textarea id="referenceXPS" ></textarea>
+データが存在すれば、リファレンスエリアに描画します。
+チュートリアルデータなどでは参考を入れたほうが良いかも
+
+
+    backend_variables
+
+  <!-- backend_variables -->
+  <span id="backend_variables"
+        data-organization_token="1xW4FYYQnmt73z7b7cMPGVx8"
+        data-user_access_token="9f320774edb09d93164c6419b95689829684a21021746654aa8ee73adf09ae1e"
+        data-user_token="vwNW7gjUuHbbZZpkC7Y4ydBs"
+        data-user_name="Nekomataya-STG1"
+        data-user_email="kiyo@nekomataya.info"
+        data-episode_id="1"
+        data-cut_id="1410"
+        data-product_token="xzNm8dBTNx5FdS3hee1Fsobo"   //(データ取得に利用)
+        data-episode_token="he4mzMCw4VWfqAgUiDaoko8Y"   //(データ取得に利用)
+        data-cut_token="BBibcvSKJYnJiPAZDyLBH5Wx"       //(データ取得に利用)
+        data-scale="1+18"  //これは、API経由で取得するデータ内に置くなら、backend_variables内では不用（後述）
+        data-line_id=""     //ヌルストリング（初期値をアプリケーションで設定）
+        data-stage_id=""　  //ヌルストリング（初期値をアプリケーションで設定）
+        data-job_id=""      //ヌルストリング（初期値をアプリケーションで設定）
+        data-status=""      //ヌルストリング（初期値をアプリケーションで設定）
+  ></span>
+
+データを指定されて立ち上がったアプリケーションはロード後にここからトークンを読んで、初期化に必要なデータをAPI経由で（必ず）取得します。
+カット作成時にユーザが指定した尺（TIME）データは、APIから取得するデータ内で以下の形式で解釈します。
+
+-カット詳細
+description:"%E6%BA%90%E6%B0%8F%E7%89%A9%E8%AA%9E#%E4%B8%80%E5%B8%96[%E6%A1%90%E5%A3%B7]//1004(1+12)",
+name:"1004(1+12)",
+token:"BBibcvSKJYnJiPAZDyLBH5Wx",
+versions:[]
+
+    description:
+取得データ内に識別子の記載があればその値を使用します。
+
+descriptionに何も記載がない場合は、タイトル、エピソード、カット名を合成して整合性のある識別子をビルドする。
+識別子の仕様は別紙
+アプリケーションはデータ更新時にdescriptionとして識別子を付加してサーバに送信する。
+
+これが基準データになります。
+サーバ側でコントロール（作成）する必要は特にない　初回起動時等　エントリのdescriptionが無い場合　送出時は空のままで良い
+
+    name:
+カット番号（名称）ですが、補助情報として"()"でくくって時間情報を後置すればそれを解釈できるようにしてあります。
+(括弧)の内容は、以下のようなタイムコードを解釈します。
+    144         :整数値、フレーム数  (00048 冒頭ゼロ付きでも良い)
+    3+18        :秒＋コマ形式（アニメ業界スタイル）タイムコード
+    00:00:03:15 :SMPTEタイムコード(00:00:2:20  桁合わせのゼロはあってもなくても良い)
+この指定は、優先順位は低い（実際にデータが存在すればその値で上書きされる）のですが、タイムシートデータが空の状態では、有効な指定になります。
+
+このため、最初のエントリを作成する際にAPIの返り値に情報を付加してもらえるなら、backend_variables内への追加は無くともかまいません。
+具体的には、カット番号に"1004(1+18)"または"1004(42)"のように括弧でくくった時間データを追加してもらえば　それを解釈するようにします。
+
+（現在この機能は有効にはなっていません。機能は既にあるのでこれから切り替えます）
+（5/23 有効化）
+
+
+
+アプリケーション起動（初期化）手順詳細
+    
+    

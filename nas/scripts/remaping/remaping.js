@@ -141,7 +141,7 @@ xUI.importBox.reset = function(){
     xUI.importBox.reset();
 /**
  *  @function
- *   変換ターゲットとなるFileオブジェクト配列を引数にして呼び出す
+ *   変換ターゲットとなるFileオブジェクト配列を引数にして以下の関数を呼び出す
  *   全カット変換終了時のコールバック関数を与えることが可能
  *  @params {Array of File} targetFiles
  *  @params {Function} callback
@@ -906,7 +906,7 @@ console.log(editxMap);
     this.activeDocument     =  this.documents[this.activeDocumentId];
 
     this.sessionRetrace = -1;                   //管理上の作業セッション状態
-    this.referenceXPS   = new Xps(5,nas.SheetLength+':00.');           //参照用Xps初期値
+    this.referenceXPS=new Xps(5,nas.SheetLength+':00.');           //参照用Xps初期値
 /**
 引数に参照オブジェクトが渡されていたら、優先して解決
     マルチステージ拡張実装後、直接指定された参照ステージは、初期化時のみ優先 
@@ -936,7 +936,6 @@ console.log(editxMap);
     this.refRegex=new RegExp(xUI.referenceView.join("|"));
 /** 
     以下UI動作制御変数
-
     viewMode    ページ単位表示か又は全体を1ページ1カラムで表示させるかのフラグ
         Compact (by scroll)
         WordProp (by page)
@@ -2561,21 +2560,6 @@ xUI.zoomSwitch =function(){
     this.adjustScale(scalePresets[this.zoomSwitch.currentPreset]);
 }
 xUI.zoomSwitch.currentPreset=0;
-/*
-        xUI.adjustPageImage()
-    タイムシートUIを参照画像と一致させる
-    一致パラメータは、画像ごとに保持（保存）された情報を使用する
-    指定UIを使って編集可能
-*/
-xUI.adjustPageImage = function(){
-    if(
-        (xUI.XPS.pageImages.length == 0)||
-        (xUI.viewMode != 'WordProp')||
-        (true)
-    ) return false;
-    
-}
-/* xUI.adjustPageImage// */
 /*        xUI.reInitBody(newTimelines,newDuration);
 引数:
     newTimelines    Number 新規トラック数
@@ -4010,10 +3994,6 @@ BODY_ +='\n';
 //BODY_ +='<div id=endMarker-print class=endMarker-print>::print-end::';
 //BODY_ +='<br></div>';
 //};// */
-//画像タイムシート用エレメントを加える
-BODY_ +='\t<img id=sheetImage-1 class=overlayDocmentImage src=./template/timeSheet_default.png>';//open pageImage//
-
-BODY_ +='\t</img>\n';//close pageImage//
 BODY_ +='</div>';//close sheetArea//
 BODY_ +='';
     this.Select=restoreValue;
@@ -4275,7 +4255,8 @@ xUI.getCurrent=function(){
 
 
 /*    ラピッドモードのコマンドを実行    */
-xUI.doRapid=function(param){rapidMode.command[param]();};
+//xUI.doRapid=function(param){rapidMode.command[param]();};
+xUI.doRapid=function(param){xUI.rapidMode.command[param]();};
 
 /*    複写
 引数:なし
@@ -5592,15 +5573,12 @@ xUI.keyPress = function(e){
 	key = e.keyCode;//キーコードを取得
       console.log(key+':press:');
 //      console.log(xUI.edmode+':xUI.edmode:');
-    if(this.ipMode >= 2){
-//iNputbOxでかつ原画モード時は補完サインをショートカット入力 160([alt]+[space]) 8211([alt]+[-])
-        if(((key==160)||(key==8211))&&(e.altKey)){
-            interpSign(); return false;
+    if(this.ipMode <= 0){
+//iNputbOxでかつ原画モード時はショートカット入力
+        if(((key==160)||(key==8211))&&((e.altKey)||(e.ctrlKey)||(e.metaKey))){
+            interpSign();
+            return false;
         };
-    };
-    if((key==8776)&&(e.altKey)){
-//ブランクを入力[alt]+[X]
-        xUI.put(nas_expdList('X'));xUI.spin("down");return false;
     };
 	if(xUI.edmode>0){
         if(xUI.edmode==1){
@@ -5746,17 +5724,6 @@ console.log(e.keyCode);
 	    }
 	}
 	key = e.keyCode;//キーコードを取得
-/*    if(this.ipMode >= 2){
-//原画モード時はショートカット入力 F-1 ,2 , 
-//FunctionKey割当（TDTS互換）
-        if(key==112){
-            interpSign('○');return false;
-        }else if(key==113){
-            interpSign('●');return false;
-        }else if(key==114){
-            xUI.put(nas_expdList('X'));xUI.spin("down");return false;
-        };
-    };// */
 //フォーカスエレメントがiNputbOx以外なら入力を戻す
     if(document.activeElement!==document.getElementById("iNputbOx")){
         if(((key==79)||(key==83))&&((e.ctrlKey)||(e.metaKey))){
@@ -5764,8 +5731,8 @@ console.log(e.keyCode);
             return false;
         }else{
             return true;
-        };
-    };
+        }
+    }
     if((this.eXMode>=2)&&((key<48)||(key>57))){
 		document.getElementById("iNputbOx").select();
 		return false;
@@ -5794,15 +5761,6 @@ case  27:	;	//esc
 //		document.getElementById("iNputbOx").value=this.bkup();
 		syncInput(this.bkup());
 		return false;
-break;
-case  112:	;	//F-1
-    if(this.ipMode >= 2) interpSign('○');return false;
-break;
-case  113:	;	//F-2
-    if(this.ipMode >= 2) interpSign('●');return false;
-break;
-case  114:	;	//F-3
-    xUI.put(nas_expdList('X'));xUI.spin("down");return false;
 break;
 case  9	:	;	//tab はシステムで使うのでUPは注意
 case  13:	;	//Enter
@@ -6716,7 +6674,7 @@ xUI.panelTable = {
 
 //inplace-UI-panel xpst editor
     'Memo'          :{elementId:"optionPanelMemo"         ,uiOrder:-1,type:'fix', note:"Xpsメモ編集(xpsedit)"},
-    'extSig'        :{elementId:"extSig"                ,uiOrder: 3,type:'fix', note:"拡張署名欄(xpsedit)"},
+    'extSig'        :{elementId:"extSig"                  ,uiOrder: 3,type:'fix', note:"拡張署名欄(xpsedit)"},
     'memoArea'      :{elementId:"memoArea"                ,uiOrder: 3,type:'fix', note:"Xpsメモ欄(xpsedit)"},
     'Data'          :{elementId:"optionPanelData"         ,uiOrder:-1,type:'fix', note:"remaping Import|Export(汎)"},
     'AEKey'         :{elementId:"optionPanelAEK"          ,uiOrder:-1,type:'fix', note:"remaping AEKey"},
@@ -6910,13 +6868,13 @@ console.log(itm.elementId,status);
  */
 xUI.eXpandPanel = function(kwd,status){
     let itm = xUI.panelTable[kwd];
+console.log(itm);
     if(
         (itm)&&
         (document.getElementById(itm.elementId))&&
         (document.getElementById(itm.elementId+'_expand'))&&
         (document.getElementById(itm.elementId+'_minimise'))
     ){
-console.log(itm.elementId);
         let currentStatus = ($('#'+itm.elementId+'_expand').isVisible())? 'expand':'minimise';
         if(status == currentStatus) return currentStatus;//NOP
         if(status == 'expand'){
@@ -7951,9 +7909,8 @@ function nas_Rmp_Startup(){
 //クッキー指定があれば読み込む
     if(config.useCookie[0]){ldCk()}; 
 //ライブラリフレームレートの設定
-//    nas.FRATE=nas.newFramerate(myFrameRate);
     nas.FRATE=nas.newFramerate(config.SheetLooks.FrameRate);
-
+//    nas.FRATE=nas.newFramerate(myFrameRate);
 //背景カラーを置換
     config.SheetLooks.SheetBaseColor = config.SheetBaseColor;
 console.log('startup')
@@ -8303,7 +8260,7 @@ if( startupDocument.length > 0){ XPS.readIN(startupDocument) }
                         window.print();
                     }else if(mode == 'png'){
                         sheetSaveAsPng(0,()=>{
-//                            window.parent.document.getElementById('printFrame').remove()
+                            window.parent.document.getElementById('printFrame').remove()
                         });
                     };
                     if(callback instanceof Function) callback();
@@ -10073,17 +10030,13 @@ if(mode!='body-only'){
     myBody+='</title>';
 //'<link REL=stylesheet TYPE="text/css" HREF="http://www.nekomataya.info/test/remaping.js/template/printout.css">';
     if((xUI.onSite)&&(window.location.href.indexOf(serviceAgent.currentRepository.url)>=0)){
-        var myAddress = document.location.origin
-
-        myBody+='<link REL=stylesheet TYPE="text/css" HREF="'+ myAddress +'/remaping/template/printout.css">';//for TEST onSite
-//        myBody+='<link REL=stylesheet TYPE="text/css" HREF="/remaping/template/printout.css">';//for TEST onSite
-        var libOffset = myAddress +'/remaping/';
-//        var libOffset = './';
+        myBody+='<link REL=stylesheet TYPE="text/css" HREF="/remaping/template/printout.css">';//for TEST onSite
+        var libOffset = '/remaping/'
     }else{
         var myAddress = window.location.href;
         if (myAddress.match(/(.+\/)(\S+\.html?$)/i)) myAddress = RegExp.$1;
         myBody+='<link REL=stylesheet TYPE="text/css" HREF="'+myAddress+'template/printout.css">';//for TEST offSite
-        var libOffset = './';
+        var libOffset = './'   
     };
 /*
     if(String(location).indexOf('https')!=0){
@@ -10204,7 +10157,7 @@ xUIの状況を確認して必要に従ってimportDocumentを呼ぶ
  */
 /**
  *  @paramas    {boolean}   autoBuffer
- *      ドロップされたファイルの内容をインポート
+ *      
  */
 var processImport=function(autoBuffer){
     
@@ -10906,7 +10859,7 @@ var myCookie = new Array();
 myCookie[0]=pageAttributes;
 
 //	[1] XPSAttrib
-	myTitle		= (config.useCookie.XPSAttrib)?XPS.title:null;
+/*	myTitle		= (config.useCookie.XPSAttrib)?XPS.title:null;
 	mySubTitle	= (config.useCookie.XPSAttrib)?XPS.subtitle:null;
 	myOpus		= (config.useCookie.XPSAttrib)?XPS.opus:null;
 
@@ -10917,6 +10870,17 @@ myCookie[0]=pageAttributes;
     CameraworkColumns = (config.useCookie.XPSAttrib)?xUI.cameraCount:null;
     StageworkColumns = (config.useCookie.XPSAttrib)?xUI.stageworkCount:null;
     SfxColumns = (config.useCookie.XPSAttrib)?xUI.sfxCount:null;
+// ======= */
+	myTitle		= (useCookie.XPSAttrib)?XPS.title:null;
+	mySubTitle	= (useCookie.XPSAttrib)?XPS.subtitle:null;
+	myOpus		= (useCookie.XPSAttrib)?XPS.opus:null;
+	myFrameRate	= (useCookie.XPSAttrib)?XPS.framerate.toString():null;
+	Sheet		= (useCookie.XPSAttrib)?nas.Frm2FCT(XPS.xpsTracks[0].length,3,0,XPS.framerate):null;//
+    SoundColumns = (useCookie.XPSAttrib)?xUI.dialogCount:null;
+	SheetLayers	= (useCookie.XPSAttrib)?xUI.timingCount:null;
+    CameraworkColumns = (useCookie.XPSAttrib)?xUI.cameraCount:null;
+    StageworkColumns = (useCookie.XPSAttrib)?xUI.stageworkCount:null;
+    SfxColumns = (useCookie.XPSAttrib)?xUI.sfxCount:null;
 
 myCookie[1]=[myTitle,mySubTitle,myOpus,myFrameRate,Sheet,SoundColumns,SheetLayers,CameraworkColumns,StageworkColumns,SfxColumns];
 
@@ -11721,18 +11685,6 @@ function chkValue(id){
 	document.getElementById("iNputbOx").select();
 	switch (id)
 	{
-case	"imgUse":
-			var imgs = document.querySelectorAll('.overlayDocmentImage');
-			if(document.getElementById(id).checked){
-//画像表示
-				imgs.forEach((e) => e.style.display = 'inline');
-//シートマージン有効
-			}else{
-//画像非表示
-				imgs.forEach((e) => e.style.display = 'none');
-//シートマージン無効
-			};
-break;
 case	"fct0"	:
 case	"fct1"	:
 	xUI.selectCell(xUI.Select[0]+'_'+
@@ -12122,7 +12074,7 @@ this.getProp=function()
 	var idNames =["prefBlmtd","prefBlpos","prefAeVersion"];//不要プロパティ＞,"prefKeyMethod"
 	var iNames  =["blmtd"    ,"blpos"    ,"aeVersion"    ];//,"keyMethod"    
 	for (var i=0;i<idNames.length;i++ ){
-		idName=idNames[i];name=iNames[i];
+		var idName = idNames[i];var name = iNames[i];
 		document.getElementById(idName).value=
 		this.Lists.aserch(idName,xUI[name]);
 	}
@@ -12131,7 +12083,7 @@ this.getProp=function()
 	var keyNames=["prefFpsF","prefDfX","prefDfY","prefDfA"];
 	var kNames  =["fpsF"    ,"dfX"    ,"dfY"    ,"dfA"    ];
 	for (var i=0;i<keyNames.length;i++){
-		idName=keyNames[i];name=kNames[i];
+		var idName = keyNames[i];var name = kNames[i];
 		document.getElementById(idName).value=xUI[name];
 	}
 	this.chgprefFpsF();this.chgdfSIZE();
@@ -13812,13 +13764,6 @@ adjustSheetA3(false);
 */
 /*
     xUI.SignBoxパネル機能オブジェクト
-    signatureオブジェクトを作成して返す
-    シグネチャオブジェクトは、生成ごとのuuidを持つ
-    user 
-    uuid
-    date
-    text
-    label
 */
 SignBox = {
     stampText:"%user%",

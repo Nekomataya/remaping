@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>りまぴんAPIV2見本</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+
+    <!-- Optional theme -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap-theme.min.css" integrity="sha384-rHyoN1iRsVXV4nD0JutlnGaslCJuC7uwjduW9SVrLvRYooPp2bWYgmgJQIXwl/Sp" crossorigin="anonymous">
+
+    <!-- Latest compiled and minified JavaScript -->
+    <script src="https://code.jquery.com/jquery-3.1.1.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+  </head>
+  <body>
+
+
+    <div class="container">
+
+      <div class="row">
+        <div class="col-lg-8 col-lg-offset-2">
+          <div class="row">
+            <div class="text-center">
+              <h1>りまぴんAPIV2見本</h1>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="text-center">
+              <h2>ログイン系</h2>
+              <div class="well">
+                <label for="email">メールアドレス</label>
+                <input id="email" type="string" name="email" value="">
+                <label for="password">パスワード</label>
+                <input id="password" type="password" name="password" value="">
+                <button id="get_token" class="btn btn-primary" type="button" name="button">トークン取得</button>
+                <dl class="dl-horizontal">
+                  <dt>トークンキー</dt><dd id="oauth_token"></dd>
+                </dl>
+              </div>
+            </div>
+          </div>
+          <div id="login_needed" style="display:none;">
+            <div class="row">
+              <div class="text-center">
+                <h2>チーム系</h2>
+                <div class="well">
+                  <h4>GET</h4>
+                  <button id="organization_list" class="btn" type="button" name="button">チーム一覧取得</button><br />
+                  <dl class="dl-horizontal">
+                    <dt>チーム名</dt><dd id="organization_name"></dd>
+                  </dl>
+                </div>
+
+              </div>
+            </div>
+          </div>
+          <div id="organization_needed"  style="display:none;">
+            <div class="row">
+              <div class="text-center">
+                <h2>作品系</h2>
+                <div class="well">
+                  <h4>GET</h4>
+                  <button id="product_list" class="btn" type="button" name="button">作品一覧取得</button><br />
+                  <button id="product_detail" class="btn" type="button" name="button">作品詳細</button>
+
+                  <h4>POST</h4>
+                  <h5>作品新規作成</h5>
+                  <form id="product_create">
+                    <label for="product_name">名前</label>
+                    <input class="form-control input-lg" type="text" name="product_name">
+                    <input type="submit" value="Submit">
+                  </form>
+
+                  <h4>PUT</h4>
+                  <h5>作品新規編集</h5>
+                  <form id="product_update">
+                    <label for="product_name">名前</label>
+                    <input class="form-control input-lg" type="text" name="product_name">
+                    <input type="submit" value="Submit">
+                  </form>
+                </div>
+              </div>
+            </div>
+
+            <div class="row">
+              <div class="text-center">
+                <h2>エピソード系</h2>
+                <div class="well">
+                  <h4>GET</h4>
+                  <button id="episode_list" class="btn" type="button" name="button">エピソード一覧取得</button><br />
+                  <button id="episode_detail" class="btn" type="button" name="button">エピソード詳細</button>
+
+                  <h4>POST</h4>
+                  <h5>エピソード新規作成</h5>
+                  <form id="episode_create">
+                    <label for="episode_name">名前</label>
+                    <input class="form-control input-lg" type="text" name="episode_name">
+                    <input type="submit" value="Submit">
+                  </form>
+                  <h4>PUT</h4>
+                  <h5>エピソード新規編集</h5>
+                  <form id="episode_update">
+                    <label for="episode_name">名前</label>
+                    <input class="form-control input-lg" type="text" name="episode_name">
+                    <input type="submit" value="Submit">
+                  </form>
+                </div>
+              </div>
+            </div>
+            <div class="row">
+              <div class="text-center">
+                <h2>カット系</h2>
+                <div class="well">
+                  <h4>GET</h4>
+                  <button id="cut_list" class="btn" type="button" name="button">カット一覧取得</button><br />
+                  <button id="cut_detail" class="btn" type="button" name="button">カット詳細</button>
+
+                  <h4>POST</h4>
+                  <h5>カット新規作成</h5>
+                  <form id="cut_create">
+                    <label for="cut_content">名前</label>
+                    <input class="form-control input-lg" name="cut_content" />
+                    <input type="submit" value="Submit">
+                  </form>
+                  <h4>PUT</h4>
+                  <h5>カット新規編集</h5>
+                  <form id="cut_update">
+                    <label for="cut_name">名前</label>
+                    <input class="form-control input-lg" type="text" name="cut_name"></input>
+                    <br />
+                    <label for="cut_content">シート内容</label>
+                    <textarea class="form-control input-lg" name="cut_content"></textarea>
+                    <label for="cut_decription">Description</label>
+                    <input class="form-control input-lg" type="text" name="cut_description"></input>
+                    <br />
+                    <input type="submit" value="Submit">
+                  </form>
+
+                  <h5>バックアップ復帰</h5>
+                  <ul id="backup_cut_list" class="list-group">
+
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+
+    <script type="text/javascript">
+
+      var server_address = "http://remaping.scivone-dev.com";
+      //var server_address = "http://localhost:3000";
+      var client_id = "b115aead773388942473e77c1e014f4d7d38e4d4829ae4fd1fa0e48e1347b4cd";
+      var client_secret = "54c0f02c38175436df16a058cc0c0e037038c82d3cc9ce4c212e3e4afe0449dd";
+      var oauth_token = "";
+      var organization_token = "";
+      var product_token = "";
+      var episode_token = "";
+      var cut_token = "";
+
+      function setHeader(xhr) {
+        xhr.setRequestHeader('Access-Control-Allow-Origin', '*' );
+        xhr.setRequestHeader('Authorization', ( "Bearer " + oauth_token ));
+        xhr.setRequestHeader('OrganizationToken', organization_token );
+      }
+
+      function getFromServer(url, msg){
+
+        $.ajax({
+          url: server_address + url,
+          type: 'GET',
+          dataType: 'json',
+          success: function(res) {
+            console.log(msg);
+            console.log(res);
+
+            if( url == '/api/v2/organizations.json' ){
+              organization_token = res[0]["token"];
+              $('#organization_needed').fadeIn("slow");
+              $('#organization_name').text(res[0]["name"]);
+            }else if ( msg == '作品一覧取得'){
+              product_token = res[0]["token"]
+            }else if (msg == 'エピソード一覧取得'){
+              episode_token = res[0]["token"]
+            }else if (msg == 'カット一覧取得'){
+              cut_token = res[0]["token"]
+
+              jQuery.each( res, function( i, cut ) {
+                  $('#backup_cut_list').append('<li class="list-group-item">'+ '<a href="#" class="cut_discard" data-cut-token="'+ cut["token"] +'" >' +  cut["name"] + '</a>' + '</li>');
+              });
+            }
+
+
+          },
+          beforeSend: setHeader
+        });
+      }
+
+      $("#get_token").on("click", function(){
+          var data = {
+                       username: $("#email").val(),
+                       password: $("#password").val(),
+                       client_id: client_id,
+                       client_secret: client_secret,
+                       grant_type: 'password'
+                     };
+          $.ajax({
+                  type: "POST",
+                  url: server_address + "/oauth/token.json",
+                  data: data,
+                  success: function(res){
+                      console.log(res);
+                      oauth_token = res["access_token"];
+                      $('#oauth_token').text(oauth_token);
+
+                      $('#login_needed').fadeIn("slow");;
+                      //$('#token_created_at').text(res["created_at"]);
+                      //$('#token_created_at').text(res["expires_in"] / 60 / 60 + "時間後");
+                  }
+          });
+
+
+      });
+
+
+      $('#organization_list').on( 'click', function(){
+        getFromServer("/api/v2/organizations.json", "チーム一覧取得");
+      });
+
+      $('#product_create').submit(function(e){
+
+          e.preventDefault();
+
+          console.log("product create!");
+
+          var data = { product: { name: $('#product_create [name=product_name]').val() } };
+          $.ajax({
+                   type: "POST",
+                   url: server_address + "/api/v2/products.json",
+                   data: data,
+                   success: function(data){
+                     console.log("作品作成成功");
+                     console.log(data);
+                   },
+                   error: function(XMLHttpRequest, textStatus, errorThrown) {
+                     console.log("XMLHttpRequest : " + XMLHttpRequest.status);
+                     console.log("textStatus : " + textStatus);
+                     console.log("errorThrown : " + errorThrown.message);
+                   },
+                   beforeSend: setHeader
+                 });
+      });
+
+      $('#product_update').submit(function(e){
+
+          e.preventDefault();
+
+          var data = {  token: product_token,　
+                        product: {
+                                  name: $('#product_update [name=product_name]').val(),
+                                }
+                     };
+
+         $.ajax({
+                  type: "PUT",
+                  url: server_address + "/api/v2/products/" + product_token + ".json",
+                  data: data,
+                  success: function(data){
+                    console.log("作品更新成功");
+                    console.log(data);
+                  },
+                  error: function(XMLHttpRequest, textStatus, errorThrown) {
+                    console.log("XMLHttpRequest : " + XMLHttpRequest.status);
+                    console.log("textStatus : " + textStatus);
+                    console.log("errorThrown : " + errorThrown.message);
+                  },
+                beforeSend: setHeader
+        });
+      });
+
+
+      $("#product_list").on("click", function(){
+        getFromServer("/api/v2/products.json", "作品一覧取得");
+      });
+
+      $("#product_detail").on("click", function(){
+        getFromServer("/api/v2/products/" + product_token + ".json", "作品詳細取得");
+      });
+
+      $('#episode_create').submit(function(e){
+
+          e.preventDefault();
+
+          var data = { episode: {
+                                  product_token: product_token,
+                                  name: $('#episode_create [name=episode_name]').val(),
+                                }
+                     };
+
+         $.ajax({
+                  type: "POST",
+                  url: server_address + "/api/v2/episodes.json",
+                  data: data,
+                  success: function(data){
+                    console.log("エピソード作成成功");
+                    console.log(data);
+                  },
+                  error: function(XMLHttpRequest, textStatus, errorThrown) {
+                    console.log("XMLHttpRequest : " + XMLHttpRequest.status);
+                    console.log("textStatus : " + textStatus);
+                    console.log("errorThrown : " + errorThrown.message);
+                  },
+                  beforeSend: setHeader
+                });
+      });
+
+      $('#episode_update').submit(function(e){
+
+          e.preventDefault();
+
+          var data = {  token: episode_token,　
+                        episode: {
+                                  name: $('#episode_update [name=episode_name]').val(),
+                                }
+                     };
+
+         $.ajax({
+                  type: "PUT",
+                  url: server_address + "/api/v2/episodes/" + episode_token + ".json",
+                  data: data,
+                  success: function(data){
+                    console.log("エピソード更新成功");
+                    console.log(data);
+                  },
+                  error: function(XMLHttpRequest, textStatus, errorThrown) {
+                    console.log("XMLHttpRequest : " + XMLHttpRequest.status);
+                    console.log("textStatus : " + textStatus);
+                    console.log("errorThrown : " + errorThrown.message);
+                  },
+                beforeSend: setHeader
+        });
+      });
+
+      $("#episode_list").on("click", function(){
+        getFromServer("/api/v2/episodes.json?product_token=" + product_token, "エピソード一覧取得");
+      });
+
+      $("#episode_detail").on("click", function(){
+        getFromServer("/api/v2/episodes/" + episode_token + ".json", "エピソード詳細取得" );
+      });
+
+      $('#cut_create').submit(function(e){
+
+          e.preventDefault();
+
+          var data = { cut: {
+                              episode_token: episode_token,
+                              //line_id: '',
+                              //stage_id: '',
+                              //job_id: '',
+                              content: $('#cut_create [name=cut_content]').val(),
+                            }
+                     };
+
+         $.ajax({
+                  type: "POST",
+                  url: server_address + "/api/v2/cuts.json",
+                  data: data,
+                  success: function(data){
+                    console.log("カット作成成功");
+                    console.log(data);
+                },
+                error: function(XMLHttpRequest, textStatus, errorThrown) {
+                  console.log("XMLHttpRequest : " + XMLHttpRequest.status);
+                  console.log("textStatus : " + textStatus);
+                  console.log("errorThrown : " + errorThrown.message);
+                },
+                beforeSend: setHeader
+        });
+      });
+      $('#cut_update').submit(function(e){
+
+          e.preventDefault();
+
+          var data = {  token: cut_token,　
+                        cut: {
+                                  name: $('#cut_update [name=cut_name]').val(),
+                                  content: $('#cut_update [name=cut_content]').val(),
+                                  description: $('#cut_update [name=cut_description]').val()
+                                }
+                     };
+
+         $.ajax({
+                  type: "PUT",
+                  url: server_address + "/api/v2/cuts/" + cut_token +".json",
+                  data: data,
+                  success: function(data){
+                    console.log("カット更新成功");
+                    console.log(data);
+                  },
+                  error: function(XMLHttpRequest, textStatus, errorThrown) {
+                    console.log("XMLHttpRequest : " + XMLHttpRequest.status);
+                    console.log("textStatus : " + textStatus);
+                    console.log("errorThrown : " + errorThrown.message);
+                  },
+                beforeSend: setHeader
+        });
+      });
+
+      $("#cut_list").on("click", function(){
+        getFromServer("/api/v2/cuts.json?episode_token=" + episode_token ,"カット一覧取得");
+      });
+
+      $("#cut_detail").on("click", function(){
+        getFromServer("/api/v2/cuts/" + cut_token + ".json","カット詳細取得" );
+      });
+
+      $(document).on("click", ".cut_discard", function(e){
+        e.preventDefault();
+        var cut_token = $(this).data('cut-token');
+
+        $.ajax({
+                 type: "PUT",
+                 url: server_address + "/api/v2/cuts/" + cut_token +"/discard.json",
+                 //data: data,
+                 success: function(data){
+                   console.log("カット更新取り消し");
+                   console.log(data);
+                 },
+                 error: function(XMLHttpRequest, textStatus, errorThrown) {
+                   console.log("XMLHttpRequest : " + XMLHttpRequest.status);
+                   console.log("textStatus : " + textStatus);
+                   console.log("errorThrown : " + errorThrown.message);
+                 },
+               beforeSend: setHeader
+       });
+
+      });
+    </script>
+  </body>
+</html>

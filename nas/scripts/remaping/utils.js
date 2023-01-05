@@ -1206,12 +1206,11 @@ setWave =function(e){
     putSectionLine(item);
 }
 /**
-interpSign(chr)
-@params {String} chr
+interpSign()
+引数:なし
 戻値:なし
 中間値補間サインをシート上に配置する
 
-補完サインが指定されている場合そのサインを使用する
 選択範囲のない場合フォーカスのあるシートセルに、補間サインを入力してスピンする
 配置候補のシートセルがすでに補間サインだった場合は補完サインの種別を変更してスピンを留保する
 種別ループに消去あり? > なし
@@ -1223,18 +1222,17 @@ interpSign(chr)
 複数列の場合はフォーカスのある一列に変更して
 その区間にSPIN指定の間隔で補完サインを配置する。基点は選択範囲の最も上のシートセル
 */
-interpSign=function(chr){
+interpSign=function(){
 	var interpRegex=nas.CellDescription.interpRegex;
 	var myValue = xUI.XPS.xpsTracks[xUI.Select[0]][xUI.Select[1]];
   if(xUI.Selection.join(",")=="0,0"){
 	if(myValue.match(interpRegex)){
-		var newValue = (chr)? chr:nas.CellDescription.interpolationSigns[
+		var newValue=nas.CellDescription.interpolationSigns[
 			((nas.CellDescription.interpolationSigns.indexOf(myValue))+1) % nas.CellDescription.interpolationSigns.length
 		];
 		xUI.put(newValue);
 	}else	if(true){
-		
-		xUI.put((chr)?nas_expdList(chr):nas_expdList(nas.CellDescription.interpolationSigns[0]));
+		xUI.put(nas_expdList(nas.CellDescription.interpolationSigns[0]));
 		xUI.spin("down");
 	}else{
 		return;
@@ -1244,7 +1242,7 @@ interpSign=function(chr){
 	var currentColumn=xUI.Select[0];//現在のカラム
 	xUI.selectCell([currentColumn,myRange[0][1]]);
 	xUI.selection([currentColumn,myRange[1][1]]);
-	xUI.put(nas_expdList((chr)?"/"+chr+"/":"/-/"));
+	xUI.put(nas_expdList("/-/"));
 	xUI.selectCell([currentColumn,myRange[1][1]+1]);
   }
 }

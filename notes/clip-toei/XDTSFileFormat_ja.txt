@@ -1,0 +1,217 @@
+XDTSファイルフォーマット 
+2018/11/29 
+XDTSファイルは、先頭行が“exchangeDigitalTimeSheet Save Data”の文字列と一致し、2行目以降が次のJSON Schemaで定義されたJSONデータで構成されるテキストデータである。
+
+    {
+        "$schema": "http://json-schema.org/draft-07/schema",
+        "type": "object",
+        "properties": {
+            "header": {
+                "description": "カット・シーン情報",
+                "type": "object",
+                "properties": {
+                    "cut": {
+                        "description": "カット番号",
+                        "type": "string",
+                        "pattern": "\\d{1,4}"
+                    },
+                    "scene": {
+                        "description": "シーン番号",
+                        "type": "string",
+                        "pattern": "\\d{1,4}"
+                    }
+                },
+                "required": ["cut", "scene"]
+            },
+            "timeTables": {
+                "description": "タイムシートの情報",
+                "type": "array",
+                "minItems": 1,
+                "items": {
+                    "type": "object",
+                    "properties": {
+                        "fields": {
+                            "description": "フィールド毎の情報",
+                            "type": "array",
+                            "items": {
+                                "type": "object",
+                                "properties": {
+                                    "fieldId": {
+                                        "description": "フィールド種別(※1)",
+                                        "type": "integer",
+                                        "enum": [0, 3, 5]
+                                },
+                                "tracks": {
+                                    "description": "フィールド内のレイヤー毎の情報",
+                                    "type": "array",
+                                    "items": {
+                                        "type": "object",
+                                        "properties": {
+                                            "frames": {
+                                                "description": "レイヤー内のフレーム毎の情報",
+                                                "type": "array",
+                                                "items": {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "data":{
+                                                            "description": "フレームに設定した指示の情報",
+                                                            "type": "array",
+                                                            "items":{
+                                                                "type": "object",
+                                                                "properties"{
+                                                                    "id": {
+                                                                        "description": "指示の種類。(※2)",
+                                                                        "type": "integer",
+                                                                        "enum": [0]
+                                                                    },
+                                                                    "values"{
+                                                                        "description": "指示の値。(※3)",
+                                                                        "type": "array",
+                                                                        "minItems": 1,
+                                                                        "items": {
+                                                                            "type":"string"
+                                                                        }
+                                                                    }
+                                                                },
+                                                                "required":["id","values"]
+                                                            },
+                                                            "frame": {
+                                                                "description": "フレーム番号。(※5)",
+                                                                "type": "integer",
+                                                                "minimum":0
+                                                            }
+                                                        },
+                                                        "required": ["data", "frame"]
+                                                    },
+                                                    "trackNo": {
+                                                        "description": "レイヤー番号。(※6)",
+                                                        "type": "integer",
+                                                        "minimum": 0
+                                                    }
+                                                },
+                                                "required": ["frames", "trackNo"]
+                                            }
+                                        }
+                                    },
+                                    "required": ["fieldId", "tracks"]
+                                }
+                            },
+                            "duration": {
+                                "description": "タイムシートの総フレーム数",
+                                "type": "integer",
+                                "minimum": 1
+                            },
+                            "name": {
+                                "description": "タイムシートの名称",
+                                "type": "string"
+                            },
+                            "timeTableHeaders": {
+                                "description": "フィールド毎のレイヤーの名称",
+                                "type": "array",
+                                "items": {
+                                    "type": "object",
+                                    "properties": {
+                                        "fieldId": {
+                                            "description": "フィールド種別(※1)",
+                                            "type": "integer",
+                                            "enum": [0, 3, 5]
+                                        },
+                                        "names": {
+                                            "description": "レイヤーの名称の配列。(※7)",
+                                            "type": "array",
+                                            "items": {
+                                                "type": "string"
+                                            }
+                                        }
+                                    },
+                                    "required": ["fieldId", "names"]
+                                }
+                            }
+                        },
+                        "required": ["duration", "name", "timeTableHeaders"]
+                    }
+                },
+                "version": {
+                    "description": "XDTSファイルフォーマットのバージョン",
+                    "type": "integer",
+                    "enum": [5]
+                }
+            },
+            "required": ["timeTables", "version"]
+        } 
+※1 フィールド：種類ごとのタイムシートの指示を入力する箇所。セル, セリフ, カメラワークの3種類に大別される。 
+fieldId 
+ フィールド名 
+ 詳細 
+ 
+
+0 
+ セル 
+ セル番号を入力するフィールド 
+ 
+3 
+ セリフ 
+ 話者名とセリフのタイミングを入力するフィールド 
+ 
+5 
+ カメラワーク 
+ カメラワークの指示を入力するフィールド 
+ 
+
+
+ 
+※2 現在はid=0の指示にのみ対応。 
+ 
+※3 valuesはフィールドの種別毎に内容が異なる。フィールド毎のvaluesの内容は以下の通り。 
+フィールド名 
+ valuesの詳細 
+ valuesの要素数 
+ 
+
+セル 
+ セル番号の文字列と、特別な指示文字列を入力する。(※4) 
+ 1 
+ 
+セリフ 
+ セリフの開始フレームの、一番目の要素に話者名、二番目の要素にセリフの文字列を入力する。セリフが複数フレームの間継続する場合は、終了フレームまで“SYMBOL_HYPHEN”の文字列を指定する。 
+ 1.2 
+ 
+カメラワーク 
+ カメラワークの開始フレームに、カメラワーク指示の文字列を入力する。カメラワークが複数フレームの間継続する場合は、終了フレームまで“SYMBOL_HYPHEN”の文字列を指定する。 
+ 1 
+ 
+
+
+ 
+※4 特別な指示文字列 
+文字列 
+ 指示の内容 
+    指示が有効なフィールド
+ 
+
+SYMBOL_TICK_1 
+ 中割記号（○） 
+    セル 
+ 
+SYMBOL_TICK_2 
+ 逆シート記号（●） 
+    セル 
+ 
+SYMBOL_NULL_CELL 
+ 空セル記号（×） 
+    セル 
+ 
+SYMBOL_HYPHEN 
+ 1フレーム前の指示を継続 
+    全フィールド 
+ 
+
+
+ 
+※5 第1フレームの指示の場合、0を設定する。 
+ 
+※6 重ね順で最も下に位置するレイヤーの場合、0を設定する。 
+ 
+※7 先頭から0, 1, 2, … と数えた数字と一致するtrackNoのレイヤーの名称を指定する。 
+ 
+

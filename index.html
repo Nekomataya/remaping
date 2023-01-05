@@ -19,8 +19,11 @@
 
 <script src=/remaping/nas_core/ext-lib/html2canvas/html2canvas.min.js></script>
 <!-- fabric.js  -->
-<script src=/remaping/nas_core/ext-lib/fabric.js/dist/fabric.min.js ></script>
 
+<script src=/remaping/nas_core/ext-lib/fabric.js/dist/fabric.min.js ></script>
+<!--
+<script src=./nas/ext-lib/fabric.js/dist/fabric.min.js ></script>
+-->
 <script src=/remaping/nas/ext-lib/crc32.js></script>
 <script src=/remaping/nas/ext-lib/png-metadata.js></script>
 
@@ -49,6 +52,8 @@
 <script src=/remaping/nas_core/lib/docio.js></script>
 
 <script src=/remaping/nas_core/lib/nas_preferenceLib.js></script>
+
+<script src=/remaping/nas_core/scripts/xpsedit/rapidCommand.js></script>
 
 
 <!-- システム汎用ライブラリ remaping.jsよりも前方でロードする必要あり　-->
@@ -1617,60 +1622,6 @@ class=optionPanel id=optionPanelProductManagement
 		<input id ='iptChange' type="range"  min="0" max="2" value="0" onChange="chkValue(this.id);">
 		<span id="iptSlider" class="switch__slider_tryval" ></span>
     </label>
-	<!-- 画像スイッチ -->
-    <label class="switch__label" style='margin-left:28px;'>
-        <input type="checkbox" class="switch__input"
-        	id='imgUse'
-			onChange="chkValue(this.id);"
-        >
-        <span class="switch__content"></span>
-        <span id="imgSlider" class="switch__slider">　</span>
-    </label>
-    <span style="position:rerative;vertical-align:middle;">
-    <label for='ImgBMode' >
-        <select
-            id = 'ImgBMOde'
-            style = 'display:inline-block;'
-            onchange='document.getElementById("sheetImage-1").style.mixBlendMode = this.value;'
-        >
-        <option value='normal'   >通常</option>
-        <option value='darken'   >比較暗</option>
-        <option value='multiply' >乗算</option>
-        <option value='color-burn' >焼き込みカラー</option>
-        <option value='lighten' >比較明</option>
-        <option value='screen' >スクリーン</option>
-        <option value='color-dodge' >覆い焼きカラー</option>
-        <option value='overlay' >オーバーレイ</option>
-        <option value='difference' >差の絶対値</option>
-        <option value='exclusion' >除外</option>
-        </select>
-    </label>
-    </span>
-
-    <div style="display:inline-block;position:rerative;vertical-align:middle;">
-不透明度:
-    <label for='OvlOpacity' >
-        <input
-			name=ovl_O
-			id=OvlOpacity
-			class=spinCtl
-			value='40%'
-			onMousedown="nas.sliderVALUE([event,this.id,'100','0','0',40,'y','5']);"
-			onChange = 'this.value = parseInt(this.value)+"%";document.getElementById("sheetImage-1").style.opacity=parseInt(this.value)/100;'
-			title="スピン値"
-			data-i18n='[title]ovl_o_description'
-		><button
-			name=opacitySlider
-			id=callSlider
-			class="spinCtl spinCtl-right"
-			onclick='document.getElementById("OvlOpacitySlider").style.display =(document.getElementById("OvlOpacitySlider").style.display=="none")?"inline":"none";'
-		>∨</button>
-        <input type=range id='OvlOpacitySlider' min=0 max=100 value=40 step=5
-			style='position:absolute;bottom:16px;right:8px;'
-            onchange='document.getElementById("OvlOpacity").value=this.value;document.getElementById("OvlOpacity").onchange();'
-        >
-    </label>
-    </div>
 <!--
         <input type="text" class="switch__input"
         	id = 'iptChange'
@@ -3017,6 +2968,8 @@ onclick='nas.incrFCTonHTMLInput(document.getElementById("editTC"),"-(1)")'
 	</td>
 </tr>
 </table>
+
+
 </div>
 <!--	タイムシート情報(scene)	-->
 <!--    一括インポートパネル      -->
@@ -4540,114 +4493,35 @@ duration :
     </span>
 </span>
 </div>
-<!-- ストップウオッチUIパネル// -->
-<!-- //Canvas編集メニュー -->
-<div
-	class = optionPanel
-	id    = OptionPanelPaint
->
+<!-- ストップウオッチUIパネル -->
+<!-- 拡張署名欄 
+<div id=extSig_h>
 	
 </div>
-<!-- Canvas編集メニュー// -->
-<!-- 拡張署名欄 -->
-<div id=extSig >
-  <div id=extSig_minimise style='display:none;'>
-	<a href="javascript:void(0);"
-		onclick='xUI.eXpandPanel("extSig","expand");'
-		title='show signaturebox area'
-	><span>[□] sig.</a></span>
-  </div>
 
-<div id=extSig_expand style='display:flex;height:48px;'>
-	<span style='vertilcal-align:bottom;white-space:nowrap;'>
+<div id=extSig style='display:flex;vertilcal-align:bottom;height:64px;'>
+	<span style='vertilcal-align:bottom'>
 		<a href="javascript:void(0);"
-			onclick='xUI.eXpandPanel("extSig","minimise");'
-			title='minimize signbox area'
-	>[━] sig.</a>
-<!--
-	<a href="javascript:void(0);"onclick='xUI.sWitchPanel("Sign");return false;'
-		style='vertilcal-align:bottom'> sig.</a>
--->
+			onclick='xUI.sWitchPanel("Sign");'
+			title='hide sig. area'
+	><span  style='vertilcal-align:bottom'>[×]</span></a>
+	<a href="javascript:void(0);"
+		onclick='xUI.sWitchPanel("Sign");return false;'
+		style='vertilcal-align:bottom'
+	>sig. </a>
 	</span>
-	<span class = signbox id="sig_0">
-		<span class = signlabel>CT</span>
-		<span class = 'signature signature-finished'>
-		演出<br><span class=signdate>12/12</span>
-		</span>
-	</span>
-	<span class = signbox id="sig_1">
-		<span class = signlabel>LO</span>
-		<span class = 'signature signature-work'>
-		たぬき
-		<br><span class=signdate>12/13</span>
-		</span>
-	</span>
-	<span class = signbox>
-		<span class = signlabel>.</span>
-		<span class = 'signature signature-check-ok'>
-		監督
-		<br><span class=signdate>12/13</span>
-		</span>
-	</span>
-	<span class = signbox>
-		<span class = signlabel>.</span>
-		<span class = 'signature signature-finished'>
-		演出
-		<span class=signdate><br>12/13</span>
-		</span>
-	</span>
-	<span class = signbox>
-		<span class = signlabel>.</span>
-		<span class = signature>-</span>
-	</span>
-	<span class = signbox>
-		<span class = signlabel>原画</span>
-		<span class = 'signature signature-work'>たぬき
-		<br><span class=signdate>12/14</span>
-		</span>
-	</span>
-	<span class = signbox>
-		<span class = signlabel>.</span>
-		<span class = signature></span>
-	</span><br>
-	<span class = signbox>
-		<span class = signlabel>.</span>
-		<span class = signature></span>
-	</span>
-	<span class = signbox>
-		<span class = signlabel>.</span>
-		<span class = signature></span>
-	</span>
-	<span class = signbox>
-		<span class = signlabel>前検</span>
-		<span class = signature></span>
-	</span	>
-	<span class = signbox>
-		<span class = signlabel>動画</span>
-		<span class = signature></span>
-	</span>
-	<span class = signbox>
-		<span class = signlabel>動検</span>
-		<span class = signature></span>
-	</span>
-  </div>
-<hr>
+	<span id='sig_0_label'>LABEL</span>:
+	<span style='text-align:center' id="sig_0-0">
 </div>
-<!-- 拡張署名欄 -->
+<hr>
+
+-- 拡張署名欄 -->
 <!-- 署名編集 -->
 
 <div class=optionPanelFloat id=optionPanelSign  style='text-align:center;min-width:480px;'>
 <dl><dt style="background-color:#888888;">signature<a href="" class=minimize ><img src=/remaping/images/ui/minimize.png alt="＿"></a><a href="" class=close ><img src=/remaping/images/ui/close.png alt="×"></a></dt></dl>
 <div id='formSign'>
-<button
-	id=signature
-	style = 'font-size:24px;'
->
-	<span id=sigStage>動画</span>:[
-	<span id=sigText >-signature-</span> 
-	<span id=sigDate >2022.11.16</span> ]
-</button>
-<br>
+	<span id=sigStage></span>:
 	<input id=sigLabel
 		type=text
 		autocomplete='on'
@@ -4657,14 +4531,10 @@ duration :
 		onchange ='SignBox.update();'
 	>
 		<datalist id='stampNames'>
-			<option value="-済-">
-			<option value="-OK-">
-			<option value="-R-">
-			<option value="-監-">
-			<option value="-演-">
-			<option value="-作-">
-			<option value="-総-">
-			<option value="-動検-">
+			<option value="=済=">
+			<option value="=OK=">
+			<option value="=NG=">
+			<option value="=保留=">
 		</datalist>
 	<input id=sigDate
 		type=text
@@ -4691,8 +4561,15 @@ duration :
 		<input id=stampColor type=text list=stampColorList autoComplete="on" onChange="myPref.chgColor(this.id)" />
 		<input id=stampColorpick type=color onChange="myPref.chgColor(this.id)" />
 <br>
-<button >sign</button>
-<button >cancel</button>
+<button
+	id=signature
+	style = 'font-size:24px;'
+>	[
+		<span >編集済データ</span>
+		<span >編集済データ</span>
+	]
+</button>
+
 
 </div></div>
 <!-- 署名編集 -->
@@ -4715,9 +4592,9 @@ duration :
    ><span>[━]</span></a>
    <a href="javascript:void(0);"
 		onclick='xUI.sWitchNotetext();return false;'
-   >MEMO : </a> <span id="transit_data"></span>
+>MEMO : </a> <span id="transit_data"></span>
    </div>
-<!-- コメント編集 -->
+<!--	コメント編集	-->
 <div class=optionPanel id=optionPanelMemo >
 <table>
 <tr>
@@ -4756,20 +4633,13 @@ duration :
 </td>
 </tr></table>
   </div>
-<!-- コメント編集/-->
-<!-- メモ表示欄     -->
+<!--	コメント編集	-->
+<!-- メモ欄表示欄     -->
   <div id=memo class=memoSpace></div>
   </div>
 <hr>
 </div>
-<!-- メモ表示欄/ -->
-<!-- タイムシートレイアウト編集 --
-	<div
-		id=optionPanelSLS
-	>
-	<img src=./template/timeSheet_default.png>
-	</div>
--- タイムシートレイアウト編集/ -->
+<!-- メモ表示欄 -->
 <div id=app_status class=application_status>***<br></div>
 </div>
 <div id=sheet_view>
@@ -4778,7 +4648,6 @@ duration :
 </div>
 <!-- ここまで印刷時に非表示　-->
 <!--   以降シート本体     -->
-      <div class=timesheetimage></div> 
     <div id=sheet_body
 	onMouseDown = " return xUI.Mouse(event)"
 	onMouseUp   = " return xUI.Mouse(event)"

@@ -1,0 +1,220 @@
+﻿/**
+ * Xps.put(書込開始アドレス:[startC,startF],データストリーム)
+ * 書込開始アドレスを起点にストリームでデータ置き換え
+ * Xpsオブジェクトメソッド
+ * undo/redo等はUIレベルの実装なのでここでは関知しない
+ * 書込開始アドレスに負の数を与えると、書込アドレスが負の場合レンジ外となる
+ * レンジ外データは無視される
+ * このメソッドでは本体データとしてセパレータの",""\n"を与えることはできない（禁則事項）
+ * リザルトとして書き込みに成功したベクトル（左上、右下）、書き換え前のデータストリーム、書き込みに成功したデータを返す
+ *
+ * @param myAddress
+ * @param myStream
+ * @returns {*}
+result:
+    [[startC,startF],[endC,endF]],
+    currentTextStream,
+    newTextStream
+ */
+/*
+    第一引数は書込開始セルアドレス
+タイムシートの左上を起点に配列で与える
+ [C : カラム, F : フレーム]
+
+以下のように最初のダイアログカラムの開始フレームを[0,0]セルとする
+
+[0,0],[1,0],[2,0],[3,0]....
+[0,1],[1,1],[2,1],[3,1]....
+[0,2],[1,2],[2,2],[3,2]....
+[0,3],[1,3],[2,3],[3,3]....
+.
+.
+.
+
+    第二引数は入力テキストストリーム
+タイムシートのコンテンツをフレーム毎にコンマ区切りデータにしてカラム毎に改行k区切りで繋いだ　一種のcsvデータ
+この関数の入力としては引用符は使用しない
+
+以下のようなコードで二次元配列から生成するのが手軽
+*/
+var streamArray=[
+    [0,"1-A",2,3,5,6,7],
+    [0,1,2,3,5,6,7],
+    [0,1,2,3,5,6,7]
+];
+var streamText = streamArray.join('\n');
+
+var columns = 5;
+var frames  = 144;
+var myXps = new Xps(columns,frames);
+
+console.log(myXps.put(streamText));
+
+/*
+    Xps.put は、タイムシートセルのデータを一括で変更するメソッドです
+    他のプロパティを書き換える場合は、プロパティを直接操作する必要があります。
+    直接更新（操作）する場合は幾つかのプロパティを、nasシステムのオブジェクトにする必要がありますので注意してください。
+*/
+    myXps.xMap      =new xMap() ;//参照用xMap 操作不用
+    myXps.mapfile   = ""        ;//現在は空白のままで運用 操作不用
+    myXps.line      = new XpsLine("(本線):0")   ;//オブジェクト
+    myXps.stage     = new XpsStage("layout:0")  ;//オブジェクト
+    myXps.job       = new XpsStage('init:0')    ;//オブジェクト
+
+    myXps.currentStatus = 'Startup'             ;//現在は文字列ただしオブジェクト化の予定
+
+//以下は統合して管理用のオブジェクトに移行する予定
+    myXps.opus = (myOpus) ? myOpus : "--"               ;//エピソード識別文字列
+    myXps.title = (myTitle) ? myTitle : "noTitle"       ;//タイトル識別文字列
+    myXps.subtitle = (mySubTitle) ? mySubTitle : "--"   ;//エピソード補足文字列(description)
+    myXps.scene = (myScene) ? myScene : ""              ;//カット識別文字列の一部
+    myXps.cut = (myCut) ? myCut : ""                    ;//カット識別文字列の一部
+//以上　ここまでをnas.SCiオブジェクトに移行予定
+
+    myXps.trin = [0, "trin"]    ;//配列　専属のトランジションオブジェクト化予定
+    myXps.trout = [0, "trout"]  ;//配列　専属のトランジションオブジェクト化予定
+    myXps.rate = (!nas) ? "24FPS" : nas.RATE    ;//下と統合してフレームレートオブジェクトに統合予定
+    myXps.framerate = (!nas) ? 24 : nas.FRATE   ;//上と統合してフレームレートオブジェクトに統合予定
+
+    myXps.framerate = nas.newFramerate(nas.FRATE.toString())   ;//フレームレートオブジェクト    myXps.rate = myXps.framerate.name    ;//互換維持のため一時的に設定
+
+            var Now = new Date();
+    myXps.create_time = Now.toNASString();//文字列
+    myXps.create_user = (xUI.currentUser)? xUI.currentUser:new nas.UserInfo(myName);//オブジェクト nas.UserInfo
+    myXps.update_time = Now.toNASString();//文字列
+    myXps.update_user = (xUI.currentUser)? xUI.currentUser:new nas.UserInfo(myName);//オブジェクト nas.UserInfo
+
+
+    myXps.xpsTracks = myXps.newTracks(trackSpec, Length);//トラックコレクションオブジェクト（シートデータ本体）
+
+/*
+    トラック（=カラム）の種別プロパティは以下の方法で切り替えが可能です。
+*/
+var myOption = "dialog";//camera/cell/dialog/effect/sfx/sound/still/timing
+myXps.xpsTracks[0].option = myOption;
+
+/*
+状況にもよりますが、以下のような形式のXPSのソーステキストを生成してXpsオブジェクトのパーサに与えたほうが良いかもしれません。
+
+不足のプロパティはデフォルトの値で補われるので、サブセットでもかまいません
+*/
+
+"nasTIME-SHEET 0.5
+##MAPPING_FILE=
+##TITLE=かちかち山Max
+##SUB_TITLE=サンプルカット
+##OPUS=おためし
+##CUT=10
+##TIME=3 + 00 .
+##TRIN=0 + 00 .,trin
+##TROUT=2 + 00 .,O.L.(C10/C11)
+##CREATE_USER=ねこまたや
+##UPDATE_USER=ねこまたや
+##CREATE_TIME=2005/05/05
+##UPDATE_TIME=
+#[CELL]
+[option	dialog	dialog	timing	timing	timing	timing	sfx	]
+[CELL			A	B	C	D	OL	]
+.	あ		(1)	1	1	X	
+.			|	｜	｜	カラ	
+.			|	｜	｜		
+.	れ		|	｜	｜	(1)	
+.			|	｜	｜	｜	
+.			|	｜	｜	｜	
+.	だ		|	3	2	｜	
+.			|			｜	
+.			|			｜	
+.	っ		|	2	3	｜	
+.			|			｜	
+.			|			｜	
+.	て		|	1	5	｜	
+.			|		｜	｜	
+.			|		｜	｜	
+.	だ		|	3	｜	｜	
+.	っ		|		｜	｜	
+.			|		｜	｜	
+.	て		|	2	4	X	
+.	ぇ		|			カラ	
+.			|				
+.	|		|	3	3		
+.			|				
+.	____		|				
+.			|	1	1		
+.			|	｜	｜		
+.			|	｜	｜	(1)	
+.			|	｜	｜	｜	
+.			|	｜	｜	｜	
+.	____		|	｜	｜	｜	
+.	ソ		|	2	2	｜	
+.			|			｜	
+.			|			｜	
+.	レ		|	3	3	｜	
+.			|			｜	
+.			|			｜	
+.	じ		|	2	5	｜	
+.			|		｜	｜	
+.			|		｜	｜	
+.	ゃ		|	1	｜	｜	
+.			|		｜	｜	
+.			|		｜	X	
+.	ダ		|	3	4	カラ	
+.			|				
+.			|				
+.	メ		|	1	3		
+.			|				
+.			|				____
+.	じ		|	2	1		O.L.
+.			|		｜	(1)	
+.			|		｜	｜	
+.	ゃ		|	3	｜	｜	
+.			|		｜	｜	
+.			|		｜	｜	
+.	ん		|	1	2	｜	
+.			|	｜		｜	
+.			|	｜		｜	
+.	!		|	｜	3	｜	
+.			|	｜		｜	
+.			|	｜		｜	
+.	も		|	2	5	｜	
+.			|		｜	｜	
+.			|		｜	｜	
+.	|	姐さん	|	3	｜	｜	
+.			|	｜	｜	X	
+.		____	|	｜	｜	カラ	
+.		と	|	｜	4		
+.			|	｜			
+.			|	｜			
+.		か	|	2	3		
+.			|				
+.	____		|				C#10/C#11
+.		な	|	(1)	1	(1)	
+.				|	｜	｜	｜	
+.			|	｜	｜	｜	
+.		ん	|	｜	｜	｜	
+.			|	｜	｜	｜	
+.			|	｜	｜	｜	
+.		と	|	｜	2	｜	
+.			|	｜		｜	
+.			|	｜		｜	
+.		か	|	｜	3	｜	
+.			|	｜		｜	
+.			|	｜		｜	
+.		い	|	｜	5	｜	
+.		っ	|	｜	｜	｜	
+.			|	｜	｜	｜	
+.		ち	|	｜	｜	X	
+.		ゃ	|	｜	｜	カラ	
+.		つ	|	｜	｜		
+.		て	|	｜	4		
+.			|	｜			
+.			|	｜			
+.		|	|	｜	3		
+.			|	｜			
+.		____	|	｜			____
+[END]
+FIX
+りまぴん用サンプルカット
+コピー自由ですどーぞご使用ください。
+
+台詞・メモ入り
+後で見るときは、こっちの方が読みやすいです。"
