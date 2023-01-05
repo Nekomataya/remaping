@@ -6674,7 +6674,6 @@ xUI.panelTable = {
 
 //inplace-UI-panel xpst editor
     'Memo'          :{elementId:"optionPanelMemo"         ,uiOrder:-1,type:'fix', note:"Xpsメモ編集(xpsedit)"},
-    'extSig'      :{elementId:"extSig"                ,uiOrder: 3,type:'fix', note:"拡張署名欄(xpsedit)"},
     'memoArea'      :{elementId:"memoArea"                ,uiOrder: 3,type:'fix', note:"Xpsメモ欄(xpsedit)"},
     'Data'          :{elementId:"optionPanelData"         ,uiOrder:-1,type:'fix', note:"remaping Import|Export(汎)"},
     'AEKey'         :{elementId:"optionPanelAEK"          ,uiOrder:-1,type:'fix', note:"remaping AEKey"},
@@ -7903,8 +7902,7 @@ function nas_Rmp_Startup(){
 //クッキー指定があれば読み込む
     if(useCookie[0]){ldCk()}; 
 //ライブラリフレームレートの設定
-//    nas.FRATE=nas.newFramerate(myFrameRate);
-    nas.FRATE=nas.newFramerate(SheetLooks.FrameRate);
+    nas.FRATE=nas.newFramerate(myFrameRate);
 //背景カラーを置換
     SheetLooks.SheetBaseColor=SheetBaseColor;
 console.log('startup')
@@ -10863,6 +10861,9 @@ myCookie[0]=pageAttributes;
     StageworkColumns = (config.useCookie.XPSAttrib)?xUI.stageworkCount:null;
     SfxColumns = (config.useCookie.XPSAttrib)?xUI.sfxCount:null;
 // ======= */
+	myTitle		= (useCookie.XPSAttrib)?XPS.title:null;
+	mySubTitle	= (useCookie.XPSAttrib)?XPS.subtitle:null;
+	myOpus		= (useCookie.XPSAttrib)?XPS.opus:null;
 	myFrameRate	= (useCookie.XPSAttrib)?XPS.framerate.toString():null;
 	Sheet		= (useCookie.XPSAttrib)?nas.Frm2FCT(XPS.xpsTracks[0].length,3,0,XPS.framerate):null;//
     SoundColumns = (useCookie.XPSAttrib)?xUI.dialogCount:null;

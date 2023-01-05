@@ -2115,39 +2115,6 @@ div.documentStatusOverlay {
 .timerButton-wide {
 	width:27px;
 }
-/*
-	署名欄
-*/
-.signbox {
-	display:flex;
-	align-items: flex-end;
-	text-align:left;
-	overflow: visible;
-	width :72px;
-	height:48px;
-	border-width:0;
-	border-style:none;
-}
-.signbox:hover {
-	background-color:gray;
-}
-.siglabel {
-	font-size:11px;
-}
-.signature {
-	font-size:18px;
-	white-space:nowrap;
-	color:#444;
-	margin-left:8px;
-/*stamp Image
-	background-image: url(images/ui/stamp.png);
- */
-}
-.signature-blank    { background-position:    0px 8px; }
-.signature-work     { background-position:  -72px 8px; }
-.signature-check-ok { background-position: -144px 8px; }
-.signature-check-ng { background-position: -216px 8px; }
-.signature-finished { background-position: -288px 8px; }
 
 /*
 	タイムシートマーカー
