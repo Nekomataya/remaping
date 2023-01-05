@@ -2115,7 +2115,6 @@ div.documentStatusOverlay {
 .timerButton-wide {
 	width:27px;
 }
-<<<<<<< HEAD
 /*
 	署名欄
 */
@@ -2149,8 +2148,6 @@ div.documentStatusOverlay {
 .signature-check-ok { background-position: -144px 8px; }
 .signature-check-ng { background-position: -216px 8px; }
 .signature-finished { background-position: -288px 8px; }
-=======
->>>>>>> parent of 3dbc987 (ライブラリを最新共用バージョンに置換前のバックアップ)
 
 /*
 	タイムシートマーカー
