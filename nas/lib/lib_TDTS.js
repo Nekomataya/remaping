@@ -17,7 +17,13 @@
  * 	{timeSheets:[{header:{},timeTables:[{},...]},...],version:7}
  * 
  *	動画欄がfield4で場合により有効
- */
+ *
+ *	2022更新 tdts ver.10に対応
+ *	動画欄を拡張したtdtsに本格対応
+ *	原画のみの(field4にデータが存在しない）場合は、従来の対応でActionフィールドの内容を読み出す
+ *	両方にデーがある場合は、原画と動画の２本のxpstを取得してアプリ側で参照を組み立てる
+ *	tdts出力時は、リファレンスxpstを原画欄に合成して出力する
+ *	xdts出力時は、従来型の出力を行う
 /*
 タイムシートドキュメントオブジェクト
 	tdts(ToeianimationDigitalTimeSheet) format 及び　xdts(eXchangeDigitalTimeSheet)兼用
@@ -574,6 +580,8 @@ console.log(myTDTS);
                 (myTDTS.timeTables)&&(myTDTS.version==5)
             )||(
                 (myTDTS.timeSheets)&&(myTDTS.version==7)
+            )||(
+                (myTDTS.timeSheets)&&(myTDTS.version==10)
             )
         )){
         myTDTS=false;
@@ -583,7 +591,7 @@ console.log(myTDTS);
 console.log(myTDTS);
 //ver.7読み出しに暫定対応 ver.7&&未指定の場合最初のシートを対象にする
 	var timesheetDocument = myTDTS;
-	if((myTDTS.timeSheets)&&(myTDTS.version==7)){
+	if((myTDTS.timeSheets)&&(myTDTS.version >= 7)){
 		if(myTDTS.timeSheets[targetTimesheet]){
 			timesheetDocument = myTDTS.timeSheets[targetTimesheet];
 		}else{
@@ -631,7 +639,7 @@ console.log(myTDTS);
 			break;
 			case 4:	;
 				if((fieldTarget)&&(yTDTS.timeTables[sheetID].timeTableHeaders[hx].names.length)){
-//ターゲットが動画でかつトラクが存在すれば上書き
+//ターゲットが動画でかつトラックが存在すれば上書き
 					replacementTracks = timesheetDocument.timeTables[sheetID].timeTableHeaders[hx].names.slice();
 				}
 			break;

@@ -153,28 +153,44 @@
 // 後からルックを変更する手続は　xUI.setSheetLook(SheetLooks);xUI.footstampPaint();
 // 後方のペイント更新が重要
 SheetLooks = {
-    SheetTextColor  :"#111111",
-	SheetBaseColor	:"#efffff",
-	SelectedColor	:"#9999ff",
-	RapidModeColor	:"#ff4444",
-	FloatModeColor	:"#88eeee",
-	SectionModeColor:"#ff44ff",
-	SelectionColor	:"#f8f8dd",
-	FootStampColor	:"#ffffff",
-	EditingColor	:"#eebbbb",
-	SelectingColor	:"#ccccaa",
-	CellWidthUnit	:"px",
-	TimeGuideWidth	    :36,
-	ActionWidth         :20,
-	DialogWidth	        :36,
-	SheetCellWidth	    :42,
+	WorkTitleLogo        :"",
+	SheetTextColor    :"#111111",
+	SheetBaseColor    :"#ffffef",
+	AppBaseColor      :"#ffffef",
+	SelectedColor     :"#9999ff",
+	RapidModeColor    :"#ffff44",
+	FloatModeColor    :"#88eeee",
+	SectionModeColor  :"#ff44ff",
+	SelectionColor    :"#f8f8dd",
+	FootStampColor    :"#ffffff",
+	EditingColor      :"#eebbbb",
+	SelectingColor    :"#ccccaa",
+	Restriction          :false,
+	ViewMode             :"page",
+	PageLength           :"6+0",
+	FrameRate            :"24fps(24)",
+	SheetColumn          :2,
+	CellWidthUnit       :"px",
+	SheetHeadMargin     :0,
+	SheetLeftMargin     :0,
+	TimeGuideWidth	    :48,
+	ActionWidth         :18,
+	DialogWidth	        :42,
+	SoundWidth          :42,
+	SheetCellWidth	    :24,
 	SheetCellNarrow	    :4,
 	StillCellWidth	    :12,
-    GeometryCellWidth   :52,
+	GeometryCellWidth   :52,
 	SfxCellWidth	    :46,
-	CameraCellWidth     :72,
-	CommentWidth        :120,
-	ColumnSeparatorWidth:4
+	CameraCellWidth     :34,
+	CommentWidth        :64,
+	ColumnSeparatorWidth:8,
+	trackSpec :[
+		["dialog"     ,   1],
+		["replacement",   8],
+		["camera"     ,   3],
+		["comment"    ,   1]
+	]
 };
 
 //メモ編集時の単語一覧
@@ -225,9 +241,9 @@ var Sheet="6+0"	;
 			//カット尺初期値初期タイムシートの長さをタイムコードで
 var SoundColumns=1;
 			//セリフ欄の数 初期値を整数で(必要に従って増やせる。最低で1つはルック維持のため予約)
-var SheetLayers=7;
+var SheetLayers=8;
 			//セル重ねの数 初期値を整数で A~D　ならば　4
-var CameraworkColumns=0;
+var CameraworkColumns=3;
 			//カメラワーク欄の数 初期値を整数で
 var StageworkColumns=0;
 			//ステージワーク欄の数 初期値を整数で
@@ -240,7 +256,7 @@ var myScene=""	;
 var myCut=""	;
 			//カット番号
 
-var myFileName= "$TITLE#$OPUS[$SUBTITLE]_s-c$CUT($TC)";
+var myFileName= "$TITLE#$OPUS[$SUBTITLE]_s$SCENE-c$CUT($TC)";
 /*	デフォルトのファイル名 以下のワードはそれぞれのカットの値と置換されます
 	$TITLE $OPUS $SUBTITLE $SCENE $CUT $TIME $TC
 
