@@ -4681,22 +4681,24 @@ serviceAgent.abortEntry=function(myIdentifier,callback,callback2){
 
 */
 serviceAgent.closeEntry=function(callback,callback2){
-    //  ドキュメントがアクティブで変更フラグが立っている場合　holdしてカレントリポジトリにプッシュ
-     if((xUI.XPS.currentStatus.content=="Active")&&(! xUI.isStored())){
+    //ドキュメントがアクティブで変更フラグが立っている場合 holdしてカレントリポジトリにプッシュ
+    if((xUI.XPS.currentStatus.content=="Active")&&(! xUI.isStored())){
     //  成功したらカレントドキュメントをクリアしてロック
-         serviceAgent.currentRepository.deactivateEntry(function(){
+        serviceAgent.currentRepository.deactivateEntry(function(){
             serviceAgent.closeEntry(callback,callback2);
         },function(){
-            xUI.errorCode=9;
-            if(callback2 instanceof Function) callback2();
-        }
-        );
+                xUI.errorCode=9;
+                if(callback2 instanceof Function) callback2();
+        });
     }else{
-        xUI.resetSheet(new Xps(5,144),new Xps(5,144));
+        xUI.resetSheet(
+            new Xps(xUI.sheetLooks.trackSpec),
+            new Xps(xUI.sheetLooks.trackSpec)
+        );
         xUI.XPS.currentStatus= new JobStatus("Floating");
         xUI.setUImode('floating');    
         if(callback instanceof Function) callback();
-    }
+    };
 }
 /**
     フロート化

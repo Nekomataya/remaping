@@ -912,7 +912,7 @@ console.log(editxMap);
     this.activeDocument     =  this.documents[this.activeDocumentId];
 
     this.sessionRetrace = -1;                   //管理上の作業セッション状態
-    this.referenceXPS   = new Xps(5,nas.SheetLength+':00.');           //参照用Xps初期値
+    this.referenceXPS   = new Xps(SheetLooks.trackSpac);            //参照用Xps初期値
 /**
 引数に参照オブジェクトが渡されていたら、優先して解決
     マルチステージ拡張実装後、直接指定された参照ステージは、初期化時のみ優先 
@@ -3263,11 +3263,13 @@ var Pages=(this.viewMode=="Compact")? 1:Math.ceil(this.XPS.duration()/this.PageL
 var    _BODY ='';
 //----印字用ページヘッダ・第一ページのみシートヘッダ---//
 if(pageNumber>1){
+//page-2 ~
 //    _BODY+='<div class="pageBreak"> </div>';
     _BODY+='<div class="printPageStatus">';
     _BODY+=decodeURIComponent(Xps.getIdentifier(xUI.XPS,'job')) +' : '+new Date().toNASString();
     _BODY+='</div><table class=pageHeader>';
 }else{
+//page-1
     _BODY+='<div class="printPageStatus">';
     _BODY+=decodeURIComponent(Xps.getIdentifier(xUI.XPS,'job')) +' : '+new Date().toNASString();
     _BODY+='</div><table class=sheetHeader>';
@@ -3275,11 +3277,11 @@ if(pageNumber>1){
 //  ページヘッダとシートヘッダの共通表示
 
     _BODY+='<tr>';
-    _BODY+='<td class="pgHeader opusHeader" id="opus'+pageNumber+'">'+this.XPS.opus+'</td>';
-    _BODY+='<td class="pgHeader titleHeader" id="title'+pageNumber+'">'+this.XPS.title+this.XPS.subtitle+'</td>';
+    _BODY+='<td class="pgHeader opusHeader"     id="opus'+pageNumber+'">'+this.XPS.opus+'</td>';
+    _BODY+='<td class="pgHeader titleHeader"    id="title'+pageNumber+'">'+this.XPS.title+this.XPS.subtitle+'</td>';
     _BODY+='<td class="pgHeader scenecutHeader" id="scene_cut'+pageNumber+'">'+this.XPS.scene+this.XPS.cut+'</td>';
-    _BODY+='<td class="pgHeader timeHeader" id="time'+pageNumber+'">'+nas.Frm2FCT(this.XPS.time(),3,0,this.XPS.framerate)+'</td>';
-    _BODY+='<td class="pgHeader nameHeader" id="update_user'+pageNumber+'">'+(this.XPS.update_user.toString()).split(":")[0]+'</td>';
+    _BODY+='<td class="pgHeader timeHeader"     id="time'+pageNumber+'">'+nas.Frm2FCT(this.XPS.time(),3,0,this.XPS.framerate)+'</td>';
+    _BODY+='<td class="pgHeader nameHeader"     id="update_user'+pageNumber+'">'+(this.XPS.update_user.toString()).split(":")[0]+'</td>';
 //    _BODY+='<td class=pgHeader id="update_user'+pageNumber+'">'+this.XPS.update_user.handle+'</td>';
 //シート番号終了表示
 if(pageNumber==Pages){
@@ -3298,10 +3300,14 @@ if(pageNumber==Pages){
     if(pageNumber==1){
 //シート書き出し部分からコメントを外す 印刷時は必要なので注意 2010/08/21
         _BODY += '<span class=top_comment >'
-//      _BODY += '<span>sig.</span>';
-//      _BODY += '<br><div><br></div><hr>';
-//      _BODY += '<br><div><br></div><hr>';
+//シグネチャエリア
+        _BODY += '<u>sig.</u>';
+//        _BODY += xUI.toHTML(XPS.signatures,'print');
+        _BODY += '<br><div><br>--------</div><hr>';
+        _BODY += '<br><div><br>--------</div><hr>';
+//メモエリア
         _BODY +='<u>memo:</u>';
+
         _BODY += '<span id="transit_dataXXX">';
         if(this.XPS.trin[0]>0){
             _BODY += "△ "+this.XPS.trin[1]+'('+nas.Frm2FCT(this.XPS.trin[0],3,0,this.XPS.framerate)+')';
@@ -7919,8 +7925,8 @@ xUI.activeteDocument  = function(tabId){
  *   リロードの際に一度だけ自校される部分
  */
 //ユーザ設定を予備加工
-    var MaxFrames=nas.FCT2Frm(Sheet);//タイムシート尺
-    var MaxLayers=[SoundColumns,SheetLayers,CameraworkColumns,StageworkColumns,SfxColumns];//セル重ね数
+    var MaxFrames = nas.FCT2Frm(SheetLooks.PageLength);//タイムシート尺 global:Sheet
+//    var MaxLayers = SheetLooks.trackSpec;//セル重ね数
 
 //始動オブジェクトとして空オブジェクトで初期化する スタートアップ終了までのフラグとして使用
 var xUI         =new Object();
@@ -7978,7 +7984,8 @@ if(location.hostname.indexOf("remaping-stg")>=0){
 /**
        グローバルの XPSを実際のXpsオブジェクトとして再初期化する
 */
-    XPS=new Xps([SoundColumns,SheetLayers,CameraworkColumns,StageworkColumns,SfxColumns],MaxFrames,myFrameRate);
+//    XPS=new Xps([SoundColumns,SheetLayers,CameraworkColumns,StageworkColumns,SfxColumns],MaxFrames,myFrameRate);
+    XPS=new Xps(SheetLooks.trackSpec,MaxFrames);
 /*
     Mapオブジェクトの改装を始めるので、いったん動作安定のため切り離しを行う
     デバッグモードでのみ接続
@@ -8067,11 +8074,12 @@ console.log(XPS.parseXps(startupDocument));
     NameCheck=false;
 }
 //リファレンスシートデータがあればオブジェクト化して引数を作成
-        var referenceX=new Xps(5,nas.SheetLength+':00.');
+        var referenceX=new Xps(SheetLooks.trackSpec,nas.SheetLength+':00.');
     if((referenceDocument)&&(referenceDocument.length)){
         referenceX.readIN(referenceDocument);
     }
-
+console.log(XPS.toString());
+console.log(SheetLooks);
     xUI.init(XPS,referenceX);//初回実行時にxUIにデータを与えて初期化
 
 
@@ -8239,7 +8247,7 @@ function nas_Prt_Startup(mode,form,page,callback){
        グローバルの XPSを実際のXpsオブジェクトとして再初期化する
 */
 //    XPS=new Xps(MaxLayers,MaxFrames);
-    XPS=new Xps([SoundColumns,SheetLayers,CameraworkColumns,StageworkColumns,SfxColumns],MaxFrames);
+    XPS=new Xps(SheetLooks.trackSpec,MaxFrames);
 /*============*     初期化時のデータ取得    *============*/
 /*
  *  レンダリング時にドキュメント内にスタートアップデータが埋め込まれていることが前提
@@ -8263,7 +8271,7 @@ if(
 //    *** xUI オブジェクトは実際のコール前に必ずXPSを与えての再初期化が必要  要注意
 if( startupDocument.length > 0){ XPS.readIN(startupDocument) }
 //リファレンスシートデータがあればオブジェクト化して引数を作成
-        var referenceX = new Xps(5,nas.SheetLength+':00.');
+        var referenceX = new Xps(SheetLooks.trackSpec,nas.SheetLength+':00.');
     if((referenceDocument)&&(referenceDocument.length)){
         referenceX.parseXps(referenceDocument);
     };
@@ -8534,7 +8542,7 @@ console.log(cutResult)
 console.log('create new Xps');
     //data-scaleに有効な値が存在する場合は、その値を参照  後ほど調整する処理を減らす
             
-        	var currentXps = new Xps(5,(spcFrames)?spcFrames:nas.SheetLength+':00.');//一時オブジェクトを作成
+        	var currentXps = new Xps(SheetLooks.tarckSpec,(spcFrames)?spcFrames:nas.SheetLength+':00.');//一時オブジェクトを作成
 
 currentXps.title    = productResult.data.product.name;
 currentXps.opus     = episodeResult.data.episode.name;

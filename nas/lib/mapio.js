@@ -40,9 +40,9 @@ function xMap(titleString,targetDecription){
  *	作品情報 workTitel-DBの値  nas.workTitles[myTitle]=
  *	this.workTitle = new nas.workTitle();//マスタライブラリ側で作成  カレントの作品はそちらで処理
  */
-	this.opus	=	myOpus;//SCi
-	this.title	=	myTitle;//
-	this.subtitle	=	mySubTitle;
+	this.opus	=	'';//myOpus;//SCi
+	this.title	=	'';//myTitle;//
+	this.subtitle	=	'';//mySubTitle;
 	this.framerate	=	(!nas)? nas.newFramerate("24FPS"):nas.newFramerate(nas.FRATE);//作品情報として追加
 
 	this.rate	=	(!nas)? "24FPS":nas.RATE;//作品情報として追加
@@ -85,9 +85,9 @@ function xMap(titleString,targetDecription){
 		this.stages	=[];
 		this.jobs	=[];
 //
-		this.lines.add	=xAdd;
-		this.stages.add	=xAdd;
-		this.jobs.add	=xAdd;
+		this.lines.add	= xAdd;
+		this.stages.add	= xAdd;
+		this.jobs.add	= xAdd;
 		
 //現在のMapが制御下に置くライン情報
 //	this.currentLine=0;//##LINE_ID から抽出
@@ -1453,7 +1453,7 @@ Xpstを単独でオープンした場合は、テンポラリのxMapが初期化
 
 */
 xMap.prototype.syncProperties = function(myXps){
-console.log(Xps.getIdentifier(myXps,'full'));
+console.log(decodeURIComponent(Xps.getIdentifier(myXps,'full')));
     var values = Xps.parseIdentifier(Xps.getIdentifier(myXps,"full"));
 console.log(values); 
     this.title = values.title;

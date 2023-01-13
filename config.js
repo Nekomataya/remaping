@@ -229,6 +229,7 @@ var myWords	=[
     以下の初期プロパティは修正
     クッキーの保存も終了
 */
+/*
 var myTitle=""	;
 			//タイトル 現行の作品名を入れておくとラクです
 var mySubTitle=""	;
@@ -249,7 +250,7 @@ var StageworkColumns=0;
 			//ステージワーク欄の数 初期値を整数で
 var SfxColumns=0;
 			//カメラワーク欄の数 初期値を整数で
-//---
+//--- */
 
 var myScene=""	;
 			//A.Bパート等  空白でも良い

@@ -370,14 +370,19 @@ return resultArry.join('.');
  *    ユーザ情報オブジェクト<br />
  *    表示名(ニックネーム／ハンドル)と識別用メールアドレス(id)を持つ
  * @param {String} nameDescription
- *  ユーザ記述文字列<br />
+ *  ユーザ記述文字列
+ * @params {Object} addisionalProp
+ *  追加プロパティ（任意）
+ *    ユーザ記述のドキュメント上の記録形式は以下<br />
  *    ドキュメント上の記録形式は以下<br />
- *    displayName:uid@domain<br />
- *　@example
- *var currentUser = new nas.UserInfo("handle:user@example.co.jp")
- *var currentUser = new nas.UserInfo("handle")
- *var currentUser = new nas.UserInfo("user@example.co.jp")
- *var currentUser = new nas.UserInfo("ねこまたや:user@example.com")
+ *    handleName:uid@domain<br />
+ * @example
+var currentUser = new nas.UserInfo("handle:user@example.co.jp")
+var currentUser = new nas.UserInfo("handle")
+var currentUser = new nas.UserInfo("user@example.co.jp")
+var currentUser = new nas.UserInfo("ねこまたや:user@example.com")
+var currentUser = new nas.UserInfo({"handle":"ねこまたや","email":"user@example.com"})
+var currentUser = new nas.UserInfo('{"handle":"ねこまたや","email":"user@example.com"}')
  *<pre>
  *初期化引数に':'が含まれない場合は、引数がメールアドレスか否かを判定して
  *メールアドレスなら uid部をハンドルとして使用
@@ -387,14 +392,44 @@ return resultArry.join('.');
  *空白で初期化したデフォルトの値はシステムで利用しないように注意する</pre>
  */
 nas.UserInfo = function UserInfo(nameDescription){
-    if ((typeof nameDescription == 'undefined')||(! nameDescription)){nameDescription = ':'}
+    this.handle = null;
+    this.email  = null;
+    if(arguments.length) this.setValue(...arguments);
+}
+/** ユーザ情報のパーサ
+ *    @params {String} nameDescription
+ *    @params {Object} addisionalProp
+ */
+nas.UserInfo.prototype.setValue = function (nameDescription,addisionalProp){
+//追加プロパティを引数として与える場合は、第二引数をオブエジェクトで {props:value}
+//パーサが受け取ったプロパティは、コンストラクターに渡す前に分離して引数で与えること
+    if((arguments.length>1)&&(arguments[1] instanceof Object)){
+        for(var prop in arguments[1]) this[prop] = arguments[1][prop];
+    };
+
+    if((typeof nameDescription == 'undefined')||(! nameDescription)){
+    	nameDescription = '';
+    }else if(nameDescription instanceof nas.UserInfo){
+		for(var prp in nameDescription){if(this.hasOwnProperty(prp)) this[prp] = nameDescription[prp];};
+        return this;//複製
+    }else if(typeof nameDescription != 'string'){
+		if(nameDescription instanceof Array){
+    		nameDescription = nameDescription.join(":");
+    	}else{
+    		nameDescription = JSON.stringify(nameDescription);
+    	};
+    };//文字列化
+	if(nameDescription.match(/^\s*\{.*\}\s*$/)){
+		var props = nameDescription = JSON.parse(nameDescription);
+		for(var prp in props){if(this.hasOwnProperty(prp)) this[prp] = props[prp];};
+		return this;//複製
+	}else if(nameDescription.match(/^\s*\[.*\]\s*$/)){
+		nameDescription = JSON.parse(nameDescription).join(":");
+	};
     if(String(nameDescription).match(/^\s*$|^:$/)){
         this.handle = null;
-        this.email  = null;        
-    }else if (nameDescription instanceof nas.UserInfo){
-        this.handle = nameDescription.handle;
-        this.email  = nameDescription.email;
-    } else if (nameDescription.indexOf(':') < 0){
+        this.email  = null;
+    }else if (nameDescription.indexOf(':') < 0){
 //セパレータなし
         if(nameDescription.indexOf('@') < 1){
             this.handle = nameDescription;//メールアドレスでないと思われるので引数全体をハンドルにする
@@ -402,34 +437,41 @@ nas.UserInfo = function UserInfo(nameDescription){
         }else{
             this.handle = nameDescription.split('@')[0];//メールアドレスっぽいので＠から前をハンドルにする
             this.email  = nameDescription;
-        }
-    } else {
+        };
+    }else{
 //セパレータあり
-         var infoArray  = nameDescription.split(':');
+        var infoArray  = nameDescription.split(':');
         this.handle     = infoArray[0];
         this.email      = infoArray[1];
     }
-    if(String(this.email).match(/\s/)){ this.email.replace(/\s/g,'') };
-//追加プロパティを引数として与える場合は、第二引数をオブエジェクトで {props:value}
-//パーサが受け取ったプロパティは、コンストラクターに渡す前に分離して引数で与えること
-    if((arguments.length>1)&&(arguments[1] instanceof Object)){
-//console.log(String(nas.Pm.users.token));
-//console.log(this.toString('JSON'));
-        for(var prop in arguments[1]) this[prop] = arguments[1][prop];
-    };
+    if(String(this.email).match(/\s/)) this.email.replace(/\s/g,'');
+//    if(! this.id) this.id = nas.uuid();
+	return this;
 }
+/*TEST
+var A = new nas.UserInfo("handle:user@example.co.jp");
+var B = new nas.UserInfo("handle");
+var C = new nas.UserInfo("user@example.co.jp");
+var D = new nas.UserInfo("ねこまたや:user@example.com");
+var E = new nas.UserInfo({"handle":"ねこまたや","email":"user@example.com"});
+var F = new nas.UserInfo('{"handle":"ねこまたや","email":"user@example.com"}');
+var G = new nas.UserInfo(["ねこまたや","user@example.com"]);
+var H = new nas.UserInfo('["ねこまたや","user@example.com"]');
+var I = new nas.UserInfo(A);
+console.log([A,B,C,D,E,F,G,J,I]);
+*/
 /**
  * @params {String} opt
  *    出力フォーマット指定オプション<br />
- * キーワード"JSON"|"text"|"dump" または  プロパティ名"handle"|"email"<br />
- * opt未指定の場合は、標準のユーザ記述文字列を戻す
+ * キーワード"JSON"|"text"|"dump" または  プロパティ名"handle"|"email"|(追加された任意のプロパティ)
+ * opt未指定の場合は、標準のユーザ記述文字列(handle)を戻す
  *  @returns {String}
  JSON   {}
  text   handle:uid:{additional property}
  dump   [handle,uid,{additional property}]
  */
 nas.UserInfo.prototype.toString = function(opt){
-    if(! opt) opt = '';
+    if(! opt) opt = 'handle';
     switch (opt){
     case 'JSON':
         return JSON.stringify(this);
@@ -446,43 +488,27 @@ nas.UserInfo.prototype.toString = function(opt){
         var form='text';
     break;
     default:
-        return this[opt];
-    }
+        if(this[opt]) return this[opt];
+    };
     var additionalOpt={};
     var additionalCount=0;
     for (var prp in this){
         if((prp=='handle')||(prp=='email')||(this[prp] instanceof Function)) continue;
         additionalOpt[prp]=this[prp];
         additionalCount++;
-    }
+    };
     if(form == 'dump'){
         if(additionalCount) return JSON.stringify([this.handle,this.email,additionalOpt]);
         return JSON.stringify([this.handle,this.email]);
-    }else{
-        if(additionalCount) return [this.handle,this.email,JSON.stringify(additionalOpt)].join(':');
+    }else if(form == 'text'){
+        if(additionalCount) return [this.handle,this.email,nas.IdfEncode(JSON.stringify(additionalOpt))].join(':');
         return [this.handle,this.email].join(':');        
-    }
-    
-
-/*
-    if (opt=='JSON'){
-        return JSON.stringify(this);
-    }else if (opt=='plain-text'){
-        return JSON.stringify(this);
-    }else if(this[opt]){
-        return this[opt];
-    }else {
-        var additionalOpt={};
-        var additionalCount=0;
-    for (prp in this){
-        if((prp=='handle')||(prp=='email')||(this[prp] instanceof Function)) continue;
-        additionalOpt[prp]=this[prp];
-        additionalCount++;
-    }
-        if(additionalCount) return [this.handle,this.email,JSON.stringify(additionalOpt)].join(':');
-        return [this.handle,this.email].join(':');
-    };// */
-}
+    }else{
+        var result = ((this.handle)? this.handle:"");
+        if(this.email) result += ':' + ((this.email)? this.email:"");
+        return result;
+    };
+};
 /**
  *    ユーザ情報の同値判定
  *  @params {Object nas.UserInfo|String} myName
@@ -666,15 +692,456 @@ A = new nas.UserInfo("A123:123@23456");
 B = new nas.UserInfo("B123@4567");
 C = new nas.UserInfo("C123");
 D = new nas.UserInfo("D123:123@23456");
-E=new nas.UserInfoCollection([A,B,C,"kiyo@nekomataya.info"]);
+E = new nas.UserInfoCollection([A,B,C,"kiyo@nekomataya.info"]);
 
-E.add(D);
-console.log(E.add(D));
-console.log(E.add(new nas.UserInfo()));
+E.addMember(D);
+console.log(E.addMember(D));
+console.log(E.addMember(new nas.UserInfo()));
 
 console.log(E);
 */
+/**
+ * @class @constractor
+ *    署名情報オブジェクト
+ *      stage 署名が配されるオブジェクトの識別情報・ステージ名:ID
+ *      自由表示テキストを指定可能
+ *      ユーザ情報(ハンドル、メールアドレス、またはフルフォーマットのUserInfo文字列)
+ *      追加情報(スタンプ等に利用 JSON)
+ * @params {String|Object nas.UserSignature} sigDescription
+ *         ステージ文字列 署名をグループ化するためのキー 省略不可 またはシグネチャ記述・シグネチャオブジェクト
+ * @params {String} signatureString
+ *         署名テキスト(省略可　省略時はユーザハンドルで代用)
+ * @params {Object} additionalProperty
+ *         追加プロパティ プロパティ名を与えてJSON文字列で指定
+ *         スタンプに利用
+ *  第一引数にシグネチャ記述文字列　または参照オブジェクトでも良い
+ */
+nas.UserSignature = function UserSignature(sigDescription,signatureString,additionalProperty){
+    this.stage  = ''               ;//
+    this.text   = ''               ;//
+    this.date   = new Date()       ;//
+    this.user   = nas.CURRENTUSER  ;//
+    this.stamp  = null             ;//
+    if(arguments.length) this.setValue(...arguments);
+};
+/** 署名情報パーサ
+ * @params {String|Object nas.UserSignature} sigDescription
+ *         ステージ文字列 署名をグループ化するためのキー 省略不可 またはシグネチャ記述・シグネチャオブジェクト
+ * @params {String} signatureString
+ *         署名テキスト(省略可　省略時はユーザハンドルで代用)
+ * @params {Object} additionalProperty
+ *         追加プロパティ プロパティ名を与えてJSON文字列で指定
+ *         スタンプに利用
+ * @returns {Object}
+ *        署名オブジェクトを返す
+ */
+nas.UserSignature.prototype.setValue = function(sigDescription,signatureString,additionalProperty){
+    if(
+    	(sigDescription instanceof nas.UserSignature)||
+    	((typeof sigDescription == 'object')&&(Object.keys(sigDescription).length > 0))
+    ){
+//引数としてシグネチャ|参照オブジェクトが与えられた場合は、日付以外を複製する
+		for ( var prp in sigDescription){
+			if((this[prp])&&(typeof this[prp].setValue == 'function')){
+				this[prp].setValue(sigDescription[prp]);
+			}else{
+				this[prp] = sigDescription[prp];
+			};
+		};
+		return this;
+    }else if(typeof sigDescription == 'string'){
+//テキスト記述
+        if(sigDescription.match(/^\s*\{.*\}\s*$/)){
+//JSON 日付含めてすべて適用する
+            var props = JSON.parse(sigDescription);
+			for ( var prp in props){
+				if((this[prp])&&(typeof this[prp].setValue == 'function')){
+					this[prp].setValue(props[prp]);
+				}else if(prp == 'date'){
+					this[prp] = new Date(props[prp]);
+				}else{
+					this[prp] = props[prp];
+				};
+			};
+			return this;
+        }else if(sigDescription.match(/^(.+)\:.*\s*(\[.+\])$/)){
+//第一引数に全記述がある場合は分離して再パース
+            return this.setValue(RegExp.$1,RegExp.$2,additionalProperty);
+        }else if((typeof signatureString == 'string')&&(signatureString.match(/^\s*\[(.+)\]\s*$/))){
+//分離記述
+            var sigDescriptions = RegExp.$1.split('\t');
+            this.stage = sigDescription;
+            this.text  = (sigDescriptions[0])? sigDescriptions[0]:"";
+            this.date  = new Date(sigDescriptions[1])               ;//記録データをパースする場合のみ上書き
+            this.user  = new nas.UserInfo(sigDescriptions[2])       ;
+            if((sigDescriptions[3])&&(sigDescriptions[3].match(/^\{.*\}$/))){
+                var props = JSON.parse(sigDescriptions[3]);
+                if(props.stamp) this.stamp = props.stamp;
+            };
+        };
+    };
+    if(typeof additionalProperty == 'object'){
+        for(var prp in additionalProperty) this[prp] = additionalProperty[prp];
+    };
+    return this;
+};
+nas.UserSignature.prototype.parse = nas.UserSignature.prototype.setValue;
+/**
+ * @params {String} opt
+ *    出力フォーマット指定オプション<br />
+ * キーワード"JSON"|"text"|"dump"
+ *  @returns {String}
+ JSON   {}
+ text   handle:uid:{additional property}
+ dump   [handle,uid,{additional property}]
+ */
+nas.UserSignature.prototype.toString = function(opt){
+    if(! opt) opt = 'dump';
+    switch (opt){
+    case 'JSON':
+//データ交換形式
+        return JSON.stringify({
+        	"stage":this.stage,
+        	"text" :this.text,
+        	"date" :this.date.toNASString(),
+        	"user" :this.user.toString('name'),
+        	"stamp":(this.stamp)?JSON.parse(this.stamp.toString('JSON')):null
+        });
+    break;
+    case 'full':
+    case 'full-dump':
+    case 'dump':
+//タイムシートデータの記録欄で使用する形式
+        var form='dump';
+        return "[" + [
+        	this.text,
+        	this.date.toNASString(),
+        	this.user.toString('name'),
+        	(this.stamp)? this.stamp.toString('JSON'):""
+        	].join("\t")+"]"
+    break;
+    case 'plain-text':
+    case 'plain':
+    case 'text':
+    default:
+//タイムシートのメモ欄に流し込む参照形式（サブセット）
+        var form='text';
+        return "[" + [
+        	this.text,
+        	this.date.toNASString('yy/mm/dd'),
+        	this.user.toString('name'),
+        	].join("\t")+"]";
+    };
+};
+/*test
+    var A = new nas.UserSignature("123:[OK	2022.01.01	kiyo@nekomataya.info]");
+    var B = new nas.UserSignature("123","[OK	2022.01.01	kiyo@nekomataya.info]");
+*/
+/**
+ *    nas.UserSignature　オブジェクトコレクション
+ *  @constractor
+ *  @class
+ *    コレクションする要素は、nas.UserSignatureオブジェクト
+ *    引数にオブジェクトまたはシグネチャ形式文字列の配列を与えて初期化可能
+ *    直接操作する場合は必ずオブジェクトで与えること
+ *    不正メンバーはコレクション対象外
+ *    空コレクションをつくる際は引数で空配列を渡すこと
+ *  @params {Array of nas.UserSigunatur|String} signature
+ *  @params {Object nas.Xpst|nas.xMap|nas.StoryBoard} parent
+ */
+nas.UserSignatureCollection = function (signature,parent){
+    this.members = [];
+    this.parent  = parent;//optional parent document
+    if(signature instanceof Array){
+       signature.forEach(function(e){
+           this.members.push(new nas.UserSignature(e));
+       });
+    };
+}
+    /**
+     *    コレクションメンバーをステージ・日付でソート
+     *  @returns　{Array of String}
+     */
+    nas.UserSignatureCollection.prototype.sort = function(){
+        this.members.sort(function(a,b){return a.date - b.date;});
+        this.members.sort(function(a,b){return a.stage - b.stage;});
+        return this.members
+    }
 
+    /**
+     *   コレクションにメンバーを追加する。既存のメンバーは追加されない。戻り値はメンバーのインデックス
+     *   配列引数渡しNG
+     *   nas.UserSignature以外の不正メンバーは追加されない。その場合の戻り値は -1
+     *  @params {Object nas.UserSignature|String} newMember
+     */
+    nas.UserSignatureCollection.prototype.push = function(newMember){
+        if (newMember instanceof nas.UserSignature){
+                newMember = new nas.UserSignature(newMember);
+        };
+        if (! newMember) return -1;
+        this.members.push(newMember);
+        return this.members.length - 1;
+    }
+    /**
+     *   signatureストリームをtext出力
+     *   @params {String} form
+     *   出力形式指定文字列 "full"|"dump"|"plain"|"text"|"JSON"
+     *   引数無しでカンマ区切りリスト("csv")
+     *   @returns {String} 
+     */
+    nas.UserSignatureCollection.prototype.dump=function(form){
+        switch(form){
+        case    'JSON':
+            return JSON.stringify(this.members);break;
+        case    'full-dump':
+        case    'full':
+        case    'dump':
+        case    'plain-text':
+        case    'plain':
+        case    'text':
+                var resultArray=[];
+                var currentStage='';
+            for (var ix=0 ; ix < this.members.length ;ix ++){
+            	if(currentStage != this.members[ix].stage){
+            		currentStage = this.members[ix].stage;
+            		resultArray.push(currentStage+":");
+            	};
+            	resultArray.push("\t" + this.members[ix].toString(form));
+            };
+            return resultArray.join('\n');
+        break;
+        default:
+            return this.members.toString();
+        };
+    }
+    /**
+     *   signatureストリームを引数にしてCollectionの内容をすべて入れ替える
+     *   ストリームの形式は "plain-text" または "full-dump" または  "JSON"を自動判別
+     *   引数が空の場合は、何も操作せずに戻る
+     *  @params {String} dataStream
+     */
+    nas.UserSignatureCollection.prototype.parse=function(dataStream){
+        if(dataStream.length==0) return false;
+        this.members.length = 0;
+        var form = 'plain-text';
+        if(dataStream.match(/^\s*\[\s*\{/)){
+            form = 'JSON';
+        };
+        switch (form){
+        case 'JSON':
+            var tempData = JSON.parse(dataStream);
+            var currentStage = tempData[0].stage;
+            for(var ix = 0;ix<tempData.length;ix++){
+                this.push(new nas.UserSignature(tempData[ix]));
+            };
+        break;
+        default:
+            var tempData = dataStream.split('\n');
+            var currentStage = "";
+            for(var ix = 0;ix<tempData.length;ix++){
+                if(tempData[ix].length==0) continue;//空行スキップ
+                if(tempData[ix].match(/^[^\[\]]+\:/)){
+                    currentStage = (nas.Pm.ManagementStage)?
+                        new nas.Pm.ManagementStage(tempData[ix]):new XpsStage(tempData[ix]);
+console.log(currentStage);
+                    continue;
+                }else if(tempData[ix].match(/^\s*\[.*\]$/)){
+console.log(currentStage.toString(),tempData[ix]);
+console.log(new nas.UserSignature(currentStage.toString(),tempData[ix]));
+                    this.push(new nas.UserSignature(currentStage.toString(),tempData[ix].trim()));
+                };
+            };
+        };
+    }
+
+/*test
+
+var stream = `
+CT:0
+	[-済-	2022.01.23	kiyo:kiyo@nekomataya.info]
+	[composite	2022.01.24	たぬき:tanuki@animal.example.com]
+LO:1
+	[-済-	2022.01.24	kiyo:kiyo@nekomataya.info]
+	[監督OK	2022.01.25	鮒:funa@animal.example.com]
+	[演出	2022.01.25	亀:kame@animal.example.com]
+	[演出	2022.01.25	亀:kame@animal.example.com]
+`;
+var sig = new nas.UserSignatureCollection();
+sig.parse(stream);
+sig
+*/
+/**
+ *  @params {String|Object HTMLImageElement|Object nas.NoteImage} img
+ *   引数は String url|HTMLImageElement|nas.NoteImageまたはnas.NoteImageのプロパティを持つ互換オブジェクト
+ *  注釈画像クラス
+ * 注釈画像は、データ入力参照&&代用ドキュメント|ドキュメント注釈|手書き記述として機能する
+ * データはドキュメントの本体の画像コレクションに格納
+ * 1ページあたり1点の画像または任意のシートセルに付属する任意のサイズの画像を、インデックス付きで保持することが可能
+ * 比較参照のために画像の 解像度|サイズ ,表示オフセット,スケールなどの補助情報を保持する
+ * UI上のキャッシュとしてHTMLImageを持つ
+ *  **HTML関連コードは、依存環境を確認して代用オブジェクトを設定することでエラー回避を行う
+ */
+nas.NoteImage = function NoteImage(img){
+    this.type       = "note"    ;//page|note|description
+    this.link       = "cell:0_0";//アタッチ座標 (座標タイプcell|page|document):(値) 
+    this.img        = null      ;//画像キャッシュ 保存されない 
+    this.content    = ""        ;//画像パス,URL URI
+    this.size       = new nas.Size("0","0")       ;//points
+    this.resolution = new nas.UnitResolution("96ppi");
+    this.offset     = new nas.Point("0","0")      ;//points
+    this.scale      = new nas.Scale("100%","100%");//pixels
+    if(img) this.parse(img);
+}
+/** 画像オブジェクトをパース
+    @params {Object nas.Image|Object nas.NoteImage |String} img
+    画像パス、画像オブジェクト またはダンプ文字列
+    @returns {Object}
+ */
+nas.NoteImage.prototype.parse = function(img){
+console.log(typeof img)
+    if(typeof img == 'string'){
+        if(img.match(/^\s*\{.+\}\s*$/)){
+//JSON
+            img = JSON.parse(img);
+            for(var prp in img){
+            	if(typeof this[prp] != 'undefined'){
+        			switch (prp){
+        			case "type":
+        			case "link":
+        			case "content":
+        				this[prp] = img[prp];
+        			break;
+        			case "size":
+        			case "resolution":
+        			case "offset":
+        			case "scale":
+console.log(img[prp])
+        				this[prp].setValue(img[prp]);
+        			break;
+        			};
+            	};
+            };
+        }else if(
+            (img.match(/^(http|https|data|file)\:.+/))||
+            (img.match(/\.(png|jpg|jpeg|gif|webp)$/))
+        ){
+//url | filePath
+            if(typeof HTMLImageElement == 'function'){
+                this.img = document.createElement('img');
+                this.img.src = img;
+            }else{
+                this.img = new nas.Image();
+                this.img.src = img;
+            };
+        };
+    }else if((typeof HTMLImageElement == 'function')&&(img instanceof HTMLImageElement)){
+        this.img = img;
+    }else if(
+    	((typeof img == 'object')&&(Object.keys(img).length > 0))||
+    	(img instanceof nas.NoteImage)
+    ){
+console.log('Object');
+        for(var prp in img){
+        	switch (prp){
+        	case "type":
+        	case "link":
+        	case "content":
+        		this[prp] = img[prp];
+        	break;
+        	case "size":
+        	case "resolution":
+        	case "offset":
+        	case "scale":
+console.log(img[prp])
+        		this[prp].setValue(img[prp]);
+        	break;
+        	};
+        };
+    };
+    if(typeof HTMLImageElement == 'function'){
+        if(this.img instanceof HTMLImageElement){
+            this.content = this.img.src;
+        }else{
+            this.img = document.createElement('img');
+            this.img.src = this.content;
+        };
+//        var ppi = (this.resolution)?this.resolution.as("ppi"):
+//        this.size.setValue((this.img.naturalWidth/)+"in",(this.img.naturalHeightthis.resolution.as("ppi"))+"in");
+    };
+    return this;
+}
+/**
+     保存用にシリアライズ
+     @params {String} form
+      JSON|text|dump
+      
+ */
+nas.NoteImage.prototype.toString = function toString(form){
+    if (! form) form = 'JSON';
+    if (form == 'JSON'){
+        return JSON.stringify(this,["type","link","content","size","resolution","offset","scale"],2);
+    }else{
+        return ((typeof HTMLImageElement == 'function')&&(this.img instanceof HTMLImageElement))? this.img.src:this.content;
+    };
+}
+/*TEST
+var A = new nas.NoteImage('{"type":"page","link":"1","content":"http://localhost/~kiyo/images/image1.png","resolution":"300ppi","offset":{"x":0 ,"y":0},"scale":{"x":1,"y":1},"size":{"x":120,"y":240}}}');
+
+var B = new nas.NoteImage('http://localhost/~kiyo/images/image1.png');//url単体
+var C = new nas.NoteImage(document.getElementById('imgPreview'));//
+*/
+/*
+    注釈画像コレクション
+*/
+nas.NoteImageCollection = function NoteImageCollection(){
+    this.imageOpacity      = 1.0;
+    this.imageBlendMode = 'normal';
+    this.dump = function(){
+//JSON only
+        return JSON.stringify(Array.from(this),["type","link","content","size","resolution","offset","scale"],2);//文字列化
+    }
+    this.parse = function(stream){
+        var temp = JSON.parse(stream);
+        if(temp instanceof Array){
+            this.length = 0;
+            temp.forEach(function(e){this.push(new nas.NoteImage(e));},this);
+        }
+    }
+}
+nas.NoteImageCollection.prototype = Array.prototype;
+
+/*TEST
+var imgs = `[
+{
+	"type":"page",
+	"link":"1",
+	"content": "./kt#Otameshi__s-c010.jpeg",
+	"size": "",
+	"resolution": "300ppi",
+	"offset": {"x":0 ,"y":0},
+	"scale": {"x":1 ,"y":1}
+},
+{
+	"type":"page",
+	"link":"2",
+	"content":"file://C:\sheet\kt#Otameshi__s-c010.jpeg",
+	"resolution": "200ppi",
+	"offset": {"x":0 ,"y":0},
+	"scale": {"x":1 ,"y":1}
+},
+{
+	"type":"page",
+	"link":"3",
+	"content":"http://www.nekomataya.info/sample/sheet\kt#Otameshi__s-c010.jpeg",
+	"size":"",
+	"resolution": "200ppi",
+	"offset": {"x":0 ,"y":0},
+	"scale": {"x":1 ,"y":1}
+}
+]`;
+var testImages = new nas.NoteImageCollection();
+testImages.parse(imgs)
+*/
 //UnitValuで利用可能な単位 px/pixels を与えるとその時点での基底解像度で処理してpointに換算、pxとしての保存は行わない
 nas.UNITRegex=new RegExp('^(in|inches|mm|millimeters|cm|centimeters|pt|picas|points|mp|millipoints)$','i');
 
@@ -683,12 +1150,12 @@ nas.UNITRegex=new RegExp('^(in|inches|mm|millimeters|cm|centimeters|pt|picas|poi
 /**
 	common method
 */
-nas.UNITString	=function(){return ([this.value,this.type]).join(' ');};
-nas.UNITValue	=function(){return this.value;};
-nas.UNITAs	=function(myUnit){return nas.decodeUnit(this.toString(),myUnit)};
-nas.UNITConvert	=function(myUnit){this.value=nas.decodeUnit(this.toString(),myUnit);this.type=myUnit;return this;};
+nas.UNITString  = function(){return ([this.value,this.type]).join(' ');};
+nas.UNITValue   = function(){return this.value;};
+nas.UNITAs      = function(myUnit){return nas.decodeUnit(this.toString(),myUnit)};
+nas.UNITConvert = function(myUnit){this.value=nas.decodeUnit(this.toString(),myUnit);this.type=myUnit;return this;};
 
-nas.ANGLEAs	=function(myUnit){
+nas.ANGLEAs	= function(myUnit){
 		var targetUnit=(myUnit.match( /^(r|rad|radians)$/i ))?"radians":"degrees";
 		if(targetUnit==this.type){
 			return this.value
@@ -717,28 +1184,46 @@ nas.RESOLUTIONConvert=function(myUnit){
 		return this;
 	};
 nas._LISTString=function(myUnit){
-		if(typeof myUnit == "unidefined"){myUnit=false;}
+		if(typeof myUnit == "unidefined"){myUnit=this.type;}
 		var myResult=[];
 		for(var myDim=0;myDim<this.length;myDim++){
-		  if(myUnit){
-			myResult.push(this[this.props[myDim]].as(myUnit));
-		  }else{
-			myResult.push(this[this.props[myDim]].toString());
-		  }
-		}
+			if(this[this.props[myDim]]){
+				if(this[this.props[myDim]].as instanceof Function){
+					myResult.push(this[this.props[myDim]].as(myUnit) + myUnit);
+				}else{
+					myResult.push(this[this.props[myDim]].toString());
+				};
+			};
+		};
 		return myResult.join();//リスト文字列で
 	};
 nas._ARRAYValue	=function(myUnit){
-		if(typeof myUnit == "unidefined"){myUnit=false;}
+		if(typeof myUnit == "unidefined"){myUnit=this.type;}
 		var myResult=[];
 		for(var myDim=0;myDim<this.length;myDim++){
-		  if(myUnit){
-			myResult.push(this[this.props[myDim]].as(myUnit))
-		  }else{
-			myResult.push(this[this.props[myDim]].value)
-		  }
-		}
-		return myResult;//配列で
+			if(this[this.props[myDim]]){
+				if(this[this.props[myDim]].as instanceof Function){
+					myResult.push(this[this.props[myDim]].as(myUnit))
+				}else{
+					myResult.push(this[this.props[myDim]].value)
+				};
+			};
+		};
+		return myResult;//配列で返す
+	};
+nas._JSONValue	=function(myUnit){
+		if(typeof myUnit == "unidefined"){myUnit=this.type;}
+		var myResult={};
+		for(var myDim=0;myDim<this.length;myDim++){
+			if (this[this.props[myDim]]){
+				if(this[this.props[myDim]].as instanceof Function){
+					myResult[this.props[myDim]] = (this[this.props[myDim]].as(myUnit))+myUnit;
+				}else{
+					myResult[this.props[myDim]] = this[this.props[myDim]].toString();
+				};
+			};
+		};
+		return myResult;//Objectで返す
 	};
 /**
  *	@summary
@@ -761,40 +1246,48 @@ nas._ARRAYValue	=function(myUnit){
  *  単位 String 単位を文字列で  省略可
  * 
  * @example
- * 	A = new nas.UnitValue("123","mm")    ;//
- * 	B = new nas.UnitValue("-72pt","in")  ;//
- * 	C = new nas.UnitValue(25.4,"cm")     ;//
- * 	D = new nas.UnitValue("うさぎ",'カメ') ;// {value: 0, type: "pt"}
- * 	E = new nas.UnitValue('125 degree')  ;// {value: 0, type: "pt"}
- * 	F = new nas.UnitValue(A)             ;// {value: 123, type: "mm"}
+ 	A = new nas.UnitValue("123","mm")    ;//
+ 	B = new nas.UnitValue("-72pt","in")  ;//
+ 	C = new nas.UnitValue(25.4,"cm")     ;//
+ 	D = new nas.UnitValue("うさぎ",'カメ') ;// {value: 0, type: "pt"}
+ 	E = new nas.UnitValue('125 degree')  ;// {value: 0, type: "pt"}
+ 	F = new nas.UnitValue(A)             ;// {value: 123, type: "mm"}
  * 
  */
-nas.UnitValue=function(numberString,unitString){
+nas.UnitValue = function(numberString,unitString){
     this.value ;
     this.type  ;
 //
-    this.setValue(numberString,unitString);
+    this.setValue(...arguments);
 }
 /**
  * 引数をパースしてUnitValueのプロパティを設定するメソッド<br />
  * 初期化の際にもコールされる<br />
- * 	@params {Number or String} myNumberString 数値、単位つき数値文字列 or 数値文字列
+ * 	@params {Number or String | Object nas.UnitValue} myNumberString 数値、単位つき数値文字列 or 数値文字列
  * 	@params {String} myUnitString 単位 String 単位を文字列で  省略可
  *  @returns {nas.UnitValue} 値をセットされた nas.UnitValue 本体
  */
 nas.UnitValue.prototype.setValue=function(myNumberString,myUnitString){
     if(myNumberString instanceof nas.UnitValue){
-        myNumberString = myNumberString.toString();
-    }
+        this.value = myNumberString.value;
+        this.type  = myNumberString.type;
+        return this;
+    };
     if(typeof myNumberString == "string"){
-		var myNumberUnit=myNumberString.replace(/[\+\-\.\s0-9]/g,'')
+		var myNumberUnit=myNumberString.replace(/[\+\-\.\s0-9]/g,'');
 	}else{
-		var myNumberUnit='';//第一引数が文字列以外
-		myNumberString=new String(myNumberString);
+		var myNumberUnit='';//第一引数が文字列以外単位なし
 	};
-	if(arguments.length<2){myUnitString=myNumberUnit;}
-	if((myUnitString) && !(myUnitString.match(nas.UNITRegex))) myUnitString="pt";// 
-	this.value=(myNumberUnit=='')?parseFloat(myNumberString):nas.decodeUnit(myNumberString,myUnitString);
+	myNumberString = String(parseFloat(myNumberString));//単位を払って数値化
+//例外処理 px,pixel 指定の場合は、現在の基準解像度でptに変換
+    if(myNumberUnit.match(/^(px|pixels?)$/i)){
+        this.value = nas.decodeUnit(myNumberString + 'px','pt');
+        this.type  = 'pt';
+        return this.convert(myUnitString);
+    };
+	if(typeof myUnitString == 'undefined') myUnitString = (myNumberUnit)? myNumberUnit:'pt';//指定単位がない場合は引数から得た単位を使用
+	if((myUnitString) && !(myUnitString.match(nas.UNITRegex))) myUnitString = "pt";// 特定できない単位は pt とみなす
+	this.value=(myNumberUnit=='')? parseFloat(myNumberString):nas.decodeUnit(myNumberString+myNumberUnit,myUnitString);
 	if((! this.value)||(isNaN(this.value))){this.value=0.000000;}
 	this.type=myUnitString;
 	return this;
@@ -820,6 +1313,7 @@ nas.UnitValue.prototype.convert	=nas.UNITConvert;
  *  @returns {String} 単位付き数値文字列
  */
 nas.UnitValue.prototype.toString=nas.UNITString;
+nas.UnitValue.prototype.toJSON  =nas.UNITString;
 /**
  *  現在の単位系の値を返す　Object.valueに同じ
  *  
@@ -828,22 +1322,22 @@ nas.UnitValue.prototype.toString=nas.UNITString;
 nas.UnitValue.prototype.valueOf	=nas.UNITValue;
 
 /*	test
- *	A=new nas.UnitValue("125","mm");//2引数初期化
- *	B=new nas.UnitValue("125mm","cm");//2引数初期化
- *	C=new nas.UnitValue("5in");//1引数初期化
- *	D=new nas.UnitValue(-123,"mm");//数値初期化
- *	E=new nas.UnitValue("たぬきさん","mm");//不正値初期化
- *	console.log(A);
- *	console.log(B);
- *	console.log(C);
- *	console.log(D);
- *	console.log(E);
- *	console.log("A+B = ",A+B);
- *	//これは誤った答えが戻る。が、使い方を誤っているのでそれで正常
- *	console.log(A.as("mm")+B.as("mm"));
- *	//確実な値が必要な場合は .as(単位)で値を求める
- *	//直接演算でUnitValeが戻ることは無い
- *	
+	A=new nas.UnitValue("125","mm");//2引数初期化
+	B=new nas.UnitValue("125mm","cm");//2引数初期化
+	C=new nas.UnitValue("5in");//1引数初期化
+	D=new nas.UnitValue(-123,"mm");//数値初期化
+	E=new nas.UnitValue("たぬきさん","mm");//不正値初期化
+	console.log(A);
+	console.log(B);
+	console.log(C);
+	console.log(D);
+	console.log(E);
+	console.log("A+B = ",A+B);
+	//これは誤った答えが戻る。が、使い方を誤っているのでそれで正常
+	console.log(A.as("mm")+B.as("mm"));
+	//確実な値が必要な場合は .as(単位)で値を求める
+	//直接演算でUnitValeが戻ることは無い
+	
  */
 /**	nas.UnitAngle
 コンストラクタ	nas.UnitAngle("値"[,"単位"])
@@ -863,17 +1357,26 @@ nas.UnitAngle.as("単位文字列")	指定された単位文字列に変換し�
 nas.UnitAngle.convert("単位文字列")	指定された単位文字列にオブジェクトを変換する 変換後の単位付き数値文字列を返す
 */
 nas.UnitAngle=function(myNumberString,myUnitString){
+	this.type  ='degrees';
+	this.value = 0 ;
+	this.setValue(...arguments);
+}
+/** 角度オブジェクトの値を更新
+	@params {String+Number|Object nas.UnitAngle} myNumberString
+	@params {String}	myUnitString
+ */
+nas.UnitAngle.prototype.setValue = function(myNumberString,myUnitString){
 	var myNumberUnit='';
 	if(! myUnitString) myUnitString='';
 	if((myNumberString)&&(String(myNumberString).match(/(d|deg|degrees|°|度)|(r|rad|radians)/i))){
 		myNumberUnit = (RegExp.$2)? "radians":"degrees";
-	}
+	};
 	if((myUnitString)&&(String(myUnitString).match(/(d|deg|degrees|°|度)|(r|rad|radians)/i))){
 	    myUnitString = (RegExp.$2)? "radians":"degrees";
-	}
+	};
 	if (myUnitString == '' ){
 	    myUnitString = ( myNumberUnit == '' )? 'degrees':myNumberUnit;
-	}
+	};
 	if ( myNumberUnit == '' ) myNumberUnit = myUnitString;
 	this.type  = myUnitString;
 	this.value = (myUnitString==myNumberUnit)? parseFloat(myNumberString):(
@@ -908,7 +1411,13 @@ nas.UnitResolution.as("単位文字列")	指定された単位文字列に変換
 nas.UnitResolution.convert("単位文字列")	指定された単位文字列にオブジェクトを変換する 変換後の単位付き数値文字列を返す
 
 */
-nas.UnitResolution=function(myNumberString,myUnitString){
+nas.UnitResolution=function(numberString,unitString){
+    this.value ;
+    this.type  ;
+//
+    this.setValue(numberString,unitString);
+};
+nas.UnitResolution.prototype.setValue = function(myNumberString,myUnitString){
 	var myNumberUnit='';
 	if((myNumberString)&&(String(myNumberString).match(/([dpl]p[ci])/i))){
 		myNumberUnit=RegExp.$1;
@@ -931,17 +1440,18 @@ nas.UnitResolution=function(myNumberString,myUnitString){
 	    );
 	if((isNaN(this.value))||(this.value<=0)){this.value=(myUnitString.indexOf('pc')<0)?nas.RESOLUTION*2.540:nas.RESOLUTION;};
 }
-nas.UnitResolution.prototype.as		=nas.RESOLUTIONAs;
-nas.UnitResolution.prototype.convert	=nas.RESOLUTIONConvert;
-nas.UnitResolution.prototype.toString	=nas.UNITString;
-nas.UnitResolution.prototype.valueOf	=nas.UNITValue;
+
+nas.UnitResolution.prototype.as         = nas.RESOLUTIONAs;
+nas.UnitResolution.prototype.convert    = nas.RESOLUTIONConvert;
+nas.UnitResolution.prototype.toString   = nas.UNITString;
+nas.UnitResolution.prototype.valueOf    = nas.UNITValue;
 /*================================  以下は単位付き数値オブジェクトを要素に持つ複合オブジェクト===============*/
 /** 解像度トレーラ
 ３次元までの解像度を保持する解像度オブジェクト
 コンストラクタ
 	new nas.Resolution(x[,y[,z]])
 引数は
-	UnitResolution	/	x,y,z-resokution
+	UnitResolution	/	x,y,z-resolution
 
 
 	TimingCurve	/	timing	
@@ -1092,77 +1602,86 @@ nas.Point=function(x,y,z){
 	this.length = 2;
 	this.type='pt';
 // 引数をパーサで処理する
-    if(arguments.length){
-        var props=new Array(arguments.length)
-        for (var i = 0 ;i<arguments.length;i++){props[i]=arguments[i]}
-         this.setValue(props);
-      }
+	this.setValue(...arguments);
 }
-nas.Point.prototype.toString=nas._LISTString;
-nas.Point.prototype.valueOf =nas._ARRAYValue;
+nas.Point.prototype.toString = nas._LISTString;
+nas.Point.prototype.valueOf  = nas._ARRAYValue;
+nas.Point.prototype.toJSON   = nas._JSONValue;
 /**
  *    表記方法のゆらぎを吸収してポイントオブジェクトを設定する自己初期化メソッド
  *   @params {Array|Object nas.Point|String csv} argumants
  */
-nas.Point.prototype.setValue=function(){
+nas.Point.prototype.setValue=function(a,b,c){
     if(arguments.length == 0) return this;
     //引数が存在しない場合は、NOP
-    var myParams = arguments;
-    if(arguments[0] instanceof Array) myParams = arguments[0];
-    if(myParams[0] instanceof nas.Point){
+    var myParams = [];
+    if(a instanceof nas.Point){
 	//第一引数がポイントオブジェクトであれば、値を複製
-	    this.x = new nas.UnitValue(myParams[0].x);
-	    this.y = new nas.UnitValue(myParams[0].y);
-	    this.z = new nas.UnitValue(myParams[0].z);
-	    this.length = myParams[0].length;
+	    this.x = new nas.UnitValue(a.x);
+	    this.y = new nas.UnitValue(a.y);
+	    this.z = new nas.UnitValue(a.z);
+	    this.length = a.length;
 	    this.type=this.x.type;
 	}else{
-	    if(myParams[0] instanceof Array){
-	        myParams=myParams[0];//第一引数が配列の場合は、操作対象を当該の配列に設定
-	    }else if(String(myParams[0]).match(/,/)){
-	        myParams=myParams[0].split(',');//コンマ分離可能な文字列なら配列化
-	    }
-	//引数の要素が２に満たない場合のみ"0pt"を一つ補う。
-		if(myParams.length == 1) myParams.push("0 pt");
-
+	  if(typeof a == 'string'){
+	    if(a.match(/^\s*\{.*\}\s*$/)){
+	        var arg = JSON.parse(a);
+            myParams = [arg.x,arg.y,arg.z];
+	    }else if(a.match(/^\s*\[.*\]\s*$/)){
+	        myParams = JSON.parse(a);
+	    }else if(a.match(/,/)){
+//コンマ分離可能文字列
+	        myParams=a.split(',');
+	    };
+	  }else{
+	    if(a instanceof Array){
+//第一引数が配列の場合は、操作対象を当該の配列に設定
+	        myParams = a;
+	    }else if((a instanceof Object)&&(a.x)){
+//文字列でなく配列でも無いオブジェクト
+            myParams.push(a.x);
+            myParams.push((a.y)? a.y:new nas.UnitValue(0));
+            myParams.push((a.z)? a.z:new nas.UnitValue(0));
+	    }else{
+	        myParams = [a,b,c];
+	    };
+	  };
+	//引数が配列で要素が２に満たない場合のみ"0pt"を一つ補う。
+	    if(myParams.length == 1) myParams.push("0 pt");
 // 以下引数の初期化処理
         this.x = new nas.UnitValue(myParams[0]);
         this.y = new nas.UnitValue(myParams[1]);
-    if(myParams[2]){
-        this.z = new nas.UnitValue(myParams[2]);
-    }
-		this.length = (myParams.length >= 3)? 3:2;
+        if(myParams[2]) this.z = new nas.UnitValue(myParams[2]);
+        this.length = (myParams.length >= 3)? 3:2;
         this.type = this.x.type;
-	}
+	};
 	return this;
 }
 /* test
-	A= new nas.Point();//原点初期化
 
-	myX= new nas.UnitValue("12mm");
+	myX= new nas.UnitValue("12mm")  ;
 	myY= new nas.UnitValue("25.4mm");
-	myZ= new nas.UnitValue("-36mm");
+	myZ= new nas.UnitValue("-36mm") ;
 	
-	B= nas.newPoint(A);
-	C= nas.newPoint(myX,myY,myZ);
-	D= nas.newPoint([myX,myY,myZ]);
-	E= nas.newPoint([myX,myY],'in');
-	F= nas.newPoint('12cm','2.54cm','30mm');
-	G= nas.newPoint(['12cm','2.54cm','30mm']);
-	H= nas.newPoint(['12cm','2.54cm','30mm'],'in');
+	A= new nas.Point()                    ;//原点初期化
+	B= new nas.Point(A)                   ;//オブジェクトで初期化
+	C= new nas.Point(myX,myY,myZ)         ;//３次元引数
+	D= new nas.Point([myX,myY,myZ])       ;//３次元配列
+	E= new nas.Point({"x":myX,"y":myY,"z":myZ}) ;//無名オブジェクトで初期化
+	F= new nas.Point([myX,myY],'in');     ;//二次元配列初期化
+	G= new nas.Point('12cm','2.54cm','30mm')                 ;//文字列
+	H= new nas.Point("'12cm','2.54cm','30mm'")               ;//単独文字列文字列
+	I= new nas.Point('["12cm","2.54cm","30mm"]')             ;//配列JSON文字列
+	J= new nas.Point('{"x":"12cm","y":"2.54cm","z":"30mm"}') ;//JSON文字列
+	K= new nas.Point(['12cm','2.54cm','30mm'])     ;//文字要素の配列で初期化
+	L= new nas.Point(['12cm','2.54cm','30mm'],'in');//指定単位は反映されない
+	M= new nas.Point(['12cm']);
 
-	I= nas.newPoint(['12cm']);
-
-	console.log (A.toString());
-	console.log (B.toString());
-	console.log (C.toString());
-	console.log (D.toString());
-	console.log (E.toString());
-	console.log (F.toString());
-	console.log (G.toString());
-	console.log (H.toString());
-	console.log (I.toString());
-
+    ([A,B,C,D,E,F,G,H,I,J,K,L,M]).forEach((e)=>{
+//	    console.log (e.toString());
+//	    console.log (e.valueOf());
+	    console.log (e.toJSON());
+    });
  */
 /*
  * 	位置オブジェクト
@@ -1199,6 +1718,7 @@ nas.Point.prototype.setValue=function(){
  * 引数なしの初期化を廃して、コードを整理したほうが良いかも？
  * 
  */
+/*
 nas.Position=function(x,y,z){
 	if(arguments.length==0){
 		x=new nas.UnitValue('0 pt');
@@ -1210,20 +1730,10 @@ nas.Position=function(x,y,z){
 	this.x=this.point.x;
 	this.y=this.point.y;
 	this.z=this.point.z;
-/*
-	for(var myDim=0;myDim<this.length;myDim++){
-//		alert(myDim +":"+arguments[myDim]);
-	  if(arguments[myDim] instanceof nas.UnitValue){
-	  	alert(this.props[myDim]);
-	    this[this.props[myDim]]  = arguments[myDim];
-	  }else{
-	    this[this.props[myDim]]  =new nas.UnitValue(arguments[myDim]);
-	  }
-	}
-*/
-	this.type=this.x.type;
-}
+	this.type=this.point.type;
+};// */
 /**
+@params {string} unit
 リスト戻し  カンマ区切り 123mm,234mm
 値単独指定
 全プロパティ
@@ -1231,14 +1741,17 @@ nas.Position=function(x,y,z){
     y=234mm
     
 */
+/*
 nas.Position.prototype.toString=function(){
     var unit=(arguments.length)?arguments[0]:undefined;
     this.point.toString(unit)
 }
-nas.Position.prototype.listString=nas._LISTString;
-nas.Position.prototype.valueOf =nas._ARRAYValue;
-
-//nas.Position objectはPointオブジェクトに換装
+nas.Position.prototype.listString = nas._LISTString;
+nas.Position.prototype.valueOf    = nas._ARRAYValue;
+nas.Position.prototype.toJSON     = nas._JSONValue;
+// */
+nas.Position = nas.Point;
+//nas.Position objectはPointオブジェクトに換装 これは使用を推奨されない
 
 /*
 	 オフセットオブジェクト
@@ -1249,32 +1762,40 @@ positionとorientationを組み合わせたもの
 引数なしの場合は  0,0,0d で初期化
 */
 nas.Offset=function(myPos,myOrt){
-	this.position=(myPos instanceof nas.Point)?myPos:new nas.Point();
+	this.position    = new nas.Point();
+	this.orientation = new nas.Orientation();
+	this.x = this.position.x;
+	this.y = this.position.y;
+	this.r = this.orientation.z;
+	if(arguments.length) this.setValue(...arguments);
+}
+nas.Offset.prototype.setValue = function(myPos,myOrt){
+	this.position=(myPos instanceof nas.Point)? myPos:new nas.Point();
 	this.orientation=(myOrt instanceof nas.Orientation)?myOrt:new nas.Orientation();
 	this.x=this.position.x;
 	this.y=this.position.y;
 	this.r=this.orientation.z;
-
-	this.toString=function(opt){
-    		var myResult=[];
-	    if(! opt){
-                myResult.push(this.position.toString());
-                myResult.push(this.orientation.toString());
-		    return myResult.join(",");
-		}else{
-		        myResult.push("\toffset.x = "+this.position.x.toString());
-		        myResult.push("\toffset.x = "+this.position.x.toString());
-		        myResult.push("\toffset.r = "+this.orientation.z.toString("degrees"));
-		    return myResult.join("\n");
-		}
-	};
-	this.valueOf=function(asUnit){
-		if(typeof asUnit == 'undefined') asUnit=this.type;
-		var myResult=[];
-		for(var myDim=0;myDim<this.length;myDim++){myResult.push(this[this.props[myDim]].as(asUnit))}
-		return myResult;
-	};
+	return this;
 }
+nas.Offset.prototype.toString = function(opt){
+    var myResult=[];
+	if(! opt){
+        myResult.push(this.position.toString());
+        myResult.push(this.orientation.toString());
+		return myResult.join(",");
+	}else{
+        myResult.push("\toffset.x = "+this.position.x.toString());
+        myResult.push("\toffset.x = "+this.position.x.toString());
+        myResult.push("\toffset.r = "+this.orientation.z.toString("degrees"));
+    	return myResult.join("\n");
+	}
+};
+nas.Offset.prototype.valueOf=function(asUnit){
+	if(typeof asUnit == 'undefined') asUnit=this.type;
+	var myResult=[];
+	for(var myDim=0;myDim<this.length;myDim++){myResult.push(this[this.props[myDim]].as(asUnit))}
+	return myResult;
+};
 /*test
 A= new nas.Offset();
 B= new nas.Offset(new nas.Point("12mm","10mm"),new nas.Orientation("0d"));
@@ -1312,6 +1833,15 @@ nas.Vector.valueOf([指定単位])	;指定単位にそろえて数値配列を�
 
 */
 nas.Vector=function(endPoint,startPoint,myUnit){
+	this.dimension = 2;
+	this.length    = 2
+	this.props=['origin','value'];
+	this.origin    = new nas.Point('0 pt','0 pt');
+	this.value     = new nas.Point('1 pt','1 pt');
+	this.type      = "pt";
+	if(arguments.length) this.setValue(...argumants);
+}
+nas.Vector.prototype.setValue = function(endPoint,startPoint,myUnit){
 	if(arguments.length==0){
 		this.dimension=2;
 		this.origin=new nas.Point('0 pt','0 pt');
@@ -1324,19 +1854,20 @@ nas.Vector=function(endPoint,startPoint,myUnit){
 		}else{
 			this.dimension=endPoint.dimension;
 			startPoint=new nas.Point(([0,0,0,0]).slice(0,this.dimension),this.type);
-		}
+		};
 		if(this.dimension>startPoint.dimension){
 			this.origin=new nas.Point((startPoint.toString(this.type)+',0,0').split(',').slice(0,this.dimension),this.type);
 		}else{
 			this.origin=new nas.Point(startPoint.valueOf(this.type),this.type);
-		}
+		};
 		this.value=new nas.Point(nas.sub(endPoint.valueOf(this.type),this.origin.valueOf(this.type)),this.type);
 
-		this.props=['origin','value'];
-	}
+	};
+	return this;
 }
-nas.Vector.prototype.toString=nas._LISTString;
-nas.Vector.prototype.valueOf =nas._ARRAYValue;
+nas.Vector.prototype.toString  = nas._LISTString;
+nas.Vector.prototype.valueOf   = nas._ARRAYValue;
+nas.Vector.prototype.toJSON    = nas._JSONValue;
 /**
 	回転オブジェクト
 	次元数を保存する
@@ -1350,26 +1881,40 @@ nas.Vector.prototype.valueOf =nas._ARRAYValue;
 引数は、bool,UnitAngleまたは文字列
 
 */
-nas.Rotation=function(){
-    this.name='rotation';
-    this.props=["w","x","y","z",];
+nas.Rotation=function(r,w){
+	this.name  ='rotation';
+	this.props =["w","x","y","z"];
+	this.length = 3;
+	this.dimension = 2;
+	this.w = 1;
+	this.z = 0;
+	this.y = 0;
+	this.x = 0;
+	if(arguments.length) this.setValue(...arguments);
+}
+nas.Rotation.prototype.setValue = function(x,y,z){
 	this.dimension=(arguments.length == 0)? 2 : 
 	(arguments.length > 1)? 3 :
-    ((! arguments[0] instanceof nas.UnitAngle)||isFinite(arguments[0]))? 1 : 2 ;	 
+    ((! arguments[0] instanceof nas.UnitAngle)||isFinite(arguments[0]))? 1 : 2 ;
+    this.length = this.dimansion + 1
     switch(this.dimension){
     case 1:
         this.w = (arguments[0] < 0 )? -1:1;
+		this.props =["w","x","y","z"];
+
     break;
     case 2:
 	    this.z=(arguments[0] instanceof nas.UnitAngle)? arguments[0]:new nas.UnitAngle(arguments[0]);
 	    this.y=new nas.UnitAngle('0 degrees');
 	    this.x=new nas.UnitAngle('0 degrees');
+		this.props =["w","z","y","x"];
 	break;
     case 3:
 	    this.x=(arguments[0] instanceof nas.UnitAngle)? arguments[0]:new nas.UnitAngle(arguments[0]);
 	    this.y=(arguments[1] instanceof nas.UnitAngle)? arguments[1]:new nas.UnitAngle(arguments[1]);
 	    this.z=(arguments[2] instanceof nas.UnitAngle)? arguments[2]:new nas.UnitAngle(arguments[2]);
-    }
+		this.props =["w","x","y","z"];
+    };
 }
 nas.Rotation.prototype.toString = function(exportForm){
     if(!exportForm) return this.listString('degrees');    
@@ -1408,7 +1953,8 @@ nas.Rotation.prototype.listString   = function(myUnit){
     }
 	return myResult.join(',');//リスト文字列で
 }
-nas.Rotation.prototype.valueOf      =nas._ARRAYValue;
+nas.Rotation.prototype.valueOf   = nas._ARRAYValue;
+nas.Rotation.prototype.toJSON    = nas._JSONValue;
 
 /*
 	方向オブジェクト
@@ -1423,9 +1969,17 @@ nas.Rotation.prototype.valueOf      =nas._ARRAYValue;
 引数は、bool,UnitAngleまたは文字列
 
 */
-nas.Orientation=function(){
+nas.Orientation=function(r,w){
     this.name='orientation';
-    this.props=["w","x","y","z",];
+	this.props =["w","x","y","z",];
+	this.dimension = 2;
+	this.w = 1;
+	this.z = 0;
+	this.y = 0;
+	this.x = 0;
+	if(arguments.length) this.setValue(...arguments);
+}
+nas.Orientation.prototype.setValue=function(r,w){
 	this.dimension=(arguments.length == 0)? 2 : 
 	(arguments.length > 1)? 3 :
     ((! arguments[0] instanceof nas.UnitAngle)||isFinite(arguments[0]))? 1 : 2 ;	 
@@ -1445,36 +1999,7 @@ nas.Orientation=function(){
     }
 };
 nas.Orientation.prototype=nas.Rotation.prototype;
-/*
-nas.Orientation=function(){
-	this.props=["w","x","y","z",];
-	this.dimension=(arguments.length == 0)? 2 : 
-	(arguments.length > 1)? 3 :
-    ((! arguments[0] instanceof nas.UnitAngle)||isFinite(arguments[0]))? 1 : 2 ;	 
-    switch(this.dimension){
-    case 1:
-        this.w = (arguments[0]);
-    break;
-    case 2:
-	    this.z=(arguments[0] instanceof nas.UnitAngle)? arguments[0]:new nas.UnitAngle(arguments[0]);
-	    this.y=new nas.UnitAngle('0 degrees');
-	    this.x=new nas.UnitAngle('0 degrees');
-	break;
-    case 3:
-	    this.x=(arguments[0] instanceof nas.UnitAngle)? arguments[0]:new nas.UnitAngle(arguments[0]);
-	    this.y=(arguments[1] instanceof nas.UnitAngle)? arguments[1]:new nas.UnitAngle(arguments[1]);
-	    this.z=(arguments[2] instanceof nas.UnitAngle)? arguments[2]:new nas.UnitAngle(arguments[2]);
-    }
-}
-nas.Orientation.prototype.toString = function(exportForm){
-    if(!exportForm) return this.listString('degrees' );    
-    var myResult=[];
-    if(this.length==1){myResult.push(this.z.toString())}
-}
 
-nas.Orientation.prototype.listString=nas._LISTString;
-nas.Orientation.prototype.valueOf =nas._ARRAYValue;
-*/
 /** レートオブジェクト　倍数比率を単位付きまたは単位係数無しで保持するオブジェクト
 .value  倍数
 .rate   係数
@@ -1484,10 +2009,10 @@ nas.Rate=function(myRate){
     if(! myRate) myRate="100%"
     this.value = 100;
     this.rate  = 100;
-    this.parseRate(myRate);
+    if(arguments.length) this.setValue(...arguments);
 }
 
-nas.Rate.prototype.parseRate=function(rateString){
+nas.Rate.prototype.setValue=function(rateString){
     var myRate=1;
     var myRateUnit=String(rateString).replace(/[\+\-\d\.]/g,'');
     var myValue=parseFloat(rateString);
@@ -1507,6 +2032,7 @@ nas.Rate.prototype.parseRate=function(rateString){
 }
 nas.Rate.prototype.valueOf=function(){return this.value;}
 nas.Rate.prototype.as=function(rate){
+    var myRate;
     switch(rate){
     case  "%":
     case "％":
@@ -1525,12 +2051,13 @@ nas.Rate.prototype.as=function(rate){
 nas.Rate.prototype.toString=function(){
     return String(this.value*this.rate)+["",null,"%","‰"][Math.log10(this.rate)];
 }
+nas.Rate.prototype.toJSON = nas.Rate.prototype.toString;
 /*  TEST
-A = nas nas.Rate("1");
-B = nas nas.Rate("96%");
-C = nas nas.Rate("1234‰");
-D = nas nas.Rate("1％");
-D = nas nas.Rate("1％");
+A = new nas.Rate("1");
+B = new nas.Rate("96%");
+C = new nas.Rate("1234‰");
+D = new nas.Rate("1％");
+D = new nas.Rate("1％");
 */
 /*	フレームレートオブジェクト
 コンストラクタ
@@ -1570,7 +2097,7 @@ nas.Framerate=function(initString){
 	this.name = "24FPS";
 	this.rate = 24;
     this.opt  = null;
-    if(initString) this.parse(initString);
+    if(arguments.length) this.setValue(...arguments);
 };
 
 nas.Framerate.prototype.toString=function(form){return (form)? this.name:this.name+"("+this.rate+")";}
@@ -1580,7 +2107,7 @@ nas.Framerate.prototype.valueOf=function(){return this.rate;}
     フレームレートオブジェクト初期化メソッド
     空引数で呼ばれた場合はデフォルト値のフレームレートを返す
 */
-nas.Framerate.prototype.parse=function(rateString,rate){
+nas.Framerate.prototype.setValue=function(rateString,rate){
 
 	if(arguments.length){
 	  //第一引数がカッコつきでフレームレート指定された文字列ならば第二引数は無効(捨てる)
@@ -1788,18 +2315,39 @@ form2:
     size.Y = 254mm
 */
 nas.Size=function(){
-	if(arguments.length==0){
+	this.props = ['x','y','z'];
+	this.x = new nas.UnitValue('72 pt');
+	this.y = new nas.UnitValue('72 pt');
+//	this.z;
+	this.length = 2;
+	this.type='pt';
+// 引数をパーサで処理する
+	this.setValue(...arguments);
+}
+nas.Size.prototype = nas.Point.prototype;
+/*
+nas.Size.prototype.setValue = function parse(width,height,depth){
+	if(arguments.length == 0){
 		var args = [new nas.UnitValue("72 pt"),new nas.UnitValue("72 pt")];
-        this.length = 2;
+		this.length = 2;
+	}else if(arguments.length == 1){
+		if(typeof width == 'string'){
+			
+		}
+		if((width instanceof nas.Size)||((typeof width == 'object')&&(Object.keys(width).length))){
+			
+		}else
+		if(typeof width == 'string')
 	}else{
-	    var args = Array.prototype.slice.call(arguments)
-	    this.length=arguments.length;//DimensionLength
-	}
-	this.props=["x","y","z"];
+		var args = Array.prototype.slice.call(arguments)
+		this.length=arguments.length;//DimensionLength
+	};
 	for(var myDim=0;myDim<this.length;myDim++){
-		 this[this.props[myDim]]  =new nas.UnitValue(args[myDim]);
-	}
-	this.toString=function(opt){
+		 this[this.props[myDim]] = new nas.UnitValue(args[myDim]);
+	};
+	return this;
+}
+nas.Size.prototype.toString = function toString(opt){
     		var myResult=[];
 	    if(! opt){
 	    	for(var myDim=0;myDim<this.length;myDim++){
@@ -1813,13 +2361,9 @@ nas.Size=function(){
 		    return myResult.join("\n");
 		}
 	};
-	this.valueOf=function(asUnit){
-		if(typeof asUnit == 'undefined') asUnit=this.type;
-		var myResult=[];
-		for(var myDim=0;myDim<this.length;myDim++){myResult.push(this[this.props[myDim]].as(asUnit))}
-		return myResult;
-	};
-}
+nas.Size.prototype.valueOf  = nas._ARRAYValue;
+nas.Size.prototype.toJSON   = nas._JSONValue;
+;// */
 /**
  *    スケールオブジェクト
  *Scale.x
@@ -1828,45 +2372,50 @@ nas.Size=function(){
  *Scale.type='percent'
  */
 nas.Scale = function(x,y,z){
-	if(arguments.length==0){
-		var args = ["100%"];
-        this.length = 1;
-	}else{
-	    var args = Array.prototype.slice.call(arguments)
-	    this.length=arguments.length;//DimensionLength
-	}
+	this.length;
 	this.props=["x","y","z"];
-	for(var myDim=0 ; myDim<this.length ; myDim++){
-		 this[this.props[myDim]]  = new nas.Rate(args[myDim]);
-	}
-	this.rate=this.x.rate;
-
-	this.toString=function(opt){
-    		var myResult=[];
-    		var rateString=['','','%','‰'][Math.log10(this.rate)];
-	    if(! opt){
-	    	for(var myDim=0;myDim<this.length;myDim++){
-		        myResult.push(this[this.props[myDim]].as(rateString)+rateString)
-		    }
-		    return myResult.join(",");
-		}else{
-		    if(this.length==1){
-		            myResult.push("\tscale = "+this.x.toString());
-		    }else{
-	    	    for(var myDim=0;myDim<this.length;myDim++){
-		            myResult.push("\tscale."+this.props[myDim] +" = "+this[this.props[myDim]].as(rateString)+rateString);
-		        }
-		    }
-		    return myResult.join("\n");
-		}
-	};
+	this.setValue(...arguments);
+/*
 	this.valueOf=function(asRate){
 		if(typeof asRate == 'undefined') asRate="";
 		var myResult=[];
 		for(var myDim=0;myDim<this.length;myDim++){myResult.push(this[this.props[myDim]].as(asRate))}
 		return myResult;
-	};    
+	};//*/
 }
+nas.Scale.prototype.setValue = function setValue(x,y,z){
+	if(arguments.length == 0){
+		var args = ["100%"];this.length = 1;
+	}else{
+	    var args = Array.prototype.slice.call(arguments)
+	    this.length=arguments.length;//DimensionLength
+	};
+	for(var myDim=0 ; myDim<this.length ; myDim++){
+		 this[this.props[myDim]] = new nas.Rate(args[myDim]);
+	};
+	this.rate=this.x.rate;
+};
+nas.Scale.prototype.toString=function(opt){
+	var myResult=[];
+	var rateString=['','','%','‰'][Math.log10(this.rate)];
+    if(! opt){
+    	for(var myDim=0;myDim<this.length;myDim++){
+	        myResult.push(this[this.props[myDim]].as(rateString)+rateString)
+	    }
+	    return myResult.join(",");
+	}else{
+	    if(this.length==1){
+	            myResult.push("\tscale = "+this.x.toString());
+	    }else{
+    	    for(var myDim=0;myDim<this.length;myDim++){
+	            myResult.push("\tscale."+this.props[myDim] +" = "+this[this.props[myDim]].as(rateString)+rateString);
+	        }
+	    }
+	    return myResult.join("\n");
+	}
+};
+nas.Scale.prototype.valueOf = nas._ARRAYValue;
+nas.Scale.prototype.toJSON  = nas._JSONValue;
 /* 
 Position（座標）クラス
 Vectorオブジェクト
@@ -2783,19 +3332,15 @@ nas.KEY_TYPE = "Scale";// or "Position"
  * RESOLUTION 派生変数 ラムダ関数試験
  * @returns {number}
  */
-nas.Dpi = function () {
-    return this.RESOLUTION * 2.540;
-};
-//	nas.Dpi = function(){return this.RESOLUTION.as('dpi');} ;
+//nas.Dpi = function () { return this.RESOLUTION * 2.540;};
+	nas.Dpi = function(){return this.RESOLUTION.as('dpi');} ;
 /**
  *
  * @returns {number|*}
  * @constructor
  */
-nas.Dpc = function () {
-    return this.RESOLUTION;
-};
-//	nas.Dpc = function(){return this.RESOLUTION.as('dpc');} ;
+//nas.Dpc = function () {    return this.RESOLUTION;};
+	nas.Dpc = function(){return this.RESOLUTION.as('dpc');} ;
 
 /**
  * nas.ClipingFrame objectを作成してそちらへ移行
@@ -4668,7 +5213,7 @@ nas.propCount = function (myObject, myOption) {
  * @returns {*}
  */
 nas.decodeUnit = function (myValue, resultUnit) {
-    if ((myValue != undefined) && (myValue.match(/^([0-9]+.?[0-9]*)\s?(millimeters|mm|centimeters|cm|points|picas|pt|pixels|px|inches|in)?$/i))) {
+    if ((myValue != undefined) && (myValue.match(/^([\+\-\.0-9]+)\s?(millimeters|mm|centimeters|cm|points|picas|pt|pixels|px|inches|in)?$/i))) {
         var baseValue = parseFloat(myValue);
         var myUnit = RegExp.$2;
     } else {
@@ -4742,8 +5287,6 @@ nas.decodeUnit = function (myValue, resultUnit) {
     }
     return myResult;
 };
-
-
 /**
  * nas.labelNormalization(myString,mySep,)
  * 引数：ラベル文字列 ,新規セパレータ

@@ -861,13 +861,13 @@ function XpsTimelineTrack(myLabel, myType, myParent, myLength) {
 */
     this.getCellIdentifier=function(myStr){
         if(this.option!="timing"){return null;}
-        this.LabelRegex=new RegExp("^"+this.id.replace(/[\\\-\+\[\]\(\)\.\^\$]/g,"\\$&") + "[\s\-_]?(.*)$")
+        this.LabelRegex=new RegExp("^"+this.id.replace(/[\\\-\+\[\]\(\)\.\^\$]/g,"\\$&") + "[\s\-_]?(.*)$");
         if(myStr.match(LableRegex)){
             myName  = RegExp.$1;
             myLabel = this.id;
         }else{
-            mName = myStr;
-        }
+            myName = myStr;
+        };
     }
 /**
  * @desc タイムラインの中間処理メソッド
@@ -1911,7 +1911,7 @@ console.log(Layers);
 
 
 //シグネチャ
-    this.sigunatures  = [];//new nas.Xps.Signature();
+    this.signatures  = new nas.UserSignatureCollection();
 
 //  this.memo = "";//メモはトラックコレクションのプロパティへ移行プロパティ名はXps.xpsTracks.noteText
 /* 2022 12拡張
@@ -1925,8 +1925,8 @@ console.log(Layers);
 * タイムシート画像コレクション配列
 * 画像数0で初期化
 */
-    this.timesheetImages  = new XpsImageCollection();
-    this.noteImages       = new XpsImageCollection();
+    this.timesheetImages  = new nas.NoteImageCollection();
+    this.noteImages       = new nas.NoteImageCollection();
 //ドキュメント画像マスターセッション間フラグ if true image master data
 //    this.imgMaster    = false;
 //状態取得関数として実装　定数扱いにしない
@@ -1940,66 +1940,6 @@ console.log(Layers);
     //コレクションの初期化で同時にシートメモが空文字列で初期化される
 }
 //==================== Object Xps//
-/**
- *  @params {String|Object HTMLImageElement|Object XpsImage} img
- *   引数は String url|HTMLImageElement|XpsImageまたはXpsImageのプロパティを持つ互換オブジェクト
- *  タイムシート画像クラス
- * タイムシート画像は、データ入力参照&&代用ドキュメント|ドキュメント注釈|手書き記述として機能する
- * データはドキュメントの本体の画像コレクションに格納
- * 1ページあたり1点の画像を、インデックス付きで保持することが可能
- * 比較参照のために画像の 解像度|サイズ ,表示オフセット,スケールなどの補助情報を保持する
- */
-function XpsImage(img){
-	this.type       = "page"    ;//page|note|description
-	this.link       = "cell:0_0";//アタッチ座標 (座標タイプ):(値) cell|page|document|
-	this.img        = null      ;
-	this.content    = ""        ;//画像パス,URL URI
-	this.size       = ""        ;
-	this.resolution = "96ppi"   ;
-	this.offset     = {x:0 ,y:0};//UnitValue
-	this.scale      = {x:1 ,y:1};//UnitValue
-    if(img) this.parse(img);
-}
-XpsImage.prototype.parse = function(img){
-    if(typeof img == 'string'){
-        this.imgSrc = img;
-    }else if(img instanceof HTMLImageElement){
-        this.img = img;
-        this.url = this.img.src;
-    }else if((typeof img == 'object')||(img instanceof XpsImage)){
-        for (prp in img){if(this[prp]) this[prp] = img[prp];};
-    };
-    if(this.img instanceof HTMLImageElement){
-        this.imgSrc = this.img.src;
-    }else{
-        this.img = document.createElement('img');
-        this.img.src = this.imgSrc;
-    };
-    if(this.img instanceof HTMLImageElement){
-        //プロパティを整理する？保留
-        
-    };
-}
-XpsImage.prototype.toString = function toString(){
-    return JSON.stringify(this,0,2);
-}
-
-/*
-    タイムシート画像コレクション
-    コレクション全体の属性を持つ
-    属性指定のないオブジェクトの省略値
-    コレクションのopacity,mixBlendModeは保存される
-*/
-function XpsImageCollection(){
-    this.imageOpacity      = 1.0     ;
-    this.imageBlendMode    = 'normal';
-    this.dump = function(){
-        return JSON.stringify(Array.from(this),["type","link","content","size","resolution","offset","scale"],2);//文字列化
-    }
-}
-
-XpsImageCollection.prototype = Array.prototype;
-
 /**
  *    ドキュメントのマスターデータが画像か否かを返す
  *      トラックの入力が０でかつドキュメントイメージが存在する場合のみtrue
@@ -2190,12 +2130,12 @@ Xps.prototype.init = function (Tracks, Length, Framerate) {
      * @type {string}
      */
     this.xMap =new xMap();//参照用xMapを初期化
-//    if (this.mapfile);//Xps初期化手順に注意初期化時にxMapを与えるのが正道
-    this.opus = myOpus;
-    this.title = myTitle;
-    this.subtitle = mySubTitle;
-    this.scene = myScene;
-    this.cut = myCut;
+//    if (this.mapfile);//Xps初期化手順に注意・初期化時にxMapを与えるのが正道
+    this.opus     = "";//myOpus;
+    this.title    = "";//myTitle;
+    this.subtitle = "";//mySubTitle;
+    this.scene    = "";//myScene;
+    this.cut      = "";//myCut;
 
     this.trin  = [0, "trin"];
     this.trout = [0, "trout"];
@@ -2771,8 +2711,9 @@ Xps.prototype.parseXps = function (datastream) {
     var SrcData = [];
     if (datastream.match(/\r/)) {
         datastream = datastream.replace(/\r\n?/g, ("\n"))
-    }
+    };
     SrcData = datastream.split("\n");
+console.log(SrcData);
 //		var AEK=true;//AEKey read-formatTestFlag
     /**
      * データストリーム判別プロパティ
@@ -2804,9 +2745,7 @@ Xps.prototype.parseXps = function (datastream) {
      */
     for (l = 0; l < SrcData.length; l++) {
         if (SrcData[l].match(/^\s*$/)) {
-
         } else {
-
             if (MSIE) {
                 var choped = SrcData[l].charCodeAt(SrcData[l].length - 1);
                 if (choped <= 32)
@@ -2822,9 +2761,9 @@ Xps.prototype.parseXps = function (datastream) {
             } else if((SrcData.startLine >= 0)&&(SrcData[l].match(/^##FRAME_RATE=(.*)$/))){
                 SrcData.framerate= nas.newFramerate(RegExp.$1);
                 break;//データ開始行のあとにフレームレート指定があればブレーク
-            }
-        }
-    }
+            };
+        };
+    };
     /**
      * 第一パス終了
      * データ識別行がなければ処理中断
@@ -2832,7 +2771,6 @@ Xps.prototype.parseXps = function (datastream) {
      * "読み取るデータがないのです。";
      */
     if(SrcData.startLine < 0){
-//	this.errorMsg[10]=SrcData[l];//message10に当該トークンを格納
         xUI.errorCode = 2;
         return false;
 //	"002:どうもすみません。このデータは読めないみたいダ\n"
@@ -2914,21 +2852,23 @@ Xps.prototype.parseXps = function (datastream) {
     var props = new Array(varNames.length);
     for (i = 0; i < varNames.length; i++) {
         props[varNames[i]] = propNames[i];
-    }
-    /**
+    };
+    /*
      * データ走査第二パス
      * 時間プロパティ欠落時のために初期値設定
-     * @type {*[]}
      */
-     var readMessage   =false;
-     var readExtension =false;
+console.log(SrcData);
+     var readMultiline = false;
+     var readMessage   = false;
+     var readExtension = false;
 //		SrcData.time="6+0";
     SrcData.trin = [0, "trin"];
     SrcData.trout = [0, "trout"];
     SrcData.headMargin = 0;
     SrcData.tailMargin = 0;
-
+    var nAme = '';var vAlue = '';
     for (line = SrcData.startLine; line < SrcData.length; line++) {
+        if((typeof SrcData[line] == 'undefined')||(SrcData[line].match(/^\s*$/))) continue;
         /**
          * 前置部分を読み込みつつ、本体情報の確認
          */
@@ -2942,24 +2882,33 @@ Xps.prototype.parseXps = function (datastream) {
          * 申し送り取得フラグが立っていればコメントと他の有効記述以外をメッセージに加算
          * 終了サインまたは他の有効記述で取得終了
          */
-        if((readMessage)||(readExtension)){
-            if(SrcData[line].match(/^#\[|^\[.*|^\#\#([A-Z].*)=(.*)$/)){
-                readMessage=false;readExtension=false;
+        if((readMultiline)||(readMessage)||(readExtension)){
+            if((readMultiline)&&(SrcData[line].match(/^#\[|^\#\#[A-Z].*=.*|^\#\#\<[A-Z].*\>\/$/i ))){
+//##<nAme>/ readMultiline close
+                readMultiline = false;nAme = ''; vAlue = '';
+            }else if(SrcData[line].match(/^#\[|^\[[A-Z].*|^\#\#[A-Z].*=.*|^\#\#\<[A-Z].*\>\s*$/i )){
+                readMessage=false;readExtension=false;nAme = ''; vAlue = '';
             }else{
-                if(! (SrcData[line].match(/^\#.*|^\[.*/))){
+                if(! (SrcData[line].match(/^\#.*|^\s*$/i))){
                     if(readMessage) {
                         SrcData.currentStatus.message +="\n"+SrcData[line];
-                    }else{
+                    }else if(readExtension){
                         SrcData.extension_data +="\n"+SrcData[line];
-                    }
-                }
-            }
+                    }else{
+                        SrcData[nAme] += "\n"+SrcData[line];
+                    };
+                };
+            };
+            ;continue;
+        };
+        if (SrcData[line].match(/^\#\#\<([A-Z].*)\>$/i)){
+//##<nAme> readMultiline 
+            nAme = RegExp.$1;
+            SrcData[nAme] = "";
+            readMultiline = true;
             continue;
-        }
-        /**
-         *  シートプロパティにマッチ
-         */
-        if (SrcData[line].match(/^\#\#([A-Z].*)=(.*)$/i)) {
+        }else if (SrcData[line].match(/^\#\#([A-Z].*)=(.*)$/i)) {
+//シートプロパティにマッチ
             nAme = RegExp.$1;
             vAlue = RegExp.$2;
             /**
@@ -2972,10 +2921,7 @@ Xps.prototype.parseXps = function (datastream) {
                 break;
                 case    "TRIN":
                 case    "TROUT":
-/*
- * トランシットイン
- * トランシットアウト
- */
+// トランシットイン | トランシットアウト
                     var tm = nas.FCT2Frm(vAlue.split(",")[0],SrcData.framerate.rate);
                     if (isNaN(tm)) {
                         tm = 0
@@ -2985,56 +2931,38 @@ Xps.prototype.parseXps = function (datastream) {
                         nm = props[nAme]
                     }
                     SrcData[props[nAme]] = [tm, nm];
-                    break;
+                break;
+                case    "TIME":
                 case    "HEAD_MARGIN":
                 case    "TAIL_MARGIN":
-/*
- * ヘッドマージン
- * テールマージン
- */
+// カット尺 | ヘッドマージン | テールマージン
                     var frm = nas.FCT2Frm(vAlue,SrcData.framerate.rate);
                     if (isNaN(tm)) frm = 0;
                     SrcData[props[nAme]] = frm;
-                    break;                case    "TIME":
-                    /**
-                     * カット尺
-                     * @type {*}
-                     */
-                    var tm = nas.FCT2Frm(vAlue,SrcData.framerate.rate);
-                    if (isNaN(tm)) {
-                        tm = 0
-                    }
-                    SrcData[props[nAme]] = tm;
-                    break;
-                  /**
-                   *  user_info
-                   *   ユーザ関連情報はオブジェクトに置き換え
-                   */
-                  case  "CREATE_USER":
-                  case  "UPDATE_USER":
+                break;
+//user_info  ユーザ関連情報はオブジェクトに置き換え
+                case  "CREATE_USER":
+                case  "UPDATE_USER":
                    SrcData[props[nAme]] = new nas.UserInfo(vAlue);
-                    break;
-                    /**
-                     * 管理情報シングルステージドキュメントの際のみ処理
-                     *
-                     */
+                break;
+// 管理情報シングルステージドキュメントの際のみ処理
                 case   "Line":;
                    SrcData[props[nAme]] = (vAlue)?
                        new XpsLine(vAlue):new XpsLine("0:"+nas.pmdb.pmTemplates.members[0].line);
-                  break;
+                break;
                 case   "Stage":;
                    SrcData[props[nAme]] = (vAlue)?
                        new XpsStage(vAlue):new XpsStage("0:"+nas.pmdb.pmTemplates.members[0].stages.members[0]);
-                  break;
+                break;
                 case   "Job":;
                    SrcData[props[nAme]] = (vAlue)?
                        new XpsStage(vAlue):new XpsStage("0:"+nas.Pm.jobNames[0]);
                   break;
-                  /**
-                   *   ステータス関連
-                   *    指名情報及び申し送りはステータスのサブプロパティとして扱う
-                   *    ステータスがない場合は無視する
-                   */
+// ステータス関連
+/*
+ *    指名情報及び申し送りはステータスのサブプロパティとして扱う
+ *    ステータスがない場合は無視する
+ */
                 case   "CurrentStatus":;
                    SrcData.currentStatus = new JobStatus(vAlue);
                   break;
@@ -3050,43 +2978,29 @@ Xps.prototype.parseXps = function (datastream) {
                 case    "EXTENSION_DATA":;
                     console.log(vAlue);
                     SrcData.extension_data = vAlue;
-                                //申し送りメッセージ取得フラグを立てて次のループに入る
+                                //拡張データ取得フラグを立てて次のループに入る
                     readExtension=true;continue;
                 break;
                 default:
-                    /**
-                     * 時間関連以外
-                     * @type {string|*}
-                     */
+// 時間関連以外
                     SrcData[props[nAme]] = vAlue;
-                /**
-                 * 判定した値をプロパティで控える
-                 */
-            }
-        }
-        /**
-         * タイムラインプロパティまたは終了識別にマッチ
-         */
+// 判定した値をプロパティで控える
+            };
+        };
+// タイムラインプロパティまたは終了識別にマッチ
         if (SrcData[line].match(/^\[(([a-zA-Z]+)\t?.*)\]$/)) {
-            /**
-             * シート終わっていたらメモを取り込んで終了
-             */
+// シート終わっていたらメモを取り込んで終了
             if (SrcData[line].match(/\[END\]/)) {
-                /**
-                 * シートボディ終了ライン控え
-                 */
+// シートボディ終了ライン控え
                 SrcData.layerBodyEnd = line;
                 SrcData["memo"] = '';
                 for (li = line + 1; li < SrcData.length; li++) {
                     SrcData["memo"] += SrcData[li];
                     if ((li + 1) < SrcData.length) {
                         SrcData["memo"] += "\n"
-                    }
-                    /**
-                     *  最終行以外は改行を追加
-                     */
-                }
-
+                    };
+// 最終行以外は改行を追加
+                };
                 break;
             } else {
                 /**
@@ -3095,7 +3009,7 @@ Xps.prototype.parseXps = function (datastream) {
                  */
                 if (SrcData.layerHeader == 0) {
                     SrcData.layerHeader = line
-                }
+                };
                 /**
                  * ロットを記録(最大の行を採る)
                  * @type {number}
@@ -3109,51 +3023,60 @@ Xps.prototype.parseXps = function (datastream) {
                  * エントリ数を記録
                  */
                 SrcData.layerProps++;
-            }
+            };
         } else {
             /**
              * シートデータ本体の行数を加算
              */
             if (!SrcData[line].match(/^\#.*$/)) {
                 SrcData.frameCount++;	//読み取りフレーム数
-            }
-        }
-    }
-//console.log(SrcData);
+            };
+        };
+    };
+console.log(SrcData);
 //console.log(JSON.stringify(SrcData));
-    /*++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
-    /**
-     * 第二パス終了・読み取った情報でXPSオブジェクトを再初期化(共通)
-     * @type {number}
-     */
-    SrcData.duration =
-        Math.ceil(SrcData.time + (SrcData.trin[0] + SrcData.trout[0]) / 2);
-    /**
-     * トランシット時間の処理は要再考。現状は切り上げ
-     * @type {number}
-     */
+/*++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
+// 第二パス終了・読み取った情報でXPSオブジェクトを再初期化(共通)
+// 継続時間確定に先行してマージンを算出 トランジション時間はヘッド・テールマージンにくりこみ
+    if (SrcData.headMargin < (SrcData.trin[0] / 2))
+        SrcData.headMargin = Math.ceil(SrcData.trin[0] / 2);
+    if (SrcData.tailMargin < (SrcData.trout[0] / 2))
+        SrcData.tailMargin = Math.ceil(SrcData.trout[0] / 2);
+//表記上の継続時間を取得
+    SrcData.duration = Math.ceil( SrcData.time + SrcData.headMargin + SrcData.tailMargin);
+//実データと記載を比較して長い方を実際の継続時間にする
     var SheetDuration = (SrcData.duration > (SrcData.frameCount - 1)) ?
         SrcData.duration : (SrcData.frameCount - 1);//大きいほうで
-
+//確定した継続時間からマージンを再計算
+    var sheetHeadMargin = SrcData.headMargin;
+    var sheetTailMargin = SheetDuration - sheetHeadMargin;
 //	///////////////////////
 //if(dbg) dbgPut("count/duration:"+SrcData.layerCount+":"+SheetDuration);
 
     this.init(SrcData.trackCount-2, SheetDuration,SrcData.framerate);//再初期化
 
-    /**
-     * 第二パスで読み取ったプロパティをXPSに転記
-     * time/currentStatus/extension_data 以外はそのまま転記
-     */
+// 第二パスで読み取ったプロパティをXPSに転記
+// time/currentStatus/extension_data 以外はそのまま転記
+
     for (id = 0; id < propNames.length; id++) {
         prpName = propNames[id];
         if (SrcData[prpName] && prpName != "time") {
             this[prpName] = SrcData[prpName];
-        }
-    }
+        };
+    };
+//拡張データ処理
+    if( SrcData.sigunatures )     this.sigunatures.parse = JSON.parse(SrcData.sigunatures);
+    if( SrcData.sheetLooks ){console.log(SrcData.sheetLooks); this.sheetLooks = JSON.parse(SrcData.sheetLooks);
+    };
+    if( SrcData.timesheetImages ){
+//        console.log(SrcData.timesheetImages);
+//        console.log(JSON.parse(SrcData.timesheetImages));
+        this.timesheetImages.parse(SrcData.timesheetImages);
+    };
+    if( SrcData.noteImages )      this.noteImages.parse(SrcData.noteImages);
 
-    /**
-     * 読み取りデータを調べて得たキーメソッドとブランク位置を転記
-     */
+// 読み取りデータを調べて得たキーメソッドとブランク位置を転記
+
     for (var lyr = 0; lyr < SrcData.layers.length; lyr++) {
         this.xpsTracks[lyr].blmtd = SrcData.layers[lyr].blmtd;
         this.xpsTracks[lyr].blpos = SrcData.layers[lyr].blpos;
@@ -3161,189 +3084,61 @@ Xps.prototype.parseXps = function (datastream) {
     }
 
     if (SrcData["memo"]) this.xpsTracks.noteText = SrcData["memo"];//memoがあれば転記
+    //後ほどメモパーサを作って入れ替え？
 
-
-    /**
-     * 各エントリのトラックプロパティとシート本体情報を取得(第三パス)
-     * @type {number}
-     */
+// 各エントリのトラックプロパティとシート本体情報を取得(第三パス)
     var frame_id = 0;//読み取りフレーム初期化
 
     for (line = SrcData.layerHeader; line < SrcData.layerBodyEnd; line++) {
-        /**
-         * 角括弧で開始するデータはタイムライントラックプロパティ
-         */
+// 角括弧で開始するデータはタイムライントラックプロパティ
         if (SrcData[line].match(/^\[(([a-zA-Z]+)\t.*)\]$/)) {
             var layerProps = RegExp.$1.split("\t");
             var layerPropName = RegExp.$2;
-            /**
-             * "CELL"のみシート表記とプロパティ名が一致していないので置換 一致が少ない場合はテーブルが必要になる
-             */
+// "CELL"のみシート表記とプロパティ名が一致していないので置換 一致が少ない場合はテーブルが必要になる
             if (layerPropName == "CELL") {
                 layerPropName = "id";//cahanged "name" to "id" 20160818
-            }
-            /**
-             *  レイヤプロパティが空白の場合があるので適切なデータで置き換える?
-             *  読み込みで例外処理を作るべきか？
-             */
+            };
+// レイヤプロパティが空白の場合があるので適切なデータで置き換える?  読み込みで例外処理を作るべきか？
             for (c = 0; c < SrcData.trackCount; c++) {
             	if(layerProps[c + 1]==""){
             		if (layerPropName=="option"){
             			layerProps[c + 1]=(c==0)?"dialog":"comment";
-            		}
-            	}
-            	
-//                this["layers"][c][layerPropName] = layerProps[c + 1]
+            		};
+            	};
                 this.xpsTracks[c][layerPropName] = layerProps[c + 1]
-            }
+            };
         } else {
-            /**
-             * ほかコメント以外はすべてシートデータ
-             */
+// ほかコメント以外はすべてシートデータ
             if (!SrcData[line].match(/^\#.*$/)) {
                 myLineAry = (SrcData[line].match(/\t/)) ? SrcData[line].split("\t") : SrcData[line].replace(/[\;\:\,]/g, "\t").split("\t");
                 for (col = 1; col <= (SrcData.trackCount); col++) {
-                    /**
-                     * シート本体データの取得
-                     */
+// シート本体データの取得
                     this.xpsTracks[col - 1][frame_id] =
                         (myLineAry[col] != undefined) ?
                             myLineAry[col].replace(/(^\s*|\s*$)/, "") : "";
-                }
+                };
                 frame_id++;
-            }
-        }
-    }
-
-
-    /**
-     * 読み取ったデータを検査する(データ検査は別のメソッドにしろ!??)
-     * マップファイルは、現在サポート無し
-     * サポート開始時期未定
-     * この情報は、他の情報以前に判定して、マップオブジェクトの生成が必要。
-     * マップ未設定状態では、代用マップを作成して使用。
-     * 代用マップは、デフォルトで存在。
-     * 現在は、代用MAPオブジェクトを先行して作成してあるが、
-     * 本来のマップが確定するのはこのタイミングなので、注意!
-     */
-    if (false) {
-        /**
-         * MAPPING_FILE=(no file)//値は未設定時の予約値?nullで初期化すべきか?
-         */
-        if (!this.mapfile) this.mapfile = '(no file)';
-
-        /**
-         * マップファイルが未設定ならば、代用マップを使用
-         * この判定はあまりに雑なので後でなんとかすれ
-         */
-        if (false) {
-            if (this.mapfile == '(no file)') {
-                MapObj = MAP;	//とりあえず既存のダミーマップを代入しておく。
-            }
-        }
-        /**
-         * マップファイルを読み込んでマップオブジェクトを初期化
-         * そのうちね、今はまだない
-         */
-
-        /**
-         * 日付関連
-         * 制作日付と制作者が無い場合は、空白で初期化?無視したほうが良いかも
-         */
-//CREATE_USER=''
-//CREATE_TIME=''
-        if (!this.create_time) this.create_time = '';
-        if (!this.create_user) this.create_user = '';
-        /**
-         * 最終更新日付と最終更新者が無い場合は、空白で初期化?
-         * (これは、どのみち保存時に現在のデータで上書き)
-         */
-//UPDATE_USER=''
-//UPDATE_TIME=''
-        if (!this.update_time) this.update_time = '';
-        if (!this.update_user) this.update_user = '';
-//FRAME_RATE=24//
-        /**
-         * フレームレート読み取れてなければ、現在の値で初期化(組み込み注意)
-         */
-        if (!this.framerate) {
-            this.framerate = nas.FRATE;
-        } else {
-            nas.FRATE = this.framerate;
-        }
+            };
+        };
+    };
 /*
- * トランジション展開
- * TRIN=(時間文字列),(トランシット種別)
+ * 読み取ったデータを検査する(データ検査は別のメソッドにしろ!??)
+ * マップファイルは、現在サポート無し
+ * サポート開始時期未定
+ * この情報は、他の情報以前に判定して、マップオブジェクトの生成が必要。
+ * マップ未設定状態では、代用マップを作成して使用。
+ * 代用マップは、デフォルトで存在。
+ * 現在は、代用MAPオブジェクトを先行して作成してあるが、
+ * 本来のマップが確定するのはこのタイミングなので、注意!
  */
-        if (!this.trin) {
-            this.trin = [0, "trin"]
-        } else {
-            time = nas.FCT2Frm(this.trin[0]);
-            if (isNaN(time)) {
-                time = 0
-            }
-            name = (this.trin[1]) ? this.trin[1] : "trin";
-            this.trin = [time, name];
-        }
-/*
- * TROUT=(時間文字列),(トランシット種別)
- */
-        if (!this.trout) {
-            this.trout = [0, "trout"];
-        } else {
-            time = nas.FCT2Frm(this.trout[0]);
-            if (isNaN(time)) {
-                time = 0
-            }
-            name = (this.trout[1]) ? this.trout[1] : "trout";
-            this.trout = [time, name];
-        }
-/*
- *  トランジット時間と前後マージンを比較してマージンを確定
- */
-        if(this.headMargin < this.trin[0])  this.headMargin = this.trin[0];
-        if(this.tailMargin < this.trout[0]) this.tailMargin = this.trout[0];
-/*
- * 記述上のTIME情報を一応取り込む
- * 実際のデータの継続時間とこの情報の「長いほう」を採る
- * TIME=(時間文字列)
- *            this.time=nas.FCT2Frm(this.time);
- *            if(isNaN(this.time)){this.time=0*} 
- * 作品データ
- * 情報が無い場合は、空白で初期化。マップをみるようになったら。
- * マップの情報を参照
- * 最終作業情報(クッキー)を参照
- * ユーザ設定によるデフォルトを参照 などから選択
- */
-// TITLE=(未設定とかのほうが良いかも)
-        if (!this.title) this.title = '';
-// SUB_TITLE=(未設定とかのほうが良いかも)
-        if (!this.subtitle) this.subtitle = '';
-        /**
-         * OPUS=()
-         */
-        if (!this.opus) this.opus = '';
-        /**
-         * SCENE=()
-         */
-        if (!this.scene) this.scene = '';
-        /**
-         * CUT=()
-         */
-        if (!this.cut) this.cut = '';
-
-        /**
-         * シーン?・カット番号は最終状態でもデフォルトは空白に。紛らわしいから。
-         */
-
-    }
     if (xUI.errorCode) {
         alert("error :" + localize(xUI.errorMsg[xUI.errorCode]));
-//	xUI.errorCode=0;
-    }
+    };
 //console.log(this.toString());
 //   仮設　ｘMap初期化　2018.12
 if (! (this.xMap.currentJob)) this.xMap.syncProperties(this); 
+console.log(this);
+console.log(this.toString());
     return this;
 };
 
@@ -3398,6 +3193,30 @@ if((this.currentStatus.message)&&(this.currentStatus.message.length))
 //result+='\n##FOCUS='	+11//
 //result+='\n##SPIN='	+S3//
 //result+='\n##BLANK_SWITCH='	+File//
+    result += '\n#';
+//拡張署名
+    if(this.signatures.length){
+        result += '\n##<signatures>\n';
+        result += this.siginitures.dump('text');
+        result += '\n##<signatures>/';
+    };
+//書類レイアウト
+    if(Object.keys(this.sheetLooks).length > 0){
+        result += '\n##<sheetLooks>\n';
+        result += JSON.stringify(this.sheetLooks,null,2);
+        result += '\n##<sheetLooks>/';
+    };
+//画像データ
+    if(Object.keys(this.timesheetImages).length > 0){
+        result += '\n##<timesheetImages>\n';
+        result += this.timesheetImages.dump('');
+        result += '\n##<timesheetImages>/';
+    };
+    if(Object.keys(this.noteImages).length > 0){
+        result += '\n##<noteImages>\n';
+        result += this.noteImages.dump('');
+        result += '\n##<noteImages>/';
+    };
     result += '\n#';
     result += bold_sep;//セパレータ####################################
     /**
