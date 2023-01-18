@@ -3065,24 +3065,17 @@ console.log(SrcData);
         };
     };
 //拡張データ処理
-    if( SrcData.sigunatures )     this.sigunatures.parse = JSON.parse(SrcData.sigunatures);
-    if( SrcData.sheetLooks ){console.log(SrcData.sheetLooks); this.sheetLooks = JSON.parse(SrcData.sheetLooks);
-    };
-    if( SrcData.timesheetImages ){
-//        console.log(SrcData.timesheetImages);
-//        console.log(JSON.parse(SrcData.timesheetImages));
-        this.timesheetImages.parse(SrcData.timesheetImages);
-    };
+    if( SrcData.signatures ) this.signatures.parse(SrcData.signatures);
+    if( SrcData.sheetLooks ) this.sheetLooks = JSON.parse(SrcData.sheetLooks);
+    if( SrcData.timesheetImages ) this.timesheetImages.parse(SrcData.timesheetImages);
     if( SrcData.noteImages )      this.noteImages.parse(SrcData.noteImages);
 
 // 読み取りデータを調べて得たキーメソッドとブランク位置を転記
-
     for (var lyr = 0; lyr < SrcData.layers.length; lyr++) {
         this.xpsTracks[lyr].blmtd = SrcData.layers[lyr].blmtd;
         this.xpsTracks[lyr].blpos = SrcData.layers[lyr].blpos;
         this.xpsTracks[lyr].lot = SrcData.layers[lyr].lot;
     }
-
     if (SrcData["memo"]) this.xpsTracks.noteText = SrcData["memo"];//memoがあれば転記
     //後ほどメモパーサを作って入れ替え？
 
@@ -3195,9 +3188,9 @@ if((this.currentStatus.message)&&(this.currentStatus.message.length))
 //result+='\n##BLANK_SWITCH='	+File//
     result += '\n#';
 //拡張署名
-    if(this.signatures.length){
+    if((this.signatures)&&(this.signatures.members.length)){
         result += '\n##<signatures>\n';
-        result += this.siginitures.dump('text');
+        result += this.signatures.dump('text');
         result += '\n##<signatures>/';
     };
 //書類レイアウト

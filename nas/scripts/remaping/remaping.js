@@ -4023,10 +4023,13 @@ BODY_ +='\n';
 //BODY_ +='<br></div>';
 //};// */
 //画像タイムシート用エレメントを加える
-if((xUI.XPS.timesheetImages.length)&&(xUI.XPS.timesheetImages[pageNumber-1])){
-    BODY_ +='\t<img id="sheetImage-'+pageNumber+'" class=overlayDocmentImage src = "'+xUI.XPS.timesheetImages[pageNumber-1].content +'" >';//open pageImage// 
-    BODY_ +='\t</img>\n';//close pageImage//
+console.log((xUI.XPS.timesheetImages.length),Pages);
+if((xUI.XPS.timesheetImages.length)&&(xUI.XPS.timesheetImages[Pages])){
+    BODY_ +='\t<div id="sheetImage-'+Pages+'" class=overlayDocmentImage '+'" >';//open pageImage// 
+    BODY_ += '<img id="pageImage-'+Pages+'" width = 1122 src = "'+xUI.XPS.timesheetImages[Pages-1].content +'" >';
+    BODY_ +='\t</div>\n';//close pageImage//
 };
+console.log('================ img ====================//')
 BODY_ +='</div>';//close sheetArea//
 BODY_ +='';
     this.Select=restoreValue;

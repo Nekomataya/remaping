@@ -749,11 +749,11 @@ nas.UserSignature.prototype.setValue = function(sigDescription,signatureString,a
 			};
 		};
 		return this;
-    }else if(typeof sigDescription == 'string'){
+	}else if(typeof sigDescription == 'string'){
 //テキスト記述
-        if(sigDescription.match(/^\s*\{.*\}\s*$/)){
+		if(sigDescription.match(/^\s*\{.*\}\s*$/)){
 //JSON 日付含めてすべて適用する
-            var props = JSON.parse(sigDescription);
+			var props = JSON.parse(sigDescription);
 			for ( var prp in props){
 				if((this[prp])&&(typeof this[prp].setValue == 'function')){
 					this[prp].setValue(props[prp]);
@@ -764,26 +764,26 @@ nas.UserSignature.prototype.setValue = function(sigDescription,signatureString,a
 				};
 			};
 			return this;
-        }else if(sigDescription.match(/^(.+)\:.*\s*(\[.+\])$/)){
+		}else if(sigDescription.match(/^(.+)\:.*\s*(\[.+\])$/)){
 //第一引数に全記述がある場合は分離して再パース
-            return this.setValue(RegExp.$1,RegExp.$2,additionalProperty);
-        }else if((typeof signatureString == 'string')&&(signatureString.match(/^\s*\[(.+)\]\s*$/))){
+			return this.setValue(RegExp.$1,RegExp.$2,additionalProperty);
+		}else if((typeof signatureString == 'string')&&(signatureString.match(/^\s*\[(.+)\]\s*$/))){
 //分離記述
-            var sigDescriptions = RegExp.$1.split('\t');
-            this.stage = sigDescription;
-            this.text  = (sigDescriptions[0])? sigDescriptions[0]:"";
-            this.date  = new Date(sigDescriptions[1])               ;//記録データをパースする場合のみ上書き
-            this.user  = new nas.UserInfo(sigDescriptions[2])       ;
-            if((sigDescriptions[3])&&(sigDescriptions[3].match(/^\{.*\}$/))){
-                var props = JSON.parse(sigDescriptions[3]);
-                if(props.stamp) this.stamp = props.stamp;
-            };
-        };
-    };
-    if(typeof additionalProperty == 'object'){
-        for(var prp in additionalProperty) this[prp] = additionalProperty[prp];
-    };
-    return this;
+			var sigDescriptions = RegExp.$1.split('\t');
+			this.stage = sigDescription;
+			this.text  = (sigDescriptions[0])? sigDescriptions[0]:"";
+			this.date  = new Date(sigDescriptions[1])               ;//記録データをパースする場合のみ上書き
+			this.user  = new nas.UserInfo(sigDescriptions[2])       ;
+			if((sigDescriptions[3])&&(sigDescriptions[3].match(/^\{.*\}$/))){
+				var props = JSON.parse(sigDescriptions[3]);
+				if(props.stamp) this.stamp = props.stamp;
+			};
+		};
+	};
+	if(typeof additionalProperty == 'object'){
+		for(var prp in additionalProperty) this[prp] = additionalProperty[prp];
+	};
+	return this;
 };
 nas.UserSignature.prototype.parse = nas.UserSignature.prototype.setValue;
 /**
@@ -846,7 +846,7 @@ nas.UserSignature.prototype.toString = function(opt){
  *    直接操作する場合は必ずオブジェクトで与えること
  *    不正メンバーはコレクション対象外
  *    空コレクションをつくる際は引数で空配列を渡すこと
- *  @params {Array of nas.UserSigunatur|String} signature
+ *  @params {Array of nas.UserSignature|String} signature
  *  @params {Object nas.Xpst|nas.xMap|nas.StoryBoard} parent
  */
 nas.UserSignatureCollection = function (signature,parent){
@@ -991,6 +991,38 @@ nas.NoteImage = function NoteImage(img){
     this.offset     = new nas.Point("0","0")      ;//points
     this.scale      = new nas.Scale("100%","100%");//pixels
     if(img) this.parse(img);
+}
+/**			クラスメソッド
+ *  @params {Object HTMLImageElement} img
+ *		判定する画像エレメント
+ *	@params {String}	siz
+ *		指定サイズキーワード A3|A4|A5|B3|B4|B5|tabloid|letter|11in|16in 省略可
+ *	@returns {Number}
+ *		数値 ppi
+ *	画像データの解像度（ピクセル密度）を推定するメソッド
+ *	
+ */
+nas.NoteImage.guessDocumentResolution = function(im,siz){
+	if(!(im instanceof HTMLImageElement)) return false;
+	if(!siz) siz = "A3";
+	var resolutionset = [72,75,96,144,150,192,200,288,300,350,384,400];
+	var wide = {
+		"A3":"297mm","A4":"210mm","A5":"148.5mm",
+		"B3":"364mm","B4":"257mm","B5":"182mm",
+		"tabloid":"272mm","letter":"215.9mm",
+		"11in":"11in","16in":"16in"
+	};
+	var docWidth = new nas.UnitValue(wide[siz]);
+	var res = im.naturalWidth/docWidth.as('in');
+	for(var e = 0; e < resolutionset.length ; e++){
+		if(
+			(resolutionset[e] > res*0.98) && (resolutionset[e] < res*1.02)
+		) return resolutionset[e];
+	};
+	return parseInt(res);
+}
+nas.NoteImage.prototype.guessDocumentResolution = function(siz){
+	this.resolution = new nas.UnitResolution(nas.NoteImage.guessDocumentResolution(this.img,siz)+" ppi");
 }
 /** 画像オブジェクトをパース
     @params {Object nas.Image|Object nas.NoteImage |String} img
