@@ -1,4 +1,4 @@
-/**
+﻿/**
  * @fileoverview
  * configPMDB.js
  * UATシステム利用する各管理情報の基礎データテーブル
@@ -21,7 +21,7 @@
  * [users]			データにリーチする事のできるユーザ一覧
  * [staff]			スタッフ一覧
  * [workTitles]		管理下のタイトル一覧
- * [opuses] 		管理下のOpus一覧
+ * [products] 		管理下のOpus一覧
  * [assets]			管理対象アセットテーブル
  * [medeias]			制作に供するメディアテーブル
  * [stages]			制作工程テーブル

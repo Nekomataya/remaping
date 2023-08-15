@@ -38,7 +38,7 @@
  * $Id: config.js,v2.0 2022/09/29  $
  */
 	var dbg=false	;	//デバッグモード
-
+	var config = {}
 /** @desc
  *	開始メッセージ
  *		お好きなメッセージに入れ替えできます。
@@ -153,46 +153,75 @@
 // 後からルックを変更する手続は　xUI.setSheetLook(SheetLooks);xUI.footstampPaint();
 // 後方のペイント更新が重要
 SheetLooks = {
-	WorkTitleLogo        :"",
-	SheetTextColor    :"#111111",
-	SheetBaseColor    :"#ffffef",
-	AppBaseColor      :"#ffffef",
-	SelectedColor     :"#9999ff",
-	RapidModeColor    :"#ffff44",
-	FloatModeColor    :"#88eeee",
-	SectionModeColor  :"#ff44ff",
-	SelectionColor    :"#f8f8dd",
-	FootStampColor    :"#ffffff",
-	EditingColor      :"#eebbbb",
-	SelectingColor    :"#ccccaa",
-	Restriction          :false,
-	ViewMode             :"page",
-	PageLength           :"6+0",
-	FrameRate            :"24fps(24)",
-	SheetColumn          :2,
-	CellWidthUnit       :"px",
-	SheetHeadMargin     :0,
-	SheetLeftMargin     :0,
-	TimeGuideWidth	    :48,
-	ActionWidth         :18,
-	DialogWidth	        :42,
-	SoundWidth          :42,
-	SheetCellWidth	    :24,
-	SheetCellNarrow	    :4,
-	StillCellWidth	    :12,
-	GeometryCellWidth   :52,
-	SfxCellWidth	    :46,
-	CameraCellWidth     :34,
-	CommentWidth        :64,
-	ColumnSeparatorWidth:8,
-	trackSpec :[
-		["dialog"     ,   1],
-		["replacement",   8],
-		["camera"     ,   3],
-		["comment"    ,   1]
-	]
+  "FormatName": "defalut",
+  "WorkTitleLogo": "",
+  "SheetTextColor": "#111111",
+  "SheetBaseColor": "#ffffef",
+  "AppBaseColor": "#ffffef",
+  "SelectedColor": "#9999ff",
+  "RapidModeColor": "#ffff44",
+  "FloatModeColor": "#88eeee",
+  "SectionModeColor": "#ff44ff",
+  "SelectionColor": "#f8f8dd",
+  "FootStampColor": "#ffffff",
+  "EditingColor": "#eebbbb",
+  "SelectingColor": "#ccccaa",
+  "Restriction": false,
+  "ViewMode": "page",
+  "PageLength": "6+0",
+  "FrameRate": "24fps(24)",
+  "SheetColumn": 2,
+  "CellWidthUnit": "px",
+  "SheetHeadMargin": 346,
+  "SheetLeftMargin": 55,
+  "SheetCellHeight": 15.62,
+  "SheetColHeight": 1211.8,
+  "TimeGuideWidth": 17,
+  "ActionWidth": 16,
+  "DialogWidth": 36,
+  "SoundWidth": 36,
+  "SheetCellWidth": 25.13,
+  "SheetCellNarrow": 4,
+  "StillCellWidth": 12,
+  "GeometryCellWidth": 52,
+  "SfxCellWidth": 46,
+  "CameraCellWidth": 30,
+  "CommentWidth": 35,
+  "TrackNoteWidth": 30,
+  "ColumnSeparatorWidth": 20.61,
+  "trackSpec": [
+    [
+      "reference",
+      8,
+      "fix"
+    ],
+    [
+      "sound",
+      1,
+      "fix"
+    ],
+    [
+      "timecode",
+      1,
+      "fix"
+    ],
+    [
+      "replacement",
+      8,
+      ""
+    ],
+    [
+      "camera",
+      3,
+      ""
+    ],
+    [
+      "comment",
+      1,
+      ""
+    ]
+  ]
 };
-
 //メモ編集時の単語一覧
 
 //使用したい単語を1列分ずつ配列で登録してください。

@@ -81,7 +81,7 @@ Repository.pmdb.jobNames        同ジョブテンプレート　(同上)
 Repository.pmdb.assets          アセット定義テーブル
 Repository.pmdb.medias          同メディアテンプレート
 Repository.pmdb.workTitles      作品タイトルコレクション
-Repository.pmdb.opuses          プロダクトコレクション
+Repository.pmdb.products          プロダクトコレクション
 
 Repository.users    アクセスの可能性がある全ユーザのリスト
 Repository.productsData.staff    アクセス可否情報　リポジトリに対するユーザとその所属・役職のDB
@@ -4691,6 +4691,7 @@ serviceAgent.closeEntry=function(callback,callback2){
                 if(callback2 instanceof Function) callback2();
         });
     }else{
+        xUI.XPS.timesheet
         xUI.resetSheet(
             new Xps(xUI.sheetLooks.trackSpec),
             new Xps(xUI.sheetLooks.trackSpec)

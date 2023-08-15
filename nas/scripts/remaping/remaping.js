@@ -13,6 +13,50 @@
 $.fn.isVisible = function() {
     return $.expr.filters.visible(this[0]);
 };
+//定数仮置
+                var trackHeaderClass = {
+                    "action"     :"referenceSpan",
+                    "tracknote"  :"tracknoteSpan",
+                    "dialog"     :"dialogSpan",
+                    "sound"      :"dialogSpan",
+                    "still"      :"stillSpan",
+                    "effect"     :"sfxSpan",
+                    "composite"  :"sfxSpan",
+                    "sfx"        :"sfxSpan",
+                    "stage"      :"geometrySpan",
+                    "stagework"  :"geometrySpan",
+                    "geometry"   :"geometrySpan",
+                    "camerawork" :"cameraSpan",
+                    "camera"     :"cameraSpan",
+                    "cell"       :"timingSpan",
+                    "replacement":"timingSpan",
+                    "timing"     :"timingSpan",
+                    "reference"  :"referenceSpan",
+                    "action"     :"referenceSpan",
+                    "comment"    :"framenoteSpan"
+                };
+//track option labes class
+    			var trackLabelClass = {
+                    "timecode"   :"tclabel",
+                    "tracknote"  :"tracknotelable",
+                    "dialog"     :"dialoglabel",
+                    "sound"      :"soundlabel",
+                    "still"      :"stilllabel",
+                    "effect"     :"sfxlabel",
+                    "composite"  :"sfxSpan",
+                    "sfx"        :"sfxSpan",
+                    "stage"      :"geometryArea",
+                    "stagework"  :"geometryArea",
+                    "geometry"   :"geometryArea",
+                    "camerawork" :"camArea",
+                    "camera"     :"camArea",
+                    "cell"       :"editArea",
+                    "replacement":"editArea",
+                    "timing"     :"editArea",
+                    "reference"  :"rnArea",
+                    "action"     :"rnArea",
+                    "comment"    :"framenoteSpan"
+    			};
 //----------------------------------- UIコントロールオブジェクトを作成、初期化
 function new_xUI(){
 /**  @class
@@ -117,8 +161,8 @@ function new_xUI(){
     xUI.importBox.importTarget  = false;
     xUI.importBox.maxSize  = 1000000;
     xUI.importBox.maxCount = 10;
-    xUI.importBox.allowExtensions = new RegExp("\.(txt|csv|xps|xpst|ard|ardj|tsh|xdts|tdts|sts)$",'i');
-    xUI.importBox.allowImgNames   = new RegExp("\.(jpg|jpeg|jfif|png|gif|tga|psd)$",'i');
+    xUI.importBox.allowExtensions    = new RegExp("\.(txt|csv|xps|xpst|ard|ardj|tsh|xdts|tdts|sts)$",'i');
+    xUI.importBox.allowImgExtensions = nas.Image.allowImgExtensions;
 
 /**
  *  @function
@@ -141,6 +185,56 @@ xUI.importBox.reset = function(){
 }
     xUI.importBox.reset();
 /**
+    Xpst画像をデータから設定
+    ファイルの画像を取得して既存のドキュメント画像を更新する
+    画像形式確認は事前に済
+    引数アイテムは
+    	１．編集可能ドキュメントのみ操作可能
+		    WEB系フォーマット限定（暫定
+		２．フォーカスに対応する画像がある場合のみ登録（複数画像操作保留）
+		３．従来モード	場合はリファレンス画像の登録
+	ケース分け操作・既存オブジェクトの画像を更新する｜新規オブジェクトを生成
+	Referenceとして読むかマスターとするかは、状況次第では問題にならない
+*/
+xUI.importBox.setImage = function(files){
+//Xpst専用・新規ドキュメントかドキュメント画像の入れ替えかを判定(汎用でない)
+	files.forEach(function(e){
+console.log('set image :'+e.name);
+console.log(e);
+		if(
+			(((xUI.uiMode == 'production')&&(xUI.sessionRetrace == 0))||
+			(xUI.uiMode == 'floating'))&&
+			(e.name.match(xUI.importBox.allowImgExtensions))
+		){
+// /\.(apng|avif|gif|jpg|jpeg|jfif|pjpeg|pje|png|svg|svgz|webp)$/i アニメ系は省いたほうが良さそう
+console.log('match');
+//画像登録操作可能
+			var targetImage  = null;//更新対象画像を設定
+			var targetPageId = Math.floor(xUI.Select[1] / xUI.PageLength);//配列IDで参照
+			if(xUI.XPS.timesheetImages.length > targetPageId){
+//画像更新確定
+				targetImage = xUI.XPS.timesheetImages[targetPageId];
+				targetImage.setImage(e);
+			}else{
+//オブジェクト追加確定
+				var itmInf = nas.Pm.parseIdentifier(e.name);
+console.log('add New pageImage');
+console.log(itmInf);
+console.log(e,'page:'+(targetPageId+1),xUI.XPS.timesheetImages);
+				xUI.XPS.timesheetImages.addMember(new nas.NoteImage(e,'page:'+(targetPageId+1),xUI.XPS.timesheetImages,"297mm"));
+				xUI.resetSheet();//画像ドキュメントを追加したので画面更新
+				if((targetPageId == 0)&&(xUI.activeDocument.undoBuffer.undoPt == 0)){
+//読み込みページが冒頭ページで、かつ入力履歴のない場合のみInfの情報を反映
+					xUI.XPS.syncIdentifier(e.name);
+				};
+			};
+		}else{
+console.log('unmatch nop');
+		    console.log(e);
+		};
+	});
+}
+/**
  *  @function
  *   変換ターゲットとなるFileオブジェクト配列を引数にして呼び出す
  *   全カット変換終了時のコールバック関数を与えることが可能
@@ -161,7 +255,7 @@ xUI.importBox.read = function (targetFiles,callback){
         }
     }else{
     // File APIを利用できるかをチェック
-  if (window.File) {
+  if(window.File){
     if(window.FileReader){
         xUI.importBox.reset();//ここで再初期化する
         xUI.importBox.callback=callback;
@@ -172,68 +266,75 @@ xUI.importBox.read = function (targetFiles,callback){
   for(var ix=0;ix<targetFiles.length;ix++){
     var check = targetFiles[ix];
 //拡張子でふるい分け
-    if((check.name.match(this.allowExtensions)) && (check.size <= this.maxSize) && (ix < this.maxCount)){
+    if(
+        (check.name.match(this.allowExtensions)) && 
+        (check.size <= this.maxSize) && 
+        (ix < this.maxCount)
+    ){
         targetQueue.push(check); this.importCount ++;
-    }else if(check.name.match(this.allowImgNames)){
+    }else if(check.name.match(xUI.importBox.allowImgExtensions)){
         imageQueue.push(check);
     }else{
         console.log("skip file "+check.name );
     };
   };
-        
-
-      // 指定されたファイルを取得してインポーターのプロパティとして記録
-  for(var ix=0;ix<targetQueue.length;ix++){
-    var input = targetQueue[ix];
+  if(imageQueue.length){
+//画像インポート
+console.log(imageQueue);
+    xUI.importBox.setImage(imageQueue);
+  }else if(targetQueue.length){
+//タイムシートドキュメントインポート
+console.log(targetQueue);
+// 指定されたファイルを取得してインポーターのプロパティとして記録
+    for(var ix=0;ix<targetQueue.length;ix++){
+        var input = targetQueue[ix];
 //最初のファイルをターゲットに読込
-    if(this.importTarget){
-	    var myEncode=(input.name.match(/\.(ard|csv|tsh|sts)$/))?"Shift-JIS":"UTF-8";
-//	    if(input.name.match(/\.sts$/)) myEncode = "bin";
+        if(this.importTarget){
+	        var myEncode=(input.name.match(/\.(ard|csv|tsh|sts)$/))?"Shift-JIS":"UTF-8";
 // ファイルリーダーオブジェクト初期化(Chrome/Firefoxのみ)
-        var reader = new FileReader();
-        reader.name=input.name;
+            var reader = new FileReader();
+            reader.name=input.name;
 // ファイルの読み込みに成功したら、その内容をxUI.data_wellに反映
-        reader.addEventListener('load', function(e) {
-            var output = reader.result;//
-            xUI.data_well.value = reader.result;//最後に読み込んだ内容で上書きされるので注意
-//console.log(reader);
+            reader.addEventListener('load', function(e) {
+                var output = reader.result;//
+                xUI.data_well.value = reader.result;//最後に読み込んだ内容で上書きされるので注意
 //エリアターゲット 
-            var areaTarget = (document.getElementById('loadTarget').value == 'ref')? 0:undefined;
-            var myXps = xUI.convertXps(
-                reader.result,
-                divideExtension(reader.name)[1],
-                xUI.importBox.overwriteProps,
-                false,
-                areaTarget
-            );// 指定オプション無しで一旦変換する
-            if(!myXps){
-                alert(reader.name+' is not supported format');
-            }
-        if((xUI.uiMode == 'production')&&(xUI.importBox.importTarget===xUI.XPS)){
-            if( (xUI.XPS.xpsTracks.duration != myXps.xpsTracks.duration)||
-                (xUI.XPS.xpsTracks.length != myXps.xpsTracks.length)
-            ) xUI.reInitBody(myXps.xpsTracks.length,myXps.xpsTracks.duration);
-            xUI.selection();xUI.selectCell([0,0]);
-            xUI.put(myXps.getRange());
-        }else{
-            if((xUI.uiMode != 'floating')&&(xUI.importBox.importTarget===xUI.XPS)){
-                xUI.resetSheet(myXps);
-                xUI.setUImode('floating');
-            }else{
-                xUI.importBox.importTarget.parseXps(myXps.toString());
-                xUI.resetSheet();
-            }
-        }
-      }, true);
-        if(input.name.match(/\.sts$/)){
+                var areaTarget = (document.getElementById('loadTarget').value == 'ref')? 0:undefined;
+                var myXps = xUI.convertXps(
+                    reader.result,
+                    divideExtension(reader.name)[1],
+                    xUI.importBox.overwriteProps,
+                    false,
+                    areaTarget
+                );// 指定オプション無しで一旦変換する
+                if(!myXps){
+                    alert(reader.name+' is not supported format');
+                };
+                if((xUI.uiMode == 'production')&&(xUI.importBox.importTarget===xUI.XPS)){
+                    if( (xUI.XPS.xpsTracks.duration != myXps.xpsTracks.duration)||
+                        (xUI.XPS.xpsTracks.length != myXps.xpsTracks.length)
+                    ) xUI.reInitBody(myXps.xpsTracks.length,myXps.xpsTracks.duration);
+                    xUI.selection();xUI.selectCell([0,0]);
+                    xUI.put(myXps.getRange());
+                }else{
+                    if((xUI.uiMode != 'floating')&&(xUI.importBox.importTarget===xUI.XPS)){
+                        xUI.resetSheet(myXps);
+                        xUI.setUImode('floating');
+                    }else{
+                        xUI.importBox.importTarget.parseXps(myXps.toString(false));
+                        xUI.resetSheet();
+                    };
+                };
+            }, true);
+            if(input.name.match(/\.sts$/)){
 // ファイルの内容をarrayBufferとして取得(sts)
-            reader.readAsArrayBuffer(input);
-        }else{
+                reader.readAsArrayBuffer(input);
+            }else{
 // ファイルの内容をテキストとして取得
-            reader.readAsText(input, myEncode);
-        }
-        break;
-    };
+                reader.readAsText(input, myEncode);
+            };
+            break;
+        };
 //非同期で実行
 (function(){
 	var myEncode=(input.name.match(/\.(ard|csv|tsh|sts)$/))?"Shift-JIS":"UTF-8";
@@ -255,7 +356,7 @@ xUI.importBox.read = function (targetFiles,callback){
         );// 指定オプション無しで一旦変換する
         if(!myXps){
             alert(reader.name+' is not supported format');
-        }
+        };
         xUI.importBox.targetContents.push({
             "name":reader.name,
             "content":reader.result,
@@ -285,7 +386,8 @@ xUI.importBox.read = function (targetFiles,callback){
             reader.readAsText(input, myEncode);
         }
 })();//キューの各エントリを処理
-  }
+    };//loop
+  };
       }else{
 //FileReaderが無いブラウザ(Safari等)では、お詫びしてオシマイ
 var msg = "no FileReader! :\n  このブラウザはFileReaderオブジェクトをサポートしていません。\nこの環境ではローカルファイルは読みだし出来ません。\nThis browser does not support the FileReader object. \n you can't read local files now.";
@@ -316,7 +418,7 @@ xUI.importBox.updateTarget= function(){
                 document.getElementById('optionPanelSCI_'+nas.Zf(tix+1,2)+'_time').value)+
                 Math.ceil(modefiedXps.trin[0]+modefiedXps.trout[0]/2)
             );
-    //  変更されたXpsのステータスをFloatingに変更（暫定処理）
+//  変更されたXpsのステータスをFloatingに変更（暫定処理）
 //        modefiedXps.currentStatus.content    = 'Floating';
         xUI.importBox.selectedContents.push(modefiedXps);
     }
@@ -511,7 +613,7 @@ console.log([datastream,optionString,overwriteProps,streamOption,targetOption]);
       }else{
         switch (true) {
         case    (/^nasTIME-SHEET\ 0\.[1-9].*/).test(datastream):
-//    判定ルーチン内で先にXPSをチェックしておく（先抜け）
+//    判定ルーチン内で先にXPSをチェックしておくNOP（先抜け）
         break;
         case    (/^(exchangeDigitalTimeSheet Save Data\n)/).test(datastream):
             datastream =TDTS2XPS(datastream);
@@ -540,9 +642,9 @@ console.log([datastream,optionString,overwriteProps,streamOption,targetOption]);
         case    (/^Adobe\ After\ Effects\x20([456]\.[05])\ Keyframe\ Data/).test(datastream):
             try{datastream=AEK2XDS(datastream)}catch(err){alert(err);return false}
             //AEKey のみトラック情報がないので  ダミーXpsを先に作成してそのトラックにデータをputする
-            var myXps=new Xps();
+            var myXps = new Xps();
             myXps.put(datastream);
-            datastream=myXps.toString();
+            datastream = myXps.toString(false);//内部コンバートフラグ
         break;
         default :
 /*
@@ -560,6 +662,7 @@ console.log([datastream,optionString,overwriteProps,streamOption,targetOption]);
     var convertedXps=new Xps();
 console.log(datastream);
     convertedXps.parseXps(datastream);
+console.log(convertedXps.toString(false));
 //ここでセリフトラックのチェックを行って、シナリオ形式のエントリを検知したら展開を行う
     for(var tix=0;tix<convertedXps.xpsTracks.length;tix++){
         var targetTrack=convertedXps.xpsTracks[tix]
@@ -616,7 +719,7 @@ console.log(convertQueue[qix][0].getStream(dialogDuration));//undefinedを戻す
         if ((optionTrailer.cut).length)      convertedXps.cut       = optionTrailer.cut;
     }
 //リザルトを返す
-    return (streamOption)?convertedXps.toString():convertedXps;
+    return (streamOption)? convertedXps.toString():convertedXps;
   }else{
     return false;    
   }
@@ -647,8 +750,8 @@ console.log(convertQueue[qix][0].getStream(dialogDuration));//undefinedを戻す
         制作管理上の作業セッションはジョブに  １：１で対応する
         整数値で作業の状態を表す データを読み取った際にセットされる
         その都度のドキュメントの保存状態から計算される値なのでデータ内での保存はされない
-    -1  所属セッションなし(初期値)  全てwriteable
-    0   最新セッション 編集対象 wtiteable
+    -1  所属セッションなし(初期値)          全てwriteable
+    0   最新セッション           編集対象      wtiteable
     1~  数値分だけ遡ったセッション 編集対象外 常にreadonly
 
         ステータスがFloationgモードのドキュメントをサーバ(リポジトリ)に記録することはない
@@ -713,8 +816,8 @@ xUI.documents.clear=function(){
         Xpsクラスメソッドを上書きするためのファンクション
         データインポートを自動判定
         xUI.sessionRetrace == -1    通常の読み出し
-        xUI.sessionRetrace == 0     内容のみ入れ替え
-        xUI.sessionRetrace > 0     読み込んだ後に-1にリセット
+        xUI.sessionRetrace ==  0     内容のみ入れ替え
+        xUI.sessionRetrace >   0     読み込んだ後に-1にリセット
         
 */
 xUI._readIN=function(datastream){
@@ -726,9 +829,9 @@ xUI._readIN=function(datastream){
 //データが存在したら、コンバータに送ってコンバート可能なデータをXPS互換ストリームに変換する
 /**
         データインポートは自動判定
-        xUI.sessionRetrace == -1    通常の読み出し
-        xUI.sessionRetrace == 0     内容のみ入れ替え
-        xUI.sessionRetrace > 0     読み込んだ後に-1にリセット
+        xUI.sessionRetrace == -1     通常の読み出し
+        xUI.sessionRetrace ==  0     内容のみ入れ替え
+        xUI.sessionRetrace >   0     読み込んだ後に-1にリセット
     import判定がtrueの場合、現データの以下のプロパティを保護する
     カット尺を保護する場合は、リファレンスに読み込んで部分コピーを行う
 */
@@ -821,8 +924,7 @@ xUI._readIN=function(datastream){
                 }
             };
         }
-//        if(xUI.sessionRetrace > 0) xUI.sessionRetrace= -1;
-        return this.parseXps(newXps.toString());
+        return this.parseXps(newXps.toString(false));//内部コンバート
     }
 }
 
@@ -835,7 +937,7 @@ xUI._readIN=function(datastream){
     xMapが存在しない場合は、新しいxMapを初期化して使用する
   
 */
-xUI.init    =function(targetObj,referenceObj){
+xUI.init = function(targetObj,referenceObj){
 console.log("Init xUI !");
 console.log(targetObj);
 console.log(referenceObj);
@@ -912,7 +1014,7 @@ console.log(editxMap);
     this.activeDocument     =  this.documents[this.activeDocumentId];
 
     this.sessionRetrace = -1;                   //管理上の作業セッション状態
-    this.referenceXPS   = new Xps(SheetLooks.trackSpac);            //参照用Xps初期値
+    this.referenceXPS   = new Xps(SheetLooks.trackSpec,editXpst.duration());            //参照用Xps初期値
 /**
 引数に参照オブジェクトが渡されていたら、優先して解決
     マルチステージ拡張実装後、直接指定された参照ステージは、初期化時のみ優先 
@@ -937,9 +1039,9 @@ console.log(editxMap);
         "dialog",
         "sound"
  */
-    this.referenceLabels=new Array();   //表示させるトラックのID配列（後ほど初期化）
-    this.referenceView=["timing","cell","replacement"];      
-    this.refRegex=new RegExp(xUI.referenceView.join("|"));
+    this.referenceLabels = new Array();   //表示させるトラックのID配列（後ほど初期化）
+    this.referenceView   = ["timing","cell","replacement"];//拡張時はoptionを加える
+    this.refRegex = new RegExp(xUI.referenceView.join("|"));
 /** 
     以下UI動作制御変数
 
@@ -983,12 +1085,15 @@ console.log(editxMap);
     this.SheetWidth= this.XPS.xpsTracks.length; // シートの幅(編集範囲)
 
 //シートのルックを求めるためのプロパティ
+    this.tcCount        = 1;    // タイムコードトラックの総数
     this.dialogCount    = 1;    // 音声トラックの総数
+    this.soundCount     = 0;    // 音声トラックの総数
     this.stillCount     = 0;    // 静止画トラックの総数
     this.timingCount    = 4;    // 置換トラックの総数
-    this.stageworkCount     = 0;    // ステージワークトラックの総数
+    this.stageworkCount = 0;    // ステージワークトラックの総数
     this.sfxCount       = 0;    // 効果トラックの総数
     this.cameraCount    = 0;    // カメラトラックの総数
+    this.noteCount      = 0;    // フレーム注釈トラック総数
     this.dialogSpan     = 1;    // シート左にある音声トラックの連続数
     this.cameraSpan     = 0;    // シート右の非置き換えトラックの連続数
     this.timingSpan     = this.XPS.xpsTracks.length-(this.cameraSpan+this.dialogSpan+1);//カメラ（非画像トラックの合計）
@@ -1123,27 +1228,50 @@ console.log(xUI.yankBuf);
     どちらか単独更新の場合でも画面全体を再描画する必要があるので、このルーチンは等しく実行される
 */
 xUI._checkProp=function(){
-    this.dialogCount=0;this.stillCount=0;this.timingCount=0;this.stageworkCount=0;this.sfxCount=0;this.cameraCount=0;
-    this.dialogSpan=0;this.cameraSpan=0;
+//リセット
+    this.tcCount        = 0;    // タイムコードトラックの総数
+    this.dialogCount    = 0;    // 音声トラックの総数
+    this.soundCount     = 0;    // 音声トラックの総数
+    this.stillCount     = 0;    // 静止画トラックの総数
+    this.timingCount    = 0;    // 置換トラックの総数
+    this.stageworkCount = 0;    // ステージワークトラックの総数
+    this.sfxCount       = 0;    // 効果トラックの総数
+    this.cameraCount    = 0;    // カメラトラックの総数
+    this.noteCount      = 0;    // フレーム注釈トラック総数
+    this.dialogSpan     = 0;    // 初出の台詞音声トラックの幅トラック数からピクセルへ変更
+    this.cameraSpan     = 0;    // 末尾エリアの幅
+
+//タイムコードトラックはxpsTracksに含まれないので先にareaOrderから取得
+    xUI.XPS.xpsTracks.areaOrder.forEach(function(e){if(e.timecode != 'none') xUI.tcCount += (e.timecode == 'bodth')? 2:1;});
+//カウント
     for(var idx=0;idx<(this.XPS.xpsTracks.length-1);idx++){
         this.XPS.xpsTracks[idx].sectionTrust=false;
         switch(this.XPS.xpsTracks[idx].option){
-            case "comment": break;//末尾はコメント予約なので判定をスキップ
-            case "sound" : ;
-            case "dialog": this.dialogCount++;break;
-            case "still" : this.stillCount++ ;break;
-            case "effect": ;
-            case "sfx"   : this.sfxCount++   ;break;
-            case "stage" :
-            case "stagework" :
-            case "geometry": this.stageworkCount++   ;break;
-            case "camerawork":;
-            case "camera": this.cameraCount++;break;
-            case "cell": ;
+            case "comment"    : break;//終端レコードはコメント予約なので判定をスキップ
+            case "timecode"   :
+            case "note"       : this.noteCount++    ;break;//trackNote トラックコメントはエリアを作らない
+            case "sound"      : this.soundCount++   ;break;
+            case "dialog"     : this.dialogCount++  ;break;
+            case "still"      : this.stillCount++   ;break;
+            case "effect"     : ;
+            case "sfx"        : this.sfxCount++     ;break;
+            case "stage"      :
+            case "stagework"  :
+            case "geometry"   : this.stageworkCount++;break;
+            case "camerawork" : ;
+            case "camera"     : this.cameraCount++   ;break;
+            case "cell"       : ;
             case "replacement": ;
-            case "timing": this.timingCount++;break;
-            default:       ;// NOP
+            case "timing"     : this.timingCount++   ;break;
+            default:          ;// NOP
         };
+//書式を形成するエリアを計算する
+
+/*
+    areaOrderテーブルとtrackSpecを比較して
+*/
+//表示領域左側の固定列をtrackSpecから確定
+
 //表示域左側で連続した音声トラックの数を控える（最初に出てきたsound/dialog以外のトラックの位置で判定 ）
         if((this.XPS.xpsTracks[idx].option!="dialog")&&(! this.dialogSpan)){this.dialogSpan=this.dialogCount};
 //フレームコメントの左側の連続したcamera/sfxトラックの数を控える(最後のcamera/sfx/effect/geometry以外のトラックの位置から計算)
@@ -1151,27 +1279,30 @@ xUI._checkProp=function(){
 //カウントする、ただしこのルーチンはこの後プロパティに変換してレイヤ数が変わるたびにプロパティとして変更するように変更されるべき。
     }
 //
-    this.timingSpan=this.XPS.xpsTracks.length-(this.cameraSpan+this.dialogSpan+1);//カメラ（非画像トラックの合計）
-    this.SheetWidth=this.XPS.xpsTracks.length;
+    this.timingSpan = this.XPS.xpsTracks.length-(this.cameraSpan+this.dialogSpan+1);//カメラ（非画像トラックの合計）
+    this.SheetWidth = this.XPS.xpsTracks.length;
 /*
 参照するトラック数をスイッチをもとに算出
 */
-    this.referenceLabels=new Array();//クリア
-    this.refRegex=new RegExp(xUI.referenceView.join("|"));//更新
+    this.referenceLabels.length = 0;//クリア
+    this.refRegex        = new RegExp(xUI.referenceView.join("|"));//更新
     for(var ix=0;ix<xUI.referenceXPS.xpsTracks.length;ix++){
         var currentTrack=xUI.referenceXPS.xpsTracks[ix].option;
-        if(currentTrack.match(this.refRegex)) {
-            this.referenceLabels.push(ix);//array of index
-        }
-    }
+        if(currentTrack.match(this.refRegex)) this.referenceLabels.push(ix);//array of index
+    };
+//チェックと同時にtrackSpecを補正(双方向マッチ)trackspecは補正しないように仕様変更
+//    var referenceArea = this.XPS.xpsTracks.areaOrder.find(function(e){return (e.type == "reference")});
+//    if((referenceArea)&&(this.referenceLabels.length != referenceArea.tracks)) referenceArea.tracks = this.referenceLabels.length;
 }
-/**
+/*
     setBackgroundColor(bgColor)
     背景色を色コードで指定する
 */
 xUI.setBackgroundColor = function(bgColor){
-SheetLooks = {
-    SheetTextColor  :"#111111",
+/*
+var SheetLooks = {
+	WorkTitleLogo   : "",
+	SheetTextColor  :"#111111",
 	SheetBaseColor	:"#ffffef",
 	SelectedColor	:"#9999FF",
 	RapidModeColor	:"#ffff44",
@@ -1181,69 +1312,100 @@ SheetLooks = {
 	FootStampColor	:"#ffffff",
 	EditingColor	:"#eebbbb",
 	SelectingColor	:"#ccccaa",
-	CellWidthUnit	:"px",
+	Restriction         :false,
+	ViewMode            :"page",
+	DocumentType        :"jp",
+	PageLength          :"6+0",
+	FrameRate           :"24fps(24)",
+	CellWidthUnit       :"px",
+	SheetHeadMargin     :0,
+	SheetLeftMargin     :0,
+	SheetCellHeight     :17,
+	SheetColHeight      :1224,
 	TimeGuideWidth	    :36,
 	ActionWidth         :20,
 	DialogWidth	        :36,
-	SheetCellWidth	    :42,
+	SoundWidth          :42,
+	SheetCellWidth	    :24,
 	SheetCellNarrow	    :4,
 	StillCellWidth	    :12,
-    GeometryCellWidth   :52,
+	GeometryCellWidth   :52,
 	SfxCellWidth	    :46,
-	CameraCellWidth     :52,
-	CommentWidth        :120,
-	ColumnSeparatorWidth:4
+	CameraCellWidth     :34,
+	TrackNoteWidth      :32,
+	CommentWidth        :64,
+	ColumnSeparatorWidth:8,
+	trackSpec :[
+		["timecode"    ,   1, "fix"],
+		["reference"   ,   8, "fix"],
+		["dialog"      ,   1, "fix"],
+		["replacement" ,   8, ""],
+		["camera"      ,   3, ""],
+		["comment"     ,   1, "hide"]
+	]
 };
-SheetLooks.SheetBaseColor=bgColor;
-xUI.setSheetLook(SheetLooks);xUI.footstampPaint();
+    SheetLooks.SheetBaseColor = bgColor; // */
+    xUI.XPS.sheetLooks.SheetBaseColor = bgColor;
 
+    xUI.applySheetlooks();
+    xUI.footstampPaint();
 }
+
+xUI.applyLooks = function(){
+    xUI.XPS.parseSheetLooks(JSON.stringify(document.getElementById('referencePanelWindow').contentWindow.documentFormat));
+    xUI.resetSheet();
+    xUI.setAppearance('show');
+}
+
 /**
-    インターフェースルック設定
-    カラー・及びシートルックを更新
-    分離のみ  暗色のテーマにはまだ対応していないので注意  2017.02.04
-    ラップ関数を作成した方が良いかも
-*/
-xUI.setSheetLook = function(sheetLooks){
-    this.sheetLooks=sheetLooks;
-/**
-    シートのカラーデータを構築
+ *   インターフェースルック反映
+ *   カラー・及びシートルックを更新
+ *   分離のみ  暗色のテーマにはまだ対応していないので注意  2017.02.04
+ *   ラップ関数を作成した方が良いかも
+xUI.sheetLooks === xUI.XPS.sheetLooks
+ sheetLook配列または配列ソースを与えて、画面に反映する
+ 引数が与えられなかった場合はXPSの持つsheetLooks配列を使用してデータの更新を行う
+ trackSpecの反映は
+ */
+xUI.applySheetlooks = function(sheetLooks){
+    if(typeof sheetLooks != 'undefined')
+    this.sheetLooks = sheetLooks;
+/*
+    シートのカラーデータを構築・反映
     別の関数に分離予定
-        指定引数は  SheetBaseColorのみ？
 */
-    if (! String(sheetLooks.SheetBaseColor).match(/^#[0-9a-f]+/i)){sheetLooks.SheetBaseColor = nas.colorAry2Str(nas.colorStr2Ary(sheetLooks.SheetBaseColor));};
+    if (! String(xUI.sheetLooks.SheetBaseColor).match(/^#[0-9a-f]+/i)){xUI.sheetLooks.SheetBaseColor = nas.colorAry2Str(nas.colorStr2Ary(xUI.sheetLooks.SheetBaseColor));};
 
 //編集不可領域の背景色 背景色を自動設定  やや暗  これは初期状態で対向色を設定してその間で計算を行うように変更
 
-    this.sheetbaseColor     = sheetLooks.SheetBaseColor;                                        //タイムシート背景色
+    this.sheetbaseColor     = xUI.sheetLooks.SheetBaseColor;                                        //タイムシート背景色
     var baseColor = nas.colorStr2Ary(this.sheetbaseColor);  //基本色をRBGのまま配列化
-//    輝度出してフラグ立てる
+// 輝度出してフラグ立てる
     this.sheetbaseDark      = (((76*baseColor[0]+150*baseColor[0]+29*baseColor[0])/255) > 0.3)? false:true;//仮のしきい値0.5
 
-    this.sheetTextColor     = sheetLooks.SheetTextColor;//基本テキストカラー
-    this.annotationColor    = nas.colorAry2Str(div(add (nas.colorStr2Ary(this.sheetTextColor),nas.colorStr2Ary(this.sheetbaseColor)),2));
-    
+    this.sheetTextColor     = xUI.sheetLooks.SheetTextColor;//基本テキストカラー
+
     this.sheetblankColor    = nas.colorAry2Str(mul(nas.colorStr2Ary(this.sheetbaseColor),.95)); //編集不可領域の背景色
     this.sheetborderColor   = nas.colorAry2Str(mul(nas.colorStr2Ary(this.sheetbaseColor),.75)); //罫線基本色
-    this.footstampColor     = nas.colorAry2Str(div( add (nas.colorStr2Ary(sheetLooks.FootStampColor),nas.colorStr2Ary(this.sheetbaseColor)),2));                        //フット/差分  スタンプの色 背景色との中間値
-//    this.footstampColor     = sheetLooks.FootStampColor;                                        //フット/差分  スタンプの色 背景色との中間値
-//       this.inputModeColor   = new Object();                                      //  入力モード色
-        this.inputModeColor.NORMAL  = nas.colorAry2Str(div( add (nas.colorStr2Ary(sheetLooks.SelectedColor),nas.colorStr2Ary(this.sheetbaseColor)),2));                      //  ノーマル色
-        this.inputModeColor.EXTEND  = nas.colorAry2Str(div( add (nas.colorStr2Ary(sheetLooks.RapidModeColor),nas.colorStr2Ary(this.sheetbaseColor)),2));                    //  ラピッド入力基本色
-        this.inputModeColor.FLOAT   = nas.colorAry2Str(div( add (nas.colorStr2Ary(sheetLooks.FloatModeColor),nas.colorStr2Ary(this.sheetbaseColor)),2));                    //  ブロック移動基本色
-        this.inputModeColor.SECTION = nas.colorAry2Str(mul( add (nas.colorStr2Ary(sheetLooks.SectionModeColor),nas.colorStr2Ary(this.sheetbaseColor)),.5));                  //  範囲編集中の色
-        this.inputModeColor.SECTIONtail = nas.colorAry2Str(mul( add (nas.colorStr2Ary(sheetLooks.SectionModeColor),nas.colorStr2Ary(this.sheetbaseColor)),.45));                  //  範囲編集中の色
-//        this.inputModeColor.SECTIONselection = nas.colorAry2Str( mul( add (nas.colorStr2Ary(sheetLooks.SectionModeColor),nas.colorStr2Ary(this.sheetbaseColor)),1));                  //  範囲編集中の色
+    this.trackLabelColor    = this.sheetborderColor;//ラベルカラーは罫線色に変更
 
-    this.selectedColor    = this.inputModeColor.NORMAL;                                     //選択セルの背景色
-    this.selectionColor    = sheetLooks.SelectionColor;                                     //選択領域の背景色
-    this.selectionColorTail    = sheetLooks.SelectionColor;                                     //選択領域末尾背景色(sectionTail)デフォルトは同色
-    this.editingColor       = sheetLooks.EditingColor;                                      //セル編集中のインジケータ
-    this.selectingColor      = sheetLooks.SelectingColor;                                   //セル選択中のインジケータ
+    this.footstampColor     = nas.colorAry2Str(div( add (nas.colorStr2Ary(xUI.sheetLooks.FootStampColor),nas.colorStr2Ary(this.sheetbaseColor)),2));                        //フット/差分  スタンプの色 背景色との中間値
+        this.inputModeColor.NORMAL  = nas.colorAry2Str(div( add (nas.colorStr2Ary(xUI.sheetLooks.SelectedColor),nas.colorStr2Ary(this.sheetbaseColor)),2));                      //  ノーマル色
+        this.inputModeColor.EXTEND  = nas.colorAry2Str(div( add (nas.colorStr2Ary(xUI.sheetLooks.RapidModeColor),nas.colorStr2Ary(this.sheetbaseColor)),2))            ;//ラピッド入力
+        this.inputModeColor.FLOAT   = nas.colorAry2Str(div( add (nas.colorStr2Ary(xUI.sheetLooks.FloatModeColor),nas.colorStr2Ary(this.sheetbaseColor)),2))            ;//ブロック移動
+        this.inputModeColor.SECTION = nas.colorAry2Str(mul( add (nas.colorStr2Ary(xUI.sheetLooks.SectionModeColor),nas.colorStr2Ary(this.sheetbaseColor)),.5))         ;//範囲編集中
+        this.inputModeColor.SECTIONtail = nas.colorAry2Str(mul( add (nas.colorStr2Ary(xUI.sheetLooks.SectionModeColor),nas.colorStr2Ary(this.sheetbaseColor)),.45))    ;//範囲編集中
+//      this.inputModeColor.SECTIONselection = nas.colorAry2Str( mul( add (nas.colorStr2Ary(sheetLooks.SectionModeColor),nas.colorStr2Ary(this.sheetbaseColor)),1));//範囲編集中
+
+    this.selectedColor      = this.inputModeColor.NORMAL        ;//選択セルの背景色
+    this.selectionColor     = xUI.sheetLooks.SelectionColor     ;//選択領域の背景色
+    this.selectionColorTail = xUI.sheetLooks.SelectionColor     ;//選択領域末尾背景色(sectionTail)デフォルトは同色
+    this.editingColor       = xUI.sheetLooks.EditingColor       ;//セル編集中のインジケータ
+    this.selectingColor     = xUI.sheetLooks.SelectingColor     ;//セル選択中のインジケータ
 //タイムライン・ラベル識別カラ－
-    this.cameraColor    = nas.colorAry2Str(div(add([0,1,0],mul(nas.colorStr2Ary(this.sheetbaseColor),6)),7));
-    this.sfxColor       = nas.colorAry2Str(div(add([0,0,1],mul(nas.colorStr2Ary(this.sheetbaseColor),5)),6));
-    this.stillColor     = nas.colorAry2Str(div(add([1,0,0],mul(nas.colorStr2Ary(this.sheetbaseColor),6)),7));  //タイムライン全体に着色
+    this.cameraColor = nas.colorAry2Str(div(add([0,1,0],mul(nas.colorStr2Ary(this.sheetbaseColor),6)),7));
+    this.sfxColor    = nas.colorAry2Str(div(add([0,0,1],mul(nas.colorStr2Ary(this.sheetbaseColor),5)),6));
+    this.stillColor  = nas.colorAry2Str(div(add([1,0,0],mul(nas.colorStr2Ary(this.sheetbaseColor),6)),7));//タイムライン全体に着色
 
 //中間色自動計算
         this.inputModeColor.NORMALspin=
@@ -1294,12 +1456,12 @@ xUI.setSheetLook = function(sheetLooks){
 // ---------------------- ここまでカラー設定(再計算)
 if(this.sheetbaseDark){
     this.sheetTextColor     = nas.colorAry2Str( div(sub([1,1,1],nas.colorStr2Ary(this.sheetTextColor)),2));
-    this.annotationColor    = nas.colorAry2Str( div(sub([1,1,1],nas.colorStr2Ary(this.annotationColor)),2));
+    this.trackLabelColor    = nas.colorAry2Str( div(sub([1,1,1],nas.colorStr2Ary(this.trackLabelColor)),2));
 
     this.sheetblankColor    = nas.colorAry2Str(sub([1,1,1],nas.colorStr2Ary(this.sheetblankColor)));
     this.sheetborderColor   = nas.colorAry2Str(div(sub([1,1,1],nas.colorStr2Ary(xUI.sheetborderColor)),2));
 //    this.footstampColor     = nas.colorAry2Str(div(nas.colorStr2Ary(this.footstampColor),2));
-    this.footstampColor     = nas.colorAry2Str(div(add (sub([1,1,1],nas.colorStr2Ary(sheetLooks.FootStampColor)),nas.colorStr2Ary(this.sheetbaseColor)),2));
+    this.footstampColor     = nas.colorAry2Str(div(add (sub([1,1,1],nas.colorStr2Ary(xUI.sheetLooks.FootStampColor)),nas.colorStr2Ary(this.sheetbaseColor)),2));
         this.inputModeColor.NORMAL  = nas.colorAry2Str(sub([1,1,1],nas.colorStr2Ary(this.inputModeColor.NORMAL)));
         this.inputModeColor.EXTEND  = nas.colorAry2Str(sub([1,1,1],nas.colorStr2Ary(this.inputModeColor.EXTEND)));
         this.inputModeColor.FLOAT   = nas.colorAry2Str(sub([1,1,1],nas.colorStr2Ary(this.inputModeColor.FLOAT)));
@@ -1350,55 +1512,21 @@ if(this.sheetbaseDark){
 //タイムシート背景色をsheetbaseColorに設定
     document.body.style.backgroundColor     = this.sheetbaseColor;
     document.body.style.color               = this.sheetTextColor;
+    nas.setCssRule('.qdr-left','background-color:'+this.sheetbaseColor,"screen");//スクロールパッチ背景色
+//    $('.qdr-left').css('background-color',this.sheetbaseColor);//スクロールパッチ背景色
 // サブテキストカラーを設定
-    nas.addCssRule("th.annotationText","color:"+this.annotationColor,"screen");
-    nas.addCssRule('td.Sep','color:'+this.annotationColor,"screen");
-    nas.addCssRule('td.ref','color:'+this.annotationColor,"screen");
+    nas.setCssRule("th.headerInfoLabel","color:"+this.trackLabelColor,"screen");
+    nas.setCssRule("th.trackLabel"     ,"color:"+this.trackLabelColor,"screen");
+    nas.setCssRule('td.Sep'            ,'color:'+this.trackLabelColor,"screen");
+    nas.setCssRule('td.ref'            ,'color:'+this.trackLabelColor,"screen");
     
 //ヘッダとフッタの背景色をシート背景色で塗りつぶし
     document.getElementById("fixedHeader").style.backgroundColor = this.sheetbaseColor;
 
-    nas.addCssRule("table.sheet","background-color:"+this.sheetbaseColor,"screen");
-    nas.addCssRule("table","border-color:"+this.sheetbaseColor,"screen");
-    nas.addCssRule("th","border-color:"+this.sheetborderColor,"screen");
-    nas.addCssRule("td","border-color:"+this.sheetborderColor,"screen");
-
-var mySections=[
-    ["th.tcSpan"        ,"width" ,(sheetLooks.TimeGuideWidth        + sheetLooks.CellWidthUnit)],
-    ["th.dialogSpan"    ,"width" ,(sheetLooks.DialogWidth           + sheetLooks.CellWidthUnit)],
-    ["td.colSep"        ,"width" ,(sheetLooks.ColumnSeparatorWidth  + sheetLooks.CellWidthUnit)],
-    ["th.referenceSpan" ,"width" ,(sheetLooks.ActionWidth           + sheetLooks.CellWidthUnit)],
-    ["th.editSpan"      ,"width" ,(sheetLooks.SheetCellWidth        + sheetLooks.CellWidthUnit)],
-    ["th.timingSpan"    ,"width" ,(sheetLooks.SheetCellWidth        + sheetLooks.CellWidthUnit)],
-    ["th.stillSpan"     ,"width" ,(sheetLooks.StillCellWidth        + sheetLooks.CellWidthUnit)],
-    ["th.geometrySpan"   ,"width" ,(sheetLooks.GeometryCellWidth     + sheetLooks.CellWidthUnit)],
-    ["th.sfxSpan"       ,"width" ,(sheetLooks.SfxCellWidth          + sheetLooks.CellWidthUnit)],
-    ["th.cameraSpan"    ,"width" ,(sheetLooks.CameraCellWidth       + sheetLooks.CellWidthUnit)]
-]
-
-/*    cssにルールセットを追加する関数
-    nas.addCssRule( セレクタ, プロパティ, 適用範囲 )
-        セレクタ    cssのセレクタを指定
-        プロパティ    プロパティを置く
-        適用範囲    "screen""print"または"both"
-        
-        注意してJqueryに置き換える
- */
-//トラックの幅を設定
-/*    リスト
-class=timelabel annotationText
-class=timeguide? 
-class=dtSep
-class=ntSep
-class=colSep
-class=layerlabelR annotationText
-class=layerlabel annotationText
- */
-
-for(var idx=0;idx<mySections.length;idx++){
-    nas.addCssRule( mySections[idx][0],mySections[idx][1]+":"+mySections[idx][2],"both");
-//    $(mySections[idx][0]).css(mySections[idx][1],mySections[idx][2])
-};
+    nas.setCssRule("table.sheet","background-color:"+this.sheetbaseColor,"screen");
+    nas.setCssRule("table","border-color:"+this.sheetbaseColor,"screen");
+    nas.setCssRule("th","border-color:"+this.sheetborderColor,"screen");
+    nas.setCssRule("td","border-color:"+this.sheetborderColor,"screen");
 
 //    シートブランクの色設定
 var mySeps=[
@@ -1408,26 +1536,491 @@ var mySeps=[
 ];
 
 for(var idx=0;idx<mySeps.length;idx++){
-    nas.addCssRule("."+mySeps[idx]+"_Blank","background-color:"+xUI.sheetblankColor)
+    nas.setCssRule("."+mySeps[idx]+"_Blank","background-color:"+xUI.sheetblankColor,'both')
 };
 //================================================================================================================================ シートカラーcss設定
 //  タブUIに  背景色を設定
-    $('.tabControll').css('background-color',this.sheetbaseColor);
-    $('#tabSelector').css('background-color',this.sheetbaseColor);
+    nas.setCssRule('.tabControll','backgroundColor:'+this.sheetbaseColor,'both');
+    nas.setCssRule('#tabSelector','backgroundColor:'+this.sheetbaseColor,'both');
 
 //================================================================================================================================ シートカラーcss設定2
 //    シート境界色設定
-    $('table').css('border-color',xUI.sheetbaseColor);
-    $('th').css('border-color',xUI.sheetborderColor);
-    $('td').css('border-color',xUI.sheetborderColor);
-    $("th.stilllabel").css("background-color",xUI.stillColor);// ,"screen");
-    $("th.sfxlabel").css("background-color",xUI.sfxColor);//   ,"screen");
-    $("th.cameralabel").css("background-color",xUI.cameraColor);//,"screen");
+    nas.setCssRule('table'        ,'border-color:'+xUI.sheetbaseColor  ,'both');
+    nas.setCssRule('.tlhead'      ,'border-color:'+xUI.sheetborderColor,'both');
+    nas.setCssRule('.trackLabel'  ,'border-color:'+xUI.sheetborderColor,'both');
+    nas.setCssRule('td.sheetbody' ,'border-color:'+xUI.sheetborderColor,'both');
 
+/*
+    nas.setCssRule('th.stilllabel'  ,'background-color:'+xUI.stillColor  ,"screen");
+    nas.setCssRule('th.sfxlabel'    ,'background-color:'+xUI.sfxColor    ,"screen");
+    nas.setCssRule('th.cameralabel' ,'background-color:'+xUI.cameraColor ,"screen");
+// */
 //================================================================================================================================ シートカラーcss設定2
 //    if(this.footstampPaint) this.footstampPaint();
-    return true;
+//================================================================================================================================ 書式配置適用
+
+//================================================================================================================================ タイムシートセルハイトcss設定
+    xUI.applySheetCellHeight(xUI.sheetLooks.SheetColHeight);
+//================================================================================================================================ タイムシートトラック幅css設定
+    xUI.applySheetTrackWidth();
+//================================================================================================================================ タイムシートマージン・カラー等をcss設定
+    xUI.setAppearance();
+//================================================================================================================================ タイムシート画像css設定
+//	var imgs = document.querySelectorAll('.overlayDocmentImage');
+//    if(imgs.length > 0) xUI.setAppearance(xUI.XPS.imgMaster());//
+//
+//    xUI.resetSheet();
+//
+    return this.sheetLooks;
 }
+/*
+    トラック幅を設定
+    sheetLooksの値をcssに対して反映させる
+*/
+xUI.applySheetTrackWidth = function(sheetLooks){
+    if(typeof sheetLooks == 'undefined') sheetLooks = xUI.XPS.sheetLooks;
+/*
+    sheetLooksの示すサイズは罫線を含むトータルなので罫線分の計算が必要
+    tdはデフォルトで罫線を含んでいるか？
+    各プロパティは Number|nas.UnitValue なので直接加算が可能
+    UnitValueの場合は必ず単位と合致する仕様
+*/
+    var ofst = 0;
+    var mySections=[
+        ["th.tcSpan"        ,"width" ,(sheetLooks.TimeGuideWidth       + ofst + sheetLooks.CellWidthUnit)],
+        ["th.dialogSpan"    ,"width" ,(sheetLooks.DialogWidth          + ofst + sheetLooks.CellWidthUnit)],
+        ["th.soundSpan"     ,"width" ,(sheetLooks.SoundWidth           + ofst + sheetLooks.CellWidthUnit)],
+        ["td.colSep"        ,"width" ,(sheetLooks.ColumnSeparatorWidth + ofst + sheetLooks.CellWidthUnit)],
+        ["th.referenceSpan" ,"width" ,(sheetLooks.ActionWidth          + ofst + sheetLooks.CellWidthUnit)],
+        ["th.editSpan"      ,"width" ,(sheetLooks.SheetCellWidth       + ofst + sheetLooks.CellWidthUnit)],
+        ["th.timingSpan"    ,"width" ,(sheetLooks.SheetCellWidth       + ofst + sheetLooks.CellWidthUnit)],
+        ["th.stillSpan"     ,"width" ,(sheetLooks.StillCellWidth       + ofst + sheetLooks.CellWidthUnit)],
+        ["th.geometrySpan"  ,"width" ,(sheetLooks.GeometryCellWidth    + ofst + sheetLooks.CellWidthUnit)],
+        ["th.sfxSpan"       ,"width" ,(sheetLooks.SfxCellWidth         + ofst + sheetLooks.CellWidthUnit)],
+        ["th.cameraSpan"    ,"width" ,(sheetLooks.CameraCellWidth      + ofst + sheetLooks.CellWidthUnit)],
+        ["th.framenoteSpan" ,"width" ,(sheetLooks.CommentWidth         + ofst + sheetLooks.CellWidthUnit)]
+    ];
+/*    cssにルールセットを追加する関数
+    nas.setCssRule( セレクタ, プロパティ, 適用範囲 )
+        セレクタ    cssのセレクタを指定
+        プロパティ    プロパティを置く
+        適用範囲    スタイルシートIDの配列、またはキーワード"screen""print"または"both"
+ */
+//トラックの幅を設定
+/*    リスト
+class=timelabel trackLabel
+class=timeguide? 
+class=dtSep
+class=ntSep
+class=colSep
+class=layerlabelR trackLabel
+class=layerlabel trackLabel
+ */
+    for(var idx=0;idx<mySections.length;idx++){
+        nas.setCssRule( mySections[idx][0],mySections[idx][1]+":"+mySections[idx][2],"both");
+    };
+}
+/*
+    カラム高さを文字列で与えてシートセルの高さを設定する
+    設定したシートの列高さを返す
+*/
+xUI.applySheetCellHeight = function(colHeight){
+    if(typeof colHeight != 'undefined') xUI.sheetLooks.SheetColHeight = colHeight;
+    if((xUI.sheetLooks.SheetColHeight)&&(document.getElementById('page_1'))){
+//カラムあたりのフレーム数 = シート長 / カラム数
+        var fpc = nas.FCT2Frm(xUI.sheetLooks.PageLength,nas.FRATE)/xUI.sheetLooks.SheetColumn;
+        var offset = document.getElementById('page_1').getBoundingClientRect().bottom - document.getElementById('0_0').getBoundingClientRect().top - ( new nas.UnitValue(nas.getCssRule("td.sheetbody",'height'),'mm').as('px')* fpc);
+        var newHeight = (new nas.UnitValue(xUI.sheetLooks.SheetColHeight + xUI.sheetLooks.CellWidthUnit,'mm').as('px')
+            - offset ) / fpc;
+console.log(newHeight);
+        if ( newHeight > 10) xUI.sheetLooks.SheetCellHeight = newHeight; 
+    }
+    nas.setCssRule('td.sheetbody','height:'+xUI.sheetLooks.SheetCellHeight + xUI.sheetLooks.CellWidthUnit,'both');
+//console.log(xUI.sheetLooks.SheetCellHeight, nas.getCssRule('td.sheetbody','height',0));
+    return xUI.sheetLooks.SheetCellHeight;
+}
+/** 
+ * @params {Number}  appearance
+ *
+ *  @returns {Numver} 
+ *
+ *  ドキュメント表示状態を設定する
+ *  画像表示状態パラメタを引数として与え ドキュメントの画像イメージを調整する
+ *	引数のない場合はドキュメントモードを確認して不整合のある部分を再設定
+ *	状態フラグと表示パラメータとが必要
+ 画像表示 ON|OFF	xUI.XPS.sheetLooks.ShowDocumentImage
+ 
+blendmode(合成モード)は、独自形式 エディタ側は罫線のカラーを背景色との中間値で計算・画像は比較暗で固定
+そのため指定パラメータは意味を失う
+
+appearance(画像表示状態)パラメータ 値範囲は .0-1.0
+
+(slider)   0  <  50 >  100
+(image )   0 <> 100 <> 100 %
+(editor) 100 <> 100 <>   0 %
+
+連動スライダで操作
+これにより画像の ON|OFF は意味を失うため、.sheetImages.imageAppearance に appearance値を記録してopacityは不要となる
+
+エディタUIは
+フォーマットエディタ上では   罫線のみ（ラベルとボディは背景色）
+画像マスターモード上 では    ボディのみ
+ノーマルモード上    では    スイッチで切り替え
+
+画像マスターモードでは アピアランス値は0が禁止される 0の場合は１に変換
+ノーマルモードでは
+ */
+xUI.setAppearance = function(appearance){
+	if(typeof appearance   == 'undefined') appearance   = xUI.XPS.timesheetImages.imageAppearance;
+	if((xUI.XPS.imgMaster())&&(xUI.XPS.timesheetImages.imageAppearance == 0)) appearance = 1.0;
+//パラメータ確定
+	var documentColor = xUI.sheetborderColor;
+	if (appearance > 0.5){
+		documentColor = nas.colorAry2Str(add(
+			mul(nas.colorStr2Ary(xUI.sheetborderColor),1 - ((appearance - 0.5) * 2)),
+			mul(nas.colorStr2Ary(xUI.sheetbaseColor),((appearance - 0.5) * 2))
+		));
+	};
+	var sheetOffsetTop = ((appearance > 0)&&(document.getElementsByClassName('sheetArea').length > 0))?
+		xUI.XPS.sheetLooks.SheetHeadMargin - (document.getElementById('0_0').offsetTop - document.getElementsByClassName('sheetArea')[0].offsetTop + document.getElementsByClassName('pgNm')[0].offsetHeight) - 4 :0;
+	var sheetOffsetLeft = xUI.XPS.sheetLooks.SheetLeftMargin - 2;
+console.log(documentColor,sheetOffsetTop,sheetOffsetLeft);
+//罫線色設定
+	$('.Sep'       ).css('border-color',documentColor);
+//	$('.tlhead'    ).css('border-color',documentColor);
+	nas.setCssRule('.tlhead','border-color:'+ documentColor,'both');
+	$('.trackLabel').css('border-color',documentColor);
+	nas.setCssRule('td.sheetbody','border-color:'+ documentColor,'both');
+//テキストラベル色設定
+	$('.Sep'       ).css('color',documentColor);
+//	$('.tlhead'    ).css('color',documentColor);
+	nas.setCssRule('.tlhead','color:'+ documentColor,'both');
+	$('.trackLabel').css('color',documentColor);
+//シートマージン設定
+	$(".sheet").css("margin-top" ,sheetOffsetTop  + xUI.XPS.sheetLooks.CellWidthUnit);
+	$(".sheet").css("margin-left",sheetOffsetLeft + xUI.XPS.sheetLooks.CellWidthUnit);
+//画像設定
+if(appearance > 0){
+	document.querySelectorAll('.overlayDocmentImage').forEach((e) =>{
+		e.style.display      = 'inline';
+		e.style.top          = e.parentNode.parentNode.offsetTop +'px';
+		e.style.mixBlendMode = 'multiply';//xUI.XPS.timesheetImages.imageBlendMode;
+		e.style.opacity      = (appearance > 0.5)? 1.0:((appearance) / 0.50);//xUI.XPS.timesheetImages.imageAppearance;
+	});
+}else{
+	document.querySelectorAll('.overlayDocmentImage').forEach((e) =>{
+		e.style.display      = 'none';
+	});
+};
+
+    xUI.XPS.timesheetImages.imageAppearance = appearance;
+    sync('docImgAppearance');;
+    return appearance;
+}
+/*
+timeSheetDocumentImageの調整
+Xps.TimesheetImageコレクション内のオブジェクト1点ずつのoffsetを調整する
+mode変数は、キーボード及び微調整ボタンの編集プロパティを示す inclination|move|scale
+scale変数は２次元
+*/
+xUI.imgAdjust = {
+    targetImg : null,
+    backup    :{
+        offset    : new nas.Offset(),
+        scale     : new nas.Scale(1,1)
+    },
+    mode      : 'scale',
+    baseline  : new nas.UnitValue('65mm')
+}
+/*Adjust control*/
+xUI.imgAdjust.ctp0 = document.createElement('div');
+xUI.imgAdjust.ctp0.id = 'uiHandle01';
+xUI.imgAdjust.ctp0.className = 'node_handle node_handle-red';
+xUI.imgAdjust.ctp0.innerHTML = '<svg width="24" height="24" viewBox="0 0 24 24"><path fill="none" stroke="red" stroke-width="2" d="M 12,1 L 23,12 L 12,23 L 1,12 z" /><path fill="none" stroke="red" stroke-width="1" d="M 12,1 L 12,11 M 23,12 L 13,12 M 12,23 L 12,13 M 1,12 L 11,12" /></svg>';
+
+xUI.imgAdjust.ctp1 = document.createElement('div');
+xUI.imgAdjust.ctp1.id = 'uiHandle02';
+xUI.imgAdjust.ctp1.className = 'node_handle node_handle-green';
+xUI.imgAdjust.ctp1.innerHTML = '<svg width="24" height="24" viewBox="0 0 24 24"><path fill="none" stroke="green" stroke-width="2" d="M 1,12 A 11 11 10 1 0 23,12 A 11 11 10 1 0 1,12" /><path fill="none" stroke="green" stroke-width="1" d="M 12,1 L 12,11 M 23,12 L 13,12 M 12,23 L 12,13 M 1,12 L 11,12" /></svg>';
+
+/*
+ * 画像位置補正UIの展開|収容
+ */
+	xUI.imgAdjust.expand = function(status){
+		if(typeof status == 'undefined') status = !($('#imgAdjustDetail').isVisible());
+		if(status){
+			$('#imgAdjustDetail').show();
+			$('#optionPanelImgAdjust').width(152);
+			$('#optionPanelImgAdjust').height(260);
+			document.getElementById('imgAdjustExpand').innerHTML = '▲';
+		}else{
+			$('#imgAdjustDetail').hide();
+			$('#optionPanelImgAdjust').width(152);
+			$('#optionPanelImgAdjust').height(158);
+			document.getElementById('imgAdjustExpand').innerHTML = '▼';
+		};
+	}
+/*
+ * モード変更
+ */
+    xUI.imgAdjust.setMode = function(mode){
+        if(typeof mode == 'undefined') mode = ["inclination","move","scale"][["scale","inclination","move"].indexOf(this.mode)];
+        if(["inclination","move","scale"].indexOf(mode) < 0) return this.mode;
+        this.mode = mode;
+        document.getElementById('imgAdjustStatus').src = [
+            "./images/ui/imgStatHolizon.png",
+            "./images/ui/imgStatMove.png",
+            "./images/ui/imgStatResize.png"
+        ][["inclination","move","scale"].indexOf(this.mode)];
+        return this.mode;
+    }
+/*
+ *  キー入力及びボタン操作による詳細編集
+ */
+    xUI.imgAdjust.adjust = function(e){
+        console.log(e);
+            var value = 1;
+        if ((e.target.id == 'imgAdjustUp')){
+            value = value * -2;
+        }else if((e.target.id == 'imgAdjustDown')){
+            value = value * 2;
+        }else if((e.target.id == 'imgAdjustLeft')){
+            value = value * -1;
+        }else if((e.target.id == 'imgAdjustRight')){
+            value = value * 1;
+        };
+        if (this.mode == 'inclination'){
+//inclination 0.1|0.05°
+            this.targetImg.offset.r.setValue(Math.floor(this.targetImg.offset.r.as('degrees')*20 + value)/20+'degrees');// 1/20°(0.05°)刻み
+        }else if(this.mode == 'move'){
+//move 0.1mm
+            if(Math.abs(value) == 1){
+                this.targetImg.offset.x.setValue(Math.floor(this.targetImg.offset.x.as('mm')*10 + value)/10+'mm');
+            }else{
+                this.targetImg.offset.y.setValue(Math.floor(this.targetImg.offset.y.as('mm')*5 + value)/5+'mm');
+            };
+        }else if(this.mode == 'scale'){
+//scale 0.1|0.05%
+            if(Math.abs(value) == 1){
+                this.targetImg.scale.x.setValue(Math.floor(this.targetImg.scale.x.as('%')*20 + value)/20+'%');// 1/20%(0.05%)刻み
+            }else{
+                this.targetImg.scale.y.setValue(Math.floor(this.targetImg.scale.y.as('%')*10 + value)/10+'%');// 1/20%(0.05%)刻み
+            };
+        };
+console.log(this.targetImg.scale);
+        this.apply();
+    }
+/*
+    ドキュメント画像の配置を反映
+    xUI.imgAdjust.targetImgの設定が必要
+    引数は、offset,scaleを分けて与える object|string
+*/
+    xUI.imgAdjust.apply = function (offset,scale){
+        if(! this.targetImg) return;
+        if(typeof offset != 'undefined') this.targetImg.offset.setValue(offset.toString());
+        if(typeof scale  != 'undefined') this.targetImg.scale.setValue(scale.toString());
+console.log("translate(" + this.targetImg.offset.position.toString('px')+") scale("+ this.targetImg.scale.toString()+") rotate("+ this.targetImg.offset.r.as('degrees')+"deg)");
+        this.targetImg.img.style.transformOrigin = (this.targetImg.offset.position.x.as('px') + xUI.XPS.sheetLooks.SheetLeftMargin) +'px '+ ( - this.targetImg.offset.position.y.as('px') + xUI.XPS.sheetLooks.SheetHeadMargin)+ 'px';
+        this.targetImg.img.style.transform = "scale("+ this.targetImg.scale.toString()+")"+" rotate("+ this.targetImg.offset.r.as('degrees')+"deg)"+" translate(" + this.targetImg.offset.position.toString('px')+")";
+        this.sync();
+        return this;
+    }
+/*オフセットとスケールを初期化する*/
+    xUI.imgAdjust.reset = function (){
+        if(! this.targetImg) return;
+        xUI.imgAdjust.apply('0mm,0mm,0degrees','100%,100%');
+    }
+/*バックアップを書き戻す*/
+    xUI.imgAdjust.restore = function (){
+        if(! this.targetImg) return;
+        xUI.imgAdjust.apply(this.backup.offset,this.backup.scale);
+    }
+/*編集UIの値を反映*/
+    xUI.imgAdjust.chkValue = function(idx){
+        if(! this.targetImg) return;
+        if(idx == 'imgAdjustRotation'){
+            this.targetImg.offset.r.setValue(document.getElementById('imgAdjustRotation').value +'degrees');
+        }else if(idx == 'imgAdjustScaleX'){
+            this.targetImg.scale.x.setValue(document.getElementById('imgAdjustScaleX').value +'%');
+        }else if(idx == 'imgAdjustScaleY'){
+            this.targetImg.scale.y.setValue(document.getElementById('imgAdjustScaleY').value +'%');
+        }else if(idx == 'imgAdjustPositionX'){
+            this.targetImg.offset.x.setValue(document.getElementById('imgAdjustPositionX').value +'mm');
+        }else if(idx == 'imgAdjustPositionY'){
+            this.targetImg.offset.y.setValue(document.getElementById('imgAdjustPositionY').value +'mm');
+        };
+        this.apply();
+    }
+/*編集対象のイメージオフセットをUIに同期*/
+    xUI.imgAdjust.sync = function(){
+        document.getElementById('imgAdjustRotation').value  = Math.round(this.targetImg.offset.r.as('degrees')*100)/100;
+        document.getElementById('imgAdjustScaleX').value    = Math.round(this.targetImg.scale.x.as(10000))/100;
+        document.getElementById('imgAdjustScaleY').value    = Math.round(this.targetImg.scale.y.as(10000))/100;
+        document.getElementById('imgAdjustPositionX').value = Math.round(this.targetImg.offset.x.as('mm')*100)/100;
+        document.getElementById('imgAdjustPositionY').value = Math.round(this.targetImg.offset.y.as('mm')*100)/100;
+    }
+//原点コントロールハンドラ(保留　未使用)
+    xUI.imgAdjust.handleMove_0 = function(e){
+				var pgOffset=document.getElementById('uiHandle01').parentNode.getBoundingClientRect();
+				$("#uiHandle01").css({ 
+					top:e.pageY  - $(target).data("clickPointY") - ( window.scrollY + pgOffset.top  ) +"px",
+					left:e.pageX - $(target).data("clickPointX") - ( window.scrollX + pgOffset.left ) +"px"
+				});
+				$("#uiHandle02").css({ 
+					top:e.pageY  - $(target).data("clickPointY") - ( window.scrollY + pgOffset.top  ) + xUI.imgAdjust.guiOffset.x.as('px') +"px",
+					left:e.pageX - $(target).data("clickPointX") - ( window.scrollX + pgOffset.left ) + xUI.imgAdjust.guiOffset.y.as('px') +"px"
+				});
+    }
+/*
+    編集を反映させて調整モードを抜ける
+ */
+    xUI.imgAdjust.close = function (){
+        if(! this.targetImg) return;
+        this.backup.offset.setValue(0,0,0);//backup clear
+        this.backup.scale.setValue(1,1);
+        this.targetImg.img.parentNode.style.pointerEvents = 'none';
+        this.targetImg = null;//編集対象をクリア
+        this.ctp0.parentNode.removeChild(this.ctp1);
+        this.ctp0.parentNode.removeChild(this.ctp0);
+    }
+/*
+    ドキュメント画像配置調整機能初期化
+*/
+    xUI.imgAdjust.startup = function (pgid){
+        var currentPageId = Math.floor(xUI.Select[1]/nas.FCT2Frm(xUI.XPS.sheetLooks.PageLength,new nas.Framerate(xUI.XPS.sheetLooks.FrameRate).rate));
+        if(typeof pgid == 'undefined') pgid = currentPageId;
+        var pgOrigin  = [0,pgid*nas.FCT2Frm(xUI.XPS.sheetLooks.PageLength,new nas.Framerate(xUI.XPS.sheetLooks.FrameRate).rate)];
+        var focusCell = (pgid == currentPageId)? xUI.Select:pgOrigin;
+        this.targetImg = xUI.XPS.timesheetImages[pgid];//編集対象を設定
+        this.backup.offset.setValue(this.targetImg.offset.toString());
+        this.backup.scale.setValue(this.targetImg.scale.toString());//backup
+        this.baseline.setValue(xUI.getAreaWidth('document'));//mm | px
+        xUI.selectCell(focusCell);//シートセルを再選択して表示を整える
+        if((xUI.XPS.timesheetImages.imageAppearance == 0)||(xUI.XPS.timesheetImages.imageAppearance == 1))
+            xUI.setAppearance(0.5);//画像が表示されていない場合は表示させる
+
+        xUI.imgAdjust.sync();
+//this.targetImg.offset.setValue('2mm','3mm','-45d');
+//this.targetImg.scale.setValue(1.0,0.6);
+//原点オフセット初期値 [document.getElementById('printPg'+(pgid+1)).offsetTop - document.getElementById(pgOrigin.join('_')).offsetTop + 'px',document.getElementById(pgOrigin.join('_')).offsetLeft +'px'];//キーエレメントの位置
+;//sheetLooksの値
+/*
+this.targetImg.offset.setValue([
+    xUI.XPS.sheetLooks.SheetLeftMargin + xUI.XPS.sheetLooks.CellWidthUnit,
+    xUI.XPS.sheetLooks.SheetHeadMargin + xUI.XPS.sheetLooks.CellWidthUnit
+    ]);//*/
+//画像調整UI配置
+        this.targetImg.img.parentNode.style.pointerEvents = 'auto';
+        this.targetImg.img.parentNode.appendChild(this.ctp0);
+        this.targetImg.img.parentNode.appendChild(this.ctp1);
+            xUI.imgAdjust.ctp0.style.left = xUI.XPS.sheetLooks.SheetLeftMargin - (xUI.imgAdjust.ctp0.clientWidth / 2)  +'px';
+            xUI.imgAdjust.ctp0.style.top  = xUI.XPS.sheetLooks.SheetHeadMargin - (xUI.imgAdjust.ctp0.clientHeight / 2) +'px';
+            xUI.imgAdjust.ctp1.style.left = xUI.XPS.sheetLooks.SheetLeftMargin + xUI.imgAdjust.baseline.as('px') - (xUI.imgAdjust.ctp1.clientWidth / 2) + 'px';
+            xUI.imgAdjust.ctp1.style.top  = xUI.XPS.sheetLooks.SheetHeadMargin - (xUI.imgAdjust.ctp1.clientHeight / 2) +'px';
+//画像調整UI原点(CT-0)初期化
+        $('#uiHandle01').mousedown(function(e){
+            var target = e.target;
+            $(target)
+                .data("clickPointX" , e.pageX - $("#uiHandle01").offset().left)
+                .data("clickPointY" , e.pageY - $("#uiHandle01").offset().top);
+        $('#uiHandle01').css('cursor','none');
+            $(document).mousemove(function(e){
+//画像位置の調整 テキストボックスのパラメータを連続して更新
+				var pgOffset=document.getElementById('uiHandle01').parentNode.getBoundingClientRect();
+				$("#uiHandle01").css({ 
+					top:e.pageY  - $(target).data("clickPointY") - ( window.scrollY + pgOffset.top  ) +"px",
+					left:e.pageX - $(target).data("clickPointX") - ( window.scrollX + pgOffset.left ) +"px"
+				});
+				$("#uiHandle02").css({ 
+					top:e.pageY  - $(target).data("clickPointY") - ( window.scrollY + pgOffset.top  ) + "px",
+					left:e.pageX - $(target).data("clickPointX") - ( window.scrollX + pgOffset.left ) + xUI.imgAdjust.baseline.as('px') +"px"
+				});
+//差分をonchangeを保留してテキストボックスに反映させる 解決はマウスアップイベント
+                document.getElementById('imgAdjustPositionX').value = xUI.imgAdjust.targetImg.offset.x.as('mm') + new nas.UnitValue(xUI.imgAdjust.ctp0.offsetLeft + (xUI.imgAdjust.ctp0.clientWidth / 2)  - xUI.XPS.sheetLooks.SheetLeftMargin + 'px','mm').as('mm') * -1;//as 'mm'
+                document.getElementById('imgAdjustPositionY').value = xUI.imgAdjust.targetImg.offset.y.as('mm') + new nas.UnitValue(xUI.imgAdjust.ctp0.offsetTop  + (xUI.imgAdjust.ctp0.clientHeight / 2) - xUI.XPS.sheetLooks.SheetHeadMargin + 'px','mm').as('mm') * -1;//as 'mm'
+            }).mouseup(function(e){
+console.log('unbind');
+//移動をoffsetに展開して解決
+            xUI.imgAdjust.apply(
+                document.getElementById('imgAdjustPositionX').value+'mm,'+
+                document.getElementById('imgAdjustPositionY').value+'mm,'+
+                document.getElementById('imgAdjustRotation').value+'degrees'
+            );
+//ctp位置リセット
+            xUI.imgAdjust.ctp0.style.left = xUI.XPS.sheetLooks.SheetLeftMargin - (xUI.imgAdjust.ctp0.clientWidth / 2)  +'px';
+            xUI.imgAdjust.ctp0.style.top  = xUI.XPS.sheetLooks.SheetHeadMargin - (xUI.imgAdjust.ctp0.clientHeight / 2) +'px';
+            xUI.imgAdjust.ctp1.style.left = xUI.XPS.sheetLooks.SheetLeftMargin + xUI.imgAdjust.baseline.as('px') - (xUI.imgAdjust.ctp1.clientWidth / 2) + 'px';
+            xUI.imgAdjust.ctp1.style.top  = xUI.XPS.sheetLooks.SheetHeadMargin - (xUI.imgAdjust.ctp1.clientHeight / 2) +'px';
+
+                $(document).unbind("mousemove");
+                $('#uiHandle01').css('cursor','move');
+                $(document).unbind("mouseup");
+            });
+        });
+//画像調整UI制御点(CT-1)初期化
+        $('#uiHandle02').mousedown(function(e){
+            var target = e.target;
+            $(target)
+                .data("clickPointX" , e.pageX - $("#uiHandle02").offset().left)
+                .data("clickPointY" , e.pageY - $("#uiHandle02").offset().top);
+        $('#uiHandle02').css('cursor','none');
+            $(document).mousemove(function(e){
+//画像サイズ・傾斜の調整 テキストボックスのパラメータを連続して更新
+				var pgOffset=document.getElementById('uiHandle01').parentNode.getBoundingClientRect();
+				$("#uiHandle02").css({ 
+					top:e.pageY  - $(target).data("clickPointY") - ( window.scrollY + pgOffset.top  ) +"px",
+					left:e.pageX - $(target).data("clickPointX") - ( window.scrollX + pgOffset.left ) +"px"
+				});
+//差分をonchangeを保留してテキストボックスに反映させる　解決はマウスアップイベント
+                var unitPt = [xUI.imgAdjust.ctp1.offsetLeft - xUI.imgAdjust.ctp0.offsetLeft,xUI.imgAdjust.ctp1.offsetTop - xUI.imgAdjust.ctp0.offsetTop];//正規化座標（[x,y]as px）
+                document.getElementById('imgAdjustRotation').value = nas.radiansToDegrees(xUI.imgAdjust.targetImg.offset.r.as('radians') - Math.atan2(unitPt[1],unitPt[0]));//as 'degrees' ctp0 - ctp1 間の傾斜角度
+                document.getElementById('imgAdjustScaleX').value = Math.round(xUI.imgAdjust.targetImg.scale.x.as(10000) * (xUI.imgAdjust.baseline.as('px')/nas.length(unitPt)))/100 ;//as percent
+                document.getElementById('imgAdjustScaleY').value = Math.round(xUI.imgAdjust.targetImg.scale.y.as(100) * parseFloat(document.getElementById('imgAdjustScaleX').value))/100 ;//as percent
+            }).mouseup(function(e){
+console.log('unbind');
+//移動をoffset,scale に展開して解決
+            xUI.imgAdjust.apply(
+                document.getElementById('imgAdjustPositionX').value +'mm,'+
+                document.getElementById('imgAdjustPositionY').value +'mm,'+
+                document.getElementById('imgAdjustRotation').value  +'degrees',
+                document.getElementById('imgAdjustScaleX').value    +'%,'+
+                document.getElementById('imgAdjustScaleY').value    +'%'
+            );
+//ctp位置リセット
+            xUI.imgAdjust.ctp1.style.left = xUI.XPS.sheetLooks.SheetLeftMargin + xUI.imgAdjust.baseline.as('px') - (xUI.imgAdjust.ctp1.clientWidth / 2) + 'px';
+            xUI.imgAdjust.ctp1.style.top  = xUI.XPS.sheetLooks.SheetHeadMargin - (xUI.imgAdjust.ctp1.clientHeight / 2) +'px';
+
+                $(document).unbind("mousemove");
+                $('#uiHandle02').css('cursor','move');
+            });
+        });
+//初期化終了
+        xUI.imgAdjust.apply();
+        
+    }
+/*
+    各調整UIの初期化
+    type inclination|scale|position
+ */
+    xUI.imgAdjust.init = function(type){
+        if(typeof type == 'undefined') type = 'inclination';
+        switch(type){
+        case 'inclination':
+//回転(傾き)入力
+        break;
+        case 'scale':
+        break;
+        case 'position':
+        break;
+        default :
+//クリア
+            //カーソルクリア
+            //UIバーツ非表示
+            //マウス入力解除
+            //キー入力解除
+        }
+    }
+
 /*
     @params {Boolean} opt
         戻り値を文字列に
@@ -2512,15 +3105,15 @@ if(! document.getElementById('fixedHeader')) return;
     var myOffset=0;
 //一時コード  あとで調整  20180916
     if(document.getElementById("scrollSpaceHd"))
-        document.getElementById("scrollSpaceHd").style.height=(headHeight-myOffset)+"px";
+        document.getElementById("scrollSpaceHd").style.height     = (headHeight-myOffset)+"px";
     if(document.getElementById("xpstScrollSpaceHd"))
-        document.getElementById("xpstScrollSpaceHd").style.height=(headHeight-myOffset)+"px";
+        document.getElementById("xpstScrollSpaceHd").style.height = (headHeight-myOffset)+"px";
     if(document.getElementById("xmapScrollSpaceHd"))
-        document.getElementById("xmapScrollSpaceHd").style.height=(headHeight-myOffset)+"px";
-    document.getElementById("UIheaderScrollH").style.top=(headHeight+$("#app_status").height())+"px";
-    document.getElementById("UIheaderFix").style.top=(headHeight+$("#app_status").height())+"px";
-    document.getElementById("UIheaderScrollV").style.top=(headHeight+$("#app_status").height())+"px";
-    document.getElementById("scrollSpaceFt").style.height="1 px";
+        document.getElementById("xmapScrollSpaceHd").style.height = (headHeight-myOffset)+"px";
+    document.getElementById("UIheaderScrollH").style.top  = (headHeight+$("#app_status").height())+"px";
+    document.getElementById("UIheaderFix").style.top      = (headHeight+$("#app_status").height())+"px";
+    document.getElementById("UIheaderScrollV").style.top  = (headHeight+$("#app_status").height())+"px";
+    document.getElementById("scrollSpaceFt").style.height = "1 px";
 }
 /**
  *  @params {Number|Array} myScale
@@ -2607,10 +3200,10 @@ xUI.putメソッドがobject Xpsに対応したのでこのメソッド自体が
  */
 xUI.reInitBody=function(newTimelines,newDuration){
     var newXPS=new Xps(newTimelines,newDuration);
-    newXPS.readIN(this.XPS.toString());//別オブジェクトとして複製を作る
+    newXPS.readIN(this.XPS.toString(false));//別オブジェクトとして複製を作る
     //変更してputメソッドに渡す
     newXPS.reInitBody(newTimelines,newDuration);
-if(dbg) console.log(newXPS.toString());
+if(dbg) console.log(newXPS.toString(false));
     this.put(newXPS);
 };
 /*
@@ -2625,7 +3218,7 @@ xUI.switchStage=function(){
 xUI.setReferenceXPS=function(myXps){
     documentDepot.currentReference = new Xps();
     if(typeof myXps == 'undefined'){
-        documentDepot.currentReference.readIN(xUI.XPS.toString());
+        documentDepot.currentReference.readIN(xUI.XPS.toString(false));
     } else if (myXps instanceof Xps) {
         documentDepot.currentReference=myXps;
     } else {
@@ -3339,46 +3932,110 @@ if(pageNumber==1){
     return _BODY;
 };
 //end headerView()
-/*    タイムシート本体のHTMLを返すメソッド(ページ単位)
+/**
+ *	@params {string}	type
+ *	リザルトのタイプは引数で指定
+ *	fix|column|document
+ *	
+ *	sheetLooksを参照して指定のブロックの幅をpixelで返す関数
+ *	指定がない場合はすべてをまとめてオブジェクトで返す
+ *	
+ */
+xUI.getAreaWidth = function(type){
+	var tableFixWidth    = 0;
+	var tableColumnWidth = 0;
+	var tableDocWidth    = 0;
+	xUI.XPS.xpsTracks.areaOrder.forEach(function (e){
+		var areaWidth = 0;//as CellWidthUnit
+		if(e.type == 'reference'){
+//トラックテーブル上に存在しないリファレンスはトラックスペックから取得
+			areaWidth += xUI.XPS.sheetLooks[XpsTrackWidth["reference"]] * e.tracks; 
+		}else{
+//その他はアサインテーブルの値を合算
+			e.members.forEach(function(ex){
+				areaWidth += xUI.XPS.sheetLooks[XpsTrackWidth[ex.option]];
+			});
+		};
+//タイムコードトラックの幅を加算
+		if(e.timecode != 'none') areaWidth += xUI.XPS.sheetLooks[XpsTrackWidth["timecode"]] * ((e.timecode == 'both')? 2:1);
+//変数を取得
+		if(e.fix)	 tableFixWidth	+= areaWidth;//固定エリア幅
+		if(!(e.hide)) tableColumnWidth += areaWidth;//全幅
+	});
+	tableDocWidth = tableColumnWidth * xUI.PageCols + (xUI.XPS.sheetLooks.ColumnSeparatorWidth*(xUI.PageCols-1));
+//リザルトのコンバート　なくても良いが将来的には必要
+
+	tableDocWidth    = new nas.UnitValue(tableDocWidth    +xUI.XPS.sheetLooks.CellWidthUnit,'mm');
+	tableFixWidth    = new nas.UnitValue(tableFixWidth    +xUI.XPS.sheetLooks.CellWidthUnit,'mm');
+	tableColumnWidth = new nas.UnitValue(tableColumnWidth +xUI.XPS.sheetLooks.CellWidthUnit,'mm');
+
+	if(type == 'fix'){
+		return tableFixWidth;
+	}else if(type == 'column'){
+		return tableColumnWidth;
+	}else if(type == 'document'){
+		return tableDocWidth;
+	};
+	return {
+		"fix"     : tableFixWidth,
+		"column"  : tableColumnWidth,
+		"document": tableDocWidth
+	};
+}
+
+/*
+ *  @params {Number}    pageNumber
+ *  @returns {String}
+ *      HTML timesheet page content
+ *    タイムシート本体のHTMLを返すメソッド(ページ単位)
  *        xUI.pageView(pageNumber)
  *        引数はページ番号を整数で
  *        戻り値はページ内容のHTMLテキスト
+ *
  *ページヘッダであった場合のみ固定のタイムラインヘッダーを出力する（画面表示専用）
  * 固定ヘッダの  第一第二第三  象限を出力する
  *   2  |  1 (横スクロール)
  *  ----+-----
- *  3   |   4
+ *   3  |  4
  *
  *引数:
- *0    第一象限(-1)
+ * 0    第一象限(-1)
  *-1    第二象限(-2)
  *-2    第三象限(-3)
  *    内部パラメータでは各値ともに減算して使用  --
  *    0以上は通常ページの出力（0 org）
+ * 1~   第四象限(0 ~ ) 1 origin
  *
- *
+ *      xUI.XPS.xpsTracks.areaOrder
+ *      xUI.XPS.sheetLooks.trackSpec(xUI.sheetLooks.trackspec)を参照
+ * 
  */
-xUI.pageView =function(pageNumber)
-{
+/*トラック/トラックエリア/CSSクラスの関連をテーブル化する*/
+
+
+xUI.pageView =function(pageNumber){
+console.log("++++++++++++++++++++++++++++ 可変書式対応")
     var restoreValue=this.Select;
     var BODY_ = '';
-    var headlineHeight=36;
-//ページ数//プロパティに変更せよ
-if(this.viewMode=="Compact"){
-var Pages=1;//コンパクトモードでは固定
-var SheetRows=Math.ceil(this.XPS.duration()/this.XPS.framerate)*Math.ceil(this.XPS.framerate);
-var hasEndMarker=true;// 継続時間終了時のエンドマーカー配置判定(必ず描画)
-}else{
-var Pages=Math.ceil((this.XPS.duration()/this.XPS.framerate)/this.SheetLength);//総尺をページ秒数で割って切り上げ
-var SheetRows=Math.ceil(this.SheetLength/this.PageCols)*Math.ceil(this.XPS.framerate);
-var hasEndMarker=false;// 継続時間終了時のエンドマーカー配置判定(初期値)
-//コンパクトモード用の固定表示が残っている場合消去する
-if((document.getElementById('qdr3'))&&(document.getElementById('qdr3').innerHTML)){
-    document.getElementById('qdr1').innerHTML='';
-    document.getElementById('qdr2').innerHTML='';
-    document.getElementById('qdr3').innerHTML='';
-}
-}
+//    var headlineHeight=36;
+//ページ数//プロパティに変更
+    if(this.viewMode=="Compact"){
+//compact(scrolle)
+        var Pages        = 1;//コンパクトモードでは固定
+        var SheetRows    = Math.ceil(this.XPS.duration() / this.XPS.framerate) * Math.ceil(this.XPS.framerate);//ショット内フレーム数
+        var hasEndMarker = true;// 継続時間終了時のエンドマーカー配置判定(必ず描画)
+    }else{
+//wordparo(page)
+        var Pages        = Math.ceil((this.XPS.duration() / this.XPS.framerate) / this.SheetLength);//総尺をページ秒数で割って切り上げ
+        var SheetRows    = Math.ceil(this.SheetLength / this.PageCols) * Math.ceil(this.XPS.framerate);//カラム内フレーム数
+        var hasEndMarker = false;// 継続時間終了時のエンドマーカー配置判定(初期値)
+//コンパクトモード用の固定表示が残っている場合1〜3象限の値を消去
+        if((document.getElementById('qdr3'))&&(document.getElementById('qdr3').innerHTML)){
+            document.getElementById('qdr1').innerHTML='';
+            document.getElementById('qdr2').innerHTML='';
+            document.getElementById('qdr3').innerHTML='';
+        };
+    };
 /*
 (2010/11/06)
     現在  PageLengthは冗長フレームを含む <秒数×フレーム母数>
@@ -3416,6 +4073,15 @@ if((document.getElementById('qdr3'))&&(document.getElementById('qdr3').innerHTML
  トラック注釈を引き出し線付きで表示する機能増設
 (2019/01/20)
  固定オーバーレイが参照非表示の際に表示乱れするのを抑制（高さ）
+(2023/02/04)
+ 画像マスタードキュメント機能を拡張
+ 画像-UI一致のためsheetLooks拡張
+ trackSpecをもとにareaOrderを作成してこれを表示のためのテーブルとして使用する
+ 左エンドの罫線＋マージンをテーブルセルとして処理することで、cssを簡略化
+
+ (2023/06/28)
+ sheetlooksオブジェクト分離のため ブロック幅算出の汎用関数を分離
+
 */
 //ページ番号が現存のページ外だった場合丸める
     if (pageNumber >=Pages){
@@ -3423,7 +4089,7 @@ if((document.getElementById('qdr3'))&&(document.getElementById('qdr3').innerHTML
     } else {
         if(pageNumber<=-3) pageNumber=0;
     };
-    pageNumber--;
+    pageNumber--;//内部値に補正
 
 //タイムシートテーブル
 
@@ -3432,609 +4098,637 @@ if((document.getElementById('qdr3'))&&(document.getElementById('qdr3').innerHTML
 タイムシートのルック調整の為のおぼえがき
 画面上は、規定幅のエレメントをすべて設定した状態で配置(cssに設定)
 全体幅は自動計算
+
+画像マスター機能の導入に伴う変更
+
 印字上は全体幅の規定が存在するので、規定幅をテーブル全体幅に設定して
-フレームコメント以外の各エレメントの設定をcssで行い
-誤差をフレームコメントで吸収する。（epsと同じアルゴリズム）
-そのために必要な表示クラスを設定
-    TimeGuideWidth    th.timeguidelabel
-    ActionWidth    th.layerlabelR
-    DialogWidth    th.dialoglabel
-    SheetCellWidth    th.layerlabel
-*new    cameraWidth    th.cameraLabel
-    CommentWidth    th.framenotelabel
-    ColumnSeparatorWidth colSep
-印字に適さない設定(幅/高さオーバー)の場合は、一応警告を表示する。
-印字用cssは、固定で作成する。A4,A3,B4,レターサイズくらいのところで作る
+印刷時点で横方向をスケーリングして印字範囲内に収める
 
-*/
-/**/
-if(this.viewMode=="Compact"){
-var tableFixWidth=(
-    this.sheetLooks.TimeGuideWidth +
-    this.sheetLooks.ActionWidth*this.referenceLabels.length 
-    );
-var tableColumnWidth=(
-    tableFixWidth+
-    this.sheetLooks.DialogWidth*xUI.dialogCount +
-    this.sheetLooks.StillCellWidth*xUI.stillCount +
-    this.sheetLooks.GeometryCellWidth*xUI.stageworkCount +
-    this.sheetLooks.SfxCellWidth*xUI.sfxCount +
-    this.sheetLooks.CameraCellWidth*xUI.cameraCount +
-    this.sheetLooks.SheetCellWidth*xUI.timingCount +
-    this.sheetLooks.CommentWidth );//
+対応する変数とcssクラス
+    SheetCellHeight      td.sheet
+    LeftMargin           
+    TimeGuideWidth       th.timeguidelabel
+    ActionWidth          th.layerlabelR
+    DialogWidth          th.dialoglabel
+    SheetCellWidth       th.layerlabel
+    cameraWidth          th.cameraLabel
+    CommentWidth         th.framenotelabel
+    ColumnSeparatorWidth .colSep
 
-/*+
-    DialogWidth*(xUI.dialogSpan-1)
-        (第二・第三象限固定幅)
-    (
-    参照レイヤ数*参照セル幅+
-    タイムヘッダ幅+
-    ダイアログ幅
-    )
-    TimeGuideWidth +
-    ActionWidth*xUI.referenceLabels.length +
-    DialogWidth*(xUI.dialogCount-xUI.dialogSpan)+
-*/
-//alert(    DialogWidth*(xUI.dialogCount-xUI.dialogSpan) );
-    var tableBodyWidth=tableColumnWidth;
+印字に適さない設定の場合は、一応警告を表示する。
+印字用cssは、固定で作成する
+現在A3サイズ固定
+
+オーバー時は横幅を縮小
+
+A4サイズオプションは検討中 202302
+ */
 /*
-コンパクトモードで１段固定(第一象限スクロールデータ)
-    (
-    参照レイヤ数*参照セル幅+
-    タイムヘッダ幅+
-    ダイアログ幅+
-    stillレイヤ数*stillセル幅+
-    timingレイヤ数*timingセル幅+
-    sfxレイヤ数*sfxセル幅+
-    cameraレイヤ数*cameraセル幅+
-    コメント欄幅
-    )
-*/
-    var PageCols=1;
-    var SheetLength=Math.ceil(this.XPS.duration()/this.XPS.framerate);
-}else{
-//シートワープロモード
-/*    第二象限固定ヘッダは、タイムガイド幅
-    第一象限ヘッダーはカラム数分繰り返し
-    第三象限ヘッダーはシート枚数分繰り返し
-UI設定に基づいて段組
-*/
-    var tableFixWidth=this.sheetLooks.TimeGuideWidth;
+referenceデータは、本体Xpstに含まれないためここで整合性をチェックする
 
-    var tableColumnWidth=(
-    this.sheetLooks.TimeGuideWidth +
-    this.sheetLooks.ActionWidth*this.referenceLabels.length +
-    this.sheetLooks.DialogWidth*xUI.dialogCount +
-    this.sheetLooks.StillCellWidth*xUI.stillCount +
-    this.sheetLooks.GeometryCellWidth*xUI.stageworkCount +
-    this.sheetLooks.SfxCellWidth*xUI.sfxCount +
-    this.sheetLooks.CameraCellWidth*xUI.cameraCount +
-    this.sheetLooks.SheetCellWidth*xUI.timingCount +
-    this.sheetLooks.CommentWidth );
+console.log("========================================================================");
+console.log(this.referenceLabels);
+    var referenceArea = this.XPS.xpsTracks.areaOrder.find(function(e){return (e.type == "reference")});
+console.log(referenceArea);
+    if((referenceArea)&&(referenceArea.tracks < this.referenceLabels.length)) referenceArea.tracks = this.referenceLabels.length;
+ */
+ /*
+    表示モードは
+    画像表示 ON|OFF
+    ページ・スクロール切り替え Compact|Wordprop
+    制限モード
+    jp|us切り替え（レイヤーの上下逆転）を検討（UI上の変更はない）
+*/
 /*
-    以前はテーブル内のタイムラン種別をここで判定していたが
-    xUIのプロパティに変換してこちらでは計算のみを行う仕様に変更済み 2015/04.25
+    スクロール固定幅（第2/3象限）
+    スクロールエリア幅
+    xUI.XPS.xpsTracks.areaOrder テーブルを参照するように切り替え 2023 02
 */
-    var tableBodyWidth=tableColumnWidth * this.PageCols +
-        (this.sheetLooks.ColumnSeparatorWidth*(this.PageCols-1));//
+console.log(this === xUI);
+console.log(this.sheetLooks);
+console.log(xUI.XPS.toString(false));
+
+
+
+    var tableFixWidth    = 0;
+    var tableColumnWidth = 0;
+
+    xUI.XPS.xpsTracks.areaOrder.forEach(function (e){
+        var areaWidth = 0;
+        if(e.type == 'reference'){
+//トラックテーブル上に存在しないリファレンスはトラックスペックから取得
+            areaWidth += xUI.XPS.sheetLooks[XpsTrackWidth["reference"]] * e.tracks; 
+        }else{
+//その他はアサインテーブルの値を合算
+console.log(e);
+            e.members.forEach(function(ex){
+console.log(ex.option,XpsTrackWidth[ex.option],xUI.XPS.sheetLooks[XpsTrackWidth[ex.option]]);
+                areaWidth += xUI.XPS.sheetLooks[XpsTrackWidth[ex.option]];
+            });
+        };
+//タイムコードトラックの幅を加算
+        if(e.timecode != 'none') areaWidth += xUI.XPS.sheetLooks[XpsTrackWidth["timecode"]] * ((e.timecode == 'both')? 2:1);
+//変数を取得
+        if(e.fix)     tableFixWidth    += areaWidth;//固定エリア幅
+        if(!(e.hide)) tableColumnWidth += areaWidth;//全幅
+    });
+
+    var areaWidth = xUI.getAreaWidth();
+    
+
+
+    if(this.viewMode=="Compact"){
+//Compact(スクロール)モード
+        var tableBodyWidth = tableColumnWidth;
+        var PageCols = 1;
+        var SheetLength = Math.ceil(this.XPS.duration()/this.XPS.framerate);
 /*
-    (
-    参照レイヤ数*参照セル幅+
-    タイムヘッダ幅+
-    ダイアログ幅+
-    stillレイヤ数*stillセル幅+
-    timingレイヤ数*timingセル幅+
-    stageworkレイヤ数*geometryセル幅+
-    sfxレイヤ数*sfxセル幅+
-    cameraレイヤ数*cameraセル幅+
-    コメント欄幅
-    )×ページカラム数＋カラムセパレータ幅×(ページカラム数?1)
+    コンパクト(スクロール）モード
+    １段組に固定
+    第１象限    トラックラベル縦方向固定ヘッダ・横スクロール
+    第２象限    縦横固定部
+    第３象限    横方向固定フィールド・縦スクロール
+    第４象限    本体ドキュメント・縦横スクロール
 */
+    }else{
+//WordProp(ページ)モード
+        var tableBodyWidth = tableColumnWidth * this.PageCols + 
+            (xUI.XPS.sheetLooks.ColumnSeparatorWidth*(this.PageCols-1));//
+        var PageCols    = this.PageCols;
+        var SheetLength = this.SheetLength
+        if(pageNumber==(Pages-1)){hasEndMarker=true;};
 
-    var PageCols=this.PageCols;
-    var SheetLength=this.SheetLength
-
-    if(pageNumber==(Pages-1)){hasEndMarker=true;};
-}
+console.log(tableColumnWidth , this.PageCols ,xUI.XPS.sheetLooks.ColumnSeparatorWidth,this.PageCols);
 
 /*
-BODY_ += 'onMouseDown =" return xUI.Mouse(event)"';
-BODY_ += 'onMouseUp =" return xUI.Mouse(event)"';
-BODY_ += 'onMouseOver =" xUI.Mouse(event)"';
+    シートワープロ（ページ）モード
+    第１、２、３象限非表示
+    第４象限のみを使用
 */
-//alert(tableFixWidth+":"+tableBodyWidth);
+    };
+console.log(xUI.sheetLooks);
+console.log(tableFixWidth+":"+tableBodyWidth);
 BODY_ +='<div class=sheetArea>';//open sheetArea
-//============= テーブル出力開始
-BODY_ +='<table class=sheet cellspacing=0 ';
+//============= ページテーブル出力開始
+BODY_ +='<table cellspacing=0 ';
     if(pageNumber<=-2){
 //第2,3象限用
-BODY_ +='style="width:'+(tableFixWidth)+this.sheetLooks.CellWidthUnit+'"';
+BODY_ +='style="width:' + tableFixWidth  + this.sheetLooks.CellWidthUnit+'"';
     }else{
 //第1,4象限用
-BODY_ +='style="width:'+tableBodyWidth+this.sheetLooks.CellWidthUnit+'"';
-    }
+console.log('style="width:' + tableBodyWidth + this.sheetLooks.CellWidthUnit+'"');
+BODY_ +='style="width:' + tableBodyWidth + this.sheetLooks.CellWidthUnit+'"';
+    };
     if(pageNumber<0){
-BODY_ +='id="qdr'+(-1*pageNumber)+'" ';
+BODY_ +='id="qdr'+(-1*pageNumber)+'" class="sheet"';
     }else{
-BODY_ +='id="qdr4" ';
-//BODY_ +='id="qdr4_'+String(pageNumber)+'" ';
+//BODY_ +='id="qdr4" ';
+BODY_ +='id="page_'+String(pageNumber+1)+'" class="qdr4 sheet"';
     }
 BODY_ +=' >';
 BODY_ +='<tbody>';
-    if(true){
-//========================================シートヘッダ
+//*========================================不可視｜タグ表示シートヘッダ
 /*    テーブルルックを決め込む為の幅配置及び将来的にリンクペアレントを表示する領域(かも)
-    第一行目
-    UI上は、イベント受信を担当するのは最も上に表示されるエレメント
+    第一行目 height:2px class:tlhead  (timelineheader)
+    不可視シートヘッダ内には、タグを表示するspanを格納するので注意
 */
 BODY_ +='<tr class=tlhead ';
     if(this.viewMode=="Compact") BODY_ +='id=tlhead';
     if(pageNumber==0) BODY_ +='Parent';
 BODY_ +='>';
+//左マージンセル
+BODY_ +='<td class="sheetMargin-left left-top" ></td>';//
 //*==============================ページカラムループ処理
-    for (cols=0;cols < PageCols;cols ++){
+    for (var cols=0;cols < PageCols;cols ++){
+//*==============================トラックエリアループ処理
+console.log(this.XPS.xpsTracks.areaOrder);
+        for (var area = 0 ;area < this.XPS.xpsTracks.areaOrder.length ; area ++){
+            var areaOrder = this.XPS.xpsTracks.areaOrder[area];
+console.log(areaOrder.timecode);
+//第二第三象限でかつコンパクトモードでない場合はここでブレイクしてヘッダーを縮小
+            if((!(areaOrder.fix))&&(this.viewMode=="Compact")&&(pageNumber<=-2)) break;
+            if((areaOrder.timecode == 'both')||(areaOrder.timecode == 'head')){
 /*********** timeguide ********************/
 BODY_ +='<th class="tcSpan tlhead"';
 BODY_ +=' ></th>';
-
-if((this.viewMode!="Compact")&&(pageNumber<=-2)){break;
-//第二第三象限でかつコンパクトモードでない場合はここでブレイクしてヘッダーを縮小
-}
+            };
+            if(areaOrder.type == 'reference'){
+//*==============================リファレンスメンバ処理
+                for (var r = 0 ; r < this.referenceLabels.length ; r++){
 /*********** Action Ref *************/
-//=====================参照エリア
-        for (r=0;r<this.referenceLabels.length;r++){
 BODY_ +='<th class="referenceSpan tlhead ref" ';
 BODY_ +='> </th>';
-        };
-
-/*********** Dialog Area*************/
-//予約タイムラインの為一回分 別に出力
-//BODY_ +='<th class=dialogSpan ';
-//BODY_ +='> </th>';
-/************左見出し固定時の処理*****************/
-    if(pageNumber<=-2){
-/*********** Edit Area *************/
-//=====================編集セル本体の固定部分のみをタイムライン種別に合わせて配置(ラベル部分)
-if(true){
-        for (var r=0;r<(xUI.dialogSpan);r++){
-    BODY_ +='<th class="dialogSpan tlhead"  id="TL'+(r+1)+'" ></th>';
-        }
-}else{
-        for (var r=0;r<this.XPS.xpsTracks.length;r++){
-//BODY_ +='<th class="editSpan" ';//editSpanは後で消しておくこと
- switch (this.XPS.xpsTracks[r].option)
- {
-case "dialog":
-    BODY_ +='<th class="dialogSpan tlhead" ';
-    BODY_ +=' id="TL'+ r +'"';
-    BODY_ +=' >';
-    BODY_ +='</th>';
-break;
-case "still":
-case "sfx":
-case "camera":
-case "timing":
-default:
- }
-        };
-//BODY_ +='</tr><tr>';//改段
-}
-
-    }else{
-/*第一、第四象限用処理*/
-/*********** Edit Area *************/
-//=====================編集セル本体をタイムライン種別に合わせて配置(ラベル部分)
-        var noteStep = 1;  
-        for (r=0;r<this.XPS.xpsTracks.length-1;r++){
-            //末尾レコードはコメント固定なので判定せず（レコード長から1減算）
- switch (this.XPS.xpsTracks[r].option)
- {
-case "sound" :
-case "dialog":  BODY_ +='<th class="dialogSpan tlhead" ';break;
-case "still" :  BODY_ +='<th class="stillSpan tlhead" ';break;
-case "sfx"   :  BODY_ +='<th class="sfxSpan tlhead" ';break;
-case "geometry":BODY_ +='<th class="geometrySpan tlhead" ';break;
-case "camera":  BODY_ +='<th class="cameraSpan tlhead" ';break;
-case "timing":
-default:        BODY_ +='<th class="timingSpan tlhead" ';
- }
-BODY_ +=' id="TL'+(r+1)+'"';
+                };
+//*==============================リファレンスメンバ処理//
+            }else{
+//*==============================エリアメンバ処理
+                for (var m = 0; m < areaOrder.members.length; m++ ){
+BODY_ +='<th class="'+ trackHeaderClass[areaOrder.members[m].option] +' tlhead" ';
+BODY_ +=' id="TL'+ areaOrder.members[m].index +'"';
 BODY_ +=' > ';
-    if(r > 0) noteStep = (this.XPS.xpsTracks[r-1].tag)? (noteStep % 5)+1 : 1 ;
-if(this.XPS.xpsTracks[r].tag){
-    var  trackId = ['p',pageNumber,'c',cols,'t',r].join('');
-    BODY_ += '<span id="';
-    BODY_ += trackId;
-    BODY_ += '" class="noteOverlay'
-    BODY_ += ' note'+noteStep;
-    BODY_ += '"><span id="'
-    BODY_ += trackId;
-    BODY_ += '_L" class=overlayLabel>'+this.XPS.xpsTracks[r].tag+'</span></span>'
-}
+/*********** span for track tag *************/
+//=====================編集セル本体をタイムライン種別に合わせて配置(ラベル部分)
+                    if(this.XPS.xpsTracks[areaOrder.members[m].index].tag){
+                        var noteStep = 0;//tag深度
+                        for (var r = areaOrder.members[m].index ; r >= 0 ;r --) if(this.XPS.xpsTracks[r].tag) noteStep ++ ;
+                        var trackId = ['p',pageNumber,'c',cols,'t',areaOrder.members[m].index].join('');
+BODY_ += '<span id="';
+BODY_ += trackId;
+BODY_ += '" class="noteOverlay'
+BODY_ += ' note'+noteStep % 5;
+BODY_ += '"><span id="'
+BODY_ += trackId;
+BODY_ += '_L" class=overlayLabel>'+this.XPS.xpsTracks[areaOrder.members[m].index].tag+'</span></span>'
+                    };
 BODY_ +='</th>';
-        };
-/*********** FrameNote Area *************/
-BODY_ +='<th class="framenoteSpan tlhead"';
-BODY_ +=' ></th>';
-//カラムセパレータの空セル挿入
-if (cols < PageCols-1) BODY_ +=('<td class="colSep tlhead" ></td>');
-    };
-
-    }
-/************************************************/
-
-
-BODY_ +='</tr>';//改段
-    }
-//第二行目========================================シート記入分ヘッダ
-    
-BODY_ +='<tr>';
-    for (cols=0;cols < PageCols;cols ++){
+                };
+//*==============================エリアメンバ処理//
+            };
+            if((areaOrder.timecode == 'both')||(areaOrder.timecode == 'tail')){
 /*********** timeguide ********************/
-BODY_ +='<th rowspan=2 class="tclabel annotationText" ';
-BODY_ +='style="height:'+headlineHeight+'px" ';
-//BODY_ +='style=" width:'+this.sheetLooks.TimeGuideWidth+CellWidthUnit+'"';
-BODY_ +=' ><span class=timeguide> TIME </span></th>';
-/*********** Action Ref *************/
-BODY_ +='<th colspan="'+this.referenceLabels.length+ '" id="rnArea" class="rnArea annotationText ref" ondblclick=sync("referenceLabel") title=""';
-//  ここは参照シートの識別名に置き換え 
-BODY_ +=' >Reference</th>';
-/*********** Dialog Area*************/
-BODY_ +='<th rowspan=2 class="dialoglabel annotationText" ';
-//ダイアログの幅は可変
-if(xUI.dialogSpan>1){
-BODY_ +='colspan ="'+xUI.dialogSpan+'" ';
-}
-/***
-BODY_ +=' onMouseDown=\'xUI.changeColumn(0 ,'+ (2 * pageNumber+cols) +');\'';
-***/
-BODY_ +='>台<BR>詞</th>';
-    if(pageNumber>=-1){
-/*********** Edit Area 1 (timing) *************/
-BODY_ +='<th colspan='+xUI.timingSpan+' id=editArea class="editArea annotationText" ondblclick=sync("editLabel") title=""';
-//ここは編集中のステージ名に置き換え予定
-BODY_ +='>Animation</th>';
-
-/*********** Edit Area 2 (camera+sfx) *************/
-if(xUI.cameraSpan>0){
-BODY_ +='<th colspan='+xUI.cameraSpan+' id=camArea class="camArea annotationText" ';
-//
-BODY_ +='>camera</th>';
-}
-/*********** FrameNote Area *************/
-BODY_ +='<th rowspan=2 class="framenotelabel annotationText"';
-/***
-BODY_ +=' onMouseDown=\'xUI.changeColumn("memo" ,'+ (2 * pageNumber+cols) +');\'';
-***/
-BODY_ +=' >MEMO.</th>';
+BODY_ +='<th class="tcSpan tlhead"';
+BODY_ +=' ></th>';
+            };
+        };
+//*==============================トラックエリアループ処理//
 //カラムセパレータの空セル挿入
-if (cols < PageCols-1) BODY_ +=('<td rowspan='+(2+SheetRows)+' id=colSep class=colSep ></td>');
+        if (cols < (PageCols-1)){
+BODY_ +=('<td class="colSep tlhead" ></td>');
+        };
     };
-
-    }
+//*==============================ページカラムループ処理//
+//*========================================不可視｜タグ表示シートヘッダ//
 BODY_ +='</tr>';//改段
+//*第２行目========================================シート記入部ヘッダ
+BODY_ +='<tr>';
+//左マージンセル
+BODY_ +='<td class="sheetbody left-end" ></td>';//
+//*==============================ページカラムループ処理
+	for (cols=0;cols < PageCols;cols ++){
+//*==============================トラックエリアループ処理
+		for (var area = 0 ;area < this.XPS.xpsTracks.areaOrder.length ; area ++){
+            var areaOrder = this.XPS.xpsTracks.areaOrder[area];
+            if((pageNumber<-1)&&(!(areaOrder.fix))) break;//第２・３象限ではfix以外をスキップ
+            if((areaOrder.timecode == 'both')||(areaOrder.timecode == 'head')){
+/*********** timeguide ********************/
+BODY_ +='<th rowspan=2 class="tclabel trackLabel" ';
+BODY_ +=' ><span class=timeguide> </span></th>';
+            };
+            if(areaOrder.type.match(/sound|dialog/i)){
+//単段 複数トラック テープルヘッダー・テキストセンタリング
+                var text ={
+                    sound:"N",
+                    dialog:"台<BR>詞"
+                }[areaOrder.type];
+                var cellclass;
+/*********** Dialog|Sound Area*************/
+BODY_ +='<th rowspan=2 class="dialoglabel trackLabel';
+                if(areaOrder.timecode == 'tail')
+BODY_ +=' dialoglabel-join';
+BODY_ +='" ';
+                if(areaOrder.members.length > 1)
+BODY_ +='colspan ="'+areaOrder.members.length+'" ';//ダイアログ|soundの幅は可変 1~
+BODY_ +='>'+text+'</th>';
+    		}else if(areaOrder.type.match(/comment/i)){
+//単段処理 確定１トラック
+/*********** FrameNote Area *************/
+BODY_ +='<th rowspan=2 class="framenotelabel trackLabel" title="';
+BODY_ +='MEMO.';
+BODY_ +='"></th>';
+    		}else if(areaOrder.type.match(/reference/i)){
+/*********** Reference Area *************/
+BODY_ +='<th ';
+BODY_ +='class="referencelabel rnArea trackLabel ref" ondblclick=sync("referenceLabel") title="" '
+BODY_ +='colspan=' + this.referenceLabels.length+' ';//
+BODY_ +='>reference</th>';
+                var text = "reference"
+    		}else if(areaOrder.members.length > 0){
+//二段・複数トラック消費型 可変 0~
+                var text = {
+                    replacement :"cell",
+                    camera      :"camera",
+                    action      :"action"
+                }[areaOrder.type];
+                var cellclass = {
+                    replacement :'class="editArea trackLabel" ondblclick=sync("editLabel") title="" ',
+                    camera      :'class="camArea trackLabel" title="" ',
+                    action      :'class="editArea trackLabel" ondblclick=sync("editLabel") title="" '
+                }[areaOrder.type];
+BODY_ +='<th ';
+BODY_ += cellclass
+                if(areaOrder.members.length > 1)
+BODY_ +='colspan='+areaOrder.members.length+' ';//
+BODY_ +='>'+text+'</th>';
+            };
+            if((areaOrder.timecode == 'both')||(areaOrder.timecode == 'tail')){
+/*********** timeguide ********************/
+BODY_ +='<th rowspan=2 class="tclabel trackLabel" ';
+BODY_ +=' ><span class=timeguide> </span></th>';
+            };
+		};
+//*==============================トラックエリアループ処理//
+//カラムセパレータの空セル挿入
+        if (cols < (PageCols-1)){
+BODY_ +=('<td class="sheetbody left-end" ></td>');
+        };
+	};
+//*==============================ページカラムループ処理//
+BODY_ +='</tr>';
+//*第２行目========================================シート記入部ヘッダ//
 
-//ヘッダ2行目
-BODY_ +='<tr>';//改段
-
-    for (cols=0;cols < PageCols;cols ++){
-
-//=====================参照エリア
-        for (r=0;r<this.referenceLabels.length;r++){
+//*第３行目========================================シート記入部ヘッダ
+BODY_ +='<tr>';
+//左マージンセル
+BODY_ +='<td class="sheetbody left-end" ></td>';//
+//*==============================ページカラムループ処理
+	for (cols=0;cols < PageCols;cols ++){
+//*==============================トラックエリアループ処理
+		for (var area = 0 ;area < this.XPS.xpsTracks.areaOrder.length ; area ++){
+            var areaOrder = this.XPS.xpsTracks.areaOrder[area];
+            if((pageNumber<-1)&&(!(areaOrder.fix))) break;//第２・３象限ではfix以外をスキップ
+            if(areaOrder.type.match(/dialog|sound|comment/i)){
+//先行処理済なのでスキップ
+                continue;
+            }else if(areaOrder.type == 'reference'){
+//*==============================リファレンスメンバ処理
+                for (var r = 0 ; r < this.referenceLabels.length ; r++){
 BODY_ +='<th id="rL';
 BODY_ += r.toString();
 BODY_ += '_';
 BODY_ += pageNumber;
 BODY_ += '_';
 BODY_ += cols.toString();
-
-BODY_ +='" class="layerlabelR annotationText ref"';
+BODY_ +='" class="layerlabelR trackLabel ref"';
 BODY_ +=' >';
+                    var currentRefLabel = (this.referenceXPS.xpsTracks[this.referenceLabels[r]])?this.referenceXPS.xpsTracks[this.referenceLabels[r]].id:"";
+                    var lbString=(currentRefLabel.length<3)?
+                    currentRefLabel:
+                    '<a onclick="return false;" title="'+currentRefLabel+'">'+currentRefLabel.slice(0,2)+'</a>';
+                    if (currentRefLabel.match(/^\s*$/)){
+BODY_ +='<span style="color:'+this.sheetborderColor+'";>'+nas.Zf(r,2)+'</span>';
+                    }else{
+BODY_ +=lbString;
+                    };
+                };
+//*==============================リファレンスメンバ処理//
+            }else{
+//*==============================エリアメンバループ処理
+    			for (var m = 0;m < areaOrder.members.length ; m ++){
+    if(pageNumber>=-1){    };
 
-var currentRefLabel=this.referenceXPS.xpsTracks[this.referenceLabels[r]].id;
-var lbString=(currentRefLabel.length<3)?
-    currentRefLabel:
-    '<a onclick="return false;" title="'+currentRefLabel+'">'+currentRefLabel.slice(0,2)+'</a>';
-
- if (currentRefLabel.match(/^\s*$/)){
-    BODY_ +='<span style="color:'+this.sheetborderColor+'";>'+nas.Zf(r,2)+'</span>';
- }else{
-    BODY_ +=lbString;
- };
-
-        };
-    if(pageNumber>=-1){
 //=====================編集セル本体(ラベル部分)
-
-        for (var r=(xUI.dialogSpan);r<(this.XPS.xpsTracks.length-1);r++){
-    if(this.XPS.xpsTracks[r].option=="comment"){break;}
-    var currentLabel=this.XPS.xpsTracks[r].id;
-    var currentElementId= 'L' + String(r) + '_' + pageNumber + '_' + String(cols);
-
+                    var r = areaOrder.members[m].index;
+                    var currentLabel=this.XPS.xpsTracks[r].id;
+                    var currentElementId= 'L' + String(r) + '_' + pageNumber + '_' + String(cols);
 BODY_ +='<th id="' + currentElementId ;
- switch (this.XPS.xpsTracks[r].option){
-case "still" :BODY_ +='" class="stilllabel annotationText" ' ;break;
-case "stagework":
-case "geometry":BODY_ +='" class="geometrylabel annotationText" ';break;
-case "effect":
-case "sfx"   :BODY_ +='" class="sfxlabel annotationText" '   ;break;
-case "camerawork":
-case "camera":BODY_ +='" class="cameralabel annotationText" ';break;
-case "replacement":
-case "timing":
-case "dialog":
-case "sound":
-default:BODY_ +='" class="layerlabel annotationText" ';
-}
+                    switch (this.XPS.xpsTracks[r].option){
+                    case "still" :
+BODY_ +='" class="stilllabel trackLabel" ' ;
+                    break;
+                    case "stagework":
+                    case "geometry":
+BODY_ +='" class="geometrylabel trackLabel" ';
+                    break;
+                    case "effect":
+                    case "sfx"   :
+BODY_ +='" class="sfxlabel trackLabel" ';
+                    break;
+                    case "camerawork":
+                    case "camera":
+BODY_ +='" class="cameralabel trackLabel" ';
+                    break;
+                    case "replacement":
+                    case "timing":
+                    case "dialog":
+                    case "sound":
+                    default:
+BODY_ +='" class="layerlabel trackLabel" ';
+                    }
 
 BODY_ +=' >';
-if(this.XPS.xpsTracks[r].option=="still"){
- if (currentLabel.match(/^\s*$/)){
-    BODY_ +='<span id ="'+currentElementId+'" style="color:'+xUI.sheetborderColor+'";>'+nas.Zf(r,2)+'</span>';
- }else{
-    BODY_ +='<span id ="'+currentElementId+'" title="'+currentLabel+'">▼</span>';
- };
-}else{
- if (this.XPS.xpsTracks[r].id.match(/^\s*$/)){
-    BODY_ +='<span id ="'+currentElementId+'" style="color:'+xUI.sheetborderColor+'";>'+nas.Zf(r,2)+'</span>';
- }else{
-    
-    BODY_ +=(currentLabel.length<5)?
-        currentLabel:
-        '<span id ="'+currentElementId+'" title="'+currentLabel+'">'+currentLabel.slice(0,4)+'</span>';
- };
-}
+                    if(this.XPS.xpsTracks[r].option=="still"){
+                        if (currentLabel.match(/^\s*$/)){
+BODY_ +='<span id ="'+currentElementId+'" style="color:'+xUI.sheetborderColor+'";>'+nas.Zf(r,2)+'</span>';
+                        }else{
+BODY_ +='<span id ="'+currentElementId+'" title="'+currentLabel+'">▼</span>';
+                        };
+                    }else{
+                        if (this.XPS.xpsTracks[r].id.match(/^\s*$/)){
+BODY_ +='<span id ="'+currentElementId+'" style="color:'+xUI.sheetborderColor+'";>'+nas.Zf(r,2)+'</span>';
+                        }else{
+BODY_ +=(currentLabel.length<5)?
+    currentLabel:
+    '<span id ="'+currentElementId+'" title="'+currentLabel+'">'+currentLabel.slice(0,4)+'</span>';
+                        };
+                    };
 BODY_ +='</th>';
+	    		};
+//*==============================エリアメンバループ処理//
+            };
+		};
+//*==============================トラックエリアループ処理//
+//カラムセパレータの空セル挿入
+        if (cols < (PageCols-1)){
+BODY_ +=('<td class="sheetbody left-end" ></td>');
         };
-
-    };
-    };
+	};
+//*==============================ページカラムループ処理//
 BODY_ +='</tr>';
+//*第３行目========================================シート記入部ヘッダ//
 
-//以下  シートデータ本体  pageNumberが-3以下の場合は固定(冒頭ダイアログ)部分まで出力
-if((pageNumber>=0)||(pageNumber<-2)){
+//*========================================以下  シートデータ本体
+//pageNumberが-3以下(第２象限)の場合は固定(fix指定エリア)部分まで出力
+//
+    if((pageNumber>=0)||(pageNumber<-2)){
 /*=========================シートデータエリア==========================*/
 //alert("SheetRows : "+ SheetRows +"\nthis.PageCols : "+this.PageCols);
-var currentPageNumber=(pageNumber<-2)?0:pageNumber;
-for (n=0;n<SheetRows;n++){
-BODY_ += '<tr>';
-        for (cols=0;cols<PageCols;cols ++){
+        var currentPageNumber = (pageNumber < -2)? 0:pageNumber;
+//*==============================シートライン処理
+	    for (var n = 0 ; n < SheetRows ; n ++){
+BODY_ +='<tr>';
+//左マージンセル
+BODY_ +='<td class="sheetbody left-end" ></td>';//
+//*==============================ページカラムループ処理
+		    for (cols=0;cols < PageCols;cols ++){
 //フレーム毎のプロパティを設定
-    var myFrameCount=cols*SheetRows+n;
-    var currentSec=(currentPageNumber*SheetLength)+Math.floor(myFrameCount/Math.ceil(this.XPS.framerate));//処理中の秒
-    var restFrm= myFrameCount % Math.ceil(this.XPS.framerate);//処理中の  ライン/秒
-//    var mySpt=(this.XPS.rate.match(/df/i))?";":":";
-    var mySpt=(this.XPS.framerate.opt=='smpte')?";":":";
-
-    var myTC=[Math.floor(currentSec/3600)%24,Math.floor(currentSec/60),currentSec%60].join(":")+mySpt+restFrm
-    var current_frame= nas.FCT2Frm(myTC,this.XPS.framerate);//FCTからフレームインデックスを導くドロップ時はnull
-
-//alert([myFrameCount,currentSec,restFrm].join("\n"));break;
-// var current_frame=(this.PageLength*currentPageNumber)+cols*SheetRows+n;//カレントフレームの計算がTCベースになる必要あり
+                var myFrameCount = cols * SheetRows + n;//ページ内フレームカウント
+                var currentSec   = (currentPageNumber * SheetLength) + Math.floor(myFrameCount / Math.ceil(this.XPS.framerate));//処理中の秒
+                var restFrm= myFrameCount % Math.ceil(this.XPS.framerate);//処理中の  ライン/秒
+                var mySpt=(this.XPS.framerate.opt=='smpte')?";":":";
+                var myTC=[Math.floor(currentSec/3600)%24,Math.floor(currentSec/60),currentSec%60].join(":")+mySpt+restFrm
+                var current_frame= nas.FCT2Frm(myTC,this.XPS.framerate);//FCTからフレームインデックスを導くドロップ時はnull
 //現在処理中のフレームは有効か否かをフラグ  フレームがドロップまたは継続時間外の場合は無効フレーム
-    var isBlankLine =((current_frame != null)&&(current_frame < this.XPS.duration()))? false:true;
-// alert(isBlankLine+" : "+current_frame)
-
+                var isBlankLine =((current_frame != null)&&(current_frame < this.XPS.duration()))? false:true;
 //セパレータ(境界線)設定
-if(restFrm==(Math.ceil(this.XPS.framerate)-1)){
+                if(restFrm==(Math.ceil(this.XPS.framerate)-1)){
 //秒セパレータ
-    var tH_border= 'ltSep';
-    var dL_border= 'dtSep';
-    var sC_border= 'ntSep';
-    var mO_border= 'ntSep';
-}else{
-    if (n%this.sheetSubSeparator==(this.sheetSubSeparator-1)){
+                    var tH_border= 'ltSep';
+                    var dL_border= 'dtSep';
+                    var sC_border= 'ntSep';
+                    var mO_border= 'ntSep';
+                }else{
+                    if (n % this.sheetSubSeparator==(this.sheetSubSeparator-1)){
 //    サブセパレータ
-        var tH_border= 'lsSep';
-        var dL_border= 'dsSep';
-        var sC_border= 'nsSep';
-        var mO_border= 'nsSep';
-    }else{
+                        var tH_border= 'lsSep';
+                        var dL_border= 'dsSep';
+                        var sC_border= 'nsSep';
+                        var mO_border= 'nsSep';
+                    }else{
 //    ノーマル(通常)指定なし
-        var tH_border= 'lnSep';
-        var dL_border= 'dnSep';
-        var sC_border= 'nnSep';
-        var mO_border= 'nnSep';
-    };
-};
+                        var tH_border= 'lnSep';
+                        var dL_border= 'dnSep';
+                        var sC_border= 'nnSep';
+                        var mO_border= 'nnSep';
+                    };
+                };
 //背景色設定
-/*    判定基準を継続時間内外のみでなくドロップフレームに拡張
-*/
-//    if ((current_frame != null)&&(current_frame < this.XPS.duration())){}
-    if (! isBlankLine){
+//    判定基準を継続時間内外のみでなくドロップフレームに拡張
+//      ヘッド｜テールマージン拡張も必要（未処理 2023 02）
+                if (! isBlankLine){
 //有効フレーム
-        var bgStyle='';
-        var bgProp='';
-        var cellClassExtention=''
-    }else{
+                    var bgStyle='';
+                    var bgProp='';
+                    var cellClassExtention=''
+                }else{
 //無効フレーム
-        var bgStyle='background-color:'+this.sheetblankColor+';';
-        var bgProp='bgcolor='+this.sheetblankColor+' ';
-        var cellClassExtention='_Blank'
-    };
-
-//タイムヘッダ
-    var tcStyle='<td nowrap ';
-
-BODY_ +=tcStyle ;
-BODY_ +='class="Sep ';
+                    var bgStyle='background-color:'+this.sheetblankColor+';';
+                    var bgProp='bgcolor='+this.sheetblankColor+' ';
+                    var cellClassExtention='_Blank'
+                };
+//*==============================トラックエリアループ処理
+			    for (var area = 0 ;area < this.XPS.xpsTracks.areaOrder.length ; area ++){
+                    var areaOrder = this.XPS.xpsTracks.areaOrder[area];
+                    if((pageNumber<-1)&&(!(areaOrder.fix))) break;
+                    if((areaOrder.timecode == 'both')||(areaOrder.timecode == 'head')){
+/*********** timeguide ********************/
+BODY_ +='<td nowrap ';
+BODY_ +='class="sheetbody Sep ';
 BODY_ +=tH_border+cellClassExtention;
 BODY_ +='"';
-BODY_ +=' id=tcg_';
-BODY_ +=String(current_frame);
+BODY_ +=' id=tcg_' + String(current_frame);
 BODY_ +=' >';
-    if (restFrm==0) {BODY_ += "<span class=timeguide>[ "+ currentSec.toString()+"' ]</span>"};
-    if  (((n+1)%2 ==0)&&(! isBlankLine))
-    {BODY_ += (current_frame+1).toString();}else{BODY_+='<br>';};
-//    {BODY_ += ((n+1)+cols*SheetRows).toString();}else{BODY_+='<br>';};
+                        if (restFrm == 0)
+BODY_ += "<span class=timeguide>[ "+ currentSec.toString()+"' ]</span>";
+                        if (((n+1)%2 ==0)&&(! isBlankLine)){
+BODY_ += (current_frame+1).toString();
+                        }else{
+BODY_+='<br>';
+                        };
 BODY_ +='</td>';
-
-//参照シートセル
-    var refLabelID = 0; //for (var refLabelID=0;refLabelID< this.referenceLabels.length;refLabelID++)
-    for (var r=0;r< this.referenceXPS.xpsTracks.length;r++){
-        if(this.referenceLabels[refLabelID] != r){continue;}
-
-//参照ラベル抽出と同アルゴリズムで抽出を行うかまたはキャッシュをとる
+                    };
+//
+				    if(areaOrder.type == 'reference'){
+//*----refecece area
+                        for (var refLabelID=0;refLabelID< this.referenceLabels.length;refLabelID++){
+                            var r = this.referenceLabels[refLabelID];
 BODY_ +='<td ';
-    if (! isBlankLine){}
-    if (current_frame<this.referenceXPS.xpsTracks[r].length){
+BODY_ +='class="sheetbody ref ';
+BODY_ +=sC_border;
+BODY_ +='"';
+                            if (current_frame<this.referenceXPS.xpsTracks[r].length){
+//表示可能な内容あり
 BODY_ += 'id=\"r_';
 BODY_ += r.toString()+'_'+ current_frame.toString();
-// BODY_ +=refLabelID.toString()+'_'+ current_frame.toString();
 BODY_ +='" ';
 BODY_ +='class="';
-BODY_ +=sC_border+cellClassExtention + ' ref';
+BODY_ +=sC_border + cellClassExtention + ' ref';
 BODY_ +='"';
-    }else{
+                            }else{
+//ブランクセル
 BODY_ +='class="';
-BODY_ +=sC_border+'_Blank';
+BODY_ +=sC_border + '_Blank';
 BODY_ +='"';
-    };
+                            };
 BODY_ +='>';
-        if (current_frame>=this.referenceXPS.xpsTracks[r].length){
-    BODY_+="<br>";
-        }else{
-    this.Select=[r,current_frame];
-    if (this.referenceXPS.xpsTracks[r][current_frame]!=""){
-        BODY_ += this.trTd(['r',r,current_frame]);
-//        BODY_ += this.trTd(this.referenceXPS.xpsTracks[r][current_frame]);
-//        BODY_ += this.trTd(document.getElementById(["r",[r],[current_frame]].join("_")));
-    }else{
-        BODY_+='<br>';
-    };
-        };
+//セル内容を転記
+                            if(current_frame >= this.referenceXPS.xpsTracks[r].length){
+BODY_+="<br>";
+                            }else{
+                                this.Select = [r,current_frame];
+                                if (this.referenceXPS.xpsTracks[r][current_frame]!=""){
+BODY_ += this.trTd(['r',r,current_frame]);
+                                }else{
+BODY_+='<br>';
+                                };
+                            };
 BODY_ +='</td>';
-        refLabelID ++;
-    };
-/*
-    ダイアログタイムラインとその他のタイムラインの混在を許容することになるので
-    位置による決め打ちでなく、タイムライン種別の判定を行う。
-    固定ヘッダ出力の場合は、ループ上限を冒頭ダイアログまでに限定
-*/
-    var outputColumus=(pageNumber<-2)?xUI.dialogSpan-1:this.XPS.xpsTracks.length-2;
-for (var r=0;r<=outputColumus;r++){
-    if((r==0)||(this.XPS.xpsTracks[r].option=="dialog")){
-//ダイアログセル
-        BODY_ +='<td ';
-//    if ((current_frame != null)&&(current_frame < this.XPS.duration())){}
-        if (! isBlankLine){
-            BODY_ += 'id="';
-            BODY_ +=r.toString()+'_'+ current_frame.toString();
-            BODY_ +='" ';
-//BODY_ +='onclick="return xUI.Mouse(event)" ';
-        };
-            BODY_ +='class="';
-            BODY_ += dL_border+cellClassExtention;
-            BODY_ +=' soundbody';
-            BODY_ +='"';
-            BODY_ +='>';
-//        if((current_frame==null)||(current_frame>=this.XPS.duration()))
-        if (isBlankLine){
-            BODY_+="<br>";
-        }else{
-            this.Select=[0,current_frame];
-
-
-            if (this.XPS.xpsTracks[r][current_frame]!=""){
-                BODY_+=this.trTd([r,current_frame]);
-//        BODY_+=this.trTd(this.XPS.xpsTracks[r][current_frame]);
-            }else{
-        BODY_ += '<BR>';
-            }
-        };
-        BODY_ +='</td>';
-    }else{
-//シートセル
-//極力インラインスタイルシートを書かないように心がける 05'2/25
-    BODY_ +='<td ';
-//    if ((current_frame != null)&&(current_frame < this.XPS.duration())){}
-    if (! isBlankLine){
-        BODY_ += 'id="';
-        BODY_ +=r.toString()+'_'+ current_frame.toString();
-        BODY_ +='" ';
-//BODY_ +='onclick="xUI.Mouse(event)" ';
-    };
-    BODY_ +='class="';
-    BODY_ +=sC_border+cellClassExtention;
-    BODY_ +='"';
-    BODY_ +='>';
-//        if((current_frame==null)||(current_frame>=this.XPS.duration())){}
-    if (isBlankLine){
-        BODY_+="<br>";
-    }else{
-        this.Select=[r,current_frame];
-        if ( this.XPS.xpsTracks[r][current_frame]!=""){
-            BODY_+=this.trTd([r,current_frame]);
-//        BODY_ += this.trTd(this.XPS.xpsTracks[r][current_frame]);
-        }else{
-            BODY_+='<br>';
-        };
-    };
-    BODY_ +='</td>';
-
-    };
-}
-
-/*    メモエリア
- * 固定ヘッダー出力時はスキップ
- *
- */
- if(pageNumber>=0){
+                        };
+//*----refecece area//
+				    }else if(areaOrder.type == 'comment'){
+//レコード終端フィールド処理    メモエリア
+                        if(pageNumber >=0){
 BODY_ +='<td ';
-//    if (current_frame < this.XPS.duration()){}
-    if (! isBlankLine){
+                            if (! isBlankLine){
 BODY_ += 'id="';
 BODY_ += (this.XPS.xpsTracks.length-1).toString()+'_'+ current_frame.toString();
 BODY_ +='" ';
-//BODY_ +='onclick="xUI.Mouse(event)" ';
-    };
-BODY_ +='class="';
+                            };
+BODY_ +='class="sheetbody ';
 BODY_ +=mO_border+cellClassExtention;
 BODY_ +='"';
 BODY_ +='>';
-//        if(current_frame>=this.XPS.duration()){}
-        if (isBlankLine){
-    BODY_+="<br>";
-        }else{
-    this.Select=[this.XPS.xpsTracks.length-1,current_frame];
-    if ( this.XPS.xpsTracks[this.XPS.xpsTracks.length-1][current_frame]!=""){
-        BODY_ += this.trTd([this.XPS.xpsTracks.length-1,current_frame]);
-//        BODY_ += this.trTd(this.XPS.xpsTracks[this.XPS.xpsTracks.length-1][current_frame]);
-    }else{
-        BODY_+='<br>';
-    };
-        };
+                            if (isBlankLine){
+BODY_+="<br>";
+                            }else{
+                                this.Select = [this.XPS.xpsTracks.length-1,current_frame];
+                                if ( this.XPS.xpsTracks[this.XPS.xpsTracks.length-1][current_frame]!=""){
+BODY_ += this.trTd([this.XPS.xpsTracks.length-1,current_frame]);
+                                }else{
+BODY_+='<br>';
+                                };
+                            };
 BODY_+='</td>';
- }
-        };
+                        };
+				    }else{
+//*----sheet data area    各種タイムライン混在
+                        var outputColumus=(pageNumber<-2)? xUI.dialogSpan-1:this.XPS.xpsTracks.length-2;
+//                  for (var r=0;r<=outputColumus;r++){};
+//*==============================エリアメンバループ処理
+					    for (var m = 0;m < areaOrder.members.length ; m ++){
+                            var r = areaOrder.members[m].index;
+//                        if((r==0)||(this.XPS.xpsTracks[r].option=="dialog")){}
+                            if((areaOrder.members[m].option == 'dialog')||(areaOrder.members[m].option == 'sound')){
+//ダイアログ|サウンド
+BODY_ +='<td ';
+                                if (! isBlankLine){
+BODY_ += 'id="';
+BODY_ +=r.toString()+'_'+ current_frame.toString();
+BODY_ +='" ';
+                               };
+BODY_ +='class="';
+BODY_ +=' soundbody ';
+                                if(areaOrder.timecode == 'tail')
+BODY_ +=' soundbody-join ';
+//BODY_ +=' sheetbody ';
+BODY_ += dL_border+cellClassExtention;
+BODY_ +='"';
+BODY_ +='>';
+                                if (isBlankLine){
+BODY_+="<br>";
+                                }else{
+                                    this.Select=[0,current_frame];
+                                    if (this.XPS.xpsTracks[r][current_frame]!=""){
+BODY_+=this.trTd([r,current_frame]);
+                                    }else{
+BODY_ += '<BR>';
+                                    };
+                                };
+BODY_ +='</td>';
+                            }else{
+//音響以外のシートセル
+BODY_ +='<td ';
+                                if (! isBlankLine){
+BODY_ += 'id="';
+BODY_ +=r.toString()+'_'+ current_frame.toString();
+BODY_ +='" ';
+                                };
+BODY_ +='class="sheetbody ';
+BODY_ +=sC_border+cellClassExtention;
+BODY_ +='"';
+BODY_ +='>';
+                                if (isBlankLine){
+BODY_+="<br>";
+                                }else{
+                                    this.Select = [r,current_frame];
+                                    if (this.XPS.xpsTracks[r][current_frame]!=""){
+BODY_+=this.trTd([r,current_frame]);
+                                    }else{
+BODY_+='<br>';
+                                    };
+                                };
+BODY_ +='</td>';
+                            };
+//*----sheet data area//
+				    	};
+//*==============================エリアメンバループ処理//
+				    };
+                    if((areaOrder.timecode == 'both')||(areaOrder.timecode == 'tail')){
+/*********** timeguide ********************/
+BODY_ +='<td nowrap ';
+BODY_ +='class="Sep ';
+BODY_ +=tH_border+cellClassExtention;
+BODY_ +='"';
+BODY_ +=' id=tcg_' + String(current_frame);
+BODY_ +=' >';
+                        if (restFrm == 0)
+BODY_ += "<span class=timeguide>[ "+ currentSec.toString()+"' ]</span>";
+                        if (((n+1)%2 ==0)&&(! isBlankLine)){
+BODY_ += (current_frame+1).toString();
+                        }else{
+BODY_+='<br>';
+                        };
+BODY_ +='</td>';
+                    };
+			    };
+//*==============================トラックエリアループ処理//
+//カラムセパレータの空セル挿入
+                if (cols < (PageCols-1)){
+BODY_ +=('<td class="sheetbody left-end" ></td>');
+                };
+		    };
+//*==============================ページカラムループ処理//
 BODY_ +='</tr>';
-
-};
+	    };
+//*==============================シートライン処理//
     };
-
 BODY_ +='</tbody></table>';
 BODY_ +='\n';
-/*タイムシート記述終了マーカーを配置 これはxUIクラスメソッドで配置に変更*/
-//if((hasEndMarker)&&(pageNumber==currentPageNumber)){
-//BODY_ +='<div id=endMarker class=endMarker>';
-//BODY_ += JSON.stringify([xUI.XPS.xpsTracks.length, xUI.XPS.xpsTracks.duration]);
-//BODY_ +='</div>';
-//BODY_ +='<div id=endMarker-print class=endMarker-print>::print-end::';
-//BODY_ +='<br></div>';
-//};// */
+//============= テーブル出力終了
+/*タイムシート記述終了マーカーはxUIクラスメソッドで配置に変更*/
+
 //画像タイムシート用エレメントを加える
-console.log((xUI.XPS.timesheetImages.length),Pages);
-if((xUI.XPS.timesheetImages.length)&&(xUI.XPS.timesheetImages[Pages])){
-    BODY_ +='\t<div id="sheetImage-'+Pages+'" class=overlayDocmentImage '+'" >';//open pageImage// 
-    BODY_ += '<img id="pageImage-'+Pages+'" width = 1122 src = "'+xUI.XPS.timesheetImages[Pages-1].content +'" >';
-    BODY_ +='\t</div>\n';//close pageImage//
-};
+//第4象限限定
+    if(pageNumber >= 0){
+BODY_ +='\t<div id="sheetImage-'+pageNumber+'" class=overlayDocmentImage '+'" >';//open pageImage// 
+BODY_ +='\t</div>\n';//close pageImage//
 console.log('================ img ====================//')
+    };
 BODY_ +='</div>';//close sheetArea//
 BODY_ +='';
-    this.Select=restoreValue;
-    return BODY_;
+        this.Select =   restoreValue;
+        return BODY_;
 };
+//******************************** pageView//
 /**
     @params {Array|Number} endPint
     @returns {Object HTMLElement}
@@ -4108,7 +4802,7 @@ $('.ref').each(function(index,elem){$(elem).show/hide()});組み合わせ処理�
 表示状態を他のメソッドから参照する必要あり（重要）
 */
 xUI.flipRefColumns=function(action){
-        var status=$('#rnArea').isVisible();
+        var status=$('.rnArea').isVisible();
     if(action){
         action = (action == 'hide')? false:true;
         if(action ==  status) return;
@@ -4118,7 +4812,8 @@ xUI.flipRefColumns=function(action){
     var flipSpan = (this.sheetLooks.ActionWidth*this.referenceLabels.length)*((this.viewMode=="Compact")?1:this.PageCols);
     if(action){
         $('.ref').show();
-        $('#qdr4.sheet').width($('#qdr4.sheet').width()+flipSpan);
+//        $('#qdr4.sheet').width($('#qdr4.sheet').width()+flipSpan);
+        $('.qdr4.sheet').width($('.qdr4.sheet').width()+flipSpan);
         if(this.viewMode=="Compact"){
             $('#qdr3.sheet').width($('#qdr3.sheet').width()-flipSpan);
             $('#qdr2.sheet').width($('#qdr2.sheet').width()-flipSpan);
@@ -4126,7 +4821,8 @@ xUI.flipRefColumns=function(action){
         }
     }else{
         $('.ref').hide();
-        $('#qdr4.sheet').width($('#qdr4.sheet').width()-flipSpan);
+//        $('#qdr4.sheet').width($('#qdr4.sheet').width()-flipSpan);
+        $('.qdr4.sheet').width($('.qdr4.sheet').width()-flipSpan);
         if(this.viewMode=="Compact"){
             $('#qdr3.sheet').width($('#qdr3.sheet').width()-flipSpan);
             $('#qdr2.sheet').width($('#qdr2.sheet').width()-flipSpan);
@@ -4751,7 +5447,7 @@ if(datastream instanceof Xps){
         xUI.resetSheet(undefined,datastream);//リファレンス更新
     }else{
         var prevXPS=new Xps();
-        prevXPS.readIN(this.XPS.toString());
+        prevXPS.readIN(this.XPS.toString(false));
         UNDO[2]=prevXPS;
 //入力データをXPSに設定   
         xUI.resetSheet(datastream);//編集画面更新
@@ -5073,6 +5769,10 @@ iNputbOx以外の入力もこのメソッドで受ける
 */
 xUI.keyDown    =function(e){
 console.log(e);
+//書式エディタ処理
+if(documentFormat.active){
+    return true;
+};
 //stopwatch処理 
 if((xUI.player)&&(xUI.player.keyboard)){
 	if(e.keyCode == 32) {
@@ -5753,6 +6453,10 @@ default :;
 */
 xUI.keyUp = function (e){
 console.log(e.keyCode);
+//書式エディタ処理
+if(documentFormat.active){
+    return true;
+};
 	if(xUI.player.keyboard){
 		if(xUI.player.markSwap){
 			if((e.keyCode == 32)&&(xUI.player.status=='run')) xUI.player.getCount=false;
@@ -6061,6 +6765,7 @@ xUI.Touch = function(e){
 
  */
 xUI.Mouse=function(e){
+if(documentFormat.active) return;
     var currentTrack = xUI.XPS.xpsTracks[xUI.Select[0]];
     var exch = ((e.ctrlKey)||(e.metaKey));
 //    console.log(e.target.id);
@@ -6618,15 +7323,11 @@ var offsetV=0;var offsetH=0;
 //    var myTop =clamp([currentOffset.top-offsetV] ,0,document.body.clientHeight-(clipBounds.bottom-clipBounds.top))[1];
     var myLeft=(currentOffset.left-offsetH);
     var myTop =(currentOffset.top-offsetV );
-//    dbgPut(myLeft+":"+myTop);
-
-//    var moved=(myLeft+myTop)?true:false;
-//    if(moved){this.Mouse.action=false;};//マウス選択キャンセル
         scrollTo(myLeft,myTop);
       if(appHost.platform=="CSX"){
         this.onScroll();
-      }
-    }
+      };
+    };
 }
 
 /* xUI.onScroll
@@ -6640,8 +7341,9 @@ onscrollの設定位置を一考
 2015.04.22
 */
    xUI.onScroll=function() {
-     $('#UIheaderScrollV').offset( { top : $('#qdr4').offset().top} );
-     $('#UIheaderScrollH').offset( { left : $('#qdr4').offset().left} );
+//     $('#UIheaderScrollV').offset( { top : $('#qdr4').offset().top} );
+     $('#UIheaderScrollV').offset( { top : $('#page_1').offset().top} );
+     $('#UIheaderScrollH').offset( { left : $('#sheet_body').offset().left} );
    };
 //===========================================
 /**
@@ -6701,6 +7403,47 @@ xUI.panelTable = {
     'Sign'     :{elementId:"optionPanelSign"  ,uiOrder:-1,type:'float',note:"署名パネル(汎)"},
     'Snd'      :{elementId:"optionPanelSnd"   ,uiOrder:-1,type:'float',note:"remaping Dialog|Snd"},
     'Ref'      :{elementId:"optionPanelRef"   ,uiOrder:-1,type:'float',note:"remaping 参考画像パネル"},
+    'DocFormat':{elementId:"optionPanelDocFormat",uiOrder:-1,type:'float',note:"書式編集パネル",func:function(elm,status){
+//パネル立ち上げと同時に現在のタイムシートのsheetLooksを渡す
+        var currentStatus = $("#optionPanelDocFormat").isVisible();
+        var opt = (status == 'switch')? (!(currentStatus)) : ((status == 'show')? true:false);
+        if(opt != currentStatus){
+            if(opt){
+//show
+                if((xUI.XPS.timesheetImages.imageAppearance == 0)||(xUI.XPS.timesheetImages.imageAppearance == 1)) xUI.setAppearance(0.5);
+                documentFormat.startup(JSON.stringify(xUI.sheetLooks));
+                $("#optionPanelDocFormat").show();
+                documentFormat.expand(false);
+            }else{
+//hide
+                documentFormat.restore();
+                $("#optionPanelDocFormat").hide();
+            };
+            xUI.setAppearance();
+        };
+    }},
+    'ImgAdjust':{elementId:"optionPanelImgAdjust",uiOrder:-1,type:'float',note:"画像調整パネル",func:function(elm,status){
+//パネル立ち上げ時に現在のタイムシートの画像を取得
+        var pgid = Math.floor(xUI.Select[1]/nas.FCT2Frm(xUI.XPS.sheetLooks.PageLength,new nas.Framerate(xUI.XPS.sheetLooks.FrameRate).rate));
+        var currentImg = (xUI.XPS.timesheetImages[pgid])? xUI.XPS.timesheetImages[pgid]:null;
+        if(! currentImg){alert('noimage');return;};
+        var currentStatus = $("#optionPanelImgAdjust").isVisible();
+        var opt = (status == 'switch')? (!(currentStatus)) : ((status == 'show')? true:false);
+        if(opt != currentStatus){
+            if(opt){
+//show
+                if((xUI.XPS.timesheetImages.imageAppearance == 0)||(xUI.XPS.timesheetImages.imageAppearance == 1)) xUI.setAppearance(0.5);
+                xUI.imgAdjust.startup(pgid);
+                $("#optionPanelImgAdjust").show();
+                xUI.imgAdjust.expand(false);
+            }else{
+//hide
+                xUI.imgAdjust.close();
+                $("#optionPanelImgAdjust").hide();
+            };
+//            xUI.setAppearance();
+        };
+    }},
     'Cam'      :{elementId:"optionPanelCam"   ,uiOrder:-1,type:'float',note:"remaping カメラワーク入力補助パネル"},
     'Stg'      :{elementId:"optionPanelStg"   ,uiOrder:-1,type:'float',note:"remaping ステージワーク入力補助パネル"},
     'Sfx'      :{elementId:"optionPanelSfx"   ,uiOrder:-1,type:'float',note:"remaping コンポジット入力補助パネル"},
@@ -6880,7 +7623,7 @@ console.log([kwd,((opt)?'show':'hide'),itm.elementId,currentStatus].join(' : '))
                     $("#"+itm.elementId).dialog("close");
                 };
             }else if((itm.func)&&(itm.func instanceof Function)){
-//func　プロパティがあればfuncを実行（イレギュラー処理    ）
+//func プロパティがあればfuncを実行（イレギュラー処理    ）
 console.log(itm.elementId,status);
                 return itm.func(document.getElementById(itm.elementId),status);
 /*            }else if(itm.type == 'float){
@@ -7338,7 +8081,8 @@ if(appHost.platform != "AIR"){
 }else{
         var objParent  = ((xUI.viewMode=="Compact")&&(myId.indexOf("r")==0))?
                     document.getElementById("UIheaderScrollV"):
-                    document.getElementById("qdr4");
+                    document.getElementById("page_1");
+//                    document.getElementById("qdr4");
 //        var targetRect = objTarget.getBoundingClientRect();
 //        var parentRect = document.getElementById("sheet_body").getBoundingClientRect();
         var myTop     = objTarget.offsetTop  + "px";
@@ -7624,17 +8368,23 @@ xUI.setRetrace = function(){
  *  初期化手順内でもこの手続を呼び出すように変更
  *  この手続内では基本的にundo処理は行わない
  *  したがって必要に従ってこの手続を呼ぶ前にundoの初期化を行うか、またはundo操作を行う必要がある。
- *  引数省略時は画面のリフレッシュのみを行う。</pre>
+ *  引数省略時は画面のリフレッシュのみを行う。
+ *  画像マスター時の処理を追加実装
+ *      viewMode=='Compact' の場合は画像表示をキャンセル（将来はサポート）
+ *      202302 現在画像マスター状態の場合 Compact(スクロール)モードをキャンセル(将来サポート?)
+ *  </pre>
  */
 xUI.resetSheet=function(editXps,referenceXps){
-//  現在のカーソル配置をバックアップ
+// 現在のカーソル配置をバックアップ
     var restorePoint = this.Select.concat();
     var restoreSelection=this.Selection.concat();
+// 画像表示状態をバックアップ
+    var appearance = xUI.setAppearance();
     this.selection();//選択解除
     var reWriteXPS = false;
     var reWriteREF = false;
 
-    var Refstatus = (document.getElementById('rnArea'))? $('#rnArea').isVisible():true;
+    var Refstatus = (document.getElementsByClassName('rnArea').length > 0)? $('.rnArea').isVisible():true;
 
     if(! Refstatus) xUI.flipRefColumns('show');
 /*
@@ -7656,10 +8406,13 @@ xUI.resetSheet=function(editXps,referenceXps){
             for(var pix=0;pix<prps.length;pix++){editXps[prps[pix]]=xUI.XPS[prps[pix]]};
         }
         */
-        this.XPS.readIN(editXps.toString());    //XPSをバッファ更新
+        this.XPS.readIN(editXps.toString(false));    //XPSをバッファ更新
         // 書換え範囲にXPS全体を追加
         reWriteXPS = true;
-    }
+    }else{
+        this.XPS.xpsTracks.initAreaOrder();
+        this.XPS.xpsTracks.assignAreaOrderMember();
+    };
 /*
         引数に参照シートが渡されていたら、優先して解決
         指定のない場合は現在の参照シートを保持して使用
@@ -7672,33 +8425,37 @@ xUI.resetSheet=function(editXps,referenceXps){
 //  バックアップしたカーソル位置が新しいシートで範囲外になる場合は範囲内にまるめる
     if(restorePoint[0] >= xUI.XPS.xpsTracks.length)   restorePoint[0] = xUI.XPS.xpsTracks.length -1;
     if(restorePoint[1] >= xUI.XPS.xpsTracks.duration) restorePoint[1] = xUI.XPS.xpsTracks.duration -1;
+//幅計算に先立って xpsTracks.areaOrderを更新
+//    xUI.XPS.xpsTracks.initAreaOrder();
 //表示プロパティのリフレッシュを行う  シートが変更されていなければ不用
     this._checkProp();
 //セルグラフィック初期化( = 画面クリア)
 //    this.Cgl.init();
 //タイムシートテーブルボディ幅の再計算
     var tableRefereneceWidth =  this.sheetLooks.ActionWidth * this.referenceLabels.length;
+
     var tableEditWidth = (
-        this.sheetLooks.DialogWidth * this.dialogCount + 
-        this.sheetLooks.SheetCellWidth * this.timingCount +
-        this.sheetLooks.StillCellWidth * this.stillCount +
-        this.sheetLooks.SfxCellWidth * this.sfxCount +
-        this.sheetLooks.GeometryCellWidth*this.stageworkCount +
-        this.sheetLooks.CameraCellWidth * this.cameraCount +
+        this.sheetLooks.DialogWidth       * this.dialogCount + 
+        this.sheetLooks.SheetCellWidth    * this.timingCount +
+        this.sheetLooks.StillCellWidth    * this.stillCount +
+        this.sheetLooks.SfxCellWidth      * this.sfxCount +
+        this.sheetLooks.GeometryCellWidth * this.stageworkCount +
+        this.sheetLooks.CameraCellWidth   * this.cameraCount +
+        this.sheetLooks.TrackNoteWidth    * this.noteCount +
         this.sheetLooks.CommentWidth
     );//タイムシートの基礎トラック専有幅を算出
-    var tableColumnWidth=this.sheetLooks.TimeGuideWidth + tableRefereneceWidth + tableEditWidth;
-//if(this.viewMode != "Compact"){    };//マルチカラムの場合、マージン付きでカラム数複製する
-    var tableBodyWidth = tableColumnWidth * this.PageCols +  (this.sheetLooks.ColumnSeparatorWidth * (this.PageCols-1) );
+
+    var tableColumnWidth = this.sheetLooks.TimeGuideWidth + tableRefereneceWidth + tableEditWidth;
+    var tableBodyWidth   = tableColumnWidth * this.PageCols + (this.sheetLooks.ColumnSeparatorWidth * (this.PageCols-1));
 //  UI上メモとトランジション表示をシート表示と切り分けること 関連処理注意
     sync("memo");
 //  シートボディの表示
     if(this.viewMode=="Compact"){
 //コンパクトモード  コンパクトUI用のラベルヘッダーを作成
-        document.getElementById("UIheaderFix").innerHTML=this.pageView(-1);
-        document.getElementById("UIheaderScrollH").innerHTML=this.pageView(0);
-        document.getElementById("UIheaderScrollV").innerHTML=this.pageView(-2);
-        document.getElementById("UIheader").style.display="inline";
+        document.getElementById("UIheaderFix").innerHTML     = this.pageView(-1);//qdr2
+        document.getElementById("UIheaderScrollH").innerHTML = this.pageView(0) ;//qdr1
+        document.getElementById("UIheaderScrollV").innerHTML = this.pageView(-2);//qdr3
+        document.getElementById("UIheader").style.display    = "inline";
 //コンパクトUI時は1ページ限定なのでボディ出力を１回だけ行う
         var SheetBody = '<div id=printPg1 class=printPage>';
         SheetBody += '<div class=headerArea id=pg1Header>';
@@ -7710,7 +8467,7 @@ xUI.resetSheet=function(editXps,referenceXps){
 //ノーマルモード  コンパクトUI用のラベルヘッダーを隠す
         if(document.getElementById("UIheader")) document.getElementById("UIheader").style.display="none";
         var SheetBody='';
-        for (Page=1 ;Page <=Math.ceil(XPS.duration()/this.PageLength);Page++){
+        for (Page=1 ;Page <=Math.ceil(this.XPS.duration()/this.PageLength);Page++){
             SheetBody += '<div id=printPg'+String(Page) +' class=printPage>';
             SheetBody += '<div class=headerArea id=pg'+String(Page)+'Header>';
             SheetBody += this.headerView(Page);
@@ -7718,21 +8475,55 @@ xUI.resetSheet=function(editXps,referenceXps){
             SheetBody += this.pageView(Page);
             SheetBody += '</div>';
         };
-    }
+    };
+console.log(SheetBody);
+//  sheet_body配下のエレメントを削除
+    var sheet_body = document.getElementById("sheet_body");
+    while (sheet_body.firstChild) {
+        sheet_body.removeChild(sheet_body.firstChild);
+    };
 //  シートボディを締める
-    document.getElementById("sheet_body").innerHTML=SheetBody+"<div class=\"screenSpace\"></div>";
+	sheet_body.innerHTML = SheetBody+"<div class=\"screenSpace\"></div>";
+// モードに関わらずドキュメントイメージがあれば配置
+    var imgs = document.querySelectorAll('.overlayDocmentImage');
+    var ix   = 0;
+	imgs.forEach(function(e){
+		e.style.top = e.parentNode.parentNode.offsetTop+'px';
+		if(xUI.XPS.timesheetImages[ix]){
+//ドキュメントイメージ配置
+    		var docImg = e.appendChild(xUI.XPS.timesheetImages[ix].img);
+    		docImg.style.width = (xUI.XPS.timesheetImages[ix].img.naturalWidth *96 / xUI.XPS.timesheetImages[ix].resolution) +'px';//A3 width 96ppi
+    	}else if(documentFormat.img){
+    		var docImg = e.appendChild(documentFormat.img);
+    	}else{
+//フォーマット調整用ダミーイメージ・後ほどブランク画像と入れ替えが必要
+    		var docImg = e.appendChild(new Image());
+    		docImg.src = documentFormat.TemplateImage;//'template/timeSheet_default.png';
+			docImg.addEventListener('load',function(){
+                docImg.style.width = (docImg.naturalWidth *96 / nas.NoteImage.guessDocumentResolution(docImg,'A3')) +'px';//"1122px = 297mm 96ppi;A3 width 96ppi 推定処理
+				},{once:true});
+    	};
+        docImg.id = "pageImage-"+ (ix+1);
+		ix ++;
+	});
+//
+//if(documentFormat.orderbox) document.getElementById('sheet_body').appendChild(documentFormat.orderbox);
 
 // グラフィックパーツを配置(setTimeoutで無名関数として非同期実行)
     window.setTimeout(function(){
-//        if (reWriteXPS) 
-            xUI.syncSheetCell(0,0,false);//シートグラフィック置換
-//        if (reWriteREF)
-            xUI.syncSheetCell(0,0,true);//referenceシートグラフィック置換
+        xUI.syncSheetCell(0,0,false);//シートグラフィック置換
+        xUI.syncSheetCell(0,0,true);//referenceシートグラフィック置換
 //フットスタンプの再表示
-        if(xUI.footMark){xUI.footstampPaint()};
+        if(xUI.footMark) xUI.footstampPaint();
 //  カーソル位置復帰（範囲外は自動でまるめる）
         xUI.selectCell(restorePoint);
         xUI.selection(add(restorePoint,restoreSelection));
+//ドキュメントモードに従って画像アピアランスを設定
+        if(xUI.XPS.imgMaster()){
+            if(xUI.XPS.timesheetImages.imageAppearance == 0) xUI.setAppearance(1);//xUI.XPS.timesheetImages.imageAppearance;
+        }else{
+            if(xUI.XPS.timesheetImages.imageAppearance >= 1) xUI.setAppearance(0);
+        };
     },0);
 //    this.bkup([XPS.xpsTracks[1][0]]);
 //画像部品の表示前のカーソル位置描画,'width':markerWidth
@@ -7747,62 +8538,63 @@ xUI.resetSheet=function(editXps,referenceXps){
 /*
     viewMode設定
 */
-//コンパクトモードが有効
+//コンパクトモードが有効 docImage非表示
     if(xUI.viewMode=="Compact"){
 //ロゴ
-    $("#logoTable").hide();
+		$("#logoTable").hide();
 //第二カウンタ
-    $("#fct1").hide();
+		$("#fct1").hide();
 //ツールバーボタン
-    $("#ok").hide();
-    $("#ng").hide();
+		$("#ok").hide();
+		$("#ng").hide();
 //シートヘッダ
-//    $("#opusL").hide();
-//    $("#titleL").hide();
-//    $("#subtitleL").hide();
-    $("#nameL").hide();
-//    $("#opus").hide();
-//    $("#title").hide();
-//    $("#subtitle").hide();
-    $("#update_user").hide();
+//		$("#opusL").hide();
+//		$("#titleL").hide();
+//		$("#subtitleL").hide();
+		$("#nameL").hide();
+//		$("#opus").hide();
+//		$("#title").hide();
+//		$("#subtitle").hide();
+		$("#update_user").hide();
 //メモエリア
-    $("#memoArea").hide();
+		$("#memoArea").hide();
 //タイムラインヘッダ
-    $("#UIheader").show();
-    if(document.getElementById("UIheaderScrollV").innerHTML==""){document.getElementById("UIheaderScrollV").innerHTML=xUI.pageView(-2);};
-//    $("#UIheaderFix").show();
-//    $("#UIheaderScroll").show();
-/*　タグ表示域高さ調整*/
-    $('.tlhead').each(function(){$(this).height($('#tlheadParent').height())});
-    }else{
+		$("#UIheader").show();
+		if(document.getElementById("UIheaderScrollV").innerHTML==""){document.getElementById("UIheaderScrollV").innerHTML=xUI.pageView(-2);};
+//		$("#UIheaderFix").show();
+//		$("#UIheaderScroll").show();
+/*タグ表示域高さ調整*/
+		$('.tlhead').each(function(){$(this).height($('#tlheadParent').height())});
+	}else{
 //ロゴ
-    $("#logoTable").show();
-//    $("#headerLogo").show();
+		$("#logoTable").show();
+//		$("#headerLogo").show();
 //第二カウンタ
-    $("#fct1").show();
+		$("#fct1").show();
 //ツールバーボタン
-    $("#ok").show();
-    $("#ng").show();
+		$("#ok").show();
+		$("#ng").show();
 
 //シートヘッダ
-//    $("#opusL").show();
-//    $("#titleL").show();
-//    $("#subtitleL").show();
-    $("#nameL").show();
-//    $("#opus").show();
-//    $("#title").show();
-//    $("#subtitle").show();
-    $("#update_user").show();
+//		$("#opusL").show();
+//		$("#titleL").show();
+//		$("#subtitleL").show();
+		$("#nameL").show();
+//		$("#opus").show();
+//		$("#title").show();
+//		$("#subtitle").show();
+		$("#update_user").show();
 //メモエリア
-    $("#memoArea").show();
+		$("#memoArea").show();
 //タイムラインヘッダ
-    $("#UIheader").hide();
-    $("#UIheaderScrollV").html("");
-    
-//    $("#UIheaderFix").hide();
-//    $("#UIheaderScroll").hide();
-    }
+		$("#UIheader").hide();
+		$("#UIheaderScrollV").html("");
 
+//		$("#UIheaderFix").hide();
+//		$("#UIheaderScroll").hide();
+	};
+
+    if(this.XPS.sheetLooks) xUI.applySheetlooks(this.XPS.sheetLooks);
 /* ヘッダ高さの初期調整*/
     this.adjustSpacer();
 /* 入力モードスイッチ初期化*/
@@ -7815,7 +8607,7 @@ xUI.replaceEndMarker([トラック数,フレーム数],上下オフセットpx);
 console.log('endmarker');
     xUI.replaceEndMarker(xUI.XPS.xpsTracks.duration);
 if(! Refstatus) xUI.flipRefColumns('hide');
-
+    if(xUI.viewMode != "Compact") xUI.setAppearance();
     return ;
 };
 
@@ -7929,7 +8721,7 @@ xUI.activeteDocument  = function(tabId){
  */
 //ユーザ設定を予備加工
     var MaxFrames = nas.FCT2Frm(SheetLooks.PageLength);//タイムシート尺 global:Sheet
-//    var MaxLayers = SheetLooks.trackSpec;//セル重ね数
+//    var MaxLayers = SheetLooks.node;//セル重ね数
 
 //始動オブジェクトとして空オブジェクトで初期化する スタートアップ終了までのフラグとして使用
 var xUI         =new Object();
@@ -7962,6 +8754,8 @@ function nas_Rmp_Startup(){
     sync("about_");
 //クッキー指定があれば読み込む
     if(useCookie[0]){ldCk()}; 
+//WEB-UI解像度の設定
+    nas.RESOLUTION.setValue('96ppi');
 //ライブラリフレームレートの設定
     nas.FRATE=nas.newFramerate(SheetLooks.FrameRate);
 //背景カラーを置換
@@ -7988,7 +8782,7 @@ if(location.hostname.indexOf("remaping-stg")>=0){
        グローバルの XPSを実際のXpsオブジェクトとして再初期化する
 */
 //    XPS=new Xps([SoundColumns,SheetLayers,CameraworkColumns,StageworkColumns,SfxColumns],MaxFrames,myFrameRate);
-    XPS=new Xps(SheetLooks.trackSpec,MaxFrames);
+    XPS = new Xps(SheetLooks.trackSpec,MaxFrames);
 /*
     Mapオブジェクトの改装を始めるので、いったん動作安定のため切り離しを行う
     デバッグモードでのみ接続
@@ -8081,7 +8875,7 @@ console.log(XPS.parseXps(startupDocument));
     if((referenceDocument)&&(referenceDocument.length)){
         referenceX.readIN(referenceDocument);
     }
-console.log(XPS.toString());
+console.log(XPS.toString(false));
 console.log(SheetLooks);
     xUI.init(XPS,referenceX);//初回実行時にxUIにデータを与えて初期化
 
@@ -8097,7 +8891,7 @@ if(! xUI.XPS.xMap.currentJob) xUI.XPS.xMap.syncProperties(xUI.XPS);
 */
 console.log('global')
 console.log(SheetLooks);
-    xUI.setSheetLook(SheetLooks);//タイムシートルック初期化
+    xUI.applySheetlooks(SheetLooks);//タイムシートルック初期化
     xUI.resetSheet();
     nas_Rmp_Init();
 /* ================================css設定
@@ -8107,9 +8901,9 @@ console.log(SheetLooks);
     $('th').css('border-color',xUI.sheetborderColor);
     $('td').css('border-color',xUI.sheetborderColor);
 //    識別用ラベル背景色設定
-//    nas.addCssRule("th.stilllabel" ,"background-color:"+xUI.stillColor ,"screen");
-//    nas.addCssRule("th.sfxlabel"   ,"background-color:"+xUI.sfxColor   ,"screen");
-//    nas.addCssRule("th.cameralabel","background-color:"+xUI.cameraColor,"screen");
+//    nas.setCssRule("th.stilllabel" ,"background-color:"+xUI.stillColor ,"screen");
+//    nas.setCssRule("th.sfxlabel"   ,"background-color:"+xUI.sfxColor   ,"screen");
+//    nas.setCssRule("th.cameralabel","background-color:"+xUI.cameraColor,"screen");
     $("th.stilllabel").css("background-color",xUI.stillColor);// ,"screen");
     $("th.sfxlabel").css("background-color",xUI.sfxColor);//   ,"screen");
     $("th.cameralabel").css("background-color",xUI.cameraColor);//,"screen");
@@ -8160,16 +8954,19 @@ if((NameCheck)||(myName=="")){
 */
 
     document.body.addEventListener('dragover', function(e) {
+        if(documentFormat.active) return;
         e.stopPropagation();e.preventDefault();
-console.log(e);
-//ドラグオーバーされたファイルの種類でカラーを変更する
+//console.log(e);
+//ドラグオーバーされたファイルの種類でカラーを変更するか?
         this.style.background = xUI.selectedColor;//
     }, false);
     document.body.addEventListener('dragleave', function(e) {
+        if(documentFormat.active) return;
         e.stopPropagation();e.preventDefault();
         this.style.background = xUI.sheetbaseColor;//
     }, false);
     document.body.addEventListener('drop', async function(e) {
+        if(documentFormat.active) return;
         e.stopPropagation();e.preventDefault();
         this.style.background = xUI.sheetbaseColor;//
 console.log('droped');
@@ -8180,6 +8977,26 @@ console.log(e.composedPath());
         const items = e.dataTransfer.items;
 
 console.log([files,items]);
+//タイムシートデータと画像をふるい分け
+//  note
+//    xUI.importBox.allowExtensions    = new RegExp("\.(txt|csv|xps|xpst|ard|ardj|tsh|xdts|tdts|sts)$",'i');
+//    xUI.importBox.allowImgExtensions = new RegExp("\.(jpg|jpeg|jfif|png|gif|tga|targa|psd|psb)$",'i');
+
+        var imgItems  = [];
+        var xpstItems = [];
+        Array.from(items).forEach(function(e){
+console.log(e)
+            if(e.type == 'file'){
+                var name = e.getAsFile().name;
+                if(e.webkitGetAsEntry().isFile){
+                    if(name.match(xUI.importBox.allowExtensions))    xpstItems.add(e);
+                    if(name.match(xUI.importBox.allowImgExtensions)) imgItems.add(e); 
+                };
+console.log(e.getAsFile().name);
+console.log(e.type);
+console.log(e.webkitGetAsEntry().isFile);
+            }
+        });
 /*
         if(itmid >= 0){
 //アイテムドロップ
@@ -8203,9 +9020,13 @@ console.log('droped to fileStrip end');
             };
         }else ;// */  
         if((items.length == 1)&&(items[0].webkitGetAsEntry().isFile)){
-//ファイル単独ドロップ
 console.log(items[0].webkitGetAsEntry().isFile);
-        xUI.importBox.read(e.dataTransfer.files,processImport);
+console.log(e.dataTransfer.files);
+//        if(xpstItems.length){}
+//  タイムシートドキュメントファイルの単独ドロップ
+//    非活性時は読込｜活性時はリファレンス読込 判別はimportBoxサイドで行う
+            xUI.importBox.read(e.dataTransfer.files,processImport);
+//        {}
 /* エレクトロン拡張時に使用
             if((files.length == 1)&&(files[0].path)){
 //fileにpath拡張があるのでhub&&spoke:メッセージ通信でバックグラウンド処理へ移行
@@ -8219,6 +9040,9 @@ console.log(items[0].webkitGetAsEntry().isFile);
 				});
 			}else if ((files.length == 1)&&(items.length == 1)){
 			} ;// */
+        }else if((items[0].webkitGetAsEntry().isFile)&&(files.length > 1)){
+//マルチファイルドロップ
+//タイムシートファイルが複数ある場合のみ複数アイテムでread
         }else{
 console.log(files);
 console.log(items);
@@ -8466,7 +9290,7 @@ console.log("no framerate specified");
         }
         if(sheetBaseColor.match(/^#[0-9a-f]+$/i)){
             SheetLooks.SheetBaseColor = sheetBaseColor;
-            xUI.setSheetLook(SheetLooks);
+            xUI.applySheetlooks(SheetLooks);
         }
 //  ユーザ情報取得
         xUI.currentUser = new nas.UserInfo(
@@ -9241,6 +10065,12 @@ function sync(prop){
 if(! document.getElementById('edchg')) return;
 if (typeof prop == 'undefined') prop = 'NOP_';
 	switch (prop){
+case    "imgAdjust":
+        break;
+case    "docImgAppearance":
+        document.getElementById('ImgAppearance').value = Math.floor(xUI.XPS.timesheetImages.imageAppearance*100);
+        document.getElementById('ImgAppearanceSlider').value = Math.floor(xUI.XPS.timesheetImages.imageAppearance*100);
+        break;
 case    "server-info":
         document.getElementById('headerRepository').innerHTML='<a onclick="serviceAgent.currentRepository.showInformation();" title="'+serviceAgent.currentRepository.owner.handle+'"><b>'+serviceAgent.currentRepository.name+'</b></a>';
         break;
@@ -9507,15 +10337,15 @@ case 1:		;//画像なしリンクあり
 	var titleString="<a href=\""+linkURL+"\" title=\""+titleText+"\" target=_new>"+XPS["title"]+" </a>";
 	break;
 default:
-	var titleString=(XPS["title"])? XPS["title"] : "";
+	var titleString=(xUI.XPS["title"])? xUI.XPS["title"] : "";
 }
 
 	}else{
-	var titleString=(XPS["title"])? XPS["title"] : "";
+	var titleString=(xUI.XPS["title"])? xUI.XPS["title"] : "";
 	}
 	if(document.getElementById("title")) document.getElementById("title").innerHTML=titleString;
 if(xUI.viewMode != "Compact"){
-	for (pg=1;pg<=Math.ceil(XPS.duration()/xUI.PageLength);pg++){
+	for (pg=1;pg<=Math.ceil(xUI.XPS.duration()/xUI.PageLength);pg++){
 		document.getElementById(prop+pg).innerHTML=titleString+"/"+XPS.subtitle;
 }
 	}
@@ -9530,10 +10360,10 @@ case	"subtitle":	;
 case	"create_time":	;
 case	"update_time":	;//?これは要らない
 	document.getElementById(prop).innerHTML=
-	(XPS[prop])? XPS[prop] : "<br />";
+	(xUI.XPS[prop])? xUI.XPS[prop] : "<br />";
 if(xUI.viewMode != "Compact"){
 	for (pg=1;pg<=Math.ceil(XPS.duration()/xUI.PageLength);pg++){
-		document.getElementById(prop+pg).innerHTML=(XPS[prop])? XPS[prop] : "<br />";
+		document.getElementById(prop+pg).innerHTML=(xUI.XPS[prop])? xUI.XPS[prop] : "<br />";
 }
 	}
 	break;
@@ -9551,10 +10381,10 @@ case    "current_user": ;
 	break;
 case	"scene":	;
 case	"cut":	;
-	var scn= XPS["scene"]	; 
-	var cut= XPS["cut"]	;
+	var scn= xUI.XPS["scene"]	; 
+	var cut= xUI.XPS["cut"]	;
 	
-	var myValue=(XPS["scene"] || XPS["cut"])?  "s" + scn + "-c" + cut :"<br />";
+	var myValue=(xUI.XPS["scene"] || xUI.XPS["cut"])?  "s" + scn + "-c" + cut :"<br />";
 //	document.title=(XPS["scene"] || XPS["cut"])? windowTitle +" "+scn +" "+ cut:windowTitle;
 
 	document.getElementById("scene_cut").innerHTML=myValue;
@@ -9778,7 +10608,7 @@ editMemo=function(e,insertTarget){
 function writeAEKey(n){
 if(! n){n=xUI.Select[0]; }
 		document.getElementById("AEKrEsult").value=XPS2AEK(XPS,n-1);
-		if(! Safari){document.getElementById("AEKrEsult").focus();}
+		if(appHost.platform != "Safari"){document.getElementById("AEKrEsult").focus();}
 		if((appHost.platform=="AIR")&&(air.Clipboard)){
 //AIRだった場合はここでクリップボードへ転送
 			writeClipBoard(XPS2AEK(XPS,n-1));
@@ -10133,7 +10963,7 @@ myBody+='" >';//
     };//ここまでbody-only時は省力
 //UNDOシステム外で原画トラック情報を削除
     var mainXps = new Xps();
-    mainXps.parseXps(xUI.XPS.toString());
+    mainXps.parseXps(xUI.XPS.toString(false));
 myBody+='<textarea id="startupContent" >';
 myBody+= mainXps.toString();
 myBody+='</textarea>';
@@ -10215,8 +11045,9 @@ xUIの状況を確認して必要に従ってimportDocumentを呼ぶ
 /**
  *  @paramas    {boolean}   autoBuffer
  *      ドロップされたファイルの内容をインポート
+ *      ドロップアイテムが画像の場合はデータを読み込んでurlに展開して使用
  */
-var processImport=function(autoBuffer){
+var processImport = function(autoBuffer){
     
     if(typeof autoBuffer == 'undefined') autoBuffer = true;
   if(autoBuffer){
@@ -10797,6 +11628,40 @@ var myOffset=document.body.getBoundingClientRect();
     })
 });
 /*
+optionPanelPaint floating Panel
+*/
+jQuery(function(){
+    jQuery("#optionPanelPaint a.close").click(function(){
+        jQuery("#optionPanelPaint").hide();
+        return false;
+    })
+    jQuery("#optionPanelPaint a.minimize").click(function(){
+        if(jQuery("#optionPanelPaint").height()>100){
+           jQuery("#formPaint").hide();
+           jQuery("#optionPanelPaint").height(24);
+    }else{
+           jQuery("#formPaint").show();
+           jQuery("#optionPanelPaint").height(360);
+    }
+        return false;
+    })
+    jQuery("#optionPanelPaint dl dt").mousedown(function(e){
+        jQuery("#optionPanelPaint")
+            .data("clickPointX" , e.pageX - jQuery("#optionPanelPaint").offset().left)
+            .data("clickPointY" , e.pageY - jQuery("#optionPanelPaint").offset().top);
+        jQuery(document).mousemove(function(e){
+var myOffset=document.body.getBoundingClientRect();
+            jQuery("#optionPanelPaint").css({
+                top:e.pageY  - jQuery("#optionPanelPaint").data("clickPointY") + myOffset.top - xUI.screenShift[1] +"px",
+                left:e.pageX - jQuery("#optionPanelPaint").data("clickPointX") + myOffset.left- xUI.screenShift[0] +"px"
+            })
+        })
+    }).mouseup(function(){
+        jQuery(document).unbind("mousemove")
+    })
+});
+// ====Paint//
+/*
 OptionPanelDraw
 */
 jQuery(function(){
@@ -10829,54 +11694,92 @@ var myOffset=document.body.getBoundingClientRect();
         jQuery(document).unbind("mousemove")
     })
 });
-// 画像ウインドウ
+// 書式編集パネル
 jQuery(function(){
-    jQuery("#optionPanelRef a.close").click(function(){
-        jQuery("#optionPanelRef").hide();
+    jQuery("#optionPanelDocFormat a.close").click(function(){
+        xUI.sWitchPanel('DocFormat','close');
+//        jQuery("#optionPanelDocFormat").hide();
         return false;
     })
 //minimize/maximaize
-    jQuery("#optionPanelRef a.minimize").click(function(){
-        if(jQuery("#optionPanelRef").height()>100){
-           jQuery("#formSnd").hide();
-           jQuery("#optionPanelRef").height(24);
+    jQuery("#optionPanelDocFormat a.minimize").click(function(){
+        if(jQuery("#optionPanelDocFormat").height()>54){
+           jQuery("#documentFormatEditor").hide();
+           jQuery("#optionPanelDocFormat").height(24);
 	}else{
-           jQuery("#formSnd").show();
-           jQuery("#optionPanelRef").height(700);
+           jQuery("#documentFormatEditor").show();
+           jQuery("#optionPanelDocFormat").height(184+24);
 	}
         return false;
     })
 //move
-    jQuery("#optionPanelRef dl dt").mousedown(function(e){
-        jQuery("#optionPanelRef")
-            .data("clickPointX" , e.pageX - jQuery("#optionPanelRef").offset().left)
-            .data("clickPointY" , e.pageY - jQuery("#optionPanelRef").offset().top);
+    jQuery("#optionPanelDocFormat dl dt").mousedown(function(e){
+        jQuery("#optionPanelDocFormat")
+            .data("clickPointX" , e.pageX - jQuery("#optionPanelDocFormat").offset().left)
+            .data("clickPointY" , e.pageY - jQuery("#optionPanelDocFormat").offset().top);
         jQuery(document).mousemove(function(e){
 var myOffset=document.body.getBoundingClientRect();
-            jQuery("#optionPanelRef").css({
-                top:e.pageY  - jQuery("#optionPanelRef").data("clickPointY") + myOffset.top - xUI.screenShift[1] +"px",
-                left:e.pageX - jQuery("#optionPanelRef").data("clickPointX") + myOffset.left- xUI.screenShift[0] +"px"
+            jQuery("#optionPanelDocFormat").css({
+                top:e.pageY  - jQuery("#optionPanelDocFormat").data("clickPointY") + myOffset.top - xUI.screenShift[1] +"px",
+                left:e.pageX - jQuery("#optionPanelDocFormat").data("clickPointX") + myOffset.left- xUI.screenShift[0] +"px"
             })
         })
     }).mouseup(function(){
         jQuery(document).unbind("mousemove")
     })
-//resize
-    jQuery("#RefPanelCotner").mousedown(function(e){
-        jQuery("#optionPanelRef")
-            .data("clickPointX" , e.pageX - jQuery("#optionPanelRef").offset().left)
-            .data("clickPointY" , e.pageY - jQuery("#optionPanelRef").offset().top);
+//resize(不要につき削除)
+/*
+    jQuery("#RefPanelCorner").mousedown(function(e){
+        jQuery("#optionPanelDocFormat")
+            .data("clickPointX" , e.pageX - jQuery("#optionPanelDocFormat").offset().left)
+            .data("clickPointY" , e.pageY - jQuery("#optionPanelDocFormat").offset().top);
         jQuery(document).mousemove(function(e){
 var myOffset=document.body.getBoundingClientRect();
-            jQuery("#optionPanelRef").css({
-                top:e.pageY  - jQuery("#optionPanelRef").data("clickPointY")+myOffset.top+"px",
-                left:e.pageX - jQuery("#optionPanelRef").data("clickPointX")+myOffset.left+"px"
+            jQuery("#optionPanelDocFormat").css({
+                top:e.pageY  - jQuery("#optionPanelDocFormat").data("clickPointY")+myOffset.top+"px",
+                left:e.pageX - jQuery("#optionPanelDocFormat").data("clickPointX")+myOffset.left+"px"
+            })
+        })
+    }).mouseup(function(){
+        jQuery(document).unbind("mousemove")
+    });// */
+});
+
+
+// ドキュメント画像調整ミニパネル
+jQuery(function(){
+    jQuery("#optionPanelImgAdjust a.close").click(function(){
+        xUI.sWitchPanel('ImgAdjust','hide');
+        return false;
+    })
+//minimize/maximaize
+    jQuery("#optionPanelImgAdjust a.minimize").click(function(){
+        if(jQuery("#optionPanelImgAdjust").height()>100){
+           jQuery("#formImgAdjust").hide();
+           jQuery("#optionPanelImgAdjust").height(24);
+	}else{
+           jQuery("#formImgAdjust").show();
+           jQuery("#optionPanelImgAdjust").height(($('#imgAdjustDetail').isVisible())? 236:158);//236|158
+	}
+        return false;
+    })
+//move
+    jQuery("#optionPanelImgAdjust dl dt").mousedown(function(e){
+        jQuery("#optionPanelImgAdjust")
+            .data("clickPointX" , e.pageX - jQuery("#optionPanelImgAdjust").offset().left)
+            .data("clickPointY" , e.pageY - jQuery("#optionPanelImgAdjust").offset().top);
+        jQuery(document).mousemove(function(e){
+var myOffset=document.body.getBoundingClientRect();
+            jQuery("#optionPanelImgAdjust").css({
+                top:e.pageY  - jQuery("#optionPanelImgAdjust").data("clickPointY") + myOffset.top - xUI.screenShift[1] +"px",
+                left:e.pageX - jQuery("#optionPanelImgAdjust").data("clickPointX") + myOffset.left- xUI.screenShift[0] +"px"
             })
         })
     }).mouseup(function(){
         jQuery(document).unbind("mousemove")
     })
 });
+
 //パネル上のデータリストを初期化する
 //    document.getElementById("sndCastList")
 //    document.getElementById("soundProplist")
@@ -11258,7 +12161,7 @@ default	:return;
 		};
 //ターゲットから複製を作ってサイズを調整
 	var newXPS=new Xps();
-	newXPS.readIN( xUI.XPS.toString());
+	newXPS.readIN( xUI.XPS.toString(false));
     newXPS.setDuration(duration);
 		newXPS["trin"]=newTrin;
 		newXPS["trout"]=newTrout;
@@ -11739,19 +12642,18 @@ function skbPush(Chr){
 */
 function chkValue(id){
 	document.getElementById("iNputbOx").select();
-	switch (id)
-	{
+	switch (id){
 case	"imgUse":
-			var imgs = document.querySelectorAll('.overlayDocmentImage');
-			if(document.getElementById(id).checked){
-//画像表示
-				imgs.forEach((e) => e.style.display = 'inline');
-//シートマージン有効
-			}else{
-//画像非表示
-				imgs.forEach((e) => e.style.display = 'none');
-//シートマージン無効
-			};
+            console.log(
+                document.getElementById("imgUse").checked,
+                document.getElementById("ImgBMOde").value,
+                parseInt(document.getElementById("ImgAppearance").value)/100
+            );
+            if(document.getElementById("imgUse").checked){
+                xUI.setAppearance(xUI.XPS.timesheetImages.imageAppearance);
+            }else{
+                xUI.setAppearance(0);
+            };
 break;
 case	"fct0"	:
 case	"fct1"	:
@@ -12804,6 +13706,7 @@ this.getProp =function ()
         document.getElementById("scnTitleList").appendChild(opt);
     }
     this.reWrite("scnTitle");
+
 //レイヤ数取得
 	if (this.tracks != (XPS.xpsTracks.length-1)){
 		this.tracks =  (XPS.xpsTracks.length-1);//バックアップとる

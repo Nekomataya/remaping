@@ -212,6 +212,1438 @@ nas.Pm.searchPropA = function(keyword,target){
     return null;
 }
 
+
+
+
+/*
+    管理ロック状態の基本的な扱い
+    制作管理者が、データ管理中に現場スタッフユーザがデータを更新する危険を回避するために
+    管理ロック状態を設ける
+
+    管理ロックの必要なオブジェクト(pmdb|stbd|xmap|xpst)に .management として設定される
+
+    データ管理のための状態オブジェクトプロパティ
+    nullまたはnas.UserInfo Boolとして評価 値のコンストラクタはつくらない
+
+    このフラグが立っているデータは当該ユーザ以外のユーザに対して読み出し操作以外ロックされる
+    (読み出しは常に可能)
+
+	標準データ識別子上のmLockedプロパティとしてタイムスタンプの前に置くことができる
+	値の置かれない場合はunlocked
+	
+	管理ログは将来的にアプリケーションがsyslog等に向かって投げる形式を取る
+	今回の実装では不要 2020.06.23
+*/
+/**
+ *	引数がユニークになるまでラストの一文字を置換する
+ *	@params {String} target
+ *		比較対象文字列
+ *	@params {number} length
+ *		比較文字列の冒頭文字数をキャプチャする数
+ *      省略時または０の場合は何もしない
+ *	@params {Array|Object} table
+ *		対照データセットが入ったテーブル配列またはオブジェクト
+ *	@params {String}	prop
+ *		対照データがオブジェクトであった場合のプロパティ名
+ *	
+ */
+nas.Pm.getUniqueStringInTable = function(target,length,table,prop){
+    if(length) target=target.slice(0,length);
+	if(nas.Pm.isUniqueStringInTable(target,table,prop)) return target;
+	for (var x=0;x<52;x++){
+		var resultString = target.slice(0,-1)+("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz").charAt(x);
+		if(nas.Pm.isUniqueStringInTable(resultString,table,prop)) return resultString;
+	}
+	return nas.uuid();
+}
+/**
+ *	データテーブル内でユニークな値か否かを判定する
+ *	@params {String} target
+ *		比較対象文字列
+ *	@params {Array|Object} table
+ *		対照データセットが入ったテーブル配列またはオブジェクト
+ *	@params {String}	prop
+ *		対照データがオブジェクトであった場合のプロパティ名
+ */
+nas.Pm.isUniqueStringInTable = function(target,table,prop){
+	var list = [];
+	if (table instanceof Array){
+		list = table;
+	}else if(Object.keys(table).length > 0){
+		for(var prp in table){
+			list.push(table[prp]);
+		}
+	}
+	if(list.length == 0) return true;
+	if((prop)&&(list[0][prop])){
+		if(list.findIndex(function(elm){return elm[prop]==target})>-1) return false;		
+	}else{
+		if(list.findIndex(function(elm){return elm==target})>-1) return false;
+	}
+	return true;
+}
+/*TEST
+
+nas.Pm.getUniqueStringInTable(
+"32TGh",3,
+["1","A","B","3","D"]
+);
+nas.Pm.getUniqueStringInTable(
+"AD",
+3,
+[
+	{bom:"AB"},
+	{bom:"AC"},
+	{bom:"AD"},
+	{bom:"AE"},
+	{bom:"AF"},
+	{bom:"AG"},
+],
+"bom"
+);
+nas.Pm.getUniqueStringInTable(
+"AD",
+{
+	A:{bom:"AB"},
+	B:{bom:"AC"},
+	C:{bom:"AD"},
+	D:{bom:"AE"},
+	E:{bom:"AF"},
+	F:{bom:"AG"},
+},
+"bom"
+);
+*/
+
+
+/*
+     管理データオブジェクトから識別子を作成するnas.Pmクラスメソッド
+     管理データは、そのオブジェクトがpmuプロパティ(nas.Pm.PmUnit)を持っているか否かで判定
+     名前を変更するか又はオブジェクトメソッドに統合
+     このメソッドは同名別機能のオブジェクトメソッドが存在するので厳重注意
+     クラスメソッドはURIencodingを行い、オブジェクトメソッドは部分的'%'エスケープを行う
+
+*** 識別子のフレームレート拡張
+    (括弧)でくくられた時間情報は、カット尺であり素材継続時間ではない。
+    フレームレートを追加情報として補うことが可能とする
+    その際は以下のルールに従う
+    (FCT/FPS)
+    単独のカットに対して設定されたフレームレートは、そのカットのみで有効
+    基本的には、タイトルのプロパティからフレームレートを取得してそれを適用する。
+    識別子には、基本的にフレームレートを含める必要性はない。
+
+    タイトルのフレームレートと異なる場合のみ、識別子にフレームレートを埋め込む。
+    (このコーディングは、pmdb実装後に行われる。2018.07.16)
+
+引数  opt
+"title"#"opus"//"s-c"("time")//"line"//"stage"//"job"//"status"
+'episode'(or 'product')//'cut'//'statsu'
+
+デフォルトでは
+Xps の場合 制作管理情報が付加されたフルフォーマットの識別子が戻る ステータスはタイムシートの所属するラインのステータスのみが添付される
+xMapの場合 制作管理情報を含まないカット識別子が戻る　フルサイズが指定されると 保持しているラインのすべてのステータスを記載する
+pmdbの場合 タイトル識別子が戻る
+stbdの場合 エピソード識別子が戻る
+
+仕様変更でタイムスタンプを追加
+タイムスタンプは必ず付加される
+
+管理ステータスを追加
+管理ステータスは、マネージャのユーザIDを使用
+タイムスタンプの前方に
+*/
+
+nas.Pm.getIdentifier = function(entryData,opt,index){
+    var dataType = '';
+    if(entryData instanceof nas.xMap){
+        dataType = 'xmap';
+    }else if(entryData instanceof nas.Xps){
+        dataType = 'xpst';
+    }else if(entryData instanceof nas.Pm.PmDomain){
+        dataType = 'pmdb';
+    }else if(entryData instanceof nas.StoryBoard){
+        dataType = 'stbd';
+    }
+    if(dataType=='pmdb'){
+            var result = entryData.dataNode;
+            if(entryData.timestamp) result += "."+entryData.timestamp;
+            return result + ".pmdb";
+    }else if(dataType=='stbd'){
+            var result = [encodeURIComponent(entryData.title),encodeURIComponent(entryData.opus)].join('#');
+            if(entryData.timestamp) result += "."+entryData.timestamp;
+            return result + ".stbd";
+    }
+
+    if(typeof opt=='undefined') opt = 'status';
+    if (!index) index = 0;
+    var timestamp = 0;
+    if(entryData.timestamp) timestamp = entryData.timestamp;
+
+    var locked = (entryData.menagement)? true:false;//管理ロック状態
+
+    var myProduct=[
+        encodeURIComponent(entryData.pmu.title),
+        "#"+encodeURIComponent(entryData.pmu.opus.toString('name')),
+        ((String(entryData.pmu.subtitle).length > 0)? "["+encodeURIComponent(entryData.pmu.subtitle)+"]":'')
+    ];
+    var myIdentifier=[myProduct.join("")];
+    if(entryData.pmu.inherit.length){
+        var cutList=[];
+        for (var cix = 0 ; cix < entryData.pmu.inherit.length ;cix ++){
+            cutList.push(
+                encodeURIComponent(entryData.pmu.inherit[cix].toString('full'))
+            );
+        }
+
+        if(opt=='xps') {
+            myIdentifier.push(cutList[index]);
+        }else{
+            myIdentifier.push(cutList.join('/'));
+        }
+    }else{
+        myIdentifier.push(entryData.name);
+    }
+    if(dataType=='xmap'){
+/*
+    拡張仕様:
+    ノードコレクション内の各ライン最終更新のデータを列挙して戻す
+    本線のみしか存在しない場合は、従来どおりの出力を行う
+ */
+        var status = []
+        for (var li = 0 ;li < entryData.pmu.nodeManager.lines.length ; li ++){
+            var targetLine  = entryData.pmu.nodeManager.lines[li];//参照ライン
+            var targetStage = targetLine.stages[targetLine.stages.length - 1];
+            var targetNode  = targetStage.jobs[targetStage.jobs.length-1];
+            status[li] =(encodeURIComponent(targetLine.toString(true))) +'//';
+            status[li]+=(encodeURIComponent(targetStage.toString(true)))+'//';
+            status[li]+=(encodeURIComponent(targetNode.toString(true))) +'//';
+            status[li]+=(encodeURIComponent(targetNode.jobStatus.toString(true)));
+        }
+        if(status.length <= 1){
+            myIdentifier.push(status[0]);
+        }else{
+            myIdentifier.push('['+status.join('][')+']');
+        }
+    }else if (dataType=='xpst'){
+        myIdentifier.push([
+            encodeURIComponent(entryData.line.toString(true)),
+            encodeURIComponent(entryData.stage.toString(true)),
+            encodeURIComponent(entryData.job.toString(true)),
+            encodeURIComponent(entryData.currentStatus.toString(true))
+        ].join('//'));
+    };
+    var order = 2;     
+    switch(opt){
+    case 'title':
+        return myProduct[0]+'.'+dataType;break;
+    case 'opus':
+        return myProduct.slice(0,2).join("")+'.'+dataType;break;
+    case 'episode':
+        return myProduct.join("")+'.'+dataType;break;
+    case 'product':
+        order = 1;break;
+    case 'cut':
+        order = 2;break;
+    case 'line':
+        order = 3;break;
+    case 'stage':
+        order = 4;break;
+    case 'job':
+        order = 5;break;
+    case 'status':
+    case 'xps':
+    case 'full':
+    default:
+        order = 6;break;
+    }
+//pmdb|stbdデータはissueを持たない　エクスポート時にエクスポート時点のpmdbを複製してともに書き出す。
+//識別子をネットワークリポジトリに送信後正常に追加・更新ができた場合は（コールバックで）ローカルリストの更新を行うこと
+    return myIdentifier.slice(0,order).join("//")+((locked)?'.locked':'')+((timestamp>0)?('.'+timestamp):'')+((opt=='xps')?'':('.'+dataType));
+}
+/**
+ *  管理情報をパースして無名オブジェクトで返す
+ *  IDと名前の分離は行わない　単純なデータチャンクで戻す
+ *  書式は '.'書式 または '//' 書式 セパレータが認識できない場合は　入力値をそのまま返す
+ *      '.'書式
+ *  セパレーターは'.'並びは逆順(リーフtoルート)各ノードはIDまたは名前 ステータスを含まない
+ *  URIエンコード不可　終端の'.'はルートを表す　ノードパス形式
+ *
+ *  原画:1.原画:2.(本線):1.|1:原画.2:原画.1:(本線).
+ *  1.2.1.
+ *  原画.原画.(本線).
+ *
+ *      '//'書式
+ *  セパレーターは'//'並びは正順(ルートtoリーフ)各ノードはIDまたは名前 ステータスを含む可能性あり
+ *  URIエンコード可
+ *  @params     {String}    nodeDescription
+ *      eg.
+ *      1.2.1-1.
+ *      1:[原画].2:原画.0:(本線).
+ *      0:(本線)//2:原画//1:[原画]//fixed:kiyo@nekomataya.info:宜しくおねがいします
+ *      0(本線)2原画
+ *  @returns    {Object}
+ *      {line:*,stage:*,job:*,status:*}
+ *
+ */
+ 
+nas.Pm.parseNodeDescription = function(nodeDescription){
+    if(! nodeDescription) return null;
+    if(! nodeDescription.match(/\.|\/\//)) return nodeDescription;
+    if(nodeDescription.match(/\.$/)){
+        var dataArray = nodeDescription.split('.');
+        dataArray.splice(-1);//ルートの上の不要なエントリを削除
+        dataArray = dataArray.reverse();//反転
+        dataArray.splice(3);//.書式はステータスを含むことができない
+        dataArray = dataArray.concat(["","","",""]);//ステータス情報はないので""を追加
+    }else{
+        var dataArray = nodeDescription.split('//');
+        if(dataArray.length > 4){
+            dataArray.splice(0,(dataArray.length-4));
+        }else if(dataArray.length < 4){
+            dataArray = dataArray.concat(["","","",""]).slice(0,4);
+        };
+    };
+    return {
+        line    : decodeURIComponent(dataArray[0]),
+        stage   : decodeURIComponent(dataArray[1]),
+        job     : decodeURIComponent(dataArray[2]),
+        status  : decodeURIComponent(dataArray[3])
+    };
+}
+
+/*
+  ドット区切りノードパス文字列をパースして、無名オブジェクトを返す
+    ドット区切りノードパスは以下のような形式の文字列（主にアプリケーション内部で使用）
+
+        [ジョブ記述].[ステージ記述].[ライン記述].
+
+    リーフ側からルートに向かってドット区切りでノード記述を連ねる
+    ルート記号として右端に'.'を置く
+    記述が完全でない場合は、不足分をカレントデータ("*")で補う
+    その際、ルート記述がある場合はリーフ側、ない場合はルート側からデータが補完される
+
+    各記述は、それぞれのオブジェクト記述に準ずる
+eg.
+    4.2.0.              ライン0 の ステージ2 ジョブ4
+    1       (1.*.*.)    カレントステージの　ジョブ1
+    1.3     (1.3.*.)    カレントラインの　ステージ3 ノード1
+    3.      (*.*.3.)    ライン3|ライン3のカレントステージカレントノード
+    2.1.    (*.2.1.)    ライン1 の ステージ2|ライン1ステージ2のカレントノード
+
+パスがノード以外のステージ、ラインを表す場合のアトリビュートを追加
+
+
+NodeManager.prototype
+*/
+
+nas.Pm.parseNodePath = function(nodepath){
+    var result={
+        path:[],
+        job:"",
+        stage:"",
+        line:"",
+        spcl:0
+    };
+    nodepath = String(nodepath).split('.').reverse();
+    if(nodepath[0]==""){
+//ルート記述がある(ライン|ステージ指定の可能性がある)
+        nodepath = nodepath.slice(1);
+        if(nodepath.length > 3) nodepath = nodepath.slice(0,3);
+//指定レベルを控えておく
+        result.spcl = nodepath.length;//1:line,2:stage,3:job(=node)
+        if(nodepath.length < 3) nodepath = nodepath.concat([' ',' ',' ']).slice(0,3);
+//        if(nodepath.length < 3) nodepath = nodepath.concat(['*','*','*']).slice(0,3);
+    }else{
+//ルート記述がない
+        result.spcl = 3;//必ずノード指定
+        if(nodepath.length < 3) nodepath = (['*','*','*']).concat(nodepath).slice(-3);
+    }
+//console.log(nodepath);
+    result.path  = nodepath;
+    if(nodepath.length){
+        result.line  = new nas.Pm.ManagementLine(nodepath[0],{nodes:[],stages:[],lines:[]});
+        if(result.line.id.join('-') == '0-0'){
+//コンポジットライン(コンストラクタで初期化処理はされていないのでここで処理する)
+            result.line.parent.lines.composite = result.line;//コンポジットライン設定（上書き）
+            var tempTrunk = new nas.Pm.ManagementLine('(tempTrunk)',result.line.parent);
+            result.line.parent.lines.add(tempTrunk);//仮の本線を置く
+        }else{
+//通常ライン
+            result.line.parent.lines.add(result.line);//仮設オブジェクトだがラインコレクションを置く
+        }
+    }
+    if(nodepath.length >= 1){
+//        result.stage = new nas.Pm.ManagementStage(nodepath[1],result.line);
+        result.stage = new nas.Pm.ManagementStage(
+            nodepath[1],
+            new nas.Pm.ManagementLine(nodepath[0],{parent:null,nodes:[],stages:[],lines:[]})
+        );
+        if(result.line.parent.lines.composite){
+//ライン指定がコンポジットなのでステージもコンポジットステージにする
+            result.stage.parentLine.parent.lines.composite = result.stage.parentLine;
+            result.stage.parentLine.parent.lines.composite.stages.add(result.stage);
+            result.stage.composite = true;
+        }
+    }
+    if(nodepath.length >= 2)
+var dummyManager = {parent:null,nodes:[],stages:[],lines:[]};
+//        result.job   = new nas.Pm.ManagementJob(nodepath[2],result.line.parent,result.stage);
+        result.job   = new nas.Pm.ManagementJob(
+            nodepath[2],
+            dummyManager,
+            new nas.Pm.ManagementStage(
+                nodepath[1],
+                new nas.Pm.ManagementLine(nodepath[0],dummyManager)
+            )
+        );
+
+    return result;
+}
+/* TEST
+var node='0:.原画.(本線):0.'
+node = nas.Pm.parseNodePath(node);
+console.log(node.getPath());
+console.log(node.getPath('name'));
+console.log(node.getPath('id'));
+*/
+/*
+    ノードパスを比較して評価数値を返す
+    一致        0
+    直系の親    -1
+    直系の子     1
+    傍系       -2
+*/
+nas.Pm.compareManagementNode = function(tgt,dst){
+    if(!(tgt instanceof nas.Pm.ManagementJob)) tgt=this.parseNodePath(tgt).job;
+    if(!(dst instanceof nas.Pm.ManagementJob)) dst=this.parseNodePath(dst).job;
+    if (tgt.getPath('id')==dst.getPath('id')) return 0;
+    if (tgt.stage.parentLine.id.join() == dst.stage.parentLine.id.join()){
+        if(tgt.stage.id == dst.stage.id){
+            if(tgt.id>dst.id){return -1}else{return 1};
+        }else if(tgt.stage.id>dst.stage.id){return -1}else{return 1}
+    }else{
+        return -1//直系の判断は分岐情報不足
+    }
+}
+/*TEST
+    nas.Pm.compareManagementNode('0.0.0','0.0.0.')
+*/
+/**<pre>
+ *       データ識別子をパースして無名オブジェクトで戻す
+ *       データ判定を兼ねる
+ *       分割要素がカット番号を含まない（データ識別子でない）場合
+ *       引数からドキュメント拡張子をのぞいたものとcutプロパティが完全に一致する
+ *       このケースでtypeがxmapの場合"asExtra"フラグを立てて戻す
+ *       asign/-(削除)
+ *       オブジェクトメソッドの識別子も解釈可能にする-(?)
+2022 05 仕様:
+dataNode情報を解釈するように拡張されているので
+全スペックの仕様は以下のようになる
+<dataNode>//<product>//<sci>//<line>//<stage>//<job>//<status>//.<timestamp>.<file-extension>
+
+ *      '//（二連スラッシュ）'を認識できなかったケースに限り'__（二連アンダーバー）'をセパレータとして認識するように変更
+ *      兼用カット情報は、冒頭のカットナンバーを代表カットと認識する
+ *      **"_(アンダーバー単独)"はセパレータ以外で使用するケースがあるため要注意
+ *      storyboardデータのために無名のショットに対応
+ *      データタイプを拡張　.xmap .xpst .pmdb .stbd
+ *      dataNode情報にurlスキームが含まれる場合データセパレータがずれる可能性があるのでこれを検出・エスケープする
+ *      dataNode情報にlocalStorageprefixが含まれる場合を考慮
+ *     （serverアドレスの一部として解釈する様に）
+ *    データユニークキーの抽出条件
+ *    pmdb|stbd	キー値から.<timestamp>を除いた値
+ *    xmap		キー値から//<SCI>-<timestamp>を除いた値
+ *    xpst		キー値から.<timestamp>を除いた値
+ *   がタイトル|エピソードパートを含まない場合を判別して空情報で補う機能を増設
+ *   第二引数に参照オブジェクトを渡して参照オブジェクトの情報で既存情報の上書きを行う機能を増設
+ *</pre>
+ *  @params {String} dataIdentifier
+ *          データ
+ *  @params {Object} template
+ *          title,opusプロパティを持った参照オブジェクト
+ *  @params {Object} parent
+ *          参照するpmdbを持つオブジェクト
+ *
+ *  @returns    {Object}
+ *      戻りデータのプロパティは以下
+    .type       :{string}   データ型 xpst|xmap|pmdb|stbd
+    .mLocked    :{Boolean}  管理ロック状態
+    .timestamp  :{Number}   timestamp Int
+    .dataNode   :{Object}   serverURL+repositoryIdf
+    .product    :{Object}   
+    .sci        :{Array}    カット inherit
+    .inherit    :.sci       alias of sci
+    .nodes      :{Array}    Array of mNode
+            
+    .mNode      :{Object}   {line:*,stage:*,job:*,status:*} マネジメントノード
+    .title      :{Object|String}
+    .subtitle   :{String}
+    .scene      :{String}
+    .cut        :{String}   代表カット
+    .time       :{String}   代表カットのカット尺
+    .line       :{String}
+    .stage      :{String}
+    .job        :{String}
+    .status     :{String}
+
+    .asExtra    :{Boolean}  エクストラアセットに対するフラグ
+    .uniqekey   :{String}   データごとの識別キー
+ */
+nas.Pm.parseIdentifier = function(dataIdentifier,template,parent){
+    if(! dataIdentifier) return false;
+    if((! parent)||(typeof parent.pmdb == 'undefined')) parent = nas;
+    dataIdentifier = nas.Pm.normalizeIdf(dataIdentifier);
+console.log(dataIdentifier);
+    var uniquekey        = dataIdentifier;
+    var typeString       = ''        ;
+    var managementLocked = false     ;
+    var timestamp        = undefined ;
+//typeString(拡張子型4文字固定)分離
+    if(dataIdentifier.match(/^(.*)\.(....)$/)){
+        typeString     = RegExp.$2;
+        dataIdentifier = RegExp.$1;
+    }
+//タイムスタンプ分離
+    if(dataIdentifier.match(/^(.*)\.(\d+)$/)) {
+        timestamp      = parseInt(RegExp.$2);
+        dataIdentifier = RegExp.$1;
+        uniquekey      = dataIdentifier;
+        if(typeString) uniquekey += '.'+typeString;
+    };
+//'.'を伴う何らかの先行記述があった場合管理ロック状態とみなして分離
+    if(dataIdentifier.match(/^(.*)\.(.*)$/)) {
+        managementLocked = true;
+        dataIdentifier = RegExp.$1;
+        uniquekey      = dataIdentifier;
+        if(typeString) uniquekey += '.'+typeString;
+    }
+    if(! typeString) typeString = 'xpst';
+//分離済識別子 予備整形
+    if(dataIdentifier.indexOf('//')< 0 ) dataIdentifier=dataIdentifier.replace(/__/g,'//');
+    dataIdentifier = dataIdentifier.replace(/:\/\//g,"%3A%2F%2F");//URLスキームの'://'をエンコード
+//フィールド分解
+    var dataArray = dataIdentifier.split('//');
+    if((typeString == 'xpst')||(typeString == 'xmap')){
+        var title = "";//"(名称未設定)";//空文字列に変更
+        var opus  = "";//"**";//空文字列に変更 5/30
+        if(dataArray[0].indexOf('#') < 0) dataArray = ([title+"#"+opus]).concat(dataArray);
+        if(template){
+            if(template.title) title = template.title;
+            if(template.opus)  opus = template.opus;
+            dataArray[0] = title+"#"+opus ;
+        }
+    }
+    var dataNodeString = '';
+    if(typeString == 'pmdb'){
+        dataNodeString = dataArray.splice(0,1)[0];//pmdbエントリからデータノード部分をスライス
+    }
+    var result={
+        type     : typeString,
+        asExtra  : false,
+        mLocked  : managementLocked,
+        dataNode : nas.Pm.parseDataNode(dataNodeString),//無名オブジェクト
+        product  : nas.Pm.parseProduct(dataArray[0]),//無名オブジェクト
+        sci      : nas.Pm.parseSCi(dataArray[1]),//nas.Pm.SCiオブジェクトの配列
+    };
+//    result.type     = typeString;
+//    result.mLocked  = managementLocked;
+
+    if(timestamp) result.timestamp = timestamp;
+//    result.dataNode = nas.Pm.parseDataNode(dataNodeString);//無名オブジェクト
+//    result.product  = nas.Pm.parseProduct(dataArray[0]);//無名オブジェクト
+//    result.sci      = nas.Pm.parseSCi(dataArray[1]);//nas.Pm.SCiオブジェクトの配列
+    result.inherit    = result.sci;//alias
+    result.server     = result.dataNode.server;
+    result.repository = result.dataNode.repository;
+    result.title      = parent.pmdb.workTitles.entry(result.product.title,'local');
+    if(! result.title) result.title = result.product.title;//Object|Srtring
+    result.opus       = parent.pmdb.products.entry(result.product.opus,'local');
+    if(! result.opus) result.opus = result.product.opus;//Object|Srtring
+    result.subtitle   = (result.opus.subtitle)?result.opus.subtitle:result.product.subtitle ;//string
+
+    if(result.sci.length){
+    var names = nas.Pm.parseCutIF(result.sci[0].name);//get Array [cutNo,sceneNo]|[cutNo]|[]
+        result.scene    = (names.length > 1)? names[1]:'';
+        result.cut      = (names.length > 0)? names[0]:'';
+        result.time     = result.sci[0].time;
+    }else{
+        result.scene    = '';
+        result.cut      = '';
+        result.time     = '';
+    }
+//複数マネジメントノードに対応 複数ノードの記述は//[0:(本線).]//
+    if(dataArray.length >= 6){
+        result.nodes = [];
+        if(dataArray[2].indexOf('[')==0){
+            var nodeDescriptions = dataArray.slice(2).join( "//" ).replace(/^\[|\]$/g,"").split('][');
+        }else{
+            var nodeDescriptions = [dataArray.slice(2,6).join('//')];
+        }
+        for (var n = 0 ; n < nodeDescriptions.length ; n ++){
+            result.nodes.push(nas.Pm.parseNodeDescription(nodeDescriptions[n]));
+        }
+        result.mNode    = result.nodes[0];
+        result.line     = new nas.Pm.ManagementLine(result.mNode.line,{lines:[],stages:[],nodes:[]});
+        result.stage    = new nas.Pm.ManagementStage(result.mNode.stage,result.line);
+        result.job      = new nas.Pm.ManagementJob(result.mNode.job,null,result.stage,result.line.parent,result.mNode.status);
+        result.status   = new nas.Pm.NodeStatus(result.mNode.status);
+    }
+//    if(typeString != 'xpst')
+    result.uniquekey = uniquekey;
+    if((result.type == 'xmap')&&(result.cut == uniquekey)){
+//        result.cut     = '_EXTRA_';//cutに与える文字列は変更なし
+        result.asExtra = true;
+    };
+    return result;
+}
+/** test 
+console.log(nas.Pm.parseIdentifier('%E3%81%8B%E3%81%A1%E3%81%8B%E3%81%A1%E5%B1%B1Max#%E3%81%8A%E3%81%9F%E3%82%81%E3%81%97//s-c10(72)//0%3A(%E6%9C%AC%E7%B7%9A)//0%3Alayout//0%3Ainit//Startup.'));
+
+nas.Pm.parseIdentifier(nas.Pm.getIdentifier(xUI.XMAP));
+
+nas.Pm.parseIdentifier(' (3+6)');
+
+
+*/
+/* 一時仮設メソッド
+識別子交換用のJSONテキストに変換
+交換用のJSONを整備して入出力に対応したクラスオブジェクトを作成
+*/
+nas.Pm.parseIdentifierJSON = function(idf,template){
+    var tgt = nas.Pm.parseIdentifier(idf,template);
+    var result = {
+        uniquekey   :   tgt.uniquekey,
+
+        mLocked     :   tgt.mLocked,
+        dataNode    :   tgt.dataNode,
+
+        timestamp   :   tgt.timestamp,
+        type        :   tgt.type,
+
+        product     :   tgt.product,
+        inherit     :   tgt.inherit,
+        mNode       :   tgt.mNode,
+        nodes       :   tgt.nodes
+    }
+    return JSON.stringify(result,undefined,2);
+}
+/**
+ *	識別子を分解してチェックする
+ *	@params {String}   idf
+ *	@returns {Object|false}
+ *	parseIdentifierのラッパ関数でもあるので、チェックとパースを同時に処理可能
+ *	チェックを抜けた識別子はパースデータを返す
+ */
+nas.Pm.checkIdentifier = function(idf){
+	var idfInfo = nas.Pm.parseIdentifier(idf);
+	var rejectRegex = new RegExp("\\(.*\\)|\\*+");
+	if(idfInfo){
+		if(
+			(idfInfo.product.title.match(rejectRegex))||
+			(idfInfo.product.opus.match(rejectRegex))||
+			(idfInfo.product.subtitle.match(rejectRegex))||
+			(idfInfo.sci[0].scene.match(rejectRegex))||
+			(idfInfo.sci[0].cut.match(rejectRegex))
+		){
+			return false;
+		}else{
+			return idfInfo;
+		}
+	}
+	return false;
+}
+/**
+ *    識別子比較関数
+ *    一致推測は未実装
+ *  @params {String}    target
+ *      比較識別子
+ *  @params {String}    destination
+ *      比較対象識別子
+ *  @params {Boolean}   compareType
+ *      タイプ比較を行い同タイプ以外を不一致とする デフォルト true
+ *  @params {Boolean}   compareNode
+ *      ノード比較を行い同ノード以外を不一致とする　pmdbの際は常にON 
+ *  @returns    {Number}
+ *    戻値:数値
+ *               -4   :no match
+ *               -3   :server match
+ *               -2   :dataNode(repository) match
+ *               -1   :title match
+ *                0   :product match
+ *                1   :product + cut match
+ *                2   :line match
+ *                3   :stage match
+ *                4   :job match
+ *                5   :status content match
+ *                6   :status assign match
+ *                7   :status clientIdf match
+ *
+ *  ステータス情報のうちassign/messageの比較は行わない
+ *  ステータス自体の比較もほぼ利用されないので省略を検討
+ *  追加実装:type比較:dataTypeがxmapであった場合は兼用カットの包括を一致と判定する
+ *      
+ *  上記実装により障害発生 type不一致を不一致とするタイプ比較オプション引数を追加   デフォルト値は比較ありに変更
+ *
+ *  追加実装　識別子に
+ *      タイトルの上位ドメインとして　データノード　（サービスURL:リポジトリ）
+ *      ステータスのプロパティとしてクライアントID
+ *　これらに伴い戻り値が拡張される
+ *      タイプのオプションとしてタイムスタンプが実装されたがここではタイムスタンプの比較は行わない
+ */
+nas.Pm.compareIdentifier =function (target,destination,compareType,compareNode){
+    if(typeof compareType == 'undefined') compareType = true;
+    if(typeof compareNode == 'undefined') compareNode = true;
+    var tgtInfo  = nas.Pm.parseIdentifier(target);
+    var destInfo = nas.Pm.parseIdentifier(destination);
+    //type
+        if((compareType)&&(tgtInfo.type!=destInfo.type)){
+            return -4;
+        }
+    //type-set
+//        if((tgtInfo.type == xmap)||(tgtInfo.type == xpst))
+//            compareNode = false;
+    //server
+        if((compareNode)&&(tgtInfo.server!=destInfo.server)){
+            return -4;
+        }
+    //repository
+        if((compareNode)&&(tgtInfo.repository!=destInfo.repository)){
+            return -3;
+        }
+    //title
+        if(tgtInfo.title instanceof nas.Pm.WorkTitle){
+            if(! tgtInfo.title.sameAs(destInfo.title)) return -2;
+        }else if(String(tgtInfo.title)!= String(destInfo.title)){
+            return -2;
+        }
+    //title+opus
+        if(tgtInfo.opus.sameAs){
+            if(! tgtInfo.opus.sameAs(destInfo.opus) ) { return -1 }
+        }else if(String(tgtInfo.opus)!= String(destInfo.opus)){
+            return -1
+        }
+    //Scene,Cut
+        var result = 0;
+        if((tgtInfo.type=='xmap')||(destInfo.type=='xmap')){
+            for(var tix=0;tix<tgtInfo.sci.length;tix++){
+                for(var dix=0;dix<destInfo.sci.length;dix++){
+                    if(nas.Pm.compareCutIdf(tgtInfo.sci[tix].name,destInfo.sci[dix].name) == 0){
+                        result = 1; break ;
+                    }
+                }
+                if(result > 0) break;
+            }
+            if(result == 0) return result;
+        }else{
+            var tgtSC = tgtInfo.cut;
+            var dstSC = destInfo.cut;
+            if((! tgtSC)||(! dstSC)) return result;
+            if(nas.Pm.compareCutIdf(tgtSC,dstSC) != 0) return result;
+            result = 1;
+        }
+    //version status
+        if (((tgtInfo.line)&&(destInfo.line))&&(tgtInfo.line.id.join() == destInfo.line.id.join() )){
+            result = 2;}else{return result;}
+        if (((tgtInfo.stage)&&(destInfo.stage))&&(tgtInfo.stage.id == destInfo.stage.id )){
+            result = 3;}else{return result;}
+        if (((tgtInfo.job)&&(destInfo.job))&&(tgtInfo.job.id  == destInfo.job.id )){
+            result = 4;}else{return result;}
+//console.log(destInfo)
+        if ((tgtInfo.status.content == destInfo.status.content)) result = 5;
+        if ((tgtInfo.status.assign != null)&&(tgtInfo.status.assign == destInfo.status.assign)) result = 6;
+        if ((tgtInfo.status.clientIdf == destInfo.status.clientIdf)) result = 7;
+        return result;
+}
+/*  TEST
+var A =[
+    "うなぎ",0,"ニョロ",
+    "","12","2+0",
+    "0:(本線)","1:原画","2:演出チェック","Startup:kiyo@nekomataya.info:TEST"
+    ];
+var B =[
+    "うなぎ",0,"ニョロ",
+    "","12","2+0",
+    "0:(本線)","1:原画","2:演出チェック","Startup"
+    ];
+nas.Pm.compareIdentifier("35%E5%B0%8F%E9%9A%8A_PC#RBE//04d",'35%E5%B0%8F%E9%9A%8A_PC#RBE[ベルセルク・エンチャント演出]')
+//console.log(nas.Pm.compareIdentifier(nas.Pm.stringifyIdf(A),nas.Pm.stringifyIdf(B)))
+*/
+/**
+ *	@params {String}	idf
+ *	@returns {String}
+ *
+ *	データ識別子をノーマライズして返す
+ *	現状一般的な
+ *	ABC_00_000{_000}*
+ *	ABC00_000_000{_000}
+ *	のような識別子は、プリプロセッサを通して正規化する
+ *
+ *	記述ミスによりダブルアンダーバーが失われた
+ *	以下のような記述は、推測でアンダーバーを補う
+ *
+ *	ABC#00_000{_000}*
+ *	ABC#00_000_000{_000}
+ *
+ *  %URIエンコードはデコードされる
+ */
+nas.Pm.normalizeIdf = function normalizeIdf(idf){
+	if(!idf) return '';
+	if(idf.match(/\%/)) idf = decodeURIComponent(idf);
+	idf = nas.normalizeStr(String(idf));
+	if(
+		(idf.match(/^([^\_\#]+)\_([0-9]+[^\_]*)\_(.+)$/))||
+		(idf.match(/^([^0-9\#]+)([0-9]+[^\_]*)\_(.+)$/))
+	){
+		idf = [RegExp.$1,'#',RegExp.$2,'__s-c',RegExp.$3].join('');
+	};
+	if(
+		(idf.match(/^[^\_]+\_[0-9]+[^\_]*(\_[^\_]+)+$/))||
+		(idf.match(/^[^0-9]+[0-9]+[^\_]*(\_[^\_]+)+$/))
+	){
+		idf = idf.replace(/\_/,'__');//初出の'_'を'__'に置換
+	};
+	return(idf);
+}
+/*TEST
+var idf = 'ABC_01_234_456';
+conasole.log(nas.Pm.normalizeIdf(idf));
+ */
+/**
+    識別子をパースする関数
+    SCiオブジェクトで戻す？
+    Identifier の持ちうる情報は以下
+
+    title
+        .name
+    opus
+        .name
+        .subtitle
+    [sci]
+        .name
+        .time
+    
+    [issues]
+        Line
+            .id
+            .name
+        Stage
+            .id
+            .name
+        Job
+            .id
+            .name
+    status
+        JobStatus
+            .content
+            .assign
+            .message
+*/
+/**
+ *   プロダクト識別子をパースして無名オブジェクトで返す
+ *   サブタイトルは一致比較時に比較対象から外す
+ *   引数または第一要素がカラの場合はfalse
+ *  @params     {String}    productString
+ *  @returns    {Object}
+ *  @example
+ *  nas.Pm.parseProduct("うらしまたろう#01[亀]");
+ */
+nas.Pm.parseProduct = function(productString){
+console.log(productString);
+
+    var dataArray = String(productString).replace( /[\[\]]/g ,'#').split('#');
+console.log(dataArray);
+    var result = {
+        title     :   (typeof dataArray[0] == 'undefined')? '':decodeURIComponent(dataArray[0]),
+        opus      :   (typeof dataArray[1] == 'undefined')? '':decodeURIComponent(dataArray[1]),
+        subtitle  :   (typeof dataArray[2] == 'undefined')? '':decodeURIComponent(dataArray[2])
+    };
+//console.log(typeof dataArray[2]);
+/* DB内にエントリがある場合のみproductを
+    if( nas.pmdb.workTitles.entry(result.title)&&
+        (nas.pmdb.workTitles.entry(result.title).products.entry(result.opus))
+    ) result.product = nas.pmdb.workTitles.entry(result.title).products.entry(result.opus);// */
+    return result;
+}
+/** test
+//if(dbg) console.log (nas.Pm.parseProduct('%E3%82%BF%E3%82%A4%E3%83%88%E3%83%AB%E6%9C%AA%E5%AE%9A#%E7%AC%AC%20%20%E8%A9%B1'));
+*/
+/**
+ *    sci識別子をパースして nas.Pm.SCi オブジェクトの配列で返す
+ *    識別子に付属する時間情報はトランジション／継続時間ではなくカット尺のみ
+ *    補助情報は持たせない。かつ対比時に比較対象とならないものとする
+ *    カット番号情報は、ここではscene-cutの分離を行わない
+ *    比較の必要がある場合に始めて比較を行う方針でコーディングする
+ *    sciString末尾の（括弧内）は時間情報部分
+ *    (括弧)による記述が2つ以上ある場合は最初の開き括弧の前がカット識別子で、時間情報はその直後の（括弧）内の情報を用いる
+ *    更に後続の（括弧）記述は出現順にtrin/troutの情報として扱う
+ *      フルフォーマットでは以下のような表現となる
+ *      s-c123(1+12)(0,trin)(18,trout)/
+ *      s4-c18(13+12)(wipe(1+12))(OL(2+0))
+ *    カッコ内の時間書式は(TC//framareteString) or (TC) フレームレートの指定のない場合はデフォルトの値で補われる
+ *    (1+12),(1+12//24FPS),(1:12//30),(01:12//30DF),(00:00:01:12//59.94) 等
+ *    デフォルト値は、タイトルから取得
+ *    sciStringに時間情報が含まれないケースあり
+ *    time指定の存在しない識別子の場合''を補う
+ *
+ *    引数が与えられない場合は引数を''とみなす
+ *      その場合の戻り値は空配列
+ *      名前が空となる要素はスキップ（無名要素は認められない）
+ *      特例で引数が'('で始まる場合のみ無名のSCiを返す
+ *  @params     {String}    sciDescription
+ *  @returns    {Array}
+ *      array of {Object SCi}
+ *      
+ */
+nas.Pm.parseSCi = function(sciDescription,productString){
+    if((typeof sciDescription == 'undefined')||(sciDescription == '')) return [];
+    if(sciDescription.match( /^\([^\)]+\)/ )) sciDescription = 's-c'+sciDescription;
+// 単独の'/'で兼用を分離
+    var dataArray = String(sciDescription).replace(/(\(.+)\,(.+\))/g,"$1//$2").replace(/([^\/])\/([^\/])/g,'$1,$2').replace(/\,|\s+|_/g,',_,').split(',_,');//.split(',');
+    var result = [];
+    for (var ix=0;ix < dataArray.length ;ix ++){
+        var currentDsc = (dataArray[ix].replace(/\)\(/g,'),_,(')).split(',_,');
+        if(currentDsc[0].match(/^([^\(]+)\(([^\)]+)\)/)) {
+            var cName = RegExp.$1;
+            var cTime = RegExp.$2;
+        }else{
+            var cName = currentDsc[0];
+            var cTime = '';
+        }
+        var cTrin  = '';
+        var cTrout = '';
+        if(currentDsc.length > 1) cTrin  = currentDsc[1];
+        if(currentDsc.length > 2) cTrout = currentDsc[2];
+// SCi(cutName,cutProduct,cutTime,cutTRin,cutTRout,cutRate,cutFrate,cutId)
+        result.add(
+            new nas.Pm.SCi(
+                decodeURIComponent(cName),
+                productString,
+                decodeURIComponent(cTime),
+                decodeURIComponent(cTrin),
+                decodeURIComponent(cTrout)
+            ),
+            function(tgt,dst){ return (nas.Pm.compareCutIdf(tgt.name,dst.name) == 0); }
+        );
+    }
+    return result;
+}
+/** test
+    console.log (nas.Pm.parseSCi('s-cC%23%20(72)/s-c96(133,30)'));
+    console.log (nas.Pm.parseSCi('s-cC%23%20(16)/s-c96(144//24)'));
+    console.log (nas.Pm.parseSCi('s-cC%23%20(16)(18)'));
+    console.log (nas.Pm.parseSCi('scC%23%20(16)(18)'));
+*/
+/**
+セル記述を整形して比較評価用に正規化された文字列を返すクラスメソッド
+戻り値は、<グループ名>-<セル番号>[-<ポストフィックス>]
+
+A_(001)_ovl  A-1-ovl
+*/
+nas.Pm.normalizeCell = function(myString){
+    return nas.normalizeStr(myString.replace( /[-_ー＿\s]/g ,"-")).replace( /([^\d.])0+/g ,"$1");
+}
+//test
+//nas.Pm.normalizeCell("A_００１２ー上");
+//nas.Pm.normalizeCell("");
+//nas.Pm.normalizeCell("");
+//nas.Pm.normalizeCell("");
+//nas.Pm.normalizeCell("");
+//nas.Pm.normalizeCell("");
+//nas.Pm.normalizeCell("");
+/*
+作品ごとのカット番号付ルールが問題になる
+
+s#@@@-c#$$$
+
+カット番号をユニークにする(通し番号)
+	$$$部分のみで識別できるようにする。$$$部分のかぶり番号は禁止　＠＠＠部分を比較に使わない
+	
+シーン番号を使う（表示するか否かのフラグ）
+	@@@
+
+どこのフラグを使うか？
+
+pmdb.
+ルートに接待
+
+
+カット番号比較機能に拡張が必要？
+	順位比較は現在の比較でOK
+	同位比較条件も同じ
+2-23 == 02-023	
+1-12 < 2-12
+2-13
+	shotNumberUnique下で、同番判定の際に問題が出る
+	1-12 == 2-12　となるので　先の判定に加えることが必要
+
+storyBoar.entry　等に　shotNumberUniqueを反映させる（検索系）
+
+カット識別子（いわゆるカット番号）CutIF を定義
+
+カット識別子は、一連の映像内でカットに与えられるユニークな名称で、カットを識別する役目を与えられる
+自由な文字列で設定して良い。
+名前が空白文字の場合システムで設定したユニークなID以外でのアクセスが制限される
+
+ユーザの間隔に一致させるため一定のゆらぎを許容する
+通常のプログラムでは異なる名称として認識される以下の文字は識別子としては同じものであると判断される
+
+1,１,01,０００１	⇒　すべて　いわゆる「カット1」
+
+
+カット識別子は慣習的に、シーン番号とショット番号の二部分に分けて解釈される
+
+	s#<XX>-c#<YY>
+
+<XX>	シーン番号
+<YY>	ショット（カット）番号
+
+カット識別子の命名ルールを以下の２変数で定義する
+
+	ShotNumberUnique
+ショット番号を重複禁止にする
+このチェックがオフの場合、シーン,ショットの組み合わせでユニークであれば良い
+シーン番号管理を行う場合はオフにする
+
+	SceneUse
+シーン番号を使用するか否か
+データ内部でのシーン分けに関わらずシーン番号を使用・表示しないモード
+データ並べ替えの際にも考慮されない
+シーン番号管理を行う場合はオンにする
+
+ShotNumberUnique	SceneUser	eg.
+
+true	true	1-1	2-2	2-3	3-4 ...*
+false	true	1-1	2-1	2-2	3-1 ...
+true	false	1	2	3	4	...*
+false	false	1	1	1	1	...*
+*/
+/**
+ *  @params {String}  cutIdentifier
+ *  @returns {Array}
+ *  SCiデータ上のカット名をセパレータで分離するクラスメソッド
+ *  この場合のカット名には時間情報・ステータス等を含まないものとする
+ *  先行プロダクト情報は排除される
+ *  パースされたカット名は、カット、シーンの順の配列で戻す最大２要素
+ *
+ *    [cut,scene];//第三要素以降は分離しても使用されないことに注意
+ *    [cut]
+ *    []
+ *
+ *  要素数が識別子に含まれる情報の深度を示す**
+ */
+nas.Pm.parseCutIF = function(cutIdentifier){
+    if(!cutIdentifier) return [];
+//プロダクト情報があればカット
+    if(cutIdentifier.match(/^.*(\/\/|__)/)) cutIdentifier = cutIdentifier.replace(/^.*(\/\/|__)/,'');
+//時間情報を削除
+    if(cutIdentifier.match(/\([^\(\)]+\)$/)) cutIdentifier = cutIdentifier.replace(/\([^\(\)]+\)$/,'');
+//全体でシーン記述のみしかない場合にセパレータを追加して空のカット番号を与える
+    if(cutIdentifier.match(/^s#?[^c\ _\-]+$/i)) cutIdentifier+='_';
+//第一セパレータで分解して倒置
+    cutIdentifier = String(cutIdentifier).trim().replace(/[\ _\-]+/,"%_%");
+//    cutIdentifier.indexOf('_')
+    var result = cutIdentifier.split("%_%").reverse();
+    for (var ix=0;ix<result.length;ix++){
+        if(ix==0){result[ix]=result[ix].replace(/^[CcＣｃ]/,"");};//cut
+        if(ix==1){result[ix]=result[ix].replace(/^[SsＳｓ]/,"");};//scene
+        result[ix]=result[ix].replace(/^[#＃№]|^(No.)/,"");//ナンバーサインを削除
+    };
+    return result;
+}
+/*test
+ console.log(nas.Pm.parseCutIF("00123#31[124]__s-c123"));
+ console.log(nas.Pm.parseCutIF("s-cC# "));
+ console.log(nas.Pm.parseCutIF("00123#31[124]__s-c123"));
+ console.log(nas.Pm.parseCutIF("ABCDE#26[9999]//s-c123-125(12+12)"));
+
+*/
+/**
+ *  エンコード済みのカット記述子を比較してマッチ情報を返す
+ *  ソート時の判定関数を兼ねるようにリターンを数値に変更 2019 06 20
+ *  シーンカットともに一致した場合のみ 0 それ以外は -1|+1で順位情報を返す
+ *  引数に秒表記部が含まれないよう調整が必要
+ *
+ *  @params     {String}   tgt
+ *     比較元カット記述子
+ *  @params     {String}   dst
+ *     比較先カット記述子
+ *  @returns    {Number}
+ *       -1 比較元下位（前方)
+ *       0  一致
+ *       +1 比較元上位（後方)
+ */
+nas.Pm.compareCutIdf=function(tgt,dst){
+console.log(tgt,dst);
+//引数がSC|PmUnitオブジェクトであった場合評価値をパース済みの値と入れ替える
+	if(tgt instanceof nas.Pm.SCi) tgt = tgt.name;
+	if(dst instanceof nas.Pm.SCi) dst = dst.name;
+	if(tgt instanceof nas.Pm.PmUnit) tgt = tgt.inherit[0].name;
+	if(dst instanceof nas.Pm.PmUnit) dst = dst.inherit[0].name;
+//評価値に時間表記が含まれる場合パースして分離
+    if(tgt.match(/\(.+\)/)){tgt = nas.Pm.parseSCi(tgt)[0].name};
+    if(dst.match(/\(.+\)/)){dst = nas.Pm.parseSCi(dst)[0].name};
+//必ず２要素以下の配列が戻るように変更されたので不足時に空文字列要素を追加 2020-12
+    var tgtArray = nas.Pm.parseCutIF(tgt);
+    if(tgtArray.length < 2) tgtArray = tgtArray.concat(["",""]);
+    var dstArray = nas.Pm.parseCutIF(dst);
+    if(dstArray.length < 2) dstArray = dstArray.concat(["",""]);
+    tgtArray[0]=nas.RZf(nas.normalizeStr(tgtArray[0]),12);
+    tgtArray[1]=nas.RZf(nas.normalizeStr(tgtArray[1]),12);
+    dstArray[0]=nas.RZf(nas.normalizeStr(dstArray[0]),12);
+    dstArray[1]=nas.RZf(nas.normalizeStr(dstArray[1]),12);
+
+//シーン記述なしは記述のあるものと一致しない
+    if ((tgtArray[1]==dstArray[1])||(nas.ShotNumberUnique)||(!(nas.SceneUse))){
+        if(tgtArray[0]==dstArray[0]){
+            return 0 ;//return 0;//一致
+        }else{
+            return (tgtArray[0] < dstArray[0])? -1:1;
+        }
+    }
+    return (tgtArray[1] < dstArray[1])? -1:1;
+}
+/*TEST
+nas.Pm.compareCutIdf("C12","s-c012");//-1
+nas.Pm.compareCutIdf("0012","title_opus_s-c012");
+nas.Pm.compareCutIdf("C００１２","s-c012");
+nas.Pm.compareCutIdf("S#1-32","s01-c0３２");
+
+["s-c12(32)","s-c14","s2-c11","s1-c#23","s#0-C#67(2+12)","s-c10(00:00:02:20)","123"].sort(nas.Pm.compareCutIdf);
+*/
+
+/**
+ *    配列指定で識別子をビルドするテスト用関数
+ *  @params {Array} myData
+ *  [
+        title,
+        opus,
+        subtitle,
+        scene,
+        cut,
+        time,
+        line,
+        stage,
+        job,
+        status
+    ];
+ * このテスト関数は完全な識別子を生成するが、複数カット複数ラインを含む識別子には対応していない
+ * またデータノード及びタイムスタンプデータタイプに関しても未対応 20200906
+ テスト用機能を残しつつIdf再構築のためのツールとして整備
+  パーサのリザルトを解釈してIdfを再構築して返す
+ */
+nas.Pm.stringifyIdf = function(myData){
+//myDataはlength>3の配列であること
+//この識別子作成は実験コードです2016.11.14
+  if(myData instanceof Array){
+    var myIdentifier=[
+            encodeURIComponent(String(myData[0]))+
+        "#"+encodeURIComponent(String(myData[1]))+
+        (
+            (
+                (String(myData[2]).length == 0)||
+                (typeof myData[2] == 'undefined')
+            )? "":"["+encodeURIComponent(myData[2])+"]"
+        )];
+        if(myData.length > 3){
+            myIdentifier.push(
+                encodeURIComponent(
+                    "s" + ((myData[3])? myData[3] : "" )+'-'+
+                    "c" + ((myData[4])? myData[4] :'00')
+                ) +
+                ((myData[5])? "(" + myData[5] +")": "" )
+            ) 
+        }
+        if((myData.length > 6)&&(typeof myData[6] != 'undefined')){
+            myIdentifier.push(encodeURIComponent(myData[6]));
+            if((myData.length > 7)&&(typeof myData[7] != 'undefined')){
+                myIdentifier.push(encodeURIComponent(myData[7]));
+                if((myData.length > 8)&&(typeof myData[8] != 'undefined')){
+                    myIdentifier.push(encodeURIComponent(myData[8]));
+                    if((myData.length > 9)&&(typeof myData[9] != 'undefined')){
+                        myIdentifier.push(encodeURIComponent(myData[9]));
+                        if(myData.length > 10)
+                        myIdentifier = myIdentifier.concat(myData.slice(9));
+                }
+            }
+        }
+    }
+  }else if((myData) && (myData.sci)){
+    var myIdentifier=[
+        encodeURIComponent(String(myData.product.title))+
+        "#"+encodeURIComponent(String(myData.product.opus))+(
+            (
+                (String(myData.product.subtitle).length == 0)||
+                (typeof myData.product.subtitle == 'undefined')
+            )? "":"["+encodeURIComponent(myData.product.subtitle)+"]"
+    )];
+    if(myData.sci.length == 1){
+            myIdentifier.push(
+                encodeURIComponent(
+                    "s" + ((myData.scene)? myData.scene : "" )+'-'+
+                    "c" + ((myData.cut)? myData.cut :'00')
+                ) +
+                ((myData.time)? "(" + myData.time +")": "" )
+            );
+        }else{
+            var inherit = [];
+            for(var cix = 0 ; cix < myData.sci.length ; cix ++){
+            inherit.push(
+                myData.sci[cix].cut + ((myData.sci[cix].time)? "(" + myData.sci[cix].time +")": "" ));
+            };
+            myIdentifier.push(inherit.join('_'))
+        };
+        if((myData.nodes)&&(myData.nodes.length)){
+            var mNodes = [];
+            for(var nix = 0 ;nix < myData.nodes.length ; nix++){
+                mNodes.push([
+                    encodeURIComponent(myData.nodes[nix].line),
+                    encodeURIComponent(myData.nodes[nix].stage),
+                    encodeURIComponent(myData.nodes[nix].job),
+                    encodeURIComponent(myData.nodes[nix].status)
+                ].join('//'));
+            }
+            if(myData.nodes.length == 1){
+                myIdentifier.push(mNodes[0]);
+            }else{
+                myIdentifier.push('['+mNodes.join(']/[')+']');
+            };
+        };
+  };
+    return myIdentifier.join("//");
+}
+//TEST
+/*
+var X = nas.Pm.stringifyIdf([
+    "たぬき",
+    "12",
+    "ポンポコリン",
+    "",
+    123,
+    "1+12",
+    "0:(本線)",
+    "1:原画",
+    "2:[演出チェック]",
+    "Startup:kiyo@nekomataya.info"
+]);
+
+nas.Pm.parseIdentifier(X);
+*/
+
+
+/**
+ *<pre>
+ *  @constractor
+ *   PmDomain オブジェクトは、制作管理上の基礎データを保持するキャリアオブジェクト
+ *   制作管理ディレクトリノード毎に保持される。
+ *   基礎データを必要とするプログラムに基礎データをサービスする
+ *   基本データが未登録の場合は親オブジェクトの同データを参照してサービスを行う
+ *　@params {Object Repositry|Title|Episode|others} myParent
+ *   リポジトリ（共有）、プロダクト（作品）または　エピソード（各話）
+ *  @example
+ *case:localRepository    
+ *    localRepository.pmdb = new nas.Pm.PmDomain(localRepository);
+ *case:NetworkRepository
+ *    NetworkRepository.pmdb = new nas.Pm.PmDomain(NetworkRepository);
+ *case:workTitle
+ *    myTitle.pmdb = Object.create(myTitle.parent.pmdb);
+ *case:Opus
+ *    myOpus.pmdb = Object.create(myOpus.parent.pmdb);;
+ */
+ /*
+    データノードパス文字列の仕様を調整
+    '.'+サーバ識別子(URL様文字列)+'.'+リポジトリ識別子+'.'+リポジトリ識別コード+'//'
+    最初の３フィールドがリポジトリを表すフィールドでユニーク値
+    xMap|Xpstは、ここまでの情報を識別情報として持つ
+ 　　データノード//標準識別子//
+    '.'で始まる文字列
+    最後の'.'の後方がリポジトリ識別子で'//'で終了していた場合はこれを払う
+    リポジトリ識別子の前方の'.'の前方がリポジトリ名
+    最初の'.'からリポジトリ名の前方の'.'の間の文字列すべてがサーバ識別子（URL）となる
+    .[serverIdf(url)].[RepositoryName].[RepositoryIdf]//
+    eg.
+    .https%3A%2F%2Fwww.dropbox.com%2Fsh%2Fg5zpxghnua49zlb%2FAADaU3-mH9zGwwEKpgLy2XYja%3Fdl%3D0.name of repository.%45abfg0170hg76376//
+
+    サービス識別子の記述はURI文字列に準ずる
+    ローカルファイルシステムのファイル名の一部として利用するためセパレータを含めてURIエンコードする
+    リポジトリ識別子の記述に".(ドット)"が必要な場合はURIエンコードする
+ */
+/**
+ *  データノードパスを分離する
+ *  @params {String}    dataNode
+ *  @returns {Object}
+ *      無名オブジェクト　{repository:REPOSITORY-STRING,server:SERVER-STRING}
+ */
+nas.Pm.parseDataNode = function(dataNode){
+    var result = {};
+    if(!(String(dataNode).indexOf('.') == 0)) dataNode = '.' + dataNode;
+    var nodeArray = dataNode.replace(/\/\/$/,'').split('.');
+    result.token      = decodeURIComponent(nodeArray.slice(-1)[0]);
+    result.repository = decodeURIComponent(nodeArray.slice(-2)[0]);
+    result.server     = decodeURIComponent(nodeArray.slice(1,-2).join('.'));
+    return result;
+}
+
+/** 
+ *    編集のための汎用データ出力メソッド
+ *  @params {String}    output
+ *         値を取得するアドレスまたはキーワード
+ *         プロパティ名 または ワイルドカード "*" または アドレス配列
+ *  @returns {String}
+ *         contents put　メソッドに引き渡し可能な文字列出力
+ */
+nas.Pm.valueGet = function (output){
+console.log(output);
+console.log(this.exList);
+//引数がない場合は失敗
+	if(! output) return false;
+//編集可能プロパティリストは、親オブジェクトのプロパティ this.exListとして保持
+/*
+	getメソッドは
+		JSON
+			JSON.stringify(<target>)
+		direct
+			String(<target>)
+		as Function
+			<target>[<getMathodFunction>]()
+		other
+			<target>
+*/
+//変換テーブルに値のないプロパティは、書き込み不能なので失敗
+//	if(! this.exList[output]) return false;
+//親オブジェクトごとに継承オブジェクトを確認
+	var targets = [];
+	if(this instanceof nas.Pm.PmUnit){
+		targets = ["nodeManager","issues"]; 
+	}else if(this instanceof nas.xMap){
+	    if(
+	        (output instanceof Array)||
+	        ((typeof output == 'string')&&(output.match(/^-?\d(\.-?\d)*$/)))
+	       ){
+console.log('asset address detect');
+	           return this.assetGet(output);
+	    }
+		targets = ["pmu"]; 
+	}else if(this instanceof nas.Xps){
+	    if(
+	        (output instanceof Array)||
+	        ((typeof output == 'string')&&(output.match(/\d+_\d+/)))
+	       ) return this.xpsTracks.get(output);
+		targets = ["pmu"];
+	}
+	for(var i = 0 ; i < targets.length ; i ++){
+		var child = targets[i]+'.';
+		if(output.indexOf(child)==0){
+			output = output.slice(child.length);
+console.log([targets[i]] +':'+ output);
+			return this[targets[i]].get(output);//子供オブジェクトのメソッドへ渡す
+		}
+	}
+//アドレスから現データを取得
+	var targetProp   = this[output];
+	if(output == "*") targetProp = this;//特例
+//文字列化した値（ディープコピー）取得
+	var currentValue;
+	if(this.exList[output].get == 'JSON'){
+		currentValue = JSON.stringify(targetProp);
+	}else if(this.exList[output].get == 'direct'){
+		currentValue = (targetProp)? String(targetProp):targetProp;
+	}else if(targetProp[this.exList[output].get] instanceof Function){
+		currentValue = targetProp[this.exList[output].get]();
+	}else {
+		return false;
+	}
+//値文字列を返す
+    return currentValue;
+};// nas.Pm.valueGet
+/** 
+ *    編集のための汎用データ入力メソッド
+ *  @params {Object InputUnit|Array address|String targetItem}    input
+ *         入力オブジェクトまたはアドレス｜キーワード
+ *  @params {String}    content
+ *         入力（書換）内容 文字列データ 第一引数が InputUnitの場合は無効
+ *  @returns [Array]
+ *      [書き込みプロパティアドレス,書き込み前の値,書き込み後の値]
+ *  複数のInputUnitの入力は認められない
+
+put(
+    []
+)
+
+
+
+
+ */
+
+nas.Pm.valuePut = function (input,content){
+//引数をオブジェクト化
+    var inputUnit = input;
+    if(!(input instanceof xUI.InputUnit)) inputUnit = {address:input,value:content};
+    if(! inputUnit.address) return false     ;//ターゲットがない場合は失敗
+//親オブジェクトごとに継承オブジェクトを確認して引き渡し
+    var targets = [];
+    if(this instanceof nas.Pm.PmUnit){
+        targets = ["nodeManager","issues"]; 
+    }else if(this instanceof nas.xMap){
+        if(inputUnit.address instanceof Array) return this.assetPut(inputUnit);
+        targets = ["pmu"];
+    }else if(this instanceof nas.Xps){
+        if(
+            ((typeof inputUnit.address == 'string')&&(inputUnit.address.match(/\d+_\d+/)))||
+            (inputUnit.address instanceof Array)
+        ) return this.xpsTracks.put(inputUnit);
+        targets = ["pmu"];
+    }else if(this instanceof nas.StoryBoard){
+        
+    }else if((typeof pman != undefined)&&(this === pman.reName)){
+        if(
+            ((typeof inputUnit.address == 'string')&&(inputUnit.address.match(/\d+_\d+/)))||
+            (inputUnit.address instanceof Array)
+        ) return this.itemPut(inputUnit);
+    };
+    for(var i = 0 ; i < targets.length ; i ++){
+        var child = targets[i]+'.';
+        if(inputUnit.address.indexOf(child)==0){
+            inputUnit.address = inputUnit.address.slice(child.length);
+            return this[targets[i]].put(inputUnit);//子供オブジェクトのメソッドへ渡す
+        }
+    }
+//変換テーブルに値のないプロパティは、書き込み不能なので失敗
+    if(! this.exList[inputUnit.address]) return false;
+//アドレス変換可能なプロパティを処理
+    if(this.exList[inputUnit.address].convert){
+        return this.put({
+            address : this.exList[inputUnit.address].convert,
+            value   : inputUnit.value
+        });
+    }
+//アドレスから現データを取得
+    var targetProp   = this[inputUnit.address];
+    if(inputUnit.address == "*") targetProp = this;//特例
+    var currentValue = this.get(inputUnit.address);//ディープコピーを取得
+    var putMethod = this.exList[inputUnit.address].put;//書き込み用メソッドを取得
+    if(putMethod == 'direct'){
+        this[inputUnit.address] = inputUnit.value;//直接代入
+    }else if(putMethod == 'JSON'){
+        this[inputUnit.address] = JSON.parse(inputUnit.value);
+    }else if(this[inputUnit.address][putMethod] instanceof Function){
+        this[inputUnit.address][putMethod](inputUnit.value);//メソッドで書き込み
+    }else{
+        return false;
+    }
+//戻り値は、配列 [書き込みアドレス,書き込み後の値,書き込み前の値[,書き込みに成功したレンジ]]
+//第四要素はレンジが存在するxpsTracksのみ
+//範囲のデータフォーマットは [[startCol,startFrm],[endCol,endFrm]]
+    if((this.exList[inputUnit.address].sync)&&(this[this.exList[inputUnit.address].sync])){
+//同期メソッドがあれば実行 引数は必ずtrue
+        this[this.exList[inputUnit.address].sync](true);
+    }
+    return [inputUnit.address, this.get(inputUnit.address), currentValue];
+};// nas.Pm.valuePut
+
+
+
+
+
+
 /**
     クラスメソッド　nas.Pm.searchPropを使ってキーを検索して対応するメンバーを返すオブジェクトメソッド
     検索に失敗したケースではnullを戻す
@@ -415,6 +1847,11 @@ entryName
     }
     return this.addStaff(myMembers);
 }
+
+
+
+
+
 */
 //test 上記共用メソッドの関与するコレクションの出力確認
 // nas.pmdb.workTitles.toString(true)
@@ -663,7 +2100,7 @@ nas.Pm.WorkTitle = function(){
 //****************************************************************
 //    this.pmTemplates;    //作品内の標準工程テンプレート 不要
 //   this.staff; //作品のスタッフ一覧　スタッフコレクションオブジェクト　不要
-//    this.opuses = new nas.Pm.OpusCollection(this);    //Object nas.Pm.OpusCollection タイトル配下の話数コレクション　不要
+//    this.products = new nas.Pm.OpusCollection(this);    //Object nas.Pm.OpusCollection タイトル配下の話数コレクション　不要
 //****************************************************************
 //UATサーバのためのプロパティ
     this.token = this.id;
@@ -1038,7 +2475,7 @@ nas.Pm.OpusCollection.prototype.parseConfig = function(configStream){
 }
 
 
-nas.Pm.opuses= new nas.Pm.OpusCollection(nas.Pm);
+nas.Pm.products= new nas.Pm.OpusCollection(nas.Pm);
 
 //メディアDB
 /*
@@ -2242,6 +3679,7 @@ nas.Pm.newSC("ktc#01.s-c123","3+12,OL(1+12),--(0+0)",framerate)
  * コンストラクタ内でのチェックはしない
  */
 nas.Pm.SCi = function SC(cutName,sceneName,myOpus,myTitle,myTime,myTRin,myTRout,myRate,myFrate,myId){
+    this.name       = (cutName)?cutName:'';//{String} cutName not number
     this.id         = myId ;//DB連結用 DBに接続していない場合はundefined
     this.cut        = cutName;//
     this.scene      = sceneName;//
@@ -2254,7 +3692,7 @@ nas.Pm.SCi = function SC(cutName,sceneName,myOpus,myTitle,myTime,myTRin,myTRout,
 }
 nas.Pm.newSCi = function(idString,index){
     var mySCi=Xps.parseIdentifier(idString)
-    var mySC= new nas.PM.SC(
+    var mySC= new nas.Pm.SCi(
         mySCi.cut,
         mySCi.scene,
         mySCi.opus,

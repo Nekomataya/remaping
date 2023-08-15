@@ -71,7 +71,7 @@ info.nekomataya.xmap.dataStore.<識別子>
 {<Repository>}.pmdb.pmTempaltes
 {<Repository>}.pmdb.jobNames
 {<Repository>}.pmdb.wrkTitles
-{<Repository>}.pmdb.opuses
+{<Repository>}.pmdb.products
 
 上記のオブジェクトに格納
 各コレクションのparentオブジェクトは pmdb

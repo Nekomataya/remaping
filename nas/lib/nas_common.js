@@ -151,6 +151,395 @@ var myFilename = ('nas_common.js');
 /** @constant {String} fileversion*/
 var myFilerevision = ('2.2');
 
+
+/*   事前に基礎環境を整備   */
+//============= console
+if(! console){
+    var console = {
+        data:[],
+        log:function(arg){this.data.push(arg);},
+    };
+};
+//============= String
+/*   String.trim
+ *   Stringクラスに trimメソッドがない場合に設定
+ */
+if(! String.prototype.trim){
+    String.prototype.trim = function trim(){
+        return this.replace(/^\s*/,'').replace(/\s*$/,'');
+    }
+}
+/* String.camelize
+ * @returns {string}
+ */
+String.prototype.camelize = function () {
+    return this.replace(/(?:[-_])(\w)/g, function (_, c) {
+        return c ? c.toUpperCase() : '';
+    });
+};
+//============= Array
+/*   Array.indexOf
+ *   配列オブジェクトにindexOfメソッドがない場合
+ */
+// https://tc39.es/ecma262/#sec-array.prototype.indexof
+if (!Array.prototype.indexOf)
+  Array.prototype.indexOf = (function(Object, max, min) {
+    "use strict"
+    return function indexOf(member, fromIndex) {
+      if (this === null || this === undefined)
+        throw TypeError("Array.prototype.indexOf called on null or undefined")
+
+      var that = Object(this), Len = that.length >>> 0, i = min(fromIndex | 0, Len)
+      if (i < 0) i = max(0, Len + i)
+      else if (i >= Len) return -1
+
+      if (member === void 0) {        // undefined
+        for (; i !== Len; ++i) if (that[i] === void 0 && i in that) return i
+      } else if (member !== member) { // NaN
+        return -1 // Since NaN !== NaN, it will never be found. Fast-path it.
+      } else                          // all else
+        for (; i !== Len; ++i) if (that[i] === member) return i 
+
+      return -1 // if the value was not found, then return -1
+    }
+  })(Object, Math.max, Math.min)
+
+/*  Array.find
+ */
+// https://tc39.github.io/ecma262/#sec-array.prototype.find
+
+if (!Array.prototype.find) {
+    Array.prototype.find = function(predicate) {
+      // 1. Let O be ? ToObject(this value).
+      if (this == null) {
+        throw TypeError('"this" is null or not defined');
+      }
+      var o = Object(this);
+      // 2. Let len be ? ToLength(? Get(O, "length")).
+      var len = o.length >>> 0;
+      // 3. If IsCallable(predicate) is false, throw a TypeError exception.
+      if (typeof predicate !== 'function') {
+        throw TypeError('predicate must be a function');
+      }
+      // 4. If thisArg was supplied, let T be thisArg; else let T be undefined.
+      var thisArg = arguments[1];
+      // 5. Let k be 0.
+      var k = 0;
+      // 6. Repeat, while k < len
+      while (k < len) {
+        // a. Let Pk be ! ToString(k).
+        // b. Let kValue be ? Get(O, Pk).
+        // c. Let testResult be ToBoolean(? Call(predicate, T, « kValue, k, O »)).
+        // d. If testResult is true, return kValue.
+        var kValue = o[k];
+        if (predicate.call(thisArg, kValue, k, o)) {
+          return kValue;
+        }
+        // e. Increase k by 1.
+        k++;
+      }
+      // 7. Return undefined.
+      return undefined;
+    }
+}
+
+/*  Array.prototype.findIndex
+ */
+// https://tc39.github.io/ecma262/#sec-array.prototype.findindex
+if (!Array.prototype.findIndex) {
+    Array.prototype.findIndex = function(predicate) {
+     // 1. Let O be ? ToObject(this value).
+      if (this == null) {
+        throw new TypeError('"this" is null or not defined');
+      }
+      var o = Object(this);
+
+      // 2. Let len be ? ToLength(? Get(O, "length")).
+      var len = o.length >>> 0;
+      // 3. If IsCallable(predicate) is false, throw a TypeError exception.
+      if (typeof predicate !== 'function') {
+        throw new TypeError('predicate must be a function');
+      }
+      // 4. If thisArg was supplied, let T be thisArg; else let T be undefined.
+      var thisArg = arguments[1];
+      // 5. Let k be 0.
+      var k = 0;
+      // 6. Repeat, while k < len
+      while (k < len) {
+        // a. Let Pk be ! ToString(k).
+        // b. Let kValue be ? Get(O, Pk).
+        // c. Let testResult be ToBoolean(? Call(predicate, T, « kValue, k, O »)).
+        // d. If testResult is true, return k.
+        var kValue = o[k];
+        if (predicate.call(thisArg, kValue, k, o)) {
+          return k;
+        }
+        // e. Increase k by 1.
+        k++;
+      }
+      // 7. Return -1.
+      return -1;
+    };
+}
+/* Array.prototype.forEach
+// Production steps of ECMA-262, Edition 5, 15.4.4.18
+// Reference: http://es5.github.io/#x15.4.4.18
+*/
+if (!Array.prototype['forEach']) {
+
+  Array.prototype.forEach = function(callback, thisArg) {
+
+    if (this == null) { throw new TypeError('Array.prototype.forEach called on null or undefined'); }
+
+    var T, k;
+    // 1. Let O be the result of calling toObject() passing the
+    // |this| value as the argument.
+    var O = Object(this);
+
+    // 2. Let lenValue be the result of calling the Get() internal
+    // method of O with the argument "length".
+    // 3. Let len be toUint32(lenValue).
+    var len = O.length >>> 0;
+
+    // 4. If isCallable(callback) is false, throw a TypeError exception.
+    // See: http://es5.github.com/#x9.11
+    if (typeof callback !== "function") { throw new TypeError(callback + ' is not a function'); }
+
+    // 5. If thisArg was supplied, let T be thisArg; else let
+    // T be undefined.
+    if (arguments.length > 1) { T = thisArg; }
+
+    // 6. Let k be 0
+    k = 0;
+
+    // 7. Repeat, while k < len
+    while (k < len) {
+
+      var kValue;
+
+      // a. Let Pk be ToString(k).
+      //    This is implicit for LHS operands of the in operator
+      // b. Let kPresent be the result of calling the HasProperty
+      //    internal method of O with argument Pk.
+      //    This step can be combined with c
+      // c. If kPresent is true, then
+      if (k in O) {
+
+        // i. Let kValue be the result of calling the Get internal
+        // method of O with argument Pk.
+        kValue = O[k];
+
+        // ii. Call the Call internal method of callback with T as
+        // the this value and argument list containing kValue, k, and O.
+        callback.call(T, kValue, k, O);
+      }
+      // d. Increase k by 1.
+      k++;
+    }
+    // 8. return undefined
+  };
+}
+/*  Array.from for Adobe ESTK
+ */
+// Production steps of ECMA-262, Edition 6, 22.1.2.1
+if (! Array.from) {
+    Array.from = (function () {
+        var symbolIterator = 'Symbol(Symbol.iterator)';
+//MDNの記法ではAEでエラーとしてキャプチャされて実行が止まるのtypeof判定に変更
+        if((typeof Symbol != 'undefined' )&&(Symbol.iterator)) symbolIterator = Symbol.iterator;
+        var toStr = Object.prototype.toString;
+        var isCallable = function (fn) {
+            return (
+                typeof fn === 'function' ||
+                toStr.call(fn) === '[object Function]'
+            );
+        };
+        var toInteger = function (value) {
+            var number = Number(value);
+            if (isNaN(number)) return 0;
+            if (number === 0 || !isFinite(number)) return number;
+            return (number > 0 ? 1 : -1) * Math.floor(Math.abs(number));
+        };
+        var maxSafeInteger = Math.pow(2, 53) - 1;
+        var toLength = function (value) {
+            var len = toInteger(value);
+            return Math.min(Math.max(len, 0), maxSafeInteger);
+        };
+
+        var setGetItemHandler = function setGetItemHandler(isIterator, items) {
+            var iterator = isIterator && items[symbolIterator]();
+            return function getItem(k) {
+                return isIterator ? iterator.next() : items[k];
+            };
+        };
+
+        var getArray = function getArray(
+            T,
+            A,
+            len,
+            getItem,
+            isIterator,
+            mapFn
+        ) {
+            // 16. Let k be 0.
+            var k = 0;
+            // 17. Repeat, while k < len… or while iterator is done (also steps a - h)
+            while (k < len || isIterator) {
+                var item = getItem(k);
+                var kValue = isIterator ? item.value : item;
+                if (isIterator && item.done) {
+                    return A;
+                } else {
+                    if (mapFn) {
+                        A[k] =
+                            typeof T === 'undefined'
+                                ? mapFn(kValue, k)
+                                : mapFn.call(T, kValue, k);
+                    } else {
+                        A[k] = kValue;
+                    }
+                }
+                k += 1;
+            }
+            if (isIterator) {
+                throw new TypeError(
+                    'Array.from: provided arrayLike or iterator has length more then 2 ** 52 - 1'
+                );
+            } else {
+                A.length = len;
+            }
+            return A;
+        };
+        // The length property of the from method is 1.
+        return function from(arrayLikeOrIterator /*, mapFn, thisArg */) {
+            // 1. Let C be the this value.
+            var C = this;
+
+            // 2. Let items be ToObject(arrayLikeOrIterator).
+            var items = Object(arrayLikeOrIterator);
+            var isIterator = isCallable(items[symbolIterator]);
+
+            // 3. ReturnIfAbrupt(items).
+            if (arrayLikeOrIterator == null && !isIterator) {
+                throw new TypeError(
+                    'Array.from requires an array-like object or iterator - not null or undefined'
+                );
+            }
+            // 4. If mapfn is undefined, then let mapping be false.
+            var mapFn = arguments.length > 1 ? arguments[1] : void undefined;
+            var T;
+            if (typeof mapFn !== 'undefined') {
+                // 5. else
+                // 5. a If IsCallable(mapfn) is false, throw a TypeError exception.
+                if (!isCallable(mapFn)) {
+                    throw new TypeError(
+                        'Array.from: when provided, the second argument must be a function'
+                    );
+                }
+                // 5. b. If thisArg was supplied, let T be thisArg; else let T be undefined.
+                if (arguments.length > 2) {
+                    T = arguments[2];
+                }
+            }
+            // 10. Let lenValue be Get(items, "length").
+            // 11. Let len be ToLength(lenValue).
+            var len = toLength(items.length);
+            // 13. If IsConstructor(C) is true, then
+            // 13. a. Let A be the result of calling the [[Construct]] internal method
+            // of C with an argument list containing the single item len.
+            // 14. a. Else, Let A be ArrayCreate(len).
+            var A = isCallable(C) ? Object(new C(len)) : new Array(len);
+            return getArray(
+                T,
+                A,
+                len,
+                setGetItemHandler(isIterator, items),
+                isIterator,
+                mapFn
+            );
+        };
+    })();
+}
+/**
+ * 配列オブジェクト拡張メソッド<br />
+ * <br />
+ *  配列要素を検索して同値の要素が存在すればその要素idを、
+ *  存在しない場合は引数を配列に追加してそのidを返す。<br />
+ *  戻り値は当該のアイテムid<br />
+ *  先入れ後出しにするため、リスト登録は配列の逆順登録にする
+ *  引数に比較関数cmpfxを与えることが出来る
+ *  cmpfx(tgt,dst)で、一致が発生した場合配列へのメンバ追加は行われない
+ *  cmpfxがない場合はindexOfで検索を行う<br />
+ * 
+ * @params {any} itm
+ * @params {Function} cmpfx
+ * @returns {Number} element id of Array
+ */
+Array.prototype.add=function(itm,cmpfx){
+    if(cmpfx instanceof Function){
+    var idx = -1;
+        for (var ix=0;ix<this.length;ix++){
+            if(cmpfx(itm,this[ix])){idx = ix;break;}
+        }
+    }else{
+        idx = this.indexOf(itm);
+    }
+    if(idx<0){
+        this.push(itm);idx = this.length-1;
+    }
+    return idx;
+}
+/* TEST
+    var A = ["A","B","C","D","E","F","G","H"];
+    console.log(A.add("A"));
+    console.log(A.add("J"));
+    console.log(A);
+    var B = [{name:"A",id:1},{name:"B",id:2},{name:"C",id:3}];
+    console.log(B.add({name:"F",id:1},function(tgt,dst){return tgt.id==dst.id}));
+    console.log(B.add({name:"D",id:0},function(tgt,dst){return tgt.id==dst.id}));
+    console.log(B);
+    
+
+*/
+/**
+ * DateオブジェクトにtoNASString形式処理を乗せる
+ *  @params {String} form
+    yyyy
+ *  @returns {string}
+ */
+Date.prototype.toNASString = function (form) {
+    if(! form) form = "yy/mm/dd h:m:s";
+    var h    = this.getHours();
+    var m    = this.getMinutes();
+    var s    = this.getSeconds();
+    var yy   = this.getFullYear();
+    var mm   = nas.Zf(this.getMonth() + 1 , 2 );
+    var dd   = nas.Zf(this.getDate() , 2 );
+        var Result = form.replace(/yy/ ,yy).replace(/mm/ ,mm).replace(/dd/ ,dd).replace(/h/ ,h).replace(/m/ ,m).replace(/s/ ,s);
+    return Result;
+};
+// Date
+/**
+ * @params {String} nasString
+ * @returns {Date}
+ */
+Date.prototype.setNASString = function (nasString) {
+    var yy = nasString.split("\ ")[0].split("/")[0];
+    var mm = nasString.split("\ ")[0].split("/")[1] - 1;
+    var dd = nasString.split("\ ")[0].split("/")[2];
+    var h = nasString.split("\ ")[1].split(":")[0];
+    var m = nasString.split("\ ")[1].split(":")[1];
+    var s = nasString.split("\ ")[1].split(":")[2];
+    this.setYear(yy);
+    this.setMonth(mm);
+    this.setDate(dd);
+    this.setHours(h);
+    this.setMinutes(m);
+    this.setSeconds(s);
+
+    return this;
+};
+
 /*
  * @description 実行環境の判定
  *	isAIR nas.isAIR等を参照していた部分を全面的に環境プロパティ appHostで書きなおす
@@ -159,159 +548,391 @@ var myFilerevision = ('2.2');
 /** 環境保持クラス
  *  @class AppHost
  *
+ *  @property  {boolean} Nodejs
+ *      Node.js 環境下であるか否かのフラグ
+ *      Electron上ではMainプロセス｜Browserプロセスがこれに当たる サンドボックスはフラグを判定する
  *  @property  {boolean} ESTK
  *      Adobe ESTS環境下であるか否かのフラグ
  *  @property  {String} platform
- *　     稼働環境指示変数 CEP|CSX|AIR|Chrome|Safari|Opera|MSIE|Netscape|Mozilla|unknown
+ *      稼働環境指示変数 UXP|CEP|CSX|AIR|Chrome|Safari|Opera|MSIE|Netscape|Mozilla|unknown
+ *      Eletron に関してはさらに preload|hub|spokeの3環境があるので要注意
  *  @property  {String} version
- *　     稼働環境バージョン変数 各環境ごとに意味が異なるので注意
+ *      稼働環境バージョン変数 各環境ごとに意味が異なるので注意
  *  @property  {String} os
- *　     稼働OS変数　Win|Mac|Other
+ *      稼働OS変数　Win|Mac|Other
+ *  @property  {boolean} localfs
+ *      ローカルファイルアクセスが可能か否かのフラグ
 */
-function AppHost()
-{
+function AppHost(){
     this.Nodejs;
     this.ESTK;
+    this.Electron;
 	this.platform;
 	this.version;
 	this.os;
+	this.fileAccess  = false;
+	this.userLibrary = false;
+	this.userLibraryVersion ;
 }
 
 AppHost.prototype.init=function(){
-    //Node.js環境判定
-    this.Nodejs = (typeof require =="undefined")? false:true;
-    //AdobeESTK判定
-    this.ESTK   = (     typeof app =="undefined")? false:true;
-    
-	var uaName=navigator.userAgent;
-    var uaVer ;
-	if(window.__adobe_cep__){
-	//CEP
-		this.platform="CEP";
-		this.version=navigator.userAgent.match(/(\sChrome\/)([0-9\.]*)/)[2];;
-	}else{
-	 if(navigator.userAgent.indexOf("AdobeAIR") > -1){
-	//AIR(フラッシュ)系
-	  if (window.runtime){
-		this.platform="AIR";
-		this.version=navigator.userAgent.match(/(AdobeAIR\/)([0-9\.]*)/)[2];
-		
-	  }else{
-		this.platform="CSX";
-		this.version=navigator.userAgent.match(/(AdobeAIR\/)([0-9\.]*)/)[2];
-	  }
-	 }else{
-	//その他普通のブラウザ
-	if (uaName.indexOf("Chrome") > -1) {
-		uaVer = uaName.match(/(Chrome\/)([0-9\.]*)/)[2];
-		this.version = (uaVer.split("\.")[0]*1);
-		this.platform = "Chrome";//chromeらしい
-	}else{
-	  if (uaName.indexOf("Safari") > -1) {
-		uaVer = uaName.match(/(Safari\/)([0-9\.]*)/)[2];
-		this.version = (uaVer.split("\.")[0]*1)+(uaVer.split("\.")[1]/10);
-		this.platform = "Safari";//サファリらしい
-	  }else{
-	  if (uaName.indexOf("Opera") > -1) {
-		this.version = uaName.match(/(Opera[\ \/])([0-9\.]*)/)[2];
-		this.platform = "Opera";//オペラである
-	    }else{
-	    if (uaName.indexOf("MSIE") > -1) {
-		this.version = uaName.match(/(MSIE[\ \/])([0-9\.]*)/)[2];
-		this.platform = 'MSIE';
-	      }else{
-	      if (uaName.indexOf("Netscape") > -1) {
-		uaVer = uaName.match(/(Netscape6?[\ \/])([0-9\.]*)/)[2];
-		this.version = (uaVer.split("\.")[0]*1)+(uaVer.split("\.")[1]/10);
-		this.platform = "NN";//NSにしてみる。
-	        }else{
-	        if (uaName.indexOf("Mozilla") > -1) {
-		this.version = uaName.match(/(Mozilla[\ \/])([0-9\.]*)/)[2];
-		this.platform = "Mozilla";//NSでないMozillaにしてみる。
-		  }else{
-		this.version = 'unKnown';
-		this.platform = 'unKnown';//知らないブラウザである。
-		}}}}}}
-/*
-		this.platform="other";
-		this.version="unknown";
-*/
-	 }
-	}
-	//OSもチェックしておく
-		this.os = "Other";//初期値として設定
-	//判定の幅がでかすぎるひとまずは Mac Win Other で
-	if ((window.navigator.platform).indexOf("Mac") > -1) {
-		this.os = "Mac";//Mac OS X
-	}else{
-	 if ((window.navigator.platform).indexOf("Win") > -1) {
-		this.os = "Win";//Windows
-	 }
-	}
-}
-
-var appHost=new AppHost();
-	appHost.init();
-// Stringクラスに trimメソッドが存在しない環境にtrimを設定
-if(! String.prototype.trim){
-    String.prototype.trim = function trim(){
-        return this.replace(/^\s*/,'').replace(/\s*$/,'');
+//Node.js環境判定()
+    this.Nodejs = (typeof process == "undefined")? false:true;
+//AdobeESTK判定
+    this.ESTK   = (typeof app == "undefined")? false:true;
+//globalのappオブジェクトを確認してAdobeScript環境を判定
+    if (this.ESTK) {
+        try {
+            if (app.isProfessionalVersion) {
+//AEは、app.nameプロパティがないのでここでアタッチしておく
+                app.name = "Adobe AfterEffects";
+            }
+        } catch (ERR) {
+        }
     }
-}
-// if (navigator.userAgent.indexOf("AdobeAIR") > -1) {isAIR=true}
-//AIR 環境が 純正/CSX(Configurator)/CEP 三種あるので判定が必要になる
-        var isAIR;var isADX;
-		if(window.runtime){
-		  isAIR = true;
+//OSチェック初期値
+	this.os = "Other";//初期値として設定
+//判定の幅がでかすぎるがひとまずは Mac Win Other で
+    if(typeof navigator != "undefined"){
+//navigatorオブジェクトが存在するので必ずHTMLが使用できる
+        var uaName = navigator.userAgent;
+        var uaVer;
+        if(uaName.indexOf('Electron/') > -1){
+            this.platform = 'Electron';
+            this.version=uaName.match(/(Electron\/)([0-9\.]*)/)[2];
+            if(typeof process == 'undefined'){
+                this.Electron = 'browser';
+            }else{
+                this.Electron = (process.sandboxed)? 'sandbox':'renderer';
+            };
+        }else if(window.__adobe_cep__){
+//windowオブジェクトも存在する
+	//CEP
+		    this.platform="CEP";
+		    this.version=uaName.match(/(\sChrome\/)([0-9\.]*)/)[2];
+		}else if(uaName.indexOf("Adobe UXP Runtime") == 0){
+	//UXP
+		    this.platform = "UXP";
+		    this.ESTK     = false;//trueで判断される可能性があるのでここで強制
+			this.uxp_host = require('uxp').host;
+			this.version  = (uaName == "Adobe UXP Runtime")? "----":(uaName.match(/(uxp\-)([\S]+)/)[2]);
+	    }else if(uaName.indexOf("AdobeAIR") > -1){
+	//AIR(フラッシュ)系
+	        if (window.runtime){
+		        this.platform="AIR";
+		        this.version=uaName.match(/(AdobeAIR\/)([0-9\.]*)/)[2];
+	        }else {
+	//CEP以前のCSX形式
+		        this.platform="CSX";
+		        this.version=uaName.match(/(AdobeAIR\/)([0-9\.]*)/)[2];
+	        };
+	    } else if(uaName.indexOf("Chrome") > -1) {
+	//その他普通のブラウザ
+		    uaVer = uaName.match(/(Chrome\/)([0-9\.]*)/)[2];
+		    this.version = (uaVer.split("\.")[0]*1);
+		    this.platform = "Chrome";//chromeらしい
+	    } else if(uaName.indexOf("Safari") > -1) {
+		    uaVer = uaName.match(/(Safari\/)([0-9\.]*)/)[2];
+		    this.version = (uaVer.split("\.")[0]*1)+(uaVer.split("\.")[1]/10);
+		    this.platform = "Safari";//サファリらしい
+	    }else if(uaName.indexOf("Opera") > -1) {
+		    this.version = uaName.match(/(Opera[\ \/])([0-9\.]*)/)[2];
+		    this.platform = "Opera";//オペラである
+	    }else if(uaName.indexOf("MSIE") > -1) {
+		    this.version = uaName.match(/(MSIE[\ \/])([0-9\.]*)/)[2];
+		    this.platform = 'MSIE';
+	    }else if(uaName.indexOf("Netscape") > -1) {
+		    uaVer = uaName.match(/(Netscape6?[\ \/])([0-9\.]*)/)[2];
+		    this.version = (uaVer.split("\.")[0]*1)+(uaVer.split("\.")[1]/10);
+		    this.platform = "NN";//NSにしてみる。
+	    }else if(uaName.indexOf("Mozilla") > -1) {
+		    this.version = uaName.match(/(Mozilla[\ \/])([0-9\.]*)/)[2];
+		    this.platform = "Mozilla";//NSでないMozillaにしてみる。
 		}else{
-		  isADX = 2;//初期値CEP
-		  try{isADX=(window.__adobe_cep__)? 2:1;}catch(er){isADX = 0;}
+		    this.version = 'unKnown';
+		    this.platform = uaName;//知らないブラウザである。
+	    };
+	    if (((window.navigator.platform).indexOf("Mac") > -1)||((window.navigator.platform).indexOf("darwin") > -1)){
+	        this.os = "Mac";//Mac OS X
+	    }else if ((window.navigator.platform).indexOf("Win") > -1){
+		    this.os = "Win";//Windows
+	    };
+    }else if(this.ESTK){
+        uaName = app.name;//applicationName
+		this.version = parseFloat(app.version);
+		this.platform = ({"Adobe Photoshop":"PHXS","Adobe AfterEffects":"AEFT"})[uaName];//ブラウザではないESTK環境
+		if(($)&&($.os)){
+		    if($.os.indexOf("Mac")>=0){
+		        this.os = 'Mac'
+		    }else if($.os.indexOf("Win")>=0){
+		        this.os = 'Win'
+		    }
 		}
+    }else{
+		this.version = 'unKnown';
+		this.platform = 'console';//GUIがないconsoleのみの環境
+		if(this.Nodejs){
+		    if(process.platform=='darwin'){
+		        this.os = 'Mac';
+		    }else if(process.platform=='win32'){
+		        this.os = 'Win';
+		    }else if(process.platform=='darwin'){
+		        this.os = 'Other';//未検証・要調整
+            }
+        }
+    }
 /*
- * namespace として　Class nasを設定
+	ローカルファイルシステムへのアクセス可否を最初にチェックしてフラグをたてる
+	Node.js|ESTK|AIR環境があればローカルファイルシステムのアクセス可能
+	Electronの場合は'browser'以外は直接ファイルシステム参照可能
+*/
+	this.fileAccess = ((this.Nodejs)||(this.ESTK)||(this.platform == 'AIR'))? true:false;
+/*
+    初期状態では appHost.userLibrary は false
+    baseLocationの初期化に利用するので
+    初期化の際に一度ライブラリチェックを行う必要がある
+    ここでやったほうが良いか？
+*/
+    this.userLibrary = false;
+}
+/**
+ *  
+ *  以下の順で初期化が行われる
+ *  先行のオブジェクトが参照される
+ *  
+ *  appHost.userLibrary
+ *  	nas.baseLocation
+ *  		Folder(ESTK|AIR|CSX|CEP|NODE|other)
+ *      appHost.userLibrary 基礎プロパティを再初期化
+ *      baseLocatonは、nas-libの格納ディレクトリ
+ *      WEB環境ではスタータhtmlのロケーション直下の'nas/'フォルダを指す
+ *      各環境ごとに再初期化が必要 （この判定では AIRはサポート対象外）
+ *      チェック実行は nas.File|fs|uat 初期化後である必要がある
+ *  
+Windows
+	<USERPROFILE>\AppData\Roaming\nas\
+Mac
+	<HOME>/Library/Application Support/nas/
+other-Unix type OS
+	<HOME>/etc/nas/
+
+UXP環境では、外部のデータアクセスに制限がかかるため同期を行う外部プロセスを作成してそれを利用する予定
+ *  
+ */
+/**
+ *  ユーザ環境Libraryをパスを取得
+ */
+AppHost.prototype.checkUserlibrary=function(){
+    this.userLibrary = false;
+    this.userLibraryVersion = '';
+    var libPath      = '';
+    var libVersion   = '';
+    var pthExists    = false;
+    if(appHost.platform == 'UXP'){
+//UXP環境では暫定的にfalseのまま ESの判定コードをのちほど実装インストール先のnasフォルダを指す
+;// NOP ;        libPath = false;
+//         fs.getDataFolder().then(function(f){f.})
+    }else if(appHost.platform == 'CEP'){
+//CEP
+        libPath = new CSInterface().getSystemPath(SystemPath.USER_DATA) + "/nas";
+//ファイルの読み出しはESへ依頼する
+        var tgObj = this;
+        new CSInterface().evalScript('var pthExists = (Folder(Folder.userData.fullName + "/nas/lib/etc").exists)?true:false;var libVersion = "";if(pthExists){var verfile = new File(Folder.userData.fullName + "/nas/version");if(verfile.exists){verfile.encoding="UTF8";verfile.open("r");libVersion = verfile.read().trim();if(libVersion.length==0){alert("Zero Length!");};verfile.close();};};([(pthExists)?"true":"false",libVersion].join(","));',function(res){
+            var result = res.split(",");
+            if(result[0]=='true'){
+                tgObj.userLibrary = libPath;
+                tgObj.userLibraryVersion = result[1].trim();
+            }else{
+                tgObj.userLibrary = false;
+                tgObj.userLibraryVersion = '';
+            };
+        });
+        return ;
+    }else if(this.ESTK){
+//インストール先を確認・バージョンを取得
+        pthExists = (Folder(Folder.userData.fullName + "/nas/lib/etc").exists);
+        if(pthExists){
+            libPath = new Folder(Folder.userData.fullName + "/nas").fullName;
+            var verfile = new File(Folder.userData.fullName + "/nas/version");
+            if(verfile.exists){
+                verfile.encoding="UTF8";
+                verfile.open("r");
+                libVersion = verfile.read().trim();
+                if(libVersion.length==0){alert("Zero Length!");}
+                verfile.close();
+            };
+        };
+    }else if(this.Electron == 'browser'){
+// browserモジュールではインストール状態を保留して残置
+// userLibraryの値に関わらずアクセスが必要な場合はその都度
+// hubを経由してリクエストを解決する
+/* eg
+        uat.MH.parentModule.window.postMessage({
+            channel:"callback",
+            form:{name:xUI.app,id:uat.MH.objectIdf},
+            to:{name:'hub',id:uat.MH.parentModuleIdf},
+            command:'return electronIpc.checkUserlibrary()',
+            content:[],
+            callback:"appHost.userLibrary = arguments[0]"
+        });
+*/
+        if(typeof uat != 'undefined'){
+            uat.MH.parentModule.window.postMessage({
+                channel:"callback",
+                form:{name:xUI.app,id:uat.MH.objectIdf},
+                to:{name:'hub',id:uat.MH.parentModuleIdf},
+                command:'return electronIpc.checkUserlibrary()',
+                content:[],
+                callback:"console.log(arguments[0]);"
+            });
+        }else if(typeof electronIpc != 'undefined'){
+            this.userLibrary = electronIpc.checkUserlibrary();//
+        };
+    }else if((this.Nodejs)||((this.Electron)&&(this.Electron != 'browser'))){
+/*
+    main.js|CEP環境でcjsロードする際に
+    path.join|nas.File.join 両方の使えないタイミングがあるため一旦文字列で生成
+ */
+        var ckPath;
+        if(this.os == "Win"){
+            ckPath = process.env.USERPROFILE+'\\AppData\\Roaming\\nas\\lib\\etc';
+        }else if(this.os == "Mac"){
+            ckPath = process.env.HOME+'/Library/Application\ Support/nas/lib/etc' ;
+        }else{
+            ckPath = process.env.HOME+'etc/nas/lib/etc';//unix|Linux|Other ?
+        };
+//パスの存在をチェックしてインストールを確認 存在しない場合はフォールバック
+//初回実行時にfsが初期化前！
+        if((fs)&&(!(fs.existsSync(ckPath)))){
+            pthExists = false;
+        }else{
+            pthExists = true;
+            if(this.os == "Win"){
+                libPath = process.env.USERPROFILE+'\\AppData\\Roaming\\nas';
+                if(fs.existsSync(libPath+"\\version"))
+                    libVersion = fs.readFileSync(libPath+"\\version");
+            }else if(this.os == "Mac"){
+                libPath = process.env.HOME+'/Library/Application\ Support/nas' ;
+                if(fs.existsSync(libPath+"/version"))
+                    libVersion = fs.readFileSync(libPath+"/version");
+            }else{
+                libPath = process.env.HOME+'etc/nas';//unix|Linux|Other ?
+                if(fs.existsSync(libPath+"/version"))
+                    libVersion = fs.readFileSync(libPath+"/version");
+            };
+        };
+    };
+    if(pthExists){
+console.log('＊＊＊＊＊＊＊ 既設 nas lib を確認');
+        this.userLibrary        = libPath;
+        this.userLibraryVersion = libVersion;
+    }else{
+//存在しない場合は、オブジェクトメソッドでディレクトリを作成する（ここでは書込は行われない）
+console.log('＊＊＊＊＊＊＊ nas/lib/etc が存在しないのでディレクトリ作成をトライ');
+        return this.initUserLib(libPath);
+    };
+    return this.userLibrary;
+}
+/**
+ *  @parmas {String}    pth
+ *      指定のローカルパス上にuserLibraryの保存先を作成
+ *      ライブラリ環境の初期化
+ *	ユーザ環境保存ディレクトリを作成するメソッド
+ *	基礎ディレクトリ作成
+ *	nas/lib/etc/
+ *		このディレクトリのみを作成する
+ *		以下の個別ディレクトリはこの場では作成しない
+ *	nas/lib/etc/_pmdb_/
+ *	nas/lib/etc/_stbd_/
+ *	nas/lib
+ *	nas/ext-lib
+ *	nas/version
+ *
+ *		これらのファイル|ディレクトリは別途インストーラーが作成するので注意
+ *		すでに存在するディレクトリを指定すると作成メソッドがエラーを返すのでトラップを付ける
+ *  
+ */
+AppHost.prototype.initUserLib = function(pth){
+	if(! pth) return pth;
+	this.userLibrary = pth;//pthで一旦初期化
+	if(appHost.platform == 'UXP'){
+/*	UXP環境では、PahotoshopのESに作成を依頼する
+ *	PhotoshopのESは定期的にフォルダをサーチしてタイムスタンプから更新を検知
+ *	UXPは定期的にそのフォルダをサーチして内容をオブジェクトに反映させる（未実装）
+ */
+    
+		this.userLibrary = false;
+/*		var content ='var targetDir= new Folder("%1");if(! targetDir.exists){try{targetDir.create();}catch(err){console.log(mkdir+":"+pth+\n"+err);return false;};}else{console.log(pth+":allready exists \n");return pth;};';
+		content = content.replace(/\%1/,this.userLibrary);
+;// */
+	}else if(this.ESTK){
+		var targetDir = new Folder(pth+'/lib/etc');
+		if(! targetDir.exists){
+//ESのFolder.createは基本的にリカーシブでフォルダを作成する
+			try{targetDir.create();}catch(err){console.log(mkdir+":"+pth+":\n"+err);this.userLibrary = false;return false;};
+		}else{
+			console.log(pth+":allready exists \n");
+			return pth;
+		};
+	}else if(this.Electron == 'browser'){
+		;//NOP
+	}else if((this.Nodejs)||((this.Electron)&&(this.Electron != 'browser'))){
+//node.jsのfa.mkdirはリカーシブオプションが必要
+		if(fs.existsSync(pth+'/lib/etc')){
+			this.userLibrary = pth;
+		}else{
+			var res = fs.mkdirSync(pth+'/lib/etc',{ recursive: true });
+			if(res){
+				this.userLibrary = pth;
+			}else{
+				this.userLibrary = false;
+			};
+		};
+	};
+	return this.userLibrary;
+}
+//インスタンスを作成して初期化
+var appHost=new AppHost();
+console.log('init appHost');
+	appHost.init();
+//初期化&&(appHost.platform != 'Electron')
+if((appHost.platform == 'UXP')){
+	console.log("platform uxp");
+	var uxp           = require('uxp');
+	var fs            = require('uxp').storage.localFileSystem;
+	var app           = require('photoshop').app;
+	var action        = require('photoshop').action;
+}else if((! appHost.Nodejs)){
+	var fs            = false;
+	var path          = false;
+	var child_process = false;
+	var iconv         = false;
+	var mime          = false;
+	var exec          = false;
+	var execSync      = false;
+	console.log("no node and electron");
+}else{
+//has Node.js main
+	console.log("init nodeUI")
+	var fs            = require('fs-extra');
+	var path          = require('path');
+	var child_process = require('child_process');
+	var iconv         = require("iconv-lite");
+	var mime          = require("mime-types");
+	var exec          = require('child_process');
+	var execSync      = require('child_process');
+	console.log('setup for Node.js with electron');
+};
+//チェックにfsを使用するので初回実行タイミングはこちら
+	appHost.checkUserlibrary();
+console.log(appHost.userLibrary);
+/*
+ * namespace として Class nasを設定
  */
 if (typeof nas == 'undefined') {
 /** @namespace */
     var nas = {};
 }
-try {
-    /*     globalのappオブジェクトを確認してAdobeScript環境を判定    */
-    if (app) {
-        /*    Adobe Scripts    */
-        nas.isAdobe = true;
-        nas.Version["common"] = "common:" + myFilename + " :" + myFilerevision;
-        try {
-            if (app.isProfessionalVersion) {
-                app.name = "Adobe AfterEffects";
-            }
-        } catch (ERR) {
-        }
-    } else {
-        nas.isAdobe = false;
-    }
-} catch (ERR) {
-    /**
-     * app オブジェクトが無いのでAIRまたはブラウザ
-     * @type {boolean}
-     */
-//var	nas	=new Object();//nas オブジェクトとの生成はこの時点より前に送る
-
-    nas.isAdobe = false;
-
-    try {
-        /**
-         * Folderオブジェクトを参照してAIR環境の場合nas.baseLocationを設定 psAxe用
-         * @type {Folder}
-         */
-        nas.baseLocation = new Folder(Folder.userData.fullName + "/nas");//(Folder.current.name=="Startup")? new Folder("../nas/"):Folder.current;
-    } catch (err) {
-        nas.baseLocation = "";
-    }
-    var MSIE = navigator.userAgent.indexOf("MSIE") != -1;
-    var Safari = navigator.userAgent.indexOf("Safari") != -1;
-    var Firefox = navigator.userAgent.indexOf("Firefox") != -1;
-}
-
 /**
  * xUIオブジェクトはHTMLライブラリにおけるUI管理オブジェクトなのでHTML環境外ではfalseで初期化して判定する
  * HTML環境下であっても依存機能が初期化完了前にアクセスすることを抑制するためにfalseであらかじめ初期化するのを標準メソッドとする
@@ -319,9 +940,6 @@ try {
  * @type {boolean}
  */
 var xUI = false;
-/**
- *    @desc nas Lib base Object
- */
 /**
  *  @fileoverview	nas配下に基礎オブジェクト拡張
  *
@@ -334,11 +952,9 @@ var xUI = false;
  *相互依存を考慮してマージ
  *または、基底プロパティをオブジェクト化しないメソッドを考慮すること 24-06 2016
  *
- *
  *単位付きカプセル化オブジェクトでは、演算の際に期待する値を確実に得るためには Object.as(Unit)で明示的に単位を指定すること
  *
  */
-
 /**
  *  列挙型リストオブジェクトから、数値をキーにキーワードを返すメソッド
  *<pre>
@@ -369,7 +985,7 @@ return resultArry.join('.');
  * @class @constractor
  *    ユーザ情報オブジェクト<br />
  *    表示名(ニックネーム／ハンドル)と識別用メールアドレス(id)を持つ
- * @param {String} nameDescription
+ * @params {String} nameDescription
  *  ユーザ記述文字列
  * @params {Object} addisionalProp
  *  追加プロパティ（任意）
@@ -703,12 +1319,12 @@ console.log(E);
 /**
  * @class @constractor
  *    署名情報オブジェクト
- *      stage 署名が配されるオブジェクトの識別情報・ステージ名:ID
+ *      node 署名が配されるオブジェクトの識別情報・ラインID//ステージ名:ID//ジョブ記述
  *      自由表示テキストを指定可能
  *      ユーザ情報(ハンドル、メールアドレス、またはフルフォーマットのUserInfo文字列)
  *      追加情報(スタンプ等に利用 JSON)
  * @params {String|Object nas.UserSignature} sigDescription
- *         ステージ文字列 署名をグループ化するためのキー 省略不可 またはシグネチャ記述・シグネチャオブジェクト
+ *         ノード記述文字列 署名をグループ化するためのキー 省略不可 またはシグネチャ記述・シグネチャオブジェクト
  * @params {String} signatureString
  *         署名テキスト(省略可　省略時はユーザハンドルで代用)
  * @params {Object} additionalProperty
@@ -717,11 +1333,11 @@ console.log(E);
  *  第一引数にシグネチャ記述文字列　または参照オブジェクトでも良い
  */
 nas.UserSignature = function UserSignature(sigDescription,signatureString,additionalProperty){
-    this.stage  = ''               ;//
-    this.text   = ''               ;//
-    this.date   = new Date()       ;//
-    this.user   = nas.CURRENTUSER  ;//
-    this.stamp  = null             ;//
+    this.node  = ''                ;//String nodeDescription
+    this.text   = ''               ;//signature text
+    this.date   = new Date()       ;//date of shign
+    this.user   = nas.CURRENTUSER  ;//signed user | userstring
+    this.stamp  = null             ;//stamp image optional
     if(arguments.length) this.setValue(...arguments);
 };
 /** 署名情報パーサ
@@ -740,7 +1356,7 @@ nas.UserSignature.prototype.setValue = function(sigDescription,signatureString,a
     	(sigDescription instanceof nas.UserSignature)||
     	((typeof sigDescription == 'object')&&(Object.keys(sigDescription).length > 0))
     ){
-//引数としてシグネチャ|参照オブジェクトが与えられた場合は、日付以外を複製する
+//引数としてシグネチャ|参照オブジェクトが与えられた場合は、job,日付,以外を複製する
 		for ( var prp in sigDescription){
 			if((this[prp])&&(typeof this[prp].setValue == 'function')){
 				this[prp].setValue(sigDescription[prp]);
@@ -770,7 +1386,7 @@ nas.UserSignature.prototype.setValue = function(sigDescription,signatureString,a
 		}else if((typeof signatureString == 'string')&&(signatureString.match(/^\s*\[(.+)\]\s*$/))){
 //分離記述
 			var sigDescriptions = RegExp.$1.split('\t');
-			this.stage = sigDescription;
+			this.node  = sigDescription;
 			this.text  = (sigDescriptions[0])? sigDescriptions[0]:"";
 			this.date  = new Date(sigDescriptions[1])               ;//記録データをパースする場合のみ上書き
 			this.user  = new nas.UserInfo(sigDescriptions[2])       ;
@@ -801,7 +1417,7 @@ nas.UserSignature.prototype.toString = function(opt){
     case 'JSON':
 //データ交換形式
         return JSON.stringify({
-        	"stage":this.stage,
+        	"node" :this.node,
         	"text" :this.text,
         	"date" :this.date.toNASString(),
         	"user" :this.user.toString('name'),
@@ -955,6 +1571,9 @@ console.log(new nas.UserSignature(currentStage.toString(),tempData[ix]));
     }
 
 /*test
+コレクションメソッド
+remove
+addMember(append)
 
 var stream = `
 CT:0
@@ -970,8 +1589,87 @@ var sig = new nas.UserSignatureCollection();
 sig.parse(stream);
 sig
 */
+//nas.Image
+/**
+ *    画像ハンドルオブジェクト
+ *    WEB|WEB以外の環境で統一して画像を扱うためのオブジェクト
+ *    HTMLImageオブジェクトと互換プロパティを持つ
+ 各種画像デコーダを通して pngに変換した画像をキャッシュする
+ pngをBASE64エンコードする
+ BASE64ストリームをデコードしてpngで保持する
+ */
+nas.Image = function Image(width,height){
+    this.width  = width;
+    this.height = height;
+    this.src    = "";
+}
+nas.Image.allowImgExtensions = new RegExp("\.(jpg|jpeg|jfif|pjpeg|pje|png|svg|gif|tga|targa|psd|psb|webp)$",'i');
+/**
+ *	@params    {Object HTMLImageElement|Object HTMLCanvsElement} img 変換する画像エレメント
+ *	@params    {String} type 
+ *	@returns   {String}
+ *	Canvas||画像エレメントをdataURLにコンバートして返す
+ */
+nas.Image.convert2dataURL = function(img,type,param){
+	if(typeof type  == 'undefined') type  = 'image/webp';
+	if(typeof param == 'undefined') param = .5;
+
+	if(img instanceof HTMLCanvasElement){
+		var canvas = img;
+	}else{
+		var canvas = document.createElement("canvas");
+		canvas.width  = img.width;
+		canvas.height = img.height;
+		var ctx = canvas.getContext("2d");
+		ctx.drawImage(img,0,0,img.width,img.height);
+	};
+	return canvas.toDataURL(type,param);
+}
+/**
+ *	@params {String|Object HTMLImageElement|Object nas.NoteImage} img
+	@params {Function} callback
+ *	汎用画像操作メソッド
+ *	引数としてFile|画像オブジェクト｜パス|URL等を与えてblobで戻す
+ *	callback関数を与えて処理の引き継ぎが可能
+ *	HTMLIMageElement|nas.Image|File|filepath|url
+ file://****.png
+ http://****.png
+ blob:http://localhost/6d532e7e-e6fc-497e-bc90-b32e2c7f784e
+ data:image/gif;base64,R0lGODlhCwALAIAAAAAA3pn/ZiH5BAEAAAEALAAAAAALAAsAAAIUhA+hkcuO4lmNVindo7qyrIXiGBYAOw==
+ *	いずれも文字列形式
+ HTMLIMageElement ｜nas.Image | File
+ 直接参照
+ */
+nas.Image.convert2Blob = function(src,callback){
+	if(typeof src == 'undefined') return false;
+	var img    = new Image();//document.createElement('img') 等価
+	var resulr = '';
+	if(src instanceof HTMLImageElement){
+//HTML画像エレメント
+		img = src;
+	}else if(src instanceof nas.Image){
+		img = src;
+	}else if(src instanceof File){
+		img = src
+	}else if(typeof src == 'string'){
+		if(src.match(/^https?:\/\/.+/)){
+			
+		}else if(src.match(/^file:\/\/.+/)){
+		}else if(src.match(/^blob:http\/\/.+/)){
+		}else if(src.match(/^data:image\/(gif|jpeg|png)\;base64\,\/\/.+/)){
+		};
+	};
+	if(callback instanceof Function) img.addEventListener('load',function(){callback(blb);},{once:true});
+return blb
+}
+//if(typeof HTMLImageElement == 'function') nas.Image.prototype = Image.prototype;
+//nas.NoteImage
+//nas.nTable
+
 /**
  *  @params {String|Object HTMLImageElement|Object nas.NoteImage} img
+ *	@params {String} address
+ *	@params {Object nas.NoteImageCollection} parent
  *   引数は String url|HTMLImageElement|nas.NoteImageまたはnas.NoteImageのプロパティを持つ互換オブジェクト
  *  注釈画像クラス
  * 注釈画像は、データ入力参照&&代用ドキュメント|ドキュメント注釈|手書き記述として機能する
@@ -980,23 +1678,93 @@ sig
  * 比較参照のために画像の 解像度|サイズ ,表示オフセット,スケールなどの補助情報を保持する
  * UI上のキャッシュとしてHTMLImageを持つ
  *  **HTML関連コードは、依存環境を確認して代用オブジェクトを設定することでエラー回避を行う
+ 
+ type|linkプロパティは、画像の用途をあらわすアドレスで初期化される
+ page:
+ 	タイムシートを含むドキュメント画像 アドレスIDは整数文字列
+ cell|note:
+ 	特定のドキュメントセルに対する注釈画像 アドレスIDはアンダーバーで連結した２要素の整数
+ description|memo:
+ 	ドキュメントに1点のみ与えられるdescription欄ための画像 アドレスIDはなし
+ すべてのtypeで編集が可能
+ 
+  new nas.NoteImage('./timesheet.png','page:1');
+  new nas.NoteImage('./anotation.png','cell:1_12');
+  new nas.NoteImage('./description.png','description:');
+  
+  
  */
-nas.NoteImage = function NoteImage(img){
-    this.type       = "note"    ;//page|note|description
-    this.link       = "cell:0_0";//アタッチ座標 (座標タイプcell|page|document):(値) 
-    this.img        = null      ;//画像キャッシュ 保存されない 
-    this.content    = ""        ;//画像パス,URL URI
-    this.size       = new nas.Size("0","0")       ;//points
-    this.resolution = new nas.UnitResolution("96ppi");
-    this.offset     = new nas.Point("0","0")      ;//points
-    this.scale      = new nas.Scale("100%","100%");//pixels
-    if(img) this.parse(img);
+nas.NoteImage = function NoteImage(img,address,parent,width){
+	this.parent     = null      ;//parentCollection
+    this.type       = "note"    ;//page|note|cell|description|memo
+    this.link       = ""        ;//アタッチ座標 (座標タイプcell:String 0_0 |page:Number 1 | description:
+    this.content    = ""        ;//画像パス,URL URI dataURL
+    this.size       = new nas.Size("0","0")          ;//画像サイズ
+    this.resolution = new nas.UnitResolution("96ppi");//オブジェクト解像度　ファイル解像度より優先
+    this.offset     = new nas.Offset()               ;//nas.Ofset
+    this.scale      = new nas.Scale("100%","100%")   ;//nas.Scale
+
+//以下のプロパティは保存されない
+	this.img = (typeof HTMLImageElement == 'function')? new Image():new nas.Image();//画像キャッシュ 保存されない HTMLImageElement|nas.Image 
+
+	this.name            = ''              ;//存在する場合はファイル名を抽出・拡張子含む フルパス・空文字列のケースあり
+	this.id              = nas.uuid()      ;//キャッシュ検索用セッション内ID
+//	this.path            = null            ;//Electron利用時に使用するローカルパス windowsパスのケースがある
+//	this.file            = null            ;//File Object
+//	this.entry           = null            ;//FileEntry|DirectoryEntry
+//	this.url             = null            ;//Object URL contentと重複
+//	this.imgsrc          = null            ;//画像src
+//	this.imgLastModified = 0               ;//最終更新タイムスタンプ
+//	this.tga             = false           ;//TGA操作一時データ
+	this.canvas              = null        ;//新規編集用 Element canvas 画像レンダリング用の表示されないcanvas
+	this.canvasStream        = []          ;//fabricCanvasシリアライズjson|SVGデータ（編集データの本体）|historyStack兼用
+	this.canvasUndoPt        = null        ;//history管理UndoPointer
+//	this.worksession         = false       ;//作業セッション情報{Object pman.WorkSessionStatus}
+	nas.NoteImageCash.push(this)           ;//キャッシュに参照を設定
+    if(arguments.length > 0) this.parse(...arguments);
+}
+/*TEST
+	var 
+*/
+/*
+	NoteImageCash配列
+	メンバーはNoteImage
+	コレクションに関わらずこの内部で参照を保持する
+*/
+nas.NoteImageCash = [];
+/**
+	オブジェクトメソッド
+	オフセット値をドキュメント画像に適用
+	@params {Object nas.Offset|String}
+	@returns 
+*/
+nas.NoteImage.prototype.applyOffset = function applyOffset(offset){
+	if(arguments.length > 0) this.offset.setValue(...arguments);
+	if(this.img instanceof HTMLImageElement){
+		this.img.style.transform = 'translateX('+this.offset.x.as('mm')+'mm) ' +
+		'translateY('+ this.offset.y.as('mm')+'mm) ' +
+		'rotate('+this.offset.r.as('degrees')+'deg)';
+	};
+	return this.offset;
+}
+/**
+	オブジェクトメソッド
+	自身の削除
+	画像にparentNodeがあれば自身をDOMツリーから削除
+	コレクションから自身を削除
+	キャッシュの開放はない
+ */
+nas.NoteImage.prototype.remove = function remove(){
+	if(this.img.parentNode) this.img.parentNode.removeChild(this.img);
+	if(this.parent instanceof nas.NoteImageCollection) this.parent.splice(this.parent.indexOf(this),1);
+	return this;
 }
 /**			クラスメソッド
  *  @params {Object HTMLImageElement} img
  *		判定する画像エレメント
  *	@params {String}	siz
  *		指定サイズキーワード A3|A4|A5|B3|B4|B5|tabloid|letter|11in|16in 省略可
+ 		または 寸法文字列 "12in","120mm","13.5cm" 等 UnitValueの扱える単位
  *	@returns {Number}
  *		数値 ppi
  *	画像データの解像度（ピクセル密度）を推定するメソッド
@@ -1012,109 +1780,313 @@ nas.NoteImage.guessDocumentResolution = function(im,siz){
 		"tabloid":"272mm","letter":"215.9mm",
 		"11in":"11in","16in":"16in"
 	};
-	var docWidth = new nas.UnitValue(wide[siz]);
+	var docWidth = (wide[siz])? new nas.UnitValue(wide[siz]):new nas.UnitValue(siz);
 	var res = im.naturalWidth/docWidth.as('in');
 	for(var e = 0; e < resolutionset.length ; e++){
 		if(
 			(resolutionset[e] > res*0.98) && (resolutionset[e] < res*1.02)
 		) return resolutionset[e];
 	};
-	return parseInt(res);
+	return parseInt(res);//適正解像度がない場合は、計算値をそのまま戻す
 }
-nas.NoteImage.prototype.guessDocumentResolution = function(siz){
-	this.resolution = new nas.UnitResolution(nas.NoteImage.guessDocumentResolution(this.img,siz)+" ppi");
-}
-/** 画像オブジェクトをパース
-    @params {Object nas.Image|Object nas.NoteImage |String} img
-    画像パス、画像オブジェクト またはダンプ文字列
-    @returns {Object}
+/*
+	クラスメソッド
+	キャッシュからIDを参照して当該のNoteImageを返す
+	id以外にname,content(blob-url)でも検索可能
  */
-nas.NoteImage.prototype.parse = function(img){
+	nas.NoteImage.get = function get(kwd){
+		var result = nas.NoteImageCash.find(function(e){return ((e.id == kwd)||(e.content == kwd)||(e.name == kwd))}	);
+		if(result) return result;
+		return null;
+	}
+/**
+	オブジェクトメソッド
+ *	@params {String}	siz
+ *		画像の横幅を指定サイズキーワード A3|A4|A5|B3|B4|B5|tabloid|letter|11in|16in または"8mm","1in" 等の文字列で与える
+ *		省略可 省略時は、現時点での解像度（06ppi）でのピクセル数によるサイズを与える
+ *	@returns {Number}
+ *		数値 ppi
+ *	同時に推定解像度にマッチさせオブジェクトのサイズプロパティを更新する
+ */
+nas.NoteImage.prototype.guessDocumentResolution = function(siz){
+	if(typeof siz != 'undefined'){
+		this.resolution.setValue(nas.NoteImage.guessDocumentResolution(this.img,siz)+" ppi");
+	}else if(this.size.x.value > 0){
+		this.resolution.setValue(nas.NoteImage.guessDocumentResolution(this.img,this.size.x.toString())+" ppi");		
+	};
+	if(this.img.parentNode){
+		this.img.style.width = (this.img.naturalWidth * ( 96 / this.resolution.as('ppi')))+'px';//"1122px = 297mm 96ppi;A3 width 96ppi 推定処理
+		this.applyOffset();
+		xUI.setAppearance();
+	};
+	this.size.setValue((this.img.naturalWidth / this.resolution.as('ppc'))*10+'mm',(this.img.naturalHeight / this.resolution.as('ppc'))*10 +'mm');
+	return this.resolution.as('ppi');
+}
+/**
+    画像設定
+    @params {Object File |Object nas.Image|Object nas.NoteImage |String} img
+    ファイルオブジェクト、画像パス、画像オブジェクト またはファイルパス｜URL文字列
+    @returns {Object}
+    tga|psd|tiffを拡張
+            (img.match(/\.(png|jpg|jpeg|gif|webp|tga|tif|tiff|psd|psb)$/))
+	戻り値:オブジェクトの画像プロパティ
+	引数がない場合は、現在のコンテントの再ロードをトライする
+
+	＊＊contentプロパティを、イメージキャッシュsrc としてblob:http://~ に設定する
+	callback関数を与えた場合はロード終了のタイミングで本体オブジェクトを引数にしてcallbackを実行する
+*/
+nas.NoteImage.prototype.setImage = function(img,callback){
+console.log(img);
+//引数を無視して自身のカンバスから画像を設定（特例）
+	if(this.canvas){
+		var itm = this;
+		if(!(itm.img instanceof HTMLImageElement)) itm.img = document.createElement('img');//これは基本不要
+		this.canvas.toBlob(function(blob) {
+			if(itm.img.src) URL.revokeObjectURL(itm.img.src);//現画像クリア
+			itm.img.src = URL.createObjectURL(blob);//カンバスから画像を設定
+			itm.img.addEventListener('load',function(){itm.content = itm.img.src ;itm.guessDocumentResolution();if(callback instanceof Function) callback(itm);},{once:true});
+		}, 'image/png');
+		return this;
+	};
+//引数の画像を処理
+	if(! img) img = this.content;
+	if(img instanceof nas.NoteImage){
+console.log('noteImage detect');
+console.log(img);
+		var itm = this;
+		itm.content = itm.img.src;
+		itm.name    = img.name;
+		itm.img.src = img.img.src;
+		//blob-URL(のはず) src複製でキャッシュを引き継ぐ
+		itm.img.addEventListener('load',function(){itm.guessDocumentResolution(); if(callback instanceof Function) callback(itm);},{once:true});
+	}else if(typeof img == 'string'){
+console.log('stringData detect');
+//シリアライズされたソースデータ
+			if((img.match(/^(https?|file):\/\/.+/))&&(img.match(nas.Image.allowImgExtensions))){
+// file-path|url
+				if(img.match(/\.(png|jpg|jpeg|pjpeg|gif|webp|svg)$/i)){
+console.log('load HTML Image form URL :' + img);
+					var itm = this;
+					itm.img.src = img;
+					itm.name    = img;
+					itm.img.addEventListener('load',function(){itm.content=itm.img.src;itm.guessDocumentResolution(); if(callback instanceof Function) callback(itm);},{once:true});
+//					nas.Image.convert2Blob(img,function(){});
+				}else if(
+					(TgaLoader)&&(img.match(/\.(tga|targa)$/i))
+				){
+console.log('load TGA form URL :' + img);
+					var itm = this;
+					var tga = new TgaLoader();
+					tga.load(img);
+					itm.img.src = tga.getDataURL('image/png');
+					itm.name    = img;
+					itm.img.addEventListener('load',function(){ itm.content = itm.img.src;itm.guessDocumentResolution();if(callback instanceof Function) callback(itm);},{once:true});//set blob
+				}else if(
+					(PSD)&&(img.match(/\.(psd|psb)$/i))
+				){
+console.log('load PSD from URL : ' +img)
+					var itm = this;
+					var imgurl = img;//(itm.url)? itm.url.href:itm.path.replace(/\#/g,'%23');
+					itm.name = imgurl;
+console.log('get psd fromURL:'+imgurl);
+					try{
+						if(PSD.fromURL){
+							PSD.fromURL(imgurl).then(function(psd) {
+								itm.img = psd.image.toPng();
+							}).catch(function(err){
+								console.log(err);
+							});
+						}else{
+							var psd = PSD.fromFile(imgurl);
+							if(psd){
+								itm.img = psd.image.toPng();
+							};
+						};
+						itm.img.addEventListener('load',function(){itm.content = itm.img.src;itm.guessDocumentResolution(); if(callback instanceof Function) callback(itm);},{once:true});
+					}catch (err){
+						console.log(err);
+					};
+				}else if(
+					(appHost.platform == 'Electron')&&(img.match(/\.(tif|tiff)$/i))
+				){
+console.log('tiff not supported.');
+				};
+			}else if(img.match(/^blob:http\/\/.+/)){
+console.log('BLOB');
+				var itm = this;
+				this.img.src = img;
+				itm.img.addEventListener('load',function(){itm.content = itm.img.src;itm.guessDocumentResolution(); if(callback instanceof Function) callback(itm);},{once:true});
+			}else if(img.match(/^data:image\/(gif|jpeg|png|webp)\;base64\,\/\/.+/)){
+console.log('DATA-URL');
+				var itm = this;
+				this.img.src = img;
+				itm.img.addEventListener('load',function(){itm.content = itm.img.src;itm.guessDocumentResolution(); if(callback instanceof Function) callback(itm);},{once:true});
+			};
+	}else if(img instanceof File){
+//as File
+console.log('File detect')
+console.log(img);
+		if(img.name.match(/\.(gif|jpg|jpeg|jfif|pjpeg|pje|png|svg|webp)$/i)){
+console.log('detect File HTML image handle : '+  img.name);
+			var itm = this;
+			itm.name = img.name;
+			var imgSrc = URL.createObjectURL(img);
+			itm.img.src = imgSrc;
+			itm.img.addEventListener('load',function(){itm.content = itm.img.src;itm.guessDocumentResolution(); if(callback instanceof Function) callback(itm);},{once:true});
+console.log (itm.img);
+		}else if(img.name.match(/\.(tga|targa)$/i)){
+console.log('detect File TGA');
+			var itm = this;
+			itm.name = img.name;
+			img.arrayBuffer().then(function(result){
+				var tga = new TgaLoader();
+				tga.load(new Uint8Array(result));
+				itm.img.src = tga.getDataURL('image/png');
+			itm.img.addEventListener('load',function(){itm.content = itm.img.src;itm.guessDocumentResolution(); if(callback instanceof Function) callback(itm);},{once:true});
+				}).catch(function(err){
+					console.log(err);
+				});
+		}else if(img.name.match(/\.(psd|psb)$/i)){
+console.log('detect File Photoshop');
+			var itm = this;
+			itm.name = img.name;
+			img.arrayBuffer().then(function(result){
+				var psd = new PSD(new Uint8Array(result));
+				psd.parse();
+				itm.img     = psd.image.toPng();
+			itm.img.addEventListener('load',function(){itm.content = itm.img.src;itm.guessDocumentResolution(); if(callback instanceof Function) callback(itm);},{once:true});
+				},function(err){
+					console.log(err);
+				}).catch(function(err){
+					console.log(err);
+				});		}else if(img.name.match(/\.(tiff|tif)$/i)){
+console.log('detect TIFF');
+			if(appHost.platform != 'Electron')
+console.log('but TIFF not suported');
+		};
+	}else if((typeof HTMLImageElement == 'function')&&(img instanceof HTMLImageElement)){
+//画像を設定
+		this.img.src = img.src;
+		this.guessDocumentResolution('A3');
+	}else if(img instanceof nas.Image){
+		this.img = img;
+	};
+//すべてblob-urlに変換してブラウザ側の画像キャッシュに管理を委ねる
+//	this.content = this.img.src;
+	return this;
+}
+/** 記録データまたは初期化引数をパースしてオブジェクトを整える
+    @params {Object nas.Image|Object nas.NoteImage |String|File} img
+    画像パス、画像オブジェクト またはダンプ文字列
+    @params {String} address
+    画像のリンクアドレス
+    @params {Object nas.NoteImageCollection} parent
+    親コレクション 省略可
+    @returns {Object}
+	画像の設定自体はsetImageメソッドに引き渡しをするのでここでの判定は最低限にする
+ */
+nas.NoteImage.prototype.parse = function(img,address,parent,width){
 console.log(typeof img)
-    if(typeof img == 'string'){
-        if(img.match(/^\s*\{.+\}\s*$/)){
-//JSON
+	if((typeof img == 'string')&&(img.match(/^\s*\{.+\}\s*$/))){
+//第一引数が文字列でかつJSON記録データ
+//JSON形式ダンプ文字列
+console.log('JSON');
+console.log(img);
             img = JSON.parse(img);
             for(var prp in img){
             	if(typeof this[prp] != 'undefined'){
         			switch (prp){
         			case "type":
         			case "link":
-        			case "content":
         				this[prp] = img[prp];
         			break;
         			case "size":
         			case "resolution":
         			case "offset":
         			case "scale":
-console.log(img[prp])
         				this[prp].setValue(img[prp]);
         			break;
         			};
             	};
             };
-        }else if(
-            (img.match(/^(http|https|data|file)\:.+/))||
-            (img.match(/\.(png|jpg|jpeg|gif|webp)$/))
-        ){
-//url | filePath
-            if(typeof HTMLImageElement == 'function'){
-                this.img = document.createElement('img');
-                this.img.src = img;
-            }else{
-                this.img = new nas.Image();
-                this.img.src = img;
-            };
-        };
-    }else if((typeof HTMLImageElement == 'function')&&(img instanceof HTMLImageElement)){
-        this.img = img;
-    }else if(
-    	((typeof img == 'object')&&(Object.keys(img).length > 0))||
-    	(img instanceof nas.NoteImage)
-    ){
-console.log('Object');
+//他のプロパティをすべて処理後に画像を設定
+console.log(img.content);
+			if(img.content) this.setImage(img.content);
+    }else if((typeof img == 'object')&&(img instanceof nas.NoteImage)){
+//第一引数は nas.NoteImage => 内容を複製
+console.log('NOTE-IMG');
+console.log(img);
+console.log('parse NoteImage 	Object');
         for(var prp in img){
         	switch (prp){
         	case "type":
         	case "link":
-        	case "content":
+        	case "parent":
         		this[prp] = img[prp];
         	break;
         	case "size":
         	case "resolution":
         	case "offset":
         	case "scale":
-console.log(img[prp])
         		this[prp].setValue(img[prp]);
         	break;
         	};
         };
+//他のプロパティをすべて処理後に画像を設定
+console.log(img.img);
+			if(img.img) this.setImage(img.img);
+	}else{
+//前2ケース以外では、setImage
+		if(width) this.size.setValue(width,this.size.y);
+		this.setImage(img);
     };
-    if(typeof HTMLImageElement == 'function'){
-        if(this.img instanceof HTMLImageElement){
-            this.content = this.img.src;
-        }else{
-            this.img = document.createElement('img');
-            this.img.src = this.content;
-        };
-//        var ppi = (this.resolution)?this.resolution.as("ppi"):
-//        this.size.setValue((this.img.naturalWidth/)+"in",(this.img.naturalHeightthis.resolution.as("ppi"))+"in");
-    };
+/*
+	String address
+	page:0 ...
+	note:0_0 ...
+	description:
+*/
+	if(address){
+		address = address.split(':');
+		this.type = address[0];
+		this.link = address[1];
+		if(! parent){
+			parent = (type == 'page')? xUI.XPS.timesheetImages:xUI.XPS.noteImages;
+		};
+	};
+	if(parent) this.parent = parent;
+	if((parent)&&(parent.addMember)){
+		parent.addMember(this);
+	};
     return this;
 }
 /**
      保存用にシリアライズ
      @params {String} form
-      JSON|text|dump
+      JSON|text|dump|export
       
  */
 nas.NoteImage.prototype.toString = function toString(form){
-    if (! form) form = 'JSON';
-    if (form == 'JSON'){
-        return JSON.stringify(this,["type","link","content","size","resolution","offset","scale"],2);
+//    if (! form) form = 'JSON';
+    if (form){
+        return JSON.stringify(this,0,2);
+//["type","link","content","size","resolution","offset","scale"],2);
     }else{
-        return ((typeof HTMLImageElement == 'function')&&(this.img instanceof HTMLImageElement))? this.img.src:this.content;
+    	return this.id;
+        return ((typeof HTMLImageElement == 'function')&&(this.img instanceof HTMLImageElement))? nas.Image.convert2dataURL(this.img,'image/webp',0):this.content;
     };
+}
+nas.NoteImage.prototype.toJSON = function toJSON(){
+        return {
+        	"type"      :this.type,
+        	"link"      :this.link,
+        	"content"   :(this.img instanceof HTMLImageElement)?
+        		nas.Image.convert2dataURL(this.img,"image/webp",0.5):this.content,
+        	"size"      :this.size.toString(),
+        	"resolution":this.resolution.toString(),
+        	"offset"    :this.offset.toString(),
+        	"scale"     :this.scale.toString()
+        };
 }
 /*TEST
 var A = new nas.NoteImage('{"type":"page","link":"1","content":"http://localhost/~kiyo/images/image1.png","resolution":"300ppi","offset":{"x":0 ,"y":0},"scale":{"x":1,"y":1},"size":{"x":120,"y":240}}}');
@@ -1126,19 +2098,78 @@ var C = new nas.NoteImage(document.getElementById('imgPreview'));//
     注釈画像コレクション
 */
 nas.NoteImageCollection = function NoteImageCollection(){
-    this.imageOpacity      = 1.0;
-    this.imageBlendMode = 'normal';
-    this.dump = function(){
+	this.type              = 'page';
+//    this.imageOpacity      = 1.0;
+//    this.imageBlendMode    = 'normal';
+    this.imageAppearance   = 0.0;//0.0 ~ 1.0
+    this.imageBlendMode    = 'auto';//'auto'ほか通常のブレンドモードを指定可能
+    this.dump = function(expt){
+//内部コンバート用
+		if(! expt) return JSON.stringify(Array.from(this,function(e){return e.id}));//文字列化 
 //JSON only
-        return JSON.stringify(Array.from(this),["type","link","content","size","resolution","offset","scale"],2);//文字列化
+        return JSON.stringify(Array.from(this,function(e){
+        	if(e.size.x * e.size.y == 0){
+        		return e.id;
+        	}else{
+        		return JSON.parse(JSON.stringify(e));
+        /*		return {
+        			"type"       :e.type,
+        			"link"       :e.link,
+        			"content"    :e.img,
+        			"resolution" :e.resolution,
+        			"offset"     :e.offset,
+        			"scale"      :e.scale
+        		};// */
+        	};
+        }),null,2);//文字列化
+//        }),["type","link","content","size","resolution","offset","scale"],2);//文字列化
     }
     this.parse = function(stream){
-        var temp = JSON.parse(stream);
+        var temp = (stream instanceof Array)? stream:JSON.parse(stream);
         if(temp instanceof Array){
             this.length = 0;
-            temp.forEach(function(e){this.push(new nas.NoteImage(e));},this);
-        }
+            temp.forEach(function(e){
+    			if(
+    				(typeof e == 'string')&&
+    				(e.match(/^([0-9a-f]{8})-([0-9a-f]{4})-([0-9a-f]{4})-([0-9a-f]{4})-([0-9a-f]{12})$/))
+    			){
+//エレメントがuuidなのでキャッシュからサルベージする
+            		this.addMember(nas.NoteImage.get(e));
+				}else{
+console.log(e)
+            		console.log(this.addMember(new nas.NoteImage(e)));
+            	};},this);
+        };
     }
+    this.getByLinkAddress = function(link){
+    	return this.find(function(e){
+    		return (link == e.link);
+    	});
+    }
+/*メンバを加える*/
+	this.addMember = function(member){
+		var lngt = this.length;
+		var ix = this.add(member);
+		if(lngt < this.length){
+			member.parent = this;
+			return member;
+		}else{
+			return this[ix];
+		};
+	};
+/*オブジェクトのremoveメソッドをコールしてメンバを削除する */
+	this.remove = function(member){
+		var ix = (member instanceof nas.NoteImage)? this.indexOf(member):member;
+		if((ix >= 0)&&( ix < this.length)){
+			return this[ix].remove();
+		}else{
+			return null;
+		};
+	}
+/*コレクションの初期化 メンバーオブジェクトのremoveメソッドを順次コールしてオブジェクト内の参照をクリアする*/
+	this.clearMember = function(){
+		this.forEach(function(e){e.remove();});
+	}
 }
 nas.NoteImageCollection.prototype = Array.prototype;
 
@@ -1180,6 +2211,95 @@ nas.UNITRegex=new RegExp('^(in|inches|mm|millimeters|cm|centimeters|pt|picas|poi
 /*=============================================================================================再利用メソッド*/
 //不正単位系の処理を追加  07-04 2016
 /**
+ * 単位つきの文字列値を数値にして返すメソッド
+ * 単位デコーダ
+ * nas.decodeUnit(入力値,変換単位)
+ *
+ * 解釈できる単位は millimeters mm centimeters cm points picas pt pixels px inches in
+ * 戻し値の単位も同じく
+ * デフォルトの単位は入りも戻しも pt
+ * 不明な単位は ptとして扱う
+ *
+ * @params {String} myValue
+ * @params {String} resultUnit
+ * @returns {Number}
+ */
+nas.decodeUnit = function (myValue, resultUnit) {
+    if ((myValue != undefined) && (myValue.match(/^([\+\-\.0-9]+)\s?(millimeters|mm|centimeters|cm|points|picas|pt|pixels|px|inches|in)?$/i))) {
+        var baseValue = parseFloat(myValue);
+        var myUnit = RegExp.$2;
+    } else {
+        return false;
+    }
+    var myResult;var reusltUnit;
+//console.log(resultUnit);
+    if((typeof resultUnit == 'undefined')||(!(String(resultUnit).match(/^(millimeters|mm|centimeters|cm|points|picas|pt|pixels|px|inches|in)?$/i)))) {
+        resultUnit = "pt";
+    }
+    if (myUnit == resultUnit) {
+        return baseValue
+    }
+    /**
+     * 入出力単位が一致した場合はコンバート不要
+     * すべてptに変換 (ここに誤差が乗る原因あり)
+     */
+    switch (myUnit) {
+        case    "inches":
+        case    "in":
+            myValue = 72. * baseValue;
+            break;
+        case    "pixels":
+        case    "px":
+            myValue = 72. * baseValue / this.Dpi();
+            break;
+        case    "centimeters":
+        case    "cm":
+            myValue = 72. * baseValue / 2.54;
+            break;
+        case    "millimeters":
+        case    "mm":
+            myValue = 72. * baseValue / 25.4;
+            break;
+        case    "millipoints":
+        case    "mp":
+            myValue = baseValue / 1000.;
+            break;
+        case    "points":
+        case    "paicas":
+        case    "pt":
+        default    :
+            myValue = baseValue;
+    }
+    switch (resultUnit) {
+        case    "inches":
+        case    "in":
+            myResult = myValue / 72.;
+            break;
+        case    "pixels":
+        case    "px":
+            myResult = this.Dpi() * myValue / 72.;
+            break;
+        case    "centimeters":
+        case    "cm":
+            myResult = 2.54 * (myValue / 72.);
+            break;
+        case    "millimeters":
+        case    "mm":
+            myResult = 25.4 * (myValue / 72.);
+            break;
+        case    "millipoints":
+        case    "mp":
+            myResult = myValue * 1000.;
+            break;
+        case    "points":
+        case    "paicas":
+        case    "pt":
+        default    :
+            myResult = myValue;
+    }
+    return myResult;
+};
+/**
 	common method
 */
 nas.UNITString  = function(){return ([this.value,this.type]).join(' ');};
@@ -1216,7 +2336,7 @@ nas.RESOLUTIONConvert=function(myUnit){
 		return this;
 	};
 nas._LISTString=function(myUnit){
-		if(typeof myUnit == "unidefined"){myUnit=this.type;}
+		if(typeof myUnit == "undefined") myUnit = this.type;
 		var myResult=[];
 		for(var myDim=0;myDim<this.length;myDim++){
 			if(this[this.props[myDim]]){
@@ -1230,7 +2350,7 @@ nas._LISTString=function(myUnit){
 		return myResult.join();//リスト文字列で
 	};
 nas._ARRAYValue	=function(myUnit){
-		if(typeof myUnit == "unidefined"){myUnit=this.type;}
+		if(typeof myUnit == "undefined"){myUnit=this.type;}
 		var myResult=[];
 		for(var myDim=0;myDim<this.length;myDim++){
 			if(this[this.props[myDim]]){
@@ -1244,7 +2364,7 @@ nas._ARRAYValue	=function(myUnit){
 		return myResult;//配列で返す
 	};
 nas._JSONValue	=function(myUnit){
-		if(typeof myUnit == "unidefined"){myUnit=this.type;}
+		if(typeof myUnit == "undefined"){myUnit=this.type;}
 		var myResult={};
 		for(var myDim=0;myDim<this.length;myDim++){
 			if (this[this.props[myDim]]){
@@ -1324,6 +2444,7 @@ nas.UnitValue.prototype.setValue=function(myNumberString,myUnitString){
 	this.type=myUnitString;
 	return this;
 }
+nas.UnitValue.prototype.parse = nas.UnitValue.prototype.setValue;
 /**
  *  指定された単位文字列に変換した数値を返す
  *
@@ -1337,21 +2458,21 @@ nas.UnitValue.prototype.as	=nas.UNITAs;
  *  @params {String} 単位文字列
  *  @returns {String} 変換後の単位付き数値文字列
  */
-nas.UnitValue.prototype.convert	=nas.UNITConvert;
+nas.UnitValue.prototype.convert	= nas.UNITConvert;
 /**
  *  現在の単位文字列を付記した数値文字列を返す
  * 
  *  @params {String} 単位文字列
  *  @returns {String} 単位付き数値文字列
  */
-nas.UnitValue.prototype.toString=nas.UNITString;
-nas.UnitValue.prototype.toJSON  =nas.UNITString;
+nas.UnitValue.prototype.toString = nas.UNITString;
+nas.UnitValue.prototype.toJSON   = nas.UNITString;
 /**
  *  現在の単位系の値を返す　Object.valueに同じ
  *  
  *  @returns {Number} 値
  */
-nas.UnitValue.prototype.valueOf	=nas.UNITValue;
+nas.UnitValue.prototype.valueOf = nas.UNITValue;
 
 /*	test
 	A=new nas.UnitValue("125","mm");//2引数初期化
@@ -1388,8 +2509,8 @@ nas.UnitValue.prototype.valueOf	=nas.UNITValue;
 nas.UnitAngle.as("単位文字列")	指定された単位文字列に変換した数値を返す
 nas.UnitAngle.convert("単位文字列")	指定された単位文字列にオブジェクトを変換する 変換後の単位付き数値文字列を返す
 */
-nas.UnitAngle=function(myNumberString,myUnitString){
-	this.type  ='degrees';
+nas.UnitAngle = function(numberString,unitString){
+	this.type  = 'degrees';
 	this.value = 0 ;
 	this.setValue(...arguments);
 }
@@ -1398,7 +2519,8 @@ nas.UnitAngle=function(myNumberString,myUnitString){
 	@params {String}	myUnitString
  */
 nas.UnitAngle.prototype.setValue = function(myNumberString,myUnitString){
-	var myNumberUnit='';
+	if(myNumberString instanceof nas.UnitAngle) myNumberString = myNumberString.toString();
+	var myNumberUnit = '';
 	if(! myUnitString) myUnitString='';
 	if((myNumberString)&&(String(myNumberString).match(/(d|deg|degrees|°|度)|(r|rad|radians)/i))){
 		myNumberUnit = (RegExp.$2)? "radians":"degrees";
@@ -1411,17 +2533,18 @@ nas.UnitAngle.prototype.setValue = function(myNumberString,myUnitString){
 	};
 	if ( myNumberUnit == '' ) myNumberUnit = myUnitString;
 	this.type  = myUnitString;
-	this.value = (myUnitString==myNumberUnit)? parseFloat(myNumberString):(
+	this.value = (myUnitString == myNumberUnit)? parseFloat(myNumberString):(
 	    (myUnitString=="degrees")?
 	        nas.radiansToDegrees(parseFloat(myNumberString)):
 	        nas.degreesToRadians(parseFloat(myNumberString))
 	    )
 	if(isNaN(this.value)){this.value=0.000000;}
 }
-nas.UnitAngle.prototype.as	=nas.ANGLEAs;
-nas.UnitAngle.prototype.convert	=nas.ANGLEConvert
-nas.UnitAngle.prototype.toString=nas.UNITString;
-nas.UnitAngle.prototype.valueOf	=nas.UNITValue;
+nas.UnitAngle.prototype.parse    = nas.UnitAngle.prototype.setValue;
+nas.UnitAngle.prototype.as       = nas.ANGLEAs;
+nas.UnitAngle.prototype.convert  = nas.ANGLEConvert
+nas.UnitAngle.prototype.toString = nas.UNITString;
+nas.UnitAngle.prototype.valueOf  = nas.UNITValue;
 /*
 	nas.UnitResolution Object
 コンストラクタ  単位付き解像度オブジェクト
@@ -1450,6 +2573,7 @@ nas.UnitResolution=function(numberString,unitString){
     this.setValue(numberString,unitString);
 };
 nas.UnitResolution.prototype.setValue = function(myNumberString,myUnitString){
+	if(myNumberString instanceof nas.UnitResolution) myNumberString = myNumberString.toString();
 	var myNumberUnit='';
 	if((myNumberString)&&(String(myNumberString).match(/([dpl]p[ci])/i))){
 		myNumberUnit=RegExp.$1;
@@ -1472,7 +2596,7 @@ nas.UnitResolution.prototype.setValue = function(myNumberString,myUnitString){
 	    );
 	if((isNaN(this.value))||(this.value<=0)){this.value=(myUnitString.indexOf('pc')<0)?nas.RESOLUTION*2.540:nas.RESOLUTION;};
 }
-
+nas.UnitResolution.prototype.parse      = nas.UnitResolution.prototype.setValue;
 nas.UnitResolution.prototype.as         = nas.RESOLUTIONAs;
 nas.UnitResolution.prototype.convert    = nas.RESOLUTIONConvert;
 nas.UnitResolution.prototype.toString   = nas.UNITString;
@@ -1619,76 +2743,85 @@ nas.Position は古いので  nas.Pointを使えやゴルァ
 /**
     二項または三項のnas.UnitValueをまとめて、座標点として扱う
     
-    @param {UnitValue or String} x
-    @param {UnitValue or String} y
-    @param {UnitValue or String} z
+    @params {UnitValue or String} x
+    @params {UnitValue or String} y
+    @params {UnitValue or String} z
     @example
-     A = new nas.Point(new nas.UnitValue('12.356 mm'),new nas.UnitValue('0.0 mm'));
-     B = new nas.Point("12.356mm, 0.0mm");
+     var A = new nas.Point(new nas.UnitValue('12.356 mm'),new nas.UnitValue('0.0 mm'));
+     var B = new nas.Point("12.356mm, 0.0mm");
+     var C = new nas.Point("12.356mm","0.0mm");
+     var D = new nas.Point(A);
  */
 nas.Point=function(x,y,z){
 	this.props = ['x','y','z'];
 	this.x = new nas.UnitValue('0 pt');
 	this.y = new nas.UnitValue('0 pt');
-	this.z;
+	this.z = new nas.UnitValue('0 pt');
 	this.length = 2;
 	this.type='pt';
 // 引数をパーサで処理する
-	this.setValue(...arguments);
+	if(arguments.length > 0) this.setValue(...arguments);
 }
 nas.Point.prototype.toString = nas._LISTString;
 nas.Point.prototype.valueOf  = nas._ARRAYValue;
 nas.Point.prototype.toJSON   = nas._JSONValue;
 /**
- *    表記方法のゆらぎを吸収してポイントオブジェクトを設定する自己初期化メソッド
- *   @params {Array|Object nas.Point|String csv} argumants
+ *	表記方法のゆらぎを吸収してポイントオブジェクトを設定する自己初期化メソッド
+ *	@params {Array|Object nas.Point|Object JSON|String csv} argumants
  */
-nas.Point.prototype.setValue=function(a,b,c){
-    if(arguments.length == 0) return this;
-    //引数が存在しない場合は、NOP
-    var myParams = [];
-    if(a instanceof nas.Point){
+nas.Point.prototype.setValue = function(a,b,c){
+	if(arguments.length == 0) return this;
+	//引数が存在しない場合は、NOP
+	var myParams = [];
+	if(a instanceof nas.Point){
 	//第一引数がポイントオブジェクトであれば、値を複製
-	    this.x = new nas.UnitValue(a.x);
-	    this.y = new nas.UnitValue(a.y);
-	    this.z = new nas.UnitValue(a.z);
-	    this.length = a.length;
-	    this.type=this.x.type;
+		this.x.setValue(a.x);
+		this.y.setValue(a.y);
+		this.z.setValue(a.z);
+		this.length = a.length;
+		this.type   = a.type;
 	}else{
 	  if(typeof a == 'string'){
-	    if(a.match(/^\s*\{.*\}\s*$/)){
-	        var arg = JSON.parse(a);
-            myParams = [arg.x,arg.y,arg.z];
-	    }else if(a.match(/^\s*\[.*\]\s*$/)){
-	        myParams = JSON.parse(a);
-	    }else if(a.match(/,/)){
+		if(a.match(/^\s*\{.*\}\s*$/)){
+//JSON object
+			var arg = JSON.parse(a);
+			myParams = [arg.x,arg.y,arg.z];
+		}else if(a.match(/^\s*\[.*\]\s*$/)){
+//JSON array
+			myParams = JSON.parse(a);
+		}else if(a.match(/,/)){
 //コンマ分離可能文字列
-	        myParams=a.split(',');
-	    };
+			myParams=a.split(',');
+		}else{
+//引数をコピー
+			myParams=Array.from(arguments,function(e){return String(e).trim();});
+		};
 	  }else{
-	    if(a instanceof Array){
+		if(a instanceof Array){
 //第一引数が配列の場合は、操作対象を当該の配列に設定
-	        myParams = a;
-	    }else if((a instanceof Object)&&(a.x)){
+			myParams = Array.from(a,function(e){return String(e).trim();});
+		}else if((a instanceof Object)&&(a.x)){
 //文字列でなく配列でも無いオブジェクト
-            myParams.push(a.x);
-            myParams.push((a.y)? a.y:new nas.UnitValue(0));
-            myParams.push((a.z)? a.z:new nas.UnitValue(0));
-	    }else{
-	        myParams = [a,b,c];
-	    };
+			myParams.push(a.x);
+			myParams.push((a.y)? a.y:new nas.UnitValue(0));
+			myParams.push((a.z)? a.z:new nas.UnitValue(0));
+		}else{
+//引数をコピー
+			myParams=Array.from(arguments);
+		};
 	  };
 	//引数が配列で要素が２に満たない場合のみ"0pt"を一つ補う。
-	    if(myParams.length == 1) myParams.push("0 pt");
+		if(myParams.length == 1) myParams.push("0 pt");
 // 以下引数の初期化処理
-        this.x = new nas.UnitValue(myParams[0]);
-        this.y = new nas.UnitValue(myParams[1]);
-        if(myParams[2]) this.z = new nas.UnitValue(myParams[2]);
-        this.length = (myParams.length >= 3)? 3:2;
-        this.type = this.x.type;
+		this.x = new nas.UnitValue(myParams[0]);
+		this.y = new nas.UnitValue(myParams[1]);
+		if(myParams[2]) this.z = new nas.UnitValue(myParams[2]);
+		this.length = (myParams.length >= 3)? 3:2;
+		this.type = this.x.type;
 	};
 	return this;
 }
+nas.Point.prototype.parse = nas.Point.prototype.setValue;
 /* test
 
 	myX= new nas.UnitValue("12mm")  ;
@@ -1702,14 +2835,15 @@ nas.Point.prototype.setValue=function(a,b,c){
 	E= new nas.Point({"x":myX,"y":myY,"z":myZ}) ;//無名オブジェクトで初期化
 	F= new nas.Point([myX,myY],'in');     ;//二次元配列初期化
 	G= new nas.Point('12cm','2.54cm','30mm')                 ;//文字列
-	H= new nas.Point("'12cm','2.54cm','30mm'")               ;//単独文字列文字列
-	I= new nas.Point('["12cm","2.54cm","30mm"]')             ;//配列JSON文字列
-	J= new nas.Point('{"x":"12cm","y":"2.54cm","z":"30mm"}') ;//JSON文字列
-	K= new nas.Point(['12cm','2.54cm','30mm'])     ;//文字要素の配列で初期化
-	L= new nas.Point(['12cm','2.54cm','30mm'],'in');//指定単位は反映されない
-	M= new nas.Point(['12cm']);
+	H= new nas.Point("'12cm','2.54cm','30mm'")               ;//単独文字列文字列（記述ミス 0ptになる）
+	I= new nas.Point("12cm , 2.54cm , 30mm")                 ;//単独文字列文字列（正常処理）
+	J= new nas.Point('["12cm","2.54cm","30mm"]')             ;//配列JSON文字列
+	K= new nas.Point('{"x":"12cm","y":"2.54cm","z":"30mm"}') ;//JSONオブジェクト
+	L= new nas.Point(['12cm','2.54cm','30mm'])     ;//文字要素の配列で初期化
+	M= new nas.Point(['12cm','2.54cm','30mm'],'in');//指定単位は反映されない
+	N= new nas.Point(['12cm']);//
 
-    ([A,B,C,D,E,F,G,H,I,J,K,L,M]).forEach((e)=>{
+    ([A,B,C,D,E,F,G,H,I,J,K,L,M,N]).forEach((e)=>{
 //	    console.log (e.toString());
 //	    console.log (e.valueOf());
 	    console.log (e.toJSON());
@@ -1789,48 +2923,208 @@ nas.Position = nas.Point;
 	 オフセットオブジェクト
 オフセットを利用するための複合オブジェクト
 positionとorientationを組み合わせたもの
-初期化の引数は位置オブジェクトと方向オブジェクトで
-
-引数なしの場合は  0,0,0d で初期化
+初期化の引数は、リスト文字列・配列・Offsetオブジェクト またはダンプ文字列
+標準的な初期化引数は、x,y,r | x,y,z,rx,ry,rz
+3パラメータまでは二次元 それ以上は三次元
+引数なしの場合は  0,0,0 で初期化
 */
-nas.Offset=function(myPos,myOrt){
+nas.Offset=function(){
 	this.position    = new nas.Point();
 	this.orientation = new nas.Orientation();
+	this.dimension = 2;
+	this.length = 2;
 	this.x = this.position.x;
 	this.y = this.position.y;
+	this.z = this.position.z;
 	this.r = this.orientation.z;
+	this.rx = this.orientation.x;
+	this.ry = this.orientation.y;
+	this.rz = this.orientation.z;
+
 	if(arguments.length) this.setValue(...arguments);
 }
-nas.Offset.prototype.setValue = function(myPos,myOrt){
-	this.position=(myPos instanceof nas.Point)? myPos:new nas.Point();
-	this.orientation=(myOrt instanceof nas.Orientation)?myOrt:new nas.Orientation();
-	this.x=this.position.x;
-	this.y=this.position.y;
-	this.r=this.orientation.z;
+/*
+setValue
+引数
+	@params {Object nas.Point|String|Arrayof params} myPos
+	@params {Object nas.Orientation} myOrt
+	
+nas.Offset.setValue("10mm,12mm,0.12degrees")       ;//コンマ区切り文字列
+nas.Offset.setValue("10mm","12mm","0.12degrees")   ;//個別文字列
+nas.Offset.setValue(["10mm","12mm","0.12degrees"]) ;//配列
+nas.Offset.setValue({x:"10mm",y:"12mm",r:"0.12degrees"});//パラメータオブジェクト
+nas.Offset.setValue(Offset);//nas.Offsetオブジェクト
+nas.Offset.setValue(`
+	offset.x = 10mm
+	offset.y = 12mm
+	offset.r = -0.34d
+`);//ダンプアウト文字列のパースも必要
+
+	offset.x  = 10mm
+	offset.y  = -12mm
+	offset.z  = 0.25mm
+	offset.rx = 0d
+	offset.ry = -4d
+	offset.rz = 128d
+*/
+/**
+ *	表記方法のゆらぎを吸収してオフセット複合オブジェクトを設定する自己初期化パーサ
+ *   @params {Array|Object nas.Offset|Object JSON|String csv} argumants
+ */
+nas.Offset.prototype.setValue = function(a){
+	if(arguments.length == 0) return this;
+	//引数が存在しない場合は、NOP
+	var myParams = [];
+	if(a instanceof nas.Offset){
+	//第一引数がオフセットオブジェクトであれば、値を複製して終了
+		this.position.setValue(a.positon);
+		this.orientation.setValue(a.orientation);
+		this.dimension = a.dimension;//number
+	}else{
+	  if(typeof a == 'string'){
+//as String
+		if(a.match(/\s*offset\.[xyzr].*\s*=/)){
+//ダンプアウト文字列
+			var obj={};
+			a.split("\n").forEach(function(lin){
+				var line = lin.trim().split('=');
+				if(line[0]) obj[line[0].trim().split(".")[1]] = line[1].trim();
+				if(line[0].match(/offset\.(z|rx|ry)/)) obj.length = 3;
+			},this);
+			return this.setValue(obj);
+		}else if(a.match(/^\s*\{.*\}\s*$/)){
+//Object JSON
+			return this.parse(JSON.parse(a));
+		}else if(a.match(/^\s*\[.*\]\s*$/)){
+//Array JSON
+			myParams = JSON.parse(a);
+		}else if(a.match(/,/)){
+//コンマ分離可能文字列
+			myParams=a.split(',');
+		}else{
+			myParams = Array.from(arguments);
+			console.log(myParams);
+		};
+	  }else{
+//as Object
+		if(a instanceof Array){
+//第一引数が配列の場合は、操作対象を当該の配列に設定
+			myParams = a;
+		}else if((a instanceof Object)&&(a.x)){
+//文字列でなく配列でも無い参照オブジェクト
+			["length","x","y","z","r","rx","ry","rz"].forEach(function(prp){
+				if(a[prp]){
+console.log(prp);
+					if(prp == "length"){
+						this.dimension = a.dimension;
+						this.position.length = a.length;
+						this.orientation.dimension = a.dimension;
+					}else if(this[prp].setValue instanceof Function){
+						this[prp].setValue(a[prp]);
+					};
+				};
+			},this);
+			return this;
+		}else{
+			myParams = Array.from(arguments);
+			console.log(myParams);
+		};
+	};
+	//引数が配列で要素が規定数に満たない場合のみ補う。
+		if(myParams.length < 4){
+			this.dimension = 2;
+			if(myParams.length < 3){
+				myParams = myParams.concat([0,0,0]);
+				myParams.splice(3);
+			};
+			var prps = ["x","y","r"];
+		}else{
+			this.dimension = 3;
+			if(myParams.length < 6){
+				myParams = myParams.concat([0,0,0,0,0,0]);
+				myParams.splice(6);
+			};
+			var prps = ["x","y","z","rx","ry","rz"];
+		};
+		prps.forEach(function(prp){
+			this[prp].setValue(myParams[prps.indexOf(prp)]);
+		},this);
+	};
 	return this;
 }
+nas.Offset.prototype.parse = nas.Offset.prototype.setValue;
+/*TEST
+var ofst = new nas.Offset(10,10,10);
+console.log(new nas.Offset("10mm,12mm,0.12degrees"));       ;//コンマ区切り文字列
+console.log(new nas.Offset("10mm","12mm","0.12degrees"))   ;//個別文字列
+console.log(new nas.Offset(["10mm","12mm","0.12degrees"])) ;//配列
+console.log(new nas.Offset({x:"10mm",y:"12mm",r:"0.12degrees"}));//パラメータオブジェクト
+console.log(new nas.Offset(ofst));//nas.Offsetオブジェクト
+console.log(new nas.Offset(`
+	offset.x = 10mm
+	offset.y = 12mm
+	offset.r = -0.34d
+`));//ダンプアウト文字列のパースも必要
+
+console.log(new nas.Offset(`
+	offset.x  = 10mm
+	offset.y  = -12mm
+	offset.z  = 0.25mm
+	offset.rx = 0d
+	offset.ry = -4d
+	offset.rz = 128d
+`));
+*/
+/**/
+nas.Offset.prototype.toJSON = function(){
+	var result = {
+		"dimension":this.dimension,
+		"x": this.x.toString(),
+		"y": this.y.toString(),
+		"r": this.r.toString()
+	};
+	if(this.dimension > 2){
+		result.z = this.z.toString();
+		result.rx = this.rx.toString();
+		result.ry = this.ry.toString();
+		result.rz = this.rz.toString();
+	};
+	return result;
+}
+/*
+文字列化メソッド
+引数trueでダンプ文字列を返す
+ dump|JSON|(none)
+*/
 nas.Offset.prototype.toString = function(opt){
     var myResult=[];
 	if(! opt){
         myResult.push(this.position.toString());
         myResult.push(this.orientation.toString());
 		return myResult.join(",");
+	}else if(opt == 'JSON'){
+//JSON
+		return JSON.stringify(this);
 	}else{
+//dump
         myResult.push("\toffset.x = "+this.position.x.toString());
-        myResult.push("\toffset.x = "+this.position.x.toString());
+        myResult.push("\toffset.y = "+this.position.y.toString());
         myResult.push("\toffset.r = "+this.orientation.z.toString("degrees"));
     	return myResult.join("\n");
-	}
+	};
 };
-nas.Offset.prototype.valueOf=function(asUnit){
-	if(typeof asUnit == 'undefined') asUnit=this.type;
+/*
+基本的には不要なメソッド
+必要時はOffsetでなく Offset.position | Offset.orientation 等の内部値が演算対象となる
+引数渡しも無意味
+*/
+nas.Offset.prototype.valueOf=function(){
 	var myResult=[];
-	for(var myDim=0;myDim<this.length;myDim++){myResult.push(this[this.props[myDim]].as(asUnit))}
 	return myResult;
 };
 /*test
 A= new nas.Offset();
-B= new nas.Offset(new nas.Point("12mm","10mm"),new nas.Orientation("0d"));
+B= new nas.Offset(new nas.Point("12mm","10mm"),new nas.Orientation("0d"));//この初期化は廃止
 
 */
 /*
@@ -1866,15 +3160,25 @@ nas.Vector.valueOf([指定単位])	;指定単位にそろえて数値配列を�
 */
 nas.Vector=function(endPoint,startPoint,myUnit){
 	this.dimension = 2;
-	this.length    = 2
-	this.props=['origin','value'];
+	this.length    = 2;
+	this.props     = ['origin','value'];
 	this.origin    = new nas.Point('0 pt','0 pt');
 	this.value     = new nas.Point('1 pt','1 pt');
 	this.type      = "pt";
 	if(arguments.length) this.setValue(...argumants);
 }
 nas.Vector.prototype.setValue = function(endPoint,startPoint,myUnit){
-	if(arguments.length==0){
+	if(endPoint instanceof nas.Vector){
+		for (var prp in endPoint){
+			if(prp == 'props'){
+				continue;
+			}else if(this[prp].setValue instanceof Function){
+				this[prp].setValue(endPoint[prp]);
+			}else{
+				this[prp] = endPoint[prp];
+			};
+		};
+	}else if(arguments.length==0){
 		this.dimension=2;
 		this.origin=new nas.Point('0 pt','0 pt');
 		this.value=new nas.Point('1 pt','1 pt');
@@ -1897,6 +3201,7 @@ nas.Vector.prototype.setValue = function(endPoint,startPoint,myUnit){
 	};
 	return this;
 }
+nas.Vector.prototype.parse     = nas.Vector.prototype.setValue;
 nas.Vector.prototype.toString  = nas._LISTString;
 nas.Vector.prototype.valueOf   = nas._ARRAYValue;
 nas.Vector.prototype.toJSON    = nas._JSONValue;
@@ -1913,76 +3218,85 @@ nas.Vector.prototype.toJSON    = nas._JSONValue;
 引数は、bool,UnitAngleまたは文字列
 
 */
-nas.Rotation=function(r,w){
+nas.Rotation=function(){
 	this.name  ='rotation';
 	this.props =["w","x","y","z"];
 	this.length = 3;
 	this.dimension = 2;
 	this.w = 1;
-	this.z = 0;
-	this.y = 0;
-	this.x = 0;
+	this.z = new nas.UnitAngle();
+	this.y = new nas.UnitAngle();
+	this.x = new nas.UnitAngle();
 	if(arguments.length) this.setValue(...arguments);
 }
 nas.Rotation.prototype.setValue = function(x,y,z){
-	this.dimension=(arguments.length == 0)? 2 : 
-	(arguments.length > 1)? 3 :
-    ((! arguments[0] instanceof nas.UnitAngle)||isFinite(arguments[0]))? 1 : 2 ;
-    this.length = this.dimansion + 1
-    switch(this.dimension){
-    case 1:
-        this.w = (arguments[0] < 0 )? -1:1;
-		this.props =["w","x","y","z"];
-
-    break;
-    case 2:
-	    this.z=(arguments[0] instanceof nas.UnitAngle)? arguments[0]:new nas.UnitAngle(arguments[0]);
-	    this.y=new nas.UnitAngle('0 degrees');
-	    this.x=new nas.UnitAngle('0 degrees');
-		this.props =["w","z","y","x"];
-	break;
-    case 3:
-	    this.x=(arguments[0] instanceof nas.UnitAngle)? arguments[0]:new nas.UnitAngle(arguments[0]);
-	    this.y=(arguments[1] instanceof nas.UnitAngle)? arguments[1]:new nas.UnitAngle(arguments[1]);
-	    this.z=(arguments[2] instanceof nas.UnitAngle)? arguments[2]:new nas.UnitAngle(arguments[2]);
-		this.props =["w","x","y","z"];
-    };
+	if(x instanceof nas.Rotation){
+		for(var prp in x){
+			if((prp == 'props')||(prp == 'name')){
+				continue;
+			}else if(typeof this[prp].setValue == 'function'){
+				this[prp].setValue(x[prp]);
+			}else{
+				this[prp] = x[prp];
+			};
+		};
+	}else{
+		this.dimension=(arguments.length == 0)? 2 : 
+		(arguments.length > 1)? 3 :
+		((! arguments[0] instanceof nas.UnitAngle)||isFinite(arguments[0]))? 1 : 2 ;
+		this.length = this.dimansion + 1
+		switch(this.dimension){
+		case 1:
+			this.w = (arguments[0] < 0 )? -1:1;
+		break;
+		case 2:
+			this.z=(arguments[0] instanceof nas.UnitAngle)? arguments[0]:new nas.UnitAngle(arguments[0]);
+			this.y=new nas.UnitAngle('0 degrees');
+			this.x=new nas.UnitAngle('0 degrees');
+		break;
+		case 3:
+			this.x=(arguments[0] instanceof nas.UnitAngle)? arguments[0]:new nas.UnitAngle(arguments[0]);
+			this.y=(arguments[1] instanceof nas.UnitAngle)? arguments[1]:new nas.UnitAngle(arguments[1]);
+			this.z=(arguments[2] instanceof nas.UnitAngle)? arguments[2]:new nas.UnitAngle(arguments[2]);
+		};
+	};
 }
+nas.Rotation.prototype.parse = nas.Rotation.prototype.setValue;
 nas.Rotation.prototype.toString = function(exportForm){
-    if(!exportForm) return this.listString('degrees');    
-    var myResult=[];
-    var myUnit = 'degrees';
-    switch (this.dimension){
-    case 1:
-        myResult.push("\t"+this.name+".w = "+this.w);
-    break;
-    case 2:
-        myResult.push("\t"+this.name+" = "+this.z.as(myUnit));
-    break;
-    case 3:
-    default:
-        myResult.push("\t"+this.name+".x = "+this.x.as(myUnit));
-        myResult.push("\t"+this.name+".y = "+this.y.as(myUnit));
-        myResult.push("\t"+this.name+".z = "+this.z.as(myUnit));
-    }
-		return myResult.join('\n');//リスト文字列で
+	if(!exportForm) return this.listString('degrees');
+	var myResult=[];
+	var myUnit = 'degrees';
+	switch (this.dimension){
+	case 1:
+		myResult.push("\t"+this.name+".w = "+this.w);
+	break;
+	case 2:
+		myResult.push("\t"+this.name+" = "+this.z.as(myUnit));
+	break;
+	case 3:
+	default:
+		myResult.push("\t"+this.name+".x = "+this.x.as(myUnit));
+		myResult.push("\t"+this.name+".y = "+this.y.as(myUnit));
+		myResult.push("\t"+this.name+".z = "+this.z.as(myUnit));
+	};
+	return myResult.join('\n');//リスト文字列で
 }
 nas.Rotation.prototype.listString   = function(myUnit){
-	if(typeof myUnit == "unidefined"){myUnit=false;}
+	if(typeof myUnit == "undefined") myUnit = false;
 	var myResult=[];
-    switch (this.dimension){
-    case 1:
-        myResult.push(this.w);
-    break;
-    case 2:
-        myResult.push(this.z.as(myUnit));
-    break;
-    case 3:
-    default:
-        myResult.push(this.x.as(myUnit));
-        myResult.push(this.y.as(myUnit));
-        myResult.push(this.z.as(myUnit));
-    }
+	switch (this.dimension){
+	case 1:
+		myResult.push(this.w);
+	break;
+	case 2:
+		myResult.push(this.z.as(myUnit));
+	break;
+	case 3:
+	default:
+		myResult.push(this.x.as(myUnit));
+		myResult.push(this.y.as(myUnit));
+		myResult.push(this.z.as(myUnit));
+	}
 	return myResult.join(',');//リスト文字列で
 }
 nas.Rotation.prototype.valueOf   = nas._ARRAYValue;
@@ -2006,82 +3320,95 @@ nas.Orientation=function(r,w){
 	this.props =["w","x","y","z",];
 	this.dimension = 2;
 	this.w = 1;
-	this.z = 0;
-	this.y = 0;
-	this.x = 0;
+	this.z = new nas.UnitAngle();
+	this.y = new nas.UnitAngle();
+	this.x = new nas.UnitAngle();
 	if(arguments.length) this.setValue(...arguments);
 }
+/*
 nas.Orientation.prototype.setValue=function(r,w){
 	this.dimension=(arguments.length == 0)? 2 : 
 	(arguments.length > 1)? 3 :
-    ((! arguments[0] instanceof nas.UnitAngle)||isFinite(arguments[0]))? 1 : 2 ;	 
-    switch(this.dimension){
-    case 1:
-        this.w = (arguments[0] < 0 )? -1:1;
-    break;
-    case 2:
-	    this.z=(arguments[0] instanceof nas.UnitAngle)? arguments[0]:new nas.UnitAngle(arguments[0]);
-	    this.y=new nas.UnitAngle('0 degrees');
-	    this.x=new nas.UnitAngle('0 degrees');
+	((! arguments[0] instanceof nas.UnitAngle)||isFinite(arguments[0]))? 1 : 2 ;	 
+	switch(this.dimension){
+	case 1:
+		this.w = (arguments[0] < 0 )? -1:1;
 	break;
-    case 3:
-	    this.x=(arguments[0] instanceof nas.UnitAngle)? arguments[0]:new nas.UnitAngle(arguments[0]);
-	    this.y=(arguments[1] instanceof nas.UnitAngle)? arguments[1]:new nas.UnitAngle(arguments[1]);
-	    this.z=(arguments[2] instanceof nas.UnitAngle)? arguments[2]:new nas.UnitAngle(arguments[2]);
-    }
-};
-nas.Orientation.prototype=nas.Rotation.prototype;
+	case 2:
+		this.z=(arguments[0] instanceof nas.UnitAngle)? arguments[0]:new nas.UnitAngle(arguments[0]);
+		this.y=new nas.UnitAngle('0 degrees');
+		this.x=new nas.UnitAngle('0 degrees');
+	break;
+	case 3:
+		this.x=(arguments[0] instanceof nas.UnitAngle)? arguments[0]:new nas.UnitAngle(arguments[0]);
+		this.y=(arguments[1] instanceof nas.UnitAngle)? arguments[1]:new nas.UnitAngle(arguments[1]);
+		this.z=(arguments[2] instanceof nas.UnitAngle)? arguments[2]:new nas.UnitAngle(arguments[2]);
+	}
+};//*/
+nas.Orientation.prototype = nas.Rotation.prototype;
 
-/** レートオブジェクト　倍数比率を単位付きまたは単位係数無しで保持するオブジェクト
+/** レートオブジェクト　倍数比率を単位係数無しで保持するオブジェクト
 .value  倍数
 .rate   係数
-
+	係数はtoString表示の際のデフォルトの値（指定変更可能）
 */
 nas.Rate=function(myRate){
-    if(! myRate) myRate="100%"
-    this.value = 100;
-    this.rate  = 100;
-    if(arguments.length) this.setValue(...arguments);
+	this.value = 1;
+	this.rate  = 100;//100%
+	if(arguments.length) this.setValue(...arguments);
 }
 
-nas.Rate.prototype.setValue=function(rateString){
-    var myRate=1;
-    var myRateUnit=String(rateString).replace(/[\+\-\d\.]/g,'');
-    var myValue=parseFloat(rateString);
-    if(isNaN(myValue)) myValue=1;
-    switch(myRateUnit){
-    case  "%":
-    case "％":
-        myRate = 100;
-    break;
-    case "‰":
-        myRate = 1000;
-    break;
-    }
-    this.value = myValue/myRate;
-    this.rate  = myRate;
-    return this;
+nas.Rate.prototype.setValue = function(rateString){
+	if(rateString instanceof nas.Rate) rateString = rateString.toString();
+	var myRate=1;
+	var myRateUnit=String(rateString).replace(/[\+\-\d\.\s]/g,'');
+	var myValue=parseFloat(rateString);
+	if(isNaN(myValue)) myValue=1;
+	switch(myRateUnit){
+	case "分":
+	case "割":
+		myRate = 10;
+	break;
+	case  "percent":
+	case  "%":
+	case "％":
+		myRate = 100;
+	break;
+	case "permill":
+	case "‰":
+		myRate = 1000;
+	break;
+	}
+	this.value = myValue/myRate;
+	this.rate  = myRate;
+	return this;
 }
-nas.Rate.prototype.valueOf=function(){return this.value;}
-nas.Rate.prototype.as=function(rate){
-    var myRate;
-    switch(rate){
-    case  "%":
-    case "％":
-    case "percent":
-        myRate = 100;
-    break;
-    case "‰":
-    case "permill":
-        myRate = 1000;
-    break;
-    default:
-        myRate = 1
-    }
-    return(myRate*this.value)
+nas.Rate.prototype.parse = nas.Rate.prototype.setValue
+nas.Rate.prototype.valueOf = function(){return this.value;}
+nas.Rate.prototype.as = function(rate){
+	var myRate;
+	switch(rate){
+	case "分":
+	case "割":
+		myRate = 10;
+	break;
+	case  "%":
+	case "％":
+	case "percent":
+		myRate = 100;
+	break;
+	case "‰":
+	case "permill":
+		myRate = 1000;
+	break;
+	default:
+		myRate = parseFloat(rate);
+	};
+	if(isNaN(myRate )) myRate = 1;
+	return(myRate*this.value)
 }
 nas.Rate.prototype.toString=function(){
-    return String(this.value*this.rate)+["",null,"%","‰"][Math.log10(this.rate)];
+	return String(this.value*this.rate)+["",null,"%","‰"][Math.log10(this.rate)];
 }
 nas.Rate.prototype.toJSON = nas.Rate.prototype.toString;
 /*  TEST
@@ -2132,14 +3459,14 @@ nas.Framerate=function(initString){
     if(arguments.length) this.setValue(...arguments);
 };
 
-nas.Framerate.prototype.toString=function(form){return (form)? this.name:this.name+"("+this.rate+")";}
+nas.Framerate.prototype.toString = function(form){return (form)? this.name:this.name+"("+this.rate+")";}
 nas.Framerate.prototype.valueOf=function(){return this.rate;}
 
 /**
     フレームレートオブジェクト初期化メソッド
     空引数で呼ばれた場合はデフォルト値のフレームレートを返す
 */
-nas.Framerate.prototype.setValue=function(rateString,rate){
+nas.Framerate.prototype.setValue = function(rateString,rate){
 
 	if(arguments.length){
 	  //第一引数がカッコつきでフレームレート指定された文字列ならば第二引数は無効(捨てる)
@@ -2148,12 +3475,12 @@ nas.Framerate.prototype.setValue=function(rateString,rate){
 	    this.rate = parseFloat(RegExp.$2);
 	  } else if(arguments.length>1){
 	//引数が2つ設定されている
-	    this.name=rateString;
-	    this.rate=parseFloat(rate);
+	    this.name = rateString;
+	    this.rate = parseFloat(rate);
 	  }else if(String(rateString).length){
 	//引数が一つのみ
-	    this.name=String(rateString);
-	    this.rate=parseFloat(String(rateString).replace(/^[^-\d]+/,""));//文字列先頭の数値以外のデータを捨てて数値化
+	    this.name = String(rateString);
+	    this.rate = parseFloat(String(rateString).replace(/^[^-\d]+/,""));//文字列先頭の数値以外のデータを捨てて数値化
 	  }else{
 	    return this;
 	  }
@@ -2164,21 +3491,22 @@ nas.Framerate.prototype.setValue=function(rateString,rate){
 	//名前に特定の強制キーワードを含む
 	if(this.name.match(/PAL|SECAM/i)){
 	    if(!(this.rate)) this.rate = 25;
-	    this.rate=( this.rate < 37.5 ) ? 25.0: 50.0 ;
+	    this.rate = ( this.rate < 37.5 ) ? 25.0: 50.0 ;
 	}else if(this.name.match(/SMPTE|NTSC|[^N]DF/i)){
-        this.opt='smpte';
+        this.opt = 'smpte';
 	    if(! isFinite(this.rate)) this.rate = 30;
-	    this.rate=(this.rate > 45 )? 59.94 : 29.97 ;
+	    this.rate = (this.rate > 45 )? 59.94 : 29.97 ;
 	}
 	if(! isFinite(this.rate)){
 //  console.log (this.rate);
-	    this.name=nas.FRATE.name;this.rate=nas.FRATE.rate;this.opt=nas.FRATE.opt;
+	    this.name = nas.FRATE.name;this.rate=nas.FRATE.rate;this.opt=nas.FRATE.opt;
 	}
 //最終的に名前がなくなった場合はフレームレート＋"fps"を文字列としてもたせる
 	if(String(this.name).length==0) {this.name = this.rate+'fps'};
 
 	return this;
 }
+nas.Framerate.prototype.parse = nas.Framerate.prototype.setValue;
 /**
     同値判定メソッド
     フレームレートと、ドロップの有無を比較して同じフレームレートか否かを返す
@@ -2405,7 +3733,8 @@ nas.Size.prototype.toJSON   = nas._JSONValue;
  */
 nas.Scale = function(x,y,z){
 	this.length;
-	this.props=["x","y","z"];
+	this.props = ["x","y","z"];
+	this.rate  = 1
 	this.setValue(...arguments);
 /*
 	this.valueOf=function(asRate){
@@ -2416,20 +3745,26 @@ nas.Scale = function(x,y,z){
 	};//*/
 }
 nas.Scale.prototype.setValue = function setValue(x,y,z){
+	if(x instanceof nas.Scale) x = x.toString();
 	if(arguments.length == 0){
-		var args = ["100%"];this.length = 1;
+		var args = ["100%"];
+		this.length = 1;
+	}else if((typeof x == 'string')&&(arguments.length == 1)){
+		var args = x.split(',');
+		this.length = args.length;
 	}else{
-	    var args = Array.prototype.slice.call(arguments)
-	    this.length=arguments.length;//DimensionLength
+		var args = Array.prototype.slice.call(arguments)
+		this.length = args.length;
 	};
-	for(var myDim=0 ; myDim<this.length ; myDim++){
-		 this[this.props[myDim]] = new nas.Rate(args[myDim]);
+	if(length > 3) length = 3;
+	for(var myDim=0 ; myDim < this.length ; myDim++){
+		this[this.props[myDim]] = new nas.Rate(args[myDim]);
 	};
-	this.rate=this.x.rate;
-};
+	this.rate = this.x.rate;
+}
 nas.Scale.prototype.toString=function(opt){
 	var myResult=[];
-	var rateString=['','','%','‰'][Math.log10(this.rate)];
+	var rateString=['',null,'%','‰'][Math.log10(this.rate)];
     if(! opt){
     	for(var myDim=0;myDim<this.length;myDim++){
 	        myResult.push(this[this.props[myDim]].as(rateString)+rateString)
@@ -2444,8 +3779,19 @@ nas.Scale.prototype.toString=function(opt){
 	        }
 	    }
 	    return myResult.join("\n");
-	}
-};
+	};
+}
+
+nas.Scale.prototype.as = function(rate){
+	if(this.length == 1){
+		return this.x.as(rate);
+	}else if(this.length == 2){
+		return [this.x.as(rate),this.y.as(rate)];
+	}else if(this.length == 3){
+		return [this.x.as(rate),this.y.as(rate),this.z.as(rate)];
+	};
+	return false
+}
 nas.Scale.prototype.valueOf = nas._ARRAYValue;
 nas.Scale.prototype.toJSON  = nas._JSONValue;
 /* 
@@ -3416,7 +4762,7 @@ Date.prototype.toNASString = function (form) {
 };
 // Date
 /**
- * @param nasString
+ * @params nasString
  * @returns {Date}
  */
 Date.prototype.setNASString = function (nasString) {
@@ -3447,7 +4793,6 @@ String.prototype.camelize = function () {
         return c ? c.toUpperCase() : '';
     });
 };
-
 /**
  * z距離>比率換算<br />
  * <br/>
@@ -3455,7 +4800,7 @@ String.prototype.camelize = function () {
  * を求める関数
  *  nas.CAMARA_Dプロパティに依存
  *
- * @param {Number} dt 距離(pixel)
+ * @params {Number} dt 距離(pixel)
  * @returns {number} z軸位置に相当する拡縮比率
  */
 nas.dt2sc = function (dt) {
@@ -3467,7 +4812,7 @@ nas.dt2sc = function (dt) {
  * 比率1(100%)を距離0に置いた場合の 任意の比率となるレイヤプロパティｚ軸値
  * （AE互換）を求める関数
  *  nas.CAMARA_Dプロパティに依存
- * @param {Number} sc 拡縮比率
+ * @params {Number} sc 拡縮比率
  * @returns {Number} 比率に相当するAEのZ軸位置(pixel)
  */
 nas.sc2dt = function (sc) {
@@ -3483,14 +4828,14 @@ nas.sc2dt = function (sc) {
  * sc は、倍率
  * FRAME_Lは、基礎情報として基準フレーム数をfl値で与えること
  *
- * @param fl
+ * @params fl
  * @returns {number}
  */
 nas.fl2fr = function (fl) {
     return ((fl * 1 + 60) / 1.60)
 };
 /**
- * @param fr
+ * @params fr
  * @returns {number}
  */
 nas.fr2fl = function (fr) {
@@ -3498,28 +4843,28 @@ nas.fr2fl = function (fr) {
 };
 
 /**
- * @param fl
+ * @params fl
  * @returns {number}
  */
 nas.fl2sc = function (fl) {
     return ((160 * ((this.FRAME_L * 1) + 60)) / (160 * ((fl * 1) + 60)))
 };
 /**
- * @param fr
+ * @params fr
  * @returns {number}
  */
 nas.fr2sc = function (fr) {
     return (this.fl2sc(this.fr2fl(fr)))
 };
 /**
- * @param sc
+ * @params sc
  * @returns {number}
  */
 nas.sc2fl = function (sc) {
     return ((((160 * (this.FRAME_L + 60)) / (sc * 1)) / 160) - 60)
 };
 /**
- * @param sc
+ * @params sc
  * @returns {number}
  */
 nas.sc2fr = function (sc) {
@@ -3531,9 +4876,9 @@ nas.sc2fr = function (sc) {
  * kac(基準量,目標量,助変数)
  * 戻り値は 序変数に対応する寸法
  *
- * @param StartSize
- * @param EndSize
- * @param timingValue
+ * @params StartSize
+ * @params EndSize
+ * @params timingValue
  * @returns {*}
  */
 nas.kac = function (StartSize, EndSize, timingValue) {
@@ -3574,9 +4919,9 @@ nas.kac = function (StartSize, EndSize, timingValue) {
  * cak(基準量,目標量,任意寸法)
  * 戻り値は助変数を最大精度で
  *
- * @param StartSize
- * @param EndSize
- * @param TargetSize
+ * @params StartSize
+ * @params EndSize
+ * @params TargetSize
  * @returns {number}
  */
 nas.cak = function (StartSize, EndSize, TargetSize) {
@@ -3645,7 +4990,7 @@ console.log(nas.Zf("123",4));//0123
  * 前後文字列つきゼロ埋め(動画番号等の正規化)
  *
  * @params {String} myName
- * @param {Array of Number|Number} num
+ * @params {Array of Number|Number} num
  * @returns {String}
  * 
  文字列内の（少数以下を含む）数値部をすべて処理する仕様に変更
@@ -3699,7 +5044,7 @@ nas.RZf = function (myName, num) {
 */
 /**
  * 時間フレーム変換
- * @param ms
+ * @params ms
  * @returns {number}
  */
 nas.ms2fr = function (ms) {
@@ -3707,7 +5052,7 @@ nas.ms2fr = function (ms) {
 };//ミリ秒からフレーム数 実時間切捨て整数フレーム
 
 /**
- * @param frm
+ * @params frm
  * @returns {number}
  */
 nas.fr2ms = function (frm) {
@@ -3715,10 +5060,10 @@ nas.fr2ms = function (frm) {
 };//フレームからミリ秒 浮動少数
 
 /**
- * @param ms
- * @param type
- * @param ostF
- * @param fpsC Object nas.Framerate
+ * @params ms
+ * @params type
+ * @params ostF
+ * @params fpsC Object nas.Framerate
  */
 nas.ms2FCT = function (ms, type, ostF, fpsC) {
     if (!type) type = 0 ;
@@ -3731,7 +5076,7 @@ nas.ms2FCT = function (ms, type, ostF, fpsC) {
 };
 
 /**
- * @param fct
+ * @params fct
  * @returns {number}
  * @constructor
  */
@@ -3919,8 +5264,8 @@ TCタイプを判定する関数が必要だが、このメソッドを拡張す
     Number.type     TCタイプ
     Number.offset   オリジネーション
  
- * @param Fct
- * @param fpsC
+ * @params Fct
+ * @params fpsC
  * @returns {*}
  * @constructor
  */
@@ -4192,8 +5537,8 @@ console.log(nas.FCT2Frm("00:01:04:11",10.2));
  * 与えられたベクトルの次数を多いものに揃えて不足分に0を加えて返す
  * 内部使なのでエイリアスは不要
  *
- * @param vec1
- * @param vec2
+ * @params vec1
+ * @params vec2
  * @returns {*[]}
  */
 nas.preformvector = function (vec1, vec2) {
@@ -4235,8 +5580,8 @@ nas.preformvector = function (vec1, vec2) {
  * 戻値:各項を加算したベクトル
  * ベクトル和を返す。
  *
- * @param vec1
- * @param vec2
+ * @params vec1
+ * @params vec2
  * @returns {Array}
  */
 nas.add = function (vec1, vec2) {
@@ -4257,8 +5602,8 @@ nas.add = function (vec1, vec2) {
  * 戻値:各項を減算したベクトル
  * ベクトル差を返す
  *
- * @param vec1
- * @param vec2
+ * @params vec1
+ * @params vec2
  * @returns {Array}
  */
 nas.sub = function (vec1, vec2) {
@@ -4278,8 +5623,8 @@ nas.sub = function (vec1, vec2) {
  * 引数:ベクトル配列 乗数
  * 戻値:各項に乗数を積算したベクトル
  * ベクトル積を返す
- * @param vec
- * @param amount
+ * @params vec
+ * @params amount
  * @returns {Array}
  */
 nas.mul = function (vec, amount) {
@@ -4303,8 +5648,8 @@ nas.mul = function (vec, amount) {
  * 引数:ベクトル配列 商数
  * 戻値:各項を商数で割ったベクトル
  * ベクトル商を返す
- * @param vec
- * @param amount
+ * @params vec
+ * @params amount
  * @returns {Array}
  */
 nas.div = function (vec, amount) {
@@ -4330,9 +5675,9 @@ nas.div = function (vec, amount) {
  * 引数:ベクトル配列 制限値１ 制限値２
  * 戻値:制限値の範囲内にクランプされたベクトル
  * ベクトルを制限値でクランプする
- * @param vec
- * @param limit1
- * @param limit2
+ * @params vec
+ * @params limit1
+ * @params limit2
  * @returns {Array}
  */
 nas.clamp = function (vec, limit1, limit2) {
@@ -4368,8 +5713,8 @@ nas.clamp = function (vec, limit1, limit2) {
  * 引数:ベクトル配列1 ベクトル配列2
  * 戻値:ベクトル要素の内積
  * ベクトル内積
- * @param vec1
- * @param vec2
+ * @params vec1
+ * @params vec2
  * @returns {number}
  */
 nas.dot = function (vec1, vec2) {
@@ -4388,8 +5733,8 @@ nas.dot = function (vec1, vec2) {
  * 引数:ベクトル配列1 ベクトル配列2
  * 戻値:ベクトル要素の外積
  * AEの仕様に合わせて2次元と3次元の値のみを計算する
- * @param vec1
- * @param vec2
+ * @params vec1
+ * @params vec2
  * @returns {number}
  */
 nas.cross = function (vec1, vec2) {
@@ -4425,7 +5770,7 @@ nas.cross = function (vec1, vec2) {
  * 引数:ベクトル配列
  * 戻値:ベクトル長
  * ベクトルの長さを求める
- * @param vec
+ * @params vec
  * @returns {*}
  */
 nas.length = function (vec) {
@@ -4484,7 +5829,7 @@ nas.length = function (vec) {
  * 引数:ベクトル配列
  * 戻値:単位長ベクトル
  * 方向が同じで長さ１のベクトル
- * @param vec
+ * @params vec
  * @returns {Array}
  */
 nas.normalize = function (vec) {
@@ -4498,14 +5843,14 @@ nas.normalize = function (vec) {
 /**
  * AE ExpressionOtherMath 互換 角度<>ラジアン変換関数
  * 桁切らないほうが良いかも、運用してみて判断しましょう 2006/06/23
- * @param degrees
+ * @params degrees
  * @returns {number}
  */
 nas.degreesToRadians = function (degrees) {
     return Math.floor((degrees / 180.) * Math.PI * 100000000) / 100000000;
 };
 /**
- * @param radians
+ * @params radians
  * @returns {number}
  */
 nas.radiansToDegrees = function (radians) {
@@ -4537,15 +5882,15 @@ if (typeof (radiansToDegrees) == "undefined") var radiansToDegrees = nas.radians
  * corveto関連の関数
  * なんかまだつらそうだがとりあえず設定しておく
  *
- * @param {Number} SP
+ * @params {Number} SP
  *  開始点
- * @param {Number} CP1
+ * @params {Number} CP1
  *  制御点1
- * @param {Number} CP2
+ * @params {Number} CP2
  *  制御点2
- * @param {Number} EP
+ * @params {Number} EP
  *  終了点
- * @param {Number} T
+ * @params {Number} T
  *  作用助変数
  * @returns {Number}
  * この式はベジェの定義どおりの式 単項の値を戻す
@@ -4562,11 +5907,11 @@ nas.bezier = function (SP, CP1, CP2, EP, T) {
  * この関数は範囲を限定してタイミングを求める関数の一部として生かし
  * SP=0 , EP=1 に固定
  *
- * @param {Number} CP1
+ * @params {Number} CP1
  *  制御点1
- * @param {Number} CP2
+ * @params {Number} CP2
  *  制御点2
- * @param {Number} Vl
+ * @params {Number} Vl
  *  助変数探索を行う値
  * @returns {Number}
  * 制御点の範囲を0-1に限定して値の増加傾向を維持することで、値に対する助変数を決定する関数
@@ -4645,19 +5990,19 @@ nas.bezierA = function (CP1, CP2, Vl) {
  * 分割数が省略された場合は    10
  * 開始・終了助変数が省略された場合は    0-1
  *
- * @param {Number or Array} SP
+ * @params {Number or Array} SP
  *  開始点
- * @param {Number or Array} CP1
+ * @params {Number or Array} CP1
  *  制御点1
- * @param {Number or Array} CP2
+ * @params {Number or Array} CP2
  *  制御点2
- * @param {Number or Array} EP
+ * @params {Number or Array} EP
  *  終了点
- * @param {Number} sT
+ * @params {Number} sT
  *  開始助変数
- * @param {Number} eT
+ * @params {Number} eT
  *  終了助変数
- * @param {Number} Slice
+ * @params {Number} Slice
  *  分割数
  * @returns {Number}
  *  戻り値の制度は分割数に依存するので注意
@@ -4726,7 +6071,7 @@ nas.bezierL = function (SP, CP1, CP2, EP, sT, eT, Slice) {
 
 /**
  * 暫定色彩関連関数
- * @param colorString
+ * @params colorString
  * @returns {*}
  */
 nas.colorStr2Ary = function (colorString) {
@@ -4750,7 +6095,7 @@ nas.colorStr2Ary = function (colorString) {
 
 /**
  * WEB色指定用の文字列を3次元の配列にして返す
- * @param colorArray
+ * @params colorArray
  * @returns {string}
  */
 nas.colorAry2Str = function (colorArray) {
@@ -4778,10 +6123,10 @@ nas.colorAry2Str = function (colorArray) {
 
 /**
  * 行列表示(特設デバッグ表示)
- * @param Name
- * @param Matrix
- * @param L
- * @param C
+ * @params Name
+ * @params Matrix
+ * @params L
+ * @params C
  */
 nas.showMatrix = function (Name, Matrix, L, C) {
     if ((Matrix instanceof Array)) Matrix = Matrix.toString();
@@ -4808,7 +6153,7 @@ nas.showMatrix = function (Name, Matrix, L, C) {
 
 /**
  * 行列式計算(2または3,4 の正方行列のみ)
- * @param myMatrix
+ * @params myMatrix
  * @returns {*}
  */
 nas.mDeterminant = function (myMatrix) {
@@ -4880,8 +6225,8 @@ nas.mDeterminant = function (myMatrix) {
 
 /**
  * 行列の積算
- * @param M1
- * @param M2
+ * @params M1
+ * @params M2
  * @returns {*}
  */
 nas.multiMatrix = function (M1, M2) {
@@ -4935,7 +6280,7 @@ nas.multiMatrix = function (M1, M2) {
 /**
  * 逆行列生成
  * 2次または3次/4次の正方行列である必要があります。
- * @param Matrix
+ * @params Matrix
  * @returns {*}
  */
 nas.mInverse = function (Matrix) {
@@ -4989,7 +6334,7 @@ nas.mInverse = function (Matrix) {
 
 /**
  * 行列の転置
- * @param Matrix
+ * @params Matrix
  * @returns {*}
  
     引数は以下の型式を受け入れる
@@ -5056,7 +6401,7 @@ nas.transMatrix = function (Matrix) {
  * azimuth（アジマス）は地図・海図等で使用する方位角。
  * ここでは時計の12時方向(北=N)を0度として時計回り方向に 1周360°の単位系とします。
  * 方位角の概念は AEには存在しない
- * @param degrees
+ * @params degrees
  * @returns {number}
  */
 nas.deg2azi = function (degrees) {//傾斜角から方位へ
@@ -5069,8 +6414,8 @@ nas.azi2deg = function (azimuth) {//方位から傾斜角へ
 /**
  * 2次元のベクトルを与えて方位角を求める。長さを加えるべきか？
  * 引数formは戻し値の形式を指定。デフォルトは方位角
- * @param Vector
- * @param form
+ * @params Vector
+ * @params form
  * @returns {*}
  */
 function vec2deg(Vector, form) {
@@ -5104,7 +6449,7 @@ function vec2deg(Vector, form) {
  * 暫定文字列操作メソッド
  * バイト数を返す。
  * 実装によっては内部コードが違うのでマルチバイト部分のバイト数は同じとは限らない。
- * @param myString
+ * @params myString
  * @returns {number}
  */
 nas.biteCount = function (myString) {
@@ -5126,8 +6471,8 @@ nas.biteCount = function (myString) {
 /**
  * 文字列のバイト数を勘定して、指定バイト以下の文字列に区切って返す。
  * AEのラベル31バイト制限用なので、デフォルトは 31
- * @param myString
- * @param count
+ * @params myString
+ * @params count
  * @returns {*}
  */
 nas.biteClip = function (myString, count) {
@@ -5153,7 +6498,7 @@ nas.biteClip = function (myString, count) {
 
 /**
  * 前後の空白を払う
- * @param myString
+ * @params myString
  * @returns {XML|string}
  */
 nas.chopString = function (myString) {
@@ -5171,9 +6516,9 @@ nas.chopString = function (myString) {
  * 番号がなければそのまま戻す
  * オプションでpostfixを付けて戻す
  *
- * @param myString
- * @param myStep
- * @param myOpt
+ * @params myString
+ * @params myStep
+ * @params myOpt
  * @returns {*}
  */
 nas.incrStr = function (myString, myStep, myOpt) {
@@ -5204,8 +6549,8 @@ nas.incrStr = function (myString, myStep, myOpt) {
  * ただしそれ以外の用途で使用できないわけではない
  * リストスイッチを入れるとプロパティを配列で返す
  *
- * @param myObject
- * @param myOption
+ * @params myObject
+ * @params myOption
  * @returns {*}
  */
 nas.propCount = function (myObject, myOption) {
@@ -5228,97 +6573,6 @@ nas.propCount = function (myObject, myOption) {
         return myResult;
     }
 };
-
-
-/**
- * 単位つきの文字列値を数値にして返すメソッド
- *
- * nas.decodeUnit(入力値,変換単位)
- *
- * 解釈できる単位は millimeters mm centimeters cm points picas pt pixels px inches in
- * 戻し値の単位も同じく
- * デフォルトの単位は入りも戻しも pt
- * 不明な単位は ptとして扱う
- *
- * @param myValue
- * @param resultUnit
- * @returns {*}
- */
-nas.decodeUnit = function (myValue, resultUnit) {
-    if ((myValue != undefined) && (myValue.match(/^([\+\-\.0-9]+)\s?(millimeters|mm|centimeters|cm|points|picas|pt|pixels|px|inches|in)?$/i))) {
-        var baseValue = parseFloat(myValue);
-        var myUnit = RegExp.$2;
-    } else {
-        return false;
-    }
-    var myResult;var reusltUnit;
-//console.log(resultUnit);
-    if((typeof resultUnit == 'undefined')||(!(String(resultUnit).match(/^(millimeters|mm|centimeters|cm|points|picas|pt|pixels|px|inches|in)?$/i)))) {
-        resultUnit = "pt";
-    }
-    if (myUnit == resultUnit) {
-        return baseValue
-    }
-    /**
-     * 入出力単位が一致した場合はコンバート不要
-     * すべてptに変換 (ここに誤差が乗る原因あり)
-     */
-    switch (myUnit) {
-        case    "inches":
-        case    "in":
-            myValue = 72. * baseValue;
-            break;
-        case    "pixels":
-        case    "px":
-            myValue = 72. * baseValue / this.Dpi();
-            break;
-        case    "centimeters":
-        case    "cm":
-            myValue = 72. * baseValue / 2.54;
-            break;
-        case    "millimeters":
-        case    "mm":
-            myValue = 72. * baseValue / 25.4;
-            break;
-        case    "millipoints":
-        case    "mp":
-            myValue = baseValue / 1000.;
-            break;
-        case    "points":
-        case    "paicas":
-        case    "pt":
-        default    :
-            myValue = baseValue;
-    }
-    switch (resultUnit) {
-        case    "inches":
-        case    "in":
-            myResult = myValue / 72.;
-            break;
-        case    "pixels":
-        case    "px":
-            myResult = this.Dpi() * myValue / 72.;
-            break;
-        case    "centimeters":
-        case    "cm":
-            myResult = 2.54 * (myValue / 72.);
-            break;
-        case    "millimeters":
-        case    "mm":
-            myResult = 25.4 * (myValue / 72.);
-            break;
-        case    "millipoints":
-        case    "mp":
-            myResult = myValue * 1000.;
-            break;
-        case    "points":
-        case    "paicas":
-        case    "pt":
-        default    :
-            myResult = myValue;
-    }
-    return myResult;
-};
 /**
  * nas.labelNormalization(myString,mySep,)
  * 引数：ラベル文字列 ,新規セパレータ
@@ -5331,8 +6585,8 @@ nas.decodeUnit = function (myValue, resultUnit) {
  * 最初に現れる数値連続部分を整数値
  * 残りを後置情報とする。
  * この関数はラベル、後置文字列の意味は問わない  
- * @param myString
- * @param mySep
+ * @params myString
+ * @params mySep
  * @returns {*}
  */
 nas.labelNormalization = function (myString, mySep) {
@@ -6234,6 +7488,395 @@ JSON.Stringify(nas.cameraworkDescriptions.members);
 */
 
 /**
+ * nas.File
+ * ファイルハンドルオブジェクト
+ * ファイルハンドルはプラットフォーム毎に実装されるファイルオブジェクトのエージェントとして機能する
+ * AIR/Adobe 拡張スクリプト/html5 File/Node.js/
+ * 今回はファイル名から拡張子切り分け（=最後の'.'で文字列をセパレート）のみの実装で済ませる
+ * ファイル名本体に空文字列を認めていない
+ * .git 等は　ファイル名　".git"   拡張子　なし　となる
+ * 拡張子なしのドットファイルの扱いに注意
+ *    これは保留　今回はHTML5のFileオブジェクトを直接扱う　AIRは保留
+ */
+/** @class 
+ *	nas.File
+ *	Fileハンドリング用オブジェクト
+ *	パスを配列で持つ
+ *	標準的にはURI形式で返す
+ *	各種形式変換メソッドあり
+ *	初期化の際に与えられた引数が相対パスだった場合は、コンストラクタのカレントで補う
+ *	
+ *	[0-9a-z\-\+]+://
+ *	MS-DOS形式のパスを扱う際は他のファイルシステムで空白となるルートエントリにドライブレターを置くように変更
+ *  ファイルスキームとドライブレターの混用を避ける
+ */
+nas.File = function(myURI,baseURI,blob,stat){
+    this.scheme      = "file:";
+	this.baseURI     = "";
+	this.currentDir  = "";//指定のない場合は "" ディレクトリ時に末尾のセパレータは付けない
+	this.body        = [];
+	this.fullName    = "";//this.currentDir+this.body.join("/");
+	this.fsName      = "";//(appHost.os=="Win")? this.fullName.replace(/\//g,"\\"):this.fullName;
+	this.name        = "";
+//	this.body[this.body.length-1] ;
+	this.blob        = ((blob)&&(typeof Blob == 'function'))? new Blob(blob,options) : null ;
+    this.stat        = (stat)? stat : null ;
+    this.pathtype    = 'unix';//unix|win|(mac|UNC|URL)予約
+    if(arguments.length)
+        this.parse(arguments[0],arguments[1],arguments[2],arguments[3]);
+};
+/*
+    
+*/
+nas.File.prototype.parse = function(uri,baseUri,blob,stat){
+    if(typeof baseUri == 'undefined') baseUri = "";
+    this.baseURI = baseUri;
+	if((! uri)||(typeof uri == 'undefined')) uri="/";
+//uri形式のスキーム部分を分離する 
+    if(uri.match(/^([a-z]+\:)\/\/(.+)$/i)){
+        this.scheme = RegExp.$1;
+        uri         = RegExp.$2;
+    }else{
+        this.scheme  = "file:";
+    }
+	if(uri.match(/\\/)){
+	    uri = uri.replace(/\\/g,'/');//windowsパスでも初期化可能に
+	    this.pathtype = 'win';
+	};
+	this.body        = uri.trim().split('/');
+	if((this.pathtype=='win')&&(this.body[1].match(/^[a-zA-Z]\:/))) this.body = this.body.slice(1);
+//	if(this.body[0]=="") this.body = this.body.slice(1);
+	this.fullName    = String(this.currentDir).split('/').slice(1).concat(this.body).join('/');//内部的にはunixタイプデリミタで保持
+	this.fsName      = (this.pathtype == "win")? this.fullName.replace(/\//g ,"\\"):this.fullName;
+	this.name        = this.body[this.body.length-1] ;
+};
+/*
+    mimeType DB
+ */
+nas.File.mimeTypes = JSON.parse('[["3G2","video/3gpp2"],["3GP","video/3gpp"],["AAC","audio/x-aac"],["AEP","application/vnd.adobe.aftereffects"],["AFM","application/x-font-type1"],["AI","application/postscript"],["AIFF","audio/x-aiff"],["AVI","video/x-msvideo"],["BMP","image/bmp"],["CSS","text/css"],["DOC","application/msword"],["EPS","application/postscript"],["EPS","application/eps"],["EPS","application/x-eps"],["EPS","image/eps"],["EPS","image/x-eps"],["F4V","video/x-f4v"],["FLA","application/x-shockwave-flash"],["FLV","video/x-flv"],["FPX","image/vnd.fpx"],["GIF","image/gif"],["ICC","application/vnd.iccprofile"],["ICM","application/vnd.iccprofile"],["INDD","application/x-indesign"],["JSON","application/json"],["JPEG","image/jpeg"],["JPG","image/jpeg"],["JFIF","image/jpeg"],["J2C","image/jp2"],["J2K","image/jp2"],["JP2","image/jp2"],["JPC","image/jp2"],["JPF","image/jp2"],["JPX","image/jp2"],["PJPEG","image/jpeg"],["PJE","image/jpeg"],["M2V","video/mpeg"],["M4V","video/x-m4v"],["MOV","video/quicktime"],["MP3","audio/mpeg"],["MP4","video/mp4"],["MPEG","video/mpeg"],["MPG","video/mpeg"],["MTS","model/vnd.mts"],["OGV","video/ogg"],["OTF","application/x-font-otf"],["PDF","application/pdf","pdfprocess=Rasterize&resolution=150"],["PFB","application/x-font-type1"],["PFM","application/x-font-type1"],["PICT","image/x-pict"],["PNG","image/png"],["PPT","application/vnd.ms-powerpoint"],["PS","application/postscript","psprocess=Rasterize&psresolution=150"],["PSD","image/vnd.adobe.photoshop","process=None&layerNaming=Layername"],["RTF","application/rtf"],["SVG","image/svg+xml"],["SVGZ","image/svg+xml"],["SWF","application/x-shockwave-flash"],["TAR","application/x-tar"],["TGA","image/x-tga"],["TXT","text/plain"],["TEXT","text/plain"],["TIF","image/tiff"],["TIFF","image/tiff"],["TTC","application/x-font-ttf"],["TTF","application/x-font-ttf"],["VOB","video/dvd"],["VTT","text/vtt"],["WAV","audio/x-wav"],["WEBM","video/webm"],["WMA","audio/x-ms-wma"],["WMV","video/x-ms-wmv"],["APNG","image/vnd.mozilla.apng"],["AVIF","image/avif"],["XLS","application/vnd.ms-excel"],["ZIP","application/zip"],["CLIP","image/clip"],["TVPP","image/tvpp"],["XPS","text/xpst"],["XPST","text/xpst"],["XMAP","text/xmap"],["STBD","text/stbd"],["PMDB","text/pmdb"],["STS","application/sts"],["TSH","application/tsh"],["ARD","application/ard"],["ARDJ","application/ardj"],["TDTS","application/tdts"],["XDTS","application/xdts"],["GDOC","application/vnd.google-apps.document"],["GDRAW","application/vnd.google-apps.drawing"],["GFORM","application/vnd.google-apps.form"],["GJAM","application/vnd.google-apps.jam"],["GMAP","application/vnd.google-apps.map"],["GSLIDE","application/vnd.google-apps.presentation"],["GSCRIPT","application/vnd.google-apps.script"],["GSITE","application/vnd.google-apps.site"],["GSHEET","application/vnd.google-apps.spreadsheet"],["ODT","application/vnd.oasis.opendocument.text"],["ODS","application/vnd.oasis.opendocument.spreadsheet"],["ODP","application/vnd.oasis.opendocument.presentation"],["ODG","application/vnd.oasis.opendocument.graphics"],["ODB","application/vnd.oasis.opendocument.database"],["ODF","application/vnd.oasis.opendocument.formula"]]');
+/*
+nas.File.mimeTypes = csvSimple.parse(`3G2,video/3gpp2
+3GP,video/3gpp
+AAC,audio/x-aac
+AEP,application/vnd.adobe.aftereffects
+AFM,application/x-font-type1
+AI,application/postscript
+AIFF,audio/x-aiff
+AVI,video/x-msvideo
+BMP,image/bmp
+CSS,text/css
+DOC,application/msword
+EPS,application/postscript
+EPS,application/eps
+EPS,application/x-eps
+EPS,image/eps
+EPS,image/x-eps
+F4V,video/x-f4v
+FLA,application/x-shockwave-flash
+FLV,video/x-flv
+FPX,image/vnd.fpx
+GIF,image/gif
+ICC,application/vnd.iccprofile
+ICM,application/vnd.iccprofile
+INDD,application/x-indesign
+JSON,application/json
+JPEG,image/jpeg
+JPG,image/jpeg
+JFIF,image/jpeg
+J2C,image/jp2
+J2K,image/jp2
+JP2,image/jp2
+JPC,image/jp2
+JPF,image/jp2
+JPX,image/jp2
+PJPEG,image/jpeg
+PJE,image/jpeg
+M2V,video/mpeg
+M4V,video/x-m4v
+MOV,video/quicktime
+MP3,audio/mpeg
+MP4,video/mp4
+MPEG,video/mpeg
+MPG,video/mpeg
+MTS,model/vnd.mts
+OGV,video/ogg
+OTF,application/x-font-otf
+PDF,application/pdf,pdfprocess=Rasterize&resolution=150
+PFB,application/x-font-type1
+PFM,application/x-font-type1
+PICT,image/x-pict
+PNG,image/png
+PPT,application/vnd.ms-powerpoint
+PS,application/postscript,psprocess=Rasterize&psresolution=150
+PSD,image/vnd.adobe.photoshop,process=None&layerNaming=Layername
+RTF,application/rtf
+SVG,image/svg+xml
+SVGZ,image/svg+xml
+SWF,application/x-shockwave-flash
+TAR,application/x-tar
+TGA,image/x-tga
+TXT,text/plain
+TEXT,text/plain
+TIF,image/tiff
+TIFF,image/tiff
+TTC,application/x-font-ttf
+TTF,application/x-font-ttf
+VOB,video/dvd
+VTT,text/vtt
+WAV,audio/x-wav
+WEBM,video/webm
+WMA,audio/x-ms-wma
+WMV,video/x-ms-wmv
+APNG,image/vnd.mozilla.apng
+AVIF,image/avif
+XLS,application/vnd.ms-excel
+ZIP,application/zip
+CLIP,image/clip
+TVPP,image/tvpp
+XPS,text/xpst
+XPST,text/xpst
+XMAP,text/xmap
+STBD,text/stbd
+PMDB,text/pmdb
+STS,application/sts
+TSH,application/tsh
+ARD,application/ard
+ARDJ,application/ardj
+TDTS,application/tdts
+XDTS,application/xdts
+GDOC,application/vnd.google-apps.document
+GDRAW,application/vnd.google-apps.drawing
+GFORM,application/vnd.google-apps.form
+GJAM,application/vnd.google-apps.jam
+GMAP,application/vnd.google-apps.map
+GSLIDE,application/vnd.google-apps.presentation
+GSCRIPT,application/vnd.google-apps.script
+GSITE,application/vnd.google-apps.site
+SGEET,application/vnd.google-apps.spreadsheet
+ODT,application/vnd.oasis.opendocument.text
+ODS,application/vnd.oasis.opendocument.spreadsheet
+ODP,application/vnd.oasis.opendocument.presentation
+ODG,application/vnd.oasis.opendocument.graphics
+ODB,application/vnd.oasis.opendocument.database
+ODF,application/vnd.oasis.opendocument.formula`);
+google-api v3 mimetypes
+    	application/vnd.google-apps.audio	
+GDOC	application/vnd.google-apps.document	Google Docs
+    	application/vnd.google-apps.drive-sdk	3rd party shortcut
+GDRAW	application/vnd.google-apps.drawing	Google Drawing
+    	application/vnd.google-apps.file	Google Drive file
+    	application/vnd.google-apps.folder	Google Drive folder
+GFORM	application/vnd.google-apps.form	Google Forms
+(終了)	application/vnd.google-apps.fusiontable	Google Fusion Tables
+GJAM	application/vnd.google-apps.jam	Google Jamboard
+GMAP	application/vnd.google-apps.map	Google My Maps
+		application/vnd.google-apps.photo	
+GSLIDE	application/vnd.google-apps.presentation	Google Slides
+GSCRIPT	application/vnd.google-apps.script	Google Apps Scripts
+    	application/vnd.google-apps.shortcut	Shortcut
+GSITE	application/vnd.google-apps.site	Google Sites
+GSHEET	application/vnd.google-apps.spreadsheet	Google Sheets
+    	application/vnd.google-apps.unknown	
+    	application/vnd.google-apps.video	
+OpenDocument mym-type
+ODT, ‐ 文書ドキュメント [application/vnd.oasis.opendocument.text]
+ODS, ‐ 表計算ドキュメント [application/vnd.oasis.opendocument.spreadsheet]
+ODP, ‐ プレゼンテーション [application/vnd.oasis.opendocument.presentation]
+ODG, ‐ 図形描画 [application/vnd.oasis.opendocument.graphics]
+ODB, ‐ データベース [application/vnd.oasis.opendocument.database]
+ODF, ‐ 数式 [application/vnd.oasis.opendocument.formula]// */
+
+/** ユーティリティー関数
+ * nas.File.divideExtension(filename)
+ *  @params {String} filename
+ *          文字列 拡張子付きファイル名
+ *  @returns {Array}
+ *      戻値:配列[拡張子,ファイル名本体]
+ *      [file-extension,name-body]
+ */
+nas.File.divideExtension = function(filename){
+    filename=String(filename);
+        var nameBody=filename;
+        var nameExtension ='';
+    if(filename.match(/^(.+)\.([^\.]*)$/)){
+        nameExtension   =RegExp.$2;
+        nameBody        =RegExp.$1;
+    };
+    return [nameExtension,nameBody];
+};
+/** ユーティリティー関数
+ * nas.File.extname(filepath)
+ *  @params {String} filepath
+ *          文字列 拡張子付きファイル名
+ *  @returns {Stirng}
+ *      パスの最後の'.'の後方文字列を'.'含めて戻す
+ */
+nas.File.extname = function(filepath){
+    if((typeof path != 'undefined')&&(path.extname instanceof Function)) return path.extname(filepath);
+    var file = new nas.File(filepath);
+    var ext = "";
+    if(filepath.match(/(\.[^\.]*)$/)) ext = RegExp.$1;
+    return ext;
+};
+/** ユーティリティー関数
+ * nas.File.basename(filename)
+ *  @params {String} filename
+ *          文字列 拡張子付きファイル名
+ *  @returns {Stirng}
+ *      パス階層を一つ上がった上位のディレクトリのパスを戻す
+ */
+nas.File.basename = function(filepath,ext){
+    if((typeof path != 'undefined')&&(path.basename instanceof Function)) return path.basename(filepath,ext);
+    var file = new nas.File(filepath);
+    return ((ext)?file.name.replace(new RegExp(ext+'$'),''):file.name);
+};
+/** ユーティリティー関数
+ * nas.File.dirname(filename)
+ *  @params {String} filename
+ *          文字列 拡張子付きファイル名
+ *  @returns {Stirng}
+ *      パス階層を一つ上がった上位のディレクトリのパスを戻す
+ */
+nas.File.dirname = function(filename){
+    if((typeof path != 'undefined')&&(path.dirname instanceof Function)) return path.dirname(filename);
+    filename = new nas.File(filename);
+    if(filename.pathtype != 'win'){
+        return filename.body.slice(0,-1).join('/');
+    }else{
+        return filename.body.slice(0,-1).join('\\');
+    };
+};
+/**
+ * nas.File.relative(from,to)
+ *  @params {String} from
+ *          起点パス
+ *  @params {String} to
+ *          相対パスを得る目的パス
+ *  @returns {Stirng}
+ *      起点から見た相対パス
+ */
+nas.File.relative = function(from,to){
+    if((typeof path != 'undefined')&&(path.relative instanceof Function)) return path.relative(from,to);
+    from = new nas.File(nas.File.resolve(from)).fullName.split('/');
+    var toFile = new nas.File(nas.File.resolve(to));
+    to = toFile.fullName.split('/');
+    var sep = (toFile.pathtype != 'win')? '/':'\\';
+    var result = [];
+    var match = 0;
+    var sim   = true;
+    for (var i = 0; i < from.length ; i ++){
+        if(i < to.length){
+            if((sim)&&(from[i] == to[i])){
+                match ++;
+                continue;
+            }else{
+                sim = false;
+            };
+        };
+        if(!sim) result.push('..');
+    };
+    return result.concat(to.slice(match)).join(sep);
+};
+/**
+ * nas.File.resolve(...arg)
+ *  @params  {String} arg
+ *  @returns {Stirng}
+ *      引数から連結されたパス
+ */
+nas.File.resolve = function(){
+    if((typeof path != 'undefined')&&(path.resolv instanceof Function)) return path.resolve.apply(this,arguments);
+    var result = (typeof Folder == 'function')? Folder.current.fullName.split('/'):[""];
+    var sep = '/';
+    for (var i = 0;i < arguments.length; i++){
+        var elm  = new nas.File(arguments[i]);
+        if(elm.pathtype == 'win') sep = '\\';
+        var tgt  = elm.fullName.split('/');
+        if(tgt[0] == ""){
+//パスがルートからの記載なので入れ替え
+            result = tgt;
+            continue;
+        };
+        for (var n = 0; n < tgt.length;n ++){
+            if(tgt[n] == '..'){
+                result.splice(-1,1);
+                continue;
+            } if((tgt[n] == '.')||(tgt[n] == '')){
+                continue;
+            }else{
+                result.push(tgt[n]);
+            };
+        };
+    };
+    return result.join(sep);
+}
+/** ユーティリティー関数
+ * nas.File.contentType(path)
+ *  @params {String} arg
+ *          文字列 拡張子付きファイル名
+ *  @returns   {Array}
+ *  mimetypeを含む配列 
+ */
+nas.File.contentType = function(path){
+//    if(mime) return mime.contentType(path);
+    var ext = this.extname(path).replace(/^\./,'').toUpperCase();
+    var result = [];
+    for(var i = 0;i<this.mimeTypes.length ; i ++ ){
+        if(this.mimeTypes[i][0] == ext) result.push(this.mimeTypes[i][1]);
+    };
+    if(result.length) return result[0];
+    return false;
+}
+/** ユーティリティー関数
+ * nas.File.join(...args)
+ *  @params {String} arg
+ *          文字列 拡張子付きファイル名
+ *          node.jsの path.joinと仕様を合わせる? 2021/07/20
+ */
+nas.File.join = function(){
+    if((typeof path != 'undefined')&&(path.join instanceof Function)) return path.join.apply(this,arguments);
+    var result = [];
+    var sep    = '/';
+    for (var i = 0 ; i < arguments.length ; i ++){
+        var elm = new nas.File(arguments[i]);
+        if(elm.pathtype == 'win') sep = '\\';
+        var pth = elm.fullName.split('/');
+        for (var j = 0 ;j < pth.length ; j ++){
+            if(
+                (pth[j]=='.')||
+                ((pth[j]=='')&&(result.length))
+            ) continue;
+            if(pth[j]=='..'){result.splice(-1,1);continue;}
+            result.push(pth[j]);
+        };
+    }
+    return result.join(sep);
+};
+/*
+    Adobeライブラリ互換のため基礎プロパティを初期化
+    baseLocationは、nas-libの格納ディレクトリ
+    WEB環境ではスタータhtmlのロケーション直下の'nas/'フォルダを指す
+    appHostの値を参照する
+    ESTK環境下では Folder それ以外では nas.File を設定する
+*/
+    if(appHost.pletform == 'UXP'){
+        if (appHost.userLibraryVersion){
+            nas.baseLocation = new nas.File(appHost.userLibrary);
+        }else{
+            fs.getPluginFolder().then(function(f){nas.baseLocation = new nas.File(nas.File.join(f.nativePath,nas))});
+        };
+    }else if(appHost.ESTK){
+        nas.baseLocation = (appHost.userLibraryVersion)?
+            new Folder(appHost.userLibrary):
+            new Folder(new File($.fileName).parent.parent.fullName);
+    }else if(appHost.platform == 'CEP'){
+        nas.baseLocation = (appHost.userLibraryVersion)?
+            new nas.File(appHost.userLibrary):
+            new nas.File(new CSInterface().getSystemPath(SystemPath.EXTENSION) + "/nas");
+    }else{
+        nas.baseLocation = new nas.File(appHost.userLibrary);
+    };
+   
+/**
  * 配列オブジェクト拡張メソッド<br />
  * <br />
  *  配列要素を検索して同値の要素が存在すればその要素idを、
@@ -6244,8 +7887,8 @@ JSON.Stringify(nas.cameraworkDescriptions.members);
  *  cmpfx(tgt,dst)で、一致が発生した場合配列へのメンバ追加は行われない
  *  cmpfxがない場合はindexOfで検索を行う<br />
  * 
- * @param {any} itm
- * @param {Function} cmpfx
+ * @params {any} itm
+ * @params {Function} cmpfx
  * @returns {Number} element id of Array
  *  
  *  

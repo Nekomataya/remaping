@@ -10,75 +10,131 @@ AdobeScript/Air(Flash)/CGI上で使用するサーバーーローカルファイ
 */
 'use strict';
 //初期化
-if(! appHost.Nodejs){
+if(
+	(! appHost.Nodejs)&&(appHost.platform != 'Electron')
+){
+// no node
+	var electron      = false;
+	var remote        = false;
+	var fs            = false;
+	var path          = false;
+	var child_process = false;
+	var iconv         = false;
+	var dialog        = false;
+	var mime          = false;
+	var exec          = false;
+	var execSync      = false;
+if(typeof TgaLoader == 'undefined')
+	var TgaLoader     = false;
+	var Tiff          = false;
+	var sharp         = false;
+	var PSD           = (typeof require == 'undefined')? false : require('psd');
 
-	var electron = false;
-	var remote = false;
-	var fs = false;
-	var path = false;
-	var iconv = false;
-	var dialog = false;
-	console.log("has no electron");
-
+	var Folder = null;
+	var sysEnv = null;
+	console.log("no node and electron");
 }else{
-	var electron = require('electron');
-	var remote = electron.remote;
+  if(appHost.Nodejs){
+//for Node.js & Electron main process
+	console.log("init nodeUI")
+	var electron      = require('electron');
+	var remote        = electron.remote;
+	var fs            = require('fs-extra');
+	var path          = require('path');
+	var child_process = require('child_process');
+	var iconv         = require("iconv-lite");
+	var mime          = require("mime-types");
+	var { BrowserWindow , dialog } = remote;
+	var { Menu, MenuItem }         = remote;
+	var	{ exec, execSync}          = require('child_process');
 
-	var fs   = require('fs');
-	var path = require('path');
-	var iconv = require("iconv-lite");
-//	var { BrowserWindow, dialog } = require('electron').remote;
-	var { BrowserWindow, dialog } = remote;
-	var { Menu, MenuItem }   = remote;
+if(typeof TgaLoader == undefined)
+	var	TgaLoader = require('tga-js');
+	var sharp     = require('sharp');
+	var Tiff      = require('tiff');
+	var PSD       = require('psd');
 
-	console.log('setup for Node.js with electron');
+	var sysEnv = JSON.parse(JSON.stringify(process.env));
+console.log('setup for Node.js for electron main process');
+  }else if(appHost.platform == 'Electron'){
+//for Electron browser process
+	var electron      = false;
+	var remote        = false;
+	var fs            = false;
+	var path          = false;
+	var child_process = false;
+	var iconv         = false;
+	var dialog        = false;
+	var mime          = false;
+	var exec          = false;
+	var execSync      = false;
+if(typeof TgaLoader == 'undefined')
+	var TgaLoader     = false;
+	var Tiff          = false;
+	var sharp         = false;
+	var PSD           = (typeof require == 'undefined')? false : require('psd');
 
+	var sysEnv = JSON.parse(electronIpc.getEnv());
+console.log('setup for Electron browser process' );
+  };
+console.log(sysEnv)
 //参照用オブジェクトを作成
 	var Folder = {};
 //homepath
-//	process.env[process.platform == "win32" ? "USERPROFILE" : "HOME"];
+//	sysEnv[process.platform == "win32" ? "USERPROFILE" : "HOME"];
 Folder.nas=(appHost.os=="Win")?
-		new nas.File(process.env["USERPROFILE"]+'/AppData/Roaming/nas'):
-		new nas.File(process.env["HOME"]+'/Library/Application%20Support/nas');
+		new nas.File(sysEnv["USERPROFILE"]+'/AppData/Roaming/nas'):
+		new nas.File(sysEnv["HOME"]+'/Library/Application%20Support/nas');
+console.log(Folder.nas.fullName);
 Folder.script=(appHost.os=="Win")?
-		new nas.File(process.env["USERPROFILE"]+'/AppData/Roaming/nas/scripts'):
-		new nas.File(process.env["HOME"]+'/Library/Application%20Support/nas');
+		new nas.File(sysEnv["USERPROFILE"]+'/AppData/Roaming/nas/scripts'):
+		new nas.File(sysEnv["HOME"]+'/Library/Application%20Support/nas/scripts');
 
+Folder.current =(appHost.Nodejs)?
+	new nas.File(process.cwd()):
+	new nas.File(electronIpc.cd());
+//アプリケーションカレントディレクトリ
+console.log(Folder);
 
 /**	ファイルハンドリングオブジェクト
 	ローカルファイル機能拡張用  ファイルは暫定的にフルパスのURIフォーム
  */
 var fileBox = {};
-	fileBox.currentFile = null; // {String} 処理対象プロジェクト｜ファイル　パス
+	fileBox.currentFile         = null  ; // {String} 処理対象プロジェクト｜ファイル　パス
 	fileBox.currentFileEncoding	= 'utf8';//{String} データエンコーディング？
-	fileBox.stream      = null; // A FileStream object, used to read and write files.
-	fileBox.defaultDir  = null; // The default directory location.
-	fileBox.chooserMode = null; // Whether the FileChooser.html window is used as an Open or Save As window.
-	fileBox.fileQueue   = null;//{Array} 処理待行列
-	fileBox.openMode    = null;//ファイルモード  saveAndOpen|saveAndOpenDropFile|saveAndOpenArgFile or ""
-	fileBox.contentText = ""  ;//テキストバッファ
-	fileBox.recentDocuments = [];//{Array} recentDocumentsStack
+	fileBox.stream              = null  ; // A FileStream object, used to read and write files.
+	fileBox.defaultDir          = null  ; // The default directory location.
+	fileBox.chooserMode         = null  ; // Whether the FileChooser.html window is used as an Open or Save As window.
+	fileBox.fileQueue           = null  ;//{Array} 処理待行列
+	fileBox.openMode            = null  ;//ファイルモード  saveAndOpen|saveAndOpenDropFile|saveAndOpenArgFile or ""
+	fileBox.contentText         = ""    ;//テキストバッファ
+	fileBox.recentDocuments     = []    ;//{Array} recentDocumentsStack
 // UI初期化
 	fileBox.init=function() {
 //スクリプトのカレントでなくドキュメントのカレントを追う方が良さそう
-		fileBox.defaultDir = __dirname;//アプリの位置でよいか？
-		//process.env["HOME"]; node.js環境下では環境変数の参照可能
+//		fileBox.defaultDir = __dirname;//アプリの位置でよいか？
+			fileBox.defaultDir = Folder.current.fsName;//起動時のカレント（あまり良くない）
+		//sysEnv["HOME"]; node.js環境下では環境変数の参照可能
 	}
 /**
-recentDocumentにファイルを加えるメソッド  同じファイルがあったら追加しない
-nasで扱うファイルオブジェクトは、読み書きを直接は行わないオブジェクトとして定義する
-ファイルハンドルもない  読み書きの実行は外部のエージェントにデータをまるごと受け渡しする
-プロパティ
-nas.File.body	<本体データ Array パスを分解して配列に格納したもの
-初期化入力は将来的には	String 相対パス、絶対パス、またはURI等のファイルの所在を表す文字列データなんでも
-現状はとりえずURI形式 estkのFileが返すfullNameと同等品
-nas.File.fullName()	URIに整形して返すURIエンコードだよ ようするに元の値を書き出す
-nas.File.fsNama()	ローカルのフルパスに整形して返す  fsName互換  win/mac
-nas.File.relativePath(currentDir)	カレントディレクトリを与えて相対パスを返す relativeURIと同じ
-*/
+ * recentDocumentにファイルを加えるメソッド  同じファイルがあったら追加しない
+ * nasで扱うファイルオブジェクトは、読み書きを直接は行わないオブジェクトとして定義する
+ * ファイルハンドルもない  読み書きの実行は外部のエージェントにデータをまるごと受け渡しする
+ *    nas.Fileのプロパティ
+ * nas.File.body
+ * 		<本体データ Array パスを分解して配列に格納したもの
+ * 		初期化入力は将来的には	String 相対パス、絶対パス、またはURI等のファイルの所在を表す文字列データなんでも
+ * 		現状はとりえずURI形式 estkのFileが返すfullNameと同等品
+ * nas.File.fullName()
+ * 		URIに整形して返すURIエンコード ようするに元の値を書き出す
+ * nas.File.fsNama()
+ * 		ローカルのフルパスに整形して返す  fsName互換  win/mac
+ * nas.File.relativePath(currentDir)
+ * 		カレントディレクトリを与えて相対パスを返す relativeURIと同じ
+ */
 	fileBox.recentDocuments.add = function(myFile){
 		for(var file=0;file<this.length;file++){
-			if(myFile==this[file]){return true}
+			if(myFile == this[file]){return true}
 		}
 		this.push(myFile.toString());//参照をpushすると次に比較できなくなるので新しい文字列オブジェクトでpush
 		return true;
@@ -86,11 +142,9 @@ nas.File.relativePath(currentDir)	カレントディレクトリを与えて相�
 /*
  * Displays the FileChooser.html file in a new window, and sets its mode to "Open".
  */
-	fileBox.openFileDB=function() {
-		var myAction   = xUI.checkStored("saveAndOpen");
-		var openTarget = dialog.showOpenDialogSync(
-			null,
-			{
+	fileBox.openFileDB=function(opt) {
+		var myAction   = (xUI.checkStored)? xUI.checkStored("saveAndOpen"):null;
+		if(typeof opt == 'undefined') opt = {
 				filters:[
 					{
 						name : 'TimeSheetFile'   ,
@@ -115,8 +169,8 @@ nas.File.relativePath(currentDir)	カレントディレクトリを与えて相�
 						extensions: ['*']
 					}
 				],
-			}
-		);
+		};
+		var openTarget = (dialog)? dialog.showOpenDialogSync(null,opt):electronIpc.showOpenDialogSync(null,opt);
 console.log(openTarget);
 		if((openTarget)&&(openTarget.length))
 		fileBox.openFile(openTarget[0]);//ファイル配列で戻る
@@ -125,10 +179,10 @@ console.log(openTarget);
  * Opens and reads a file.
  *	sync
  */
-	fileBox.openFile = function (target) {
+	fileBox.openFile = function (target,callback){
 		if(target){
 			fileBox.currentFile = target;//ファイル設定
-			fileBox.readIN();
+			fileBox.readIN(callback);
 			fileBox.recentDocuments.add(fileBox.currentFile);//最近のファイルに追加
 			sync();//タイトル同期
 		}else{console.log("targetErr :"+target)}
@@ -138,7 +192,7 @@ console.log(openTarget);
  */
 	fileBox.readContent = function(){
 //拡張子でテキストエンコーディングを設定
-		if(fileBox.currentFile.match(/\.(xmap|xpst?|te?xt|ardj|json|tdts|xdts)$/i)){
+		if(fileBox.currentFile.match(/\.(xmap|xpst?|te?xt|ardj|json|tdts|xdts|stbd|pmdb)$/i)){
 			fileBox.currentFileEncoding='utf8';
 		}else{
 			fileBox.currentFileEncoding='cp932';
@@ -151,7 +205,7 @@ console.log(openTarget);
 		if(result){
 //デコード
 			if(fileBox.currentFileEncoding == 'utf8'){
-				fileBox.contentText = result;
+				fileBox.contentText = (result).trim();
 			}else{
 				fileBox.contentText = iconv.decode(
 					result,
@@ -164,14 +218,13 @@ console.log(openTarget);
 	}
 
 /**
- * fileBoxの指定データをfsから読み出してxUI.XPSに設定　非同期
+ * fileBoxの指定データをfsから読み出してcallbackを実行する
+ * callbackが指定されない場合は xUI.XPSに対して設定する(非同期)
  */
-	fileBox.readIN = function(){
+	fileBox.readIN = function(callback){
 		var myOpenfile = fileBox.currentFile;
-
-console.log(myOpenfile);
 //拡張子でエンコーディングを判別
-		if(fileBox.currentFile.match(/\.(xps|te?xt|ardj|json|tdts|xdts)$/i)){
+		if(fileBox.currentFile.match(/\.(xps|te?xt|ardj|json|tdts|xdts|stbd|pmdb)$/i)){
 			fileBox.currentFileEncoding='utf8';
 		}else{
 			fileBox.currentFileEncoding='cp932';
@@ -180,12 +233,11 @@ console.log(myOpenfile);
 			fileBox.currentFile,
 			(fileBox.currentFileEncoding == 'utf8')?"utf8":"binary",
 			function(err,data){
-console.log(data);
 				if(err){
 					console.log(err);
 				}else{
 					if(fileBox.currentFileEncoding == "utf8"){
-						fileBox.contentText = data;
+						fileBox.contentText = (data).trim();
 					}else{
 						fileBox.contentText = iconv.decode(
 							data,
@@ -196,16 +248,16 @@ console.log(data);
 //xUI初期化のタイミングだけ認識してそれ以前なら以下のルーチンは実行しない
 //開始時点でxUI空オブジェクトで初期化されるのでxUI.initを判定
 console.log(fileBox.contentText);
-					if(xUI.init){
+					if(callback instanceof Function){
+						callback(fileBox.contentText);
+						var myResult=false;
+					}else if(xUI.init){
 						var myResult= xUI.XPS.readIN(fileBox.contentText);
-console.log(myResult);
 					}else{
 						var myResult=false;
 					}
 					if(myResult) xUI.resetSheet();
-
-					console.log(myResult);
-				}
+				};
 			}
 		);
 	}
@@ -253,13 +305,13 @@ console.log(myResult);
  *	シンプルに内容をカレントファイルに保存する  ダイアログ類は全て省略
  事前にfileBox.contenText .currentFileを設定しておくこと
  */
- 	fileBox.saveContent=function(){
+	fileBox.saveContent=function(){
 		if (fileBox.currentFile == null) {
 			return false;
 		} else {
 			var myOpenfile = new File(encodeURI(fileBox.currentFile));
 	//拡張子でエンコーディングを判別
-			if(fileBox.currentFile.match(/\.(xps|te?xt|ardj|json|tdts|xdts)$/i)){
+			if(fileBox.currentFile.match(/\.(xps|te?xt|ardj|json|tdts|xdts|stbd|pmdb)$/i)){
 				fileBox.currentFileEncoding='utf-8';
 			}else{
 				fileBox.currentFileEncoding='cp932';
@@ -315,7 +367,7 @@ console.log(myResult);
 			}
 			var myOpenfile = new nas.File(encodeURI(fileBox.currentFile));
 	//拡張子でエンコーディングを判別
-			if(fileBox.currentFile.match(/\.(xps|te?xt|ardj|json|tdts|xdts)$/i)){
+			if(fileBox.currentFile.match(/\.(xps|te?xt|ardj|json|tdts|xdts|stbd|pmdb)$/i)){
 				fileBox.currentFileEncoding='utf8';
 			}else{
 				fileBox.currentFileEncoding='cp932';
@@ -363,7 +415,7 @@ console.log(fileBox);
 //case s-jis or other
 				fs.writeFileSync( fileBox.currentFile , "" );
 				var fd = fs.openSync( fileBox.currentFile, "w");
-				var buf = iconv.encode( fileBox.contentTextO , fileBox.currentFileEncoding );
+				var buf = iconv.encode( fileBox.contentText , fileBox.currentFileEncoding );
 				fs.write( fd , buf , 0 , buf.length , function(err, written, buffer){
 					if(err) throw err;
 //正常終了
@@ -446,7 +498,7 @@ console.log(fileBox);
 //画面同期もストア管理も省略
 		var myOpenfile = fileBox.currentFile;
 	//拡張子でエンコーディングを判別
-		if(fileBox.currentFile.match(/\.(xps|te?xt|ardj|html|htm|json)$/)){
+		if(fileBox.currentFile.match(/\.(xps|te?xt|ardj|html|htm|json|stbd|pmdb)$/)){
 			fileBox.currentFileEncoding="utf8";
 		}else{
 			fileBox.currentFileEncoding="cp932";
@@ -494,7 +546,7 @@ console.log(fileBox);
 /*	TEST
 	fileBox.getDirEnt(process.argv[2], console.log);		
 */
-var showFiles = (dirpath, callback) => {
+  var showFiles = (dirpath, callback) => {
   fs.readdir(dirpath, {withFileTypes: true}, (err, dirents) => {
     if (err) {
       console.error(err);
@@ -510,7 +562,7 @@ var showFiles = (dirpath, callback) => {
       }
     }
   });
-}
+  }
 
 // showFiles(process.argv[2], console.log);
 /*
@@ -521,58 +573,124 @@ var showFiles = (dirpath, callback) => {
 		alert("Error reading or writing the file.\n");
 	}
 //fileBox初期化
-fileBox.init();
+  fileBox.init();
 
-//アプリケーションメニュー初期化
+	if(nas.HTML){
+/*
+	テスト・node.js慣熟を兼ねた作業用関数
+*/
+/**
+ *	@parms	{String}	target_path
+ *	データをシステムツールで開く
+ *
+ */
+		var openData = function openData(target_path){
+			if(appHost.Nodejs ){
+				if(appHost.os=='Mac'){
+					child_process.exec('open "'+target_path+'"');
+				}else if(appHost.os=='Win'){
+					child_process.exec('start "'+target_path+'"');
+				};
+			}else{
+				xUI.openWithSystem(target_path);
+			};
+		}
+/**
+ *	@params {String}	target_path
+ *	@params {Object}	options
+ *
+ * ファインダ｜ファイルエクスプローラでファイル・フォルダを開く
+ *
+ */
+		var openPath = function openPath(target_path){
 
-var mne = new Menu();
 
-// ElectronのMenuの設定
-var templateMenu = [
-    {
-        label: 'Edit',
-        submenu: [
-            {
-                role: 'undo',
-            },
-            {
-                role: 'redo',
-            },
-        ]
-    },
-    {
-        label: 'View',
-        submenu: [
-            {
-                label: 'Reload',
-                accelerator: 'CmdOrCtrl+R',
-                click(item, focusedWindow){
-                    if(focusedWindow) focusedWindow.reload()
-                },
-            },
-            {
-                type: 'separator',
-            },
-            {
-                role: 'resetzoom',
-            },
-            {
-                role: 'zoomin',
-            },
-            {
-                role: 'zoomout',
-            },
-            {
-                type: 'separator',
-            },
-            {
-                role: 'togglefullscreen',
-            }
-        ]
-    }
-];
+		if(appHost.os=='Mac'){
+			child_process.exec('open "'+nas.File.dirname(target_path)+'"');
+		}else if(appHost.os=='Win'){
+			child_process.exec('start "'+nas.File.dirname(target_path)+'"');
+		}else if(appHost.os=='Unix'){
+		};
+	}
+/**
+ *	@params	{String}	target_path
+ *	@returns	{String}
+ */
+		var ls = function(target_path,form,mode){
+			if(! mode) mode = 'fs';
+			if(! form) form = 'JSON';
+			if(! target_path) target_path = "./";
+			var result=[];
+			var entries =(appHost.Nodejs)?
+				fs.readdirSync(target_path,{withFileTypes:true}):
+				electronIpc.readdirSync(target_path,{withFileTypes:true});
+console.log(entries);
+			for (var ix = 0 ; ix < entries.length ; ix ++){
+				if(entries[ix].isDirectry){
+					result.push(decodeURIComponent(entries[ix].name) + "\t[dir]");
+				}else{
+					result.push(decodeURIComponent(entries[ix].name));
+				};
+			};
+			return result.join('\n');
+		}
+		ls.description = "ディレクトリスト";
+		ls.usage = "ls ENTRY";
 
-//var menu = mne.buildFromTemplate(templateMenu);
-//mne.setApplicationMenu(menu);
+		var cd = function(wd){
+			if(appHost.Nodejs){
+				if(wd) process.chdir(wd);
+				return process.cwd();
+			}else{
+				return electronIpc.cd(wd);
+			};
+		}
+		cd.description = "ディレクトリ変更";
+		cd.usage = "cd DIRNAME";
 
+
+
+		var chdir = cd;
+		var pwd   = cd;
+/**
+ *	@params	{String}	target_path
+ *	@returns	{String}	
+ */
+		var mkdir = function (target_path){
+			if(
+				(! target_path)||
+				((fs)&&(fs.existsSync(target_path)))||
+				((electronIpc)&&(electronIpc.existsSync(target_path)))
+			) throw target_path;
+			if(appHost.Nodejs){
+				fs.mkdir(target_path,function(err){if(err) throw err;});
+			}else{
+				electronIpc.mkdir(target_path,function(err){if(err) throw err;});
+			};
+		}
+		mkdir.description = "ディレクトリ作成";
+		mkdir.usage = "mkdir DIRNAME";
+
+//コマンドラインリストへ登録
+		if (nas.HTML.Console){
+			(['ls','cd','chdir','pwd','mkdir']).forEach(function(e){
+				nas.HTML.Console.prototype.constructor.comlist[e]={
+					"command":e,
+				};
+				if(typeof global != 'undefined'){
+					if(global[e].usage)
+						nas.HTML.Console.prototype.constructor.comlist[e]["usage"] = global[e].usage
+					if(global[e].description)
+						nas.HTML.Console.prototype.constructor.comlist[e]["description"] = global[e].description;
+				}else{
+					if(window[e].usage)
+						nas.HTML.Console.prototype.constructor.comlist[e]["usage"] = window[e].usage
+					if(window[e].description)
+						nas.HTML.Console.prototype.constructor.comlist[e]["description"] = window[e].description;
+				};
+			});
+		}
+	}
+console.log('load nodeJs');
 };//with Node.js
+

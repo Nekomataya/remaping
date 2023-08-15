@@ -187,31 +187,6 @@ isADX=0;//Adobeエクステンション環境
     });
   } );
 
- 
-/*
-	nas.File
-	Fileハンドリング用オブジェクト
-	パスを配列で持つ
-	標準的にはURI形式で返す
-	各種形式変換メソッドあり
-	初期化の際に与えられた引数が相対パスだった場合は、コンストラクタのカレントで補う
-	
-	　[0-9a-z\-\+]+://
-	
-*/
-nas.File = function(myURI)
-{
-	if((! myURI)||(myURI==undefined)){myURI="/";}
-	
-	this.body=myURI.split("/").slice(1);
-	  if(this.body[0]==""){this.body=this.body.slice(1);}
-	this.currentDir="/";
-	this.fullName=this.currentDir+this.body.join("/");
-	this.fsName=(appHost.os=="Mac")?this.fullName:this.fullName.replace(/\//g,"\\");
-	this.name=this.body[this.body.length-1];
-}
-
-
 try {
 
 //エレメントの値をすべてバックアップ(正常な処理の最後に呼ぶ)
@@ -220,19 +195,6 @@ function updateBk() {
 	elName = ElementName[n];
 	BkValue[n] = document.nasExchg.elements[elName].value }
 };
-
-/**
-nas.File
-　ファイルハンドルオブジェクト
-　ファイルハンドルはプラットフォーム毎に実装されるファイルオブジェクトのエージェントとして機能する
-　AIR/Adobe 拡張スクリプト/html5 File/Node.js/
-　とか色々必要だけど
-　今回はファイル名から拡張子切り分け（=最後の'.'で文字列をセパレート）のみの実装で済ませる
-　ファイル名本体に空文字列を認めていない
-　.git 等は　ファイル名　".git"   拡張子　なし　となる
-　拡張子なしのドットファイルの扱いに注意
-    これは保留　今回はHTML5のFileオブジェクトを直接扱う　AIRは保留
-*/
 
 /**
 divideExtension(filename)
@@ -327,7 +289,7 @@ default:
 		this.onmouseup   = null;
 
 //スライダの値が前の値と異なっていた場合のみ更新
-		if (this.sliderTarget.value != this.sliderTarget.baseValue) {this.sliderTarget.onchange();}
+		if (this.sliderTarget.value != this.sliderTarget.baseValue) {this.sliderTarget.onchange(event);}
 		
 		delete this.sliderTarget.startX;
 		delete this.sliderTarget.slmax;
@@ -457,7 +419,7 @@ if((myObj==null)||(myObj instanceof HTMLInputElement)||(myObj instanceof HTMLTex
 		this.target.innerHTML=this.newContent;//先に書き換える、onChangeで参照可能かつ変更可能に
 	}
 	delete myObj;//明示的に消す
-	if(this.onChange){this.onChange()};
+	if(this.onChange){this.onChange(event)};
 	if(this.target.innerHTML==""){this.target.innerHTML+="<br />"};//空文字列の時 改行ひとつと置換
 	var myResult=(this.status)? this.newContent:null;
 	this.init();
@@ -723,48 +685,106 @@ if (! MSIE){
 		}
 	}
 }
-/*	cssルールセットから値を取得する関数
-		nasメソッド
+/**
+    @params {String}  selector
+    @params {String}  property
+    @params {Number}  sheetindex
+    @returns {String|null}
+
+	nasメソッド
+	cssルールセットから値を取得する関数
 	nas.getCssRule( セレクタ, プロパティ, シートインデックス )
-セレクタ	cssのセレクタを指定
-プロパティ	プロパティを置く
-シートインデック	"screen"=0 "print"=1
-*** 	このメソッドは必0番にスクリーン用スタイルシート・1番にプリント用スタイルシートが
-	ロード済みであることが前提条件 注意！！ IDの方が良いかも
+selector cssのセレクタを指定　CSSに記述したままの指定が必要
+property cssプロパティ
+sheetindex	"screen"=0 "print"=1
+一致するプロパティがない場合は nullが戻る
+0番にスクリーン用スタイルシート・1番にプリント用スタイルシートを設定することが多いがシートのIDで指定のこと
+
+eg.
+nas.getCssRule('th.dialogSpan','width',0)
+
 */
 nas.getCssRule=function( selector, property, sheetindex ) {
-	selector = selector.toLowerCase( )
+	selector = String(selector).toLowerCase( );
 	if( sheetindex == undefined ) sheetindex = 0;
 	if( property.indexOf( "-" ) != -1 ) property = property.camelize( );
-	var rules = document.styleSheets[ sheetindex ].rules //IE
-	|| document.styleSheets[ sheetindex ].cssRules; //Mozilla
-
-  for( var i = rules.length - 1; i >= 0; i-- ) {
-      var rule = rules[i];
-      if( rule.selectorText.toLowerCase( ) != selector
-      || rule.style[ property ] == "" ) continue;
-      return rule.style[ property ];
-  }
-
+	var rules = document.styleSheets[sheetindex].cssRules;//IEを除外
+    for(var i =(rules.length - 1); i >= 0; i-- ) {
+        var rule = rules[i];
+        if(
+            ((rule.selectorText)&&
+            (rule.selectorText.toLowerCase() == selector))&&
+            ((rule.style)&&(rule.style[property] != "" ))
+        ) return rule.style[ property ];
+        continue;
+    }
   return null;
 }
+/**
+    cssスタイルシートセットかセレクタで指定したルールセットを検索して戻す
+    @params {String}  selector
+    @params {String}  sheetindex
+    @returns {CSSStyleRule|null}
+eg
+    nas.findCSSRule('th.dialogSpan');
+*/
+nas.findCssRule = function(selector,sheetindex){
+	if( sheetindex == undefined ) sheetindex = 0;
+	var rules = document.styleSheets[sheetindex].cssRules;
+    for(var i =(rules.length - 1); i >= 0; i-- ) {
+        if(
+            ((rules[i].selectorText)&&
+            (rules[i].selectorText == selector))
+        ) return rules[i];
+        continue;
+    }
+  return null;
+}
+/*
+    @params {String}  selector
+    @params {String}  property
+    @params {Array|String}  region
+    @returns {undefined|false}
 
-/*	cssにルールセットを追加する関数
-		nasのメソッド
+		nasメソッド
+	cssにルールセットを追加する関数
 	nas.addCssRule( セレクタ, プロパティ, 適用範囲 )
 セレクタ	cssのセレクタを指定
-プロパティ	プロパティを置く
-適用範囲	"screen""print"または"both"(0,1 or both)
-*** 	このメソッドは必0番にスクリーン用スタイルシート・1番にプリント用スタイルシートが
+プロパティ	設定するプロパティをcssの書式で置く "{}"は補われるので不要
+適用範囲	スタイルシートID、またはその配列もしくはキーワード"screen""print"または"both"(0,1 or both)
+*** 	このメソッドは 0番にスクリーン用スタイルシート・1番にプリント用スタイルシートが
 	ロード済みであることが前提条件 注意！！ IDの方が良いかも
+eg.
+nas.addCssRule('th.dialogSpan','width:6em','both')
  */
-
 nas.addCssRule= function( selector, property, region ) {
-	if(! region){region="both"}
+
+	if(region instanceof Array){
+		var target = region;
+	}else{
+		var target = [];
+		switch(region){
+		case "screen":target = [0]  ;break;
+		case "print" :target = [1]  ;break;
+		case "both"  :
+		default	  :target = [0,1];
+		};
+	};
+	if( document.styleSheets[0].insertRule ){
+		target.forEach(function(e){
+			var targetSheet = document.styleSheets[e];
+			if(targetSheet){
+				targetSheet.insertRule(selector+" {"+property+"}",targetSheet.cssRules.length);
+			};
+		});
+		return;
+	}else{
+		return false;
+	};
 
 //	if(( document.styleSheets[0].addRule)&&(! Safari) ){}
 //Safari３は、addRuleとinsertRule両方のメソッドを持っているが、Mozilla互換っぽいので判定変更
-	if(MSIE){
+	if(appHost.platform == "MSIE"){
 //IE
 switch(region){
 case	"both":
@@ -817,6 +837,56 @@ default:
 	return;
 		}else{	return false;}
 }}
+/*
+    @params {String}  selector
+    @params {String}  property
+    @params {String}  region
+    @returns {undefined|false}
+
+		nasメソッド
+	cssルール設定を上書きする関数
+	nas.setCssRule( セレクタ, プロパティ, 適用範囲 )
+セレクタ	cssのセレクタを指定
+セレクタがそのCSSに存在しない場合、新規ルールセットを追加して適用する
+
+プロパティ	設定するプロパティをJSでなくcssの書式で置く "{}"は補われるので不要
+適用範囲	"screen""print"または"both"(0,1 or both)
+*** 	このメソッドは 0番にスクリーン用スタイルシート・1番にプリント用スタイルシートが
+	ロード済みであることが前提条件 注意！！ IDの方が良いかも
+eg.
+nas.setCssRule('th.dialogSpan','width:6em','both')
+nas.setCssRule('th.dialogBox','border-width:2px;height:2cm','both')
+//2023 追加分の関数なのでIEは完全に対象外	
+ */
+
+nas.setCssRule= function( selector, property, region ) {
+	if(region instanceof Array){
+		var target = region;
+	}else{
+		var target = [];
+		switch(region){
+		case "screen":target = [0]  ;break;
+		case "print" :target = [1]  ;break;
+		case "both"  :
+		default	  :target = [0,1];
+		};
+	};
+	if( document.styleSheets[0].insertRule ){
+		target.forEach(function(e){
+			var targetRule = nas.findCssRule(selector,e);
+			if(targetRule){
+				property.split(';').forEach(function(rv){
+					targetRule.style[(rv.split(':')[0]).camelize()] = [rv.split(':')[1]];
+				});
+			}else{
+				nas.addCssRule(selector,property,e);
+			};
+		});
+		return;
+	}else{
+		return false;
+	};
+}
 
 /*
 	htmlオブジェクトのテキストの選択状態を返すメソッド
@@ -908,7 +978,7 @@ nas.timeIncrement=function(target,step,type){
         }else{
             target.innerHTML = nas.Frm2FCT(newValue,type);
         }
-        if(target.onchange){target.onchange();}
+        if(target.onchange){target.onchange(event);}
     }
     return newValue;
 }
@@ -954,8 +1024,8 @@ nas.HTML.addClass = function (element,className){
 }
 /*
     クラスリストからアイテムを削除
-    classListのない古い環境のためのコード
-    
+    classListのない古い環境のためのコードを含む
+ex: nas.HTML.removeClass(document.body,'scroll-lock');
 */
 nas.HTML.removeClass = function (element,className){
     if(element.classList){
@@ -967,7 +1037,77 @@ nas.HTML.removeClass = function (element,className){
         element.className = classList.join(' ');        
     }
 }
+/**
+ * 汎用引数内容テキストを指定のエンコードでファイルとして保存
+ *
+ *	@params {String}	contentText
+ *	@params {String}	encoding
+ *	@params {String}	path
+ *	@params {Boolean}	noconfirm
+ * ここでのencodingはnodeの形式で
+ * ファイルアクセス環境が無い場合はダウンロードへ移行する（未実装）
+ エンコード変換未実装 220621
+ */
+nas.HTML.writeTextFile = function (contentText,encoding,path,noconfirm){
+	if(typeof contentText == 'undefined') return false;//
+	if(typeof path        == 'undefined') path = new Date().getTime();//timestamp
+	if(typeof encoding    == 'undefined') encoding = 'utf-8';//
 
+/*書き出しをトライ appHost.platform=='Electron'のケースは、書き出しをサンドボックスへ依頼する*/
+	if((contentText.length)&&((appHost.platform=='Electron')||(appHost.Nodejs))) {
+		var savedir  = nas.File.dirname(path);
+		if(! savedir) savedir = ((pman.reName)&&(pman.reName.baseFolder))?
+			pman.reName.baseFolder :'/';//得られなかった場合はルートに設定する（アプリの位置は良くない）暫定値
+		var savename = nas.File.basename(path);
+			nas.showModalDialog(
+				'prompt',
+				nas.localize('フォルダ\n%1\nに、ファイル\n%2\nを保存します。\nファイル名を変更することができます。\n変更する場合はボックスの値を書き換えてください。\n同名のファイルは上書きされます。\n保存してよろしいですか？',savedir,savename),
+				'保存',
+				nas.File.basename(path),
+				function(result){
+					if(result){
+						var savefile = nas.File.join(savedir,result);
+console.log(savefile);
+						if(fs){
+							fs.writeFileSync(savefile,content,{encoding:'utf-8'});
+							pman.reName.setItem(savefile);
+						}else{
+							uat.MH.parentModule.window.postMessage({
+								channel:'callback',
+								from:{name:xUI.app,id:uat.MH.objectIdf},
+								to:{name:'hub',id:uat.MH.parentModuleIdf},
+								command:'electronIpc.writeFileSync(...arguments);',
+								content:[savefile,content,{encoding:"utf-8"}],
+								callback:'pman.reName.setItem("'+ savefile +'")'
+							});//electronIpc.writeFileSync(savefile,content,{encoding:'utf-8'});
+						};
+					};
+				},
+				false
+			);
+	}else{
+		nas.HTML.downloadData(contentText,encoding,nas.File.basename(path));
+	}
+}
+/*TEST
+	nas.HTML.fileWrite('ぶんぶく茶釜','./bukubuku.txt','utf8');
+*/
+
+//汎用のクリップボードテキスト書込
+nas.HTML.sendText2Clipboard = function sendText2Clipboard(contentText){
+	if(contentText){
+//クリップボード転送
+		var i = document.body.appendChild(document.createElement('textarea'));
+		i.value = contentText;
+		i.select();
+		document.execCommand("Copy");
+		document.body.removeChild(i);
+		console.log('クリップボードに転送しました');
+	};
+}
+/*TEST
+	nas.HTML.sendText2Clipboard('ぶんぶく茶釜');
+*/
 /**
     ダウンロード
     プログラム内で生成したデータをダウンロードする
@@ -1007,3 +1147,178 @@ fileSelect.addEventListener("change", function(evt){
 /*TEST
 nas.HTML.download(new Blob([xUI.XPS.toString()], {type : 'application/xps'}), 'test');
 */
+/**
+ *	@params	{Blob|String|Array|Blob}    content
+ *		Blob,Blob化するテキスト文字列または配列
+ *	@params	{String}	filename
+ *		保存のためのファイル名
+ *	引数の内容をBlob化してダウンロード encodingを与えるかまたはファイル名からエンコーディングを得る
+ *	ファイル名の指定がない場合はダウンロード関数でシリアルタイムスタンプが与えられる
+ *  
+ */
+nas.HTML.downloadData = function download(content,encoding,filename){
+	if(typeof content == 'undefined') return false;//
+	if(typeof encoding == 'undefined') encoding = '';//
+	if(typeof filename == 'undefined') filename = '';//timestamp
+
+	const encode = {
+		sjis:'SJIS',
+		utf8:'UTF8',
+		eucjp:'EUCJP',
+		ascii:'ASCII',
+		bin:'BINARY',
+		jis:'JIS',
+		utf16:'UTF16',
+		utf16bd:'UTF16BE',
+		utf16le:'UTF16LE',
+		utf32:'UTF32'
+	};
+	if(filename){
+//拡張子を含み上位ディレクトリを含めない保存ファイル名
+		filename = nas.File.basename(filename);
+//拡張子を抽出
+		var myExt = nas.File.extname(filename);
+//		if(! myExt) myExt="txt";//?
+		if(myExt){
+//登録拡張子はエンコーディングを強制
+			switch (myExt){
+			case ".tdts":
+			case ".xdts":
+				content = content.replace(/\r?\n/g,"\n");
+				encoding="utf8";
+			break;
+			case ".tsh":
+				content = content.replace(/\r?\n/g,"\r")+"\n";
+			case ".eps":
+			case ".csv":
+			case ".ard":
+				encoding="sjis";
+			break;
+			};
+		};
+	};
+	if(! encoding) encoding = 'binary';//
+	if(!(content instanceof Blob)){
+//ファイルとしてmimeTypeを設定して保存
+//Blob化・
+		if(encoding.match(/binary|utf32|ascii/)){
+//タイプ指定なし・必要な場合はあらかじめblob化して渡すか、直接downloadを呼ぶ
+			var blob = new Blob([content]);
+		}else if( encoding == 'utf8'){
+//utf-8には無条件でbomを付加
+			let bom  = new Uint8Array([0xEF, 0xBB, 0xBF]);
+			var blob = new Blob([bom,content], {type: nas.File.contentType(filename)});
+		}else{
+//encodingにあわせてコンバート
+			let array = Array.from(content,e => e.charCodeAt(0));
+			let convertedArray = Encoding.convert(array, encode[encoding], 'UNICODE');
+			let binArray       = new Uint8Array(convertedArray);
+			var blob           = new Blob([binArray], {type: nas.File.contentType(filename)});
+		}
+	}else{
+//blob直接
+		var blob = content;
+	};
+	return nas.HTML.download(blob,filename);
+}
+/*TEST
+	nas.HTML.downloadData("狸の泥舟1234\n","euc","test.text")
+	nas.HTML.downloadData(new Blob(["狸の泥舟1234\n"], {type : 'application/xps'}),'', 'test.xps');
+*/
+//------簡易テキストエディタ 2022 06 21
+/**
+	簡易型のテキストエディタ
+	結果をアプリケーション内で利用する際はコールバック関数を渡す
+*/
+nas.HTML.miniTextEdit = {
+	msg:"汎用ミニテキストエディタです",
+	title:"汎用ミニテキストエディタ",
+	content:"",
+	filename:""
+};
+/**
+ *	@params {String}	content
+ *	@params {String}	msg
+ *	@params {String}	title
+ *	@params {Function}	callback
+ *	簡易テキストエディタ を立ち上げる
+ *	引数を表示して編集を促す
+ *	ファイル保存｜ダウンロード｜クリップボード転送をサポート
+ *	callbackテキストの内容を引き渡すことが可能
+ */
+nas.HTML.miniTextEdit.init = function(content,msg,title,filename,callback){
+	if(typeof content == 'undefined') content = this.content;
+	if(typeof msg == 'undefined')     msg     = this.msg;
+	if(typeof title == 'undefined')   title   = this.title;
+	if(typeof filename == 'undefined')   filename = this.filename;
+	this.content = content;
+	this.msg     = msg;
+	this.title   = title;
+	this.filename = filename;
+	var msgs = [msg];
+	msgs.push('<br><hr><button class=modalBt onclick="nas.HTML.miniTextEdit.downloadContent()">Download</button><button class=modalBt onclick="nas.HTML.miniTextEdit.sendClipboard()">Copy</button><button class=modalBt onclick="nas.HTML.miniTextEdit.clear()">Clear</button><button class=modalBt onclick="nas.HTML.miniTextEdit.reset()">Reset</button><br>filename:<input id=miniTextFilename type=text size = 42><br><textarea id="miniTextContent" style="height:320px;width:480px;">QQX</textarea>');
+	nas.showModalDialog(
+		"alert",
+		msgs,
+		title,
+		'',
+		function(){
+			nas.HTML.miniTextEdit.content = document.getElementById("miniTextContent").value;
+			if(callback instanceof Function) callback(nas.HTML.miniTextEdit.content);}
+	);
+	$("#nas_modalDialog").keyup(function(e) {
+		if ((e.keyCode == 13)&&(e.target == document.getElementById("miniTextContent"))){
+			document.getElementById("miniTextContent").insert("\n");
+		};
+	});//*/
+	this.reset();
+}
+//ミニテキストエディタをクリア
+nas.HTML.miniTextEdit.clear = function(){
+	document.getElementById("miniTextContent").value = '';
+	document.getElementById("miniTextFilename").value = this.filename;
+}
+//ミニテキストエディタを最後の状態にリセット
+nas.HTML.miniTextEdit.reset = function(){
+	document.getElementById("miniTextContent").value = this.content;
+	document.getElementById("miniTextFilename").value = this.filename;
+}
+//編集内容をダウンロードして保存(WEB|Electron兼用)
+nas.HTML.miniTextEdit.downloadContent = function(){
+	if (document.getElementById('miniTextContent')){
+		nas.HTML.miniTextEdit.content  = document.getElementById('miniTextContent').value;
+		nas.HTML.miniTextEdit.filename = document.getElementById('miniTextFilename').value;
+		nas.HTML.downloadData(nas.HTML.miniTextEdit.content,'',nas.HTML.miniTextEdit.filename);
+	};
+}
+//編集内容をローカルファイルへ保存(Electron専用)
+nas.HTML.miniTextEdit.writeContent = function(){
+	if (document.getElementById('miniTextContent')){
+		nas.HTML.miniTextEdit.content  = document.getElementById('miniTextContent').value;
+		nas.HTML.miniTextEdit.filename = document.getElementById('miniTextFilename').value;
+		nas.HTML.writeTextFile(nas.HTML.miniTextEdit.content,'',nas.HTML.miniTextEdit.filename);
+	};
+}
+//現在の内容をクリップボードへ転送してオブジェクトを更新
+nas.HTML.miniTextEdit.sendClipboard = function(){
+//クリップボード転送 / clipboard copy * 冗長だが、ユーザが操作中の要素を選択状態にして操作を目視できるようにここでは重複コードを書く
+	if (document.getElementById('miniTextContent')){
+		document.getElementById('miniTextContent').select();
+		document.execCommand("Copy");
+		xUI.printStatus('クリップボードに転送しました');
+	};
+	this.content  = document.getElementById('miniTextContent').value;
+	this.filename = document.getElementById('miniTextFilename').value;
+//	nas.HTML.sendText2Clipboard(this.content);
+}
+/*TEST
+	nas.HTML.miniTextEdit.init(
+		JSON.stringify(config.extApps.members,0,2),
+		"外部アプリケーションデータの編集をします\nOKボタンでデータが更新されます",
+		"外部アプリケーションテーブル",
+		"config.extApp.members.json",
+		function(content){config.extApps.members = JSON.parse(content);}
+	);
+*/
+//------簡易テキストエディタ 2022 06 21//
+

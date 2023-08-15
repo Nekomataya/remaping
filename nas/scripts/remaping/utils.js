@@ -580,10 +580,10 @@ console.log(trackName);
 	現在のXPSの複製を作り新しいタイムラインを作成して挿入位置に挿入
 	putメソッドでドキュメントを入れ替える
  */
-	var newXPS= new Xps();
-	newXPS.readIN(xUI.XPS.toString());
+	var newXPS=new Xps(xUI.XPS.xpsTracks.getTrackSpec(),xUI.XPS.duration());
+	newXPS.parseXps(xUI.XPS.toString(false));
 	var currentDuration=newXPS.duration();
-//console.log([insertPoint[0],new XpsTimelineTrack(trackName,myOpt,newXPS.xpsTracks,currentDuration)]);
+console.log([insertPoint[0],new XpsTimelineTrack(trackName,myOpt,newXPS.xpsTracks,currentDuration)]);
 	newXPS.insertTL(insertPoint[0],new XpsTimelineTrack(trackName,myOpt,newXPS.xpsTracks,currentDuration));
 //	xUI.selection();
 //	xUI.selectCell('0_0')
@@ -602,49 +602,45 @@ console.log(X);
 insertColumns=function(newNames){
 	var insertLength=Math.abs(xUI.Selection[0])+1;//挿入タイムライン数を取得
 	var insertPoint=(xUI.Selection[0]<0)?[xUI.Select[0]+xUI.Selection[0],0]:[xUI.Select[0],0];//挿入ポイントを記録
-if(typeof newNames == "undefined"){
-	if(insertPoint[0]<1){return};
-
-	var currentNames=new Array();//挿入後のラベル名格納配列
+	if(typeof newNames == "undefined"){
+		if(insertPoint[0]<1) return;
+		var currentNames=new Array();//挿入後のラベル名格納配列
 //	挿入分仮ラベルをタイムラインIDで初期化
-	for(var Tidx=0;Tidx<insertLength;Tidx++){
-		currentNames.push(nas.Zf(Tidx+insertPoint[0],2));
-	};
+		for(var Tidx=0;Tidx<insertLength;Tidx++) currentNames.push(nas.Zf(Tidx+insertPoint[0],2));
 //	警告
-	nas.showModalDialog("prompt",
-		"以下のタイムラインを挿入します。\n希望のラベルをコンマ区切りで指定できます。\n",
-		"タイムライン挿入",
-		currentNames.join(","),
-		function(){if(this.status==0){insertColumns(this.value)};xUI.setStored("force");//sync();
-		}
-	)
+		nas.showModalDialog("prompt",
+			"以下のタイムラインを挿入します。\n希望のラベルをコンマ区切りで指定できます。\n",
+			"タイムライン挿入",
+			currentNames.join(","),
+			function(){if(this.status==0){insertColumns(this.value)};xUI.setStored("force");//sync();
+			}
+		);
+	}else{
+		if(newNames!=null){
+			newNames=newNames.split(",");
+			if(newNames.length>insertLength) newNames.length=insertLength;//オーバー時切捨て
+			if(newNames.length<insertLength){
+				for(var Tidx=newNames.length;Tidx<insertLength;Tidx++){
+					newNames.push(nas.Zf(Tidx+insertPoint[0],2));
+				};
+			};//不足時は再生成
 
-}else{
-//	xUI.printStatus();
-if(newNames!=null){
-	newNames=newNames.split(",");
-	if(newNames.length>insertLength){newNames.length=insertLength;};//オーバー時切捨て
-	if(newNames.length<insertLength){
-		for(var Tidx=newNames.length;Tidx<insertLength;Tidx++){
-			newNames.push(nas.Zf(Tidx+insertPoint[0],2));
-		};
-	};//不足時は再生成
+			var bkPt=xUI.Select;//カーソル元位置控
 
-	var bkPt=xUI.Select;//カーソル元位置控
-
-	var newXPS=new Xps();
-	newXPS.readIN(xUI.XPS.toString());
-	newXPS.insertTL(insertPoint[0],newNames);//配列渡し
-	xUI.put(newXPS);
-//	nas_Rmp_Init();//リフレッシュ put側で実行される
-
-	xUI.selectCell(add(bkPt,[insertLength,0]).join("_"));//カーソルを挿入後の元位置へ復帰
+			var newXPS=new Xps(xUI.XPS.xpsTracks.getTrackSpec(),xUI.XPS.duration());
+			newXPS.parseXps(xUI.XPS.toString());
+console.log(newXPS.toString());
+//	newXPS.insertTL(insertPoint[0],newNames);//配列渡し
+			newXPS.insertTL(insertPoint[0],newNames);//配列渡し
+console.log(newXPS.toString());
+			xUI.put(newXPS);
+			xUI.selectCell(add(bkPt,[insertLength,0]).join("_"));//カーソルを挿入後の元位置へ復帰
 //	xUI.flushUndoBuf();sync("undo");//
 
-}else{
-	alert(localize(nas.uiMsg.aborted));//処理を中止しました
-};
-};
+		}else{
+			alert(localize(nas.uiMsg.aborted));//処理を中止しました
+		};
+	};
 }
 ;//
 //		タイムライン削除
@@ -652,60 +648,51 @@ if(newNames!=null){
 	指定IDのタイムラインを削除
 	指定は、選択範囲を使用することに
 	undoバッファは維持できないのでクリア
-	Xpxのメソッドを呼び出す形に変更
-	0番タイムライン及びフレームコメントは削除不可
+	Xpsのメソッドを呼び出す形に変更
+	0番タイムライン及び終端フィールドのコメントタイムラインは削除不可
  */
 deleteColumns=function(newNames){
-	if(xUI.Select[0]==0||xUI.Select[0]+xUI.Selection[0]<=0||xUI.Select[0]+xUI.Selection[0]>=(xUI.XPS.xpsTracks.length-1)||xUI.Select[0]==(xUI.XPS.xpsTracks.length-1))
-	{return false;};
-	var deleteLength=Math.abs(xUI.Selection[0])+1;//削除列数を算出
-	if(deleteLength>=(xUI.XPS.xpsTracks.length-2)){return false;};
+	if(
+		xUI.Select[0]==0||
+		xUI.Select[0]+xUI.Selection[0]<=0||
+		xUI.Select[0]+xUI.Selection[0]>=(xUI.XPS.xpsTracks.length-1)||
+		xUI.Select[0]==(xUI.XPS.xpsTracks.length-1)
+	) return false;
+	var deleteLength =  Math.abs(xUI.Selection[0])+1;//削除列数を算出
+	if(deleteLength  >= (xUI.XPS.xpsTracks.length-2)) return false;
 	var deletePoint=(xUI.Selection[0]<0)?[xUI.Select[0]+xUI.Selection[0],0]:[xUI.Select[0],0];//削除ポイントを記録
 
-if(newNames==undefined){
-
-
-	var restNames=new Array();//削除後のラベル名格納配列
+	if(newNames==undefined){
+//引数未指定の場合はダイアログ提示
+		var restNames=new Array();//削除後のラベル名格納配列
 //新規ラベルセット
-	for(var Lidx=1; Lidx<xUI.XPS.xpsTracks.length - 1 ;Lidx++){
-		if((Lidx<deletePoint[0]) || (Lidx >(deletePoint[0]+deleteLength-1)) ){restNames.push(xUI.XPS.xpsTracks[Lidx].id)};
-	};
-
+		for(var Lidx=1; Lidx<xUI.XPS.xpsTracks.length - 1 ;Lidx++){
+			if((Lidx<deletePoint[0]) || (Lidx >(deletePoint[0]+deleteLength-1)) ){restNames.push(xUI.XPS.xpsTracks[Lidx].id)};
+		};
 //	警告
-nas.showModalDialog(
-	"prompt",
-	deleteLength+" 個のタイムラインが削除されて以下のタイムラインが残ります。\n必要ならばレイヤ名の編集ができます。\n",
-	"タイムライン削除",
-	restNames.join(","),
-	function(){if(this.status==0){deleteColumns(this.value)};xUI.setStored("force");sync();}
-);
-//		alert(newNames);
-}else{
-if(newNames!=null){
-	newNames=newNames.split(",");
-	var bkPt=xUI.Select;//カーソル元位置
-	var removeIdx=[];
-	for (var ix=0;ix<deleteLength;ix++){removeIdx.push(ix+deletePoint[0]);}
-
-	var newXPS=new Xps();
-	newXPS.readIN(xUI.XPS.toString());
-	newXPS.deleteTL(removeIdx); 
-	xUI.put(newXPS);
-
-	// タイムライン削除後にラベルの指定があれば書きなおし(ダイアログ拡張が考慮されていないでの後で修正)
-//	for(var Lidx=0;Lidx<restNames.length;Lidx++){		if(xUI.XPS.xpsTracks[Lidx+1].id != restNames[Lidx]){xUI.XPS.xpsTracks[Lidx+1].id=restNames[Lidx]}	};
-
-		sync("lbl");
-//	nas_Rmp_Init();//リフレッシュ
-
-	xUI.selectCell(bkPt.join("_"));//カーソルを元位置へ復帰
-//	xUI.flushUndoBuf();sync("undo");//
-
-}else{
-	alert(localize(nas.uiMsg.aborted));//処理を中止しました
-};
-}
-
+		nas.showModalDialog(
+			"prompt",
+			deleteLength+" 個のタイムラインが削除されて以下のタイムラインが残ります。\n必要ならばレイヤ名の編集ができます。\n",
+			"タイムライン削除",
+			restNames.join(","),
+			function(){if(this.status==0){deleteColumns(this.value)};xUI.setStored("force");sync();}
+		);
+	}else{
+		if(newNames != null){
+			newNames=newNames.split(",");
+			var bkPt=xUI.Select;//カーソル元位置
+			var removeIdx=[];
+			for (var ix=0;ix<deleteLength;ix++){removeIdx.push(ix+deletePoint[0]);}
+				var newXPS=new Xps(xUI.XPS.xpsTracks.getTrackSpec(),xUI.XPS.duration());
+				newXPS.parseXps(xUI.XPS.toString());
+				newXPS.xpsTracks.removeTrack(removeIdx); 
+				xUI.put(newXPS);
+				sync("lbl");
+				xUI.selectCell(bkPt.join("_"));//カーソルを元位置へ復帰
+		}else{
+			alert(localize(nas.uiMsg.aborted));//処理を中止しました
+		};
+	};
 };
 //フレームデータ挿入
 /*
@@ -907,12 +894,11 @@ inputButtonText=function(myText){
 
 デフォルトはreplacement
 */
-putReference=function()
-{
+putReference=function(){
 	//xUIに範囲設定があれば、その範囲を、無ければすべてのシートを操作対象にする
 	if((xUI.Selection[0]==0)&&(xUI.Selection[1]==0)){
-		documentDepot.currentReference=new Xps();
-		documentDepot.currentReference.readIN(xUI.XPS.toString());//選択範囲指定がない場合は、すべてコピー
+		documentDepot.currentReference=new Xps(xUI.XPS.xpsTracks.getTrackSpec(),xUI.XPS.duration());
+		documentDepot.currentReference.parseXps(xUI.XPS.toString());//選択範囲指定がない場合は、すべてコピー
 		xUI.resetSheet(undefined,documentDepot.currentReference);
 	}else{
 	//return false;
@@ -1404,9 +1390,9 @@ buildActionSheet =function(){
 	var bkPos=xUI.Select.join("_");//現在のカーソルを記録
 
     var backupPoint = xUI.activeDocument.undoBuffer.undoPt;
-    var mainXps = new Xps();
-    var backupXps = new Xps();
-    var backupRef  = new Xps();
+    var mainXps    = new Xps(xUI.XPS.xpsTracks.getTrackSpec(),xUI.XPS.duration());
+    var backupXps  = new Xps(xUI.XPS.xpsTracks.getTrackSpec(),xUI.XPS.duration());
+    var backupRef  = new Xps(xUI.referenceXPS.xpsTracks.getTrackSpec(),xUI.referenceXPS.duration());
     mainXps.parseXps(xUI.XPS.toString());
     backupXps.parseXps(xUI.XPS.toString());
     backupRef.parseXps(xUI.referenceXPS.toString());

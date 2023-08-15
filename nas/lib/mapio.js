@@ -907,12 +907,6 @@ xMap.prototype.parsexMap=function(datastream){
 			continue;
 		}else{
 
-		if(MSIE){
-	var choped=SrcData[l].charCodeAt(SrcData[l].length-1);
-	if(choped<=32)
-	SrcData[l] = SrcData[l].slice(0,-1);
-		}
-		//なぜだかナゾなぜに一文字多いのか?
 if(SrcData[l].match(/^nasMAP-FILE\ 1\.9x$/))
 {
 	SrcData.startLine =l;//データ開始行
@@ -1027,12 +1021,6 @@ console.log(this.join('\n'));
 */
 	for(line=SrcData.startLine;line<SrcData.length;line++){
 			//前置部分を読み込みつつ、本体情報の確認
-		if(MSIE){
-	var choped=SrcData[line].charCodeAt(SrcData[line].length-1);
-	if(choped<=32)
-	SrcData[line] = SrcData[line].slice(0,-1);
-		}
-		//なぜだかナゾなぜに一文字多いのか?
 //テキストディスクリプション取得時以外の　#コメントと空行をスキップに変更
 		if(((currentGroup)&&(! currentGroup.type.match(/dialog|sound|text|camera|camerawork/)))&&(SrcData[line].match(/(^#[^#]|^\s*$)/))) continue;
 //			シートプロパティにマッチ

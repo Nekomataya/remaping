@@ -152,6 +152,7 @@ th {
 	border-style:solid;
 	border-width:4px 1px 1px 0;
 	line-height:1;
+	height:4.5mm;
 }
 /*
 	シートヘッダビュー設定
@@ -202,6 +203,7 @@ th.layerlabelR {
 	text-align:center;
 	border-style:solid;
 	border-width:3px 1px 3px 0;
+	font-size:10px;
 }
 /*
 	ダイアログトラック
@@ -229,7 +231,6 @@ th.layerlabel {
 	border-style:solid;
 	border-width:3px 1px 3px 0;
 	font-size:10px;
-	height:16px;
 }
 
 /* still */
@@ -271,6 +272,7 @@ th.cameralabel {
 	text-align:center;
 	border-style:solid;
 	border-width:3px 1px 3px 0;
+	font-size:5pt;
 }
 /*
 		フレームコメント
@@ -677,43 +679,95 @@ button.iconButton:disabled {
 /*
 .iconButton- { background-position: -405px -351px; }
 */
-/*
-.iconButton- { background-position: 0 -378px; }
-.iconButton- { background-position: -27px -378px; }
-.iconButton- { background-position: -54px -378px; }
-.iconButton- { background-position: -81px -378px; }
-.iconButton- { background-position: -108px -378px; }
-.iconButton- { background-position: -135px -378px; }
-.iconButton- { background-position: -162px -378px; }
-.iconButton- { background-position: -189px -378px; }
-.iconButton- { background-position: -216px -378px; }
-.iconButton- { background-position: -243px -378px; }
-.iconButton- { background-position: -270px -378px; }
-.iconButton- { background-position: -297px -378px; }
-.iconButton- { background-position: -324px -378px; }
-.iconButton- { background-position: -351px -378px; }
-.iconButton- { background-position: -378px -378px; }
-.iconButton- { background-position: -405px -378px; }
-*/
-.iconButton-checker { background-position: 0 -405px; }
-.iconButton-cell { background-position: -27px -405px; }
-.iconButton-separation { background-position: -54px -405px; }
-.iconButton-traceAll { background-position: -81px -405px; }
-.iconButton-traceFGC { background-position: -108px -405px; }
-.iconButton-traceK { background-position: -135px -405px; }
-.iconButton-tracePPP { background-position: -162px -405px; }
-.iconButton-paintLayer { background-position: -189px -405px; }
-.iconButton-thiningLine { background-position: -216px -405px; }
-.iconButton-borderFill { background-position: -243px -405px; }
-.iconButton-smoother { background-position: -270px -405px; }
-.iconButton-colorBox { background-position: -297px -405px; }
-.iconButton-colorInfo { background-position: -324px -405px; }
-/*
-.iconButton- { background-position: -351px -405px; }
-.iconButton- { background-position: -378px -405px; }
-.iconButton- { background-position: -405px -405px; }
-*/
+/*15*/
+.iconButton-addItem     { background-position: 0 -378px; }
+.iconButton-editItem    { background-position: -27px -378px; }
+.iconButton-issue       { background-position: -54px -378px; }
+.iconButton-merge       { background-position: -81px -378px; }
+.iconButton-salvage     { background-position: -108px -378px; }
+.iconButton-STORE       { background-position: -135px -378px; }
+.iconButton-STOREFS     { background-position: -162px -378px; }
+.iconButton-STORENF     { background-position: -189px -378px; }
+.iconButton-checkOut    { background-position: -216px -378px; }
+.iconButton-checkIn     { background-position: -243px -378px; }
+.iconButton-sinkUAT     { background-position: -270px -378px; }
+.iconButton-floatUAT    { background-position: -297px -378px; }
+.iconButton-receipt     { background-position: -324px -378px; }
+.iconButton-branch      { background-position: -351px -378px; }
+.iconButton-abort       { background-position: -378px -378px; }
+.iconButton-destroy     { background-position: -405px -378px; }
+/*16*/
+.iconButton-message     { background-position: 0 -405px; }
+.iconButton-menuFwd     { background-position: -27px -405px; }
+.iconButton-menuBwd     { background-position: -54px -405px; }
+.iconButton-openFolder  { background-position: -81px -405px; }
+.iconButton-closeFolder { background-position: -108px -405px; }
+.iconButton-prefix      { background-position: -135px -405px; }
+.iconButton-postfix     { background-position: -162px -405px; }
+.iconButton-sort        { background-position: -189px -405px; }
+.iconButton-reverse     { background-position: -216px -405px; }
+.iconButton-script      { background-position: -243px -405px; }
+.iconButton-Idf         { background-position: -270px -405px; }
+.iconButton-addGrp      { background-position: -297px -405px; }
+.iconButton-delGrp      { background-position: -324px -405px; }
+.iconButton-hand        { background-position: -351px -405px; }
+.iconButton-circle      { background-position: -378px -405px; }
+.iconButton-rect        { background-position: -405px -405px; }
 
+/*17 */
+.iconButton-uparrow     { background-position: 0 -432px; }
+.iconButton-downarrow   { background-position: -27px -432px; }
+.iconButton-leftarrow   { background-position: -54px -432px; }
+.iconButton-rightarrow  { background-position: -81px -432px; }
+.iconButton-reName      { background-position: -108px -432px; }
+.iconButton-bake        { background-position: -135px -432px; }
+.iconButton-pack        { background-position: -162px -432px; }
+.iconButton-multiname   { background-position: -189px -432px; }
+.iconButton-thumbnail   { background-position: -216px -432px; }
+.iconButton-seekbar     { background-position: -243px -432px; }
+.iconButton-eye         { background-position: -270px -432px; }
+.iconButton-camera      { background-position: -297px -432px; }
+.iconButton-move        { background-position: -324px -432px; }
+/*
+.iconButton- { background-position: -351px -432px; }
+*/
+.iconButton-ungroup     { background-position: -378px -432px; }
+.iconButton-group       { background-position: -405px -432px; }
+/*18
+.iconButton-    { background-position: 0 -459px; }
+.iconButton-    { background-position: -27px -459px; }
+.iconButton-    { background-position: -54px -459px; }
+.iconButton-    { background-position: -81px -459px; }
+.iconButton-    { background-position: -108px -459px; }
+.iconButton-    { background-position: -135px -459px; }
+.iconButton-    { background-position: -162px -459px; }
+.iconButton-    { background-position: -189px -459px; }
+.iconButton-    { background-position: -216px -459px; }
+.iconButton-    { background-position: -243px -459px; }
+.iconButton-    { background-position: -270px -459px; }
+.iconButton-    { background-position: -297px -459px; }
+.iconButton-    { background-position: -324px -459px; }
+.iconButton-    { background-position: -351px -459px; }
+.iconButton-    { background-position: -378px -459px; }
+.iconButton-    { background-position: -405px -459px; }
+*/
+/*19*/
+.iconButton-checker     { background-position: 0 -486px; }
+.iconButton-cell        { background-position: -27px -486px; }
+.iconButton-separation  { background-position: -54px -486px; }
+.iconButton-traceAll    { background-position: -81px -486px; }
+.iconButton-traceFGC    { background-position: -108px -486px; }
+.iconButton-traceK      { background-position: -135px -486px; }
+.iconButton-tracePPP    { background-position: -162px -486px; }
+.iconButton-paintLayer  { background-position: -189px -486px; }
+.iconButton-thiningLine { background-position: -216px -486px; }
+.iconButton-borderFill  { background-position: -243px -486px; }
+.iconButton-smoother    { background-position: -270px -486px; }
+.iconButton-colorBox    { background-position: -297px -486px; }
+.iconButton-colorInfo   { background-position: -324px -486px; }
+.iconButton-pickupColor  { background-position: -351px -486px; }
+.iconButton-pickupGray   { background-position: -378px -486px; }
+.iconButton-pickupDrawing{ background-position: -405px -486px; }
 
 /*一文字用ボタン*/
 button.oneChr {display:none;}
@@ -969,19 +1023,39 @@ div.optionPanelModal{
 div.optionPanelFloat{
 	display:none;
 }
-/*	タイムシートの罫線
+/*	タイムシートセル罫線
 	タイムシートセルは以下の分類でスタイルを設定している
-	Sep	＝セパレータ
-	lt,nt,dt	秒セパレータ
-	ls,ns,ds　サブセパレータ
-	ln,nn,dn	標準セパレータ
+	Sep	= セパレータ separator
+	l	= left   テーブル左端
+	n	= normal 通常セル
+	d	= dailog ダイアログセル
+	lt,nt,dt	秒	time-separator left|normal|dialog
+	ls,ns,ds	サブセパレータ 	sub-separator
+	ln,nn,dn	標準セパレータ 	normal-separator
 	
+	左端.left-endで
+		border-left-width:1px を追加する
+	通常セルは.sheet-cell
+		border-top-width    :0px;
+		border-right-width  :1px;
+		border-bottom-width :1px;
+		border-left-width   :0px;
+	タイムセパレータ
+		border-bottom-width :3px;
+	サブセパレータ
+		border-bottom-width :2px;
  */
 .Sep {
 	color:gray;
 }
-/*タイムセパレータライン*/
-/*		左端*/
+/*タイムセパレータライン
+	time-separator-left
+	time-separator
+	time-separator-dialog
+ */
+/*		左端
+	height 固定16px は廃止
+*/
 .ltSep,.ltSep_Blank {
 	color:gray;
 	text-align:right;
@@ -998,8 +1072,14 @@ div.optionPanelFloat{
 		border-width:0 1px 3px 0;
 }
 
-/*サブセパレータライン*/
-/*		左端*/
+/*サブセパレータライン
+	sub-separator-left
+	sub-separator
+	sub-separator-dialog
+ */
+/*		左端
+	height 固定16px は廃止
+ */
 .lsSep,.lsSep_Blank {
 	color:gray;
 	text-align:right;
@@ -1069,12 +1149,25 @@ th.editArea ,th.camArea{
 }
 /*	カラムセパレータ	*/
 td.colSep {
+	border-width:0 0 0 0;
 	border-style:none;
 	height:1px;
 	width:11px;
 }
 /*	border-width:1px 1px 1px 1px; */
 /*エンドセパレータ（未使用）*/
+td.sheetMargin-left {
+	height:2px;
+	width:24px;
+}
+.left-top{
+	border-style:none;
+}
+.left-end{
+	border-style:solid;
+	border-width:0 1px 0 0;
+}
+
 /*		左端*/
 .leSep,.leSep_Blank {
 		border-width:0 1px 4px 1px;
