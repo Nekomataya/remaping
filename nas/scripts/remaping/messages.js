@@ -15,6 +15,8 @@ nas.LangPack.ja=[
     ["pMnewdoc","innerHTML","新規書類"],
     ["pMnewdoc","title","新規ドキュメントを作成"],
 
+    ["pMnote","innerHTML","ノート編集"],
+    ["pMnote","title","手書きノート編集"],
 
     ["pMbrowse","innerHTML","書類選択"],
     ["pMbrowse","title","ドキュメントを選択"],
@@ -137,6 +139,12 @@ nas.LangPack.ja=[
     ["pMrenameTL","title","タイムラインの名前変更"],
     ["pMeditTN","innerHTML","タグ編集"],
     ["pMeditTN","title","タイムラインタグ編集"],
+
+    ["pMeditPageImage","innerHTML","ページ画像編集"],
+    ["pMeditPageImage","title","ページ画像を編集"],
+    ["pMnoteImage","innerHTML","ノート画像"],
+    ["pMnoteImage","title","手書きノート画像を挿入・編集"],
+
     ["pMclearTL","innerHTML","一列クリア"],
     ["pMclearTL","title","一列クリア"],
     ["pMclearSheet","innerHTML","シートクリア"],
@@ -190,6 +198,11 @@ nas.LangPack.ja=[
     ["pMbuildActionSheet","innerHTML","アクションシート"],
     ["pMbuildActionSheet","title","原画アクションシートを作成"],
 
+    ["pMprintAct","innerHTML"," --- 印刷"],
+    ["pMprintAct","title","アクションシートを印刷"],
+    ["pMexportActPng","innerHTML"," --- 画像で保存"],
+    ["pMexportActPng","title","アクションシートを画像で保存"],
+
 ["pMstage","innerHTML","工程"],
     ["pMtools","innerHTML","ツール"],
     ["pMabout","innerHTML","りまぴんについて"],
@@ -210,7 +223,7 @@ nas.LangPack.ja=[
     ["pMmanagementMode","innerHTML","[管理モード]"],
     ["pMmanagementMode","title","管理モード切り替え"],
 
-    ["pMeditMode","innerHTML","[表示モード]"],
+    ["pMeditMode","innerHTML","[ページ|スクロール]"],
     ["pMeditMode","title","ページ/スクロール切り替え"],
 
     ["pMcolumns","innerHTML","[段組]"],
@@ -297,6 +310,10 @@ nas.LangPack.ja=[
     ["pMpaste","title","貼り付け"],
     ["pMprintHTML","innerHTML","印刷"],
     ["pMprintHTML","title","タイムシートを印刷"],
+
+    ["pMexportPng","innerHTML","画像で保存"],
+    ["pMexportPng","title","シートをpng画像で保存"],
+
     ["pMredo","innerHTML","Redo[ctr]+[Y]"],
     ["pMredo","title","やり直しのやり直し[ctr]+[Y]"],
     ["pMtransition","innerHTML","トランジション"],
@@ -505,6 +522,8 @@ nas.LangPack.en=[
     ["pMnewdoc","innerHTML","new document"],
     ["pMnewdoc","title","Create a new document"],
 
+    ["pMnote","innerHTML","noteImage"],
+    ["pMnote","title","noteImage edit"],
 
     ["pMbrowse","innerHTML","selector"],
     ["pMbrowse","title","select document"],
@@ -630,6 +649,12 @@ nas.LangPack.en=[
     ["pMrenameTL","title","rename timeline label"],
     ["pMeditTN","innerHTML","edit track tag"],
     ["pMeditTN","title","edit timeline tag"],
+
+    ["pMeditPageImage","innerHTML","pageImage"],
+    ["pMeditPageImage","title","edit page image"],
+    ["pMnoteImage","innerHTML","noteImage"],
+    ["pMnoteImage","title","edit noteImage"],
+
     ["pMclearTL","innerHTML","clearTL"],
     ["pMclearTL","title","clear timeline data"],
     ["pMclearSheet","innerHTML","clear all"],
@@ -682,6 +707,12 @@ nas.LangPack.en=[
     ["pMclearReference","title","clear reference area"],
     ["pMbuildActionSheet","innerHTML","make action-sheet"],
     ["pMbuildActionSheet","title","make old-style Action-sheet"],
+
+    ["pMprintAct","innerHTML"," --- print"],
+    ["pMprintAct","title","print old-style Action-sheet"],
+    ["pMexportActPng","innerHTML"," --- export as PNG"],
+    ["pMexportActPng","title","export old-style Action-sheet as PNG"],
+
     ["pMstage","innerHTML","Stage"],
 
 ["pMtools","innerHTML","Tools"],
@@ -702,8 +733,8 @@ nas.LangPack.en=[
     ["pMmanagementMode","innerHTML","[management mode]"],
     ["pMmanagementMode","title","chamge management mode"],
 
-    ["pMeditMode","innerHTML","[view mode]"],
-    ["pMeditMode","title","change view mode page/scroll"],
+    ["pMeditMode","innerHTML","[page|scroll]"],
+    ["pMeditMode","title","change edit mode page/scroll"],
 
     ["pMcolumns","innerHTML","[columns]"],
     ["pMcolumns","title","doble column"],
@@ -795,6 +826,10 @@ nas.LangPack.en=[
     ["pMpaste","title","paste"],
     ["pMprintHTML","innerHTML","printout"],
     ["pMprintHTML","title","open dialog for printout"],
+
+    ["pMexportPng","innerHTML","exportPNG"],
+    ["pMexportPng","title","export as PNG image"],
+
     ["pMredo","innerHTML","Redo [ctr]+[Y]"],
     ["pMredo","title","redo [ctr]+[Y]"],
     ["pMtransition","innerHTML","transition"],

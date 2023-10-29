@@ -502,12 +502,12 @@ window.addEventListener('DOMContentLoaded', function() {
 switch (myAction){
 case "body":		if(XPS.readIN(xUI.data_well.value)){
 			xUI.init(XPS);nas_Rmp_Init();xUI.sWitchPanel("clear");
-		}else{alert("reading-Body : "+xUI.errorMsg[xUI.errorCode] )}
+		}else{alert("error reading body : ")};
 break;
 case "ref":	var myStream=convertXps(xUI.data_well.value,"",{},true);
 		if(xUI.referenceXPS.readIN(myStream)){
 			nas_Rmp_Init();xUI.sWitchPanel("clear");
-		}else{alert("reading-Ref : "+xUI.errorMsg[xUI.errorCode] )}
+		}else{alert("reading-Ref : ")};
 break;
 }
 		document.getElementById("loadShortcut").value="false";
@@ -539,7 +539,7 @@ break;
 case "ref":
 		if(xUI.referenceXPS.readIN(convertXps(xUI.data_well.value,'',{},true))){
 			nas_Rmp_Init();xUI.sWitchPanel("clear");
-		}else{alert("reading-Ref : "+xUI.errorMsg[xUI.errorCode] )};
+		}else{alert("error reading ref :")};
 break;
 }
 		document.getElementById("loadShortcut").value="false";

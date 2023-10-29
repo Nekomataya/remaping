@@ -1028,14 +1028,15 @@ nas.HTML.addClass = function (element,className){
 ex: nas.HTML.removeClass(document.body,'scroll-lock');
 */
 nas.HTML.removeClass = function (element,className){
+    if(! element) return ;//誤指定のケース分岐
     if(element.classList){
         if(element.classList.contains(className)) element.classList.remove(className);
     }else{
         var classList = (element.className).split(' ');
         var ix = classList.indexOf(className);
         if(ix >= 0) classList.splice(ix,1);
-        element.className = classList.join(' ');        
-    }
+        element.className = classList.join(' ');
+    };
 }
 /**
  * 汎用引数内容テキストを指定のエンコードでファイルとして保存
@@ -1321,4 +1322,235 @@ nas.HTML.miniTextEdit.sendClipboard = function(){
 	);
 */
 //------簡易テキストエディタ 2022 06 21//
+
+/**
+ *	スクロールドラッガブル要素設定
+ *		右クリックを通す
+ *		リリースの際にフットマークを残す
+ *	キャンセルフラグが立っていればスキップ
+ */
+nas.HTML.mousedragscrollable = function mousedragscrollable(element){
+    let target; // 動かす対象
+    $(element).each(function (i, e) {
+        $(e).mousedown(function (event) {
+            if(nas.HTML.mousedragscrollable.movecancel) return true;
+            event.preventDefault();
+            target = $(e); // 動かす対象
+            $(e).data({
+                "down": true,
+                "move": false,
+                "x": event.clientX,
+                "y": event.clientY,
+                "scrollleft": $(e).scrollLeft(),
+                "scrolltop": $(e).scrollTop(),
+            });
+            $(e).css("cursor","grabbing");
+        	$(document).mousemove(function(event){
+xUI.printStatus(nas.HTML.mousedragscrollable.footmark);
+    // list要素内/外でのevent
+        		if ($(target).data("down")) {
+            		event.preventDefault();
+            		let move_x = $(target).data("x") - event.clientX;
+            		let move_y = $(target).data("y") - event.clientY;
+            		if (move_x !== 0 || move_y !== 0) {
+                		$(target).data("move", true);
+            		} else { return; };
+            		$(target).scrollLeft($(target).data("scrollleft") + move_x);
+            		$(target).scrollTop($(target).data("scrolltop") + move_y);
+            		nas.HTML.mousedragscrollable.footmark = true;
+            		return false;
+        		};
+        	});
+            return ((event.button == 2)? true:false);
+        }).mouseup(function(){
+        	$(e).css("cursor","");
+			$(document).unbind("mousemove");
+		}).mouseleave(function(){
+        	$(e).css("cursor","");
+			$(document).unbind("mousemove");
+		});
+    });
+}
+//移動フットマーク
+nas.HTML.mousedragscrollable.footmark  = false;
+//マウスドラグ移動キャンセルフラグ
+nas.HTML.mousedragscrollable.movecancel = false;
+
+//常用クラス設定 以下のコードはドキュメントの読込時に実行のこと
+//nas.HTML.mousedragscrollable('.mousedragscrollable');
+/*
+	Progress表示Textを生成して app_status の内容を更新する
+
+
+nas.HTML.showProgress = function showProgress(value,all,form){
+	var statusText = "<br>";
+	if(value < all) statusText = [value,all].join("/");
+	if((document.getElementById("app_status"))&&(document.getElementById("app_status").innerHTML != statusText))
+		document.getElementById("app_status").innerHTML = statusText;
+	return statusText;
+};// */
+/* TEST
+	nas.HTML.showProgress(15,100,"")
+*/
+/*
+	登録済みのアイコンデータ
+	mime type 一点につき アイコンのURLを１点登録が可能
+	mime type は、nasシステムとして拡張されたtypeStringで
+	先行のディレクトリとして システムで使用するデータリジョンが追加されているケースがある
+	現在のデータリジョンは timesheet のみ
+	application/pdf				一般のpdf
+	timesheet/application/pdf	timesheetリジョンないのpdfデータに与えられる一時的なmime-type
+
+	urlには、iconとして利用される画像のurlが格納される
+	url:"" の エントリはシステムで準備された画像のurlと置換される
+	nas.File.join("template/images/pman-ui",<type-string>)
+*/
+nas.HTML.typeIcons = {
+"application/ard":{type:"application/ard",url:""},
+"application/pdf":{type:"application/pdf",url:""},
+"application/tsh":{type:"application/tsh",url:""},
+"application/ardj":{type:"application/ardj",url:""},
+"application/postscript":{type:"application/postscript",url:""},
+"application/vnd.adobe.aftereffects":{type:"application/vnd.adobe.aftereffects",url:""},
+"application/eps":{type:"application/eps",url:""},
+"application/sts":{type:"application/sts",url:""},
+"application/vnd.audiograph":{type:"application/vnd.audiograph",url:""},
+"application/json":{type:"application/json",url:""},
+"application/tdts":{type:"application/tdts",url:""},
+"application/xdts":{type:"application/xdts",url:""},
+"application/zip":{type:"application/zip",url:""},
+"image/bmp":{type:"image/bmp",url:""},
+"image/gif":{type:"image/gif",url:""},
+"image/jpeg":{type:"image/jpeg",url:""},
+"image/svg+xml":{type:"image/svg+xml",url:""},
+"image/tvpp":{type:"image/tvpp",url:""},
+"image/clip":{type:"image/clip",url:""},
+"image/iff":{type:"image/iff",url:""},
+"image/png":{type:"image/png",url:""},
+"image/tga":{type:"image/tga",url:""},
+"image/vnd.adobe.photoshop":{type:"image/vnd.adobe.photoshop",url:""},
+"image/dga":{type:"image/dga",url:""},
+"image/jp2":{type:"image/jp2",url:""},
+"image/sgi":{type:"image/sgi",url:""},
+"image/tiff":{type:"image/tiff",url:""},
+"image/x-tga":{type:"image/x-tga",url:""},
+"text/csv":{type:"text/csv",url:""},
+"text/plain":{type:"text/plain",url:""},
+"text/stbd":{type:"text/stbd",url:""},
+"text/xmap":{type:"text/xmap",url:""},
+"text/xpst":{type:"text/xpst",url:""},
+"timesheet/json":{type:"timesheet/json",url:""},
+"timesheet/timesheet":{type:"timesheet/timesheet",url:""},
+"timesheet/application/ard":{type:"timesheet/application/ard",url:""},
+"timesheet/application/eps":{type:"timesheet/application/eps",url:""},
+"timesheet/application/postscript":{type:"timesheet/application/postscript",url:""},
+"timesheet/application/tdts":{type:"timesheet/application/tdts",url:""},
+"timesheet/application/xdts":{type:"timesheet/application/xdts",url:""},
+"timesheet/application/ardj":{type:"timesheet/application/ardj",url:""},
+"timesheet/application/pdf":{type:"timesheet/application/pdf",url:""},
+"timesheet/application/sts":{type:"timesheet/application/sts",url:""},
+"timesheet/application/tsh":{type:"timesheet/application/tsh",url:""},
+"timesheet/image/bmp":{type:"timesheet/image/bmp",url:""},
+"timesheet/image/gif":{type:"timesheet/image/gif",url:""},
+"timesheet/image/jpeg":{type:"timesheet/image/jpeg",url:""},
+"timesheet/image/svg+xml":{type:"timesheet/image/svg+xml",url:""},
+"timesheet/image/tvpp":{type:"timesheet/image/tvpp",url:""},
+"timesheet/image/clip":{type:"timesheet/image/clip",url:""},
+"timesheet/image/iff":{type:"timesheet/image/iff",url:""},
+"timesheet/image/png":{type:"timesheet/image/png",url:""},
+"timesheet/image/tga":{type:"timesheet/image/tga",url:""},
+"timesheet/image/vnd.adobe.photoshop":{type:"timesheet/image/vnd.adobe.photoshop",url:""},
+"timesheet/image/dga":{type:"timesheet/image/dga",url:""},
+"timesheet/image/jp2":{type:"timesheet/image/jp2",url:""},
+"timesheet/image/sgi":{type:"timesheet/image/sgi",url:""},
+"timesheet/image/tiff":{type:"timesheet/image/tiff",url:""},
+"timesheet/image/x-tga":{type:"timesheet/image/x-tga",url:""},
+"timesheet/text/csv":{type:"timesheet/text/csv",url:""},
+"timesheet/text/plain":{type:"timesheet/text/plain",url:""},
+"timesheet/text/xpst":{type:"timesheet/text/xpst",url:""},
+"video/movie":{type:"video/movie",url:""},
+"video/mp4":{type:"video/mp4",url:""},
+"video/quicktime":{type:"video/quicktime",url:""},
+"video/x-m4v":{type:"video/x-m4v",url:""},
+};//
+/**
+	@params {}
+	mimetypeを与えてtype別のアイコンurlを返す
+	icon不登録のtype判定を兼ねる?
+	未登録タイプに対して false を返す?
+ */	
+nas.HTML.getTypeIcon = function getTypeIcon(mimetype,asTimesheet){
+	if(! mimetype) mimetype  = "";
+	mimetype = mimetype.replace(/^(timesheet|storyboard|pmdb)\//i,"");
+	if(asTimesheet) mimetype = nas.File.join("timesheet",mimetype);
+console.log(mimetype);
+console.log(nas.HTML.typeIcons[mimetype]);
+	if(nas.HTML.typeIcons[mimetype]){
+//データあり
+		if(nas.HTML.typeIcons[mimetype].url == "" ){
+//ファイルとして存在
+			return nas.File.join("template/images/pman-ui/documenticons",mimetype) + ".png";
+		}else{
+//一時データとして存在
+			return nas.HTML.typeIcons[mimetype].url;
+		}
+	}else{
+//一時データを生成
+		nas.HTML.typeIcons[mimetype] = {
+			type : mimetype,
+			url  : "template/images/pman-ui/documenticons/default.png"
+		};
+		return nas.HTML.typeIcons[mimetype].url;
+/*
+		var baseImg = new Image();
+		baseImg.src = "template/images/pman-ui/documenticons/default.png"
+		return nas.HTML.mkIcon(
+			128,128,
+			mimetype,
+			baseImg,
+			true
+		);//*/
+	};
+}
+nas.HTML.mkIcon = function mkIcon(width,height,mimetype,baseImg,cash){
+	if(typeof width   == 'undefined') width  = 128  ;//px
+	if(typeof height  == 'undefined') height = width;//same as width
+	if(typeof mimetype    == 'undefined') text   = ''   ;//
+	if(typeof baseImg == 'undefined'){
+		var baseImg   = new Image();
+		baseImg.width  = width ;
+		baseImg.height = height;
+	};
+	var icnCanvas =  document.createElement('canvas');
+	icnCanvas.width  = width;
+	icnCanvas.height = height;
+	var context = icnCanvas.getContext('2d');
+	if(baseImg instanceof HTMLImageElement){
+// ベース画像が指定されているならフィットして配置
+		context.drawImage(baseImg, 0, 0, width, height);
+//		if(baseImg.naturalWidth > baseImg.naturalHeight){
+//		}else{
+//		};
+	}else{
+// (角丸?)アイコン背景ボックスを描画
+		context.fillStyle = "#D88";
+		context.fillRect(0, 0, width, height);
+	};
+//テキストがあればハイライト色で描画
+	if(mimetype.length){
+	var text = mimetype.replace(/\.|\-/g,"/").split("/").reverse[0];
+	console.log(text);
+//		contenxt.
+	};
+// toBlob は非同期操作
+	icnCanvas.toBlob(function(blob) {
+		nas.HTML.typeIcons[mimetype] = {
+			type:mimetype,
+			url :URL.createObjectURL(blob)
+		};
+	}, 'image/png');
+	return nas.HTML.typeIcons[mimetype];
+}
+
+/*=======================================*/
 

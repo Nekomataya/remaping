@@ -1251,9 +1251,9 @@ XPS2AEK = function (myXps, layer_id) {
          * ここで、layer_max_lot が 0 であった場合変換すべきデータが無いので処理中断
          */
         if (layer_max_lot == 0) {
-            xUI.errorCode = 4;
+//            xUI.errorCode = 4;
+    console.log("変換すべきデータがありません。\n処理を中断します。");
             return;
-// "変換すべきデータがありません。\n処理を中断します。";
         }
     }
 
@@ -1566,9 +1566,9 @@ XPS2AEK = function (myXps, layer_id) {
 
     Result += '\n';
     Result += 'End of Keyframe Data';
-
+/*
     if (xUI.errorCode) {
         xUI.errorCode = 0
-    }
+    }; // */
     return Result;
 };

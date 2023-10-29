@@ -136,8 +136,12 @@ table.info	{
 	table-layout:fixed;
 }
 table.sheet	{
-		z-index: 1;
-transform: {matrix(1, 0, 0, 1, 0, 0)};
+	table-layout:fixed;
+	margin-top :0px;
+	margin-left:0px;
+	width:240px;
+	z-index: 1;
+	transform: {matrix(1, 0, 0, 1, 0, 0)};
 }
 table.toolbox {	
 	margin:0 0 0 0;

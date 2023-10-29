@@ -1240,7 +1240,7 @@ localRepository.pushEntry=function(myXps,callback,callback2){
         };
     };
 // console.log(myXps)
-//console.log("既存エントリなし :追加処理");
+console.log("既存エントリなし :追加処理");
 //既存エントリが無いので新規エントリを追加
 //設定制限値をオーバーしたら、警告する。　OKならばローカルストレージから最も古いエントリを削除して実行
     try{
@@ -1279,7 +1279,7 @@ localRepository.pushEntry=function(myXps,callback,callback2){
     引数は、Object
     読み出し直後は必ず書き込み禁止のモードとなる
 */
-localRepository.getEntry=function(myIdentifier,isReference,callback){
+localRepository.getEntry=function(myIdentifier,isReference,callback,callback2){
     if(typeof isReference == 'undefined'){isReference = false;}
     //識別子をパース
     var targetInfo = Xps.parseIdentifier(myIdentifier);//根底としてここで解釈に問題が発生している
@@ -1321,12 +1321,17 @@ if(dbg) console.log(decodeURIComponent(myIssue.identifier));
 //識別子を再結合してもキーが得られない場合があるのでエントリから対応キーの引き出しを行う
 
     if(myXpsSource){
-        if(isReference){            
+        if(callback instanceof Function){
+console.log(callback);
+console.log('has callback function');
+            callback(myXpsSource);
+        }else if(isReference){
         //データ単独で現在のセッションのリファレンスを置換
             documentDepot.currentReference = new Xps();
             documentDepot.currentReference.readIN(myXpsSource);
             xUI.resetSheet(undefined,documentDepot.currentReference);
         }else{
+console.log('start session');
         //新規セッションを開始する
             documentDepot.currentDocument = new Xps();
             documentDepot.currentDocument.readIN(myXpsSource);
@@ -1363,9 +1368,20 @@ if(dbg) console.log(decodeURIComponent(myIssue.identifier));
             xUI.sessionRetrace = myEntry.issues.length-cx-1;
             xUI.setUImode('browsing');sync("productStatus");
             xUI.flushUndoBuf();sync('undo');sync('redo');
-            if(callback instanceof Function){setTimeout(callback,10)};
-        }
-    } else { 
+//            if(callback instanceof Function){setTimeout(callback,10)};
+            setTimeout(function(){
+                if(
+                    xUI.currentUser.sameAs(xUI.XPS.update_user)&&
+                    (xUI.XPS.currentStatus.content.match(/(Hold|Active)/))&&
+                    (xUI.sessionRetrace==0)
+                ){
+                    serviceAgent.activateEntry();
+                };
+                sync('historySelector');
+            },10);
+        };
+    }else{
+        if(callback2 instanceof Function) callback2();
         return false;
     }
 }
@@ -1384,7 +1400,7 @@ localRepository.addTitle=function (myTitle,myDescription,myPm,callback,callback2
 //現在ローカルリポジトリ側で行う処理は存在しない コールバックの実行のみを行う
 //タイトルDBが実装された場合はDBにエントリを加える
 console.log(['localRepository.addTitle',myTitle,myDescription,myPm].join(':'));
-　if(callback instanceof Function) callback();
+    if(callback instanceof Function) callback();
     return true;
 }
 /**
@@ -2718,11 +2734,16 @@ if(dbg) console.log(targetURL);
         success: function(result) {
 console.log(result);
 //データ請求に成功したので、現在のデータを判定して処理の必要があれば処理
-        	var myContent=result.data.cut.content;//XPSソーステキストをセット
+        	var myContent = result.data.cut.content;//XPSソーステキストをセット
         	var currentXps = new Xps();
-	        if(myContent){
-	            currentXps.parseXps(myContent);
-	        }else{
+            if(callback instanceof Function){
+//コールバック関数に渡す
+                callback(myContent);
+            }else{
+                if(myContent){
+//処理バッファに反映
+                    currentXps.parseXps(myContent);
+                }else{
 /*
     サーバリザルトにタイムシートの内容が含まれない場合は、登録直後の空白データ
     以下の情報を取得して空のタイムシートをビルドする
@@ -2731,23 +2752,23 @@ console.log(result);
     識別子に含まれるカット番号　あれば　カット尺（ない場合はシステムデフォルト）
 */
 //console.log('contents :'+ myContent);
-	            var myParseData = Xps.parseSCi(result.data.cut.name);
-	            currentXps.cut = myParseData.cut;
-	            currentXps.setDuration(nas.FCT2Frm(String(myParseData.time)));
-	        }
+                    var myParseData = Xps.parseSCi(result.data.cut.name);
+                    currentXps.cut = myParseData.cut;
+                    currentXps.setDuration(nas.FCT2Frm(String(myParseData.time)));
+                };
 //myContent==nullのケースは、サーバに空コンテンツが登録されている場合なので単純にエラー排除してはならない
 //currentXpsのプロパティをリザルトに同期させる
 //エラーではなく初期化時点の初期状態のXpsのままで処理を継続する
             //xUI.userPermissions=result.data.cut.permissions;
 //読み込んだXPSが識別子と異なっていた場合識別子優先で同期する
-	            xUI.resetSheet(currentXps);
-	            var durationChange=xUI.XPS.duration();
+                xUI.resetSheet(currentXps);
+                var durationChange=xUI.XPS.duration();
 //console.log(xUI.XPS);
 //console.log(myIssue.identifier);
 //                xUI.XPS.syncIdentifier(myIssue.identifier,false);
                 xUI.XPS.syncIdentifier(myIssue.identifier,true);
                 durationChange = (durationChange == xUI.XPS.duration())? false:true;
-	            if(myEntry.issues.length>1){
+                if(myEntry.issues.length>1){
                     documentDepot.currentReference = new Xps(5,144);//空オブジェクトをあらかじめ新規作成
                     //自動設定されるリファレンスはあるか？
                     //指定管理部分からissueを特定する 文字列化して比較
@@ -2763,22 +2784,24 @@ console.log(result);
                                 if (parseInt(decodeURIComponent(myEntry.issues[xcx][1]).split(':')[0]) == (parseInt(decodeURIComponent(myIssue[1]).split(':')[0])-1)){
                                     refIssue = myEntry.issues[xcx];
                                     break;
-                                }
-                            }
+                                };
+                            };
                         };//cx==0 のケースでは、デフォルトで参照すべき先行ジョブは無い
-	                }
-	                if(refIssue) serviceAgent.currentRepository.getEntry(refIssue.identifier,true);
-	            }
-	            //xUI.resetSheet(XPS);
+                    };
+                    if(refIssue) serviceAgent.currentRepository.getEntry(refIssue.identifier,true);
+                };
+                //xUI.resetSheet(XPS);
                 xUI.sessionRetrace = myEntry.issues.length-cx-1;
                 xUI.setUImode('browsing');sync("productStatus");
                 xUI.flushUndoBuf();sync('undo');sync('redo');
                 if(durationChange) xUI.resetSheet();
-                if(callback instanceof Function) callback();
+                setTimeout(function(){sync('historySelector');},10);
+//                if(callback instanceof Function) callback();//callbackの扱いを定形処理外のユーザ関数に変更
+            };
         },
         error:function(result){
 if(dbg) console.log(result);
-            if(callback2 instanceof Function) callback2();
+            if(callback2 instanceof Function) callback2(result);
         },
         beforeSend: this.service.setHeader
     });
@@ -4123,8 +4146,8 @@ if(dbg) console.log("noProduct : "+ decodeURIComponent(myIdentifier));//プロ�
         return false;
     }else{
 //pmdbからプロダクトごとのデフォルト値を取得する
-        
-    }
+
+    };
     if(! targetInfo.currentStatus){
    //引数に管理部分がないので、最新のissueとして補う
         var cx = myEntry.issues.length-1;//最新のissue
@@ -4138,19 +4161,19 @@ if(dbg) console.log("noProduct : "+ decodeURIComponent(myIdentifier));//プロ�
                 if ( Xps.compareIdentifier(myEntry.issues[cx].identifier,myIdentifier) > 4){
                     myIssue = myEntry.issues[cx];
                     break checkIssues;
-                }
-            }
+                };
+            };
             if (! myIssue){
 if(dbg) console.log( 'no target data :'+ decodeURIComponent(myIdentifier) );//ターゲットのデータが無い
                 return false;
-            }
-        }
-    }
+            };
+        };
+    };
 //console.log(decodeURIComponent(myEntry.issues[cx].identifier));
-if((! isReference)&&(Xps.compareIdentifier(myEntry.issues[cx].identifier,Xps.getIdentifier(xUI.XPS)) > 3)){
-//console.log(decodeURIComponent(Xps.getIdentifier(xUI.XPS)))
-//console.log('ジョブ一致　ロードスキップ');
-}
+    if((! isReference)&&(Xps.compareIdentifier(myEntry.issues[cx].identifier,Xps.getIdentifier(xUI.XPS)) > 3)){
+console.log(decodeURIComponent(Xps.getIdentifier(xUI.XPS)))
+console.log('ジョブ一致　ロードスキップ');
+    };
 //読み込み前に現在のデータの状態を確認して必要ならば編集状態を解除
 //その後読み込み
 //読込の前にカーソル位置を　1_0　にリセット
@@ -4159,27 +4182,27 @@ if((! isReference)&&(Xps.compareIdentifier(myEntry.issues[cx].identifier,Xps.get
 //console.log("need deactivate");
             if(xUI.edchg) xUI.put(document.getElementById('iNputbOx').value);
             serviceAgent.currentRepository.deactivateEntry(function(){
-            serviceAgent.currentRepository.getEntry(myIdentifier,isReference,callback,callback2)
-            return;
-/*                
+                serviceAgent.currentRepository.getEntry(myIdentifier,isReference,callback,callback2);
+                return;
+/*
                 serviceAgent.currentRepository.getEntry(myIdentifier,isReference,function(){
 //console.log("get ");
                     sync('historySelector');
                     if (callback instanceof Function) callback();
 }
 */
-            },function(){
-//console.log("fail getting ");
-                    if (callback2 instanceof Function) callback2();
-            });
+            },(callback2 instanceof Function)? callback2:function(result){
+//error callback
+            console.log(result);
+        });
     }else{
         xUI.selectCell([1,0]);
-        this.currentRepository.getEntry(myIdentifier,isReference,function(){
-            sync('historySelector');
-            if (callback instanceof Function) callback();
-        },function(){
-//console.log("fail getting ");
-            if (callback2 instanceof Function) callback2();
+//callbackの扱いを定形処理外のユーザ関数に変更
+        this.currentRepository.getEntry(myIdentifier,isReference,
+        (callback instanceof Function)? callback:null,
+        (callback2 instanceof Function)? callback2:function(result){
+//error callback
+            console.log(result);
         });
     }
     if($("#optionPanelFile").is(':visible')) xUI.sWitchPanel('File');
@@ -4681,20 +4704,26 @@ serviceAgent.abortEntry=function(myIdentifier,callback,callback2){
 
 */
 serviceAgent.closeEntry=function(callback,callback2){
-    //ドキュメントがアクティブで変更フラグが立っている場合 holdしてカレントリポジトリにプッシュ
+//ドキュメントがアクティブで変更フラグが立っている場合 holdしてカレントリポジトリにプッシュ
     if((xUI.XPS.currentStatus.content=="Active")&&(! xUI.isStored())){
-    //  成功したらカレントドキュメントをクリアしてロック
+//成功したらカレントドキュメントをクリアしてロック
         serviceAgent.currentRepository.deactivateEntry(function(){
             serviceAgent.closeEntry(callback,callback2);
         },function(){
-                xUI.errorCode=9;
-                if(callback2 instanceof Function) callback2();
+//            xUI.errorCode=9;
+            if(callback2 instanceof Function) callback2();
         });
     }else{
-        xUI.XPS.timesheet
+//新規ブランクシートを作成　
         xUI.resetSheet(
-            new Xps(xUI.sheetLooks.trackSpec),
-            new Xps(xUI.sheetLooks.trackSpec)
+			new Xps(
+				xUI.XPS.sheetLooks,
+				xUI.XPS.sheetLooks.PageLength
+			),
+			new Xps(
+				xUI.XPS.sheetLooks.trackSpec.find(function(e){return(e[0]=='reference')})[1],
+				documentFormat.PageLength
+			)
         );
         xUI.XPS.currentStatus= new JobStatus("Floating");
         xUI.setUImode('floating');    
@@ -4716,7 +4745,7 @@ serviceAgent.floatEntry=function(callback,callback2){
          serviceAgent.currentRepository.deactivateEntry(function(){
             serviceAgent.floatEntry();
         },function(){
-            xUI.errorCode=9;
+//            xUI.errorCode=9;
             if(callback2 instanceof Function) callback2();
         }
         );
@@ -4799,8 +4828,8 @@ serviceAgent.pushEntry=function(myXps,callback,callback2){
 //console.log('serviceAgent.pushEntry');
     if (typeof myXps == 'undefined') myXps = xUI.XPS;
     if((xUI.XPS === myXps)&&(xUI.sessionRetrace > 0)){
-        xUI.errorCode=8;//確定済データを更新することはできません
-        alert(localize(xUI.errorMsg[xUI.errorCode]));
+//        xUI.errorCode=8;//確定済データを更新することはできません
+//        alert(localize(xUI.errorMsg[xUI.errorCode]));
         return false;
     }
     if (!( myXps instanceof Xps)){

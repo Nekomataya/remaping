@@ -669,7 +669,7 @@ dataNode情報を解釈するように拡張されているので
     .mLocked    :{Boolean}  管理ロック状態
     .timestamp  :{Number}   timestamp Int
     .dataNode   :{Object}   serverURL+repositoryIdf
-    .product    :{Object}   
+    .product    :{Object}   title,opus,subtitle
     .sci        :{Array}    カット inherit
     .inherit    :.sci       alias of sci
     .nodes      :{Array}    Array of mNode
@@ -687,6 +687,7 @@ dataNode情報を解釈するように拡張されているので
 
     .asExtra    :{Boolean}  エクストラアセットに対するフラグ
     .uniqekey   :{String}   データごとの識別キー
+
  */
 nas.Pm.parseIdentifier = function(dataIdentifier,template,parent){
     if(! dataIdentifier) return false;
@@ -697,11 +698,12 @@ console.log(dataIdentifier);
     var typeString       = ''        ;
     var managementLocked = false     ;
     var timestamp        = undefined ;
-//typeString(拡張子型4文字固定)分離
+//typeString識別
     if(dataIdentifier.match(/^(.*)\.(....)$/)){
+//拡張子型(4文字固定)分離
         typeString     = RegExp.$2;
         dataIdentifier = RegExp.$1;
-    }
+	};
 //タイムスタンプ分離
     if(dataIdentifier.match(/^(.*)\.(\d+)$/)) {
         timestamp      = parseInt(RegExp.$2);
@@ -977,18 +979,22 @@ nas.Pm.compareIdentifier("35%E5%B0%8F%E9%9A%8A_PC#RBE//04d",'35%E5%B0%8F%E9%9A%8
  *	ABC00_000_000{_000}
  *	のような識別子は、プリプロセッサを通して正規化する
  *
- *	記述ミスによりダブルアンダーバーが失われた
- *	以下のような記述は、推測でアンダーバーを補う
+ *	記述ミスによりダブルアンダーバーが失われた以下のような記述は、推測でアンダーバーを補う
  *
  *	ABC#00_000{_000}*
  *	ABC#00_000_000{_000}
  *
  *  %URIエンコードはデコードされる
+ *  整形済みと思われる識別子は処理スキップして戻す
+ *  識別子末尾のデータタイプトークンは削除？ ＞パーサで判別
  */
 nas.Pm.normalizeIdf = function normalizeIdf(idf){
 	if(!idf) return '';
 	if(idf.match(/\%/)) idf = decodeURIComponent(idf);
 	idf = nas.normalizeStr(String(idf));
+	idf = idf.replace(/\s+/g,'_');//空白をアンダースコア
+	if(idf.match(/^([^0-9\#]+)\#([^\_]+)\_{2}(.+)$/)) return idf;
+	idf = idf.replace(/\_+/g,'_');//連続アンダースコアをひとつに
 	if(
 		(idf.match(/^([^\_\#]+)\_([0-9]+[^\_]*)\_(.+)$/))||
 		(idf.match(/^([^0-9\#]+)([0-9]+[^\_]*)\_(.+)$/))

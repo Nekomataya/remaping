@@ -1208,30 +1208,32 @@ interpSign(chr)
 選択範囲がある場合 範囲が一列ならばそのまま動作対象に
 複数列の場合はフォーカスのある一列に変更して
 その区間にSPIN指定の間隔で補完サインを配置する。基点は選択範囲の最も上のシートセル
+
 */
 interpSign=function(chr){
 	var interpRegex=nas.CellDescription.interpRegex;
 	var myValue = xUI.XPS.xpsTracks[xUI.Select[0]][xUI.Select[1]];
-  if(xUI.Selection.join(",")=="0,0"){
-	if(myValue.match(interpRegex)){
-		var newValue = (chr)? chr:nas.CellDescription.interpolationSigns[
-			((nas.CellDescription.interpolationSigns.indexOf(myValue))+1) % nas.CellDescription.interpolationSigns.length
-		];
-		xUI.put(newValue);
-	}else if(true){
-		xUI.put((chr)?nas_expdList(chr):nas_expdList(nas.CellDescription.interpolationSigns[0]));
-		xUI.spin("down");
+	if(xUI.Selection.join(",")=="0,0"){
+		if(myValue.match(interpRegex)){
+			var newValue = (chr)? chr:nas.CellDescription.interpolationSigns[
+				((nas.CellDescription.interpolationSigns.indexOf(myValue))+1) % nas.CellDescription.interpolationSigns.length
+			];
+			xUI.put(newValue);
+		}else if(true){
+			xUI.put((chr)?nas_expdList(chr):nas_expdList(nas.CellDescription.interpolationSigns[0]));
+			xUI.spin("down");
+		}else{
+			return;
+		}
 	}else{
-		return;
-	}
-  }else{
-	var myRange=xUI.actionRange();
-	var currentColumn=xUI.Select[0];//現在のカラム
-	xUI.selectCell([currentColumn,myRange[0][1]]);
-	xUI.selection([currentColumn,myRange[1][1]]);
-	xUI.put(nas_expdList((chr)?"/"+chr+"/":"/-/"));
-	xUI.selectCell([currentColumn,myRange[1][1]+1]);
-  }
+		var myRange=xUI.actionRange();
+		var currentColumn=xUI.Select[0];//現在のカラム
+		xUI.selectCell([currentColumn,myRange[0][1]]);
+		xUI.selection([currentColumn,myRange[1][1]]);
+//		xUI.put(nas_expdList((chr)?"/"+chr+"/":"/-/"));
+		xUI.put(nas_expdList((chr)?"/"+chr+"/":"/○/"));
+		xUI.selectCell([currentColumn,myRange[1][1]+1]);
+	};
 }
 /*addCircle(キーワード)
  *	@params {String} keyword
@@ -1589,6 +1591,30 @@ var iptFilter = function(cell,targetTrack,mode,exch){
 /*TEST
 	iptFilert(["1","2","3",4,5])
 */
+/**
+	@params   {String} mode
+	@returns  {String}
+	表示モードを変更する
+	引数は変更するモード Page|WordProp|Scroll|Compact 
+	現在の表示モード変数を戻す xUI.viewMode
+ */
+changeViewMode = function chamgeViewMode(mode){
+	if(String(mode).match(/scroll|compact/i)){mode = 'Compact';}else{mode = 'wordProp';};
+	if(xUI.viewMode == mode) return xUI.viewMode;
+	if((mode == 'Compact')&&(xUI.setAppearance() > 0)){
+		xUI.setAppearance(0,false);
+//設定UIをロック
+        document.getElementById('ImgAppearance').disabled = true;
+        document.getElementById('ImgAppearanceSlider').disabled = true;
+   	}else{
+		xUI.setAppearance(undefined,false);
+//設定UIをアンロック
+        document.getElementById('ImgAppearance').disabled = false;
+        document.getElementById('ImgAppearanceSlider').disabled = false;
+	};
+	xUI.viewMode = mode;xUI.resetSheet();sync('docImgAppearance');
+	return xUI.viewMode
+}
 /*
 	このファイルの関数は基本的にはxUIまたはXPSのメソッドなので
 	デバグ終了後には必要に応じてラッパ関数を残してふさわしい位置へ移動すること。

@@ -8,10 +8,12 @@
 <link rel="shortcut icon" href="/remaping/icons/favicon.ico">
 
 
-
 <link href="/remaping/template/remaping_.css" type="text/css" rel=stylesheet media="screen,tv">
-<link href="/remaping/template/printout.css" type="text/css" rel=stylesheet media="print">
+<link href="/remaping/template/printout.css"  type="text/css" rel=stylesheet media="print">
+<link href="/remaping/nas/lib/nas_common_HTML.css"    type="text/css" rel=stylesheet media="screen,tv">
 <link href="/remaping/template/jquery-ui.css" type="text/css" rel="stylesheet">
+
+
 
 <link href="https://fonts.googleapis.com/css?family=M+PLUS+1p:700&display=swap" rel="stylesheet">
 <!-- AIR関連のファイルをリポジトリから削除 -->
@@ -20,11 +22,11 @@
 <script src=/remaping/lib/jquery-ui.js></script>
 <script src=/remaping/lib/ecl/ecl.js></script>
 <script src=/remaping/lib/csv/csvsimple.js></script>
-<script src=./nas/ext-lib/psd.js/dist/psd.min.js></script>
-<script src=./nas/ext-lib/tga-js/dist/umd/tga.js></script>
+<script src=/remaping/nas/ext-lib/psd.js/dist/psd.min.js></script>
+<script src=/remaping/nas/ext-lib/tga-js/dist/umd/tga.js></script>
 <script src=/remaping/nas/ext-lib/html2canvas.min.js></script>
 <!-- fabric.js  -->
-<script src=./nas/ext-lib/fabric.js/dist/fabric.min.js ></script>
+<script src=/remaping/nas/ext-lib/fabric.js/dist/fabric.min.js ></script>
 
 <script src=/remaping/nas/ext-lib/crc32.js></script>
 <script src=/remaping/nas/ext-lib/png-metadata.js></script>
@@ -83,7 +85,8 @@
        <script src=/remaping/pmdb/configPMDB.js></script>
 <script src=/remaping/nas/scripts/remaping/remaping.js></script>
 <script src=/remaping/nas/scripts/remaping/documentFormat.js></script>
-<!-- 下　remaping.js　にマージ予定　-->
+<script src=/remaping/nas/scripts/remaping/canvasaddon.js></script>
+<!--  下　remaping.js　にマージ予定　-->
 <script src=/remaping/nas/scripts/remaping/utils.js></script>
 
 
@@ -119,12 +122,15 @@
 	onbeforeunload = "return nas_Rmp_reStart();"
 	onContextMenu  = "return false;"
 	onSelectStart  = "return false;"
+
+>
+<!--
+	class = 'mousedragscrollable'
 	onScroll       = "xUI.onScroll();"
     onKeydown      = "return xUI.keyDown(event);"
-    onKeyup        = "return xUI.keyUp(event);"
-	onMouseDown    = "return xUI.flipContextMenu(event);"
->
-<!--	onKeyDown='if(document.getElementById("iNputbOx")!==document.activeElement){document.getElementById("iNputbOx").focus();};xUI.keyDwon(event)' -->
+    onKeyup        = "return xUI.keyUp(event);"	onMouseDown    = "return xUI.flipContextMenu(event);"
+	onKeyDown='if(document.getElementById("iNputbOx")!==document.activeElement){document.getElementById("iNputbOx").focus();};xUI.keyDwon(event)'
+	 -->
 <div id=overlayHeadline >
 <div class=fixedHeadline id=UIheader>
 <!-- qdr3 -->
@@ -177,11 +183,11 @@
 >カット</a></li>
 <hr>
 -->
-<li id=pMbrowseMenu><span id=pMbrowse-d class='pM pM-alt'>書類選択</span><A	id=pMbrowse
+<li id=pMbrowseMenu><span id=pMbrowse-d class='pM pM-alt'>書類選択==</span><A	id=pMbrowse
 	href = 'javascript:void(0)'
 	onclick = 'xUI.sWitchPanel("File");return false;//myScenePref.open();document.getElementById("scnNewSheet").checked=true;return false;'
 	title="ドキュメントを選択"
->書類選択</A></li><hr>
+>書類選択==</A></li><hr>
 
 <li><span id=pMnewdoc-d class='pM pM-alt'>新規書類</span><A id=pMnewdoc
 	href = 'javascript:void(0)'
@@ -424,6 +430,17 @@ serviceAgent.pushEntry(xUI.XPS,function(){xUI.setStored("current");sync();
 	onclick='chkValue("paste");return false;'
 	title=""
 >Paste [ctr]-[v]</A></li>
+
+<li><hr><span id=pMeditPageImage-d class='pM pM-alt'></span><A	id=pMeditPageImage
+	HREF='javascript:void(0);'
+	onclick='console.log(this.id);return false;'
+	title="ページ画像を編集"
+>ページ画像編集</A></li>
+<li><span id=pMnoteImage-d class='pM pM-alt'></span><A	id=pMnoteImage
+	HREF='javascript:void(0);'
+	onclick='console.log(this.id);return false;'
+	title="ノート画像を挿入・編集"
+>ノート画像編集</A></li>
 
 <li><hr><span id=pMrenameTL-d class='pM pM-alt'></span><A	id=pMrenameTL
 	HREF='javascript:void(0);'
@@ -1088,6 +1105,11 @@ serviceAgent.pushEntry(xUI.XPS,function(){xUI.setStored("current");sync();
     class='iconButton iconButton-move'
     onClick='xUI.sWitchPanel("ImgAdjust");'
     title='ドキュメント画像調整'
+ ></button><button
+	id=ibMipaint
+    class='iconButton iconButton-trace'
+    onClick='xUI.sWitchPanel("Paint");'
+    title='画像編集パネル'
  ></button>
 
 </span>
@@ -1632,7 +1654,7 @@ class=optionPanel id=optionPanelProductManagement
 --> 
 	<!-- スピン -->
 	<!-- スピン設定 -->
-    <label class="switch__label">
+    <label class="switch__label" title="範囲設定をスピン量と連動">
         <input type="checkbox" class="switch__input"
         	id='spinCk'
 			onChange="chkValue(this.id);"
@@ -1641,12 +1663,51 @@ class=optionPanel id=optionPanelProductManagement
         <span id="spinSlider" class="switch__slider">連動</span>
     </label>
 	<!-- 入力モード -->
-    <label class="switch__label">
+    <label class="switch__label" title="入力フィルタ切替(なし|動画|原画)">
 		<input id ='iptChange' type="range"  min="0" max="2" value="0" onChange="chkValue(this.id);">
 		<span id="iptSlider" class="switch__slider_tryval" ></span>
     </label>
-
-
+<span id=screenZoom>
+    <div style="display:inline-block;position:rerative;vertical-align:middle; margin-left:28px;transform:translate(0,0);">
+ZOOM:
+    <label for='pageZoom' >
+        <input
+			name=ovl_O
+			id=pageZoom
+			class=spinCtl
+			value='100'
+			onMousedown="nas.sliderVALUE([event,this.id,'400','0','0',50,'y','25']);"
+			onchange='var scale = (parseInt(this.value)/100);xUI.adjustScale(scale);'
+			title=""
+			data-i18n='[title]ovl_o_description'
+		><button
+			name=zoomSlider
+			id=zoomSlider
+			class="spinCtl spinCtl-right"
+			onclick='if(document.getElementById("pageZoomSlider").style.display!="none"){document.getElementById("pageZoomSlider").style.display ="none";this.innerHTML="▼";}else{document.getElementById("pageZoomSlider").style.display ="inline";this.innerHTML="▲";};'
+		>▼</button>
+        <input
+        	type ='range'
+        	id   ='pageZoomSlider'
+        	name ='pageZoomSlider'
+        	list = 'zoom_values'
+        	min  = 25
+        	max  = 200
+			style='display:none;position:absolute;top:24px;left:0px;'
+            onchange='document.getElementById("pageZoom").value=this.value;document.getElementById("pageZoom").onchange();'
+        >
+        <datalist id='zoom_values'>
+			<option value="25"  ></option>
+			<option value="50"  ></option>
+			<option value="75" ></option>
+			<option value="100" ></option>
+			<option value="150" ></option>
+			<option value="200" ></option>
+		</datalist>
+    </label>
+    </div>
+<!--    </span>-->
+</span>
 	<!-- 画像スイッチ -->
 <span id=docImgAppearance>
 <!--
@@ -1682,7 +1743,7 @@ class=optionPanel id=optionPanelProductManagement
     </label>
     </span>
 -->
-    <div style="display:inline-block;position:rerative;vertical-align:middle; margin-left:28px;">
+    <div style="display:inline-block;position:rerative;vertical-align:middle; margin-left:28px;transform:translate(0,0);">
 画像表示:
     <label for='ImgAppearance' >
         <input
@@ -1691,7 +1752,7 @@ class=optionPanel id=optionPanelProductManagement
 			class=spinCtl
 			value='50%'
 			onMousedown="nas.sliderVALUE([event,this.id,'100','0','0',50,'y','25']);"
-			onchange='xUI.setAppearance(parseInt(this.value)/100);'
+			onchange='xUI.setAppearance(parseInt(this.value)/100,true);'
 			title="不透明度"
 			data-i18n='[title]ovl_o_description'
 		><button
@@ -1700,13 +1761,24 @@ class=optionPanel id=optionPanelProductManagement
 			class="spinCtl spinCtl-right"
 			onclick='if(document.getElementById("ImgAppearanceSlider").style.display!="none"){document.getElementById("ImgAppearanceSlider").style.display ="none";this.innerHTML="▼";}else{document.getElementById("ImgAppearanceSlider").style.display ="inline";this.innerHTML="▲";};'
 		>▼</button>
-        <input type=range id='ImgAppearanceSlider' min=0 max=100 value=0 step=25
-			style='display:none;position:relative;top:24px;left:-128px;'
+        <input
+        	type ='range'
+        	id   ='ImgAppearanceSlider'
+        	name ='ImgAppearanceSlider'
+        	list = 'appearance_values'
+			style='display:none;position:absolute;top:24px;left:0px;'
             onchange='document.getElementById("ImgAppearance").value=this.value;document.getElementById("ImgAppearance").onchange();'
         >
+        <datalist id='appearance_values'>
+			<option value="0"  ></option>
+			<option value="1"  ></option>
+			<option value="25" ></option>
+			<option value="50" ></option>
+			<option value="75" ></option>
+			<option value="100"></option>
+		</datalist>
     </label>
     </div>
-<!--    </span>-->
 </span>
 <!--
         <input type="text" class="switch__input"
@@ -1729,10 +1801,10 @@ disabled
 	id=iNputbOx
 	class=iNputbOx
 	type=text
-	onKeyPress="return xUI.keyPress(event);"
 	title="シートにデータを入力します。"
 > </span>
 <!--
+	onKeyPress="return xUI.keyPress(event);"
 	onKeyUp   ="return xUI.keyUp(event);"
 	onKeyDown ="return xUI.keyDown(event);"
 	onBlur='xUI.put(this.value);'
@@ -1840,7 +1912,7 @@ disabled
 	name
      </th>
 </tr>
-<tr onDblClick ="return rewriteValueByEvt(event)" >
+<tr onDblClick ="return rewriteValueByEvt(event)" style='height:24px;font-size:18px;'>
 <!--<td rowspan=2>
 Jobセレクタの動作をもうすこしインテリジェントに変更
 編集時はリファレンスエリアの書き換え
@@ -1891,6 +1963,12 @@ Jobセレクタの動作をもうすこしインテリジェントに変更
 <!-- ドキュメントメニュー　範囲外（常時）　-->
 
     <ul class='cMonHeadline'>
+<li id=cMnoteMenu><span id=cMnote-d class='cM cM-alt'>ノート編集</span><A	id=cMnote
+	href = 'javascript:void(0)'
+	onclick = 'alert(this.id);return false;'
+	title="手書き編集"
+>ノート編集</A></li><hr>
+
 <li id=cMbrowseMenu><span id=cMbrowse-d class='cM cM-alt'>書類選択</span><A	id=cMbrowse
 	href = 'javascript:void(0)'
 	onclick = 'xUI.sWitchPanel("File");return false;//myScenePref.open();document.getElementById("scnNewSheet").checked=true;return false;'
@@ -2054,7 +2132,7 @@ serviceAgent.pushEntry(xUI.XPS,function(){xUI.setStored("current");sync();
 	onclick='printHTML("print");return false;'
 	title="印刷"
 >Print HTML</A></li>
-<li id=cMcgi><span id=cMexportPNG-d class='cM cM-alt'>Export PNG</span><A	id=cMexportPNG
+<li id=cMcgi><span id=cMexportPng-d class='cM cM-alt'>Export PNG</span><A	id=cMexportPng
 	href='javascript:void(0)'
 	onclick='printHTML("png");return false;'
 	title="PNG画像で保存"
@@ -2065,12 +2143,12 @@ serviceAgent.pushEntry(xUI.XPS,function(){xUI.setStored("current");sync();
 	onclick='buildActionSheet("print","action");'
 	title="原画アクションシートを作成"
 >原画アクションシート</A></li>
-<li id=cMcgi><span id=cMprintActionHTML-d class='cM cM-alt'>Print html</span><A	id=cMprintActionHTML
+<li id=cMcgi><span id=cMprintAct-d class='cM cM-alt'>Print html</span><A	id=cMprintAct
 	href='javascript:void(0)'
 	onclick='printHTML("print","action");return false;'
 	title="アクションシートを印刷"
 > --- 印刷</A></li>
-<li id=cMcgi><span id=cMexportActionPNG-d class='cM cM-alt'>Export PNG</span><A	id=cMexportActionPNG
+<li id=cMcgi><span id=cMexportActPng-d class='cM cM-alt'>Export PNG</span><A	id=cMexportActPng
 	href='javascript:void(0)'
 	onclick='printHTML("png","action");return false;'
 	title="アクションシートをPNG画像で保存"
@@ -2271,6 +2349,18 @@ serviceAgent.pushEntry(xUI.XPS,function(){xUI.setStored("current");sync();
     </ul> 
 <!--        reformat     onTrack onTiming -->
     <ul class='cMonTrack onTiming'>
+
+<li><span id=cMeditPageImage-d class='cM cM-alt'>ページ画像編集</span><A	id=cMeditPageImage
+	HREF='javascript:void(0);'
+	onclick='alert(this.id);return false;'
+	title="ページ画像を編集"
+>ページ画像編集</A></li>
+<li><span id=cMnoteImage-d class='cM cM-alt'>ノート画像挿入・編集</span><A	id=cMnoteImage
+	HREF='javascript:void(0);'
+	onclick='alert(this.id);return false;'
+	title="手書きメモ追加・編集"
+>ノート画像挿入・編集</A></li><hr>
+
 <li><span id=cMaddCircle-d class='cM cM-alt'>◯かこみ</span><A	id=cMaddCircle
 	HREF='javascript:void(0);'
 	onclick='addCircle("circle");return false;'
@@ -2892,7 +2982,7 @@ onclick='nas.incrFCTonHTMLInput(document.getElementById("editTC"),"-(1)")'
 	</th><td colspan=2>
 	<input	type=text
 		id=scnTitle
-		style="width:100%"
+		style="width:95%"
 		value="" 
 		autoComplete= "on"
 		list ="scnTitleList"
@@ -2906,7 +2996,7 @@ onclick='nas.incrFCTonHTMLInput(document.getElementById("editTC"),"-(1)")'
 	</th><td colspan=2>
 		<input	type=text
 			id=scnOpus
-			style="width:100%"
+			style="width:95%"
 			value=""
 			autoComplete= "on"
 			list ="scnOpusList"
@@ -2920,7 +3010,7 @@ onclick='nas.incrFCTonHTMLInput(document.getElementById("editTC"),"-(1)")'
 	</th><td colspan=2>
 	<input type=text
 		id=scnSubtitle
-		style="width:100%"
+		style="width:95%"
 		value=""
 		onChange="myScenePref.reWrite(this.id)"
 	/>
@@ -2929,16 +3019,16 @@ onclick='nas.incrFCTonHTMLInput(document.getElementById("editTC"),"-(1)")'
 </tr><tr>
 	<th>	S - C
 	</th><td>
-		<input	type=text
+		S <input	type=text
 			id=scnScene
-			style="width:100%"
+			style="width:80%"
 			value="---"
 			onChange="myScenePref.rewrite(this.id)"
 		/>
 	</td><td>
-		<input	type=text
+		- C <input	type=text
 			id=scnCut
-			style="width:100%"
+			style="width:80%"
 			value="---"
 			onChange="myScenePref.rewrite(this.id)"
 	/>
@@ -3004,11 +3094,27 @@ onclick='nas.incrFCTonHTMLInput(document.getElementById("editTC"),"-(1)")'
 	</td><td id=scnUpdate_userTD >  ユーザ(編集不可)
 	</td>
 </tr><tr>
+<!--
 	<th  colspan=3>	memo:<br />
 		<textarea id=scnMemo rows=4 style="width:100%" onChange="myScenePref.rewrite(this.id)">
 ---
 		</textarea>
 	</th>
+</tr><tr>-->
+	<th>	format/書式
+	</th><td colspan=2 nowrap>
+		<select
+			id=scnFormatList
+			value=''
+			style ='text-align:center;width:95%;'
+			onChange="myScenePref.scnFormatList(this.value)"
+			title = 'プリセットからフォーマットを選択してください'
+		><select>
+	</td>
+</tr><tr>
+	<td colspan=3 nowrap style="overflow:hidden;width:320px;height:240px;">
+		<img id=scnFormPreview src=/remaping/documentFormat/timesheet/default.png width=256px>
+	<td>
 </tr><tr>
 	<th>	tracks
 	</th><td colspan=2 nowrap>
@@ -3242,11 +3348,12 @@ TIME:(<input type=text style="width:64px" value='##+##'>)
 </button></span><br>
 <hr></div>
 <!-- 時間編集UI -->
-<!--	ファイルブラウザ	-->
+<!-- リポジトリエントリブラウザ optionPanelFile-->
 <div class=optionPanelModal id=optionPanelFile >
 <!-- りまぴん(新) ファイルブラウザインターフェース -->
 <!-- タイトル、カット等の新規作成（登録）UI-->
-<div style="text-align:right;">
+<div>
+<span class=labelMargin > product : </span> 
 <input type=text
 	class = ddpInput
     id = titleInput
@@ -3261,31 +3368,24 @@ TIME:(<input type=text style="width:64px" value='##+##'>)
 	disabled=true
     value='(*--opus--*)'
 	onChange="documentDepot.currentSelection=documentDepot.buildIdentifier();"
-><input type=text
+><br>
+<span class=labelMargin > </span>
+<input type=text
 	class = ddpInput
     id = subtitleInput
     size=42
 	disabled=true
     value='(*--subtitle--*)'
 	onChange="documentDepot.currentSelection=documentDepot.buildIdentifier();"
-><br>
-<!--    issueSelector   -->
-<select
-	id=issueSelector
-	class=issueSelector
-	disabled=true
-	onChange="documentDepot.currentSelection=documentDepot.buildIdentifier(true);"
-	title='過去のバージョン'
->
-	<option value=-1>#:---line//#:---stage//#:---job//(status)</option>
-</select>
-<!--    issueSelector   -->
+><hr>
+<span class=labelMargin > s - c : </span> 
+<!--    SCENE-CUT    -->
 <input	type=text
 	class = "ddpInput sciInput"
 	name=fileTest
 	id=cutInput
-	size=32
-	value='(*--c#--*)'
+	size=64
+	value='(*-- s-c# --*)'
 	disabled=true
 	onChange="documentDepot.currentSelection=documentDepot.buildIdentifier();"
 >(<input	type=text
@@ -3297,37 +3397,24 @@ TIME:(<input type=text style="width:64px" value='##+##'>)
 	disabled=true
 	onChange="documentDepot.currentSelection=documentDepot.buildIdentifier();"
 >)
-<!--
-<span class='subControl_TC' ><button
-    class='subControl subControl-incrS subControl-left-top'
-    onClick='xUI.tcControl("timeInput",3,nas.FRATE);return false;'
+<!--    SCENE-CUT//  -->
+<br>
+<span class=labelMargin > issue : </span> 
+<!--    issueSelector   -->
+<select
+	id=issueSelector
+	class=issueSelector
+	disabled=true
+	onChange="documentDepot.currentSelection=documentDepot.buildIdentifier(true);"
+	title='過去のバージョン'
 >
-</button><button
-    class='subControl subControl-decrS subControl-left-bottom'
-    onClick='xUI.tcControl("timeInput",3,-nas.FRATE);return false;'
->
-</button><button
-    class='subControl subControl-incr6 subControl-mid-top'
-    onClick='xUI.tcControl("timeInput",3,6);return false;'
->
-</button><button
-    class='subControl subControl-decr6 subControl-mid-bottom'
-    onClick='xUI.tcControl("timeInput",3,-6);return false;'
->
-</button><button
-    class='subControl subControl-incr subControl-right-top'
-    onClick='xUI.tcControl("timeInput",3,1);return false;'
->
-</button><button
-    class='subControl subControl-decr subControl-right-bottom'
-    onClick='xUI.tcControl("timeInput",3,-1);return false;'
->
-</button></span> -->
+	<option value=-1>#:---line//#:---stage//#:---job//(status)</option>
+</select>
+<!--    issueSelector// -->
 </div>
 
-
- 
 <div id=current_identifier></div>
+
 <div id='ddp_assignment' style='text-align:left;'>
 <!--
 <button
@@ -3351,7 +3438,7 @@ HTML（画像を使用可能）か？<br>
 <hr>
 </span>
 <!-- メニューバー と ロゴ -->
-<!-- for management -->
+<!--  for management  -->
 <div id=ddp-man class='documentPanelTools documentPanelTools-man' >
 
 <div id=localMultiLoader class='debug'><form id="multiLoader" name="multiLoader" method="post" action="javascript:void(0);" enctype="multipart/form-data">
@@ -3412,7 +3499,7 @@ HTML（画像を使用可能）か？<br>
  disabled=true
 >参照</button><button
  id='ddp-readout'
- onClick='console.log("read :" + decodeURIComponent(documentDepot.currentSelection));serviceAgent.getEntry(documentDepot.currentSelection,false,function(){console.log(xUI.XPS);if(xUI.currentUser.sameAs(xUI.XPS.update_user)&&(xUI.XPS.currentStatus.content.match(/(Hold|Active)/))&&(xUI.sessionRetrace==0)){serviceAgent.activateEntry();}});'
+ onClick='console.log("read :" + decodeURIComponent(documentDepot.currentSelection));serviceAgent.getEntry(documentDepot.currentSelection,false,null,null,function(){console.log(xUI.XPS);if(xUI.currentUser.sameAs(xUI.XPS.update_user)&&(xUI.XPS.currentStatus.content.match(/(Hold|Active)/))&&(xUI.sessionRetrace==0)){serviceAgent.activateEntry();};});'
  class='documentPanelButton'
  title="読出 readout"
  disabled=true
@@ -3529,8 +3616,15 @@ onclick='documentDepot.updateDocumentSelector(new RegExp("3[0-9][0-9][^0-9]*$"))
 <button onClick='console.log(serviceAgent.currentRepository.productsData)'>productsData</button>
 <button onClick='console.log(serviceAgent.currentRepository.entryList)'>entryList</button>
 -->
+<br>
+	<div><hr>
+	<button onclick="serviceAgent.currentRepository.getEntry(documentDepot.currentSelection,null,function(result){document.getElementById('dbgPreview').value += result;});">dump</button>
+	<button onclick="document.getElementById('dbgPreview').value = '';">clear</button>
+	<br>
+	<textarea id=dbgPreview ></textarea>
+	</div>
 </div>
-<!--	ファイルブラウザ試験中	-->
+<!-- リポジトリエントリブラウザ optionPanelFile // -->
 <!-- 新規登録ダイアログ -->
 <div class=optionPanelModal id=optionPanelNewEntry>
 	<span>TITLE-Selector</span>
@@ -3667,7 +3761,7 @@ id=prefDfY VALUE="---" onChange="myPref.chgdfSIZE(this.id)">:<input type=text
 				<a id=prefLbColums href="javascript:" onClick='return myPref.chg("prefPageCol")'>1ページ2列</a>:<INPUT
 					TYPE=CheckBox NAME=PageCol id=prefPageCol checked><br />
 				<a id=prefLbDiff href="javascript:" onClick='return myPref.chg("prefFootMark")'> 差分表示機能</a>:<INPUT
-					TYPE=CheckBox NAME=footMark id=prefFootMark checked><br />
+					TYPE=CheckBox NAME=	Mark id=prefFootMark checked><br />
 
 				</TD>
 				<TD ALIGN=right NOWRAP><span id=prefLbFCT >カウンタのタイプ</span><br />
@@ -3919,7 +4013,7 @@ debug console
 >
 
 <tr>
-	<th id=tBtrackID>レベル</th>
+	<th id=tBtrackID>トラック</th>
 	<th id=tBtrackEL>セル</th>
 	<th id=tBitems>よく使う文字</th>
 	<td colspan=3>
@@ -4472,15 +4566,19 @@ duration :
 </div></div>
 <!--	手描きメモ編集UI	-->
 
-<!-- 参照用オーバーレイ画像ビュアウインドウ optionPanelRef -->
+<!-- 参照用オーバーレイ画像ビュアウインドウ optionPanelRef 
+ 本来の参照用　任意画像表示オーバーレイとして使用
+-->
 <div class='optionPanelFloat' id =optionPanelRef style='resize:both;'>
 <dl>
 <dt style="background-color:#888888;"><span id=ovlPnl >画像</span><a href="" class=minimize ><img src=/remaping/images/ui/minimize.png alt="＿"></a><a href="" class=close ><img src=/remaping/images/ui/close.png alt="×"></a></dt>
 <dt style="background-color:#aaaaaa;">[+][-][100%] [URL]  　[-----◆---------]</dt></dl>
 <div class=imageOverlay style='width:100%;height:100%;'>
-    <iframe id ='referencePanelWindow' src="../remaping.js/sheetLooksEditor.html" title="iframe example" width="640" height="1280" style='width:100%;height:100%;opcity:1.0'>
+
+<!--    <iframe id ='referencePanelWindow' src="./sheetLooksEditor.html" title="iframe example" width="640" height="1280" style='width:100%;height:100%;opcity:1.0'>
   <p>Your browser does not support iframes.</p>
-    </iframe></div>
+    </iframe> -->
+</div>
 <!--    <img src=/remaping/images/ui/cornerTip.png id=RefPanelCorner class=panelCorner> -->
 </div>
 <!-- 参照用オーバーレイ画像ビュアウインドウ optionPanelRef > optionPanelRef-->
@@ -4537,20 +4635,29 @@ duration :
 		</button>
 </div>
 
-<div id=orderPropHeader class='order_prop_header'>	タイムシート用紙を設定します。詳しくはこちら </div>
+<div id=orderPropHeader>
+	<span class=doc_form_label > form select : </span>
+		<select id=docFormatSelect
+			style ='text-align:center;width:240px;'
+			onchange ='documentFormat.checkUIValue(event);'
+			title = '書類形式を選択します'
+		></select> 
+	<span style='white-space:nowrap;'> タイムシート用紙を設定します。詳しくは<a href="https://docs.google.com/document/d/1hOkPcxLVa15zLpegpgMyX0tW80ZLnJ-0rJfiKrpd3dM/edit?usp=drive_link" target='_new'>こちら</a> </span>
+</div>
 <hr>
 <div id=docFormatDetail>
-	<span> format : <input
-		type = text
-		id=docFormatName
-		value=''
-		autocomplete = on
-		list  = format_list
-		size  = 32
-		style ='text-align:center;'
-		onchange ='documentFormat.checkUIValue(event);'
-		title = '任意の名前をつけるか、またはプリセットからフォーマットを選択してください'
-	> 
+	<span>
+	<span class=doc_form_label > format name : </span>
+		<input
+			type = text
+			id=docFormatName
+			value=''
+			autocomplete = on
+			size  = 32
+			style ='text-align:center;'
+			onchange ='documentFormat.checkUIValue(event);'
+			title = '任意の名前に変更できます'
+		>
 	<datalist id=format_list >
 		<option value ="横浜アニメーションラボ" label='format_list_YAL'>
 		<option value =東映動画 >
@@ -4563,11 +4670,57 @@ duration :
 		
 	</datalist>
 	</span> |
-	<span> 解像度 <input type = text id=docResolution value='300' size = 6 style='text-align:center;' onchange='documentFormat.checkUIValue(event);'> ppi </span> |
 	<span> <input type = text id=docPageLength value='6' size = 6 style='text-align:center;' onchange='documentFormat.checkUIValue(event);'> 秒 / ページ </span> |
 	<span> <input type = text id=docFrameRate value='24' size = 6 style='text-align:center;' onchange='documentFormat.checkUIValue(event);'> fps </span> |
 	<span> <label for=docColumn>二段組 </label><input type = checkbox id=docColumn checked =true onchange='documentFormat.checkUIValue(event);'></span>
 <hr> 
+	<span>
+	<span class=doc_form_label > template : </span><input type=file id='docFormatTemplateImageFile' style ='display:none;' accept=".jpeg,.webp,.png,.gif,.psd,.tga,image/png,image/webp,image/gif,image/jpeg,image/vnd.adobe.photoshop,image/x-tga" onchange ='documentFormat.checkUIValue(event);'>
+<input
+		type  = text
+		id    = docFormatTemplateImage
+		value = ''
+		size  = 48
+		style ='text-align:center;'
+		onchange ='documentFormat.checkUIValue(event);'
+		title = 'urlを入力するかまたはファイルをドラグしてください'
+	> </span>|
+	<span>
+	<span class=doc_form_label > template解像度 : </span><input type = text id=docResolution value='300' size = 6 style='text-align:center;' onchange='documentFormat.checkUIValue(event);' title='自動で設定されます間違っていた場合は入力してください'> ppi </span>
+<hr>
+<table class='sheet' cellspacing='0' style='margin:0px;'><tbody>
+
+<tr class='thlead'><td class="sheetMargin-left left-top"></td><td class='dialogspan tlhead'></td><td class='timingspan tlhead'></td><td class='timingspan tlhead'></td><td class='timingspan tlhead'></td><td class='timingspan tlhead'></td><td class='timingspan tlhead'></td><td class='timingspan tlhead'></td></tr>
+
+<tr><td class="sheetbody left-end"></td><th> </th><th class='layerlabel trackLabel'>A</th><th class='layerlabel trackLabel'>B</th><th class='layerlabel trackLabel'>C</th><th class='layerlabel trackLabel'>D</th><th class='layerlabel trackLabel'>E</th><th class='layerlabel trackLabel'>F</th></tr>
+
+<tr><td class="sheetbody left-end"></td><td class='soundbody dnSep'> </td><td class='sheetbody nnSep focus-cell'>①</td><td class='sheetbody nnSep focus-cell'>X</td><td class='sheetbody nnSep rapid'></td><td class='sheetbody nnSep focus-range-selected'></td><td class='sheetbody nnSep section-head'></td><td class='sheetbody nnSep'></td></tr>
+
+<tr><td class="sheetbody left-end"></td><td class='soundbody dnSep'> </td><td class='sheetbody nnSep focus-spin'></td><td class='sheetbody nnSep spin-selected'></td><td class='sheetbody nnSep rapid-spin'></td><td class='sheetbody nnSep range-selected'></td><td class='sheetbody nnSep section-body'></td><td class='sheetbody nnSep'></td></tr>
+
+<tr><td class="sheetbody left-end"></td><td class='soundbody dnSep'> </td><td class='sheetbody nnSep focus-spin'></td><td class='sheetbody nnSep spin-selected'></td><td class='sheetbody nnSep rapid-spin'></td><td class='sheetbody nnSep range-selected'></td><td class='sheetbody nnSep section-body'></td><td class='sheetbody nnSep'></td></tr>
+
+
+<tr><td class="sheetbody left-end"></td><td class='soundbody dnSep'> </td><td class='sheetbody nnSep'></td><td class='sheetbody nnSep selected'></td><td class='sheetbody nnSep'></td><td class='sheetbody nnSep range-selected'></td><td class='sheetbody nnSep section-body'></td><td class='sheetbody nnSep'></td></tr>
+
+<tr><td class="sheetbody left-end"></td><td class='soundbody dnSep'> </td><td class='sheetbody nnSep'></td><td class='sheetbody nnSep selected'></td><td class='sheetbody nnSep'></td><td class='sheetbody nnSep range-selected'></td><td class='sheetbody nnSep section-body'></td><td class='sheetbody nnSep'></td></tr>
+<tr><td class="sheetbody left-end"></td><td class='soundbody dsSep'> </td><td class='sheetbody nsSep'></td><td class='sheetbody nsSep selected'></td><td class='sheetbody nsSep'></td><td class='sheetbody nsSep range-selected'></td><td class='sheetbody nsSep section-tail'></td><td class='sheetbody nsSep'></td></tr>
+
+</tbody></table>
+	<label for='docColorpickBG'     class=doc_form_label>背景 :      </label><input id=docColorpickBG type=color onChange="documentFormat.checkUIValue(event)" /> 
+	<label for='docColorpickTXT'    class=doc_form_label>文字 :      </label><input id=docColorpickTXT type=color onChange="documentFormat.checkUIValue(event)" /> 
+	<label for='docColorpickAP'     class=doc_form_label>アプリ背景 : </label><input id=docColorpickAP type=color onChange="documentFormat.checkUIValue(event)" /> 
+<br>
+	<label for='docColorpickSLCT'   class=doc_form_label>選択 :      </label><input id=docColorpickSLCT type=color onChange="documentFormat.checkUIValue(event)" /> 
+	<label for='docColorpickSLCN'   class=doc_form_label>選択範囲 :   </label><input id=docColorpickSLCN type=color onChange="documentFormat.checkUIValue(event)" /> 
+<br>
+	<label for='docColorpickRapid'  class=doc_form_label>拡張編集 :   </label><input id=docColorpickRapid type=color onChange="documentFormat.checkUIValue(event)" /> 
+	<label for='docColorpickFloat'   class=doc_form_label>範囲編集 :  </label><input id=docColorpickFloat type=color onChange="documentFormat.checkUIValue(event)" /> 
+	<label for='docColorpickSect'   class=doc_form_label>区間編集 :   </label><input id=docColorpickSect type=color onChange="documentFormat.checkUIValue(event)" /> 
+<hr>
+	<label for='docColorpickHi'     class=doc_form_label>footstamp  : </label><input id=docColorpickHi type=color onChange="documentFormat.checkUIValue(event)" /> 
+	<label for='docColorpickEdt'    class=doc_form_label>編集中 :      </label><input id=docColorpickEdt type=color onChange="documentFormat.checkUIValue(event)" /> 
+<hr>
 	<span> left <input type = text id=docMarginLeft value='15' size = 6 style='text-align:center;' onchange='documentFormat.checkUIValue(event);'> mm </span> |
 	<span> top <input type = text id=docMarginTop value='91' size = 6 style='text-align:center;' onchange='documentFormat.checkUIValue(event);'> mm </span> |
 	<span id=spanFrameHeight> hight <input type = text id=docSheetColHeight value='320' size = 6 style='text-align:center;' onMousedown="nas.sliderVALUE([event,this.id,'200','2','2']);"
@@ -4628,7 +4781,7 @@ onchange='documentFormat.checkUIValue(event);'> mm </span> |
 	<button onclick="xUI.imgAdjust.restore();xUI.sWitchPanel('ImgAdjust','hide')" title='編集を破棄して閉じる'>discard</button>
 -->
 </div>
-<div style='text-align:center;'>	<img id=imgAdjustStatus src=./images/ui/imgStatResize.png onclick="xUI.imgAdjust.setMode();"><br>
+<div style='text-align:center;'>	<img id=imgAdjustStatus src=/remaping/images/ui/imgStatResize.png onclick="xUI.imgAdjust.setMode();"><br>
 	<button id=imgAdjustUp    class=imgAdjustButton onclick='xUI.imgAdjust.adjust(event);'>↑</button><br>
 	<button id=imgAdjustLeft  class=imgAdjustButton onclick='xUI.imgAdjust.adjust(event);'>←</button>
 	<button id=imgAdjustRight class=imgAdjustButton onclick='xUI.imgAdjust.adjust(event);'>→</button><br>
@@ -4752,61 +4905,61 @@ id='imgAdjustDetail'
 <!-- ストップウオッチUIパネル// -->
 <!-- //Canvas編集メニュー -->
 <div class=optionPanelFloat id=optionPanelPaint >
-<dl><dt class="floatPanelHeader">paint menu<a href="" class=minimize ><img src=./images/ui/minimize.png alt="＿"></a><a href="" class=close ><img src=./images/ui/close.png alt="×"></a></dt></dl>
+<dl><dt class="floatPanelHeader">note menu<a href="" class=minimize ><img src=/remaping/images/ui/minimize.png alt="＿"></a><a href="" class=close ><img src=/remaping/images/ui/close.png alt="×"></a></dt></dl>
 <div id=formPaint class='centeringForm'>
-         <button id='select' class='paintTool iconButton iconButton-plus' onclick='pman.reName.canvasPaint.setTool(this.id)' title='select'>
-</button><button id='selectRect' class='iconButton iconButton-selectBox paintTool' onclick='pman.reName.canvasPaint.setTool(this.id);' title ='text'>
-</button><button id='addText' class='iconButton iconButton-addText paintTool' onclick='pman.reName.canvasPaint.setTool(this.id)' title ='addText'>
-</button><button id='stamp' class='iconButton iconButton-footStamp paintTool' onclick='pman.reName.canvasPaint.setTool(this.id)' title ='stamp'>
+         <button id='select' class='paintTool iconButton iconButton-plus' onclick='xUI.canvasPaint.setTool(this.id)' title='select'>
+</button><button id='selectRect' class='iconButton iconButton-selectBox paintTool' onclick='xUI.canvasPaint.setTool(this.id);' title ='text'>
+</button><button id='addText' class='iconButton iconButton-addText paintTool' onclick='xUI.canvasPaint.setTool(this.id)' title ='addText'>
+</button><button id='stamp' class='iconButton iconButton-footStamp paintTool' onclick='xUI.canvasPaint.setTool(this.id)' title ='stamp'>
 </button>
 <br>
-         <button id='pen' class='paintTool iconButton iconButton-pen_3' onclick='pman.reName.canvasPaint.setTool(this.id)' title='ペンツール'>
-</button><button id='circle' class='iconButton iconButton-circle paintTool' onclick='pman.reName.canvasPaint.setTool(this.id)' title ='楕円ツール'>
-</button><button id='rect' class='iconButton iconButton-rect paintTool' onclick='pman.reName.canvasPaint.setTool(this.id)' title ='矩形ツール'>
+         <button id='pen' class='paintTool iconButton iconButton-pen_3' onclick='xUI.canvasPaint.setTool(this.id)' title='ペンツール'>
+</button><button id='circle' class='iconButton iconButton-circle paintTool' onclick='xUI.canvasPaint.setTool(this.id)' title ='楕円ツール'>
+</button><button id='rect' class='iconButton iconButton-rect paintTool' onclick='xUI.canvasPaint.setTool(this.id)' title ='矩形ツール'>
 </button>
 <br>
-         <button id='hand' class='paintTool iconButton iconButton-hand' onclick='pman.reName.canvasPaint.setTool(this.id)' title='hand'>
-<!--</button><button id='' class='iconButton paintTool' onclick='pman.reName.canvasPaint.setTool(this.id);' title =''>
-</button><button id='' class='iconButton paintTool' onclick='pman.reName.canvasPaint.setTool(this.id)' title =''>
-</button><button id='' class='iconButton paintTool' onclick='pman.reName.canvasPaint.setTool(this.id)' title =''>-->
+         <button id='hand' class='paintTool iconButton iconButton-hand' onclick='xUI.canvasPaint.setTool(this.id)' title='hand'>
+<!--</button><button id='' class='iconButton paintTool' onclick='xUI.canvasPaint.setTool(this.id);' title =''>
+</button><button id='' class='iconButton paintTool' onclick='xUI.canvasPaint.setTool(this.id)' title =''>
+</button><button id='' class='iconButton paintTool' onclick='xUI.canvasPaint.setTool(this.id)' title =''>-->
 </button>
 <br><hr>
 
-         <button id='removeCanvasObject' class='iconButton iconButton-eraser paintCommand' onclick='pman.reName.canvasPaint.removeSelection()' title='選択オブジェクトを削除'>
-</button><button id='clearCanvasField' class='iconButton iconButton-close paintCommand' onclick='pman.reName.canvasPaint.clearContent()' title='すべてのオブジェクトを削除'>
-</button><button id='groupingCanvasObject' class='iconButton iconButton-group paintCommand' onclick='pman.reName.canvasPaint.groupingSelection()' title='選択オブジェクトをグループ化'>
-</button><button id='ungroupingCanvasObject' class='iconButton iconButton-ungroup paintCommand' onclick='pman.reName.canvasPaint.ungroupingSelection()' title='グループ化を解除'>
+         <button id='removeCanvasObject' class='iconButton iconButton-eraser paintCommand' onclick='xUI.canvasPaint.removeSelection()' title='選択オブジェクトを削除'>
+</button><button id='clearCanvasField' class='iconButton iconButton-close paintCommand' onclick='xUI.canvasPaint.clearContent()' title='すべてのオブジェクトを削除'>
+</button><button id='groupingCanvasObject' class='iconButton iconButton-group paintCommand' onclick='xUI.canvasPaint.groupingSelection()' title='選択オブジェクトをグループ化'>
+</button><button id='ungroupingCanvasObject' class='iconButton iconButton-ungroup paintCommand' onclick='xUI.canvasPaint.ungroupingSelection()' title='グループ化を解除'>
+</button>
+<br><hr>
+         <button id='lightBoxPrp' class='iconButton iconButton-switchShortcut itemCommand' onclick='xUI.sWitchPanel("lightBoxProp");' title='lightBoxProperty'>
+</button><button id='lightBoxCtrl' class='iconButton itemCommand' onclick='xUI.sWitchPanel("lightBoxControl");' title='lightBoxControl'>
+</button><button id='thumbnailCtrl' class='iconButton iconButton-zoom itemCommand' onclick='xUI.sWitchPanel("Zoom");' title='zoomControl'>
+</button><button id='previewCtrl' class='iconButton iconButton-eye itemCommand' onclick='xUI.sWitchPanel("Appearance");' title='appearanceControl'>
 </button>
 <br>
-         <button id='lightBoxPrp' class='iconButton iconButton-ONS itemCommand' onclick='xUI.sWitchPanel("lightBoxProp");' title='lightBoxProperty'>
-</button><button id='lightBoxCtrl' class='iconButton iconButton-ONSsetting itemCommand' onclick='xUI.sWitchPanel("lightBoxControl");' title='lightBoxControl'>
-</button><button id='thumbnailCtrl' class='iconButton iconButton-gia itemCommand' onclick='xUI.sWitchPanel("ThumbnailSize");' title='サムネイル'>
-</button><button id='previewCtrl' class='iconButton iconButton-zoom itemCommand' onclick='xUI.sWitchPanel("PreviewSize");' title='zoom'>
-</button>
-<br>
-         <button id='unsetPaint' class='iconButton iconButton-toLeft itemCommand' onclick='pman.reName.canvasPaint.unset();' title='unsetPaintMode'>
-</button><button id='addCanvasAsset' class='iconButton iconButton-addItem itemCommand' onclick='pman.reName.insertCanvasAsset();' title='アイテムを挿入'>
-</button><button id='setPaintMode' class='iconButton iconButton-editItem itemCommand' onclick='pman.reName.canvasPaint.set(pman.reName.selection[0]);' title='アイテムを編集'>
+         <button id='note_edit'    class='iconButton iconButton-addItem itemCommand' onclick='xUI.canvasPaint.set(xUI.getTargetImageAddress());' title='append noteImage|edit noteImage'>
+</button><button id='note_push'    class='iconButton iconButton-push itemCommand' onclick='xUI.canvasPaint.unset();' title='save noteImage'>
+</button><button id='note_discard' class='iconButton itemCommand' onclick='xUI.canvasPaint.set(xUI.getTargetImageAddress());' title='discard '>
 </button><!--<button id='' class='iconButton iconButton- itemCommand' onclick='' title=''>
 </button>-->
 <hr>
-         <button id='black' class='graphicColorChip graphicColorBlack' onclick='pman.reName.canvasPaint.setColor(this.id);'>
-</button><button id='white' class='graphicColorChip graphicColorWhite' onclick='pman.reName.canvasPaint.setColor(this.id);'>
-</button><button id='red' class='graphicColorChip graphicColorRed' onclick='pman.reName.canvasPaint.setColor(this.id);'>
-</button><button id='green' class='graphicColorChip graphicColorGreen' onclick='pman.reName.canvasPaint.setColor(this.id);'>
-</button><button id='blue' class='graphicColorChip graphicColorBlue' onclick='pman.reName.canvasPaint.setColor(this.id);'>
-</button><button id='backdrop' class='graphicColorChip graphicColorBackdrop' onclick='pman.reName.canvasPaint.setColor(this.id);'>
+         <button id='black'    class='graphicColorChip graphicColorBlack'    onclick='xUI.canvasPaint.setColor(this.id);'>
+</button><button id='white'    class='graphicColorChip graphicColorWhite'    onclick='xUI.canvasPaint.setColor(this.id);'>
+</button><button id='red'      class='graphicColorChip graphicColorRed'      onclick='xUI.canvasPaint.setColor(this.id);'>
+</button><button id='green'    class='graphicColorChip graphicColorGreen'    onclick='xUI.canvasPaint.setColor(this.id);'>
+</button><button id='blue'     class='graphicColorChip graphicColorBlue'     onclick='xUI.canvasPaint.setColor(this.id);'>
+</button><button id='backdrop' class='graphicColorChip graphicColorBackdrop' onclick='xUI.canvasPaint.setColor(this.id);'>
 </button><br>
 <hr>
-<button id='dot1' class='graphicToolButton oneChr' onclick='pman.reName.canvasPaint.setPenWidth(1);'>.</button>
-<button id='dot2' class='graphicToolButton oneChr' onclick='pman.reName.canvasPaint.setPenWidth(3)'>・</button>
-<button id='dot3' class='graphicToolButton oneChr' onclick='pman.reName.canvasPaint.setPenWidth(6);'>●</button>
+<button id='dot1' class='graphicToolButton oneChr' onclick='xUI.canvasPaint.setPenWidth(1);'><div class='circle circle-diameter-1'></div></button>
+<button id='dot2' class='graphicToolButton oneChr' onclick='xUI.canvasPaint.setPenWidth(3);'><div class='circle circle-diameter-2'></div></button>
+<button id='dot3' class='graphicToolButton oneChr' onclick='xUI.canvasPaint.setPenWidth(6);'><div class='circle circle-diameter-3'></div></button>
 <br>
-<button id='colorReset' class='graphicToolButton' onclick='pman.reName.canvasPaint.resetColor();'>[reset]</button>
+<button id='colorReset' class='graphicToolButton' onclick='xUI.canvasPaint.resetColor();'>[reset]</button>
 <br>
 		<div>
-	<button id='colorSelectBG' class='graphicColorSelect graphicColorSelectBG' onclick='pman.reName.canvasPaint.swapColor()'></button>
-	<button id='colorSelectFG' class='graphicColorSelect graphicColorSelectFG' onclick='pman.reName.canvasPaint.swapColor();'></button>
+	<button id='colorSelectBG' class='graphicColorSelect graphicColorSelectBG' onclick='xUI.canvasPaint.swapColor()'></button>
+	<button id='colorSelectFG' class='graphicColorSelect graphicColorSelectFG' onclick='xUI.canvasPaint.swapColor();'></button>
 		</div>
 	</div>
 </div>
@@ -4954,7 +5107,7 @@ id='imgAdjustDetail'
 </div></div>
 <!-- 署名編集 -->
 <!-- メモ編集エリア　画面表示のみ　印刷時はシートヘッダ上に別表示-->
-<div id=memoArea>
+<div id=memoArea style='transform: translate(0px, 0px);'>
   <div id=memoArea_minimise style='display:none;'>
 	<a href="javascript:void(0);"
 		onclick='xUI.eXpandPanel("memoArea","expand");'
@@ -5013,8 +5166,9 @@ id='imgAdjustDetail'
 </td>
 </tr></table>
   </div>
+  <div id=memo_image class=overlayNoteImage></div>
 <!--	コメント編集	-->
-<!-- メモ欄表示欄     -->
+<!-- メモ表示欄     -->
   <div id=memo class=memoSpace></div>
   </div>
 <hr>
@@ -5026,7 +5180,8 @@ id='imgAdjustDetail'
  <div class=headerTool>
   <div id="scrollSpaceHd" class="screenSpace"></div>
 </div>
-<!-- ここまで印刷時に非表示　-->
+<!-- ここまで印刷時に非表示 -->
+	<div id=spcHd class=application_status ><br></div>
 <!--   以降シート本体     -->
     <div id=sheet_body
 	onMouseDown = " return xUI.Mouse(event)"
@@ -5035,6 +5190,8 @@ id='imgAdjustDetail'
 	onDblClick  = " return xUI.Mouse(event)"
 	onMouseOver = " xUI.Mouse(event)"
 	onMouseOut  = " xUI.Mouse(event)"
+	
+	style = "display:flow-root;"
 >
       <div align=center>
 <br><br><br><br><br><br><br><br>ただいま準備中…ちょっぴりお待ちください<br>
@@ -5049,7 +5206,7 @@ index.html ,v 1.7 2018/03/05  support@u-at.net <br />
     <textarea id="startupReference"></textarea>
   </div>
 <!-- overlay-canvas をここに挿入-->
-  <canvas id=drawingOverlay></canvas>
+  <canvas id=drawingOverlay ></canvas>
   <div id=scrollSpaceFt class=screenSpace><br></div>
  </div>
   <!--

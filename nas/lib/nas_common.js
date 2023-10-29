@@ -970,15 +970,16 @@ var xUI = false;
  *      列挙子のプレフィックスにキーワードを加えたもの
  *  @example
  *  nas.getEnumulatedNameByNumber(3620,'BlendingMode');//>> BelndingMode.NORMAL
+ *  値が配列|Objectのケースを考慮のこと
  */
 nas.getEnumulatedNameByNumber =function getEnumulatedNameByNumber(targetNumber,targetName){
     if((!nas[targetName])||(! nas[targetName].propertyIsEnumerable)) return '';
     var resultArry=[targetName];
-        for(prp in nas[targetName]){
+        for(var prp in nas[targetName]){
             if (nas[targetName][prp] == targetNumber){resultArry.push(prp); break;}
         }
 return resultArry.join('.');
-};//値が配列|Objectであったケースを考慮のこと。
+};
 
 
 /**
@@ -990,7 +991,6 @@ return resultArry.join('.');
  * @params {Object} addisionalProp
  *  追加プロパティ（任意）
  *    ユーザ記述のドキュメント上の記録形式は以下<br />
- *    ドキュメント上の記録形式は以下<br />
  *    handleName:uid@domain<br />
  * @example
 var currentUser = new nas.UserInfo("handle:user@example.co.jp")
@@ -1323,6 +1323,7 @@ console.log(E);
  *      自由表示テキストを指定可能
  *      ユーザ情報(ハンドル、メールアドレス、またはフルフォーマットのUserInfo文字列)
  *      追加情報(スタンプ等に利用 JSON)
+ *   eg. 
  * @params {String|Object nas.UserSignature} sigDescription
  *         ノード記述文字列 署名をグループ化するためのキー 省略不可 またはシグネチャ記述・シグネチャオブジェクト
  * @params {String} signatureString
@@ -1338,7 +1339,7 @@ nas.UserSignature = function UserSignature(sigDescription,signatureString,additi
     this.date   = new Date()       ;//date of shign
     this.user   = nas.CURRENTUSER  ;//signed user | userstring
     this.stamp  = null             ;//stamp image optional
-    if(arguments.length) this.setValue(...arguments);
+    if(arguments.length) this.setValue(sigDescription,signatureString,additionalProperty);
 };
 /** 署名情報パーサ
  * @params {String|Object nas.UserSignature} sigDescription
@@ -1669,6 +1670,7 @@ return blb
 /**
  *  @params {String|Object HTMLImageElement|Object nas.NoteImage} img
  *	@params {String} address
+ *	@params {Object nas.Size|String} size
  *	@params {Object nas.NoteImageCollection} parent
  *   引数は String url|HTMLImageElement|nas.NoteImageまたはnas.NoteImageのプロパティを持つ互換オブジェクト
  *  注釈画像クラス
@@ -1686,42 +1688,46 @@ return blb
  	特定のドキュメントセルに対する注釈画像 アドレスIDはアンダーバーで連結した２要素の整数
  description|memo:
  	ドキュメントに1点のみ与えられるdescription欄ための画像 アドレスIDはなし
- すべてのtypeで編集が可能
+ RenameItemと異なりすべてのtypeで編集が可能
  
   new nas.NoteImage('./timesheet.png','page:1');
   new nas.NoteImage('./anotation.png','cell:1_12');
   new nas.NoteImage('./description.png','description:');
   
+  初期化の際に必ずしも画層データは必要ないその場合はキャッシュ画像はnull設定される
+  画像の専有サイズは、都度sheetLooksから計算される
+
+  new nas.NoteImage(null,'page:1');
+  new nas.NoteImage(null,'cell:1_12');
+  new nas.NoteImage(null,'description:');
   
+  page:に対してはページサイズ
+  cell:に対しては指定情報がなければ規定サイズ
+  description:に対しては、フォーマットにもとづいてページ幅でヘッドマージンから
  */
-nas.NoteImage = function NoteImage(img,address,parent,width){
+nas.NoteImage = function NoteImage(img,address,size,parent){
 	this.parent     = null      ;//parentCollection
-    this.type       = "note"    ;//page|note|cell|description|memo
-    this.link       = ""        ;//アタッチ座標 (座標タイプcell:String 0_0 |page:Number 1 | description:
+    this.type       = "cell"    ;//description|page|cell|note(予)|memo(予)
+    this.link       = ""        ;//アタッチ座標 (座標タイプcell:String eg.0_0 |page:Number eg.1 | description:nullSrtring eg.""
     this.content    = ""        ;//画像パス,URL URI dataURL
-    this.size       = new nas.Size("0","0")          ;//画像サイズ
+    this.size       = new nas.Size("0mm","0mm")          ;//画像サイズ
     this.resolution = new nas.UnitResolution("96ppi");//オブジェクト解像度　ファイル解像度より優先
     this.offset     = new nas.Offset()               ;//nas.Ofset
     this.scale      = new nas.Scale("100%","100%")   ;//nas.Scale
 
 //以下のプロパティは保存されない
-	this.img = (typeof HTMLImageElement == 'function')? new Image():new nas.Image();//画像キャッシュ 保存されない HTMLImageElement|nas.Image 
+	this.img = (typeof HTMLImageElement == 'function')? new Image():new nas.Image();//画像キャッシュ 保存対象外 HTMLImageElement|nas.Image 
 
-	this.name            = ''              ;//存在する場合はファイル名を抽出・拡張子含む フルパス・空文字列のケースあり
-	this.id              = nas.uuid()      ;//キャッシュ検索用セッション内ID
-//	this.path            = null            ;//Electron利用時に使用するローカルパス windowsパスのケースがある
-//	this.file            = null            ;//File Object
-//	this.entry           = null            ;//FileEntry|DirectoryEntry
-//	this.url             = null            ;//Object URL contentと重複
-//	this.imgsrc          = null            ;//画像src
-//	this.imgLastModified = 0               ;//最終更新タイムスタンプ
-//	this.tga             = false           ;//TGA操作一時データ
-	this.canvas              = null        ;//新規編集用 Element canvas 画像レンダリング用の表示されないcanvas
-	this.canvasStream        = []          ;//fabricCanvasシリアライズjson|SVGデータ（編集データの本体）|historyStack兼用
-	this.canvasUndoPt        = null        ;//history管理UndoPointer
+	this.name                = ''              ;//存在する場合はファイル名を抽出・拡張子含む フルパス・空文字列のケースあり
+	this.id                  = nas.uuid()      ;//キャッシュ検索用セッション内ID
+//svgプロパティは画像にオーバーレイ表示される画像キャッシュエレメントへの参照/保存対象外
+	this.svg                 = null        ;//新規編集用 Element svg
+//	this.canvas              = null        ;//新規編集用 Element canvas
+	this.canvasStream        = []          ;//fabricCanvasシリアライズjson|SVGデータ（編集データの本体）|historyStack兼用 .canvasが存在する場合は<保存対象>
+	this.canvasUndoPt        = null        ;//history管理UndoPointer<保存対象>
 //	this.worksession         = false       ;//作業セッション情報{Object pman.WorkSessionStatus}
 	nas.NoteImageCash.push(this)           ;//キャッシュに参照を設定
-    if(arguments.length > 0) this.parse(...arguments);
+    if(arguments.length > 0) this.parse(img,address,size,parent);
 }
 /*TEST
 	var 
@@ -1755,20 +1761,22 @@ nas.NoteImage.prototype.applyOffset = function applyOffset(offset){
 	キャッシュの開放はない
  */
 nas.NoteImage.prototype.remove = function remove(){
-	if(this.img.parentNode) this.img.parentNode.removeChild(this.img);
-	if(this.parent instanceof nas.NoteImageCollection) this.parent.splice(this.parent.indexOf(this),1);
+	if((this.img)&&(this.img.parentNode)) this.img.parentNode.removeChild(this.img);
+	if((this.svg)&&(this.svg.parentNode)) this.svg.parentNode.removeChild(this.svg);
+	if(this.parent instanceof nas.NoteImageCollection) this.parent.members.splice(this.parent.members.indexOf(this),1);
 	return this;
 }
 /**			クラスメソッド
  *  @params {Object HTMLImageElement} img
  *		判定する画像エレメント
- *	@params {String}	siz
+ *	@params {String |Object nas.UnitValue}	siz
+ *		画像の横幅を与える
  *		指定サイズキーワード A3|A4|A5|B3|B4|B5|tabloid|letter|11in|16in 省略可
- 		または 寸法文字列 "12in","120mm","13.5cm" 等 UnitValueの扱える単位
+ *		または 寸法文字列 "12in","120mm","13.5cm" 等 UnitValueの扱える単位
  *	@returns {Number}
  *		数値 ppi
  *	画像データの解像度（ピクセル密度）を推定するメソッド
- *	
+ *	処理エラーでサイズ0の画像が与えられた場合
  */
 nas.NoteImage.guessDocumentResolution = function(im,siz){
 	if(!(im instanceof HTMLImageElement)) return false;
@@ -1787,7 +1795,7 @@ nas.NoteImage.guessDocumentResolution = function(im,siz){
 			(resolutionset[e] > res*0.98) && (resolutionset[e] < res*1.02)
 		) return resolutionset[e];
 	};
-	return parseInt(res);//適正解像度がない場合は、計算値をそのまま戻す
+	return (res > 0)? parseInt(res):96;//適正解像度がない場合は、計算値をそのまま戻す
 }
 /*
 	クラスメソッド
@@ -1809,12 +1817,19 @@ nas.NoteImage.guessDocumentResolution = function(im,siz){
  *	同時に推定解像度にマッチさせオブジェクトのサイズプロパティを更新する
  */
 nas.NoteImage.prototype.guessDocumentResolution = function(siz){
+/*	if(typeof siz == 'undefined'){
+		if(this.type.indexOf('description:' == 0){
+			siz = 
+		}else if(this.type.indexOf('page:') == 0){
+			siz = 
+		};
+	};//*/
 	if(typeof siz != 'undefined'){
 		this.resolution.setValue(nas.NoteImage.guessDocumentResolution(this.img,siz)+" ppi");
 	}else if(this.size.x.value > 0){
 		this.resolution.setValue(nas.NoteImage.guessDocumentResolution(this.img,this.size.x.toString())+" ppi");		
 	};
-	if(this.img.parentNode){
+	if((this.img)&&(this.img.parentNode)){
 		this.img.style.width = (this.img.naturalWidth * ( 96 / this.resolution.as('ppi')))+'px';//"1122px = 297mm 96ppi;A3 width 96ppi 推定処理
 		this.applyOffset();
 		xUI.setAppearance();
@@ -1837,18 +1852,16 @@ nas.NoteImage.prototype.guessDocumentResolution = function(siz){
 */
 nas.NoteImage.prototype.setImage = function(img,callback){
 console.log(img);
-//引数を無視して自身のカンバスから画像を設定（特例）
-	if(this.canvas){
-		var itm = this;
-		if(!(itm.img instanceof HTMLImageElement)) itm.img = document.createElement('img');//これは基本不要
-		this.canvas.toBlob(function(blob) {
-			if(itm.img.src) URL.revokeObjectURL(itm.img.src);//現画像クリア
-			itm.img.src = URL.createObjectURL(blob);//カンバスから画像を設定
-			itm.img.addEventListener('load',function(){itm.content = itm.img.src ;itm.guessDocumentResolution();if(callback instanceof Function) callback(itm);},{once:true});
-		}, 'image/png');
-		return this;
+	if((this.img)&&(this.img.parentNode)){
+//画像のDOM状態を記録し親子関係をクリア?
+		var parent_node = this.img.parentNode;
+		var img_node = parent_node.removeChild(this.img);
+	}else{
+		var parent_node = null;
 	};
+//canvas プロパティの消失に伴い不要コード ベイクメソッドに機能を移行 */
 //引数の画像を処理
+console.log("content:>"+ this.content);
 	if(! img) img = this.content;
 	if(img instanceof nas.NoteImage){
 console.log('noteImage detect');
@@ -1870,17 +1883,23 @@ console.log('load HTML Image form URL :' + img);
 					itm.img.src = img;
 					itm.name    = img;
 					itm.img.addEventListener('load',function(){itm.content=itm.img.src;itm.guessDocumentResolution(); if(callback instanceof Function) callback(itm);},{once:true});
-//					nas.Image.convert2Blob(img,function(){});
 				}else if(
 					(TgaLoader)&&(img.match(/\.(tga|targa)$/i))
 				){
 console.log('load TGA form URL :' + img);
 					var itm = this;
+					itm.content = String(img);
+					itm.name = itm.content;
 					var tga = new TgaLoader();
-					tga.load(img);
-					itm.img.src = tga.getDataURL('image/png');
-					itm.name    = img;
-					itm.img.addEventListener('load',function(){ itm.content = itm.img.src;itm.guessDocumentResolution();if(callback instanceof Function) callback(itm);},{once:true});//set blob
+					try{
+						tga.load(img);
+						itm.img.src = tga.getDataURL('image/png');
+						itm.name    = img;
+						itm.img.addEventListener('load',function(){ itm.content = itm.img.src;itm.guessDocumentResolution();if(callback instanceof Function) callback(itm);},{once:true});//set blob
+					}catch (err){
+						console.log(err);
+//標準の読出失敗画像を設定してここで設定したほうがユーザにわかりやすい
+					};
 				}else if(
 					(PSD)&&(img.match(/\.(psd|psb)$/i))
 				){
@@ -1889,12 +1908,14 @@ console.log('load PSD from URL : ' +img)
 					var imgurl = img;//(itm.url)? itm.url.href:itm.path.replace(/\#/g,'%23');
 					itm.name = imgurl;
 console.log('get psd fromURL:'+imgurl);
+					itm.content = itm.name;
 					try{
 						if(PSD.fromURL){
 							PSD.fromURL(imgurl).then(function(psd) {
 								itm.img = psd.image.toPng();
 							}).catch(function(err){
 								console.log(err);
+//標準の読出失敗画像を設定してここで設定したほうがユーザにわかりやすい
 							});
 						}else{
 							var psd = PSD.fromFile(imgurl);
@@ -1905,22 +1926,25 @@ console.log('get psd fromURL:'+imgurl);
 						itm.img.addEventListener('load',function(){itm.content = itm.img.src;itm.guessDocumentResolution(); if(callback instanceof Function) callback(itm);},{once:true});
 					}catch (err){
 						console.log(err);
+//標準の読出失敗画像を設定してここで設定したほうがユーザにわかりやすい
 					};
 				}else if(
 					(appHost.platform == 'Electron')&&(img.match(/\.(tif|tiff)$/i))
 				){
 console.log('tiff not supported.');
 				};
-			}else if(img.match(/^blob:http\/\/.+/)){
+			} else if(img.match(/^blob:http\/\/.+/)){
 console.log('BLOB');
 				var itm = this;
 				this.img.src = img;
 				itm.img.addEventListener('load',function(){itm.content = itm.img.src;itm.guessDocumentResolution(); if(callback instanceof Function) callback(itm);},{once:true});
-			}else if(img.match(/^data:image\/(gif|jpeg|png|webp)\;base64\,\/\/.+/)){
+			}else if(img.match(/^data:image\/(gif|jpeg|png|webp)\;base64\,[0-9a-zA-Z+/]*={0,2}$/)){
 console.log('DATA-URL');
 				var itm = this;
 				this.img.src = img;
 				itm.img.addEventListener('load',function(){itm.content = itm.img.src;itm.guessDocumentResolution(); if(callback instanceof Function) callback(itm);},{once:true});
+			}else{
+console.log('string NOT IMAGE');
 			};
 	}else if(img instanceof File){
 //as File
@@ -1942,6 +1966,7 @@ console.log('detect File TGA');
 				var tga = new TgaLoader();
 				tga.load(new Uint8Array(result));
 				itm.img.src = tga.getDataURL('image/png');
+//				itm.img.src = tga.getDataURL('image/webp',.5);
 			itm.img.addEventListener('load',function(){itm.content = itm.img.src;itm.guessDocumentResolution(); if(callback instanceof Function) callback(itm);},{once:true});
 				}).catch(function(err){
 					console.log(err);
@@ -1953,8 +1978,9 @@ console.log('detect File Photoshop');
 			img.arrayBuffer().then(function(result){
 				var psd = new PSD(new Uint8Array(result));
 				psd.parse();
-				itm.img     = psd.image.toPng();
-			itm.img.addEventListener('load',function(){itm.content = itm.img.src;itm.guessDocumentResolution(); if(callback instanceof Function) callback(itm);},{once:true});
+				var psdimg = psd.image.toPng();
+				 
+			psdimg.addEventListener('load',function(){itm.img.src = psdimg.src;itm.content = itm.img.src;itm.guessDocumentResolution(); if(callback instanceof Function) callback(itm);},{once:true});
 				},function(err){
 					console.log(err);
 				}).catch(function(err){
@@ -1976,80 +2002,113 @@ console.log('but TIFF not suported');
 	return this;
 }
 /** 記録データまたは初期化引数をパースしてオブジェクトを整える
-    @params {Object nas.Image|Object nas.NoteImage |String|File} img
-    画像パス、画像オブジェクト またはダンプ文字列
+    @params {Object nas.Image|Object nas.NoteImage |HTMLCavasElement|String|File|null} img
+    画像パス、画像オブジェクト、Canvas要素、ダンプ文字列 | null
     @params {String} address
     画像のリンクアドレス
     @params {Object nas.NoteImageCollection} parent
     親コレクション 省略可
+	@params {Object nas.Size|String} size
+	サイズオブジェクトまたはサイズを表す文字列
+
     @returns {Object}
 	画像の設定自体はsetImageメソッドに引き渡しをするのでここでの判定は最低限にする
+	
+	img引数にnullが与えられた場合は、引数から初期サイズを割り出してcanvasを初期化するために使用する
+	canvasは、基本的に96ppi 
+
+	size 引数は以下のいずれか
+		Object nas.Size
+		Object nas.Size互換文字列
+		UnitValue(widthとして扱う)
+		ドキュメントサイズキーワード A3 A3L等
+	いずれも全てObject nas.Sizeに変換してプロパティとして保持する
  */
-nas.NoteImage.prototype.parse = function(img,address,parent,width){
-console.log(typeof img)
-	if((typeof img == 'string')&&(img.match(/^\s*\{.+\}\s*$/))){
-//第一引数が文字列でかつJSON記録データ
-//JSON形式ダンプ文字列
-console.log('JSON');
+nas.NoteImage.prototype.parse = function(img,address,size,parent){
+console.log(img instanceof File);
+console.log(typeof img);
+	if(
+		((typeof img == 'object')&&(
+			(!(img instanceof File))&&
+			(!(img instanceof HTMLCanvasElement))&&
+			(!(img instanceof HTMLImageElement))&&
+			(!(img instanceof nas.NoteImage))&&
+			(img != null)
+		))||(
+			(typeof img == 'string')&&(img.match(/^\s*\{.+\}\s*$/))
+		)
+	){
+//第一引数が無名オブジェクトでかつFile|nas.NoteImage|HTMLCanvasElement|Image 等の画像インスタンスではない
+//または第一引数が文字列でかつJSON記録データ(JSON形式ダンプ文字列)
+//第一引数のみ有効
+console.log('JSON | Object noname' );
 console.log(img);
-            img = JSON.parse(img);
-            for(var prp in img){
-            	if(typeof this[prp] != 'undefined'){
-        			switch (prp){
-        			case "type":
-        			case "link":
-        				this[prp] = img[prp];
-        			break;
-        			case "size":
-        			case "resolution":
-        			case "offset":
-        			case "scale":
-        				this[prp].setValue(img[prp]);
-        			break;
-        			};
-            	};
-            };
+		if(typeof img == 'string') img = JSON.parse(img);
+		for(var prp in img){
+console.log(prp);
+			if((prp == 'content')||(typeof this[prp] == 'undefined')) continue;
+			if(this[prp].setValue instanceof Function){
+				this[prp].setValue(img[prp]);
+			}else if(this[prp].parse instanceof Function){
+				this[prp].parse(img[prp]);
+			}else{
+				this[prp] = img[prp];
+			};
+		};
 //他のプロパティをすべて処理後に画像を設定
 console.log(img.content);
-			if(img.content) this.setImage(img.content);
-    }else if((typeof img == 'object')&&(img instanceof nas.NoteImage)){
-//第一引数は nas.NoteImage => 内容を複製
+		if(img.content) this.setImage(img.content);
+		return this;
+    }else if(
+    	(typeof img == 'object')&&(img instanceof nas.NoteImage)
+    ){
+//第一引数は nas.NoteImage => 内容を複製 他の引数は無視
+//第一引数のみ有効
 console.log('NOTE-IMG');
 console.log(img);
 console.log('parse NoteImage 	Object');
-        for(var prp in img){
-        	switch (prp){
-        	case "type":
-        	case "link":
-        	case "parent":
-        		this[prp] = img[prp];
-        	break;
-        	case "size":
-        	case "resolution":
-        	case "offset":
-        	case "scale":
-        		this[prp].setValue(img[prp]);
-        	break;
-        	};
-        };
+		for(var prp in img){
+			switch (prp){
+			case "type":
+			case "link":
+			case "parent":
+				this[prp] = img[prp];
+			break;
+			case "size":
+			case "resolution":
+			case "offset":
+			case "scale":
+				this[prp].setValue(img[prp]);
+			break;
+			};
+		};
 //他のプロパティをすべて処理後に画像を設定
 console.log(img.img);
-			if(img.img) this.setImage(img.img);
+		if(img.img) this.setImage(img.img);
+		return this;
+	}else if((typeof img == 'object')&&(img == null)){
+//画像データにnullが指定された
+console.log(img);
+		if(size) this.size.setValue(size);
+		this.img = null;//
 	}else{
-//前2ケース以外では、setImage
-		if(width) this.size.setValue(width,this.size.y);
+//前3ケース以外では、直接setImage
+console.log(img);
+		if(img instanceof File) this.name = nas.File.basename(img.name)
+		if(size) this.size.setValue(size);
 		this.setImage(img);
-    };
-/*
+	};
+/*引数アドレスは リンク先とタイプ文字列を同時もつ文字列
 	String address
 	page:0 ...
-	note:0_0 ...
-	description:
+	cell:0_0 ...
+	description:|direction:|memo:
+ typeプロパティは':'を含まない
 */
 	if(address){
 		address = address.split(':');
 		this.type = address[0];
-		this.link = address[1];
+		this.link = (address[1])? address[1]:"";
 		if(! parent){
 			parent = (type == 'page')? xUI.XPS.timesheetImages:xUI.XPS.noteImages;
 		};
@@ -2058,35 +2117,78 @@ console.log(img.img);
 	if((parent)&&(parent.addMember)){
 		parent.addMember(this);
 	};
-    return this;
+	if(this.svg) return this.initSVGCash();
+	return this;
 }
 /**
-     保存用にシリアライズ
-     @params {String} form
-      JSON|text|dump|export
-      
+ *	@params {Function} callback
+ *	@params {Array}    pxSize
+ *	を初期化
+ *	画像の解像度に従ったサイズで空の画像キャッシュSVGを初期化する
  */
-nas.NoteImage.prototype.toString = function toString(form){
-//    if (! form) form = 'JSON';
+nas.NoteImage.prototype.initSVGCash = function initCanvas(callback,pxSize){
+	if(!(this.svg)) this.svg = document.createElement('svg');
+	if(pxSize){
+		this.size.setValue(
+			pxSize[0]/this.resolution.as('ppc')*10 +'mm',
+			pxSize[1]/this.resolution.as('ppc')*10 +'mm'
+		);
+	};
+	this.svg.style.width  = parseInt(this.size.x.as('in') * this.resolution.as('ppi'))+'px';
+	this.svg.style.height = parseInt(this.size.y.as('in') * this.resolution.as('ppi'))+'px';
+	this.svg.id = this.type+["CanvasBuffer",this.link].join('-');
+
+	if(callback instanceof Function) callback(this);
+	return this;
+}
+/**
+ *	オブジェクトの持つ画像を単一画像にベイクして imgプロパティに設定
+ *	canvas関連の情報をクリアする
+ */
+nas.NoteImage.prototype.bake = function(){
+	this.svg;
+	this.canvasStream =   [];
+	this.canvasUndoPt = null;
+}
+/**
+ *     保存用にシリアライズ
+ *  canvasオブジェクトが存在する場合は、canvasの内容を出力対象とする
+ *  ベイクを行うことでcanvasの内容はimgと合成されてcanvasにnullが設定される
+ *     @params {String} form
+ *      JSON|text|dump|export
+ *      キャッシュ用に
+ *	@params {Array of Number|String} replacer
+ *		stringify params
+ *	@params {String|Number} space
+ *		stringify params
+ */
+nas.NoteImage.prototype.toString = function toString(form, replacer, space){
     if (form){
-        return JSON.stringify(this,0,2);
-//["type","link","content","size","resolution","offset","scale"],2);
+        return JSON.stringify(this, replacer, space);
     }else{
-    	return this.id;
-        return ((typeof HTMLImageElement == 'function')&&(this.img instanceof HTMLImageElement))? nas.Image.convert2dataURL(this.img,'image/webp',0):this.content;
+    	return this.id;//キャッシュ検索用IDを返す
     };
 }
+/**
+	JSON出力時のフィルタ
+	canvasが存在する場合は、canvasの内容を出力に加える
+*/
 nas.NoteImage.prototype.toJSON = function toJSON(){
-        return {
-        	"type"      :this.type,
-        	"link"      :this.link,
-        	"content"   :(this.img instanceof HTMLImageElement)?
-        		nas.Image.convert2dataURL(this.img,"image/webp",0.5):this.content,
-        	"size"      :this.size.toString(),
-        	"resolution":this.resolution.toString(),
-        	"offset"    :this.offset.toString(),
-        	"scale"     :this.scale.toString()
-        };
+		var result ={
+			"type"      :this.type,
+			"link"      :this.link,
+			"content"   :(this.img instanceof HTMLImageElement)?
+			nas.Image.convert2dataURL(this.img,"image/webp",0.5):this.content,
+			"size"      :this.size.toString(),
+			"resolution":this.resolution.toString(),
+			"offset"    :this.offset.toString(),
+			"scale"     :this.scale.toString()
+		};
+		if(this.svg){
+			result.canvasStream = this.canvasStream;
+			result.canvasUndoPt = this.canvasUndoPt;
+		};
+		return result;
 }
 /*TEST
 var A = new nas.NoteImage('{"type":"page","link":"1","content":"http://localhost/~kiyo/images/image1.png","resolution":"300ppi","offset":{"x":0 ,"y":0},"scale":{"x":1,"y":1},"size":{"x":120,"y":240}}}');
@@ -2098,80 +2200,110 @@ var C = new nas.NoteImage(document.getElementById('imgPreview'));//
     注釈画像コレクション
 */
 nas.NoteImageCollection = function NoteImageCollection(){
-	this.type              = 'page';
-//    this.imageOpacity      = 1.0;
-//    this.imageBlendMode    = 'normal';
-    this.imageAppearance   = 0.0;//0.0 ~ 1.0
-    this.imageBlendMode    = 'auto';//'auto'ほか通常のブレンドモードを指定可能
-    this.dump = function(expt){
-//内部コンバート用
-		if(! expt) return JSON.stringify(Array.from(this,function(e){return e.id}));//文字列化 
-//JSON only
-        return JSON.stringify(Array.from(this,function(e){
-        	if(e.size.x * e.size.y == 0){
-        		return e.id;
-        	}else{
-        		return JSON.parse(JSON.stringify(e));
-        /*		return {
-        			"type"       :e.type,
-        			"link"       :e.link,
-        			"content"    :e.img,
-        			"resolution" :e.resolution,
-        			"offset"     :e.offset,
-        			"scale"      :e.scale
-        		};// */
-        	};
-        }),null,2);//文字列化
-//        }),["type","link","content","size","resolution","offset","scale"],2);//文字列化
-    }
-    this.parse = function(stream){
-        var temp = (stream instanceof Array)? stream:JSON.parse(stream);
-        if(temp instanceof Array){
-            this.length = 0;
-            temp.forEach(function(e){
-    			if(
-    				(typeof e == 'string')&&
-    				(e.match(/^([0-9a-f]{8})-([0-9a-f]{4})-([0-9a-f]{4})-([0-9a-f]{4})-([0-9a-f]{12})$/))
-    			){
-//エレメントがuuidなのでキャッシュからサルベージする
-            		this.addMember(nas.NoteImage.get(e));
-				}else{
-console.log(e)
-            		console.log(this.addMember(new nas.NoteImage(e)));
-            	};},this);
-        };
-    }
-    this.getByLinkAddress = function(link){
-    	return this.find(function(e){
-    		return (link == e.link);
-    	});
-    }
-/*メンバを加える*/
-	this.addMember = function(member){
-		var lngt = this.length;
-		var ix = this.add(member);
-		if(lngt < this.length){
-			member.parent = this;
-			return member;
-		}else{
-			return this[ix];
-		};
-	};
-/*オブジェクトのremoveメソッドをコールしてメンバを削除する */
-	this.remove = function(member){
-		var ix = (member instanceof nas.NoteImage)? this.indexOf(member):member;
-		if((ix >= 0)&&( ix < this.length)){
-			return this[ix].remove();
-		}else{
-			return null;
-		};
-	}
-/*コレクションの初期化 メンバーオブジェクトのremoveメソッドを順次コールしてオブジェクト内の参照をクリアする*/
-	this.clearMember = function(){
-		this.forEach(function(e){e.remove();});
-	}
+
+	this.type              = 'page';//page | note
+	this.members           = []    ;//array of collection menbers
+	this.imageAppearance   = 0.0   ;//0.0 ~ 1.0
+	this.imageBlendMode    = 'auto';//'auto'ほか通常のブレンドモードを指定可能
 }
-nas.NoteImageCollection.prototype = Array.prototype;
+/**
+ *	@params {Boolean}	expt
+ *	出力オプション true 外部出力|false 内部コンバート出力
+ *	@params {Array of Number|String} replacer
+ *		stringify params
+ *	@params {String|Number} space
+ *		stringify params
+ */
+nas.NoteImageCollection.prototype.dump = function(expt, replacer, space){
+//内部コンバート用
+	if(! expt) return JSON.stringify(Array.from(this.members,function(e){return e.id}));//文字列化 
+//JSON only
+	return JSON.stringify(Array.from(this.members,function(e){
+		if(e.size.x * e.size.y == 0){
+			return e.id;
+		}else{
+			return JSON.parse(JSON.stringify(e));
+		};
+	}), replacer, space);//文字列化
+//        ({}),["type","link","content","size","resolution","offset","scale"],2);//文字列化
+}
+/**
+ *	@params {Array|String JSON} stream
+ *	記録文字列からメンバー配列を作成
+ */
+nas.NoteImageCollection.prototype.parse = function(stream){
+	var temp = (stream instanceof Array)? stream:JSON.parse(stream);
+	if(temp instanceof Array){
+		this.members.length = 0;
+		temp.forEach(function(e){
+		if(
+				(typeof e == 'string')&&
+				(e.match(/^([0-9a-f]{8})-([0-9a-f]{4})-([0-9a-f]{4})-([0-9a-f]{4})-([0-9a-f]{12})$/))
+			){
+//エレメントがuuidなのでキャッシュからサルベージする
+			this.addMember(nas.NoteImage.get(e));
+		}else{
+console.log(e)
+			console.log(this.addMember(new nas.NoteImage(e)));
+		};},this);
+		
+	};
+}
+/*
+ 特定のリンクアドレスを指定してコレクションからメンバーを呼び出す
+ アドレス形式 type:link
+ */
+nas.NoteImageCollection.prototype.getByLinkAddress = function(address){
+	if(address){
+		address = address.split(':');
+		return this.members.find(function(e){
+			return ((address[0] == e.type)&&(address[1] == e.link));
+		});
+	}else{
+		return undefined;
+	};
+}
+/*
+ 特定のタイプのメンバー配列で得る
+  
+ */
+nas.NoteImageCollection.prototype.getMembersByType = function(type){
+	var result = [];
+	if(type){
+		result = Array.from(this.members,function(e){
+			if(type == e.type) return e;
+		});
+	};
+	return result;
+}
+/*
+ メンバを加える
+ */
+nas.NoteImageCollection.prototype.addMember = function(member){
+	var lngt = this.members.length;
+	var ix = this.members.add(member);
+	if(lngt < this.members.length){
+		member.parent = this;
+		return member;
+	}else{
+		return this[ix];
+	};
+}
+/*オブジェクトのremoveメソッドをコールしてメンバを削除する */
+nas.NoteImageCollection.prototype.remove = function(member){
+	var ix = (member instanceof nas.NoteImage)? this.members.indexOf(member):member;
+	if((ix >= 0)&&( ix < this.length)){
+		return this.members[ix].remove();
+	}else{
+		return null;
+	};
+}
+/*コレクションの初期化 メンバーオブジェクトのremoveメソッドを順次コールしてオブジェクト内の参照をクリアする*/
+nas.NoteImageCollection.prototype.clearMember = function(){
+	this.members.forEach(function(e){e.remove();});
+}
+
+// nas.NoteImageCollection.prototype = Array.prototype;
 
 /*TEST
 var imgs = `[
@@ -3674,15 +3806,28 @@ form2:
     size.X = 125mm
     size.Y = 254mm
 */
-nas.Size=function(){
+nas.Size=function(a,b,c){
 	this.props = ['x','y','z'];
 	this.x = new nas.UnitValue('72 pt');
 	this.y = new nas.UnitValue('72 pt');
 //	this.z;
 	this.length = 2;
 	this.type='pt';
+// 引数がひとつで文字列だった場合、クラスメソッドで展開する
+	var presets = {
+		"A3":"297mm,420mm","A4":"210mm,297mm",
+		"A3L":"420mm,297mm","A4L":"297mm,210mm"
+	};
 // 引数をパーサで処理する
-	this.setValue(...arguments);
+	if(
+		(arguments.length == 1)&&
+		(typeof arguments[0] == 'string')&&
+		(presets[arguments[0]])
+	){
+		this.setValue(presets[arguments[0]]);
+	}else{
+		this.setValue(a,b,c);
+	}
 }
 nas.Size.prototype = nas.Point.prototype;
 /*
@@ -6074,7 +6219,7 @@ nas.bezierL = function (SP, CP1, CP2, EP, sT, eT, Slice) {
  * @params colorString
  * @returns {*}
  */
-nas.colorStr2Ary = function (colorString) {
+nas.colorStr2Ary = function(colorString) {
     var Cr = .5;
     var Cg = .5;
     var Cb = .5;
@@ -7470,7 +7615,6 @@ nas.cameraworkDescriptions.parseConfig = function(dataStream,form){
 
     return this.members;
 }
-
 /* test
 var A = new nas.CameraworkDescription(
     "fadeIn",
@@ -7481,12 +7625,8 @@ var A = new nas.CameraworkDescription(
 )
 nas.cameraworkDescriptions.add(A);
 nas.cameraworkDescriptions.dump();
-
 JSON.Stringify(nas.cameraworkDescriptions.members);
-
-
 */
-
 /**
  * nas.File
  * ファイルハンドルオブジェクト

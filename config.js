@@ -45,8 +45,8 @@
  *		ただし開始メッセージが抑制されている場合は表示されません。
  */
 
-	var welcomeMsg="サーバ対応-作業安定版- 20220929";
-	var windowTitle="ver. 1.9.0";//WindowTitleとしての役割は終了 統合バージョンです
+	var welcomeMsg="サーバ対応-作業安定版- 20230830";
+	var windowTitle="ver. 1.9.1";//WindowTitleとしての役割は終了 統合バージョンです
 
 /**************************************************************************
  *	ロゴ等
@@ -153,73 +153,49 @@
 // 後からルックを変更する手続は　xUI.setSheetLook(SheetLooks);xUI.footstampPaint();
 // 後方のペイント更新が重要
 SheetLooks = {
-  "FormatName": "defalut",
-  "WorkTitleLogo": "",
-  "SheetTextColor": "#111111",
-  "SheetBaseColor": "#ffffef",
-  "AppBaseColor": "#ffffef",
-  "SelectedColor": "#9999ff",
-  "RapidModeColor": "#ffff44",
-  "FloatModeColor": "#88eeee",
-  "SectionModeColor": "#ff44ff",
-  "SelectionColor": "#f8f8dd",
-  "FootStampColor": "#ffffff",
-  "EditingColor": "#eebbbb",
-  "SelectingColor": "#ccccaa",
-  "Restriction": false,
-  "ViewMode": "page",
-  "PageLength": "6+0",
-  "FrameRate": "24fps(24)",
-  "SheetColumn": 2,
-  "CellWidthUnit": "px",
-  "SheetHeadMargin": 346,
-  "SheetLeftMargin": 55,
-  "SheetCellHeight": 15.62,
-  "SheetColHeight": 1211.8,
-  "TimeGuideWidth": 17,
-  "ActionWidth": 16,
-  "DialogWidth": 36,
-  "SoundWidth": 36,
-  "SheetCellWidth": 25.13,
-  "SheetCellNarrow": 4,
-  "StillCellWidth": 12,
-  "GeometryCellWidth": 52,
-  "SfxCellWidth": 46,
-  "CameraCellWidth": 30,
-  "CommentWidth": 35,
-  "TrackNoteWidth": 30,
-  "ColumnSeparatorWidth": 20.61,
+  "FormatName"           : "remaping-old",
+  "TemplateImage"        : "/remaping/documentFormat/timesheet/default.png",
+  "WorkTitleLogo"        : "",
+  "SheetTextColor"       : "#111111",
+  "SheetBaseColor"       : "#faf2f2",
+  "AppBaseColor"         : "#ffffef",
+  "SelectedColor"        : "#9999ff",
+  "RapidModeColor"       : "#ffff44",
+  "FloatModeColor"       : "#88eeee",
+  "SectionModeColor"     : "#ff44ff",
+  "SelectionColor"       : "#f8f8dd",
+  "FootStampColor"       : "#ffffff",
+  "EditingColor"         : "#eebbbb",
+  "SelectingColor"       : "#ccccaa",
+  "Restriction"          : false,
+  "ViewMode"             : "page",
+  "PageLength"           : "6+0",
+  "FrameRate"            : "24fps(24)",
+  "SheetColumn"          : 2,
+  "CellWidthUnit"        : "px",
+  "SheetHeadMargin"      : 383,
+  "SheetLeftMargin"      : 30,
+  "SheetCellHeight"      : 14.04,
+  "SheetColHeight"       : 1095.64,
+  "TimeGuideWidth"       : 55,
+  "ActionWidth"          : 19.8,
+  "DialogWidth"          : 43,
+  "SoundWidth"           : 36,
+  "SheetCellWidth"       : 42.4,
+  "SheetCellNarrow"      : 4,
+  "StillCellWidth"       : 12,
+  "GeometryCellWidth"    : 52,
+  "SfxCellWidth"         : 46,
+  "CameraCellWidth"      : 32,
+  "CommentWidth"         : 112,
+  "TrackNoteWidth"       : 30,
+  "ColumnSeparatorWidth" : 13.42,
   "trackSpec": [
-    [
-      "reference",
-      8,
-      "fix"
-    ],
-    [
-      "sound",
-      1,
-      "fix"
-    ],
-    [
-      "timecode",
-      1,
-      "fix"
-    ],
-    [
-      "replacement",
-      8,
-      ""
-    ],
-    [
-      "camera",
-      3,
-      ""
-    ],
-    [
-      "comment",
-      1,
-      ""
-    ]
+        ["timecode"   ,1,"fix"],
+        ["reference"  ,5,"fix"],
+        ["dialog"     ,1,"fix"],
+        ["replacement",5,""],
+        ["comment"    ,1,""]
   ]
 };
 //メモ編集時の単語一覧
@@ -258,9 +234,9 @@ var myWords	=[
     以下の初期プロパティは修正
     クッキーの保存も終了
 */
-/*
 var myTitle=""	;
 			//タイトル 現行の作品名を入れておくとラクです
+/*
 var mySubTitle=""	;
 			//サブタイトル 同上
 var myOpus=""	;

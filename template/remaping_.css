@@ -150,7 +150,7 @@ table.UItable{
 
 table.info	{
 	width:100%;
-	height:10px;
+	height:24px;
 	border-width:0;
 	table-layout:fixed;
 }
@@ -378,6 +378,7 @@ th.framenotelabel {
 */
 div.printPage {
 	page-break-inside:avoid;
+	transform:translate(0px,0px);
 }
 /*
 	シート冒頭メモ欄
@@ -413,7 +414,7 @@ td {
 	margin:0;
 	white-space: nowrap;
 	overflow:visible;
-	font-size:8px;
+	font-size:11px;
 	line-height:1.0;
 	height:10px;
 }
@@ -1478,6 +1479,8 @@ td.deSep,td.deSep_Blank {
 }
 .printSpace {
 	display:inline;
+	height:180px;
+	width:100%;
 }
 
 /*form view*/
@@ -1623,15 +1626,15 @@ a.close img{
 /* 書類フォーマット編集パネル */
 #optionPanelDocFormat{
 	width:128px;
-	top:240px;
-	right:400px;
+	top:152px;
+	right:16px;
 }
 /* ドキュメント画像調整 */
 #optionPanelImgAdjust{
 	width:152px;
 	height:236px;
 	top:240px;
-	right:400px;
+	right:100px;
 }
 
 /*アカウントパネル*/
@@ -1725,8 +1728,8 @@ a.close img{
 }
 /*手描きメモパネル*/
 #optionPanelPaint {
-    top:150px;
-    left:150px;
+    top:72px;
+    right:150px;
     width:132px;
     height:360px;
 }
@@ -1784,20 +1787,42 @@ div#underlay {
 /**
 	画像オーバーレイ
 */
+.canvasWrap {
+    position       :absolute;
+    top            : 0px;
+    left           : 0px;
+    mix-blend-mode : normal;
+    pointer-events : auto;
+    border-style   :solid;
+	border-width   :1px;
+    border-color   :red;
+	z-index        :10;
+}
 #drawingOverlay{
 	position       : absolute;
 	top            : 0;
 	left           : 0;
-	z-index        : 3;
+	z-index        : 7;
 	pointer-events : none;
+	mix-blend-mode : normal;
 }
 .overlayDocmentImage{
 	position       : absolute;
-	display        : none;
+	display        : inline-block;
 	top            : 0;
 	left           : 0;
 	z-index        : 3;
 	pointer-events : none;
+	mix-blend-mode : darken;
+}
+.documentOverlayCanvas{
+	position       : absolute;
+	display        : none;
+	top            : 0;
+	left           : 0;
+	z-index        : 4;
+	pointer-events : none;
+	mix-blend-mode : darken;
 }
 .overlayDocmentImage-master{
 	display        : inline;
@@ -1808,6 +1833,16 @@ div#underlay {
 	mix-blend-mode : multiply;
 	opacity        : 0.4;
 }
+.overlayNoteImage{
+	position       : absolute;
+	display        : inline-block;
+	top            : 0;
+	left           : 0;
+	z-index        : 3;
+	pointer-events : none;
+	mix-blend-mode : darken;
+}
+
 /* 旧タイプ*/
 div.timesheetimage{
 	opacity:.25;
@@ -1903,16 +1938,24 @@ div.imageOverlay {
     border-style:double;
 }
 /*	ドキュメントブラウザ関連
-
+ほかツールパネル整形用
+calss .labelMargin 左端の項目名範囲調整
 */
+.labelMargin	{
+	display:inline-block;
+	width:72px;
+}
 input.ddpInput	{
 	disabled:true;
 }
 
-
-#issueSelector select{
-		width:100%;
-		height:42px;
+#dbgPreview {
+		width:690px;
+		height:96px;
+}
+#issueSelector {
+		width:80%;
+		overflow:hidden;
 	}
 .issueSelector {
 		vertical-align:middle;
@@ -2097,6 +2140,7 @@ input{
 
 #sheet_body {
 transform-origin: 0 0;transform:scale(1,1);	
+
 }
 /**
 	　jQuery-ui　combobox
@@ -2546,7 +2590,16 @@ div.documentStatusOverlay {
     background-color: #eeeeee;
 	pointer-events: none;
 }
-/* 書式編集UI */
+/*
+	書式編集UI
+	書式編集UIのためのcss
+*/
+	.doc_form_label {
+		display:inline-block;
+		text-align:right;
+		width:96px;
+		border-style:none;
+	}
 	.order_prop_list{
 		display : block;
 		border-style :solid;
@@ -2610,9 +2663,15 @@ div.documentStatusOverlay {
 		overflow     : hidden;
 	}
 	.track_item{
+		display : inline-block;
+		white-space:nowrap;
+		padding : 4px;
+		margin  : 2px;
 		border-style:solid;
-		border-width:2;
+		border-width:2px;
 		border-color:gray;
+		border-width :0 1 1 0;
+		font-size:16px;
 	}
 	.track_item:hover{
 		background-color:gray;
@@ -2627,7 +2686,8 @@ div.documentStatusOverlay {
 		border-width :0 1 1 0;
 	}
 	.iteminfo_dragover{
-		padding-left:16px;
+		margin-left:8px;
+		border-left-color:snow;
 	}
 	.iteminfo:hover{
 		background-color:gray;

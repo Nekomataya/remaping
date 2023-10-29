@@ -145,12 +145,15 @@ var XpsTrackPropRegex=new RegExp(XpsTrackProperties.join("|"),"i");
 //トラック重ね順を支配するドキュメントタイプを確定
 //ドキュメントタイプは、レイヤーの重ね順を規定する
 var XpsDocumentType = "jp";//"jp"|"us"
+
+//トラックオプションからエリアタイプを得る対照テーブル
 var XpsAreaOptions = {
-		"dialog"     :"sound",
-		"sound"      :"sound",
+		"dialog"     :"dialog",
+		"sound"      :"dialog",
 		"cell"       :"replacement",
 		"timing"     :"replacement",
 		"replacement":"replacement",
+		"still"      :"replacement",
 		"cam"        :"camera",
 		"camera"     :"camera",
 		"stagework"  :"camera",
@@ -165,9 +168,11 @@ var XpsAreaOptions = {
 		"action"     :"action",
 		"comment"    :"comment"
 	};
+
+//トラックオプションとSheetLooks変数の対照テーブル
 var XpsTrackWidth = {
 		"dialog"     :"DialogWidth",
-		"sound"      :"DialogWidth",
+		"sound"      :"SoundWidth",
 		"cell"       :"SheetCellWidth",
 		"timing"     :"SheetCellWidth",
 		"replacement":"SheetCellWidth",
@@ -186,12 +191,13 @@ var XpsTrackWidth = {
 		"action"     :"ActionWidth",
 		"comment"    :"CommentWidth"
 	};
+//トラックオプションとシートセルCSSの対照テーブル
 var XpsTrackClass = {
 		"dialog"     :"dialogSpan",
 		"sound"      :"dialogSpan",
-		"cell"       :"timinSpan",
-		"timing"     :"timinSpan",
-		"replacement":"timinSpan",
+		"cell"       :"timingSpan",
+		"timing"     :"timingSpan",
+		"replacement":"timingSpan",
 		"still"      :"stillSpan",
 		"cam"        :"cameraSpan",
 		"camera"     :"cameraSpan",
@@ -207,6 +213,7 @@ var XpsTrackClass = {
 		"action"     :"referenceSpan",
 		"comment"    :"framenoteSpan"
 	};
+//track option header Class
                 var trackHeaderClass = {
                     "action"     :"referenceSpan",
                     "tracknote"  :"tracknoteSpan",
@@ -720,13 +727,12 @@ XpsTrackCollection = function(parent,index,duration,scope){
 	this.noteText    = ""           ;//property dopesheet note-text
 	this.areaOrder   = []           ;//トラックをメンバーごとに配置するためのエイリアス
 	this.length      = 1            ;//メンバーを要素数１(undefined)で初期化
-//		this[0]=new XpsTimelineTrack("N","dialog",this,this.duration);
-//		this[1]=new XpsTimelineTrack("","comment",this,this.duration);
-		this[0] = new XpsTimelineTrack("","comment",this,this.duration); //初期要素としてレコード終端フィールド
+	this[0] = new XpsTimelineTrack("","comment",this,this.duration); //初期要素としてレコード終端フィールド
 //以下はオブジェクトメソッド（配列ベースなのでArrayオブジェクトのメソッド書き換えを防ぐためこの表記に統一）
 //オブジェクトメソッド群
-/*
-    areaOrderからtrackSpecへ変換して返す
+/**
+    現在のareaOrderからtrackSpecを作成して得る
+    引数なし
  */
     this.getTrackSpec = function(){
         var trackSpec = [];
@@ -737,19 +743,58 @@ XpsTrackCollection = function(parent,index,duration,scope){
         });
         return trackSpec;
     };//getTrackSpec
-/*
-    trackSpecを設定
+/**
+    @params {Object Array TrackSpec} trackSpec
     
+    現在のXpsTrackCollectionに指定のtrackSpecを設定
+    
+    指定のトラックスペックでエリアオーダーを再初期化する
+    (=トラックスペックに一致するエリアオーダーを得る)
+    エリアオーダーメンバ配列を使用してトラックをエリアタイプ別に分類する
+    (sound|replacement|camera|action に分類)
+    現在のトラックメンバーから順次抜き出しを行いエリアオーダーメンバに移動
+    仕分け終了時で残ったトラックは削除
+    エリアトラックの不足メンバーを追加しながら新しいトラックメンバーに入れ替える
+    
+    既存のドキュメントトラックスペックを変更（更新）する
+    削除されるトラックの内容は特に保持されない
  */
     this.setTrackSpec = function(trackSpec){
-        var trackSpec = [];
-        this.areaOrder.forEach(function(e){
-            if((e.timecode == 'both')||(e.timecode == 'head')) trackSpec.push(["timecode",1,(e.fix)?"fix":""]);
-            trackSpec.push([e.type,e.tracks,(e.hide )?"hide":((e.fix)?"fix":"")]);
-            if((e.timecode == 'both')||(e.timecode == 'tail')) trackSpec.push(["timecode",1,(e.fix)?"fix":""]);
-        });
-        return trackSpec;
-    };//getTrackSpec
+        if((! trackSpec)&&(this.parentXps)) trackSpec = this.parentXps.sheetLooks.trackSpec;
+        if(trackSpec instanceof Array){
+            this.parentXps.sheetLooks.trackSpec = trackSpec;//チェックして複製のほうが良い
+            this.initAreaOrder(trackSpec);//エリアオーダーを再初期化
+            this.areaOrder.forEach(function(e){
+                var trk = this.find(function(elm){return (XpsAreaOptions[elm.option]==e.type);});
+                while(trk){
+                    if(trk){
+                        if(e.members.length < e.tracks) e.members.push(trk);//orderArea側に参照を残す
+                        this.splice(this.indexOf(trk),1);//直接削除
+                    };
+                    trk = this.find(function(elm){return (XpsAreaOptions[elm.option]==e.type);});
+                };
+            },this);
+            this.areaOrder.forEach(function(e){
+                if((e.type != 'reference')&&(e.members.length < e.tracks)){
+                    while(e.members.length < e.tracks){
+                        var tracklabel = (e.type == 'replacement')?
+                            ('ABCDEFGHIJKLMNOPQRSTUVWXWZ').slice(e.members.length,e.members.length+1):
+                            (e.type).slice(0,3)+(e.members.length + 1);
+                        e.members.push(new XpsTimelineTrack(tracklabel,e.type, this, this.duration));
+                    };
+                };
+                e.members.forEach(function(mtrk){this.push(mtrk);},this);
+            },this);
+            this.renumber();
+        };
+        return;
+    };//setTrackSpec
+/*TEST 
+    xUI.XPS.xpsTracks.setTrackSpec();
+    xUI.referenceXPS.xpsTracks.setTrackSpec();
+    resetSheet();
+*/
+//
 /**
  * XpsTrackCollection.getSheetLooks()
  * 初期化指定用のSheetLooksオブジェクトを戻す
@@ -838,7 +883,7 @@ console.log(tracktype,trackCount,trackOption,areatype);
     }
 /*
     カウントを参照してエリアオーダーのメンバーテーブルを更新
-    エリアオーダーはトラックスペックに寄るが、書き換え時に実際のトラックと不整合が発生するケースがあるのでここで調整を組み込む(230812)
+    エリアオーダーはトラックスペックによるが、書き換え時に実際のトラックと不整合が発生するケースがあるのでここで調整を組み込む(230812)
     エリアカウント数０は許容
     トラックカウントいっぱいまでメンバーをアサインして次のエリアに移るので取り違えの可能性が残るので注意
     割付の仕様
@@ -1163,24 +1208,24 @@ XpsTrackCollection.prototype = Array.prototype;
  */
 function XpsTimelineTrack(myLabel, myType, myParent, myLength) {
 	
-	this.index;//indexは自動制御生成時点ではundefinedタイムラインコレクションへの組み込み時点で設定される
-	this.xParent=myParent;//親オブジェクトへの参照（トラックコレクションxpsTracksへの参照）
-	this.length=myLength;//配列メンバーを空文字列に設定する
-		for(var ix=0;ix<this.length;ix++){this[ix]="";}
-    this.duration=this.length;
-    this.id = myLabel;//識別用タイムラインid(文字列)タイムライン|グループ名
-    this.option = (typeof myType == "undefined") ? "timing" : myType;//still/timing/dialog/sound/camera/camerawork/effect/composite/comment/tracknoteのいずれか
-    this.value = '';//デフォルトのフィールド(シートセル)値
-    this.sizeX = "640";//デフォルト幅 point
-    this.sizeY = "480";//デフォルト高 point
-    this.aspect = "1";//デフォルトのpixelAspect
-    this.lot = "=AUTO=";//旧オブジェクト互換
-    this.blmtd = "file";//旧オブジェクト互換
-    this.blpos = "end";//旧オブジェクト互換
-    this.tag =(this.option=='still')? this.id:'';
-    this.link = ".";
-    this.parent = ".";//
-    this.sections = new XpsTimelineSectionCollection(this);
+	this.index     ;//indexは自動制御生成時点ではundefinedタイムラインコレクションへの組み込み時点で設定される
+	this.xParent   = myParent;//親オブジェクトへの参照（トラックコレクションxpsTracksへの参照）
+	this.length    = myLength;//配列メンバーを空文字列に設定する
+		for(var ix = 0;ix < this.length;ix ++){ this[ix] = "";}
+    this.duration  = this.length;
+    this.id        = myLabel;//識別用タイムラインid(文字列)タイムライン|グループ名
+    this.option    = (typeof myType == "undefined") ? "timing" : myType;//action|still|timing|replacement|dialog|sound|camera|camerawork|effect|composite|comment|tracknoteのいずれか
+    this.value     = '';//デフォルトのフィールド(シートセル)値
+    this.sizeX     = "640";//デフォルト幅 point
+    this.sizeY     = "480";//デフォルト高 point
+    this.aspect    = "1";//デフォルトのpixelAspect
+        this.lot   = "=AUTO=";//旧オブジェクト互換
+        this.blmtd = "file";//旧オブジェクト互換
+        this.blpos = "end";//旧オブジェクト互換
+    this.tag       = (this.option=='still')? this.id:'';
+    this.link      = ".";
+    this.parent    = ".";//
+    this.sections  = new XpsTimelineSectionCollection(this);
     this.sectionTrust = false;//セクションコレクションが最新の場合のみtrueとなるインジケータ変数
 
 //以下はオブジェクトメソッド（配列ベースなのでArrayオブジェクトのメソッド書き換えを防ぐためこの表記に統一）
@@ -2130,11 +2175,11 @@ XpsTimelineSubSection.prototype.strtOffset = _getSectionStartOffset;
  */
 
 /**
- *　object Xps(汎用アニメーションタイムシート)日本形式のタイムシート記述クラスを提供
+ *object Xps(汎用アニメーションタイムシート)日本形式のタイムシート記述クラスを提供
  * @class 
  *   汎用アニメーションタイムシートクラス
  * 
- * @param {Number | Array | Object SheetLooks} Layers
+ * @param {Number | Array | Object SheetLooks |Object TrackSpec} Layers
  *  Number  タイムライントラックのうちデフォルトのダイアログ(1)を抜いた数
  *  Array   スカラーを要素とする配列 [dialog,cell,camera,stage,composite] と解釈される
  *  Object  trackSpec配列を要素とする配列 [[tracktypeString, trackCount, optiontext],...]
@@ -2147,6 +2192,7 @@ XpsTimelineSubSection.prototype.strtOffset = _getSectionStartOffset;
  * @params {String} nodepath
  *  タイムシートの所属するノードパス　指定する場合は上記のxMapのノードチャートに含まれる必要がある<省略可>
  * <pre>
+ *
  *     Xpsオブジェクトの初期化引数を拡張
  * 第一引数はかつて「レイヤ数」であったが、これを拡張して配列を受け取れるようにする
  * 引数がスカラの場合は、従来互換として「リプレースメントトラック数」とする
@@ -2155,16 +2201,16 @@ XpsTimelineSubSection.prototype.strtOffset = _getSectionStartOffset;
  * 配列が
  * [リプレースメントトラック数]
  * [ダイアログトラック数,リプレースメントトラック数]
- * [ダイアログトラック数,リプレースメントトラック数,ジオメトリトラック数]
- * [ダイアログトラック数,リプレースメントトラック数,ジオメトリトラック数,コンポジットトラック数]
+ * [ダイアログトラック数,リプレースメントトラック数,カメラワークトラック数]
  * 
  * 配列長が1の場合は、特例でリプレースメントトラック数とする
  * ダイアログトラック数は、1以上とする
  * これに1以下の値が与えられた際は1として初期化される。
  * 
- * 完全な指定を行う場合は、引数としてtrackspec配列またはtrackspecを含むオブジェクト(sheetLooks)を渡す
- * 例:
- * [
+ * 完全な指定を行う場合は、引数としてtrackspec配列またはtrackspec配列を配下に含むオブジェクトSheetLooksを渡す
+ * 例:トラックスペック配列
+ * {
+ *  "trackSpec":[
  *     ["timecode"   ,1,"fix"],
  *     ["reference"  ,7,"fix"],
  *     ["dialog"     ,1,"fix"],
@@ -2177,12 +2223,13 @@ XpsTimelineSubSection.prototype.strtOffset = _getSectionStartOffset;
  *     ["effects"    ,1,""],
  *     ["stage"      ,2,""],
  *     ["comment"    ,2,"hide"]
- * ]
+ *  ]
+ *}
  *  各トラックの出現順位置・回数は任意
  *  スクロール時の固定列は第２要素に"fix"を置く
  *  fixトラックがないのは許容されるが望ましくない
  *  timecode,referenceはシステム管理トラックでありXpsデータ内にはトラックがない
- *  冒頭は基本的にdialigで1以上の値にすること。そうでない場合は{dialog:1}が補われる。
+ *  冒頭は基本的にdialig|soundで1以上の値にすること。そうでない場合は["dialog",1,"fix"]が補われる。
  *  末尾プロパティはcommentで値1とすること
  *  末尾プロパティがcommentでない場合にはデフォルトの["comment",1,""]が補われる
  * 
@@ -2190,6 +2237,7 @@ XpsTimelineSubSection.prototype.strtOffset = _getSectionStartOffset;
  *  sheetImage noteImage を実装
  */
 function Xps(Layers, Length, Framerate) {
+console.log('xps-constractor');
 console.log(Layers);
     if (typeof Framerate == 'undefined'){
         Framerate = false;
@@ -2198,33 +2246,66 @@ console.log(Layers);
     }
     if (! Framerate) Framerate = nas.newFramerate(nas.FRATE.toString());
 
-    if ((typeof Layers == 'object')&&(Layers.trackSpec)&&(Layers.trackSpec instanceof Array)){
-        Layers = Array.from(Layers.trackSpec);
+//sheetLooks オブジェクトを初期化引数として渡せるように変更 20230905
+    if((typeof Layers == 'object')&&(Layers.trackSpec)&&(Layers.trackSpec instanceof Array)){
+//引数としてsheetLooksを受け取った場合、オブジェクトプロパティとして設定する
+        this.sheetLooks = documentFormat.normalizeSheetlooks(Layers);
+        Layers = Array.from(this.sheetLooks.trackSpec);//レイヤー引数をトラックスペックに設定する
         console.log(Layers)
+    }else{
+//それ以外はconfigのSheetLooksを設定
+        this.sheetLooks = documentFormat.normalizeSheetlooks(SheetLooks);
     }
-// */
-    if (typeof Layers == 'undefined') Layers = 4;	//標準的なA,B,C,D の4レイヤで初期化
-
-    if(!isNaN(Layers)) Layers = [Layers];//単独スカラ引数の場合配列化
+//Layers引数なし
+    if (typeof Layers == 'undefined') Layers = 4;	//標準的なA,B,C,D の4レイヤで初期化(旧仕様)
+    if (!isNaN(Layers)) Layers = [Layers];//単独スカラ引数の場合配列化
 console.log(Layers);
     //配列引数の場合トラック配置用のオブジェクトに展開
     var trackSpec=[];
     if(! (Layers[0] instanceof Array)){
 //スカラ要素の配列
         switch (Layers.length){
-            case 0:trackSpec=[["timecode",1,"fix"],["reference",4,"fix"],["dialog",1,"fix"],["timing",4,""]];break;
-            case 1:trackSpec=[["timecode",1,"fix"],["reference",4,"fix"],["dialog",1,"fix"],["timing",Layers[0],""]];break;
-            case 2:trackSpec=[["timecode",1,"fix"],["reference",4,"fix"],["dialog",Layers[0],"fix"],["timing",Layers[1],""]];break;
-            case 3:trackSpec=[["timecode",1,"fix"],["reference",4,"fix"],["dialog",Layers[0],"fix"],["timing",Layers[1],""],["camera",Layers[2],""]];break;
+            case 0:trackSpec=[
+                ["timecode",1,"fix"],
+                ["reference",4,"fix"],
+                ["dialog",1,"fix"],
+                ["timing",4,""]
+            ];break;
+            case 1:trackSpec=[
+                ["timecode",1,"fix"],
+                ["reference",4,"fix"],
+                ["dialog",1,"fix"],
+                ["timing",Layers[0],""]
+            ];break;
+            case 2:trackSpec=[
+                ["timecode",1,"fix"],
+                ["reference",4,"fix"],
+                ["dialog",Layers[0],"fix"],
+                ["timing",Layers[1],""]
+            ];break;
+            case 3:trackSpec=[
+                ["timecode",1,"fix"],
+                ["reference",4,"fix"],
+                ["dialog",Layers[0],"fix"],
+                ["timing",Layers[1],""],
+                ["camera",Layers[2],""]
+            ];break;
             case 4:;
             case 5:;
-            default:
-                trackSpec=[["timecode",1,"fix"],["reference",4,"fix"],["dialog",Layers[0],"fix"],["timing",Layers[1],""],["camera",Layers[2],""],["geometry",Layers[3],""],["effect",Layers[4],""]];
-        }
+            default:trackSpec=[
+                ["timecode",1,"fix"],
+                ["reference",4,"fix"],
+                ["dialog",Layers[0],"fix"],
+                ["timing",Layers[1],""],
+                ["camera",Layers[2],""],
+                ["geometry",Layers[3],""],
+                ["effect",Layers[4],""]
+            ];
+        };
 console.log(trackSpec);
     }else{
 console.log(Layers);
-//配列要素が配列なのでtrackSpecデータとみなす
+//引数配列の第一要素が配列なのでtrackSpecデータとみなす
         for(var pix=0;pix<Layers.length;pix++){
             if(! String(Layers[pix][0]).match(XpsTrackPropRegex)){
 //不正引数が含まれているためデフォルト値に設定してブレーク
@@ -2237,7 +2318,7 @@ console.log('不正引数検出のためトラック仕様をデフォルト値�
         };
 //引数が配置オブジェクトでなければ、デフォルトの配置オブジェクトを置いてブレイク
     }
-
+console.log('reduct Data :2321')
 console.log(trackSpec);
 //
     if(isNaN(Length)){Length = nas.FCT2Frm(Length,Framerate)}
@@ -2322,13 +2403,14 @@ console.log(trackSpec);
 これはタイムシートの外見を保持するプロパティとなる
 クラスを初期化の際は、オブジェクトの初期化手順を踏むこと
  */
-    this.sheetLooks = {};
+//    this.sheetLooks = {};
 /*
 * タイムシート画像コレクション配列
 * 画像数0で初期化
 */
     this.timesheetImages  = new nas.NoteImageCollection();
     this.noteImages       = new nas.NoteImageCollection();
+    this.noteImages.imageAppearance = 1;
 //ドキュメント画像マスターセッション間フラグ if true image master data
 //    this.imgMaster    = false;
 //状態取得関数として実装　定数扱いにしない
@@ -2338,7 +2420,8 @@ console.log(trackSpec);
 * タイムライントラックコレクション配列
 */
     this.xpsTracks  = this.newTracks(trackSpec, Length);
-    this.sheetLooks = this.xpsTracks.getSheetLooks();
+//    this.sheetLooks = this.xpsTracks.getSheetLooks();
+console.log('Object XPS:2423')
 console.log(this.sheetLooks);
 //if(dbg) console.log(this.xpsTracks);
     //コレクションの初期化で同時にシートメモが空文字列で初期化される
@@ -2348,8 +2431,14 @@ console.log(this.sheetLooks);
  *    ドキュメントのマスターデータが画像か否かを返す
  *      トラックの入力が０でかつドキュメントイメージが存在する場合のみtrue
  *      引数なし
+ *  この関数は、ほぼ意味がないので削除予定
+ 画像の編集状態は、アプリのUIの状態に帰する
+ 画像カウントは必要なので、コレクションの合計を返す関数を作成する
  */
-Xps.prototype.imgMaster = function (){ return ((this.xpsTracks.countStr() == 0)&&(this.timesheetImages.length > 0))? true:false;};
+Xps.prototype.imgCount = function (){
+//return ((this.xpsTracks.countStr() == 0)&&(this.timesheetImages.members.length > 0))? true:false;
+return (this.timesheetImages.members.length + this.noteImages.members.length);
+};
 
 /**
  * 新規タイムライントレーラを作成
@@ -2495,20 +2584,20 @@ Xps.prototype.init = function (Tracks, Length, Framerate) {
     if(! (Tracks[0] instanceof Array)){
 //配列メンバがスカラ
         switch (Tracks.length){
-            case 0:trackSpec=[["timecode",1,""],["reference",5,""],["dialog",1,""],["timing",5,""]];break;
-            case 1:trackSpec=[["timecode",1,""],["reference",Tracks[0],""],["dialog",1],["timing",Tracks[0],""]];break;
-            case 2:trackSpec=[["timecode",1,""],["reference",Tracks[1],""],["dialog",Tracks[0],""],["timing",Tracks[1],""]];break;
-            case 3:trackSpec=[["timecode",1,""],["reference",Tracks[1],""],["dialog",Tracks[0]],["timing",Tracks[1],""],["camera",Tracks[2]],""];break;
+            case 0:trackSpec=[["timecode",1,""],["reference",5,""],["sound",1,""],["timing",5,""]];break;
+            case 1:trackSpec=[["timecode",1,""],["reference",Tracks[0],""],["sound",1,""],["timing",Tracks[0],""]];break;
+            case 2:trackSpec=[["timecode",1,""],["reference",Tracks[1],""],["sound",Tracks[0],""],["timing",Tracks[1],""]];break;
+            case 3:trackSpec=[["timecode",1,""],["reference",Tracks[1],""],["sound",Tracks[0],""],["timing",Tracks[1],""],["camera",Tracks[2]],""];break;
             case 4:
             default:
-                trackSpec=[["timecode",1,""],["reference",Tracks[1],""],["dialog",Tracks[0],""],["timing",Tracks[1],""],["camera",Tracks[2],""],["stage",Tracks[3],""],["effect",Tracks[4],""]];
+                trackSpec=[["timecode",1,""],["reference",Tracks[1],""],["sound",Tracks[0],""],["timing",Tracks[1],""],["camera",Tracks[2],""],["stage",Tracks[3],""],["effect",Tracks[4],""]];
         }
     }else{
 //配列メンバーが配列（トラックスペック）ならばチェック
         for(var pix=0;pix<Tracks.length;pix++){
             if(! String(Tracks[pix][0]).match(XpsTrackPropRegex)){
 //引数に不正値が含まれる場合は全体をリセット
-                trackSpec=[["timecode",1,""],["reference",5,""],["dialog",1,""],["timing",5,""],["camera",3,""]];
+                trackSpec=[["timecode",1,""],["reference",5,""],["sound",1,""],["timing",5,""],["camera",3,""]];
                 break;
             }else{
                 trackSpec.push(Tracks[pix]);
@@ -2697,6 +2786,7 @@ Xps.prototype.getIdentifier = function (opt) {
 Xps.prototype.syncIdentifier =function(myIdentifier,withoutTime){
     if(typeof withoutTime == 'undefined') withoutTime = true;
     var parseData   = Xps.parseIdentifier(myIdentifier);
+console.log(parseData);
     this.title      = parseData.title;
     this.cut        = parseData.cut;
     this.opus       = parseData.opus;
@@ -2760,12 +2850,13 @@ Xps.prototype.stringifySheetLooks = function () {
  */
 Xps.prototype.parseSheetLooks = function (sheetLooks){
 //    this.sheetLooks = JSON.parse(sheetLooks);
-
     if ((typeof sheetLooks == 'string')&&(sheetLooks.match(/(\{[\s\S]*?\})/))){
         sheetLooks = JSON.parse(RegExp.$1);
     };
+console.log(sheetLooks);
     for (var prp in sheetLooks){
         if(this.sheetLooks[prp]){
+            if(prp == 'trackSpec') console.log(this.sheetLooks[prp],sheetLooks[prp]);
             if(this.sheetLooks[prp].setValue instanceof Function){
                 this.sheetLooks[prp].setValue(sheetLooks[prp]);
             }else if(this.sheetLooks[prp].parse instanceof Function){
@@ -3473,6 +3564,11 @@ console.log(SrcData);
     var sheetTailMargin = SheetDuration - sheetHeadMargin;
 
 //新フォーマットのデータにはsheetLooksが含まれる
+/*
+    sheetLooksは必ずしも実際のトラック数と一致はしないので注意が必要
+    現在の使用では sheetLooksを維持したままトラックの増減が行われる
+    トラックスペックに対して保持されるのはエリアオーダーでありエリアオーダー内のトラック数はトラックスペックと必ずしも一致しない
+*/
     if( SrcData.sheetLooks ){
 console.log('srcdata has sheetLooks');
 console.log( SrcData.sheetLooks );
@@ -3507,6 +3603,7 @@ console.log(trackOptions);
             cellCount = (trackOptions.length - soundCount - cameraCount - 2)
         };
         this.sheetLooks = JSON.parse(JSON.stringify(xUI.sheetLooks));
+//旧来データのトラックスペック
         this.sheetLooks.trackSpec = [
             ['timecode',1,'fix'],
             ['reference',cellCount,'fix'],
@@ -3517,18 +3614,19 @@ console.log(trackOptions);
         ];
 console.log( this.sheetLooks.trackSpec );
     };
+/*
 //	///////////////////////フォーマット拡張
     if(Object.keys(this.sheetLooks).length > 0){
 console.log('INIT TRACKSPEC')
         this.init(this.sheetLooks.trackSpec, SheetDuration,SrcData.framerate);//再初期化
     }else{
+    };// */
 console.log('INIT TRACKCOUNT')
         this.init(SrcData.trackCount-2, SheetDuration,SrcData.framerate);//再初期化
-    };
 // 第二パスで読み取ったプロパティをXPSに転記
 
 // time/currentStatus/extension_data/ 以外はそのまま転記
-console.log(this.timesheetImages.length);
+console.log(this.timesheetImages.members.length);
 
     for (id = 0; id < propNames.length; id++) {
         prpName = propNames[id];
@@ -3588,7 +3686,7 @@ console.log(this.noteImages);
             };
 // レイヤプロパティが空白の場合があるので適切なデータで置き換える?  読み込みで例外処理を作るべきか？
 console.log(layerPropName,layerProps);
-console.log(SrcData.trackCount);
+console.log('srcData-trackcount '+ SrcData.trackCount +': xps-tracks:' +this.xpsTracks.length);
 console.log(this.xpsTracks);
             for (c = 0; c < SrcData.trackCount; c++) {
             	if(layerProps[c + 1]==""){
@@ -3605,20 +3703,20 @@ console.log(c,layerPropName,layerProps[c+1]);
                 };
             };
         } else {
-console.log(SrcData.trackCount);
-console.log(this.xpsTracks.length);
-console.log(line);
+//console.log(SrcData.trackCount);
+//console.log(this.xpsTracks.length);
+//console.log(line);
 
 // ほかコメント以外はすべてシートデータ
             if (!SrcData[line].match(/^\#.*$/)) {
-console.log(SrcData[line]);
-console.log(SrcData.trackCount)
+//console.log(SrcData[line]);
+//console.log(SrcData.trackCount)
                 myLineAry = (SrcData[line].match(/\t/)) ? SrcData[line].split("\t") : SrcData[line].replace(/[\;\:\,]/g, "\t").split("\t");
-console.log(myLineAry);
+//console.log(myLineAry);
                 for (col = 1; col <= (SrcData.trackCount); col++) {
 // シート本体データの取得
-console.log(col-1);
-console.log(this.xpsTracks[col - 1]);
+//console.log(col-1);
+//console.log(this.xpsTracks[col - 1]);
                     this.xpsTracks[col - 1][frame_id] =
                         (myLineAry[col] != undefined) ?
                             myLineAry[col].replace(/(^\s*|\s*$)/, "") : "";
@@ -4254,10 +4352,13 @@ Xps.stringifyIdf([
     
     '//（二連スラッシュ）'を認識できなかったケースに限り'__（二連アンダーバー）'をセパレータとして認識するように変更
     **"_(アンダーバー単独)"はセパレータ以外で使用するケースがあるため要注意
+
 */
 Xps.parseIdentifier = function(myIdentifier){
     if(! myIdentifier) return false;
-    if(myIdentifier.indexOf( '//' )<0 ){ myIdentifier=myIdentifier.replace(/__/g,'//'); }
+//    return nas.Pm.parseIdentifier(myIdentifier);
+    myIdentifier = nas.Pm.normalizeIdf(myIdentifier);//正規化
+    if(myIdentifier.indexOf( '//' )<0 ) myIdentifier = myIdentifier.replace(/__/g,'//');
     var dataArray = myIdentifier.split('//');
     var result={};
     result.product  = Xps.parseProduct(dataArray[0]);
@@ -4288,6 +4389,46 @@ Xps.parseIdentifier = function(myIdentifier){
 }
 /** test 
 //if(dbg) console.log(Xps.parseIdentifier('%E3%81%8B%E3%81%A1%E3%81%8B%E3%81%A1%E5%B1%B1Max#%E3%81%8A%E3%81%9F%E3%82%81%E3%81%97//s-c10(72)//0%3A(%E6%9C%AC%E7%B7%9A)//0%3Alayout//0%3Ainit//Startup'));
+
+{
+  "product": {
+    "title": "かちかち山Max",
+    "opus": "おためし",
+    "subtitle": ""
+  },
+  "sci": [
+    {
+      "cut": "s-c10",
+      "time": "72"
+    }
+  ],
+  "title": "かちかち山Max",
+  "opus": "おためし",
+  "subtitle": "",
+  "scene": "",
+  "cut": "10",
+  "time": "72",
+  "line": {
+    "id": [
+      "0"
+    ],
+    "name": "本線"
+  },
+  "stage": {
+    "id": "0",
+    "name": "layout"
+  },
+  "job": {
+    "id": "0",
+    "name": "init"
+  },
+  "currentStatus": {
+    "content": "Startup",
+    "assign": "",
+    "message": ""
+  }
+}
+
 */
 /** =====================================機能分割 20130221
  * レイヤストリームを正規化する
