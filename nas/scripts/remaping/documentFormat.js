@@ -11,6 +11,7 @@ var documentFormat = {
 	orderbox     : null,
 	moveBox      : false,
 	onResize     : null,
+	modified     : false,
 
 	img          : null,
 	tga          : null,
@@ -169,19 +170,42 @@ var documentFormat = {
 documentFormat.formatList = [
 	['YAL',"横浜アニメーションラボ",'/remaping/documentFormat/timesheet/YAL.json'],
 	['TDTS',"東映アニメーションデジタルタイムシート",'/remaping/documentFormat/timesheet/TDTS.json'],
-	['remaping-old',"旧りまぴん",'/remaping/documentFormat/timesheet/default.json'],
+	['remaping-old',"旧りまぴん",'/remaping/documentFormat/timesheet/remaping-old.json'],
 	['remaping',"UAT",'/remaping/documentFormat/timesheet/UAT.json'],
 	['nekomataya',"ねこまたや",'/remaping/documentFormat/timesheet/nekomataya.json']
 ];
 documentFormat.syncFormatList = function(){
-	var datalist   = document.getElementById("format_list");
+	var datalist   = document.getElementById("docFormatSelect");
 	if(! datalist) return false;//印刷モードの場合同期処理無し
-	Array.from(datalist.children).forEach(function(e){datalist.removeChild(e);console.log('removed :'+e.value);});
-	documentFormat.formatList.forEach(function(e){
-		var opt = document.createElement('option');
-		opt.value = e[1];
-		datalist.appendChild(opt);
+//'= CUSTOM ='以外の値は削除
+	Array.from(datalist.children).forEach(function(e){if(e.value.match(/^\=.*\=$/)){
+		if(this.modified) e.selected = true;
+	}else{
+		datalist.removeChild(e);console.log('removed :'+e.value);}
 	});
+//現在保持している値をリストに追加
+	documentFormat.formatList.forEach(function(e){
+//リストを設定
+		var opt = document.createElement('option');
+		opt.value = e[0];opt.innerHTML = e[1];
+		datalist.appendChild(opt); console.log('append :'+opt.value);
+		if((!(this.modified))&&((opt.value == documentFormat.FormatName)||(opt.innerHTML == documentFormat.FormatName))){
+			opt.selected = true;
+		};
+	});
+}
+//選択状態を更新（リストの更新は行われない）
+documentFormat.syncFormatSelect = function(){
+	var datalist   = document.getElementById("docFormatSelect");
+	if(! datalist) return false;//印刷モードの場合同期処理無し
+	Array.from(datalist.children).forEach(function(e){
+		if((this.modified)&&(e.value.match(/^\=.*\=$/))){
+			e.selected = true;
+		}else{
+			if((!(this.modified))&&((e.value == documentFormat.FormatName)||(e.innerHTML == documentFormat.FormatName)))
+				e.selected = true;
+		};
+	},this);
 }
 /**
 	@parms   {Object} looks
@@ -408,16 +432,7 @@ documentFormat.toString = function toString(){
 		document.getElementById("docMarginTop").value       = Math.round(100 * documentFormat.SheetHeadMargin.as("mm"))/100;
 		document.getElementById("docSheetColHeight").value  = Math.round(100 * documentFormat.SheetColHeight.as("mm"))/100;
 //選択リストを更新
-		var formselect = document.getElementById("docFormatSelect");
-		if(formselect){
-			Array.from(formselect.children).forEach(function(e){formselect.removeChild(e);console.log('removed :'+e.value);});
-				documentFormat.formatList.forEach(function(e){
-				var opt = document.createElement('option');
-				opt.value = e[0];opt.innerHTML = e[1];
-				if((opt.value == xUI.sheetLooks.FormatName)||(opt.innerHTML == xUI.sheetLooks.FormatName)){opt.selected = true};
-				formselect.appendChild(opt);
-			});
-		};
+		documentFormat.syncFormatList();
 
 //UI上はカラム幅を指定するので加算して表示
 		var colSpan = 0;
@@ -648,6 +663,7 @@ fileの読出し・登録の時点でdataURLに変換が行われる
 テキストは
 dataURLの場合、パス表示なし"[画像データが登録されています]"
 有効なurlの場合、（/^(https?|file)\:\/\/.*\.(png|webp|gif|jpeg)$/) のみ、文字列のままソースパスとして扱う
+
 */
 	documentFormat.importData = function importData(ipt){
 		if((ipt.files)&&(ipt.files.length)){
@@ -667,6 +683,7 @@ console.log('image load ' + ipt.files[0].name);
 						tga.load(new Uint8Array(result));
 						let imgsrc  = tga.getDataURL('image/png');
 						documentFormat.img.src = imgsrc;
+						documentFormat.img.id  = 'pageImage-1';
 						documentFormat.TemplateImage = imgsrc;
 						documentFormat.img.addEventListener('load',()=> documentFormat.guessImageResolution(),{once:true});
 					});
@@ -678,6 +695,7 @@ console.log('image load ' + ipt.files[0].name);
 						psd.parse();
 						let imgsrc = psd.image.toPng().src;
 						documentFormat.img.src = imgsrc;
+						documentFormat.img.id  = 'pageImage-1';
 						documentFormat.TemplateImage = imgsrc;
 						documentFormat.img.addEventListener('load',()=> documentFormat.guessImageResolution(),{once:true});
 					},function(err){
@@ -689,6 +707,7 @@ console.log('image load ' + ipt.files[0].name);
 					var reader = new FileReader();
 					reader.addEventListener('load',function(e){
 						documentFormat.img.src = reader.result;
+						documentFormat.img.id  = 'pageImage-1';
 						documentFormat.TemplateImage = reader.result;
 						documentFormat.img.addEventListener('load',()=> documentFormat.guessImageResolution(),{once:true});
 					});
@@ -700,6 +719,7 @@ console.log('image path :'+ ipt);
 			documentFormat.TemplateImage = ipt;
 			if(ipt.match(/\.(png|jpg|jpeg|pjpeg|gif|webp|svg)$/i)){
 				documentFormat.img.src = ipt;
+				documentFormat.img.id  = 'pageImage-1';
 				documentFormat.TemplateImage = ipt;
 				documentFormat.img.addEventListener('load',()=> documentFormat.guessImageResolution(),{once:true});
 			}else if(ipt.match(/\.(tga|targa)$/i)){
@@ -713,6 +733,7 @@ console.log('TIFF not suported');
 		}else if((typeof ipt == 'string')&&(ipt.match(/^data:image\/(gif|jpeg|png|webp)\;base64\,[0-9a-zA-Z+/]*={0,2}$/))){
 console.log('DATA-URL find');
 				documentFormat.img.src = ipt;
+				documentFormat.img.id  = 'pageImage-1';
 				documentFormat.TemplateImage = ipt;
 				documentFormat.img.addEventListener('load',()=> documentFormat.guessImageResolution(),{once:true});
 		};
@@ -1104,7 +1125,14 @@ table 幅リサイズ・移動時に望まない変形が発生する原因は�
 	documentFormat.checkUIValue = function checkUIvalue(e){
 		if(! documentFormat.active) return false;
 		var idx = parseInt(e.target.id.split('_').reverse()[0]);
-		if(e.target.id.indexOf("itminfo_ipt") == 0){
+		if(e.target.id == "docFormatSelect"){
+//書式変更 書式名指定して切り替え
+			var find = documentFormat.applyFormat(e.target.value);
+			documentFormat.syncArea();
+			documentFormat.modified = false;
+			documentFormat.syncFormatSelect();
+			return;
+		}else if(e.target.id.indexOf("itminfo_ipt") == 0){
 //トラック幅の設定
 			documentFormat[documentFormat.itemWidth[documentFormat.trackSpec[idx][0]]].setValue(e.target.value + 'mm','mm');//更新
 		}else if(e.target.id.indexOf("itminfo_ckb") == 0){
@@ -1120,9 +1148,6 @@ table 幅リサイズ・移動時に望まない変形が発生する原因は�
 //トラックカウント
 			documentFormat.trackSpec[idx][1] = parseInt(e.target.value);
 			documentFormat.adjustTrack(idx);
-		}else if(e.target.id == "docFormatSelect"){
-//書式変更 書式名指定して切り替え
-			var find = documentFormat.applyFormat(e.target.value);
 		}else if(e.target.id == "docFormatName"){
 //書式名変更 現在のデータの書式名を変更する切り替えは廃止
 			documentFormat.FormatName = e.target.value;
@@ -1175,6 +1200,8 @@ console.log('set columnSpan '+e.target.value + 'mm');
 			documentFormat.previewSheetColor();
 		};
 		documentFormat.syncArea();
+		documentFormat.modified = true;
+		documentFormat.syncFormatSelect();
 	}
 /**
 	タイムシートUIカラーのプレビュー previewSheetColor
@@ -1213,6 +1240,7 @@ console.log(prp)
 		documentFormat.syncFormatList();//現在保持しているフォーマットリストをUIに反映
 		documentFormat.img = new Image();//テンプレート画像キャリアを初期化
 		documentFormat.img.src = '';
+		documentFormat.img.id  = 'pageImage-1';
 //ピクセルコンバートのための解像度を設定(WEB 96ppi固定)
 		nas.RESOLUTION.setValue('96ppi');
 //sheetLooks各値をUnitValueに初期化
@@ -1242,7 +1270,7 @@ console.log(prp)
 //シート秒数をフレームに換算
 		documentFormat.PageLength = nas.FCT2Frm(documentFormat.PageLength);
 //ドキュメントがエディタUIを含んでいる場合のみエディタUIを初期化（印刷時はUIがない）
-		if(document.getElementById('documentFormatEditor')){
+		if(document.getElementById('formDocFormat')){
 //orderboxを初期化・参照を作成
 			if(! documentFormat.orderbox){
 				documentFormat.orderbox           = document.createElement("div");
@@ -1269,18 +1297,18 @@ console.log(prp)
 			document.getElementById('orderbox').addEventListener('mouseleave',function(e){
 				document.getElementById('orderbox').style.cursor = 'auto';
 			});
-			document.getElementById('documentFormatEditor').addEventListener('dragenter',function(e){
+			document.getElementById('formDocFormat').addEventListener('dragenter',function(e){
 				e.preventDefault();
 				nas.HTML.addClass(this,"formatEdit-dragover");
 			});
-			document.getElementById('documentFormatEditor').addEventListener('dragover',function(e){
+			document.getElementById('formDocFormat').addEventListener('dragover',function(e){
 				e.preventDefault();
 				nas.HTML.addClass(this,"formatEdit-dragover");
 			});
-			document.getElementById('documentFormatEditor').addEventListener('dragleave',function(e){
+			document.getElementById('formDocFormat').addEventListener('dragleave',function(e){
 				nas.HTML.removeClass(this,"formatEdit-dragover");
 			});
-			document.getElementById('documentFormatEditor').addEventListener('drop',function(e){
+			document.getElementById('formDocFormat').addEventListener('drop',function(e){
 //編集UI全体のアイテムドロップを初期化
 				e.preventDefault();
 				if(e.dataTransfer.files.length){
@@ -1308,8 +1336,8 @@ console.log(prp)
 				};
 			},false);
 //キー入力初期化
-			document.addEventListener('keydown',documentFormat.kbHandle);
-			document.addEventListener('keyup'  ,documentFormat.kbHandle);
+//			document.addEventListener('keydown',documentFormat.kbHandle);
+//			document.addEventListener('keyup'  ,documentFormat.kbHandle);
 //オーダーボックス移動/リサイズ初期化
 			$("#orderbox").mousedown(function(e){
 				var target = e.target;
@@ -1492,7 +1520,7 @@ documentFormat.adjustTrack = function(){
 	xUI.referenceXPS.sheetLooks.trackSpec.find(function(e){return(e[0]=='replacement');})[1] = documentFormat.trackSpec.find(function(e){return(e[0]=='reference');})[1];
 	xUI.referenceXPS.xpsTracks.setTrackSpec();
 //本体(エディタアンアクティブ時はUNDO有効)
-	var newData = new Xps(xUI.XPS.sheetLooks.trackSpec);
+	var newData = new Xps(xUI.XPS.sheetLooks.trackSpec,xUI.XPS.sheetLooks.pageLength);
 	newData.parseXps(xUI.XPS.toString(false));
 	newData.xpsTracks.setTrackSpec(documentFormat.trackSpec);
 	xUI.put(newData);

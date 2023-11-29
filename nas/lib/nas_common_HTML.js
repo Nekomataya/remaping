@@ -15,7 +15,8 @@ nas.sliderVALUE(chnk)
 	マウスドラグによるインプット値の編集開始
 nas.sliderOFF()
 	マウスドラグによるインプット値の編集終了
-
+nas.HTML.SliderSelect(elemennt,options,direction)
+	スライドメニューUI
 nas.MVSlider_NS(event)
 nas.MVSlider_IE()
 	マウススライダが呼び出すメソッド
@@ -1009,8 +1010,19 @@ nas.clipTC=function(myValue,max,min,TCtype){
 */
 nas.HTML={};
 /*
+    タッチスクロール・ホイルスクロールの停止
+    document.addEventListener('mousedown',nas.HTML.disableScroll,{ passive: false });
+    document.addEventListener('touchmove',nas.HTML.disableScroll,{ passive: false });
+
+    一時停止解除
+    document.removeEventListener('mousedown',nas.HTML.disableScroll,{ passive: false });
+    document.removeEventListener('touchmove',nas.HTML.disableScroll,{ passive: false });
+// */
+// スクロールを禁止にする関数
+nas.HTML.disableScroll = function disableScroll(evt){ evt.preventDefault();}
+/*
     クラスリストにアイテムを追加
-    classListのない古い環境のためのコード
+    classListのない古い環境のためのコード付き
     
 */
 nas.HTML.addClass = function (element,className){
@@ -1322,37 +1334,50 @@ nas.HTML.miniTextEdit.sendClipboard = function(){
 	);
 */
 //------簡易テキストエディタ 2022 06 21//
-
+if(false){
 /**
  *	スクロールドラッガブル要素設定
  *		右クリックを通す
  *		リリースの際にフットマークを残す
  *	キャンセルフラグが立っていればスキップ
+ * pointerイベントに書き換え 2023 11 24
  */
 nas.HTML.mousedragscrollable = function mousedragscrollable(element){
     let target; // 動かす対象
     $(element).each(function (i, e) {
-        $(e).mousedown(function (event) {
-            if(nas.HTML.mousedragscrollable.movecancel) return true;
-            event.preventDefault();
+//        $(e).on('mousedown touchstart',function (event) {}
+        $(e).on('pointerdown',function (event){
+console.log(event.originalEvent.target.id);
+//console.log(event.originalEvent);
+            if(
+                (nas.HTML.mousedragscrollable.movecancel)
+            ) return true;
+            event.originalEvent.preventDefault();
             target = $(e); // 動かす対象
             $(e).data({
                 "down": true,
                 "move": false,
-                "x": event.clientX,
-                "y": event.clientY,
+                "x": ((event.type != 'touchstart')? event.originalEvent.clientX:event.originalEvent.touches[0].clientX),
+                "y": ((event.type != 'touchstart')? event.originalEvent.clientY:event.originalEvent.touches[0].clientY),
                 "scrollleft": $(e).scrollLeft(),
                 "scrolltop": $(e).scrollTop(),
             });
             $(e).css("cursor","grabbing");
-        	$(document).mousemove(function(event){
+//ドラグストローク停止
+        	document.addEventListener('mouseover',nas.HTML.disableScroll,{ passive: false });
+        	document.addEventListener('mousedown',nas.HTML.disableScroll,{ passive: false });
+        	document.addEventListener('pointerdown',nas.HTML.disableScroll,{ passive: false });
+        	document.addEventListener('touchstart' ,nas.HTML.disableScroll,{ passive: false });
+
+        	$(document).on('pointermove',function(event){
 xUI.printStatus(nas.HTML.mousedragscrollable.footmark);
     // list要素内/外でのevent
         		if ($(target).data("down")) {
-            		event.preventDefault();
-            		let move_x = $(target).data("x") - event.clientX;
-            		let move_y = $(target).data("y") - event.clientY;
-            		if (move_x !== 0 || move_y !== 0) {
+//            		event.originalEvent.preventDefault();
+//            		event.preventDefault();
+            		let move_x = $(target).data("x") - ((event.type != 'touchstart')? event.originalEvent.clientX:event.originalEvent.touches[0].clientX);
+            		let move_y = $(target).data("y") - ((event.type != 'touchstart')? event.originalEvent.clientY:event.originalEvent.touches[0].clientY);
+            		if (Math.abs(move_x) <= 2 || Math.abs(move_y) <= 2) {
                 		$(target).data("move", true);
             		} else { return; };
             		$(target).scrollLeft($(target).data("scrollleft") + move_x);
@@ -1361,13 +1386,21 @@ xUI.printStatus(nas.HTML.mousedragscrollable.footmark);
             		return false;
         		};
         	});
-            return ((event.button == 2)? true:false);
-        }).mouseup(function(){
+            return ((event.originalEvent.button == 2)? true:false);
+        }).on('pointerup',function(event){
+console.log(event.type);
         	$(e).css("cursor","");
-			$(document).unbind("mousemove");
-		}).mouseleave(function(){
-        	$(e).css("cursor","");
-			$(document).unbind("mousemove");
+        	if($(target).data("move")){event.originalEvent.stopPropagation() ;event.originalEvent.preventDefault();};
+//ドラグストローク再開
+        	document.removeEventListener('mouseover',nas.HTML.disableScroll,{ passive: false });
+        	document.removeEventListener('mousedown',nas.HTML.disableScroll,{ passive: false });
+        	document.removeEventListener('pointerdown',nas.HTML.disableScroll,{ passive: false });
+        	document.removeEventListener('touchstart' ,nas.HTML.disableScroll,{ passive: false });
+//			$(document).unbind("pointermove");
+//		}).on('pointerleave',function(evt){
+//console.log(evt.type);
+//        	$(e).css("cursor","");
+			$(document).unbind("pointermove");
 		});
     });
 }
@@ -1378,6 +1411,122 @@ nas.HTML.mousedragscrollable.movecancel = false;
 
 //常用クラス設定 以下のコードはドキュメントの読込時に実行のこと
 //nas.HTML.mousedragscrollable('.mousedragscrollable');
+}
+
+/**
+ *	スクロールドラッガブル要素設定
+ *		右クリックを通す
+ *		リリースの際にフットマークを残す
+ *	キャンセルフラグが立っていればスキップ
+ * Vanila/pointerイベントに書き換え 2023 11 25
+ */
+nas.HTML.mousedragscrollable = function mousedragscrollable(elements){
+	if(elements instanceof HTMLCollection){
+		elements = Array.from(elements)
+	}else if(typeof elements == 'string'){
+		if(elements.match(/^\.(.*)$/)){
+			elements = Array.from(document.getElementsByClassName(RegExp.$1));
+		}else if(elements.match(/^\#?(.*)$/)){
+			elements = [document.getElementById(RegExp.$1)];
+		};
+	};
+	if(!(elements instanceof Array)) elements = Array.from(document.getElementsByClassName('mousedragscrollable'));
+	elements.forEach(function(e){
+
+		e.addEventListener('pointerdown',function ptHandle(evt){
+console.log(evt.target.id)
+			if(nas.HTML.mousedragscrollable.movecancel) return true;
+			event.preventDefault();
+			nas.HTML.mousedragscrollable.target = e; // 動かす対象
+			nas.HTML.mousedragscrollable.target.style.cursor = "grabbing";
+
+			nas.HTML.mousedragscrollable.down = true;//ポインタダウン時に更新
+			nas.HTML.mousedragscrollable.move = false;//ポインタムーブ時に更新
+			nas.HTML.mousedragscrollable.x = evt.clientX;
+			nas.HTML.mousedragscrollable.y = evt.clientY;
+			nas.HTML.mousedragscrollable.scrollleft = nas.HTML.mousedragscrollable.target.scrollLeft;
+			nas.HTML.mousedragscrollable.scrolltop  = nas.HTML.mousedragscrollable.target.scrollTop;
+
+//ドラグストローク停止
+//			document.addEventListener('mouseover'  ,nas.HTML.disableScroll,{ passive: false });
+			document.addEventListener('mousedown'  ,nas.HTML.disableScroll,{ passive: false });
+			document.addEventListener('pointerdown',nas.HTML.disableScroll,{ passive: false });
+			document.addEventListener('touchstart' ,nas.HTML.disableScroll,{ passive: false });
+//			document.addEventListener('touchmove'  ,nas.HTML.disableScroll,{ passive: false });
+//ポインタ処理イベントリスナ設定
+			document.addEventListener('pointermove',nas.HTML.mousedragscrollable.slHandle);
+			document.addEventListener('pointerup'  ,nas.HTML.mousedragscrollable.rvHandle);
+//ポインタ離脱に対して
+			nas.HTML.mousedragscrollable.target.addEventListener('pointerleave',nas.HTML.mousedragscrollable.rvHandle);
+			return false;
+		});
+	});
+}
+//移動フットマーク
+nas.HTML.mousedragscrollable.footmark  = false;
+//マウスドラグ移動キャンセルフラグ
+nas.HTML.mousedragscrollable.movecancel = false;
+/*	ポインタハンドラ
+*/
+//ドラグ移動終了ハンドラ 
+nas.HTML.mousedragscrollable.rvHandle = function(event){
+console.log(event.type);
+console.log(nas.HTML.mousedragscrollable.move);
+    if(!(nas.HTML.mousedragscrollable.move)){
+        if (event.target.click instanceof Function) event.target.click();
+    };
+	if((nas.HTML.mousedragscrollable.down)||(nas.HTML.mousedragscrollable.move)){
+	};
+	if(nas.HTML.mousedragscrollable.down) event.stopImmediatePropagation();
+	if(nas.HTML.mousedragscrollable.down) event.stopPropagation();
+	if(nas.HTML.mousedragscrollable.move) event.preventDefault();
+	nas.HTML.mousedragscrollable.down = false;
+	document.removeEventListener('pointermove',nas.HTML.mousedragscrollable.slHandle);
+	if((event.type == 'pointerup')&&(nas.HTML.mousedragscrollable.target)){
+		nas.HTML.mousedragscrollable.target.removeEventListener('pointerleave',nas.HTML.mousedragscrollable.rvHandle);
+	}else{
+console.log('remove')
+		document.removeEventListener('pointerup',nas.HTML.mousedragscrollable.rvHandle);
+	};
+//タッチスクロール・ホイルスクロール再開
+	document.removeEventListener('pointerdown',nas.HTML.disableScroll,{ passive: false });
+	document.removeEventListener('mousedown'  ,nas.HTML.disableScroll,{ passive: false });
+	document.removeEventListener('touchstart' ,nas.HTML.disableScroll,{ passive: false });
+//	document.removeEventListener('touchmove'  ,nas.HTML.disableScroll,{ passive: false });
+	if(nas.HTML.mousedragscrollable.target){
+		nas.HTML.mousedragscrollable.target.style.cursor = '';
+		nas.HTML.mousedragscrollable.target = null;
+	};
+}
+//ドラグ移動ハンドラ pointermove
+nas.HTML.mousedragscrollable.slHandle = function(evt){
+// list要素内/外でのevent
+	if (nas.HTML.mousedragscrollable.down){
+//		evt.preventDefault();
+//		evt.stopPropagation();
+		let move_x = nas.HTML.mousedragscrollable.x - evt.clientX;
+		let move_y = nas.HTML.mousedragscrollable.y - evt.clientY;
+		if (Math.abs(move_x) > 2 || Math.abs(move_y) > 2) {
+//detect move
+			nas.HTML.mousedragscrollable.move = true;
+		}else{
+//detect non move//リリース実行
+			return;
+		};
+		evt.preventDefault();
+		evt.stopPropagation();
+		nas.HTML.mousedragscrollable.target.scrollTo(
+			nas.HTML.mousedragscrollable.scrollleft + move_x,
+			nas.HTML.mousedragscrollable.scrolltop  + move_y
+		);
+		return false;
+	};
+	return (((evt.button == 2)||(evt.metaKey))? true:false);
+}
+/*TEST
+nas.HTML.mousedragscrollable('.mousedragscrollable');
+*/
+
 /*
 	Progress表示Textを生成して app_status の内容を更新する
 
@@ -1391,6 +1540,302 @@ nas.HTML.showProgress = function showProgress(value,all,form){
 };// */
 /* TEST
 	nas.HTML.showProgress(15,100,"")
+*/
+/**
+    スライダセレクタUI
+    
+
+	@params {Object HTMLDivElement} element
+	@params {Array of String}       options
+	@direction {String}       direction
+	スライダセレクタ
+	
+	縦,横方向を引数で指定
+	ボタンパレードを自動で作る
+	既存のボタンがあればその値をオプションとして初期化
+	onclickメソッドでvalueを更新
+	onchangeメソッドを呼ぶ
+*/
+nas.HTML.SliderSelect = function(element,options,direction){
+	this.element = document.createElement('div');
+	this.element.className = 'nasHTMLSliderSelect';
+	this.element.link      = this;
+	this.element.focusItm  = null;//selectedOption
+	this.element.selectedIndex     = null;//selectedIndex
+	this.element.direction = 'vertical';//horizontal | vertical
+	this.options = [];
+	if(arguments.length) this.parse(element,options,direction);
+}
+nas.HTML.SliderSelect.prototype.parse = function(element,options,direction){
+	if(element instanceof HTMLDivElement){
+		this.element = element;
+	}else if(typeof element == 'string'){
+		if(
+			(document.getElementById(element))&&
+			(document.getElementById(element) instanceof HTMLDivElement)
+		){
+			this.element = document.getElementById(element);
+		}else{
+			this.element.id = element;
+		};
+	};
+	nas.HTML.addClass(this.element,'nasHTMLSliderSelect');
+	this.element.link       = this;
+	this.element.focusItm      = null;
+	this.element.value      = '';//トレーラーにvalueをアタッチ
+	this.element.direction  = (direction != 'vertical')? 'hrizontal':'vertical';//トレーラーにdirectionをアタッチ
+//
+	if(!(this.element.onchange instanceof Function)) this.element.onchange = function(){console.log(this.value);};//既存の関数があれば残す
+//options : [string1,string2,string3...];
+	if((!(options instanceof Array))&&(this.element.children.length)){
+		options = Array.from(this.element.children,function(e){return e.innerHTML});
+	};
+	this.setOptions(options);
+	if(direction != 'vertical'){
+		nas.HTML.removeClass(this.element,'nasHTMLSliderSelect-v');
+		nas.HTML.addClass   (this.element,'nasHTMLSliderSelect-h');
+	}else{
+		nas.HTML.removeClass(this.element,'nasHTMLSliderSelect-h');
+		nas.HTML.addClass   (this.element,'nasHTMLSliderSelect-v');
+	};
+}
+/*セレクタを初期化する*/
+nas.HTML.SliderSelect.prototype.init = function(){
+//	this.element.addEventListener('mousedown' ,nas.HTML.SliderSelect.ptHandle);
+//	this.element.addEventListener('touchstart',nas.HTML.SliderSelect.ptHandle);
+	this.element.addEventListener('pointerdown',nas.HTML.SliderSelect.ptHandle);
+	Array.from(this.element.children).forEach(function(e){
+//		e.addEventListener('mousedown' ,nas.HTML.SliderSelect.ptHandle);
+//		e.addEventListener('touchstart',nas.HTML.SliderSelect.ptHandle);
+		e.addEventListener('pointerdown',nas.HTML.SliderSelect.ptHandle);
+	});
+	this.element.addEventListener('keydown',nas.HTML.SliderSelect.kbHandle);
+	this.element.addEventListener('keyup'  ,nas.HTML.SliderSelect.kbHandle);
+}
+/*
+    @parames {Array of String|Array of Object|HTMLCollection} options
+セレクタのオプションリストを更新する
+オプションは、ボタンエレメントに変換される
+引数要素がボタンオブジェクトであった場合はそのまま利用
+それ以外のオブジェクトなら一定のプロパティを引き継ぐ
+*/
+nas.HTML.SliderSelect.prototype.setOptions = function(options){
+	if(options instanceof HTMLCollection) options = Array.from(oprions);
+	if(!(options instanceof Array)) return this;
+	this.element.innerHTML  = '';//クリア
+	options.forEach(function(e){
+		if(typeof e == 'string'){
+			var bt = document.createElement('button');
+			bt.innerHTML = e;
+		}else{
+			if(e instanceof HTMLButtonElement){
+				var bt = e;
+			}else{
+				var bt = document.createElement('button');
+				(['innerHLML','id','title','onclick','className']).forEach(function(prp){if(e[prp]) bt[prp] = e[prp];});
+			};
+		};
+		bt.parent = this.element;
+		if(!(bt.onclick)) bt.onclick = nas.HTML.SliderSelect.selectItem;
+		nas.HTML.addClass(bt,'sliderSelectOption');
+		nas.HTML.addClass(bt,'sliderSelectOption-mobile');
+		nas.HTML.addClass(bt,((this.element.direction == 'vertical')?'sliderSelectOption-v':'sliderSelectOption-h'));
+		this.element.appendChild(bt);
+	},this);
+	this.element.selectedIndex = 0;
+	this.element.focusItm	  = this.element.children[0];
+	if(this.element.children[0]){
+		this.element.value = this.element.children[0].innerHTML;
+		this.select();
+	}else{
+		this.element.value = '';
+	};
+}
+/*
+ *	@params  {Object HTMLButtonElement|String|Number}  itm
+ *	ボタンオブジェクトまたはキーワード up|down または Number option id
+ *	リストアイテムを選択状態にする
+ */
+nas.HTML.SliderSelect.prototype.select = function(itm){
+	if(this.element.children.length == 0) return this.element.focusItm;
+	if((typeof itm == 'string')&&(itm.match(/up|down/i))){
+		var idx = Array.from(this.element.children).findIndex(function(e){return (e===this.element.focusItm)},this);
+		if(itm =='up'){idx--;}else{idx++};
+		if(idx < 0) idx = 0;
+		if(idx >= this.element.children.length) idx = this.element.children.length - 1;
+		itm = this.element.children[idx];
+	}else if (typeof itm == 'number'){
+		itm = this.element.children[parseInt(itm)];
+	};
+	if(typeof itm == 'string'){
+		itm = Array.from(this.element.children).find(function(e){return (e.innerHTML == itm)});
+	};
+	if(!(itm instanceof HTMLButtonElement)) itm = this.element.focusItm;
+	for (var ix = 0 ;ix < this.element.children.length; ix ++){
+		var e = this.element.children[ix];
+//	Array.from(this.element.children).forEach(function(e){},this);
+		if(e === itm){
+			this.element.focusItm = itm;
+			this.element.selectedIndex = ix;
+			this.element.focusItm.focus();
+			this.element.value = itm.innerHTML;
+			nas.HTML.addClass(e,'sliderSelectOption-focus');
+		}else{
+			nas.HTML.removeClass(e,'sliderSelectOption-focus');
+		};
+	};
+/*選択要素が画面に表示されているか否かを判定して表示されていない場合スクロールを行う*/
+	if(
+		(((this.element.focusItm.offsetTop - this.element.offsetTop) + this.element.focusItm.clientHeight) < (this.element.scrollTop))||
+		(((this.element.focusItm.offsetTop - this.element.offsetTop) - this.element.scrollTop) > (this.element.clientHeight))||
+		(((this.element.focusItm.offsetLeft - this.element.offsetLeft) + this.element.focusItm.clientWidth) < (this.element.scrollLeft))||
+		(((this.element.focusItm.offsetLeft - this.element.offsetLeft) - this.element.scrollLeft) > (this.element.clientWidth))
+	){
+console.log('RANGE-OUT!');
+console.log([		
+        [(this.element.focusItm.offsetTop - this.element.offsetTop ), (this.element.focusItm.clientHeight) ,(this.element.scrollTop)],
+		[(this.element.focusItm.offsetTop - this.element.offsetTop ), (this.element.scrollTop) , (this.element.clientHeight)],
+		[(this.element.focusItm.offsetLeft - this.element.offsetLeft ),( this.element.focusItm.clientWidth) , (this.element.scrollLeft)],
+		[(this.element.focusItm.offsetLeft - this.element.offsetLeft ),( this.element.scrollLeft) , (this.element.clientWidth)]
+		])
+console.log(this.element);
+console.log(this.element.focusItm);
+		var left = ((this.element.focusItm.offsetLeft - this.element.offsetLeft ) < this.element.scrollLeft)?
+			(this.element.focusItm.offsetLeft - this.element.offsetLeft - this.element.clientWidth/2):
+			(this.element.focusItm.offsetLeft - this.element.offsetLeft + this.element.clientWidth/2);
+		var top  = ((this.element.focusItm.offsetTop - this.element.offsetTop ) < this.element.scrollTop)?
+			(this.element.focusItm.offsetTop - this.element.offsetTop  - this.element.clientHeight/2):
+			(this.element.focusItm.offsetTop - this.element.offsetTop  + this.element.clientHeight/2);
+		this.element.scrollTo(left,top);
+	};
+	return this.element.focusItm;
+}
+/*TEST
+    document.getElementById('sliderSelect').link.select('up')
+    document.getElementById('sliderSelect').link.select(document.getElementById('sliderSelect').children[4])
+		document.addEventListener('pointerdown',nas.HTML.disableScroll,{ passive: false });
+*/
+/*
+    @params  {String}  itm
+	リストアイテムはボタンクリックで親のvalueを変更してonchangeを叩く
+	thisはOptionのボタンアイテムを指す
+ */
+nas.HTML.SliderSelect.selectItem = function(){
+console.log("click :"+nas.HTML.SliderSelect.move)
+	if(nas.HTML.SliderSelect.move) return false;
+	this.parentNode.value = this.innerHTML;
+	this.parentNode.link.select(this);
+	this.parentNode.onchange();
+}
+/*リストのイベントリスナ*/
+/*	キーボードハンドラ
+		有効なリストが存在した場合のみキーボードイベントを処理する
+*/
+nas.HTML.SliderSelect.kbHandle = function(evt){
+	if(!(nas.HTML.SliderSelect.target)) return;
+	evt.stopPropagation();evt.preventDefault();
+console.log(this);
+console.log(evt.target);
+//	nas.HTML.SliderSelect.down = false;
+	nas.HTML.SliderSelect.move = false;
+	switch(evt.keyCode){
+	case	13	:	//Enter 標準 現在のセレクションをclick()↲
+		if(evt.type == 'keyup') this.focusItm.click();
+	break;
+	case	37	:		//左[←]
+	case	38	:		//カーソル上
+		if(evt.type == 'keydown') this.link.select('up');
+	break;
+	case	39	:		//右[→]
+	case	40	:		//カーソル下
+		if(evt.type == 'keydown') this.link.select('down');
+	break;
+	default :	return true;
+	};
+	return false;
+}
+/*	ポインタハンドラ
+		div全体とbutton 双方に適用されるので注意
+*/
+nas.HTML.SliderSelect.ptHandle = function(evt){
+console.log(evt.type);
+//マウスドラッグスクロールの停止
+	nas.HTML.mousedragscrollable.movecancel = true;
+//タッチスクロール・ホイルスクロールの停止
+//	document.addEventListener('pointerdown',nas.HTML.disableScroll,{ passive: false });
+	document.addEventListener('mousedown'  ,nas.HTML.disableScroll,{ passive: false });
+//	document.addEventListener('touchstart' ,nas.HTML.disableScroll,{ passive: false });
+	document.addEventListener('touchmove'  ,nas.HTML.disableScroll,{ passive: false });
+	var target = (evt.target instanceof HTMLButtonElement)? evt.target.parentNode:evt.target;
+	if(nas.HTML.SliderSelect.down) evt.stopImmediatePropagation();
+	evt.stopPropagation();
+	evt.preventDefault();
+	nas.HTML.SliderSelect.target = target;
+//console.log('change target :' + target.id)
+	nas.HTML.SliderSelect.down = true;//ポインタダウン時に更新
+	nas.HTML.SliderSelect.move = false;//ポインタムーブ時に更新
+	nas.HTML.SliderSelect.x = evt.clientX;
+	nas.HTML.SliderSelect.y = evt.clientY;
+	nas.HTML.SliderSelect.scrollleft = nas.HTML.SliderSelect.target.scrollLeft;
+	nas.HTML.SliderSelect.scrolltop  = nas.HTML.SliderSelect.target.scrollTop;
+	evt.target.style.cursor = 'grabbing';
+	document.addEventListener('pointermove',nas.HTML.SliderSelect.slHandle);
+	document.addEventListener('pointerup'  ,nas.HTML.SliderSelect.rvHandle);
+//ポインタ離脱に対して
+//	nas.HTML.SliderSelect.target.addEventListener('pointerleave',nas.HTML.SliderSelect.rvHandle);
+    return false;
+}
+//ドラグ移動終了ハンドラ 
+nas.HTML.SliderSelect.rvHandle = function(event){
+	if((nas.HTML.SliderSelect.down)||(nas.HTML.SliderSelect.move)){
+	};
+	if(nas.HTML.SliderSelect.down) event.stopImmediatePropagation();
+	if(nas.HTML.SliderSelect.down) event.stopPropagation();
+	if(nas.HTML.SliderSelect.move) event.preventDefault();
+	nas.HTML.SliderSelect.down = false;
+	nas.HTML.SliderSelect.target.style.cursor = '';
+	document.removeEventListener('pointermove',nas.HTML.SliderSelect.slHandle);
+	if(event.type == 'pointerup'){
+		nas.HTML.SliderSelect.target.removeEventListener('pointerleave',nas.HTML.SliderSelect.rvHandle);
+	}else{
+		document.removeEventListener('pointerup',nas.HTML.SliderSelect.rvHandle);
+	};
+//マウスドラッグスクロール再開
+	nas.HTML.mousedragscrollable.movecancel = ((xUI.canvas)&&(xUI.canvasPaint.active
+)&&(xUI.canvasPaint.currentTool == 'hand'))? true:false;
+//タッチスクロール・ホイルスクロール再開
+//	document.removeEventListener('pointerdown',nas.HTML.disableScroll,{ passive: false });
+	document.removeEventListener('mousedown'  ,nas.HTML.disableScroll,{ passive: false });
+//	document.removeEventListener('touchstart' ,nas.HTML.disableScroll,{ passive: false });
+	document.removeEventListener('touchmove'  ,nas.HTML.disableScroll,{ passive: false });
+}
+//ドラグ移動ハンドラ pointermove
+nas.HTML.SliderSelect.slHandle = function(evt){
+// list要素内/外でのevent
+	if (nas.HTML.SliderSelect.down){
+//		evt.preventDefault();
+//		evt.stopPropagation();
+		let move_x = nas.HTML.SliderSelect.x - ((evt.type != 'touchmove')? evt.clientX:evt.touches[0].clientX);
+		let move_y = nas.HTML.SliderSelect.y - ((evt.type != 'touchmove')? evt.clientY:evt.touches[0].clientY);
+		if (Math.abs(move_x) > 2 || Math.abs(move_y) > 2) {
+//detect move
+			nas.HTML.SliderSelect.move = true;
+		}else{
+//detect non move//リリース実行
+			return;
+		};
+		evt.preventDefault();
+		evt.stopPropagation();
+		nas.HTML.SliderSelect.target.scrollTo(
+			nas.HTML.SliderSelect.scrollleft + move_x,
+			nas.HTML.SliderSelect.scrolltop  + move_y
+		);
+		return false;
+	};
+	return (((evt.button == 2)||(evt.metaKey))? true:false);
+}
+/*TEST
+Array.from(document.getElementsByClassName('nasHTMLSliderSelect')).forEach(function(e){var SSel = new nas.HTML.SliderSelect(e,null,'vertical');e.link.init();});
 */
 /*
 	登録済みのアイコンデータ

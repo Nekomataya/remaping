@@ -80,12 +80,17 @@ a:focus		{color:#880000;background-color:snow}
 div.server-info {
   text-align:right;
 }
-div #toolbarHeader {
+div.toolbarHeader {
 	padding:0 0 0 8px;
 	float:left;
 	width:100%;
-	background-color:#a0a0a0;
+	background-color:#666666;
+	overflow:hidden;
 }
+.toolbarHeader-mobile {
+	height:47px;
+}
+
 div #sheetHeaderTable{
 	padding-right:8px;
 }
@@ -124,6 +129,11 @@ div#UIheader {
 div.fixedHeadline {
 	position:absolute;
 }
+
+div.fixedHeadlineLeft {
+	position:absolute;
+}
+
 iframe.UIhidden {
 	visibility:none;
 }
@@ -227,6 +237,10 @@ xMap Design-TEST
 */
 .trackLabel{
 	color:blue;
+	height:20px;
+}
+.trackLabel-tall{
+	min-height:40px;
 }
 .headerInfoLabel{
 	color:green;
@@ -483,7 +497,7 @@ button.iconButton {
 	height:27px;
 	background-color:#666666;
 	border-width:1px;
-	vertical-align:middle;
+	vertical-align:top;
    /* 角丸 */
     -moz-border-radius: 3px;
     -webkit-border-radius: 3px;
@@ -493,15 +507,35 @@ button.iconButton {
 
 background-image: url(images/ui/nas-ui-icons_IVS.png);
 }
-
+button.buttonSelector {
+	float:left;
+}
+button.iconButton-mobile {
+	margin:12px;
+	border-style:none;
+}
 button.iconButton:hover {
 	background-color:#464646;
 }
 
 button.iconButton:disabled {
 	background-color:#b0b0b0;
+	opacity:0.5;
+}
+button.iconButton-selected {
+	background-color:#202020;
+	opacity:1.0;
+	border-width:2px;
+	border-color:#808080;
 }
 
+button.iconButton-wide2 { width:54px;}
+button.iconButton-wide3 { width:81px;}
+button.iconButton-wide4 { width:108px;}
+
+button.iconButton-headbar {
+	margin:10px;
+}
 /*    icon offset positioning 27x27*/
 /*1*/
 .iconButton-blank         { background-position: 27px 27px; }
@@ -800,8 +834,9 @@ button.iconButton:disabled {
 .iconButton-resize      { background-position: -351px -432px; }
 .iconButton-ungroup     { background-position: -378px -432px; }
 .iconButton-group       { background-position: -405px -432px; }
-/*18
-.iconButton-    { background-position: 0 -459px; }
+/*18 */
+.iconButton-space    { background-position: 0 -459px; }
+/*
 .iconButton-    { background-position: -27px -459px; }
 .iconButton-    { background-position: -54px -459px; }
 .iconButton-    { background-position: -81px -459px; }
@@ -1231,14 +1266,28 @@ table.sheetHeaderMargin {
 	border-style:none;
 	border-width:0;
 }
-.memoSpace {
+#memoArea {
+	  transform: translate(0px, 0px);
+}
+div.memoSpace {
 	width:1056px;
 	min-height:128px;
-	border-width:0;
+	border-width:0px;
 	text-align:left;
 	vertical-align:top;
 	line-height:1.5;
 	overflow:visible;
+	border-style:solid;
+	background-color:transparent;
+}
+div.memoSpace:hover {
+	border-width     : 1px;
+	border-color     : green;
+	background-color : rgb (1 1 1 / 0.02);
+}
+div.memoSpace-selected {
+	border-width     : 1px;
+	border-color     : gray;
 }
 
 
@@ -1268,6 +1317,7 @@ input.toolTip	{
 		border-bottom-width :3px;
 	サブセパレータ
 		border-bottom-width :2px;
+
  */
 td.Sep {
 	color:gray;
@@ -1307,7 +1357,8 @@ td.lsSep,td.lsSep_Blank {
 	text-align:right;
 	border-style:solid;
 	vertical-align:bottom;
-	border-bottom-width:0;
+	border-bottom-width:3px;
+	border-bottom-color:transparent;
 }
 /*		通常データ*/
 td.nsSep,td.nsSep_Blank {
@@ -1330,7 +1381,8 @@ td.dsSep,td.dsSep_Blank {
 	text-align:right;
 	border-style:solid;
 	vertical-align:bottom;
-	border-width:0 1px 0px 0px;
+	border-width:0 1px 1px 0px;
+	border-bottom-color:transparent;
 }
 /*		参照データ
 未使用？
@@ -1556,7 +1608,8 @@ div.application_status {
 div.optionPanel{
 	display:none;
 	padding:0 0 0 8px;
-	backgroung-color:snow;
+	background-color:snow;
+	vertical-align: middle;
 }
 div.optionPanelModal{
 	display:none;
@@ -1574,6 +1627,9 @@ div.optionPanelFloat{
     -moz-border-radius: 4px ;
     -webkit-border-radius: 4px;
     border-radius: 4px;
+}
+div.optionPanelFloat-mobile{
+    background-color:#666666;
 }
 a.minimize{
     position:absolute;
@@ -1623,6 +1679,11 @@ a.close img{
         background-color:#555;
     }
 }
+/* UTLToolbar */
+#optionPanelUtl {
+	background-color:#666666;
+}
+
 /* 書類フォーマット編集パネル */
 #optionPanelDocFormat{
 	width:128px;
@@ -1632,11 +1693,13 @@ a.close img{
 /* ドキュメント画像調整 */
 #optionPanelImgAdjust{
 	width:152px;
-	height:236px;
 	top:240px;
 	right:100px;
 }
-
+/*シーン情報*/
+#optionPanleScn {
+	background-color:#efefef;
+}
 /*アカウントパネル*/
 #account_box	{
     position:absolute;
@@ -1650,27 +1713,56 @@ a.close img{
     display:none;
 }
 /*ソフトウェアキーボード*/
-#optionPanelTbx {
+.optionPanelTbx {
     display:none;
-    top:64px;
-    left:120px;
-    width:660px;
-    height:210px;
+    top:128px;
+    right:48px;
+    width:620px;
+    height:256px;
+	font-weight:bold;
 }
-
+.optionPanelTbx-mobile {
+    width:680px;
+    height:350px;
+}
 .tBSelector {
-    height:9em;
-    width:7em;
+    height:100%;
+    max-height:200px;
+    width:52px;
     text-align:center;
-    font-size:12pt;
+    font-size:14px;
+}
+.tBSelector-mobile {
+    max-height:300px;
+    width:36px;
+    font-size:16px;
 }
 #formTbx {
     padding-left:8px;
 }
 .skb_key {
-    height:1.75em;
-    width:2.75em;
+    height:36px;
+    width:36px;
     background-color:#eeeeee;
+	color:#444444;
+	font-size:14px;
+	font-weight:bold;
+	margin-left:6px;
+	border-style:solid;
+  /* 角丸 */
+    -moz-border-radius: 18px ;
+    -webkit-border-radius: 18px;
+    border-radius: 18px;
+}
+.skb_key-mobile {
+    height:52px;
+    width:52px;
+	font-size:16px;
+	margin-left:8px;
+  /* 角丸 */
+    -moz-border-radius: 26px ;
+    -webkit-border-radius: 26px;
+    border-radius: 26px;
 }
 .skb_key_func {
     background-color:#dddddd;
@@ -1683,11 +1775,15 @@ a.close img{
     background-color:#cccccc;
 }
 /*音響フローティングパネル*/
-#optionPanelSnd {
+.optionPanelSnd {
     top:32px;
     left:0px;
     width:660px;
     height:248px;
+}
+.optionPanelSnd-mobile {
+    width:740px;
+    height:280px;
 }
 #formSnd {
 	padding-left:12px;
@@ -1727,19 +1823,63 @@ a.close img{
 	padding-left:12px;
 }
 /*手描きメモパネル*/
-#optionPanelPaint {
+.optionPanelPaint {
     top:72px;
     right:150px;
     width:132px;
-    height:360px;
+    height:400px;
+}
+.optionPanelPaint-mobile{
+    width:228px;
+    height:560px;
+    background-color:#b0b0b0;
 }
 #formPaint {
     padding-left:8px;
     resize:horizontal;
 }
-
-
-
+/*画像編集テキストフローティングパネル*/
+#optionPanelText {
+    display:none;
+    position:absolute;
+    top:100px;
+    left:240px;
+    min-width:240px;
+    padding:0;
+    border-style:solid;
+    border-width:1px;
+    border-color:#808080;
+    z-index:7;
+    overflow:hidden;
+    /* 角丸*/
+    -moz-border-radius: 4px ;
+    -webkit-border-radius: 4px;
+    border-radius: 4px;
+}
+.textEditBox {
+	width:100%;
+    min-width:240px;
+	min-height:96px;
+	font-size:24px;
+}
+/*画像編集スタンプフローティングパネル*/
+#optionPanelStamp {
+    display:none;
+    position:absolute;
+    top:100px;
+    left:320px;
+    min-width:240px;
+    padding:0;
+    border-style:solid;
+    border-width:1px;
+    border-color:#808080;
+    z-index:7;
+    overflow:hidden;
+    /* 角丸*/
+    -moz-border-radius: 4px ;
+    -webkit-border-radius: 4px;
+    border-radius: 4px;
+}
 /*画像フローティングパネル*/
 #optionPanelRef {
     display:none;
@@ -1786,6 +1926,11 @@ div#underlay {
 }
 /**
 	画像オーバーレイ
+	#.canvasWrap	編集領域トレーラー
+	.overlayDocumentImage	書類にオーバーレイする画像用キャリアトレーラー・内包画像と１：１
+	.drawingOverlay			描画用画像オーバーレイ領域 ドキュメント画像に透明度が連動しない
+	.overlayNoteImage		書類にオーバーレイする画像用キャリアトレーラー・内包画像とサイズが異なる
+	.docmentOverlayCanvas	画像キャリア内に置く編集バッファ
 */
 .canvasWrap {
     position       :absolute;
@@ -1793,10 +1938,10 @@ div#underlay {
     left           : 0px;
     mix-blend-mode : normal;
     pointer-events : auto;
-    border-style   :solid;
-	border-width   :1px;
-    border-color   :red;
-	z-index        :10;
+    border-style   : solid;
+    border-width   : 1px;
+    border-color   : red;
+    z-index        : 10;
 }
 #drawingOverlay{
 	position       : absolute;
@@ -1806,6 +1951,7 @@ div#underlay {
 	pointer-events : none;
 	mix-blend-mode : normal;
 }
+/*	ドキュメント画像表示バッファ*/
 .overlayDocmentImage{
 	position       : absolute;
 	display        : inline-block;
@@ -1815,14 +1961,24 @@ div#underlay {
 	pointer-events : none;
 	mix-blend-mode : darken;
 }
-.documentOverlayCanvas{
+/*	ドキュメント画像用編集バッファ	*/
+svg.documentOverlayCanvas{
 	position       : absolute;
-	display        : none;
+	display        : inline-block;
 	top            : 0;
 	left           : 0;
 	z-index        : 4;
 	pointer-events : none;
 	mix-blend-mode : darken;
+	background-color: rgb(0 0 0 /.03);
+	border-style    : solid;
+	border-width    : 0;
+	opacity         : 1;
+}
+svg.documentOverlayCanvas-hover{
+	border-width  :1px;
+	border-color  :green;
+	opacity       : 0.65;
 }
 .overlayDocmentImage-master{
 	display        : inline;
@@ -1842,7 +1998,17 @@ div#underlay {
 	pointer-events : none;
 	mix-blend-mode : darken;
 }
-
+#note_switch{
+	margin-top:8px;
+	margin-bottom:2px;
+	color:snow;
+}
+.note_item{
+	text-align:center;
+	overflow:visible;
+}
+.note_item_focus{	color:green;}
+.note_item_edit {	color:red;}
 /* 旧タイプ*/
 div.timesheetimage{
 	opacity:.25;
@@ -2137,11 +2303,11 @@ hr.dialog_border {
 input{
 	vertical-align:middle;
 }
-
+/**
 #sheet_body {
 transform-origin: 0 0;transform:scale(1,1);	
-
 }
+*/
 /**
 	　jQuery-ui　combobox
 */
@@ -2440,6 +2606,7 @@ div.documentStatusOverlay {
 	position:relative;
 	z-index:4;
  	border-style:solid;
+  	border-color:black;
   	border-width:0px 1px 0px 0px;
   	margin:0;
 }
@@ -2466,6 +2633,7 @@ div.documentStatusOverlay {
   	padding:4px 2px 4px 2px;
   	height:24px;
   	white-space:nowrap;
+	color:black;
   /* 角丸 */
     -moz-border-radius: 3px ;
     -webkit-border-radius: 3px;

@@ -68,8 +68,23 @@ pman.reName.items[0].setImage();
 	pmanreName.items[0].setImage();
 // */
 /**
+ *	@params {String} link
+ *	nas.NoteImage アイテムのアドレスを変更する
+ *	アドレス変更が可能なアイテムは type:cell のみ
+ *	それ以外はこのメソッドは機能しない
+ *	引数はリンクアドレス(cell_id)
+ *
+ */
+	nas.NoteImage.prototype.setAddress = function setAddress(link){
+		if(this.type != 'cell') return false;
+		if(link instanceof Array)link = link.join('_');
+		this.link = link;
+		this.parent.members.add(this);
+		this.replaceImage()
+	}
+/**
  *	上書き画像用のアイテムの描画環境を再初期化する
- *	現在の編集中のcanvasは廃棄されるので呼び出しに注意
+ *	現在の編集中のSVGキャッシュは廃棄されるので呼び出しに注意
  */
 	nas.NoteImage.prototype.initCanvas = function initCanvas(callback){
 //あらかじめimgが設定されている必要がある?| noteImageは必ずimgプロパティを持つので判定は不要
@@ -78,7 +93,7 @@ pman.reName.items[0].setImage();
 
 //		var imgsrc = ( this.img.width*this.img.height != 0)? this.img.src :'';//現在の画像のsrcを控える
 
-//オブジェクトのcanvas関連プロパティを初期化する
+//オブジェクトのcanvas関連プロパティを初期化する 96ppiで初期化
 		if(!(this.svg)) this.svg = document.createElement('svg');
 		this.svg.style.width  = this.size.x.as('px')+'px';
 		this.svg.style.height = this.size.y.as('px')+'px';
@@ -157,7 +172,9 @@ pman.reName.items[0].setImage();
 		if(this.type == 'page'){
 			parentId = 'sheetImage-' + (parseInt(this.link) - 1);//タイムシート画像
 		}else if(this.type == 'cell'){
-			parentId = 'noteImagefield';
+//スクロールモードでは、表示レイヤ（エレメント）をqdr3|qdr4で振り分ける
+			var qdr3 = xUI.XPS.xpsTracks.getAreaOrder(this.link).fix ;
+			parentId = (qdr3)?'areaFixImageField':'noteImageField';
 //		}else if(this.type == 'description'){
 //			parentId = 'memo_image';
 		};
@@ -287,11 +304,11 @@ xUI.getTargetImageAddress = function(){
 			"b-skin"  : [1,.9,.8,1],
 			"b-light" : [.9,.9,.9,1],
 		},
-		tools : ["select","selectRect","pen","pencil","addText","stamp","hand","eraser","rect","circle"],
+		tools : ["select","selectRect","pen","pencil","addText","stamp","hand","eraser","rect","circle","canvasMove","canvasResize"],
 		toolProps:{downPoint:{x:0,y:0},upPoint:{x:0,y:0},lineDrawId:-1},
 		previousTool: "select",
 		currentTool : "pen",
-		pencilWitdh : 3,
+		pencilWitdh : 1,
 		canvasScale : 1,
 		targetItem  :null,
 		targetOvl   :null,
@@ -355,6 +372,7 @@ xUI.getTargetImageAddress = function(){
 		){
 			xUI.canvas.discardActiveObject();
 			xUI.canvas.renderAll();
+			xUI.canvasPaint.syncCommand();
 			return false;
 		};
 		if(
@@ -364,6 +382,7 @@ xUI.getTargetImageAddress = function(){
 		){
 			document.getElementById('textToolEditBox').value = xUI.canvas.getActiveObjects()[0].text;
 		};
+		xUI.canvasPaint.syncCommand();
 	}
 /*
 	 *
@@ -378,6 +397,7 @@ xUI.getTargetImageAddress = function(){
 		}else{
 			console.log('no undostack!')
 		};
+		xUI.canvasPaint.syncCommand();
 	}
 /*
  *
@@ -392,6 +412,7 @@ xUI.getTargetImageAddress = function(){
 		}else{
 			console.log('empty redostack!');
 		};
+		xUI.canvasPaint.syncCommand();
 	}
 /**
  *	現在編集中のアイテム編集を保存して解除
@@ -400,7 +421,6 @@ xUI.getTargetImageAddress = function(){
 	xUI.canvasPaint.unset = function(){
 		if(!(xUI.canvas)) return;//編集中ではない
 console.log([xUI.canvas.undoPt,xUI.canvas.undoStack.length]);
-		var scale = xUI.viewScale;
 //canvasの内容を表示バッファへ反映
 		xUI.canvasPaint.targetItem.svg.innerHTML = xUI.canvas.toSVG();
 //イベントリスナアンバインド
@@ -427,12 +447,16 @@ console.log([xUI.canvas.undoPt,xUI.canvas.undoStack.length]);
 		xUI.canvasPaint.wrapParent   = null;// canvasトレーラー削除
 		xUI.onCanvasedit = false;//編集モード終了
 //
-		if(nas.HTML.mousedragscrollable.movecancel){
-			nas.HTML.mousedragscrollable.movecancel = false;
-		};//スクロールロック解除
+		if(!(nas.HTML.mousedragscrollable.movecancel)){
+			nas.HTML.mousedragscrollable.movecancel = true;
+		};//スクロールロック
 //編集ポインタを解除
 		xUI.canvasPaint.targetItem = null;
 		xUI.canvasPaint.targetElm  = null;
+//インジケータを解除
+		document.getElementById('note_item').innerHTML = xUI.getTargetImageAddress();
+		nas.HTML.removeClass(document.getElementById('note_item'),'note_item_edit');
+		nas.HTML.addClass(document.getElementById('note_item'),'note_item_focus');
 //表示を更新
 		xUI.sync('paintTool');
 //		xUI.sWitchPanel('Paint','close');
@@ -456,9 +480,6 @@ console.log([xUI.canvas.undoPt,xUI.canvas.undoStack.length]);
 			return false;
 		};
 		if(typeof itm == 'string'){
-//			itm = (itm.indexOf('page:') == 0 ) ?
-//				xUI.XPS.timesheetImages.getByLinkAddress(itm):
-//				xUI.XPS.noteImages.getByLinkAddress(itm);
 //アイテムを作成|取得
 			if(itm.indexOf('description:') == 0){
 				itm = xUI.appendDescriptionImage();
@@ -475,7 +496,7 @@ console.log([xUI.canvas.undoPt,xUI.canvas.undoStack.length]);
 			((itm.parent.members.indexOf(itm) < 0))
 		){
 // 引数がない・引数が対象オブジェクトでない 対象アイテムが有効なコレクション上にない
-			alert('有効なアイテムが指定されていません');
+			alert('x有効なアイテムが指定されていません');
 			return false;//
 		};
 		if(!(itm.svg)){
@@ -564,8 +585,9 @@ console.log([xUI.canvas.undoPt,xUI.canvas.undoStack.length]);
 	ノーマルモードでは、自身が編集可能canvasを持つか否かで判断される
 */
 			var tgtItm     = itm;//nas.NoteImage
-			var sourceSize = [Math.round(itm.size.x.as('in')*itm.resolution.as('ppi')),Math.round(itm.size.y.as('in')*itm.resolution.as('ppi'))];//naturalSizeピクセル値であらかじめ計算しておく
-	console.log(tgtItm);
+//naturalSize をピクセル値であらかじめ計算しておく（ベイク時に必要だが、ここではスクリーン解像度で統一）
+//			var sourceSize = [Math.round(itm.size.x.as('in')*itm.resolution.as('ppi')),Math.round(itm.size.y.as('in')*itm.resolution.as('ppi'))];
+//	console.log(tgtItm);
 //最終条件判定
 			if(
 				(tgtItm)&&
@@ -573,7 +595,7 @@ console.log([xUI.canvas.undoPt,xUI.canvas.undoStack.length]);
 			){
 console.log(tgtItm,nas.NoteImageCash.indexOf(tgtItm),tgtItm.svg);
 //引数アイテムにフォーカスがない・アイテムがsvgを持たない
-				alert('有効なアイテムが指定されていません');
+				alert('有効なアイテムが指定されていませんx');
 console.log(itm);
 				return false;
 			};
@@ -604,13 +626,13 @@ console.log(tgtItm.resolution/nas.RESOLUTION);
 		xUI.adjustScale(tgtItm.resolution/nas.RESOLUTION);
 //編集アイテムのターゲット・フィールドを特定
 // page: #sheetImage-[idx]	ページいっぱいのサイズで image*1 canvas*1
-// note: #noteImagefield アイテムごとの位置とサイズで不定数 
+// cell: #noteImageField アイテムごとの位置とサイズで不定数 
 // description: #memo_image 領域いっぱいのサイズで image*1 canvas*1 初期状態では image==null
 		var parentId = 'memo_image';//通常のノート画像トレーラー
 		if(tgtItm.type == 'page'){
 			parentId = 'sheetImage-' + (parseInt(tgtItm.link) - 1);//タイムシート画像
 		}else if(tgtItm.type == 'cell'){
-			parentId = 'noteImagefield';
+			parentId = (xUI.XPS.xpsTracks.getAreaOrder(tgtItm.link).fix)?'areaFixImageField':'noteImageField';
 //		}else if(tgtItm.type == 'description'){
 //			parentId = 'memo_image';
 		};
@@ -631,13 +653,15 @@ console.log(parentId);
 			xUI.canvasPaint.canvasWrap.appendChild(targetCanvas);
 			targetCanvas.id        = 'imgEditableOverlay';
 			targetCanvas.className = 'imgEditableOverlay';
-			targetCanvas.width     = sourceSize[0];//itm.img.naturalWidth;
-			targetCanvas.height    = sourceSize[1];//itm.img.naturalHeight;
+
+			targetCanvas.width     = tgtItm.size.x.as('px');//96ppi
+			targetCanvas.height    = tgtItm.size.y.as('px');//screen resolution
+
 if(tgtItm.type == 'cell'){
 				var linkElement = document.getElementById(tgtItm.link);
 console.log(linkElement);
-				xUI.canvasPaint.canvasWrap.style.left  = (linkElement.offsetLeft + tgtItm.offset.x.as('px'))+'px';
-				xUI.canvasPaint.canvasWrap.style.top   = (linkElement.offsetTop  + tgtItm.offset.y.as('px'))+'px';
+				xUI.canvasPaint.canvasWrap.style.left  = (linkElement.offsetLeft + tgtItm.offset.x.as('px')) + 'px';
+				xUI.canvasPaint.canvasWrap.style.top   = (linkElement.offsetTop  + tgtItm.offset.y.as('px')) + 'px';
 };
 			console.log(targetCanvas);
 
@@ -646,9 +670,9 @@ console.log(linkElement);
 	var canv_1 = document.createElement('canvas');
 	var canv_2 = document.createElement('canvas');
 	var canv_3 = document.createElement('canvas');
-	var canvE_1 = document.getElementById('noteImagefield').appendChild(canv_1);
-	var canvE_2 = document.getElementById('noteImagefield').appendChild(canv_2);
-	var canvE_3 = document.getElementById('noteImagefield').appendChild(canv_3);
+	var canvE_1 = document.getElementById('noteImageField').appendChild(canv_1);
+	var canvE_2 = document.getElementById('noteImageField').appendChild(canv_2);
+	var canvE_3 = document.getElementById('noteImageField').appendChild(canv_3);
 	canv_1.id = 'canv_1';
 	canv_2.id = 'canv_2';
 	canv_3.id = 'canv_3';
@@ -710,7 +734,10 @@ console.log(linkElement);
 //*overlay scale & position match
 /*canvas全体のスケーリングと位置合わせをcssで行う*/
 /*canvas全体のスケーリングと位置合わせをfablicで行う*/
-//	var scale = baseImage.width / baseImage.naturalWidth;
+//	var scale = 96 / xUI.canvasPaint.targetItem.resolution;
+//	xUI.canvasPaint.canvasWrap.style.transform = 'scale('+[scale,scale].join(',')+');';
+//	xUI.canvasPaint.canvasWrap.style.transformOrigin = 'left top;';
+
 //	editField.getContext('2d').drawImage(targetItem.canvas,0,0);//現在の内容を描画
 //	xUI.canvas.getContext('2d').drawImage(targetItem.canvas,0,0);//現在の内容を描画
 	
@@ -760,13 +787,17 @@ console.log(linkElement);
 		xUI.adjustScale(bkup.preview);//resetSheetが含まれるので要注意　通常は、なくても良い…はず
 		window.scrollTo(bkup.point);
 //		pmanreName.changeView(null,bkup.preview);
+//編集中アイテムインジケータを点灯
+		document.getElementById('note_switch').innerHTML = 'UNSET';
+		nas.HTML.removeClass(document.getElementById('note_item'),'note_item_focus');
+		nas.HTML.addClass(document.getElementById('note_item'),'note_item_edit');
+		document.getElementById('note_item').innerHTML = "! "+xUI.getTargetImageAddress();
 
 //再読み込みの際にツールを再セットする必要がある
 		xUI.canvasPaint.setTool('reset');
-	
-	xUI.sync('paintColor');
-	xUI.sync('paintTool');
-	xUI.sWitchPanel('Paint','show');
+		xUI.sync('paintColor');
+		xUI.sync('paintTool');
+		xUI.sWitchPanel('Paint','show');
 //	return editField;
 	}
 	
@@ -792,6 +823,7 @@ console.log(linkElement);
 /*canvas編集中のキーボードイベントハンドラ トラップした際にはfalseを戻す
 	 */
 	xUI.canvasPaint.kbHandle = function(evt){
+		if(xUI.canvasPaint.active == false) return;
 		if(evt.target.id == 'textToolEditBox') return true;
 		if(evt.target.id == 'iNputbOx') return true;
 console.log(evt.keyCode);
@@ -1008,8 +1040,9 @@ console.log(evt.keyCode);
 		
 		return true;
 	}
-/*canvas編集中のマウスイベントハンドラ トラップした際にはfalseを戻す
-	
+/*
+	@params {Object} evt
+canvas編集中のマウス・タッチイベントハンドラ トラップした際にはfalseを戻す
 		tools : [
 			"select":,
 			"selectRect":,
@@ -1017,15 +1050,23 @@ console.log(evt.keyCode);
 			"pencil":,
 			"addText":ptHandle,
 			"stamp":ptHandle,
-			"hand":,
+			"hand":ptHandle,
 			"eraser":,
 			"rect":ptHandle,
 			"circle":ptHandle
 		],
 	 */
 	xUI.canvasPaint.ptHandler = function(evt){
-console.log(evt)
-		if(evt.e.type == 'mousedown'){
+		if(xUI.canvasPaint.active == false){xUI.canvasPaint.suspend = true; return false;}
+
+		if((evt.e.type == 'mousedown')||(evt.e.type == 'touchstart')){
+			if(xUI.canvasPaint.currentTool != 'hand'){
+console.log('NOHAND')
+//マウスドラッグスクロールの停止
+				nas.HTML.mousedragscrollable.movecancel = true;
+//タッチスクロール・ホイルスクロールの停止
+				document.addEventListener('mousedown',nas.HTML.disableScroll,{ passive: false });
+				document.addEventListener('touchmove',nas.HTML.disableScroll,{ passive: false });
 /*
 			if(
 				((xUI.canvasPaint.currentTool != 'select')&&(xUI.canvasPaint.currentTool != 'selectRect'))&&
@@ -1034,18 +1075,18 @@ console.log(evt)
 				xUI.canvas.discardActiveObject();
 				xUI.canvas.renderAll();
 			};// */
-	
-			if(xUI.canvasPaint.currentTool != 'hand') xUI.canvasPaint.toolProps.downPoint = evt.absolutePointer;
-//
+//			if(xUI.canvasPaint.currentTool != 'hand'){};;
+				xUI.canvasPaint.toolProps.downPoint = evt.absolutePointer;
+
 			if((xUI.canvasPaint.currentTool == 'pen')&&(evt.e.shiftKey)){
 				xUI.canvasPaint.toolProps.lineDrawId = xUI.canvas._objects.length;//直線描画時にこれから描画するオブジェクトのIDでフラグを立てる
 			//（フラグの回収はチェンジイベント側で行う）
 			var lineOffset = xUI.canvasPaint.pencilWitdh/2;
 				xUI.canvas.add(new fabric.Line([
-					xUI.canvasPaint.toolProps.upPoint.x  -lineOffset,
-					xUI.canvasPaint.toolProps.upPoint.y  -lineOffset,
-					xUI.canvasPaint.toolProps.downPoint.x-lineOffset,
-					xUI.canvasPaint.toolProps.downPoint.y-lineOffset
+					xUI.canvasPaint.toolProps.upPoint.x   - lineOffset,
+					xUI.canvasPaint.toolProps.upPoint.y   - lineOffset,
+					xUI.canvasPaint.toolProps.downPoint.x - lineOffset,
+					xUI.canvasPaint.toolProps.downPoint.y - lineOffset
 				],{
 					strokeWidth  : xUI.canvasPaint.pencilWitdh,
 					strokeLineCap: "round",
@@ -1060,18 +1101,27 @@ console.log(evt)
 	console.log('shape drawing start');
 				xUI.canvasPaint.suspend = true;
 			};
-		}else if(evt.e.type == 'mouseup'){
-			if(xUI.canvasPaint.currentTool != 'hand') xUI.canvasPaint.toolProps.upPoint = evt.absolutePointer;
-			if(
-				(xUI.canvasPaint.suspend)&&
-				((xUI.canvasPaint.currentTool == 'circle')||(xUI.canvasPaint.currentTool == 'rect'))
-			){
+			};//ハンドツールを除く全てのツールでの処理
+		}else if((evt.e.type == 'mouseup')||(evt.e.type == 'touchend')){
+			if(xUI.canvasPaint.currentTool != 'hand'){
+				xUI.canvasPaint.toolProps.upPoint = evt.absolutePointer;
+				if(
+					(xUI.canvasPaint.suspend)&&
+					
+					((xUI.canvasPaint.currentTool == 'circle')||(xUI.canvasPaint.currentTool == 'rect'))
+				){
 //フラグを下げて図形の描画
-	console.log('shape drawing end');
-				xUI.canvasPaint.suspend = false;
-				xUI.canvasPaint.setShape	(((evt.e.metaKey)||(evt.e.ctrlKey)),(evt.e.shiftKey));
+console.log('shape drawing end');
+					xUI.canvasPaint.suspend = false;
+					xUI.canvasPaint.setShape	(((evt.e.metaKey)||(evt.e.ctrlKey)),(evt.e.shiftKey));
+				};
+//マウスドラッグスクロール再開
+				nas.HTML.mousedragscrollable.movecancel = (xUI.canvasPaint.currentTool == 'hand')? false:true;
+//タッチスクロール・ホイルスクロール再開
+				document.removeEventListener('mousedown',nas.HTML.disableScroll,{ passive: false });
+				document.removeEventListener('touchmove',nas.HTML.disableScroll,{ passive: false });
 			};
-		}else if((evt.e.type == 'mousemove')){
+		}else if((evt.e.type == 'mousemove')||(evt.e.type == 'touchmove')){
 			if(
 				(xUI.canvasPaint.suspend)&&
 				((xUI.canvasPaint.currentTool == 'circle')||(xUI.canvasPaint.currentTool == 'rect'))
@@ -1082,9 +1132,6 @@ console.log(evt)
 				return false
 			};
 		};
-//	if(xUI.canvasPaint.currentTool.match(/select|selectRect|pen|pencil|hand|eraser/)) return;
-//console.log(evt)
-//	return false;
 	}
 
 //現在の編集内容を保存更新 UNDO操作の一部になる
@@ -1093,7 +1140,7 @@ console.log(evt)
 //スケール 1:1
 			var scale = xUI.viewScale;//スカラ
 			var point = [window.scrollLeft,window.scrollTop];//
-			if(scale != 1) xUI.adjustScale(1);//resetSheet
+//			if(scale != 1) xUI.adjustScale(1);//resetSheet
 			if(point.join('_') != '0_0') window.scrollTo([0,0]);
 //			xUI.canvasPaint.targetItem.canvas = xUI.canvas.toCanvasElement(1.0);//canvs置換
 			xUI.canvasPaint.targetItem.svg.innerHTML = xUI.canvas.toSVG();//キャッシュ更新
@@ -1101,8 +1148,6 @@ console.log(evt)
 //			xUI.canvasPaint.targetElm.src = xUI.canvas.toDataURL();
 //			xUI.canvasPaint.targetItem.setImage();//キャッシュ更新
 console.log(scale)
-//			if(scale != 1) xUI.adjustScale(scale);
-//			if(point.join('_') != '0_0') window.scrollTo(point);
 		};
 	}
 //現在の編集内容を編集canvasへレストア undoの実装により不要
@@ -1110,19 +1155,21 @@ console.log(scale)
 		if(xUI.canvas){
 //スケール 1:1
 			var scale = xUI.viewScale;//スカラ
-			if(scale != 1) xUI.adjustScale(1);
+//			if(scale != 1) xUI.adjustScale(1);
 //キャッシュ側からデータを得る
 			if(xUI.canvas.undoPt > 0){
 				xUI.canvas.loadFromJSON(xUI.canvas.undoStack[xUI.canvas.undoPt]).renderAll();;
 			};
-			if(scale != 1) xUI.adjustScale(scale);
+//			if(scale != 1) xUI.adjustScale(scale);
 		};
 	}
 /*テキスト設定
-	選択されたオブジェクトが存在して、かつテキストプロパティがあれば内容を変更する
-	存在しない場合は新規のテキストオブジェクトを作成して現座標に配置
-	*/
+ *	選択されたオブジェクトが存在して、かつテキストプロパティがあれば内容を変更する
+ *	存在しない場合は新規のテキストオブジェクトを作成して現座標に配置
+ */
 	xUI.canvasPaint.putText = function (content){
+console.log([window.scrollX,window.scrollY,xUI.viewScale]);
+
 		if((typeof content != 'string')||(content.length == 0)) return false;
 		if(
 			(xUI.canvas.getActiveObjects().length == 1)&&
@@ -1131,8 +1178,10 @@ console.log(scale)
 			xUI.canvas.getActiveObjects()[0].text = content;
 			xUI.canvas.renderAll();
 		}else{
+			var leftPos = (xUI.canvasPaint.targetItem.type == 'page')? Math.floor(window.scrollX/xUI.viewScale) + 96:8;
+			var TopPos  = (xUI.canvasPaint.targetItem.type == 'page')? Math.floor(window.scrollY/xUI.viewScale) + 96:8;
 			var fColor = xUI.canvasPaint.parseColor(xUI.canvasPaint.pencilColorF);
-			xUI.canvas.add(new fabric.Text(content,{left:96,top:96,fill:fColor,stroke:fColor}));
+			xUI.canvas.add(new fabric.Text(content,{left:leftPos,top :TopPos,fill:fColor,stroke:fColor}));
 			xUI.canvas.setActiveObject(xUI.canvas._objects[xUI.canvas._objects.length-1]);
 			xUI.canvas.renderAll();
 		};
@@ -1237,6 +1286,7 @@ console.log(scale)
 	 */
 	xUI.canvasPaint.yank = function(){
 		xUI.canvasPaint.yankBuffer = Array.from(xUI.canvas.getActiveObjects(),e => e.toObject());//toDatalessObject ?
+		xUI.canvasPaint.syncCommand();
 	}
 	xUI.canvasPaint.copy = xUI.canvasPaint.yank;//コピーは現在yankと等価
 /*
@@ -1246,6 +1296,7 @@ console.log(scale)
 		xUI.canvasPaint.yank();
 		if(xUI.canvasPaint.yankBuffer.length)
 		xUI.canvasPaint.removeSelection();
+		xUI.canvasPaint.syncCommand();
 	}
 /*
 	 *	ヤンクバッファの内容をペースト
@@ -1261,7 +1312,8 @@ console.log(scale)
 			});
 			xUI.canvasPaint.selectObject(insertObjects);
 			xUI.canvas.renderAll();
-		}
+		};
+		xUI.canvasPaint.syncCommand();
 	}
 /*
 	 *	引数オブジェクトを選択・引数が空または文字列の場合は全部のすべてのオブジェクトを選択
@@ -1271,17 +1323,18 @@ console.log(scale)
 		if((! objects)||(objects == 'all')) objects = xUI.canvas.getObjects();
 		if(xUI.canvasPaint.targetItem.type.match(/-asset-|-xpst-/))
 			objects = objects.slice(1);//第一要素を除く
-			xUI.canvas.discardActiveObject();
-			if(objects.length == 1){
-				xUI.canvas.setActiveObject(objects[0]);
-				xUI.canvas.renderAll();
-			}else if(objects.length > 1){
-				var sel = new fabric.ActiveSelection(objects, {
-					canvas: xUI.canvas,
-				});
-				xUI.canvas.setActiveObject(sel);
-				xUI.canvas.requestRenderAll();
-			};
+		xUI.canvas.discardActiveObject();
+		if(objects.length == 1){
+			xUI.canvas.setActiveObject(objects[0]);
+			xUI.canvas.renderAll();
+		}else if(objects.length > 1){
+			var sel = new fabric.ActiveSelection(objects, {
+				canvas: xUI.canvas,
+			});
+			xUI.canvas.setActiveObject(sel);
+			xUI.canvas.requestRenderAll();
+		};
+		xUI.canvasPaint.syncCommand();
 	}
 //xUI.canvasPaint.selectObject();
 //
@@ -1294,43 +1347,54 @@ console.log(scale)
 		xUI.canvasPaint.historyHandler('removed');
 	}
 /**
-	 *	@params {String} tl
-	 *	ツールキーワードを指定してツールモードを設定する
-	 *	
-	 *	
-	 */
+ *	@params {String} tl
+ *	ツールキーワードを指定してツールモードを設定する
+ *	キーワードは、ツールパレットのエレメントIDと一致
+ *	
+ */
 	xUI.canvasPaint.setTool = function(tl){
+		if(xUI.canvasPaint.active == false) return;
 		if(xUI.canvasPaint.currentTool == tl) return;
+		if((tl.match(/canvas(Move|Resize)/))&&(xUI.viewMode != 'Compact')) return;
+
 		if(tl == 'reset') tl = xUI.canvasPaint.currentTool;
 		if(xUI.canvasPaint.previousTool != tl) xUI.canvasPaint.previousTool = xUI.canvasPaint.currentTool;
 		xUI.canvasPaint.currentTool = tl;
-		xUI.canvasPaint.tools.forEach((t)=>{
-			if(document.getElementById(t))document.getElementById(t).disabled = (t == tl)? true:false;
-		});
-//select,selectRect,addText,stamp,pen,eraser,rect,circle,hand
+		if(!(tl.match(/addText|stamp/))){
+			document.getElementById(xUI.canvasPaint.previousTool).disabled = false;
+			nas.HTML.removeClass(document.getElementById(xUI.canvasPaint.previousTool),'iconButton-selected');
+			document.getElementById(xUI.canvasPaint.currentTool).disabled  = true;
+			nas.HTML.addClass(document.getElementById(xUI.canvasPaint.currentTool),'iconButton-selected');
+		};
+// */
+
+//		xUI.canvasPaint.tools.forEach((t)=>{if(document.getElementById(t))document.getElementById(t).disabled = (t == tl)? true:false;});
+//select,selectRect,addText,stamp,pen,eraser,rect,circle,hand,canvasMove,canvasResize
 		if(xUI.canvas){
 			xUI.canvas.isDrawingMode = ((tl == 'pen')||(tl == 'pencil'))? true:false;
 //		if((tl == 'select')||(tl == 'selectRect'))
 			xUI.canvas.selection = (tl == "selectRect")? true:false;
+
 			nas.HTML.mousedragscrollable.movecancel = (tl == 'hand')?false:true;
-			if(tl == 'addText'){xUI.sWitchPanel('Text','show');xUI.canvasPaint.setTool('select');};
-			if(tl == 'stamp'){xUI.canvasPaint.setTool('select');};
+			if(tl == 'addText'){xUI.sWitchPanel('Text' ,'show');xUI.canvasPaint.setTool('select');};
+			if(tl == 'stamp'  ){xUI.sWitchPanel('Stamp','show');xUI.canvasPaint.setTool('select');};
 		};
 	}
 /**
 	 *	@params	{Number|String}	wdth
 	 *	ペンのサイズを設定する
-	 *	値はpixelで範囲外の値は 1,3,6に正規化
+	 *	値はpixelで範囲外の値は 1,2,3に正規化
 	 *	またはキーワード thin|bold
 	 */
 	xUI.canvasPaint.setPenWidth = function(wdth){
 		if(typeof wdth == 'undefined') wdth = xUI.canvasPaint.pencilWitdh;
+		let min = 1 ;let max = 3 ;
 		if(wdth == 'thin'){
-			wdth = Math.floor(xUI.canvasPaint.pencilWitdh / 2);
-			if(wdth < 1) wdth = 1;
+			wdth = Math.floor(xUI.canvasPaint.pencilWitdh - 1);
+			if(wdth < min) wdth = min;
 		}else if(wdth == 'bold'){
-			wdth = Math.floor(xUI.canvasPaint.pencilWitdh * 3);
-			if(wdth > 3) wdth = 6;
+			wdth = Math.floor(xUI.canvasPaint.pencilWitdh + 1);
+			if(wdth > max) wdth = max;
 		};
 		xUI.canvasPaint.pencilWitdh = wdth;
 		xUI.sync('paintTool');//syncに委ねる
@@ -1376,6 +1440,7 @@ console.log(scale)
  *	syncに呼ばれるカラーパレット同期ハンドラ xUI.sync("paintColor");
  */
 	xUI.canvasPaint.syncColors = function(){
+		if(!(document.getElementById('optionPanelPaint'))) return;//NOP
 		document.getElementById('colorSelectFG').style.backgroundColor = xUI.canvasPaint.parseColor(xUI.canvasPaint.pencilColorF);
 		if(xUI.canvas){
 			xUI.canvas.freeDrawingBrush.color = document.getElementById('colorSelectFG').style.backgroundColor;
@@ -1385,55 +1450,142 @@ console.log(scale)
 		document.getElementById('backdrop').style.backgroundColor = xUI.canvasPaint.parseColor(xUI.canvasPaint.backdropColor);
 	}
 /*
- *	syncに呼ばれるツールパレット同期ハンドラ xUI.sync("paintColor");
+ *	syncに呼ばれるツールパレット同期ハンドラ xUI.sync("paintTool");
  */
 	xUI.canvasPaint.syncTools = function(){
+		if(!(document.getElementById('optionPanelPaint'))) return;//NOP
 //カラーパレットの背景色を更新
 		document.getElementById('backdrop').style.backgroundColor = xUI.canvasPaint.parseColor(xUI.canvasPaint.backdropColor);
-//		if(xUI.canvasActive)
-		if(xUI.onCanvasedit){
-			xUI.canvasPaint.setTool(xUI.canvasPaint.currentTool);
-			xUI.canvas.freeDrawingBrush.width = xUI.canvasPaint.pencilWitdh;
-			Array.from(document.getElementsByClassName('paintTool')).forEach(e=> e.disabled =(xUI.canvasPaint.currentTool == e.id)? true:false);
-			Array.from(document.getElementsByClassName('paintCommand')).forEach(e=> e.disabled = false);
-		}else{
-			Array.from(document.getElementsByClassName('paintTool')).forEach(e=> e.disabled = true);
+		if((xUI.viewOnly)){
+			Array.from(document.getElementsByClassName('paintTool')   ).forEach(e=> e.disabled = true);
 			Array.from(document.getElementsByClassName('paintCommand')).forEach(e=> e.disabled = true);
-		}
-
-//ノート編集ボタンのアイコン更新
+			Array.from(document.getElementsByClassName('itemCommand') ).forEach(e=> e.disabled = true);
+		}else{
+			if(
+				(xUI.onCanvasedit)
+			){
+				xUI.canvasPaint.setTool(xUI.canvasPaint.currentTool);
+				xUI.canvas.freeDrawingBrush.width = xUI.canvasPaint.pencilWitdh;
+				Array.from(document.getElementsByClassName('paintTool')).forEach(function(e){
+					if((xUI.viewMode != 'Compact')&&(e.id.match(/canvas(Move|Resize)/))){
+						e.disabled = true;
+						nas.HTML.removeClass(e,'iconButton-selected');
+					}else if(xUI.canvasPaint.currentTool == e.id){
+						e.disabled = true;
+						nas.HTML.addClass(e,'iconButton-selected');
+					}else{
+						e.disabled = false;
+						nas.HTML.removeClass(e,'iconButton-selected');
+					};
+				});
+				Array.from(document.getElementsByClassName('paintCommand')).forEach(e=> e.disabled = false);
+//				Array.from(document.getElementsByClassName('itemCommand') ).forEach(e=> e.disabled = true);
+			}else{
+				Array.from(document.getElementsByClassName('paintTool')   ).forEach(e=> e.disabled = true);
+				Array.from(document.getElementsByClassName('paintCommand')).forEach(e=> e.disabled = true);
+//				Array.from(document.getElementsByClassName('itemCommand') ).forEach(e=> e.disabled = false);
+			};
+//ペンの太さを更新
+			var currentId = ({"1":"dot1","2":"dot2","3":"dot3"})[xUI.canvasPaint.pencilWitdh];
+			["dot1","dot2","dot3"].forEach(e=>document.getElementById(e).disabled = (e ==currentId)? true:false);
+		};
+	};
+/**
+	ペイントコマンドの同期
+*/
+	xUI.canvasPaint.syncCommand = function(){
+		if(
+			(!(document.getElementById('optionPanelPaint')))
+		) return;// NOP
+//ノート編集(アイテムコマンド)ボタンのアイコン更新
 //scroll(TDTS互換)モード 任意のアイテムがシートセルに登録されるので、フォーカスしているアイテムのNoteImageが登録されている場合は編集ボタン、それ以外は追加ボタン
 //pageモード ページ毎に１点のアイテムが登録されるので随時編集ボタン
 //双方のモードでnoteForcusがある場合は、ノート領域に対する編集ボタン
 		var hasItem = false;
 		var itemAddress = xUI.getTargetImageAddress();
+
 		if(itemAddress.indexOf('page:') == 0){
 			hasItem = xUI.XPS.timesheetImages.getByLinkAddress(itemAddress);
 		}else{
 			hasItem = xUI.XPS.noteImages.getByLinkAddress(itemAddress);
 		};
+if(dbg) console.log(hasItem);
+		if(xUI.canvasPaint.active == false){
+			document.getElementById('note_switch').disabled = true;
+		}else{
+			document.getElementById('note_switch').disabled = false;
+		};
 		if((itemAddress == 'description:')||(itemAddress.indexOf('page:') == 0)){
-			nas.HTML.removeClass(document.getElementById('note_edit'),'iconButton-addItem');
-			nas.HTML.addClass(document.getElementById('note_edit'),'iconButton-editItem');
-			if((xUI.canvas)&&(xUI.canvasPaint.targetItem === hasItem)){
-				document.getElementById('note_edit').disabled = true;
-			}else{
-				document.getElementById('note_edit').disabled = false;
-			};
-		}else if((xUI.viewMode == 'Compact')){
+			document.getElementById('note_switch').innerHTML = 'EDIT';
+		};
+//編集開始｜アイテム追加ボタンのアイコン
+		if((xUI.viewMode == 'Compact')){
 			if(hasItem){
-				nas.HTML.removeClass(document.getElementById('note_edit'),'iconButton-addItem');
-				nas.HTML.addClass(document.getElementById('note_edit'),'iconButton-editItem');
-				
+//				nas.HTML.removeClass(document.getElementById('note_edit'),'iconButton-addItem');
+//				nas.HTML.addClass(document.getElementById('note_edit'),'iconButton-editItem');
+				document.getElementById('note_switch').innerHTML = 'EDIT';
 			}else{
-				nas.HTML.removeClass(document.getElementById('note_edit'),'iconButton-editItem');
-				nas.HTML.addClass(document.getElementById('note_edit'),'iconButton-addItem');
+//				nas.HTML.removeClass(document.getElementById('note_edit'),'iconButton-editItem');
+//				nas.HTML.addClass(document.getElementById('note_edit'),'iconButton-addItem');
+				document.getElementById('note_switch').innerHTML = 'APPEND+EDIT';
 			};
 		};
-//ペンの太さを更新
-		var currentId = ({"1":"dot1","3":"dot2","6":"dot3"})[xUI.canvasPaint.pencilWitdh];
-		["dot1","dot2","dot3"].forEach(e=>document.getElementById(e).disabled = (e ==currentId)? true:false);
-	};
+//保存ボタン
+		if(xUI.canvas){
+			document.getElementById('note_switch').innerHTML = 'UNSET';
+		}else{
+			document.getElementById('note_item').innerHTML = itemAddress;
+		};
+//削除ボタン
+		if((hasItem)&&(!(xUI.canvas))&&(xUI.canvasPaint.active == true)){
+			document.getElementById('note_discard').disabled = false;
+		}else{
+			document.getElementById('note_discard').disabled = true;
+		};
+//copy|cut|paste 設定
+		if(
+			(xUI.canvasPaint.active == true)&&
+			(xUI.canvas)&&
+			(xUI.canvasPaint.yankBuffer.length)
+		){
+			document.getElementById('note_paste').disabled = false;
+		}else{
+			document.getElementById('note_paste').disabled = true;
+		};
+		if(
+			(xUI.canvasPaint.active == true)&&
+			(xUI.canvas)&&
+			(xUI.canvas.getActiveObjects().length)
+		){
+			document.getElementById('note_copy').disabled = false;
+			document.getElementById('note_cut').disabled = false;
+		}else{
+			document.getElementById('note_copy').disabled = true;
+			document.getElementById('note_cut').disabled = true;
+		};
+//undo|redo
+		if(
+			(xUI.canvasPaint.active == true)&&
+			(xUI.canvas)
+		){
+			var stat=(xUI.canvas.undoPt == 0)? true:false ;
+			document.getElementById('note_undo').disabled = stat;
+			var r_stat=((xUI.canvas.undoPt+1)>=xUI.canvas.undoStack.length)? true:false ;
+			document.getElementById('note_redo').disabled = r_stat;
+		}else{
+			document.getElementById('note_undo').disabled = true;
+			document.getElementById('note_redo').disabled = true;
+		};
+//ショートカットキー設定
+/*		if(xUI.canvasPaint.keyassign == 'canvas'){
+			document.getElementById('setSCpaint').disabled = false;
+			document.getElementById('setSCinput').disabled = true;
+		}else{
+			document.getElementById('setSCpaint').disabled = true;
+			document.getElementById('setSCinput').disabled = false;
+		};// */
+//zoom|アピアランスコントロール 不要
+	}
 /**
 	 *	@params	{Boolean}	asOvl
 	 *	推測名をオブジェクトに加えてダイアログを更新する（更新のみ）
@@ -1503,6 +1655,34 @@ console.log(scale)
 		xUI.canvasPaint.currentReference.asOvl         = asOvl;
 	};
 /**
+ *	編集状態の切り替え
+ */
+	xUI.canvasPaint.switch = function(){
+		if(xUI.canvas){
+			xUI.canvasPaint.unset();
+		}else{
+			xUI.canvasPaint.set(xUI.getTargetImageAddress());
+		};
+		xUI.canvasPaint.syncTools();
+	}
+/**
+	画像イメージをハイライトする
+	引数のない場合はハイライトをクリア
+ */
+xUI.hilightImage = function(address){
+	var type = address.split(':')[0];
+	var collection = (type == 'page')? xUI.XPS.timesheetImages:xUI.XPS.noteImages;
+	var itm = collection.getByLinkAddress(address);
+//	if(itm)
+	collection.members.forEach(function(e){
+		if(e === itm){
+			nas.HTML.addClass(e.svg,'documentOverlayCanvas-hover');
+		}else{
+			nas.HTML.removeClass(e.svg,'documentOverlayCanvas-hover');
+		};
+	});
+}
+/**
  *	@returns {Object nas.NoteImage|null}
  * 空のデスクリプション画像をコレクションに加える
  * すでに画像登録のある場合新たな登録はできない・既存の画像を返す
@@ -1555,7 +1735,9 @@ xUI.appendPageImage = function(pgNo){
  * トラックタイプによりサイズ計算が異なる
  * TDTS互換部分としてレンジ設定が１秒に満たない場合は定サイズの画像に拡張が行われる
  * 基点はターゲット要素の左上
- * レンジが負数になった場合オフセット量にくりこみ
+ * レンジが負数になった場合オフセット量にくりこむ
+ * 指定のトラックがfixエリアに入る場合は、カメラワークトラックに準ずるトラック固定領域を生成する
+ * フレームレンジはカメラワークでなく他のトラックに準ずる
  */
 xUI.appendCellImage = function(select,range){
 	if(xUI.viewMode != 'Compact') return false;
@@ -1566,24 +1748,29 @@ xUI.appendCellImage = function(select,range){
 	};
 //指定アドレスが許容範囲外かどうかを確認
 	if(
-		(select[0] < 0)||(select[0] >= xUI.XPS.duration())||
-		(select[1] < 0)||(select[1] >= xUI.XPS.xpsTracks.length)
+		(select[0] < 0)||(select[0] >= xUI.XPS.xpsTracks.length)||
+		(select[1] < 0)||(select[1] >= xUI.XPS.duration())
 	) return false;
 console.log(select,range);
 	var result = xUI.XPS.noteImages.getByLinkAddress('cell:'+select.join('_'));
 	if(result) return result;//既存ならそれを戻す
+console.log(result);
 	var trackType = XpsAreaOptions[xUI.XPS.xpsTracks[select[0]].option];
-	var trackWidth  = range[0] + 1;
+	var area = xUI.XPS.xpsTracks.areaOrder.find(function(e){return (e.members.indexOf(xUI.XPS.xpsTracks[select[0]])>=0)});
+	var trackWidth  = range[0] + 1;//
 	var frameHeight = range[1] + 1;
-	if(trackType == 'camera'){
+	if((trackType == 'camera')||((area)&&(area.fix))){
 		trackWidth  = 1;
-		frameHeight = xUI.XPS.duration() - select[1];
+//		if(frameHeight == 1) frameHeight = xUI.XPS.framerate.rate + 1 ;//１秒１コマ
+		if(frameHeight <= xUI.XPS.framerate.rate) frameHeight = xUI.XPS.duration() - select[1] ;//開始フレームからシート末尾
 	}else{
+		if(frameHeight <= (xUI.XPS.framerate.rate+1)){
+			frameHeight = xUI.XPS.framerate.rate + 1 ;//１秒１コマ
+		};
 		if(
 			(frameHeight <= (xUI.XPS.framerate.rate+1))&&
 			(trackWidth < 4)
 		){
-			frameHeight = xUI.XPS.framerate.rate+1;
 			trackWidth  = 'default';
 		}else if(
 			(frameHeight > (xUI.XPS.framerate.rate+1))&&
@@ -1598,22 +1785,30 @@ console.log(select,range);
 		new nas.Size(),
 		xUI.XPS.noteImages
 	)
-	var tgt1 = document.getElementById(select.join('_'));
-	var tgt2 = document.getElementById(nas.add(select,range).join('_'));
-	result.size.y.setValue(((xUI.XPS.sheetLooks.SheetCellHeight * frameHeight) / 96)+'in','mm');
+console.log(select,range);
+	var tgt1 = document.getElementById(select.join('_'));//範囲左上
+	var tgt2 = document.getElementById(nas.add(select,range).join('_'));//範囲右下
+console.log(tgt1,tgt2);
+//サイズ設定
 	if(typeof trackWidth == 'string'){
 		result.size.x.setValue(((trackWidth == 'harf')? '1.1in':'2.2in'),'mm');
 	}else{
 		var pixWidth = (range[0] < 0)?
-		tgt2.offsetLeft-tgt1.offsetLeft+tgt1.clientWidth:tgt1.offsetLeft-tgt2.offsetLeft+tgt1.clientWidth;
+			tgt2.offsetLeft - tgt1.offsetLeft + tgt1.offsetWidth:
+			tgt1.offsetLeft - tgt2.offsetLeft + tgt2.offsetWidth;
 		result.size.x.setValue(pixWidth/96 + 'in','mm');
 	};
+
+//	result.size.y.setValue(((xUI.XPS.sheetLooks.SheetCellHeight * frameHeight) / 96)+'in','mm');
+	result.size.y.setValue(((document.getElementById('0_0').offsetHeight * frameHeight) / 96)+'in','mm');
+//配置設定
 	if(range[0] < 0){
 		result.offset.x.setValue(((tgt2.offsetLeft-tgt1.offsetLeft)/96)+'in','mm');
 	};
 	if(range[1] < 0){
 		result.offset.y.setValue(((tgt2.offsetTop-tgt1.offsetTop)/96)+'in','mm');
 	};
+console.log(result);
 //	xUI.selectCell(select);//
 //	xUI.range(nas.add(select,range));//
 	return result;

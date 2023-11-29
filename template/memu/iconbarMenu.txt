@@ -1,0 +1,132 @@
+﻿/*remaping iconbar menu list*/
+document
+	openDocumentXps
+	storeDocumentXps
+	newDocumentXps
+	duplicateDocumentXps
+
+	doccumentInfoXps
+
+	import_file
+	export_file
+
+	switch management
+
+	print_doc
+	export_docImage
+
+	reload_app
+____
+	
+
+
+show|hide
+	switchSKB
+
+	switchDialogEdit
+	switchMemoArea
+
+	switchZoom
+	switchViewMode
+	switchStrictMode
+
+	switchStopwatch
+
+	switchDocmentFormatEditor
+	switchDocumantImageAdjustor
+
+	switchCanvasPaintPanel
+
+
+/* 作業管理 */
+nodeControll
+	nodeControl_checkin
+	nodeControl_store
+	nodeControl_checkout
+	nodeControl_activate
+	nodeControl_deactivate
+	nodeControl_discard
+	========
+	nodeControl_appendLine
+	nodeControl_mergeDocument
+	========
+//新規登録（リポジトリに現在のタイムシートを登録）
+	nodeControl_entryCurrentXpscheckin
+//作業検収
+	nodeControl_receipt
+//ひきあげ
+	nodeControl_salvageJob
+//欠番処理
+	nodeControl_abort
+	======
+	switchModeManagement
+
+/*編集操作*/
+editMenu
+	undo
+	redo
+	======== 
+	selection_selectAll
+	selection_cut
+	selection_copy
+	selection_paste
+	========
+
+	pushBackup
+	restoreBackup
+	clearBackup
+	========
+
+referenceMenu
+	exchReference
+	extIO_importReference
+	extIO_exportReference
+	selection_copyToReference
+	selection_copyFromReference
+	selection_clearReferenece
+
+
+	switcReferenceDIFF
+	redrawReferenceDIFF
+	clearReferenceDIFF
+
+/* トラック編集 */
+	edit_xpst_appendDialogTrack
+	edit_xpst_appendSoundTrack
+	edit_xpst_appendStilTL
+	edit_xpst_appendReplacementTL
+	edit_xpst_appendCameraTL
+	edit_xpst_appendGeometryTL
+	edit_xpst_appendSfxTL
+	edit_xpst_insertTL
+	edit_xpst_deleteTL
+
+	edit_xpst_reformatTL
+	edit_xpst_reformatSheet
+	edit_xpst_simplifyTL
+	edit_xpst_simplifySheet
+
+	edit_xpst_clearTL
+	edit_xpst_clearSheet
+
+	edit_xpst_blockInsert
+	edit_xpst_blockRemove
+
+
+
+/*	原画（構成）記述メニュー */
+	modificationCircle
+	modificationTryangle
+	modificationRectangle
+
+	incrementCELLContent
+	decrimentCELLContent
+
+	inputBar
+	inputWaveline
+	inputDot
+
+	inputSection
+	inputTransition
+	inputFadeIn
+	inputFadeOut

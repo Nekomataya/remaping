@@ -212,3 +212,55 @@ div.circle-diameter-1 {width:2px;height:2px;}
 div.circle-diameter-2 {width:4px;height:4px;}
 div.circle-diameter-3 {width:6px;height:6px;}
 
+/*for nas.HTML.SliderSelect*/
+.nasHTMLSliderSelect {
+	display         : inline-block;
+	background-color: white;
+	border-style : solid;
+	border-width : 1px;
+	overflow        : hidden;
+	white-space     : nowrap;
+}
+.nasHTMLSliderSelect-h {
+	width:100%;
+}
+.nasHTMLSliderSelect-v {
+	height:100%;
+
+}
+button.sliderSelectOption {
+	border-style    : none;
+	background-color: transparent;
+	text-align      : center;
+	font-size       : 12px;
+	margin-top      : 3px;
+	margin-bottom   : 3px;
+}
+button.sliderSelectOption-mobile {
+	font-size    : 18px;
+	margin-top   : 9px;
+	margin-bottom: 9px;
+	min-width    : 52px;
+	min-height   : 24px;
+}
+button.sliderSelectOption-focus {
+	background-color:#ddd;
+}
+button.sliderSelectOption-h {
+	display      :inline;
+	margin-left  :3px;
+	margin-right :3px;
+	height       :100%;
+}
+button.sliderSelectOption-v {
+	display :block;
+	width   :100%;
+}
+
+button.sliderSelectOption:hover {
+	opacity:0.5;
+}
+button.sliderSelectOption:active {
+	background-color:#808080;
+	opacity:0.75;
+}

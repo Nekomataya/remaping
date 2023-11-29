@@ -731,6 +731,19 @@ XpsTrackCollection = function(parent,index,duration,scope){
 //以下はオブジェクトメソッド（配列ベースなのでArrayオブジェクトのメソッド書き換えを防ぐためこの表記に統一）
 //オブジェクトメソッド群
 /**
+    @params {Object XpsTimelineTrack | String | Number}    trk
+    @returns    {Boolean}
+    指定のトラックが含まれるareaOrderグループを返す
+    セルIDが指定された場合はそのIDを含むトラックを判定する
+    数値はトラックIDとして
+ */
+    this.getAreaOrder = function(trk){
+        if((typeof trk == 'string')&&(trk.match(/\d+\_\d+/))) trk = trk.split('_')[0];
+        if(!(trk instanceof XpsTimelineTrack)) trk = this[parseInt(trk)];
+        return this.areaOrder.find((e)=> e.members.indexOf(trk)>=0);
+    };//getAreaOrder
+ 
+/**
     現在のareaOrderからtrackSpecを作成して得る
     引数なし
  */

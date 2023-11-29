@@ -569,10 +569,12 @@ function AppHost(){
     this.Electron;
 	this.platform;
 	this.version;
-	this.os;
+	this.os = 'unknown';
 	this.fileAccess  = false;
 	this.userLibrary = false;
 	this.userLibraryVersion ;
+	this.touchDevice = false;
+	this.tablet = false;
 }
 
 AppHost.prototype.init=function(){
@@ -592,7 +594,7 @@ AppHost.prototype.init=function(){
     }
 //OSチェック初期値
 	this.os = "Other";//初期値として設定
-//判定の幅がでかすぎるがひとまずは Mac Win Other で
+//判定カテゴリは、Mac|Win|iOS|Android|Other で
     if(typeof navigator != "undefined"){
 //navigatorオブジェクトが存在するので必ずHTMLが使用できる
         var uaName = navigator.userAgent;
@@ -626,6 +628,20 @@ AppHost.prototype.init=function(){
 		        this.platform="CSX";
 		        this.version=uaName.match(/(AdobeAIR\/)([0-9\.]*)/)[2];
 	        };
+	    } else if(uaName.match(/(iPhon|iPad|iPod)\;\sCPU\s(iPhone\s)?OS\s([0-9].+)/)) {
+	//iOS系デバイス 'CPU iPhone OS 13_2_3''CPU OS 13_3'
+		    this.version = parseInt(RegExp.$3.split("\.")[0]);
+		    this.platform = RegExp.$1;//iPhone|iOS	
+			this.touchDevice = true;
+			if(uaName.indexOf('iPad') >= 0) this.tablet = true;
+			this.os = 'iOS';
+	    } else if(uaName.match(/Android\s([0-9].+)\;/)) {
+	//Android系デバイス
+		    this.version = parseInt(RegExp.$1.split("\.")[0]);
+		    this.platform = "Android";//Android系
+			this.touchDevice = true;
+			if(uaName.indexOf('Mobile') < 0) this.tablet = true;
+			this.os = 'Android';
 	    } else if(uaName.indexOf("Chrome") > -1) {
 	//その他普通のブラウザ
 		    uaVer = uaName.match(/(Chrome\/)([0-9\.]*)/)[2];
@@ -652,10 +668,18 @@ AppHost.prototype.init=function(){
 		    this.version = 'unKnown';
 		    this.platform = uaName;//知らないブラウザである。
 	    };
-	    if (((window.navigator.platform).indexOf("Mac") > -1)||((window.navigator.platform).indexOf("darwin") > -1)){
+	    if(this.os == 'Other'){
+	    	if (((window.navigator.platform).indexOf("Mac") > -1)||((window.navigator.platform).indexOf("darwin") > -1)){
 	        this.os = "Mac";//Mac OS X
-	    }else if ((window.navigator.platform).indexOf("Win") > -1){
-		    this.os = "Win";//Windows
+	    	}else if ((window.navigator.platform).indexOf("Win") > -1){
+		    	this.os = "Win";//Windows
+				if(uaName.indexOf('Tablet') >= 0){
+					this.touchDevice = true;
+					this.tablet      = true;
+				};
+	    	}else if ((window.navigator.platform).indexOf("linux") > -1){
+		    	this.os = "linux";//linux
+	    	};
 	    };
     }else if(this.ESTK){
         uaName = app.name;//applicationName
@@ -1738,11 +1762,32 @@ nas.NoteImage = function NoteImage(img,address,size,parent){
 	コレクションに関わらずこの内部で参照を保持する
 */
 nas.NoteImageCash = [];
+
+/**
+	オブジェクトメソッド
+	@params {Object nas.Offset|String}
+	@returns 
+	svg-canvasの画像をimgオブジェクトに焼き付け、canvas関連のプロパティをクリアする
+	UNDOが必要な場合は、オブジェクト全体のダンプを事前に保存しておく必要がある
+*/
+nas.NoteImage.prototype.bakeCnavas = function bakeCanvas(){
+	if(!(this.svg)) return;
+	if((this.img.width == '0')||(!(this.img))){
+		this.img = new Image();
+	}
+	
+	
+	this.svg = null;
+	this.canvasStream =   [];
+	this.canvasUndoPt = null;
+	return this;
+}
 /**
 	オブジェクトメソッド
 	オフセット値をドキュメント画像に適用
-	@params {Object nas.Offset|String}
-	@returns 
+	@params {Object nas.Offset|String} offset
+	@returns {Object nsa.Offset}
+	returns current offset
 */
 nas.NoteImage.prototype.applyOffset = function applyOffset(offset){
 	if(arguments.length > 0) this.offset.setValue(...arguments);
@@ -1759,6 +1804,7 @@ nas.NoteImage.prototype.applyOffset = function applyOffset(offset){
 	画像にparentNodeがあれば自身をDOMツリーから削除
 	コレクションから自身を削除
 	キャッシュの開放はない
+	オブジェクト自身を返すのでそれを控えて操作が可能
  */
 nas.NoteImage.prototype.remove = function remove(){
 	if((this.img)&&(this.img.parentNode)) this.img.parentNode.removeChild(this.img);
@@ -1852,6 +1898,9 @@ nas.NoteImage.prototype.guessDocumentResolution = function(siz){
 */
 nas.NoteImage.prototype.setImage = function(img,callback){
 console.log(img);
+	if(! this.img){
+		this.img = document.createElement('img');
+	};
 	if((this.img)&&(this.img.parentNode)){
 //画像のDOM状態を記録し親子関係をクリア?
 		var parent_node = this.img.parentNode;
@@ -1859,7 +1908,6 @@ console.log(img);
 	}else{
 		var parent_node = null;
 	};
-//canvas プロパティの消失に伴い不要コード ベイクメソッドに機能を移行 */
 //引数の画像を処理
 console.log("content:>"+ this.content);
 	if(! img) img = this.content;
@@ -2025,8 +2073,6 @@ console.log('but TIFF not suported');
 	いずれも全てObject nas.Sizeに変換してプロパティとして保持する
  */
 nas.NoteImage.prototype.parse = function(img,address,size,parent){
-console.log(img instanceof File);
-console.log(typeof img);
 	if(
 		((typeof img == 'object')&&(
 			(!(img instanceof File))&&
@@ -2146,14 +2192,14 @@ nas.NoteImage.prototype.initSVGCash = function initCanvas(callback,pxSize){
  *	canvas関連の情報をクリアする
  */
 nas.NoteImage.prototype.bake = function(){
-	this.svg;
+	this.svg = null;
 	this.canvasStream =   [];
 	this.canvasUndoPt = null;
 }
 /**
  *     保存用にシリアライズ
  *  canvasオブジェクトが存在する場合は、canvasの内容を出力対象とする
- *  ベイクを行うことでcanvasの内容はimgと合成されてcanvasにnullが設定される
+ *  ベイクを行うことでsvg-canvasの内容はimgと合成されてsvg-canvasにnullが設定される
  *     @params {String} form
  *      JSON|text|dump|export
  *      キャッシュ用に
@@ -2289,8 +2335,15 @@ nas.NoteImageCollection.prototype.addMember = function(member){
 		return this[ix];
 	};
 }
-/*オブジェクトのremoveメソッドをコールしてメンバを削除する */
+/**
+	@params {Object nas.NoteImage|Number|String} member
+	
+	オブジェクトのremoveメソッドをコールしてメンバを削除する
+	引数は メンバ自身、数値：メンバID,文字列:メンバアドレス
+	
+ */
 nas.NoteImageCollection.prototype.remove = function(member){
+	if(typeof member == 'string') member = this.getByLinkAddress(member);
 	var ix = (member instanceof nas.NoteImage)? this.members.indexOf(member):member;
 	if((ix >= 0)&&( ix < this.length)){
 		return this.members[ix].remove();
@@ -2354,9 +2407,10 @@ nas.UNITRegex=new RegExp('^(in|inches|mm|millimeters|cm|centimeters|pt|picas|poi
  *
  * @params {String} myValue
  * @params {String} resultUnit
+ * @params {String} resolution (px出力時のみ有効な解像度指定)
  * @returns {Number}
  */
-nas.decodeUnit = function (myValue, resultUnit) {
+nas.decodeUnit = function (myValue, resultUnit,resolution) {
     if ((myValue != undefined) && (myValue.match(/^([\+\-\.0-9]+)\s?(millimeters|mm|centimeters|cm|points|picas|pt|pixels|px|inches|in)?$/i))) {
         var baseValue = parseFloat(myValue);
         var myUnit = RegExp.$2;
@@ -2409,7 +2463,13 @@ nas.decodeUnit = function (myValue, resultUnit) {
             break;
         case    "pixels":
         case    "px":
-            myResult = this.Dpi() * myValue / 72.;
+            var myResolution;
+            if(resolution instanceof nas.UnitResolution){
+                myResolution = resolution.as('ppi');
+            }else{
+                myResolution = (parseFloat(resolution))? parseFloat(resolution):this.Dpi();
+            };
+            myResult = myResolution * myValue / 72.;
             break;
         case    "centimeters":
         case    "cm":
@@ -2436,7 +2496,7 @@ nas.decodeUnit = function (myValue, resultUnit) {
 */
 nas.UNITString  = function(){return ([this.value,this.type]).join(' ');};
 nas.UNITValue   = function(){return this.value;};
-nas.UNITAs      = function(myUnit){return nas.decodeUnit(this.toString(),myUnit)};
+nas.UNITAs      = function(myUnit,resolution){return nas.decodeUnit(this.toString(),myUnit,resolution)};
 nas.UNITConvert = function(myUnit){this.value=nas.decodeUnit(this.toString(),myUnit);this.type=myUnit;return this;};
 
 nas.ANGLEAs	= function(myUnit){
@@ -2583,7 +2643,7 @@ nas.UnitValue.prototype.parse = nas.UnitValue.prototype.setValue;
  *  @params {String} 単位文字列
  *  @returns {Number} 指定単位系における値
  */
-nas.UnitValue.prototype.as	=nas.UNITAs;
+nas.UnitValue.prototype.as	= nas.UNITAs;
 /**
  *  指定された単位文字列にオブジェクトを変換する
  * 
@@ -6772,7 +6832,7 @@ console.log(nas.labelNormalization("たぬき3"));
 //比較補助関数
 /** nas.normalizeStr(str)
  *  @params {String}    str
- *       元文字列
+ *       元文字列 ''
  *  @params {Number}   zeroCount
  *       数値部分を桁合わせする数 -1の場合桁合わせは行わない
  *       
@@ -6783,6 +6843,14 @@ nas.normalizeStr = function(str,zeroCount){
     if(typeof zeroCount == 'undefined') zeroCount = -1;
     if(str.normalize){
         str = str.normalize("NFKC");
+  // normalize("NFKC")で対応できない文字の変換
+  str = str.replace(/”/g, "\"")
+    .replace(/[ー‐―−➖━ーｰ]/g, "-")
+    .replace(/’/g, "'")
+    .replace(/‘/g, "`")
+    .replace(/￥/g, "\\")
+    .replace(/  /g, " ")
+    .replace(/〜/g, "~");
     }else{
 // ノーマライズが無い時は半角化のみ実行
 
@@ -6791,6 +6859,7 @@ nas.normalizeStr = function(str,zeroCount){
     });
   // 文字コードシフトで対応できない文字の変換
   str = str.replace(/”/g, "\"")
+    .replace(/[ー‐―−➖━ーｰ]/g, "-")
     .replace(/’/g, "'")
     .replace(/‘/g, "`")
     .replace(/￥/g, "\\")
