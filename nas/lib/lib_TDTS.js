@@ -464,8 +464,8 @@ TDTS.SectionItemTable = {
  14: ["PAN DOWN","c",["|","▽","△"],"panDown"],
  15: ["TILT","c",["|","▽","△"],"tilt"],
  16: ["FOLLOW","c",["┃","┳","┻"],"followSlide"],
- 17: ["CU","c",["┃","┳","┻"],"closeUp"],
- 18: ["CD","c",["｜","┬","┴"],null],
+ 17: ["CU","c",["┃","┳","┻"],"craneUp"],
+ 18: ["CD","c",["｜","┬","┴"],"caraneDown"],
  19: ["DOLLY","c",["｜","┬","┴"],"dolly"],
  20: ["MULTI","c",["｜","┬","┴"],"multi"],
  21: ["Fairing","c",["｜","⇑","⇓"],"fairing"],
@@ -908,6 +908,9 @@ TDTS.parseTdts = function(dataStream){
 }
 
 /**
+	@params {Object Xps}  myXps
+	@params {String}      targetFormat
+	@params {Object TDTS} career
 XPSオブジェクトを引数にしてXDTS/TDTSフォーマットで出力
 暫定的にXDTSと互換のある　1ドキュメント/1タイムシートの形式でコンバート
 オプション指定で xdts/tdts を切り替え
@@ -990,7 +993,7 @@ console.log(career);
 				for(var ssx = 0 ; ssx < timingTracks[tx].sections[six].subSections.length ; ssx ++){
 					var valueString = (timingTracks[tx].sections[six].subSections[ssx].value)?
 						timingTracks[tx].sections[six].subSections[ssx].getStream(1)[0] : "○";
-					valueString = (valueString.match( /^[\-·・○]$/ ))? "SYMBOL_TICK_1" : "SYMBOL_TICK_2";//二種にふりわけ
+					valueString = (valueString.match( /^[\-·・◦○○]$/ ))? "SYMBOL_TICK_1" : "SYMBOL_TICK_2";//二種にふりわけ
 					var currentFrameEntry  =  new TDTS.TimeTableFrameEntry(
 						timingTracks[tx].sections[six].startOffset()+timingTracks[tx].sections[six].subSections[ssx].startOffset()
 					);
@@ -1004,7 +1007,7 @@ console.log(career);
 				continue;	
 			}
 //			var valueString = (timingTracks[tx].sections[six].value)? timingTracks[tx].sections[six].value.name : "×";
-			var valueString = (timingTracks[tx].sections[six].value)? timingTracks[tx].sections[six].getContent()[0]: "×";
+			var valueString = (timingTracks[tx].sections[six].value)? String(nas.parseNumber(timingTracks[tx].sections[six].getContent()[0])): "×";
 			if((! valueString)||( valueString == "×")||(valueString == "blank-cell")) valueString = "SYMBOL_NULL_CELL";
 			var currentFrameEntry  =  new TDTS.TimeTableFrameEntry(timingTracks[tx].sections[six].startOffset());
 			currentFrameEntry.data = [];

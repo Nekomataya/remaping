@@ -143,38 +143,692 @@
 	onKeyDown='if(document.getElementById("iNputbOx")!==document.activeElement){document.getElementById("iNputbOx").focus();};xUI.keyDwon(event)'
 	 -->
 
-
+<!-- 以下 スクロールモード時のオーバーレイ -->
 <div id=overlayHeadline >
 <!-- <div id="xpstScrollSpaceHd" class="screenSpace" style='position:absolute;'></div> -->
 <div id=UIheader>
 <!-- qdr3 -->
-<div class='fixedHeadline qdr-left' id=UIheaderScrollV
+<div class='fixedHeadline qdr-left' id=UIheaderScrollV >
+<!--
 	onMouseDown = " return xUI.Mouse(event)"
 	onMouseUp   = " return xUI.Mouse(event)"
 	onDblClick  = " return xUI.Mouse(event)"
 	onMouseOver = " xUI.Mouse(event)"
->
+-->
   <div id=UIheaderScrollV-table class=sheet></div>
   <div class='fixedHeadline' id=areaFixImageField style='z-index:9;top:0px;'></div>
   <!--<br><br><br><br><br><br><br><br><br><br><hr><br><br><br><br><br><br><br><br><br><br><hr><br><br><br><br><br><br><br><br><br><br><hr>qdr3***********-->
 </div>
 <!-- qdr1 -->
-<div class=fixedHeadline id=UIheaderScrollH
+<div class=fixedHeadline id=UIheaderScrollH >
+<!--
 	onMouseDown  = " return xUI.Mouse(event)"
 	onMouseUp    = " return xUI.Mouse(event)"
 	onDblClick   = " return xUI.Mouse(event)"
 	onMouseOver  = " xUI.Mouse(event)"
-> </div>
+--> </div>
 <!-- qdr2 -->
 <div class='fixedHeadline qdr-left' id=UIheaderFix > </div>
 </div></div>
+<!-- 以上 スクロールモード時のオーバーレイ -->
 
-<!--	簡易UIヘッダ	-->
+<!--    コンテキストメニューUI        -->
+<div id ="contextMenu" class ="contextMenu optionPanelFloat">
+<!--
+    regionの分類
+    onHeadline
+    onTimelineTrackLabel
+        onTimelineTrack
+        onSelection
+        onSection
+    onTimelineTrackHeader
+    onReferenece
+    onRefereneceHeader
+    outer
 
+    管理モードによるメニュー切替はモード変更メソッド(xUI.setUImode)
+    表示モードによるメニュー抑制はリセッターメソッド(xUI.resetSheet)が
+    アプリケーションのホスト状態による遷移も同様に(xUI.resetSheet)で行う
 
-<!-- 固定コントロール fixedHeaderは、UIのマージン等を取得するためのエレメント 		onMouseOver=xUI.Mouse(event);
+    操作中の編集モードによるON/OFFはflipcMメソッドが担当する。
 -->
-	<div id="fixedHeader"
+<!-- コンテキストメニュー -->
+<!-- 
+制限モード（スマートフォン）専用コンテキストメニュー
+	ひとつづつのユニットは3〜5選択肢を上限とする
+-->
+<!-- ドキュメントメニュー 範囲外（常時） -->
+    <ul class='cMonHeadline'>
+<li id=cMnoteMenu><span id=cMnote-d class='cM cM-alt'>ノート編集</span><A	id=cMnote
+	href = 'javascript:void(0)'
+	onclick = "if((xUI.canvas)&&(xUI.canvasPaint.targetItem.type=='description')){xUI.canvasPaint.unset();this.innerText = 'Edit|Append';}else if(!(xUI.canvas)){
+	xUI.canvasPaint.set('description:');	this.innerText = 'UNSET';};return false;"
+	title="手書き編集"
+>ノート編集</A></li><hr>
+
+<li id=cMbrowseMenu><span id=cMbrowse-d class='cM cM-alt'>書類選択</span><A	id=cMbrowse
+	href = 'javascript:void(0)'
+	onclick = 'xUI.sWitchPanel("File");return false;//myScenePref.open();document.getElementById("scnNewSheet").checked=true;return false;'
+	title="ドキュメントを選択"
+>書類選択</A></li><hr>
+
+<li><span id=cMnewdoc-d class='cM cM-alt'>新規書類</span><A id=cMnewdoc
+	href = 'javascript:void(0)'
+	onclick = 'myScenePref.open("new");return false;'
+	title="新規書類"
+>新規書類</A></li>
+    </ul>
+<!-- プロジェクト管理メニュー　範囲外（管理モード以外）　-->
+    <ul class='cMonHeadline noPm'>
+<li class=cuiMenu><span id=cMcheckin-d class='cM cM-alt'>作業開始</span><A id=cMcheckin
+	href = 'javascript:void(0)'
+	onclick = 'serviceAgent.checkinEntry();return false;'
+	title="作業開始"
+>作業開始</A></li>
+<li class=cuiMenu><span id=cMsave-d class='cM cM-alt'>作業保存</span><A	id=cMsave
+	href = 'javascript:void(0)'
+	onclick = 'if(xUI.edchg) xUI.put(document.getElementById("iNputbOx").value);
+serviceAgent.pushEntry(xUI.XPS,function(){xUI.setStored("current");sync();
+},function(){alert("error");});return false;'
+	title="作業保存"
+>作業保存</A></li>
+<li class=cuiMenu><span id=cMcheckout-d class='cM cM-alt'>作業終了</span><A	id=cMcheckout
+	href = 'javascript:void(0)'
+	onclick = 'serviceAgent.checkoutEntry();return false;'
+	title="作業終了"
+>作業終了</A></li>
+<li class=cuiMenu><span id=cMactivate-d class='cM cM-alt'>作業再開</span><A	id=cMactivate
+	href = 'javascript:void(0)'
+	onclick = 'serviceAgent.activateEntry();return false;'
+	title="作業再開"
+>作業再開</A></li>
+<li class=cuiMenu><span id=cMdeactivate-d class='cM cM-alt'>作業中断</span><A	id=cMdeactivate
+	href = 'javascript:void(0)'
+	onclick = 'serviceAgent.deactivateEntry();return false;'
+	title="作業中断"
+>作業中断</A></li>
+<li class=cuiMenu><span id=cMdiscard-d class='cM cM-alt'>編集破棄</span><A	id=cMdiscard
+	href = 'javascript:void(0)'
+	onclick = 'serviceAgent.destroyJob();return false;'
+	title="編集を破棄して閉じる"
+>編集破棄</A></li>
+<hr>
+<li class=fuiMenu><span id=cMentry-d class='cM cM-alt'>新規登録</span><A	id=cMentry
+	href = 'javascript:void(0)'
+	onclick = 'xUI.storeDocument();return false;'
+	title="現在のドキュメントをリポジトリへ"
+>新規登録</A></li>
+<hr>
+    </ul>
+<!-- 制作管理用ドキュメントメニュー 範囲外（管理モード）-->
+    <ul class='cMonHeadline noPm'>
+<li class=auiMenu><span id=cMnewEntry-d class='cM cM-alt'>新規登録</span><A	id=cMnewEntry
+	href = 'javascript:void(0)'
+	onclick = 'xUI.sWitchPanel("File");return false;'
+	title="タイトルやカットを新規に登録"
+>新規登録</A></li>
+
+<li class=auiMenu><span id=cMreceipt-d class='cM cM-alt'>作業検収</span><A	id=cMreceipt
+	href = 'javascript:void(0)'
+	onclick = 'serviceAgent.receiptEntry();return false;'
+	title="次の工程へ進める"
+>作業検収</A></li>
+<li class=auiMenu><span id=cMcheckoutF-d class='cM cM-alt'>作業終了</span><A	id=cMcheckoutF
+	href = 'javascript:void(0)'
+	onclick = ';return false;'
+	title="強制的に作業を閉じる"
+>作業終了</A></li>
+<li class=auiMenu><span id=cMabort-d class='cM cM-alt'>作業中断</span><A	id=cMabort
+	href = 'javascript:void(0)'
+	onclick = 'serviceAgent.abortEntry();return false;'
+	title="制作を中断する"
+>制作中断</A></li>
+
+<li class=auiMenu><span id=cMbranch-d class='cM cM-alt'>ライン分岐</span><A	id=cMbranch
+	href = 'javascript:void(0)'
+	onclick = ';return false;'
+	title="制作ラインを分岐"
+>ライン分岐</A></li>
+<li class=auiMenu><span id=cMmerge-d class='cM cM-alt'>ラインマージ</span><A	id=cMmerge
+	href = 'javascript:void(0)'
+	onclick = ';return false;'
+	title=""
+>ラインマージ</A></li>
+    </ul>
+<!-- ファイルメニュー 範囲外（常時）-->
+    <ul class='cMonHeadline'>
+<li id=cMcgi><span id=cMimportDatas-d class='cM cM-alt'>Open</span><A id=cMimportDatas
+	href="javascript:void(0);"
+	onclick="xUI.importDocument('body');return false;"
+	title="ローカルドキュメントを開く"
+>Open</A></li>
+<li id=cMair><span id=cMopenFS-d class='cM cM-alt'>Open</span><A id=cMopenFS
+	href="javascript:void(0);"
+	onclick="fileBox.openFileDB();return false;"
+	title="ローカルドキュメントを開く(ファイル)"
+>Open</A></li>
+<li id=cMair><span id=cMsaveFS-d class='cM cM-alt'>Save</span><A id=cMsaveFS
+	href="javascript:void(0);"
+	onclick="if(fileBox.saveFile){fileBox.saveFile();}"
+	title="保存（ファイル）"
+>Save</A></li>
+<li id=cMair><span id=cMexportFS-d class='cM cM-alt'>Save As</span><A	id=cMexportFS
+	href="javascript:void(0);"
+	onclick="if(fileBox.saveAs){fileBox.saveAs();}else{alert('現在ファイルの操作ができません')};return false;"
+	title="別名で保存（ファイル）"
+>Save As</A></li>
+<li id=cMps><span id=cMopenFSps-d class='cM cM-alt'>Open</span><A	id=cMopenFSps
+	href="javascript:void(0);"
+	onclick="fileBox.openFileDB();return false;"
+	title="ローカルドキュメントを開く(ファイル)"
+>Open</A></li>
+<li id=cMps><span id=cMsaveFSps-d class='cM cM-alt'>Save</span><A	id=cMsaveFSps
+	href="javascript:void(0);"
+	onclick="if(fileBox.saveFile){fileBox.saveFile();}"
+	title="保存（ファイル）"
+>Save</A></li>
+<li id=cMps><span id=cMexportFSps-d class='cM cM-alt'>Save As</span><A	id=cMexportFSps
+	href="javascript:void(0);"
+	onclick="if(fileBox.saveAs){fileBox.saveAs();}else{alert('現在ファイルの操作ができません')};return false;"
+	title="別名で保存（ファイル）"
+>Save As</A></li>
+<li id=cMcgi><span id=cMdownloadXps-d class='cM cM-alt'>Export As Xps</span><A	id=cMdownloadXps
+    download=''
+	href="javascript:void(0);"
+	onclick='xUI.data_well.value=xUI.XPS.toString();callEcho();return false;'
+	title="ダウンロード保存（XPS）"
+>Export As Xps</A></li>
+<!--	onclick="return nas.HTML.download(new Blob([xUI.XPS.toString()],{type:'application/xps'}),xUI.XPS.getIdentifier('simple'));" -->
+<li id=cMcgi><span id=cMdownloadTdts-d class='cM cM-alt'>Export As Tdts</span><A	id=cMdownloadTdts
+	href="javascript:void(0);"
+	onclick='xUI.data_well.value=XPS2TDTS(xUI.XPS,"tdts");callEchoExport("xdts");return false;'
+	title="ダウンロード保存（TDTS）"
+>Export As Tdts</A></li>
+<li id=cMcgi><span id=cMdownloadXdts-d class='cM cM-alt'>Export As Tdts</span><A	id=cMdownloadXdts
+	href="javascript:void(0);"
+	onclick='xUI.data_well.value=XPS2XDTS(xUI.XPS,"xdts");callEchoExport("xdts");return false;'
+	title="ダウンロード保存（XDTS）"
+>Export As Xdts</A></li>
+<li><span id=cMimportexport-d class='cM cM-alt'>Import/Export</span><a	id=cMimportexport
+	href="javascript:void(0);"
+	onclick="xUI.sWitchPanel('Data');return false;"
+	title="読み込み書き出しパネルを開く"
+>Import/Export</a></li>
+<li><span id=cMdocInfo-d class='cM cM-alt'>DocumentInfo</span><A	id=cMdocInfo
+	href='javascript:void(0)'
+	onclick='myScenePref.open("edit");return false;'
+	title="シート情報"
+>DocumentInfo</A></li>
+<li id=cMair><span id=cMexportHTMLair-d class='cM cM-alt'>Export as html</span><A	id=cMexportHTMLair
+	href='javascript:void(0)'
+	onclick='if(fileBox.storeOtherExtensionFile){fileBox.storeOtherExtensionFile(printHTML(true),"html")}else{alert("現在ファイルの操作ができません")};return false;'
+	title="表示用HTMLで書出し"
+>Export as html</A></li>
+<li id=cMcgi><span id=cMprintHTML-d class='cM cM-alt'>Print html</span><A	id=cMprintHTML
+	href='javascript:void(0)'
+	onclick='printHTML("print");return false;'
+	title="印刷"
+>Print HTML</A></li>
+<li id=cMcgi><span id=cMexportPng-d class='cM cM-alt'>Export PNG</span><A	id=cMexportPng
+	href='javascript:void(0)'
+	onclick='printHTML("png");return false;'
+	title="PNG画像で保存"
+>画像保存(PNG)</A></li>
+
+<li><span id=cMbuildActionSheet-d class='cM cM-alt'></span><A	id=cMbuildActionSheet
+	HREF='javascript:void(0);'
+	onclick='buildActionSheet("print","action");'
+	title="原画アクションシートを作成"
+>原画アクションシート</A></li>
+<li id=cMcgi><span id=cMprintAct-d class='cM cM-alt'>Print html</span><A	id=cMprintAct
+	href='javascript:void(0)'
+	onclick='printHTML("print","action");return false;'
+	title="アクションシートを印刷"
+> --- 印刷</A></li>
+<li id=cMcgi><span id=cMexportActPng-d class='cM cM-alt'>Export PNG</span><A	id=cMexportActPng
+	href='javascript:void(0)'
+	onclick='printHTML("png","action");return false;'
+	title="アクションシートをPNG画像で保存"
+> --- 画像保存</A></li>
+
+    </ul>
+
+<!--    etc 範囲外（ドロップダウンメニュー非表示の際のみ出現）   -->
+    <ul class='cMonHeadline noDm'>
+<li><span id=cMabout-d class='cM cM-alt'></span><A	id=cMabout
+	HREF='javascript:void(0);'
+	onclick='xUI.sWitchPanel("Ver");'
+	title="りまぴんについて"
+>about</A><br></li>
+<hr>
+<li><span id=cMloginPnl-d class='pM pM-alt'></span><A	id=cMloginPnl
+	HREF='javascript:void(0);'
+	onclick='xUI.sWitchPanel("Login");return false'
+	title="lgin"
+>loginPanel</A></li>
+<li><span id=cMfilePnl-d class='pM pM-alt'></span><A	id=cMfilePnl
+	HREF='javascript:void(0);'
+	onclick='xUI.sWitchPanel("File");return false'
+	title="File"
+>filePanel</A></li>
+<li><span id=cMskb-d class='pM pM-alt'></span><A	id=cMskb
+	HREF='javascript:void(0);'
+	onclick='xUI.sWitchPanel("Tbx");return false'
+	title="ソフトウェアキーボード"
+>softwareKB</A></li>
+<hr>
+<li><span id=cMpref-d class='cM cM-alt'></span><A	id=cMpref
+	HREF='javascript:void(0);'
+	onclick='myPref=new Pref();myPref.open();return false;'
+	target='pref_'
+	title="各種環境設定"
+>Pref</A></li>
+<li><span id=cMrepositoryInfo-d class='cM cM-alt'></span><A id=cMrepositoryInfo
+	HREF='javascript:void(0)'
+	onclick='serviceAgent.currentRepository.showInformation();return false;'
+	title="repository infomation"
+>リポジトリの情報を見る</A> </li>
+
+<li><span id=cMmemoEdit-d class='cM cM-alt'></span><A id=cMmemoEdit
+	HREF='javascript:void(0)'
+	onclick='xUI.sWitchPanel("memo");return false;'
+	title="memo Edit"
+>メモ編集</A> </li>
+<li><span id=cMreload-d class='cM cM-alt'></span><A	id=cMreload
+	HREF='javascript:void(0)'
+	onclick='if(confirm("アプリケーションを再読み込みします\nデータは破棄されます\nよろしいですか？")){document.location.reload()};return false;'
+	title="reload application"
+>reload</A> </li>
+<li><span id=cMrestrictionMode-d class='cM cM-alt'>[ 制限モード ]</span><A	id=cMrestrictionMode
+	HREF='javascript:void(0);'
+	onclick='xUI.setRestriction(! xUI.restriction);return false;'
+	title="管理モード切り替え"
+>[ 制限モード ]</A></li>
+<li><span id=cMmanagementMode-d class='cM cM-alt'>[ 管理モード ]</span><A	id=cMmanagementMode
+	HREF='javascript:void(0);'
+	onclick='xUI.setUImode("next");sync("productStatus");return false;'
+	title="管理モード切り替え"
+>[ 管理モード ]</A></li>
+<li><span id=cMeditMode-d class='cM cM-alt'>[ 編集モード ]</span><A	id=cMeditMode
+	HREF='javascript:void(0);'
+	onclick='xUI.viewMode=(xUI.viewMode=="Compact")?"WordProp":"Compact";xUI.resetSheet();return false'
+	title="表示モード切り替え"
+>[ 編集モード ]</A></li>
+<li><span id=cMcolumns-d class='cM cM-alt'>[ 段組 ]</span><A	id=cMcolumns
+	HREF='javascript:void(0);'
+	onclick='xUI.PageCols=(xUI.PageCols==1)?2:1;xUI.resetSheet();return false'
+	title="二段組"
+>[ 段組 ]</A></li>
+<li><span id=cMchgLoacle-d class='cM cM-alt'>[言語切替]</span><A	id=cMchgLoacle
+	HREF='javascript:void(0);'
+    onClick='nas.locale=(nas.locale=="ja")? "en":"ja";nas.LangPack.chgLocale(nas.locale);return false;'
+    title="言語切替"
+>[言語切替]</A></li>
+<hr>
+<li><span id=cMzoom-d class='cM cM-alt'></span><A	id=cMzoom
+	HREF='javascript:void(0);'
+	onclick='xUI.zoomSwitch();return false'
+	title="zoomChange"
+>zoom</A></li>
+<li><span id=cMunZoom-d class='cM cM-alt'></span><A	id=cMunZoom
+	HREF='javascript:void(0);'
+	onclick='xUI.zoomSwitch.currentPreset=0;xUI.adjustScale();return false'
+	title="zoom100%"
+>100%</A></li>
+<hr>
+    </ul>
+
+<!--       show/hide   範囲外（ドロップダウンメニュー非表示の際のみ出現）      -->
+    <ul class='cMonHeadline noDm'>
+<li><span id=cMpMenu-d class='pM pM-alt'></span><A	id=cMpMenu
+	HREF='javascript:void(0);'
+	onclick='xUI.sWitchPanel("menu");return false'
+	title="pMenu"
+>pMenu</A></li>
+<li><span id=cMaccountBox-d class='pM pM-alt'></span><A	id=cMaccountBox
+	HREF='javascript:void(0);'
+	onclick='xUI.sWitchPanel("account_box");return false'
+	title="account box show/hide"
+>accountBox</A></li>
+<li><span id=cMtoolbar-d class='pM pM-alt'></span><A	id=cMtoolbar
+	HREF='javascript:void(0);'
+	onClick="document.getElementById('toolbarHeader').style.display=(document.getElementById('toolbarHeader').style.display=='none')?'inline':'none';xUI.adjustSpacer();"
+	title="toolbarHeader"
+>toolbarHeader</A></li>
+<li><span id=cMcommandbar-d class='cM cM-alt'></span><A	id=cMcommandbar
+	HREF='javascript:void(0);'
+	onclick='xUI.sWitchPanel("Utl");return false;'
+	title="ユーティリテーメニュー"
+>commandBar</A></li>
+<li><span id=cMpmui-d class='pM pM-alt'></span><A	id=cMpmui
+	HREF='javascript:void(0);'
+	onclick='xUI.sWitchPanel("pmcui");return false'
+	title="制作管理メニュー"
+>進捗管理バー</A></li>
+<li><span id=cMheaderTools-d class='pM pM-alt'></span><A	id=cMheaderTools
+	HREF='javascript:void(0);'
+	onclick='xUI.sWitchPanel("headerTool");return false'
+	title="header tools show/hide"
+>headerTools</A></li>
+<li><span id=cMinputControl-d class='pM pM-alt'></span><A	id=cMinputControl
+	HREF='javascript:void(0);'
+	onclick='xUI.sWitchPanel("inputControl");return false'
+	title="input control show/hide"
+>inputControl</A></li>
+<li style="display:none;"><span id=cMairMenu-d class='cM cM-alt'></span><A	id=cMairMenu
+	HREF='javascript:void(0);'
+	onClick="document.getElementById('airMenu').style.display=(document.getElementById('airMenu').style.display=='none')?'inline':'none';"
+	title="airMenu"
+>-----airMenu</A></li>
+<hr>
+<li><span id=cMsheetHeader-d class='cM cM-alt'></span><A	id=cMsheetHeader
+	HREF='javascript:void(0);'
+	onClick="document.getElementById('sheetHeaderTable').style.display=(document.getElementById('sheetHeaderTable').style.display=='none')?'inline':'none';xUI.adjustSpacer();"
+	title="sheetHeaderTable"
+>sheetHeaderTable</A></li>
+
+<li><span id=cMextSig-d class='pM pM-alt'></span><A id=cMextSig
+	HREF='javascript:void(0);'
+	onClick="xUI.sWitchPanel('extSig')"
+	title="拡張シグネチャ"
+>シグネチャ</A></li>
+
+<li><span id=cMmemoArea-d class='cM cM-alt'></span><A id=cMmemoArea
+	HREF='javascript:void(0);'
+	onClick="xUI.sWitchPanel('memoArea')"
+	title="memo_header"
+>memo</A></li>
+<li><span id=cMreference-d class='cM cM-alt'></span><A id=cMreference
+	HREF='javascript:void(0);'
+	onClick="xUI.flipRefColumns();"
+	title="reference"
+>references</A></li>
+<hr>
+<li id=debug><span id=cMdbgCons-d class='cM cM-alt'></span><A	id=cMdbgCons
+	HREF='javascript:void(0);'
+	onclick='xUI.sWitchPanel("Dbg");return false;'
+	title="debug_ON"
+>debugConsole</A></li>
+<li><span id=cMdbgMode-d class='cM cM-alt'></span><A id=cMdbgMode
+	HREF='javascript:void(0);'
+	onclick='dbg=(dbg)?false:true;nas_Rmp_Init();'
+	title="デバッグモード切り替え"
+>dbgON/OFF</A> </li>
+
+<li id=airDbg ><span id=cMintrospector-d class='cM cM-alt'></span><A	id=cMintrospector
+	HREF='javascript:void(0);'
+	onclick='air.Introspector.Console.log(document);'
+	title="イントロスペクタ"
+>イントロスペクタ</A> </li>
+<li id=airDbg><span id=cMviewSource-d class='cM cM-alt'></span><A	id=cMviewSource
+	HREF='javascript:void(0);'
+	onclick='var viewer = air.SourceViewer.getDefault(); viewer.viewSource();'
+	title="ソース閲覧"
+>ソース</A></li>
+
+    </ul>
+<!-- 編集エリア用ステージ切り替えリスト
+    <ul id=cMstageList class='cMonTrackHeader'>
+<li><span class=cM>----</span></li>
+    </ul> -->
+    <ul class='cMonTrackHeader'>
+<li><span id=cMimport-d class='cM cM-alt'></span><A	id=cMimport
+	HREF='javascript:void(0);'
+	onclick="xUI.importDocument('body');return false;"
+	title="データ読み出し"
+>readout</A></li>
+    </ul>
+<!-- トラック編集メニュー onTrackLabel(常時)-->
+    <ul class='cMonTrackLabel'>
+<li><span id=cMrenameTL-d class='cM cM-alt'></span><A	id=cMrenameTL
+	HREF='javascript:void(0);'
+	onclick='reNameLabel(xUI.Select[0]);return false;'
+	title="ラベル変更"
+>renameTL</A></li>
+<li><span id=cMeditTN-d class='cM cM-alt'></span><A	id=cMeditTN
+	HREF='javascript:void(0);'
+	onclick='editTrackTag(xUI.Select[0]);return false;'
+	title="タグ編集"
+>editTrackTag</A></li>
+    </ul> 
+<!--        reformat     onTrack onTiming -->
+    <ul class='cMonTrack onTiming'>
+
+<li><span id=cMeditPageImage-d class='cM cM-alt'>ページ画像編集</span><A	id=cMeditPageImage
+	HREF='javascript:void(0);'
+	onclick='alert(this.id);return false;'
+	title="ページ画像を編集"
+>ページ画像編集</A></li>
+<li><span id=cMnoteImage-d class='cM cM-alt'>ノート画像挿入・編集</span><A	id=cMnoteImage
+	HREF='javascript:void(0);'
+	onclick='alert(this.id);return false;'
+	title="手書きメモ追加・編集"
+>ノート画像挿入・編集</A></li><hr>
+
+<li><span id=cMaddCircle-d class='cM cM-alt'>◯かこみ</span><A	id=cMaddCircle
+	HREF='javascript:void(0);'
+	onclick='addCircle("circle");return false;'
+	title="丸囲い"
+>◯かこみ</A></li>
+<li><span id=cMaddAngles-d class='cM cM-alt'>△かこみ</span><A	id=cMaddAngles
+	HREF='javascript:void(0);'
+	onclick='addCircle("triangle");return false;'
+	title="三角囲い"
+>△かこみ</A></li>
+<li><span id=cMformatTL-d class='cM cM-alt'></span><A	id=cMformatTL
+	HREF='javascript:void(0);'
+	onclick='reformatTimeline();return false;'
+	title="タイムライン整形"
+>FormatTL</A></li>
+<li><span id=cMformatSheet-d class='cM cM-alt'></span><A	id=cMformatSheet
+	HREF='javascript:void(0);'
+	onclick='reformatTimeline("all");return false;'
+	title="シートを整形"
+>FormatSheet</A></li>
+<li><span id=cMsimplifyTL-d class='cM cM-alt'></span><A	id=cMsimplifyTL
+	HREF='javascript:void(0);'
+	onclick='simplifyTimeline();return false;'
+	title="タイムライン単整形"
+>simplifyTL</A></li>
+<li><span id=cMsimplifySheet-d class='cM cM-alt'></span><A	id=cMsimplifySheet
+	HREF='javascript:void(0);'
+	onclick='simplifyTimeline("all");return false;'
+	title="タイムシート単整形"
+>simplifySheet</A></li>
+<hr>
+    </ul>
+    <ul class='cMonTrack onCamera'>
+<li><span id=cMaddBrackets-d class='cM cM-alt'>□かこみ</span><A	id=cMaddBrackets
+	HREF='javascript:void(0);'
+	onclick='addCircle("brackets");return false;'
+	title="四角囲い"
+>□かこみ</A></li>
+<li><span id=cMcameraPnl-d class='pM pM-alt'></span><A	id=cMcameraPnl
+	HREF='javascript:void(0);'
+	onclick='xUI.sWitchPanel("Cam");return false'
+	title="Camera"
+>cMcameraPnl</A></li>
+<hr>
+    </ul>
+    <ul class='cMonTrack onDialog'>
+<li><span id=cMsoundPnl-d class='pM pM-alt'></span><A	id=cMsoundPnl
+	HREF='javascript:void(0);'
+	onclick='xUI.sWitchPanel("Snd");return false'
+	title="Snd"
+>soundPanel</A></li>
+<hr>
+    </ul>
+<!-- 編集メニュー onTrack (常時?)-->
+    <ul class='cMonTrack'>
+<li><span id=cMselectAll-d class='cM cM-alt'>selectAll</span><A	id=cMselectAll
+	HREF='javascript:void(0);'
+	onclick='chkValue("selall");return false;'
+	title=""
+>selectAll</A></li>
+<li class='onSlect onSelection'><span id=cMcut-d class='cM cM-alt'></span><A	id=cMcut
+	HREF='javascript:void(0);'
+	onclick='chkValue("cut");return false;'
+	title=""
+>Cut [ctr]-[x]</A></li>
+<li><span id=cMcopy-d class='cM cM-alt'></span><A	id=cMcopy
+	HREF='javascript:void(0);'
+	onclick='chkValue("copy");return false;'
+	title=""
+>Copy [ctr]-[c]</A></li>
+<li><span id=cMpaste-d class='cM cM-alt'></span><A	id=cMpaste
+	HREF='javascript:void(0);'
+	onclick='chkValue("paste");return false;'
+	title=""
+>Paste [ctr]-[v]</A></li>
+<hr>
+<li><span id=cMincrementNum-d class='cM cM-alt'>[＋＋]</span><A	id=cMincrementNum
+	HREF='javascript:void(0);'
+	onclick='incrementCell(1);return false;'
+	title="セルを繰り上げる"
+>[＋＋]</A></li>
+<li><span id=cMdecrementNum-d class='cM cM-alt'>[ーー]</span><A	id=cMdecrementNum
+	HREF='javascript:void(0);'
+	onclick='incrementCell(-1);return false;'
+	title="セルを繰り下げる"
+>[ーー]</A></li>
+    </ul>
+<!-- トラック編集メニュー onTrack(emode0)-->
+    <ul class='cMonTrack'>
+<li><span id=cMclearTL-d class='cM cM-alt'></span><A	id=cMclearTL
+	HREF='javascript:void(0);'
+	onclick='clearTL();return false;'
+	title="一列クリア"
+>ClearTL</A></li>
+<li><span id=cMclearSheet-d class='cM cM-alt'></span><A	id=cMclearSheet
+	HREF='javascript:void(0);'
+	onclick='clearTL("all");return false;'
+	title="シートをクリア"
+>ClearAll</A></li>
+
+<li class=cMSelection><span id=cMinsertBlank-d class='cM cM-alt'></span><A	id=cMinsertBlank
+	HREF='javascript:void(0);'
+	onclick='insertBlank();return false;'
+	title="選択範囲にカラコマを挿入"
+>InsertBlank</A></li>
+<li class=cMSelection><span id=cMbrockRemove-d class='cM cM-alt'></span><A	id=cMbrockRemove
+	HREF='javascript:void(0);'
+	onclick='deleteBlank();return false;'
+	title="ブロックで削除"
+>BlockDelete</A></li>
+<hr>
+	</ul>
+    <ul class='cMonTrackLabel'>
+<li><span id=cMaddSoundTrack-d class='cM cM-alt'></span><A	id=cMaddSoundTrack
+	HREF='javascript:void(0);'
+	onclick='addTimeline("dialog");return false;'
+	title="音声タイムライン追加"
+>addSoundTrack</A></li>
+<li><span id=cMaddStilTL-d class='cM cM-alt'></span><A	id=cMaddStilTL
+	HREF='javascript:void(0);'
+	onclick='addTimeline("still");return false;'
+	title="静止画タイムライン追加"
+>addStilTL</A></li>
+<li><span id=cMaddReplacementTL-d class='cM cM-alt'></span><A	id=cMaddReplacementTL
+	HREF='javascript:void(0);'
+	onclick='addTimeline("timing");return false;'
+	title="タイムライン追加"
+>addCellTL</A></li>
+<li><span id=cMaddCameraTL-d class='cM cM-alt'></span><A	id=cMaddCameraTL
+	HREF='javascript:void(0);'
+	onclick='addTimeline("camera");return false;'
+	title="カメラを追加"
+>addCameraTL</A></li>
+<li><span id=cMaddGeometryTL-d class='cM cM-alt'></span><A	id=cMaddGeometryTL
+	HREF='javascript:void(0);'
+	onclick='addTimeline("geometry");return false;'
+	title="ステージワークを追加"
+>addStageworkTL</A></li>
+<li><span id=cMaddSfxTL-d class='cM cM-alt'></span><A	id=cMaddSfxTL
+	HREF='javascript:void(0);'
+	onclick='addTimeline("effect");return false;'
+	title="効果を追加"
+>addSfxTL</A></li>
+<li><span id=cMinsertTL-d class='cM cM-alt'></span><A	id=cMinsertTL
+	HREF='javascript:void(0);'
+	onclick='insertColumns();return false;'
+	title="タイムライン挿入"
+>InsertTL</A></li>
+<li><span id=cMdeleteTL-d class='cM cM-alt'></span><A	id=cMdeleteTL
+	HREF='javascript:void(0);'
+	onclick='deleteColumns();;return false;'
+	title="タイムライン削除"
+>DeleteTL</A></li>
+    </ul>
+
+<!--    referenece  onReference (emode0) 
+    <ul id=cMjobList class='cMonReferenceHeader'>
+<li><span class=cM>----</span></li>
+    </ul> -->
+    <ul class='cMonReferenceHeader'>
+<li id=cMcgi><span id=cMimportReference-d class='cM cM-alt'></span><A	id=cMimportReference
+	HREF='javascript:void(0);'
+	onclick='xUI.importDocument("ref");return false;'
+	title="参照エリア読み込み"
+>import</A></li>
+<li id=cMair><span id=cMimportReferenceAir-d class='cM cM-alt'></span><A	id=cMimportReferenceAir
+	HREF='javascript:void(0);'
+	onclick='alert("yet!");return false;'
+	title="参照エリア読み込み"
+>import</A></li>
+    </ul>
+    <ul class='cMonReference'>
+<li><span id=cMcopyToReference-d class='cM cM-alt'></span><A	id=cMcopyToReference
+	HREF='javascript:void(0);'
+	onclick='putReference();return false;'
+	title="参照エリアへ転記"
+>copy to Ref</A></li>
+<li><span id=cMcopyFromReference-d class='cM cM-alt'></span><A	id=cMcopyFromReference
+	HREF='javascript:void(0);'
+	onclick='getReference();return false;'
+	title="参照エリアから転記"
+>copy from Ref</A></li>
+<li><span id=cMclearReference-d class='cM cM-alt'></span><A	id=cMclearReference
+	HREF='javascript:void(0);'
+	onclick='xUI.referenceXPS=new Xps(XPS.xpsTracks.length-2,XPS.duration());xUI.resetSheet();return false;'
+	title="参照エリア消去"
+>clear Ref</A></li>
+
+    </ul>
+<!--        backup     offTrack (emode0) -->
+    <ul class='cMonReference'>
+<li><span id=cMpushBackup-d class='cM cM-alt'></span><A	id=cMpushBackup
+	HREF='javascript:void(0);'
+	onclick='xUI.setBackup();return false;'
+	title="バックアップ更新"
+>pushBackup</A></li>
+<li><span id=cMrestoreBackup-d class='cM cM-alt'></span><A	id=cMrestoreBackup
+	HREF='javascript:void(0);'
+	onclick='xUI.getBackup();return false;'
+	title="バックアップ復帰"
+>restoreBackup</A></li>
+<li><span id=cMclearBackup-d class='cM cM-alt'></span><A	id=cMclearBackup
+	HREF='javascript:void(0);'
+	onclick='xUI.clearBackup();return false;'
+	title="バックアップをクリア"
+>clearBackup</A></li>
+    </ul>
+
+   <ul class='cMouter'>
+<li><span id=cMstw-d class='cM cM-alt'></span><A	id=cMstw
+	HREF='javascript:void(0);'
+	onclick='xUI.sWitchPanel("Timer");return false;'
+	title="ストップウオッチ機能切り替え"
+>stopWatch</A></li>
+	</ul>
+<!-- コンテキストメニュー -->
+	</span>
+</div>
+<!--    コンテキストメニューUI        -->
+
+<!-- 固定コントロール fixedHeaderは、UIのマージン等を取得するためのキャリアエレメント 		onMouseOver=xUI.Mouse(event);
+-->
+	<div	id="fixedHeader"
+			class="fixedHeader"
 	>
 
 <!-- dropdown menu for browser ブラウザ用ドロップダウンメニュー　-->
@@ -772,11 +1426,19 @@ serviceAgent.pushEntry(xUI.XPS,function(){xUI.setStored("current");sync();
 	onClick="document.getElementById('airMenu').style.display=(document.getElementById('airMenu').style.display=='none')?'inline':'none';"
 	title="airMenu"
 >-----airMenu</A></li>
+<hr>
 <li><span id=pMsheetHeader-d class='pM pM-alt'></span><A	id=pMsheetHeader
 	HREF='javascript:void(0);'
 	onClick="document.getElementById('sheetHeaderTable').style.display=(document.getElementById('sheetHeaderTable').style.display=='none')?'inline':'none';xUI.adjustSpacer();"
 	title="sheetHeaderTable"
 >sheetHeaderTable</A></li>
+
+<li><span id=pMextSig-d class='pM pM-alt'></span><A id=pMextSig
+	HREF='javascript:void(0);'
+	onClick="xUI.sWitchPanel('extSig')"
+	title="拡張シグネチャ"
+>シグネチャ</A></li>
+
 <li><span id=pMmemoArea-d class='pM pM-alt'></span><A id=pMmemoArea
 	HREF='javascript:void(0);'
 	onClick="xUI.sWitchPanel('memoArea')"
@@ -806,14 +1468,15 @@ serviceAgent.pushEntry(xUI.XPS,function(){xUI.setStored("current");sync();
 <li class=airDbg><span id=pMviewSource-d class='pM pM-alt'></span><A	id=pMviewSource
 	HREF='javascript:void(0);'
 	onclick='var viewer = air.SourceViewer.getDefault(); viewer.viewSource();'
-	title="ソース閲覧"
+	title="ソース"
 >ソース</A></li>
 
 </ul>
 </li>
 
 </ul>
-</div><br>
+<br>
+</div>
 <!-- dropdown menu for browser ブラウザ用ドロップダウンメニュー　-->
 <div id=account_box>
     <div class=server-info
@@ -1978,648 +2641,165 @@ Jobセレクタの動作をもうすこしインテリジェントに変更
 </table>
 </div>
 <!-- 固定ヘッダ ここまで 以下は表示切り換えのパネル群 -->
-<!--    コンテキストメニューUI        -->
-<div id ="contextMenu" class ="contextMenu optionPanelFloat">
+<!-- //拡張署名欄 -->
+<div id=extSig >
+  <div id=extSig_minimise style='display:none;'>
+	<a href="javascript:void(0);"
+		onclick='xUI.eXpandPanel("extSig","expand");'
+		title='show signaturebox area'
+	><span>[□] sig.</a></span>
+  </div>
+
+<div id=extSig_expand style='display:flex;height:48px;'>
+	<span style='vertilcal-align:bottom;white-space:nowrap;'>
+		<a href="javascript:void(0);"
+			onclick='xUI.eXpandPanel("extSig","minimise");'
+			title='minimize signbox area'
+	>[━] sig.</a>
 <!--
-    regionの分類
-    onHeadline
-    onTimelineTrackLabel
-        onTimelineTrack
-        onSelection
-        onSection
-    onTimelineTrackHeader
-    onReferenece
-    onRefereneceHeader
-    outer
-
-    管理モードによるメニュー切替はモード変更メソッド(xUI.setUImode)
-    表示モードによるメニュー抑制はリセッターメソッド(xUI.resetSheet)が
-    アプリケーションのホスト状態による遷移も同様に(xUI.resetSheet)で行う
-
-    操作中の編集モードによるON/OFFはflipcMメソッドが担当する。
+	<a href="javascript:void(0);"onclick='xUI.sWitchPanel("Sign");return false;'
+		style='vertilcal-align:bottom'> sig.</a>
 -->
-<!-- コンテキストメニュー -->
-<!-- ドキュメントメニュー 範囲外（常時） -->
-
-    <ul class='cMonHeadline'>
-<li id=cMnoteMenu><span id=cMnote-d class='cM cM-alt'>ノート編集</span><A	id=cMnote
-	href = 'javascript:void(0)'
-	onclick = "if((xUI.canvas)&&(xUI.canvasPaint.targetItem.type=='description')){xUI.canvasPaint.unset();this.innerText = 'Edit|Append';}else if(!(xUI.canvas)){
-	xUI.canvasPaint.set('description:');	this.innerText = 'UNSET';};return false;"
-	title="手書き編集"
->ノート編集</A></li><hr>
-
-<li id=cMbrowseMenu><span id=cMbrowse-d class='cM cM-alt'>書類選択</span><A	id=cMbrowse
-	href = 'javascript:void(0)'
-	onclick = 'xUI.sWitchPanel("File");return false;//myScenePref.open();document.getElementById("scnNewSheet").checked=true;return false;'
-	title="ドキュメントを選択"
->書類選択</A></li><hr>
-
-<li><span id=cMnewdoc-d class='cM cM-alt'>新規書類</span><A id=cMnewdoc
-	href = 'javascript:void(0)'
-	onclick = 'myScenePref.open("new");return false;'
-	title="新規書類"
->新規書類</A></li>
-    </ul>
-<!-- プロジェクト管理メニュー　範囲外（管理モード以外）　-->
-    <ul class='cMonHeadline noPm'>
-<li class=cuiMenu><span id=cMcheckin-d class='cM cM-alt'>作業開始</span><A id=cMcheckin
-	href = 'javascript:void(0)'
-	onclick = 'serviceAgent.checkinEntry();return false;'
-	title="作業開始"
->作業開始</A></li>
-<li class=cuiMenu><span id=cMsave-d class='cM cM-alt'>作業保存</span><A	id=cMsave
-	href = 'javascript:void(0)'
-	onclick = 'if(xUI.edchg) xUI.put(document.getElementById("iNputbOx").value);
-serviceAgent.pushEntry(xUI.XPS,function(){xUI.setStored("current");sync();
-},function(){alert("error");});return false;'
-	title="作業保存"
->作業保存</A></li>
-<li class=cuiMenu><span id=cMcheckout-d class='cM cM-alt'>作業終了</span><A	id=cMcheckout
-	href = 'javascript:void(0)'
-	onclick = 'serviceAgent.checkoutEntry();return false;'
-	title="作業終了"
->作業終了</A></li>
-<li class=cuiMenu><span id=cMactivate-d class='cM cM-alt'>作業再開</span><A	id=cMactivate
-	href = 'javascript:void(0)'
-	onclick = 'serviceAgent.activateEntry();return false;'
-	title="作業再開"
->作業再開</A></li>
-<li class=cuiMenu><span id=cMdeactivate-d class='cM cM-alt'>作業中断</span><A	id=cMdeactivate
-	href = 'javascript:void(0)'
-	onclick = 'serviceAgent.deactivateEntry();return false;'
-	title="作業中断"
->作業中断</A></li>
-<li class=cuiMenu><span id=cMdiscard-d class='cM cM-alt'>編集破棄</span><A	id=cMdiscard
-	href = 'javascript:void(0)'
-	onclick = 'serviceAgent.destroyJob();return false;'
-	title="編集を破棄して閉じる"
->編集破棄</A></li>
-<hr>
-<li class=fuiMenu><span id=cMentry-d class='cM cM-alt'>新規登録</span><A	id=cMentry
-	href = 'javascript:void(0)'
-	onclick = 'xUI.storeDocument();return false;'
-	title="現在のドキュメントをリポジトリへ"
->新規登録</A></li>
-<hr>
-    </ul>
-<!-- 制作管理用ドキュメントメニュー 範囲外（管理モード）-->
-    <ul class='cMonHeadline noPm'>
-<li class=auiMenu><span id=cMnewEntry-d class='cM cM-alt'>新規登録</span><A	id=cMnewEntry
-	href = 'javascript:void(0)'
-	onclick = 'xUI.sWitchPanel("File");return false;'
-	title="タイトルやカットを新規に登録"
->新規登録</A></li>
-
-<li class=auiMenu><span id=cMreceipt-d class='cM cM-alt'>作業検収</span><A	id=cMreceipt
-	href = 'javascript:void(0)'
-	onclick = 'serviceAgent.receiptEntry();return false;'
-	title="次の工程へ進める"
->作業検収</A></li>
-<li class=auiMenu><span id=cMcheckoutF-d class='cM cM-alt'>作業終了</span><A	id=cMcheckoutF
-	href = 'javascript:void(0)'
-	onclick = ';return false;'
-	title="強制的に作業を閉じる"
->作業終了</A></li>
-<li class=auiMenu><span id=cMabort-d class='cM cM-alt'>作業中断</span><A	id=cMabort
-	href = 'javascript:void(0)'
-	onclick = 'serviceAgent.abortEntry();return false;'
-	title="制作を中断する"
->制作中断</A></li>
-
-<li class=auiMenu><span id=cMbranch-d class='cM cM-alt'>ライン分岐</span><A	id=cMbranch
-	href = 'javascript:void(0)'
-	onclick = ';return false;'
-	title="制作ラインを分岐"
->ライン分岐</A></li>
-<li class=auiMenu><span id=cMmerge-d class='cM cM-alt'>ラインマージ</span><A	id=cMmerge
-	href = 'javascript:void(0)'
-	onclick = ';return false;'
-	title=""
->ラインマージ</A></li>
-    </ul>
-<!-- ファイルメニュー 範囲外（常時）-->
-    <ul class='cMonHeadline'>
-<li id=cMcgi><span id=cMimportDatas-d class='cM cM-alt'>Open</span><A id=cMimportDatas
-	href="javascript:void(0);"
-	onclick="xUI.importDocument('body');return false;"
-	title="ローカルドキュメントを開く"
->Open</A></li>
-<li id=cMair><span id=cMopenFS-d class='cM cM-alt'>Open</span><A id=cMopenFS
-	href="javascript:void(0);"
-	onclick="fileBox.openFileDB();return false;"
-	title="ローカルドキュメントを開く(ファイル)"
->Open</A></li>
-<li id=cMair><span id=cMsaveFS-d class='cM cM-alt'>Save</span><A id=cMsaveFS
-	href="javascript:void(0);"
-	onclick="if(fileBox.saveFile){fileBox.saveFile();}"
-	title="保存（ファイル）"
->Save</A></li>
-<li id=cMair><span id=cMexportFS-d class='cM cM-alt'>Save As</span><A	id=cMexportFS
-	href="javascript:void(0);"
-	onclick="if(fileBox.saveAs){fileBox.saveAs();}else{alert('現在ファイルの操作ができません')};return false;"
-	title="別名で保存（ファイル）"
->Save As</A></li>
-<li id=cMps><span id=cMopenFSps-d class='cM cM-alt'>Open</span><A	id=cMopenFSps
-	href="javascript:void(0);"
-	onclick="fileBox.openFileDB();return false;"
-	title="ローカルドキュメントを開く(ファイル)"
->Open</A></li>
-<li id=cMps><span id=cMsaveFSps-d class='cM cM-alt'>Save</span><A	id=cMsaveFSps
-	href="javascript:void(0);"
-	onclick="if(fileBox.saveFile){fileBox.saveFile();}"
-	title="保存（ファイル）"
->Save</A></li>
-<li id=cMps><span id=cMexportFSps-d class='cM cM-alt'>Save As</span><A	id=cMexportFSps
-	href="javascript:void(0);"
-	onclick="if(fileBox.saveAs){fileBox.saveAs();}else{alert('現在ファイルの操作ができません')};return false;"
-	title="別名で保存（ファイル）"
->Save As</A></li>
-<li id=cMcgi><span id=cMdownloadXps-d class='cM cM-alt'>Export As Xps</span><A	id=cMdownloadXps
-    download=''
-	href="javascript:void(0);"
-	onclick='xUI.data_well.value=xUI.XPS.toString();callEcho();return false;'
-	title="ダウンロード保存（XPS）"
->Export As Xps</A></li>
-<!--	onclick="return nas.HTML.download(new Blob([xUI.XPS.toString()],{type:'application/xps'}),xUI.XPS.getIdentifier('simple'));" -->
-<li id=cMcgi><span id=cMdownloadTdts-d class='cM cM-alt'>Export As Tdts</span><A	id=cMdownloadTdts
-	href="javascript:void(0);"
-	onclick='xUI.data_well.value=XPS2TDTS(xUI.XPS,"tdts");callEchoExport("xdts");return false;'
-	title="ダウンロード保存（TDTS）"
->Export As Tdts</A></li>
-<li id=cMcgi><span id=cMdownloadXdts-d class='cM cM-alt'>Export As Tdts</span><A	id=cMdownloadXdts
-	href="javascript:void(0);"
-	onclick='xUI.data_well.value=XPS2XDTS(xUI.XPS,"xdts");callEchoExport("xdts");return false;'
-	title="ダウンロード保存（XDTS）"
->Export As Xdts</A></li>
-<li><span id=cMimportexport-d class='cM cM-alt'>Import/Export</span><a	id=cMimportexport
-	href="javascript:void(0);"
-	onclick="xUI.sWitchPanel('Data');return false;"
-	title="読み込み書き出しパネルを開く"
->Import/Export</a></li>
-<li><span id=cMdocInfo-d class='cM cM-alt'>DocumentInfo</span><A	id=cMdocInfo
-	href='javascript:void(0)'
-	onclick='myScenePref.open("edit");return false;'
-	title="シート情報"
->DocumentInfo</A></li>
-<li id=cMair><span id=cMexportHTMLair-d class='cM cM-alt'>Export as html</span><A	id=cMexportHTMLair
-	href='javascript:void(0)'
-	onclick='if(fileBox.storeOtherExtensionFile){fileBox.storeOtherExtensionFile(printHTML(true),"html")}else{alert("現在ファイルの操作ができません")};return false;'
-	title="表示用HTMLで書出し"
->Export as html</A></li>
-<li id=cMcgi><span id=cMprintHTML-d class='cM cM-alt'>Print html</span><A	id=cMprintHTML
-	href='javascript:void(0)'
-	onclick='printHTML("print");return false;'
-	title="印刷"
->Print HTML</A></li>
-<li id=cMcgi><span id=cMexportPng-d class='cM cM-alt'>Export PNG</span><A	id=cMexportPng
-	href='javascript:void(0)'
-	onclick='printHTML("png");return false;'
-	title="PNG画像で保存"
->画像保存(PNG)</A></li>
-
-<li><span id=cMbuildActionSheet-d class='cM cM-alt'></span><A	id=cMbuildActionSheet
-	HREF='javascript:void(0);'
-	onclick='buildActionSheet("print","action");'
-	title="原画アクションシートを作成"
->原画アクションシート</A></li>
-<li id=cMcgi><span id=cMprintAct-d class='cM cM-alt'>Print html</span><A	id=cMprintAct
-	href='javascript:void(0)'
-	onclick='printHTML("print","action");return false;'
-	title="アクションシートを印刷"
-> --- 印刷</A></li>
-<li id=cMcgi><span id=cMexportActPng-d class='cM cM-alt'>Export PNG</span><A	id=cMexportActPng
-	href='javascript:void(0)'
-	onclick='printHTML("png","action");return false;'
-	title="アクションシートをPNG画像で保存"
-> --- 画像保存</A></li>
-
-    </ul>
-
-<!--    etc 範囲外（ドロップダウンメニュー非表示の際のみ出現）   -->
-    <ul class='cMonHeadline noDm'>
-<li><span id=cMabout-d class='cM cM-alt'></span><A	id=cMabout
-	HREF='javascript:void(0);'
-	onclick='xUI.sWitchPanel("Ver");'
-	title="りまぴんについて"
->about</A><br></li>
-<hr>
-<li><span id=cMloginPnl-d class='pM pM-alt'></span><A	id=cMloginPnl
-	HREF='javascript:void(0);'
-	onclick='xUI.sWitchPanel("Login");return false'
-	title="lgin"
->loginPanel</A></li>
-<li><span id=cMfilePnl-d class='pM pM-alt'></span><A	id=cMfilePnl
-	HREF='javascript:void(0);'
-	onclick='xUI.sWitchPanel("File");return false'
-	title="File"
->filePanel</A></li>
-<li><span id=cMskb-d class='pM pM-alt'></span><A	id=cMskb
-	HREF='javascript:void(0);'
-	onclick='xUI.sWitchPanel("Tbx");return false'
-	title="ソフトウェアキーボード"
->softwareKB</A></li>
-<hr>
-<li><span id=cMpref-d class='cM cM-alt'></span><A	id=cMpref
-	HREF='javascript:void(0);'
-	onclick='myPref=new Pref();myPref.open();return false;'
-	target='pref_'
-	title="各種環境設定"
->Pref</A></li>
-<li><span id=cMrepositoryInfo-d class='cM cM-alt'></span><A id=cMrepositoryInfo
-	HREF='javascript:void(0)'
-	onclick='serviceAgent.currentRepository.showInformation();return false;'
-	title="repository infomation"
->リポジトリの情報を見る</A> </li>
-
-<li><span id=cMmemoEdit-d class='cM cM-alt'></span><A id=cMmemoEdit
-	HREF='javascript:void(0)'
-	onclick='xUI.sWitchPanel("memo");return false;'
-	title="memo Edit"
->メモ編集</A> </li>
-<li><span id=cMreload-d class='cM cM-alt'></span><A	id=cMreload
-	HREF='javascript:void(0)'
-	onclick='if(confirm("アプリケーションを再読み込みします\nデータは破棄されます\nよろしいですか？")){document.location.reload()};return false;'
-	title="reload application"
->reload</A> </li>
-<li><span id=cMrestrictionMode-d class='cM cM-alt'>[ 制限モード ]</span><A	id=cMrestrictionMode
-	HREF='javascript:void(0);'
-	onclick='xUI.setRestriction(! xUI.restriction);return false;'
-	title="管理モード切り替え"
->[ 制限モード ]</A></li>
-<li><span id=cMmanagementMode-d class='cM cM-alt'>[ 管理モード ]</span><A	id=cMmanagementMode
-	HREF='javascript:void(0);'
-	onclick='xUI.setUImode("next");sync("productStatus");return false;'
-	title="管理モード切り替え"
->[ 管理モード ]</A></li>
-<li><span id=cMeditMode-d class='cM cM-alt'>[ 編集モード ]</span><A	id=cMeditMode
-	HREF='javascript:void(0);'
-	onclick='xUI.viewMode=(xUI.viewMode=="Compact")?"WordProp":"Compact";xUI.resetSheet();return false'
-	title="表示モード切り替え"
->[ 編集モード ]</A></li>
-<li><span id=cMcolumns-d class='cM cM-alt'>[ 段組 ]</span><A	id=cMcolumns
-	HREF='javascript:void(0);'
-	onclick='xUI.PageCols=(xUI.PageCols==1)?2:1;xUI.resetSheet();return false'
-	title="二段組"
->[ 段組 ]</A></li>
-<li><span id=cMchgLoacle-d class='cM cM-alt'>[言語切替]</span><A	id=cMchgLoacle
-	HREF='javascript:void(0);'
-    onClick='nas.locale=(nas.locale=="ja")? "en":"ja";nas.LangPack.chgLocale(nas.locale);return false;'
-    title="言語切替"
->[言語切替]</A></li>
-<hr>
-<li><span id=cMzoom-d class='cM cM-alt'></span><A	id=cMzoom
-	HREF='javascript:void(0);'
-	onclick='xUI.zoomSwitch();return false'
-	title="zoomChange"
->zoom</A></li>
-<li><span id=cMunZoom-d class='cM cM-alt'></span><A	id=cMunZoom
-	HREF='javascript:void(0);'
-	onclick='xUI.zoomSwitch.currentPreset=0;xUI.adjustScale();return false'
-	title="zoom100%"
->100%</A></li>
-<hr>
-    </ul>
-
-<!--       show/hide   範囲外（ドロップダウンメニュー非表示の際のみ出現）      -->
-    <ul class='cMonHeadline noDm'>
-<li><span id=cMpMenu-d class='pM pM-alt'></span><A	id=cMpMenu
-	HREF='javascript:void(0);'
-	onclick='xUI.sWitchPanel("menu");return false'
-	title="pMenu"
->pMenu</A></li>
-<li><span id=cMaccountBox-d class='pM pM-alt'></span><A	id=cMaccountBox
-	HREF='javascript:void(0);'
-	onclick='xUI.sWitchPanel("account_box");return false'
-	title="account box show/hide"
->accountBox</A></li>
-<li><span id=cMtoolbar-d class='pM pM-alt'></span><A	id=cMtoolbar
-	HREF='javascript:void(0);'
-	onClick="document.getElementById('toolbarHeader').style.display=(document.getElementById('toolbarHeader').style.display=='none')?'inline':'none';xUI.adjustSpacer();"
-	title="toolbarHeader"
->toolbarHeader</A></li>
-<li><span id=cMcommandbar-d class='cM cM-alt'></span><A	id=cMcommandbar
-	HREF='javascript:void(0);'
-	onclick='xUI.sWitchPanel("Utl");return false;'
-	title="ユーティリテーメニュー"
->commandBar</A></li>
-<li><span id=cMpmui-d class='pM pM-alt'></span><A	id=cMpmui
-	HREF='javascript:void(0);'
-	onclick='xUI.sWitchPanel("pmcui");return false'
-	title="制作管理メニュー"
->進捗管理バー</A></li>
-<li><span id=cMheaderTools-d class='pM pM-alt'></span><A	id=cMheaderTools
-	HREF='javascript:void(0);'
-	onclick='xUI.sWitchPanel("headerTool");return false'
-	title="header tools show/hide"
->headerTools</A></li>
-<li><span id=cMinputControl-d class='pM pM-alt'></span><A	id=cMinputControl
-	HREF='javascript:void(0);'
-	onclick='xUI.sWitchPanel("inputControl");return false'
-	title="input control show/hide"
->inputControl</A></li>
-<li style="display:none;"><span id=cMairMenu-d class='cM cM-alt'></span><A	id=cMairMenu
-	HREF='javascript:void(0);'
-	onClick="document.getElementById('airMenu').style.display=(document.getElementById('airMenu').style.display=='none')?'inline':'none';"
-	title="airMenu"
->-----airMenu</A></li>
-<li><span id=cMsheetHeader-d class='cM cM-alt'></span><A	id=cMsheetHeader
-	HREF='javascript:void(0);'
-	onClick="document.getElementById('sheetHeaderTable').style.display=(document.getElementById('sheetHeaderTable').style.display=='none')?'inline':'none';xUI.adjustSpacer();"
-	title="sheetHeaderTable"
->sheetHeaderTable</A></li>
-
-<li><span id=cMmemoArea-d class='cM cM-alt'></span><A id=cMmemoArea
-	HREF='javascript:void(0);'
-	onClick="xUI.sWitchPanel('memoArea')"
-	title="memo_header"
->memo</A></li>
-<li><span id=cMreference-d class='cM cM-alt'></span><A id=cMreference
-	HREF='javascript:void(0);'
-	onClick="xUI.flipRefColumns();"
-	title="reference"
->references</A></li>
-<hr>
-<li id=debug><span id=cMdbgCons-d class='cM cM-alt'></span><A	id=cMdbgCons
-	HREF='javascript:void(0);'
-	onclick='xUI.sWitchPanel("Dbg");return false;'
-	title="debug_ON"
->debugConsole</A></li>
-<li><span id=cMdbgMode-d class='cM cM-alt'></span><A id=cMdbgMode
-	HREF='javascript:void(0);'
-	onclick='dbg=(dbg)?false:true;nas_Rmp_Init();'
-	title="デバッグモード切り替え"
->dbgON/OFF</A> </li>
-
-<li id=airDbg ><span id=cMintrospector-d class='cM cM-alt'></span><A	id=cMintrospector
-	HREF='javascript:void(0);'
-	onclick='air.Introspector.Console.log(document);'
-	title="イントロスペクタ"
->イントロスペクタ</A> </li>
-<li id=airDbg><span id=cMviewSource-d class='cM cM-alt'></span><A	id=cMviewSource
-	HREF='javascript:void(0);'
-	onclick='var viewer = air.SourceViewer.getDefault(); viewer.viewSource();'
-	title="ソース閲覧"
->ソース</A></li>
-
-    </ul>
-<!-- 編集エリア用ステージ切り替えリスト
-    <ul id=cMstageList class='cMonTrackHeader'>
-<li><span class=cM>----</span></li>
-    </ul> -->
-    <ul class='cMonTrackHeader'>
-<li><span id=cMimport-d class='cM cM-alt'></span><A	id=cMimport
-	HREF='javascript:void(0);'
-	onclick="xUI.importDocument('body');return false;"
-	title="データ読み出し"
->readout</A></li>
-    </ul>
-<!-- トラック編集メニュー onTrackLabel(常時)-->
-    <ul class='cMonTrackLabel'>
-<li><span id=cMrenameTL-d class='cM cM-alt'></span><A	id=cMrenameTL
-	HREF='javascript:void(0);'
-	onclick='reNameLabel(xUI.Select[0]);return false;'
-	title="ラベル変更"
->renameTL</A></li>
-<li><span id=cMeditTN-d class='cM cM-alt'></span><A	id=cMeditTN
-	HREF='javascript:void(0);'
-	onclick='editTrackTag(xUI.Select[0]);return false;'
-	title="タグ編集"
->editTrackTag</A></li>
-    </ul> 
-<!--        reformat     onTrack onTiming -->
-    <ul class='cMonTrack onTiming'>
-
-<li><span id=cMeditPageImage-d class='cM cM-alt'>ページ画像編集</span><A	id=cMeditPageImage
-	HREF='javascript:void(0);'
-	onclick='alert(this.id);return false;'
-	title="ページ画像を編集"
->ページ画像編集</A></li>
-<li><span id=cMnoteImage-d class='cM cM-alt'>ノート画像挿入・編集</span><A	id=cMnoteImage
-	HREF='javascript:void(0);'
-	onclick='alert(this.id);return false;'
-	title="手書きメモ追加・編集"
->ノート画像挿入・編集</A></li><hr>
-
-<li><span id=cMaddCircle-d class='cM cM-alt'>◯かこみ</span><A	id=cMaddCircle
-	HREF='javascript:void(0);'
-	onclick='addCircle("circle");return false;'
-	title="丸囲い"
->◯かこみ</A></li>
-<li><span id=cMaddAngles-d class='cM cM-alt'>△かこみ</span><A	id=cMaddAngles
-	HREF='javascript:void(0);'
-	onclick='addCircle("triangle");return false;'
-	title="三角囲い"
->△かこみ</A></li>
-<li><span id=cMformatTL-d class='cM cM-alt'></span><A	id=cMformatTL
-	HREF='javascript:void(0);'
-	onclick='reformatTimeline();return false;'
-	title="タイムライン整形"
->FormatTL</A></li>
-<li><span id=cMformatSheet-d class='cM cM-alt'></span><A	id=cMformatSheet
-	HREF='javascript:void(0);'
-	onclick='reformatTimeline("all");return false;'
-	title="シートを整形"
->FormatSheet</A></li>
-<li><span id=cMsimplifyTL-d class='cM cM-alt'></span><A	id=cMsimplifyTL
-	HREF='javascript:void(0);'
-	onclick='simplifyTimeline();return false;'
-	title="タイムライン単整形"
->simplifyTL</A></li>
-<li><span id=cMsimplifySheet-d class='cM cM-alt'></span><A	id=cMsimplifySheet
-	HREF='javascript:void(0);'
-	onclick='simplifyTimeline("all");return false;'
-	title="タイムシート単整形"
->simplifySheet</A></li>
-<hr>
-    </ul>
-    <ul class='cMonTrack onCamera'>
-<li><span id=cMaddBrackets-d class='cM cM-alt'>□かこみ</span><A	id=cMaddBrackets
-	HREF='javascript:void(0);'
-	onclick='addCircle("brackets");return false;'
-	title="四角囲い"
->□かこみ</A></li>
-<li><span id=cMcameraPnl-d class='pM pM-alt'></span><A	id=cMcameraPnl
-	HREF='javascript:void(0);'
-	onclick='xUI.sWitchPanel("Cam");return false'
-	title="Camera"
->cMcameraPnl</A></li>
-<hr>
-    </ul>
-    <ul class='cMonTrack onDialog'>
-<li><span id=cMsoundPnl-d class='pM pM-alt'></span><A	id=cMsoundPnl
-	HREF='javascript:void(0);'
-	onclick='xUI.sWitchPanel("Snd");return false'
-	title="Snd"
->soundPanel</A></li>
-<hr>
-    </ul>
-<!-- 編集メニュー onTrack (常時?)-->
-    <ul class='cMonTrack'>
-<li><span id=cMselectAll-d class='cM cM-alt'>selectAll</span><A	id=cMselectAll
-	HREF='javascript:void(0);'
-	onclick='chkValue("selall");return false;'
-	title=""
->selectAll</A></li>
-<li class='onSlect onSelection'><span id=cMcut-d class='cM cM-alt'></span><A	id=cMcut
-	HREF='javascript:void(0);'
-	onclick='chkValue("cut");return false;'
-	title=""
->Cut [ctr]-[x]</A></li>
-<li><span id=cMcopy-d class='cM cM-alt'></span><A	id=cMcopy
-	HREF='javascript:void(0);'
-	onclick='chkValue("copy");return false;'
-	title=""
->Copy [ctr]-[c]</A></li>
-<li><span id=cMpaste-d class='cM cM-alt'></span><A	id=cMpaste
-	HREF='javascript:void(0);'
-	onclick='chkValue("paste");return false;'
-	title=""
->Paste [ctr]-[v]</A></li>
-<hr>
-<li><span id=cMincrementNum-d class='cM cM-alt'>[＋＋]</span><A	id=cMincrementNum
-	HREF='javascript:void(0);'
-	onclick='incrementCell(1);return false;'
-	title="セルを繰り上げる"
->[＋＋]</A></li>
-<li><span id=cMdecrementNum-d class='cM cM-alt'>[ーー]</span><A	id=cMdecrementNum
-	HREF='javascript:void(0);'
-	onclick='incrementCell(-1);return false;'
-	title="セルを繰り下げる"
->[ーー]</A></li>
-    </ul>
-<!-- トラック編集メニュー onTrack(emode0)-->
-    <ul class='cMonTrack'>
-<li><span id=cMclearTL-d class='cM cM-alt'></span><A	id=cMclearTL
-	HREF='javascript:void(0);'
-	onclick='clearTL();return false;'
-	title="一列クリア"
->ClearTL</A></li>
-<li><span id=cMclearSheet-d class='cM cM-alt'></span><A	id=cMclearSheet
-	HREF='javascript:void(0);'
-	onclick='clearTL("all");return false;'
-	title="シートをクリア"
->ClearAll</A></li>
-
-<li class=cMSelection><span id=cMinsertBlank-d class='cM cM-alt'></span><A	id=cMinsertBlank
-	HREF='javascript:void(0);'
-	onclick='insertBlank();return false;'
-	title="選択範囲にカラコマを挿入"
->InsertBlank</A></li>
-<li class=cMSelection><span id=cMbrockRemove-d class='cM cM-alt'></span><A	id=cMbrockRemove
-	HREF='javascript:void(0);'
-	onclick='deleteBlank();return false;'
-	title="ブロックで削除"
->BlockDelete</A></li>
-<hr>
-	</ul>
-    <ul class='cMonTrackLabel'>
-<li><span id=cMaddSoundTrack-d class='cM cM-alt'></span><A	id=cMaddSoundTrack
-	HREF='javascript:void(0);'
-	onclick='addTimeline("dialog");return false;'
-	title="音声タイムライン追加"
->addSoundTrack</A></li>
-<li><span id=cMaddStilTL-d class='cM cM-alt'></span><A	id=cMaddStilTL
-	HREF='javascript:void(0);'
-	onclick='addTimeline("still");return false;'
-	title="静止画タイムライン追加"
->addStilTL</A></li>
-<li><span id=cMaddReplacementTL-d class='cM cM-alt'></span><A	id=cMaddReplacementTL
-	HREF='javascript:void(0);'
-	onclick='addTimeline("timing");return false;'
-	title="タイムライン追加"
->addCellTL</A></li>
-<li><span id=cMaddCameraTL-d class='cM cM-alt'></span><A	id=cMaddCameraTL
-	HREF='javascript:void(0);'
-	onclick='addTimeline("camera");return false;'
-	title="カメラを追加"
->addCameraTL</A></li>
-<li><span id=cMaddGeometryTL-d class='cM cM-alt'></span><A	id=cMaddGeometryTL
-	HREF='javascript:void(0);'
-	onclick='addTimeline("geometry");return false;'
-	title="ステージワークを追加"
->addStageworkTL</A></li>
-<li><span id=cMaddSfxTL-d class='cM cM-alt'></span><A	id=cMaddSfxTL
-	HREF='javascript:void(0);'
-	onclick='addTimeline("effect");return false;'
-	title="効果を追加"
->addSfxTL</A></li>
-<li><span id=cMinsertTL-d class='cM cM-alt'></span><A	id=cMinsertTL
-	HREF='javascript:void(0);'
-	onclick='insertColumns();return false;'
-	title="タイムライン挿入"
->InsertTL</A></li>
-<li><span id=cMdeleteTL-d class='cM cM-alt'></span><A	id=cMdeleteTL
-	HREF='javascript:void(0);'
-	onclick='deleteColumns();;return false;'
-	title="タイムライン削除"
->DeleteTL</A></li>
-    </ul>
-
-<!--    referenece  onReference (emode0) 
-    <ul id=cMjobList class='cMonReferenceHeader'>
-<li><span class=cM>----</span></li>
-    </ul> -->
-    <ul class='cMonReferenceHeader'>
-<li id=cMcgi><span id=cMimportReference-d class='cM cM-alt'></span><A	id=cMimportReference
-	HREF='javascript:void(0);'
-	onclick='xUI.importDocument("ref");return false;'
-	title="参照エリア読み込み"
->import</A></li>
-<li id=cMair><span id=cMimportReferenceAir-d class='cM cM-alt'></span><A	id=cMimportReferenceAir
-	HREF='javascript:void(0);'
-	onclick='alert("yet!");return false;'
-	title="参照エリア読み込み"
->import</A></li>
-    </ul>
-    <ul class='cMonReference'>
-<li><span id=cMcopyToReference-d class='cM cM-alt'></span><A	id=cMcopyToReference
-	HREF='javascript:void(0);'
-	onclick='putReference();return false;'
-	title="参照エリアへ転記"
->copy to Ref</A></li>
-<li><span id=cMcopyFromReference-d class='cM cM-alt'></span><A	id=cMcopyFromReference
-	HREF='javascript:void(0);'
-	onclick='getReference();return false;'
-	title="参照エリアから転記"
->copy from Ref</A></li>
-<li><span id=cMclearReference-d class='cM cM-alt'></span><A	id=cMclearReference
-	HREF='javascript:void(0);'
-	onclick='xUI.referenceXPS=new Xps(XPS.xpsTracks.length-2,XPS.duration());xUI.resetSheet();return false;'
-	title="参照エリア消去"
->clear Ref</A></li>
-
-    </ul>
-<!--        backup     offTrack (emode0) -->
-    <ul class='cMonReference'>
-<li><span id=cMpushBackup-d class='cM cM-alt'></span><A	id=cMpushBackup
-	HREF='javascript:void(0);'
-	onclick='xUI.setBackup();return false;'
-	title="バックアップ更新"
->pushBackup</A></li>
-<li><span id=cMrestoreBackup-d class='cM cM-alt'></span><A	id=cMrestoreBackup
-	HREF='javascript:void(0);'
-	onclick='xUI.getBackup();return false;'
-	title="バックアップ復帰"
->restoreBackup</A></li>
-<li><span id=cMclearBackup-d class='cM cM-alt'></span><A	id=cMclearBackup
-	HREF='javascript:void(0);'
-	onclick='xUI.clearBackup();return false;'
-	title="バックアップをクリア"
->clearBackup</A></li>
-    </ul>
-
-   <ul class='cMouter'>
-<li><span id=cMstw-d class='cM cM-alt'></span><A	id=cMstw
-	HREF='javascript:void(0);'
-	onclick='xUI.sWitchPanel("Timer");return false;'
-	title="ストップウオッチ機能切り替え"
->stopWatch</A></li>
-	</ul>
-<!-- コンテキストメニュー -->
 	</span>
+	<span class = signbox id="sig_0">
+		<span class = signlabel>CT</span>
+		<span class = 'signature signature-finished'>
+		演出<br><span class=signdate>12/12</span>
+		</span>
+	</span>
+	<span class = signbox id="sig_1">
+		<span class = signlabel>LO</span>
+		<span class = 'signature signature-work'>
+		たぬき
+		<br><span class=signdate>12/13</span>
+		</span>
+	</span>
+	<span class = signbox>
+		<span class = signlabel>.</span>
+		<span class = 'signature signature-check-ok'>
+		監督
+		<br><span class=signdate>12/13</span>
+		</span>
+	</span>
+	<span class = signbox>
+		<span class = signlabel>.</span>
+		<span class = 'signature signature-finished'>
+		演出
+		<span class=signdate><br>12/13</span>
+		</span>
+	</span>
+	<span class = signbox>
+		<span class = signlabel>.</span>
+		<span class = signature>-</span>
+	</span>
+	<span class = signbox>
+		<span class = signlabel>原画</span>
+		<span class = 'signature signature-work'>たぬき
+		<br><span class=signdate>12/14</span>
+		</span>
+	</span>
+	<span class = signbox>
+		<span class = signlabel>.</span>
+		<span class = signature></span>
+	</span><br>
+	<span class = signbox>
+		<span class = signlabel>.</span>
+		<span class = signature></span>
+	</span>
+	<span class = signbox>
+		<span class = signlabel>.</span>
+		<span class = signature></span>
+	</span>
+	<span class = signbox>
+		<span class = signlabel>前検</span>
+		<span class = signature></span>
+	</span	>
+	<span class = signbox>
+		<span class = signlabel>動画</span>
+		<span class = signature></span>
+	</span>
+	<span class = signbox>
+		<span class = signlabel>動検</span>
+		<span class = signature></span>
+	</span>
+  </div>
+<hr>
 </div>
-<!--    コンテキストメニューUI        -->
+<!-- 拡張署名欄// -->
+
+<!-- メモ編集エリア　画面表示のみ　印刷時はシートヘッダ上に別表示-->
+<div id=memoArea class=memoArea >
+  <div id=memoArea_minimise style='display:none;'>
+	<a href="javascript:void(0);"
+		onclick='xUI.eXpandPanel("memoArea","expand");'
+		title='show note text'
+	><span>[□]</span></a>
+	<a href="javascript:void(0);"
+		onclick='xUI.eXpandPanel("memoArea","expand");return false;'
+	>MEMO : </a></span>
+  </div>
+  <div id=memoArea_expand>
+   <div id=memo_header>
+   <a href="javascript:void(0);"
+    onclick='xUI.eXpandPanel("memoArea","minimise");'
+    title='hide note text'
+   ><span>[━]</span></a>
+   <a href="javascript:void(0);"
+		onclick='xUI.sWitchNotetext();return false;'
+>MEMO : </a> <span id="transit_data"></span>
+   </div>
+<!--	コメント編集	-->
+<div class=optionPanel id=optionPanelMemo >
+<table>
+<tr>
+<td>
+<input type=button
+    id=memoPnlSelentAll class=toolTip value="全選択"
+	onClick='document.getElementById("rEsult").select();' /><br>
+<input type=button
+    id=memoPnlClear class=toolTip value="消去"
+	onClick='document.getElementById("rEsult").value="";' /><br>
+<input type=button
+    id=memoPnlTab class=toolTip value="TAB"
+	onClick='document.getElementById("rEsult").insert("\t");' /><br>
+<input type=button
+    id=memoPnlLineFeed class=toolTip value="改行"
+	onClick='document.getElementById("rEsult").insert("\n");' /><br>
+<input type=button
+    id=memoPnlReset class=toolTip value="リセット"
+	onClick='document.getElementById("rEsult").value=xUI.XPS.xpsTracks.noteText;' /><br>
+<input type=button
+    id=memoPnlPut class=toolTip value="更新"
+	onClick='xUI.XPS.xpsTracks.noteText=document.getElementById("rEsult").value;xUI.setStored("force");sync("memo");' /><br>
+<input type=button
+    id=memoPnlClose class=toolTip value="閉じる"
+	onClick='if(xUI.XPS.xpsTracks.noteText!=document.getElementById("rEsult").value){if(confirm("内容が変更されています。\n更新しますか?")){xUI.XPS.xpsTracks.noteText=document.getElementById("rEsult").value;xUI.setStored("force");sync("memo");}};xUI.sWitchNotetext();' /><br>
+</td>
+<td><span id=memoPnlCaption>タイムシートコメントを編集します</span><br>
+<textarea name=rEsult id=rEsult cols=96 rows=8 >
+</textarea></td>
+</tr><tr>
+<td colspan=2>
+<span id=myWords
+	onClick="editMemo(event,document.getElementById('rEsult'));"
+
+>word table</span>
+</td>
+</tr></table>
+  </div>
+  <div id=memo_image class=overlayNoteImage></div>
+<!--	コメント編集	-->
+<!-- メモ表示欄     -->
+  <div id=memo class=memoSpace></div>
+  </div>
+<hr>
+</div>
+<!-- メモ表示欄 -->
+
+<!-- アプリケーションステータス -->
+<div id=app_status class=application_status>***<br></div>
+<!-- アプリケーションステータス -->
+
 <!--	ユーティリティーパネル	-->
 <!--    トラックラベルセレクタ  -->
 <div class=optionPanel id=optionPanelTrackLabel >
@@ -3572,6 +3752,7 @@ HTML（画像を使用可能）か？<br>
  title=" ウインドウを閉じる "
 >Cancel</button>
 </div>
+<div>
 	<select
 	id="repositorySelector"
 	title="リポジトリ選択"
@@ -3580,9 +3761,10 @@ HTML（画像を使用可能）か？<br>
 >
 <option selected>[localRepository]
 </select>
-
-
-<br><select
+</div>
+<div>
+<!--
+<select
 	name="opus_numbers"
 	id="opusSelect"
 	class="document-selector document-selector-opus"
@@ -3590,8 +3772,6 @@ HTML（画像を使用可能）か？<br>
 onChange='setProduct();'
 >
 <option selected>（*-- no title --*）
-<!--
--->
 </select><select
 	name="cutList"
 	id="cutList"
@@ -3602,10 +3782,30 @@ onChange='setProduct();'
 	ondblclick='if(this.selectedIndex>0){document.getElementById("ddp-readout").click();}'
 >
 <option >（*-- no document --*）
-<!--
--->
 </select>
-<div>
+-->
+<div
+	name  = "opus_numbers"
+	id    = "opusSelect"
+	class ="nasHTMLSliderSelect document-selector document-selector-opus"
+onChange='setProduct();'
+>
+<option selected>（*-- no title --*）
+</div><div
+	name  = "cutList"
+	id    = "cutList"
+	class = "nasHTMLSliderSelect document-selector document-selector-cut"
+	multiple = true
+	onChange = "selectSCi();"
+	ondblclick = 'if(this.selectedIndex>0){document.getElementById("ddp-readout").click();}'
+>
+<option>（*-- no document --*）
+</div>
+</div>
+
+
+
+<div style='white-space:nowrap;'>
 <span align=left>
 <button
  id='ddp-refresh'
@@ -4638,7 +4838,7 @@ duration :
 		accept=".json,.webp,.gif,.png,.psd,.psb,.tga,.jpg,.jpeg"
 		style="display:none"
 		onchange='documentFormat.importData(this);' />
-<div style="background-color:#aaaaaa;height:28px;display:block;">
+<div style="background-color:#999;height:52px;display:block;vertical-align:middle;">
 		<button id='docFormatExpand' onclick='documentFormat.expand();' title='詳細編集'> ▼ </button>
 		<button id='docFormatStatas' class='iconButton iconButton-resize' onclick='documentFormat.setStatus();'></button>
 <!--
@@ -4646,6 +4846,8 @@ duration :
 		<a href="javascript:documentFormat.setStatus('ordebox');//documentFormat.onResize= documentFormat.orderbox;documentFormat.moveBox= false;">リサイズ</a>
 -->
 		<button
+			class = toolButton
+			style = 'vertical-arign:middle;'
 			onclick="document.getElementById('fileLister').click();"
 			title='設定データ読出'
 		>
@@ -4932,7 +5134,8 @@ id='imgAdjustDetail'
 <!-- //Canvas編集メニュー -->
 <div id=optionPanelPaint class='optionPanelFloat optionPanelPaint' >
 <dl><dt class="floatPanelHeader">note menu<a href="" class=minimize ><img src=/remaping/images/ui/minimize.png alt="＿"></a><a href="" class=close ><img src=/remaping/images/ui/close.png alt="×"></a></dt></dl>
-<div id=formPaint class='centeringForm'>
+	<div id=formPaint class='centeringForm'>
+	<div class='centeringForm blockMenu'>
          <button id='select' class='paintTool iconButton iconButton-plus' onclick='xUI.canvasPaint.setTool(this.id)' title='select(v)'>
 </button><button id='selectRect' class='iconButton iconButton-selectBox paintTool' onclick='xUI.canvasPaint.setTool(this.id);' title ='box select(m)'>
 </button><button id='addText' class='iconButton iconButton-addText paintTool' onclick='xUI.canvasPaint.setTool(this.id)' title ='text tool(t)'>
@@ -4950,6 +5153,8 @@ id='imgAdjustDetail'
 <!--</button><button id='' class='iconButton paintTool' onclick='xUI.canvasPaint.setTool(this.id)' title =''>-->
 </button>
 <br><hr>
+	</div>
+	<div class='centeringForm blockMenu'>
 
          <button id='removeCanvasObject' class='iconButton iconButton-eraser paintCommand' onclick='xUI.canvasPaint.removeSelection()' title='選択オブジェクトを削除'>
 </button><button id='clearCanvasField' class='iconButton iconButton-close paintCommand' onclick='xUI.canvasPaint.clearContent()' title='すべてのオブジェクトを削除'>
@@ -4976,6 +5181,10 @@ id='imgAdjustDetail'
 </button>--><!--<button id='' class='iconButton iconButton- itemCommand' onclick='' title=''>
 </button>-->
 <br>
+
+	</div>
+	<div class='centeringForm blockMenu'>
+
          <button id='note_switch'    class='iconButton iconButton-space iconButton-wide4 itemCommand' onclick='xUI.canvasPaint.switch();' title='編集状態の切り替え'> EDIT
 </button><br><span id='note_item' class='note_item note_item_focus'> ・・・ </span><hr>
          <button id='black'    class='graphicColorChip graphicColorBlack'    onclick='xUI.canvasPaint.setColor(this.id);'>
@@ -4996,6 +5205,7 @@ id='imgAdjustDetail'
 	<button id='colorSelectBG' class='graphicColorSelect graphicColorSelectBG' onclick='xUI.canvasPaint.swapColor()'></button>
 	<button id='colorSelectFG' class='graphicColorSelect graphicColorSelectFG' onclick='xUI.canvasPaint.swapColor();'></button>
 		</div>
+	</div>
 	</div>
 </div>
 <!-- Canvas編集メニュー// -->
@@ -5028,91 +5238,6 @@ id='imgAdjustDetail'
 	</div>
 </div>
 <!-- スタンプセレクタ// -->
-<!-- //拡張署名欄 -->
-<div id=extSig >
-  <div id=extSig_minimise style='display:none;'>
-	<a href="javascript:void(0);"
-		onclick='xUI.eXpandPanel("extSig","expand");'
-		title='show signaturebox area'
-	><span>[□] sig.</a></span>
-  </div>
-
-<div id=extSig_expand style='display:flex;height:48px;'>
-	<span style='vertilcal-align:bottom;white-space:nowrap;'>
-		<a href="javascript:void(0);"
-			onclick='xUI.eXpandPanel("extSig","minimise");'
-			title='minimize signbox area'
-	>[━] sig.</a>
-<!--
-	<a href="javascript:void(0);"onclick='xUI.sWitchPanel("Sign");return false;'
-		style='vertilcal-align:bottom'> sig.</a>
--->
-	</span>
-	<span class = signbox id="sig_0">
-		<span class = signlabel>CT</span>
-		<span class = 'signature signature-finished'>
-		演出<br><span class=signdate>12/12</span>
-		</span>
-	</span>
-	<span class = signbox id="sig_1">
-		<span class = signlabel>LO</span>
-		<span class = 'signature signature-work'>
-		たぬき
-		<br><span class=signdate>12/13</span>
-		</span>
-	</span>
-	<span class = signbox>
-		<span class = signlabel>.</span>
-		<span class = 'signature signature-check-ok'>
-		監督
-		<br><span class=signdate>12/13</span>
-		</span>
-	</span>
-	<span class = signbox>
-		<span class = signlabel>.</span>
-		<span class = 'signature signature-finished'>
-		演出
-		<span class=signdate><br>12/13</span>
-		</span>
-	</span>
-	<span class = signbox>
-		<span class = signlabel>.</span>
-		<span class = signature>-</span>
-	</span>
-	<span class = signbox>
-		<span class = signlabel>原画</span>
-		<span class = 'signature signature-work'>たぬき
-		<br><span class=signdate>12/14</span>
-		</span>
-	</span>
-	<span class = signbox>
-		<span class = signlabel>.</span>
-		<span class = signature></span>
-	</span><br>
-	<span class = signbox>
-		<span class = signlabel>.</span>
-		<span class = signature></span>
-	</span>
-	<span class = signbox>
-		<span class = signlabel>.</span>
-		<span class = signature></span>
-	</span>
-	<span class = signbox>
-		<span class = signlabel>前検</span>
-		<span class = signature></span>
-	</span	>
-	<span class = signbox>
-		<span class = signlabel>動画</span>
-		<span class = signature></span>
-	</span>
-	<span class = signbox>
-		<span class = signlabel>動検</span>
-		<span class = signature></span>
-	</span>
-  </div>
-<hr>
-</div>
-<!-- 拡張署名欄// -->
 <!-- 署名編集 -->
 
 <div class=optionPanelFloat id=optionPanelSign  style='text-align:center;min-width:480px;'>
@@ -5170,75 +5295,6 @@ id='imgAdjustDetail'
 
 </div></div>
 <!-- 署名編集 -->
-<!-- メモ編集エリア　画面表示のみ　印刷時はシートヘッダ上に別表示-->
-<div id=memoArea class=memoArea >
-  <div id=memoArea_minimise style='display:none;'>
-	<a href="javascript:void(0);"
-		onclick='xUI.eXpandPanel("memoArea","expand");'
-		title='show note text'
-	><span>[□]</span></a>
-	<a href="javascript:void(0);"
-		onclick='xUI.eXpandPanel("memoArea","expand");return false;'
-	>MEMO : </a></span>
-  </div>
-  <div id=memoArea_expand>
-   <div id=memo_header>
-   <a href="javascript:void(0);"
-    onclick='xUI.eXpandPanel("memoArea","minimise");'
-    title='hide note text'
-   ><span>[━]</span></a>
-   <a href="javascript:void(0);"
-		onclick='xUI.sWitchNotetext();return false;'
->MEMO : </a> <span id="transit_data"></span>
-   </div>
-<!--	コメント編集	-->
-<div class=optionPanel id=optionPanelMemo >
-<table>
-<tr>
-<td>
-<input type=button
-    id=memoPnlSelentAll class=toolTip value="全選択"
-	onClick='document.getElementById("rEsult").select();' /><br>
-<input type=button
-    id=memoPnlClear class=toolTip value="消去"
-	onClick='document.getElementById("rEsult").value="";' /><br>
-<input type=button
-    id=memoPnlTab class=toolTip value="TAB"
-	onClick='document.getElementById("rEsult").insert("\t");' /><br>
-<input type=button
-    id=memoPnlLineFeed class=toolTip value="改行"
-	onClick='document.getElementById("rEsult").insert("\n");' /><br>
-<input type=button
-    id=memoPnlReset class=toolTip value="リセット"
-	onClick='document.getElementById("rEsult").value=xUI.XPS.xpsTracks.noteText;' /><br>
-<input type=button
-    id=memoPnlPut class=toolTip value="更新"
-	onClick='xUI.XPS.xpsTracks.noteText=document.getElementById("rEsult").value;xUI.setStored("force");sync("memo");' /><br>
-<input type=button
-    id=memoPnlClose class=toolTip value="閉じる"
-	onClick='if(xUI.XPS.xpsTracks.noteText!=document.getElementById("rEsult").value){if(confirm("内容が変更されています。\n更新しますか?")){xUI.XPS.xpsTracks.noteText=document.getElementById("rEsult").value;xUI.setStored("force");sync("memo");}};xUI.sWitchNotetext();' /><br>
-</td>
-<td><span id=memoPnlCaption>タイムシートコメントを編集します</span><br>
-<textarea name=rEsult id=rEsult cols=96 rows=8 >
-</textarea></td>
-</tr><tr>
-<td colspan=2>
-<span id=myWords
-	onClick="editMemo(event,document.getElementById('rEsult'));"
-
->word table</span>
-</td>
-</tr></table>
-  </div>
-  <div id=memo_image class=overlayNoteImage></div>
-<!--	コメント編集	-->
-<!-- メモ表示欄     -->
-  <div id=memo class=memoSpace></div>
-  </div>
-<hr>
-</div>
-<!-- メモ表示欄 -->
-<div id=app_status class=application_status>***<br></div>
 </div>
 <div id=sheet_view>
  <div class=headerTool>
@@ -5249,18 +5305,19 @@ id='imgAdjustDetail'
 <!--   以降シート本体     -->
 <div id=xpsDocumentField style='transform: scale(1);display:frow-root;'>
 
-<div id=sheet_body
+<div id=sheet_body>
+<!--
 	onMouseDown = " return xUI.Mouse(event)"
 	onMouseUp   = " return xUI.Mouse(event)"
 	onClick     = " return xUI.Mouse(event)"
 	onDblClick  = " return xUI.Mouse(event)"
 	onMouseOver = " xUI.Mouse(event)"
 	onMouseOut  = " xUI.Mouse(event)"
->
+-->
 <!--
 	style = "display:flow-root;"
 -->
-      <div align=center>
+      <div align=center style='margin-top:6cm;'>
 <br><br><br><br><br><br><br><br>ただいま準備中…ちょっぴりお待ちください<br>
 あ、非常に申し訳ありませんがりまぴんはIEでは正常に動作しません。<br>サポート外です。<br>
 <h3> タイムシート編集サービス　テスト中 </h3><img src=/remaping/images/remaping.gif border=0 /><br /><img src=/remaping/images/ui/wait.gif width=48 height=48><br>

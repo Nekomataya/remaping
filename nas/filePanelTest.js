@@ -128,33 +128,45 @@ documentDepot.getProducts=function(){
     return myProducts;
 }
 
-/*  OPUSセレクタを更新する
-引数:エントリフィルタ用正規表現
+/*
+    @params {Object RegExp | String} myRegexp
+        引数:エントリフィルタ用正規表現
+    @params {Boolean}   rev
+        フィルタを反転
+    @returns {Array}
+  OPUSセレクタを更新する
 戻値:フィルタリング済のリスト配列
 更新後のセレクタ内に現在の被選択アイテムがある場合はそれを選択状態にする
 ない場合は選択アイテムを空に
 プロダクトリストは、都度生成に変更（スタティックには持たない）
  */
 documentDepot.updateOpusSelector=function(myRegexp,rev){
-//    if(! serviceAgent.currentRepository.opusList.updated){return;}
     if(!(myRegexp instanceof RegExp)){ myRegexp = new RegExp(".+");}
     if(!rev ) rev = false;
 // ここで正規表現フィルタを引数にする
     var myContents = "";
-//    var myProducts = documentDepot.getProducts();
     var myProducts = documentDepot.products;
-    var myResult   = [];
+    
+    var options    = [];
     myContents += (myProducts.length)?
     '<option value="==newTitle==" selected>（*-- no title selected --*）</option>':
     '<option value="==newTitle==" selected>（*-- no titles --*）</option>';
+    options.push((myProducts.length)?
+        {value:"==newTitle==",innerText:"（*-- no title selected --*）"}:
+        {value:"==newTitle==",innerText:"（*-- no titles --*）"}
+    );
     for( var opid = 0 ; opid < myProducts.length ; opid ++){
-        var currentText = decodeURIComponent(myProducts[opid]);
+        var currentText  = decodeURIComponent(myProducts[opid]);
+        var currentData  = myProducts[opid];
+        var contentClass = "docStatus document-selector-option-right";
+        var contentStyle = "text-align:right;";
         var show = (currentText.match(myRegexp))? true:false;
         if(rev) show = !show;
         if(show){
+
+
             myContents += '<option';
-            myContents += ' value="';
-            myContents += myProducts[opid];
+            myContents += ' value="'+currentData;
             if (documentDepot.currentProduct == myProducts[opid]){
                 myContents += '" selected>';
             }else{
@@ -163,14 +175,25 @@ documentDepot.updateOpusSelector=function(myRegexp,rev){
             }
             myContents += currentText;
             myContents += '</option>';
-            myResult.push(myProducts[opid]);
+            options.push({
+                value     :currentData.toString(),
+                innerText :currentText,
+                className :contentClass,
+                style     :contentStyle
+            });
         }
     }
-    if(document.getElementById( "opusSelect" ).innerHTML != myContents){
-        document.getElementById( "opusSelect" ).innerHTML = myContents;
-        document.getElementById( "opusSelect" ).disabled  = false;
-    }
-    return myResult;
+
+	if(document.getElementById("opusSelect").link){
+		document.getElementById("opusSelect").link.setOptions(options);
+		document.getElementById("opusSelect").link.select(documentDepot.currentProduct);
+    }else{
+        if(document.getElementById( "opusSelect" ).innerHTML != myContents){
+            document.getElementById( "opusSelect" ).innerHTML = myContents;
+            document.getElementById( "opusSelect" ).disabled  = false;
+        };
+    };
+    return options;
 }
 /*  Documentセレクタを更新
 引数:エントリフィルタ用正規表現
@@ -191,28 +214,33 @@ console.log(documentDepot.currentProduct);
 console.log(myDocuments);
 //  正規表現フィルタで抽出してHTMLを組む
     var myContents = "";
-    var myResult   = [];
+    var options    = [];
     myContents +=(myDocuments.length)? 
     '<option value="==newDocument==" selected>（*-- no document selected--*）</option>':
     '<option value="==newDocument==" selected>（*-- no documents --*）</option>';
+    options.push((myDocuments.length)?
+        {value:"==newDocument==",innerText:"（*-- no document selected--*）"}:
+        {value:"==newDocument==",innerText:"（*-- no documents --*）"}
+    );
     for ( var dlid = 0 ; dlid < myDocuments.length ; dlid ++){
 //全ドキュメント走査
         var currentText = decodeURIComponent(myDocuments[dlid].toString(0).split('//')[1]);
         var currentData = myDocuments[dlid];
-//console.log(currentData.cut)
-       var currentStatus = currentData.getStatus();
-//console.log(currentData);console.log(currentStatus)
-        if( (currentData.dataInfo.currentStatus.content.indexOf('Aborted') < 0) &&
-            (currentData.dataInfo.sci[0].cut.match(myRegexp))){
-            myContents += '<option';
+        var currentStatus = currentData.getStatus();
+        var contentClass  = "docStatus document-selector-option-left";
+        var contentStyle  = "text-align:left;";
 
-            myContents += ' class="docStatus docStatus-';
-            myContents += currentStatus;
-if((currentStatus=='Fixed')&&(currentStatus.assign)){
-            myContents += "-2";
-}
-            myContents += '"';
-            myContents += ' value="';
+        if( (currentData.dataInfo.currentStatus.content.indexOf('Aborted') < 0) &&
+            (currentData.dataInfo.sci[0].cut.match(myRegexp))
+        ){
+
+            contentClass += " docStatus-"+ currentStatus;
+            if((currentStatus=='Fixed')&&(currentStatus.assign)){
+                contentClass += "-2";
+            };
+            var myContents = '<option class="';
+            myContents += contentClass;
+            myContents += '" value="';
             myContents += myDocuments[dlid];
             if(this.currentSelection == myDocuments[dlid]){
                 myContents += '" selected >';
@@ -220,17 +248,28 @@ if((currentStatus=='Fixed')&&(currentStatus.assign)){
                 myContents += '">';
                 this.currentSelection = null;
             };
+            currentText += ' ['+currentStatus.content +']';
             myContents += currentText;
-            myContents += ' ['+currentStatus.content;
-            myContents += ']</option>';
-            myResult.push(myDocuments[dlid]);
+            myContents += '</option>';
+            options.push({
+                value     :currentData.toString(),
+                innerText :currentText,
+                className :contentClass,
+                style     :contentStyle
+            });
+//            options.push(currentText);
         }
     }
-    if (document.getElementById( "cutList" ).innerHTML != myContents){
-        document.getElementById( "cutList" ).innerHTML = myContents;
-        document.getElementById( "cutList" ).disabled  = false;
-    }
-    return myResult;//抽出したリスト
+	if(document.getElementById("cutList").link){
+		document.getElementById("cutList").link.setOptions(options);
+		document.getElementById("cutList").link.select(documentDepot.currentSelection);
+	}else{
+		if(document.getElementById( "cutList" ).innerHTML != myContents){
+			document.getElementById( "cutList" ).innerHTML = myContents;
+			document.getElementById( "cutList" ).disabled  = false;
+		};
+	};
+	return options;//抽出したリスト
 }
 
 /*
@@ -492,12 +531,13 @@ console.log('setProduct####')
 console.log(productName);
 
 //ドキュメント（カット）ブラウザの表示をリセット（クリア）
-    document.getElementById('cutList').innerHTML = "<option selected>（*-- no document --*）";
+//    document.getElementById('cutList').innerHTML = "<option selected>（*-- no document --*）";
+    document.getElementById('cutList').link.setOptions(["（*-- no document --*）"]);
     documentDepot.updateDocumentSelector();
 //    selectSCi();
 //ブラウザの選択を解除
     documentDepot.currentSelection=null;
-    document.getElementById( "cutList" ).disabled=true;
+    document.getElementById( "cutList" ).disabled = true;
     
     if(typeof productName == "undefined"){
     //プロダクト名が引数で与えられない場合はセレクタの値をとる
@@ -505,21 +545,20 @@ console.log(productName);
         if ( document.getElementById("opusSelect").selectedIndex >= 0 ){
             productName = ( document.getElementById("opusSelect").selectedIndex == 0 )?
             "#[]":
-            document.getElementById("opusSelect").options[document.getElementById("opusSelect").selectedIndex].text;
+            document.getElementById("opusSelect").value;//.options[document.getElementById("opusSelect").selectedIndex].text;
         }else{
-            document.getElementById("opusSelect").selectedIndex = 0;
+            document.getElementById("opusSelect").link.select(0);
             productName = "#[]";
-        }
+        };
     }else{
 console.log("changeSelector")
     //プロダクト名が与えられた場合は、セレクタの選択を更新する
-          //  document.getElementById('opusSelect').value=productName;
         for(var pix=0;pix<documentDepot.products.length;pix++){
             if(Xps.compareIdentifier(documentDepot.products[pix],productName)>=0){
-                document.getElementById('opusSelect').value=documentDepot.products[pix];break;
-            }
-        }
-    }
+                document.getElementById('opusSelect').link.select(documentDepot.products[pix]);break;
+            };
+        };
+    };
     productName=String(productName);//明示的にストリング変換する
     var productInfo=Xps.parseProduct(productName);
         var subTitle    = productInfo.subtitle;
@@ -534,7 +573,8 @@ console.log("changeSelector")
 //    selectSCi();    
 
 // タイトルからカットのリストを構築して右ペインのリストを更新
-    documentDepot.currentProduct=document.getElementById("opusSelect").options[document.getElementById("opusSelect").selectedIndex].value;
+//    documentDepot.currentProduct=document.getElementById("opusSelect").options[document.getElementById("opusSelect").selectedIndex].value;
+    documentDepot.currentProduct=document.getElementById("opusSelect").value;
 
     serviceAgent.currentRepository.getEpisodes(function(){
 //        documentDepot.documentsUpdate();
@@ -585,6 +625,7 @@ console.log(documentDepot.currentProduct);
 selectSCi
 */
 function selectSCi(sciName){
+console.log(sciName);
     if(typeof sciName == "undefined"){
     //カット名が引数で与えられない場合はセレクタの値をとる
     //セレクタ値の場合は、ドキュメントリストの対応するエントリを取得
@@ -593,7 +634,7 @@ function selectSCi(sciName){
             /*  セレクタで選択したカットのissuesをドロップダウンリストで閲覧可能にする
                 デフォルト値は最終issue
              */
-            var myEntry = serviceAgent.currentRepository.entry(document.getElementById("cutList").options[document.getElementById("cutList").selectedIndex].value);
+            var myEntry = serviceAgent.currentRepository.entry(document.getElementById("cutList").value);//options[document.getElementById("cutList").selectedIndex].value);
             if(myEntry){
             var myContents="";
             for (var ix=0;ix<myEntry.issues.length;ix++){
@@ -604,16 +645,16 @@ function selectSCi(sciName){
             document.getElementById("issueSelector").innerHTML=myContents;
             if(xUI.uiMode!='management') document.getElementById("issueSelector").disabled=false;
 
-            sciName = document.getElementById("cutList").options[document.getElementById("cutList").selectedIndex].text;
+            sciName = myEntry.sci;//.options[document.getElementById("cutList").selectedIndex].text;
             }else{console.log(myEntry)}
         }else{
             document.getElementById("issueSelector").innerHTML='<option value="" selected>#:---line//#:---stage//#:---job//(status)</option>';
             document.getElementById("issueSelector").disabled=true;
-            document.getElementById("cutList").selectedIndex = 0;
+            document.getElementById("cutList").link.select(0);//.selectedIndex = 0;
             sciName = "(*--c#--*)";
             var myEntry = null;
-        }
-    }
+        };
+    };
     sciName=String(sciName);//明示的にストリング変換する
     if(sciName.length <= 0){return false;}
     var sciArray=sciName.split( "/" );//セパレータ"/"で兼用カットを分離
@@ -628,7 +669,7 @@ function selectSCi(sciName){
     }
 
 //  状態更新
-//　パネルテキスト更新
+//  パネルテキスト更新
     document.getElementById("cutInput").value   = (cutNumber.length)? cutNumber:"(*--c#--*)";
     document.getElementById("timeInput").value  = (cutTime)? nas.Frm2FCT(nas.FCT2Frm(cutTime),3):"6 + 00 .";
 //UIボタンの更新
@@ -653,7 +694,7 @@ var currentStatus = myEntry.issues[myEntry.issues.length-1][3];
         for ( var tidx = 0 ; tidx < myInputText.length ; tidx ++ ){
             document.getElementById(myInputText[tidx]).disabled = true;
         }
-        documentDepot.currentSelection = document.getElementById("cutList").options[document.getElementById("cutList").selectedIndex].value;
+        documentDepot.currentSelection = document.getElementById("cutList").value;//.options[document.getElementById("cutList").selectedIndex].value;
     }
     if((xUI.uiMode=='management')&&(!myEntry)){
         document.getElementById('ddp-addentry').disabled    = false;

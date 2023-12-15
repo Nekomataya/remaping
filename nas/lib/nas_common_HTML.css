@@ -28,6 +28,114 @@ element.style {
     max-height: none;
     height: 718.231px;
 }
+/*
+	オプションパネル
+*/
+div.optionPanel{
+	display:none;
+	padding:0 0 0 8px;
+	vertical-align: middle;
+	color:#333;
+	background-color:#efefef;
+}
+@media (prefers-color-scheme: dark) {
+	div.optionPanel {
+		color:#efefef;
+		background-color:#333;
+	}
+}
+div.optionPanelModal {
+		display: none;
+		color:#333;
+		background-color: #efefef;
+}
+@media (prefers-color-scheme: dark)
+	div.optionPanelModal {
+		color: #efefef;
+		background-color: #333;
+}
+/* optionPanelFloat*/
+
+div.optionPanelFloat{
+	display:none;
+    position:absolute;
+	color:#333;
+    background-color:#efefef;
+    padding:0;
+    border-style:solid;
+    border-width:1px;
+    border-color:#808080;
+    z-index:7;
+  /* 角丸 */
+    -moz-border-radius: 4px ;
+    -webkit-border-radius: 4px;
+    border-radius: 4px;
+}
+@media (prefers-color-scheme: dark) {
+	div.optionPanelFloat {
+		color:#efefef;
+		background-color:#333;
+	}
+}
+div.optionPanelFloat-mobile{
+	position:absolute;
+	left    :0px;
+	bottom  :24px;
+	background-color:#668866;
+	width   :100%;
+}
+
+a.minimize{
+    position:absolute;
+    right:32px;
+    top:1px;
+}
+a.minimize img{
+    border:none;
+}
+a.close{
+    position:absolute;
+    right:8px;
+    top:1px;
+}
+a.close img{
+    border:none;
+}
+.optionPanelFloat dl dt {
+    height:25px;
+    line-height:25px;
+    text-indent:1em;
+    font-weight:bold;
+    cursor:move;
+}
+.optionPanelFloat dl dd {
+    margin:0;
+    padding:2em;
+    line-height:1.5;
+    text-indent:1em;
+}
+.floatPanelHeader {
+    background-color:#888888;
+}
+@media (prefers-color-scheme: dark) {
+    .optionPanel{
+        background-color:#333;
+    }
+    .optionPanelModal{
+        background-color:#333;
+    }
+
+    .optionPanelFloat{
+        background-color:#333;
+        border-color:#808080;
+    }
+    .floatPanelHeader {
+        background-color:#555;
+    }
+}
+
+/* 個別部分はアプリごとのcssへ移動 */
+/*
 @media screen and (min-width: 600px)
 #optionPanelVer {
     display: none;
@@ -44,6 +152,8 @@ element.style {
     padding: 6px;
     border-style: double;
 }
+*/
+/*以下は jQueryUIと重複でこちらは特に反映されない*/
 .ui-dialog .ui-dialog-content {
     position: relative;
     border: 0;
@@ -51,23 +161,12 @@ element.style {
     background: none;
     overflow: auto;
 }
-div.optionPanelModal {
-    /* display: none; */
-    /* background-color: #888; */
-		color:black;
-		background-color: #888;
-}
-@media (prefers-color-scheme: dark)
-	div.optionPanelModal {
-		color: #eee;
-		background-color: black;
-}
 
 .ui-widget-content {
-	background-color:red;
+	background-color:#efefef;
 }
 .ui-widget-header {
-	background-color:red;
+	background-color:#efefef;
 }
 /*
    mousedragscrollable
@@ -77,11 +176,23 @@ div.optionPanelModal {
     overflow: auto;
     -webkit-overflow-scrolling: touch;
 }
+.mousedragscrollable_overlay {
+	position: fixed;
+	display : none;
+	top     : 0px;
+	left    : 0px;
+	background-color:rgba(1,1,1,0.1);
+}
+.mousedragscrollable_select {
+	background-color:red;
+}
 .centeringForm {
 	text-align:center;
 	padding:4px;
 }
-
+.blockMenu {
+	display:inline-block;
+}
 
 button.itemSelector {
 	border-style:solid;
@@ -214,12 +325,12 @@ div.circle-diameter-3 {width:6px;height:6px;}
 
 /*for nas.HTML.SliderSelect*/
 .nasHTMLSliderSelect {
-	display         : inline-block;
-	background-color: white;
-	border-style : solid;
-	border-width : 1px;
-	overflow        : hidden;
-	white-space     : nowrap;
+	display          : inline-block;
+	background-color : white;
+	border-style     : solid;
+	border-width     : 1px;
+	overflow         : hidden;
+	white-space      : nowrap;
 }
 .nasHTMLSliderSelect-h {
 	width:100%;

@@ -722,7 +722,7 @@ nas.getCssRule=function( selector, property, sheetindex ) {
   return null;
 }
 /**
-    cssスタイルシートセットかセレクタで指定したルールセットを検索して戻す
+    cssスタイルシートセットからセレクタで指定したルールセットを検索して戻す
     @params {String}  selector
     @params {String}  sheetindex
     @returns {CSSStyleRule|null}
@@ -740,6 +740,28 @@ nas.findCssRule = function(selector,sheetindex){
         continue;
     }
   return null;
+}
+
+/**
+    cssスタイルシートセットからセレクタで指定したルールセットをすべて削除する
+    @params {String}  selector
+    @params {String}  sheetindex
+    @returns {CSSStyleRule|null}
+eg
+    nas.findCSSRule('th.dialogSpan');
+*/
+nas.deleteCssRule = function(selector,sheetindex){
+    if(! selector) return ;
+    selector = String(selector).trim();
+    for (var ix = document.styleSheets[sheetindex].cssRules.length - 1 ;ix >=0; ix --){
+        if(
+            (document.styleSheets[sheetindex].cssRules[ix].selectorText)&&
+            (document.styleSheets[sheetindex].cssRules[ix].selectorText == selector)
+        ){
+            document.styleSheets[sheetindex].deleteRule(ix);
+        };
+    };
+  return ;
 }
 /*
     @params {String}  selector
@@ -852,7 +874,7 @@ default:
 
 プロパティ	設定するプロパティをJSでなくcssの書式で置く "{}"は補われるので不要
 適用範囲	"screen""print"または"both"(0,1 or both)
-*** 	このメソッドは 0番にスクリーン用スタイルシート・1番にプリント用スタイルシートが
+*** 	このメソッドは 0番にスクリーン用・1番にプリント用、2番にnas_HTMLが
 	ロード済みであることが前提条件 注意！！ IDの方が良いかも
 eg.
 nas.setCssRule('th.dialogSpan','width:6em','both')
@@ -868,8 +890,10 @@ nas.setCssRule= function( selector, property, region ) {
 		switch(region){
 		case "screen":target = [0]  ;break;
 		case "print" :target = [1]  ;break;
-		case "both"  :
-		default	  :target = [0,1];
+		case "lib"   :target = [2]  ;break;
+
+		case "both"  :target = [0,1];break;
+		default	  :target = [0,1,2];
 		};
 	};
 	if( document.styleSheets[0].insertRule ){
@@ -888,7 +912,6 @@ nas.setCssRule= function( selector, property, region ) {
 		return false;
 	};
 }
-
 /*
 	htmlオブジェクトのテキストの選択状態を返すメソッド
 	nas.getAreaRange(htmlObject)
@@ -1419,25 +1442,68 @@ nas.HTML.mousedragscrollable.movecancel = false;
  *		リリースの際にフットマークを残す
  *	キャンセルフラグが立っていればスキップ
  * Vanila/pointerイベントに書き換え 2023 11 25
+ * mouse|touch　両イベント対応で再調整 11 30
  */
 nas.HTML.mousedragscrollable = function mousedragscrollable(elements){
 	if(elements instanceof HTMLCollection){
 		elements = Array.from(elements)
 	}else if(typeof elements == 'string'){
 		if(elements.match(/^\.(.*)$/)){
-			elements = Array.from(document.getElementsByClassName(RegExp.$1));
+			elements = Array.from(document.getElementsByClassName(RegExp.$1));//クラス
 		}else if(elements.match(/^\#?(.*)$/)){
-			elements = [document.getElementById(RegExp.$1)];
+			elements = [document.getElementById(RegExp.$1)];//id
 		};
 	};
 	if(!(elements instanceof Array)) elements = Array.from(document.getElementsByClassName('mousedragscrollable'));
 	elements.forEach(function(e){
+//エレメントにマウスモーダルバリヤを設定
+		e.style.transform = 'scale(1, 1)';
+		var ovl = document.createElement('div');
+		ovl.className = 'mousedragscrollable_overlay';
+		ovl.addEventListener('mousedown',function(evt){evt.preventDefault();evt.stopPropagation();return false;})
+		ovl.style.height = e.scrollHeight + 'px';
+		ovl.style.width  = e.scrollWidth  + 'px';
+		e.appendChild(ovl);
+//  nas.setCssRule('.mousedragscrollable_overlay','display:none;')        ;//解除 (デフォルト)
+//  nas.setCssRule('.mousedragscrollable_overlay','display:inline-block;');//ブロック
 
-		e.addEventListener('pointerdown',function ptHandle(evt){
-console.log(evt.target.id)
+//		e.addEventListener('click',function(evt){console.log('click : '+evt.target.id);evt.stopImmediatePropagation();evt.stopPropagation();evt.preventDefault();return true;});
+//		e.addEventListener('mousedown' , nas.HTML.mousedragscrollable.ptHandle);
+//		e.addEventListener('touchstart', nas.HTML.mousedragscrollable.ptHandle);
+		e.addEventListener('mousedown',function ptHandle(evt){
+//console.log(evt.target.id);
+//console.log(evt.target.type);
+			if(nas.HTML.mousedragscrollable.movecancel) return true;
+			if(!(nas.HTML.mousedragscrollable.down)){
+				evt.preventDefault();
+				nas.HTML.mousedragscrollable.target = e; // 動かす対象をピックアップ
+				nas.HTML.mousedragscrollable.target.style.cursor = "grabbing";
+				nas.HTML.mousedragscrollable.ptHandle(evt);
+			}
+		});
+		e.addEventListener('touchstart',function ptHandle(evt){
+console.log(evt.target.id);
+//console.log(evt.target.type);
+			if(nas.HTML.mousedragscrollable.movecancel) return true;
+			if(!(nas.HTML.mousedragscrollable.down)){
+				evt.preventDefault();
+				nas.HTML.mousedragscrollable.target = e; // 動かす対象をピックアップ
+				nas.HTML.mousedragscrollable.ptHandle(evt);
+				if(evt.target.click){
+console.log(evt.target)
+					nas.HTML.addClass(evt.target,'mousedragscrollable_select');//e.style.opacity = 0.86 // 透明度でハイライト
+					evt.target.addEventListener('pointerleave',function(evnt){nas.HTML.removeClass(evnt.target,'mousedragscrollable_select');},{once:true});
+				};
+			}
+		});
+/*
+		e.addEventListener('pointerdown',function nas.HTML.mousedragscrollable.ptHandle(evt){
+console.log(evt.target.id);
+console.log(evt.target.type);
+
 			if(nas.HTML.mousedragscrollable.movecancel) return true;
 			event.preventDefault();
-			nas.HTML.mousedragscrollable.target = e; // 動かす対象
+			nas.HTML.mousedragscrollable.target = e; // 動かす対象をピックアップ
 			nas.HTML.mousedragscrollable.target.style.cursor = "grabbing";
 
 			nas.HTML.mousedragscrollable.down = true;//ポインタダウン時に更新
@@ -1455,11 +1521,14 @@ console.log(evt.target.id)
 //			document.addEventListener('touchmove'  ,nas.HTML.disableScroll,{ passive: false });
 //ポインタ処理イベントリスナ設定
 			document.addEventListener('pointermove',nas.HTML.mousedragscrollable.slHandle);
+
+			document.addEventListener('mouseup'    ,nas.HTML.mousedragscrollable.rvHandle);
 			document.addEventListener('pointerup'  ,nas.HTML.mousedragscrollable.rvHandle);
+			document.addEventListener('touchend'   ,nas.HTML.mousedragscrollable.rvHandle);
 //ポインタ離脱に対して
 			nas.HTML.mousedragscrollable.target.addEventListener('pointerleave',nas.HTML.mousedragscrollable.rvHandle);
 			return false;
-		});
+		});// */
 	});
 }
 //移動フットマーク
@@ -1468,35 +1537,94 @@ nas.HTML.mousedragscrollable.footmark  = false;
 nas.HTML.mousedragscrollable.movecancel = false;
 /*	ポインタハンドラ
 */
+//開始ハンドラ
+nas.HTML.mousedragscrollable.ptHandle = function(event){
+//console.log(event);
+//	if(nas.HTML.mousedragscrollable.movecancel) return true;
+//	event.preventDefault();
+//	nas.HTML.mousedragscrollable.target = e; // 動かす対象
+//	nas.HTML.mousedragscrollable.target.style.cursor = "grabbing";
+
+	nas.HTML.mousedragscrollable.down = true;//ポインタダウン時に更新
+	nas.HTML.mousedragscrollable.move = false;//ポインタムーブ時に更新
+	nas.HTML.mousedragscrollable.x = (event.type != 'touchstart')?
+		event.clientX:event.touches[0].clientX;
+	nas.HTML.mousedragscrollable.y = (event.type != 'touchstart')?
+		event.clientY:event.touches[0].clientY;
+	nas.HTML.mousedragscrollable.scrollleft = nas.HTML.mousedragscrollable.target.scrollLeft;
+	nas.HTML.mousedragscrollable.scrolltop  = nas.HTML.mousedragscrollable.target.scrollTop;
+	if(event.type != 'touchstart'){
+//ドラグスクロール停止
+		document.addEventListener('mousedown'  , nas.HTML.disableScroll,{ passive: false });
+//ポインタ処理イベントリスナ設定
+//		document.addEventListener('mousemove'  , nas.HTML.mousedragscrollable.slHandle);
+//終了処理
+		document.addEventListener('mouseup'    , nas.HTML.mousedragscrollable.rvHandle);
+	}else{
+//ドラグスクロール停止
+		document.addEventListener('touchstart' ,nas.HTML.disableScroll,{ passive: false });
+//ポインタ処理イベントリスナ設定
+//		document.addEventListener('touchmove'  ,nas.HTML.mousedragscrollable.slHandle);
+//終了処理
+		document.addEventListener('touchend'   ,nas.HTML.mousedragscrollable.rvHandle);
+	};
+//			document.addEventListener('mouseover'  ,nas.HTML.disableScroll,{ passive: false });
+//			document.addEventListener('pointerdown',nas.HTML.disableScroll,{ passive: false });
+//			document.addEventListener('touchmove'  ,nas.HTML.disableScroll,{ passive: false });
+			document.addEventListener('pointermove',nas.HTML.mousedragscrollable.slHandle);
+//			document.addEventListener('pointerup'  ,nas.HTML.mousedragscrollable.rvHandle);
+//ポインタ離脱に対して
+	nas.HTML.mousedragscrollable.target.addEventListener('pointerleave',nas.HTML.mousedragscrollable.rvHandle);
+	return false;
+};
+
 //ドラグ移動終了ハンドラ 
 nas.HTML.mousedragscrollable.rvHandle = function(event){
 console.log(event.type);
 console.log(nas.HTML.mousedragscrollable.move);
     if(!(nas.HTML.mousedragscrollable.move)){
-        if (event.target.click instanceof Function) event.target.click();
-    };
+console.log(event.target.click instanceof Function)
+		if((event.type == 'touchend')&&(event.target.click instanceof Function)){
+//強制クリック
+			event.target.click();
+		};
+	}else{
+console.log('mouseup set click cancel')
+//クリックキャンセル
+//		nas.setCssRule('.mousedragscrollable_overlay','display:inline-block;','lib');//ブロック
+	};
 	if((nas.HTML.mousedragscrollable.down)||(nas.HTML.mousedragscrollable.move)){
 	};
-	if(nas.HTML.mousedragscrollable.down) event.stopImmediatePropagation();
-	if(nas.HTML.mousedragscrollable.down) event.stopPropagation();
-	if(nas.HTML.mousedragscrollable.move) event.preventDefault();
+//	if(nas.HTML.mousedragscrollable.down) event.stopImmediatePropagation();
+//	if(nas.HTML.mousedragscrollable.down) event.stopPropagation();
+//	if(nas.HTML.mousedragscrollable.move) event.preventDefault();
 	nas.HTML.mousedragscrollable.down = false;
 	document.removeEventListener('pointermove',nas.HTML.mousedragscrollable.slHandle);
-	if((event.type == 'pointerup')&&(nas.HTML.mousedragscrollable.target)){
+//	document.removeEventListener('mousemove',nas.HTML.mousedragscrollable.slHandle);
+//	document.removeEventListener('touchmove',nas.HTML.mousedragscrollable.slHandle);
+	if((event.type != 'pointerup')&&(nas.HTML.mousedragscrollable.target)){
 		nas.HTML.mousedragscrollable.target.removeEventListener('pointerleave',nas.HTML.mousedragscrollable.rvHandle);
 	}else{
 console.log('remove')
-		document.removeEventListener('pointerup',nas.HTML.mousedragscrollable.rvHandle);
+
+//		document.removeEventListener('pointerup',nas.HTML.mousedragscrollable.rvHandle);
+		document.removeEventListener(((event.type=='mouseup')?'mouseup':'touchend'),nas.HTML.mousedragscrollable.rvHandle);
 	};
 //タッチスクロール・ホイルスクロール再開
-	document.removeEventListener('pointerdown',nas.HTML.disableScroll,{ passive: false });
-	document.removeEventListener('mousedown'  ,nas.HTML.disableScroll,{ passive: false });
-	document.removeEventListener('touchstart' ,nas.HTML.disableScroll,{ passive: false });
+	if(event.type != 'touchend'){
+		document.removeEventListener('mousedown'  ,nas.HTML.disableScroll,{ passive: false });
+	}else{
+		document.removeEventListener('touchstart' ,nas.HTML.disableScroll,{ passive: false });
+	};
+
+//	document.removeEventListener('pointerdown',nas.HTML.disableScroll,{ passive: false });
 //	document.removeEventListener('touchmove'  ,nas.HTML.disableScroll,{ passive: false });
+
 	if(nas.HTML.mousedragscrollable.target){
 		nas.HTML.mousedragscrollable.target.style.cursor = '';
 		nas.HTML.mousedragscrollable.target = null;
 	};
+	nas.setCssRule('.mousedragscrollable_overlay','display:none;','lib')        ;//解除 (デフォルト)
 }
 //ドラグ移動ハンドラ pointermove
 nas.HTML.mousedragscrollable.slHandle = function(evt){
@@ -1506,15 +1634,17 @@ nas.HTML.mousedragscrollable.slHandle = function(evt){
 //		evt.stopPropagation();
 		let move_x = nas.HTML.mousedragscrollable.x - evt.clientX;
 		let move_y = nas.HTML.mousedragscrollable.y - evt.clientY;
-		if (Math.abs(move_x) > 2 || Math.abs(move_y) > 2) {
+		if (Math.abs(move_x) > 3 || Math.abs(move_y) > 3) {
 //detect move
 			nas.HTML.mousedragscrollable.move = true;
+//click block
+			nas.setCssRule('.mousedragscrollable_overlay','display:inline-block;','lib');//ブロック
 		}else{
 //detect non move//リリース実行
 			return;
 		};
-		evt.preventDefault();
-		evt.stopPropagation();
+//		evt.preventDefault();
+//		evt.stopPropagation();
 		nas.HTML.mousedragscrollable.target.scrollTo(
 			nas.HTML.mousedragscrollable.scrollleft + move_x,
 			nas.HTML.mousedragscrollable.scrolltop  + move_y
@@ -1546,7 +1676,7 @@ nas.HTML.showProgress = function showProgress(value,all,form){
     
 
 	@params {Object HTMLDivElement} element
-	@params {Array of String}       options
+	@params {Array of String|Array of Object}       options
 	@direction {String}       direction
 	スライダセレクタ
 	
@@ -1555,15 +1685,24 @@ nas.HTML.showProgress = function showProgress(value,all,form){
 	既存のボタンがあればその値をオプションとして初期化
 	onclickメソッドでvalueを更新
 	onchangeメソッドを呼ぶ
+	selectメソッドで選択
+	複数選択可
+eg.
+    new nas.HTML.SliderSelect(
+        document.getElementById(id),
+        null,
+        'vertical'
+    )
 */
 nas.HTML.SliderSelect = function(element,options,direction){
 	this.element = document.createElement('div');
 	this.element.className = 'nasHTMLSliderSelect';
 	this.element.link      = this;
 	this.element.focusItm  = null;//selectedOption
-	this.element.selectedIndex     = null;//selectedIndex
-	this.element.direction = 'vertical';//horizontal | vertical
-	this.options = [];
+	this.element.selectedIndex = null;//selectedIndex
+	this.element.direction     = 'vertical';//horizontal | vertical
+	this.element.options       = [];
+	this.element.multiple      = false;
 	if(arguments.length) this.parse(element,options,direction);
 }
 nas.HTML.SliderSelect.prototype.parse = function(element,options,direction){
@@ -1581,12 +1720,12 @@ nas.HTML.SliderSelect.prototype.parse = function(element,options,direction){
 	};
 	nas.HTML.addClass(this.element,'nasHTMLSliderSelect');
 	this.element.link       = this;
-	this.element.focusItm      = null;
+	this.element.focusItm   = null;
 	this.element.value      = '';//トレーラーにvalueをアタッチ
 	this.element.direction  = (direction != 'vertical')? 'hrizontal':'vertical';//トレーラーにdirectionをアタッチ
 //
 	if(!(this.element.onchange instanceof Function)) this.element.onchange = function(){console.log(this.value);};//既存の関数があれば残す
-//options : [string1,string2,string3...];
+//options : [string1,string2,string3...]; [{value:'12',text:'12番',}]
 	if((!(options instanceof Array))&&(this.element.children.length)){
 		options = Array.from(this.element.children,function(e){return e.innerHTML});
 	};
@@ -1617,23 +1756,35 @@ nas.HTML.SliderSelect.prototype.init = function(){
 セレクタのオプションリストを更新する
 オプションは、ボタンエレメントに変換される
 引数要素がボタンオブジェクトであった場合はそのまま利用
-それ以外のオブジェクトなら一定のプロパティを引き継ぐ
+それ以外のオブジェクトなら以下の一定のプロパティを引き継ぐ
+'value','innerText','selected','id','title','onclick','className','style'
+
+eg. [{innerText:"s-c123(72)[active]",className:"document-selector-option-left",value:"ABC#1//c-s123",selected:true}]
 */
 nas.HTML.SliderSelect.prototype.setOptions = function(options){
 	if(options instanceof HTMLCollection) options = Array.from(oprions);
 	if(!(options instanceof Array)) return this;
 	this.element.innerHTML  = '';//クリア
+	this.element.options    = [];//クリア
 	options.forEach(function(e){
+	    var opt = {value:'',text:'',selected:false};
 		if(typeof e == 'string'){
+//as text
 			var bt = document.createElement('button');
 			bt.innerHTML = e;
+			opt.value = e;
+			opt.text  = e;
 		}else{
+//as object HTMLButtonElement || other Object
 			if(e instanceof HTMLButtonElement){
 				var bt = e;
 			}else{
 				var bt = document.createElement('button');
-				(['innerHLML','id','title','onclick','className']).forEach(function(prp){if(e[prp]) bt[prp] = e[prp];});
+				(['innerText','id','title','onclick','className','value','selected','style']).forEach(function(prp){if(e[prp]) bt[prp] = e[prp];});
 			};
+			opt.value    = (e.value)? e.value:e.innerText;
+			opt.text     = e.innerText;
+			opt.selected = e.selected;
 		};
 		bt.parent = this.element;
 		if(!(bt.onclick)) bt.onclick = nas.HTML.SliderSelect.selectItem;
@@ -1641,11 +1792,12 @@ nas.HTML.SliderSelect.prototype.setOptions = function(options){
 		nas.HTML.addClass(bt,'sliderSelectOption-mobile');
 		nas.HTML.addClass(bt,((this.element.direction == 'vertical')?'sliderSelectOption-v':'sliderSelectOption-h'));
 		this.element.appendChild(bt);
+		this.element.options.push(opt);
 	},this);
 	this.element.selectedIndex = 0;
 	this.element.focusItm	  = this.element.children[0];
 	if(this.element.children[0]){
-		this.element.value = this.element.children[0].innerHTML;
+		this.element.value = this.element.children[0].value;
 		this.select();
 	}else{
 		this.element.value = '';
@@ -1668,7 +1820,7 @@ nas.HTML.SliderSelect.prototype.select = function(itm){
 		itm = this.element.children[parseInt(itm)];
 	};
 	if(typeof itm == 'string'){
-		itm = Array.from(this.element.children).find(function(e){return (e.innerHTML == itm)});
+		itm = Array.from(this.element.children).find(function(e){return ((e.value == itm)||(e.innerText == itm))});
 	};
 	if(!(itm instanceof HTMLButtonElement)) itm = this.element.focusItm;
 	for (var ix = 0 ;ix < this.element.children.length; ix ++){
@@ -1678,7 +1830,7 @@ nas.HTML.SliderSelect.prototype.select = function(itm){
 			this.element.focusItm = itm;
 			this.element.selectedIndex = ix;
 			this.element.focusItm.focus();
-			this.element.value = itm.innerHTML;
+			this.element.value = itm.value;
 			nas.HTML.addClass(e,'sliderSelectOption-focus');
 		}else{
 			nas.HTML.removeClass(e,'sliderSelectOption-focus');
@@ -1723,7 +1875,7 @@ console.log(this.element.focusItm);
 nas.HTML.SliderSelect.selectItem = function(){
 console.log("click :"+nas.HTML.SliderSelect.move)
 	if(nas.HTML.SliderSelect.move) return false;
-	this.parentNode.value = this.innerHTML;
+	this.parentNode.value = this.value;
 	this.parentNode.link.select(this);
 	this.parentNode.onchange();
 }
@@ -1817,7 +1969,7 @@ nas.HTML.SliderSelect.slHandle = function(evt){
 //		evt.stopPropagation();
 		let move_x = nas.HTML.SliderSelect.x - ((evt.type != 'touchmove')? evt.clientX:evt.touches[0].clientX);
 		let move_y = nas.HTML.SliderSelect.y - ((evt.type != 'touchmove')? evt.clientY:evt.touches[0].clientY);
-		if (Math.abs(move_x) > 2 || Math.abs(move_y) > 2) {
+		if (Math.abs(move_x) > 3 || Math.abs(move_y) > 3) {
 //detect move
 			nas.HTML.SliderSelect.move = true;
 		}else{

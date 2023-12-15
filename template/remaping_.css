@@ -44,11 +44,15 @@ a:focus		{color:#880000;background-color:snow}
 /*		固定ヘッダ
 	ウインドウ全体をUIに割り付け、UIのマージン等を取得するエレメント
 */
-#fixedHeader {
+.fixedHeader {
 	width:100%;
 	position:fixed;
 	z-index:3;
 }
+.fixedHeader-mobile {
+	bottom:0;
+}
+
 .loginPanel	{
 	width:100%;
 	text-align:right;
@@ -1234,10 +1238,13 @@ button.subControl {
 	この配下の二つのテーブルの合算を設定しておくこと
  */
 .headerArea {
-	display:none;
-	width:1058px;
-	height:318px;
+	display  : none;
+	position : absolute;
+	width    : 1058px;
+	height   : 318px;
 	padding-left:16px;
+	margin-top  : 13mm;
+	margin-left : 4mm;
  }
  /*========== ページヘッダーテーブル ============*/
 table.pageHeader,.sheetHeader {
@@ -1249,6 +1256,7 @@ table.pageHeader,.sheetHeader {
 	border-color:#bbbbbb;
 }
 td.pgHeader {
+	vertical-align:bottom;
 	height:38px;
 	margin:0;
 	border-width:0;
@@ -1268,6 +1276,21 @@ table.sheetHeaderMargin {
 }
 #memoArea {
 	  transform: translate(0px, 0px);
+}
+span.memoLabel {
+	border-style : solid;
+	border-width : 0 0 2px 0;
+	border-color : gray;
+	color        : gray;
+
+}
+td.memoSpace {
+	border-style:none;
+	border-width:0;
+	text-align:left;
+	height:250px;
+	vertical-align:top;
+	line-height:1.5;
 }
 div.memoSpace {
 	width:1056px;
@@ -1442,6 +1465,8 @@ td.sheetbody {
 	border-top-width:0;
 	border-right-width:1px;
 	height:9px;
+	overflow:visible;
+	white-space:nowrap;
 }
 /*	カラムセパレータ	*/
 td.colSep {
@@ -1525,7 +1550,7 @@ td.deSep,td.deSep_Blank {
 	width:97%;height:10px;
 }
 .printPageStatus {
-	display:none;
+	display:block;
 	text-align:right;
 	width:1058px;
 }
@@ -1604,32 +1629,60 @@ div.application_status {
 }
 /*
 	オプションパネル
+	基礎部分をnas_common_HTML に移行
+	
 */
+/*
 div.optionPanel{
 	display:none;
 	padding:0 0 0 8px;
-	background-color:snow;
 	vertical-align: middle;
+	color:#333;
+	background-color:#efefef;
 }
+@media (prefers-color-scheme: dark) {
+	div.optionPanel {
+		color:#efefef;
+		background-color:#333;
+	}
+}
+
 div.optionPanelModal{
 	display:none;
+	color:#333;
+	background-color:#efefef;
 }
+@media (prefers-color-scheme: dark) {
+	div.optionPanelModal {
+		color:#efefef;
+		background-color:#333;
+	}
+}
+
 div.optionPanelFloat{
 	display:none;
     position:absolute;
+	color:#333;
     background-color:#efefef;
     padding:0;
     border-style:solid;
     border-width:1px;
     border-color:#808080;
     z-index:7;
-  /* 角丸 */
     -moz-border-radius: 4px ;
     -webkit-border-radius: 4px;
     border-radius: 4px;
 }
+@media (prefers-color-scheme: dark) {
+	div.optionPanelFloat {
+		color:#efefef;
+		background-color:#333;
+	}
+}
 div.optionPanelFloat-mobile{
-    background-color:#666666;
+	position:static;
+	background-color:#668866;
+	width:100%;
 }
 a.minimize{
     position:absolute;
@@ -1668,9 +1721,9 @@ a.close img{
         background-color:#333;
     }
     div.optionPanelModal{
-/*        color:#eee;*/
         background-color:black;
     }
+
     div.optionPanelFloat{
         background-color:#333;
         border-color:#808080;
@@ -1679,6 +1732,7 @@ a.close img{
         background-color:#555;
     }
 }
+*/
 /* UTLToolbar */
 #optionPanelUtl {
 	background-color:#666666;
@@ -1687,13 +1741,13 @@ a.close img{
 /* 書類フォーマット編集パネル */
 #optionPanelDocFormat{
 	width:128px;
-	top:152px;
+	bottom:152px;
 	right:16px;
 }
 /* ドキュメント画像調整 */
 #optionPanelImgAdjust{
 	width:152px;
-	top:240px;
+	bottom:240px;
 	right:100px;
 }
 /*シーン情報*/
@@ -1715,14 +1769,14 @@ a.close img{
 /*ソフトウェアキーボード*/
 .optionPanelTbx {
     display:none;
-    top:128px;
+    bottom:128px;
     right:48px;
     width:620px;
     height:256px;
 	font-weight:bold;
 }
 .optionPanelTbx-mobile {
-    width:680px;
+    width:700px;
     height:350px;
 }
 .tBSelector {
@@ -1776,7 +1830,7 @@ a.close img{
 }
 /*音響フローティングパネル*/
 .optionPanelSnd {
-    top:32px;
+    bottom:32px;
     left:0px;
     width:660px;
     height:248px;
@@ -1794,7 +1848,7 @@ a.close img{
 
 /*カメラワークパネル*/
 #optionPanelCam {
-    top:128px;
+    bottom:128px;
     right:32px;
     width:256px;
     height:256px;
@@ -1804,7 +1858,7 @@ a.close img{
 }
 /*ステージワークパネル*/
 #optionPanelStg {
-    top:96px;
+    bottom:96px;
     right:64px;
     width:640px;
     height:480px;
@@ -1814,7 +1868,7 @@ a.close img{
 }
 /*コンポジットワークパネル*/
 #optionPanelSfx {
-    top:64px;
+    bottom:64px;
     right:96px;
     width:640px;
     height:480px;
@@ -1824,10 +1878,10 @@ a.close img{
 }
 /*手描きメモパネル*/
 .optionPanelPaint {
-    top:72px;
+    bottom:72px;
     right:150px;
     width:132px;
-    height:400px;
+    height:500px;
 }
 .optionPanelPaint-mobile{
     width:228px;
@@ -1842,7 +1896,7 @@ a.close img{
 #optionPanelText {
     display:none;
     position:absolute;
-    top:100px;
+    bottom:100px;
     left:240px;
     min-width:240px;
     padding:0;
@@ -1866,7 +1920,7 @@ a.close img{
 #optionPanelStamp {
     display:none;
     position:absolute;
-    top:100px;
+    bottom:100px;
     left:320px;
     min-width:240px;
     padding:0;
@@ -1884,7 +1938,7 @@ a.close img{
 #optionPanelRef {
     display:none;
     position:absolute;
-    top:64px;
+    bottom:64px;
     left:120px;
 	width:640px;
     padding:0;
@@ -2067,15 +2121,23 @@ div.imageOverlay {
 }
 
 /* 以下オプションパネル群 */
+@media screen and (min-width: 600px)
 #optionPanelVer {
-    display:none;
-    width:480px;
-    height:340px;
+    display: none;
+    width: 480px;
+    height: 340px;
+    padding: 6px;
+    border-style: double;
     background-color:#efefef;
-    padding:6px;
-    border-style:double;
 }
-
+@media screen and (min-width: 300px)
+#optionPanelVer {
+    display: none;
+    width: 100%;
+    height: 100%;
+    padding: 6px;
+    border-style: double;
+}
 #optionPanelRol {
     display:none;
     width:720px;
@@ -2128,14 +2190,23 @@ input.ddpInput	{
 	}
 	.document-selector {
 	  height:60%;
+	  min-height:320px;
+	  max-height:320px;
+	  overflow:scroll;
 	}
 	.document-selector-opus {
-	  width:60%;
-	  text-align:right;
+	  width:59%;
 	}
 	.document-selector-cut {
 	  width:40%;
-	  text-align:left;
+	}
+	.document-selector-option-left {
+		text-align   : left;
+		padding-left : 6px;
+	}
+	.document-selector-option-right {
+		text-align    : right;
+		padding-right : 6px;
 	}
 .sciInput {
 	height:24px;
@@ -2243,7 +2314,13 @@ hr.dialog_border {
   border: solid 1px #ccc;
   font-weight: bold;
   list-style-type: none;
+  vertical-align:middle;
 }
+/*
+#pMenu li.mobile {
+	hight:16px;
+}
+*/
 #pMenu li:hover {
   color: #fff;
   background: #333;
@@ -2259,6 +2336,18 @@ hr.dialog_border {
   background: #eee;
   border: solid 1px #ccc;
 }
+/*モバイル用代替style
+#pMenu li ul {
+  display: none;
+  position: absolute;
+  bottom: 16px;
+  left: -1px;
+  padding: 5px;
+  width: 150px;
+  background: #eee;
+  border: solid 1px #ccc;
+}
+*/
 #pMenu li ul li {
   margin: 0;
   padding: 0;
@@ -2482,34 +2571,72 @@ div.documentStatusOverlay {
 #contextMenu {
     display:none;
     position:absolute;
-	top:450px;
-	left:450px;
-  z-index:7;
-  background-color:#efefef;
-  border-style:solid;
-  border-width:1px;
-  border-color:#d0d0d0;
-  margin:0;
-  padding:4px 8px 4px 8px;
-  width:180px;
-  /* 角丸 */
+    top:450px;
+    left:450px;
+    z-index:7;
+    background-color:#efefef;
+    border-style:solid;
+    border-width:1px;
+    border-color:#d0d0d0;
+    margin:0;
+    padding:4px 8px 4px 8px;
+    width:180px;
+    /* 角丸*/
     -moz-border-radius: 6px ;
     -webkit-border-radius: 6px;
     border-radius: 6px;
 }
-	
+@media (prefers-color-scheme: dark) {
+    #contextMenu {
+        background-color:#444;
+        border-color:#222;
+    }
+}
 .contextMenu {
 	overflow:hidden;
 }
+#contextMenu select {
+    width:180px;
+    border-style:none;
+    background-color:transparent;
+}
+#contextMenu option:hover {
+    border-style    :none;
+    background-color:transparent;
+    text-align      : left;
+    margin-left     : 6px;
+}
+#contextMenu option.selectedOption {
+    border-style:solid;
+    background-color:#888;
+    color:#eee;
+}
+#contextMenu li a:hover {
+    color: #fff;
+    background: #999;
+    z-index: 9;
+}
+#cMenu a:hover {
+    display:none;
+}
+
+#contextMenu li ul{
+    display:none;
+    position:absolute;
+}
+
 .cM {
-	color: #666;
+    color: #666;
+}
+.cM:hover {
+    background: #999;
+    color: #fff;
 }
 
 .cM-alt {
-	coror:AAA;
-	display:none;
+    color:#AAA;
+    display:none;
 }
-
 /*
     ストップウオッチ UI
 */

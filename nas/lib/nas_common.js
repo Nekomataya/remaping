@@ -1274,6 +1274,7 @@ nas.UserInfoCollection = function (users,parent){
      *  @params {String} dataStream
      */
     nas.UserInfoCollection.prototype.parseConfig=function(dataStream){
+console.log(dataStream);
         if(dataStream.length==0) return false;
         this.members.length = 0;
         if((this.parent)&&(this.parent instanceof nas.Pm.PmDomain)) this.parent.contents.add('users');
@@ -1292,7 +1293,7 @@ nas.UserInfoCollection = function (users,parent){
                         continue ;
                     }
                     var optProp ={};var hasOpt=false;
-                    for(prp in tempData[ix]){
+                    for(var prp in tempData[ix]){
                         if((prp == 'handle')||(prp == 'email')) continue;
                         hasOpt=true;
                         optProp[prp] = tempData[ix][prp];
@@ -1356,9 +1357,12 @@ console.log(E);
  *         追加プロパティ プロパティ名を与えてJSON文字列で指定
  *         スタンプに利用
  *  第一引数にシグネチャ記述文字列　または参照オブジェクトでも良い
+ eg.
+ 	new nas.UserSignature("原画","[UP 2023.12.14 kiyo@nekomataya.info]",{stamp:'http://www.nekomataya.info/images/stamp.jpg'});
+ 	new nas.UserSignature("原画:[UP 2023.12.14 kiyo@nekomataya.info {}]",'無効引数',{});
  */
 nas.UserSignature = function UserSignature(sigDescription,signatureString,additionalProperty){
-    this.node  = ''                ;//String nodeDescription
+    this.node   = ''               ;//String nodeDescription
     this.text   = ''               ;//signature text
     this.date   = new Date()       ;//date of shign
     this.user   = nas.CURRENTUSER  ;//signed user | userstring
@@ -1406,11 +1410,12 @@ nas.UserSignature.prototype.setValue = function(sigDescription,signatureString,a
 			};
 			return this;
 		}else if(sigDescription.match(/^(.+)\:.*\s*(\[.+\])$/)){
-//第一引数に全記述がある場合は分離して再パース
+//第１引数に全記述がある場合は分離して再パース 第２引数は無視
 			return this.setValue(RegExp.$1,RegExp.$2,additionalProperty);
 		}else if((typeof signatureString == 'string')&&(signatureString.match(/^\s*\[(.+)\]\s*$/))){
 //分離記述
-			var sigDescriptions = RegExp.$1.split('\t');
+			var sigDescriptions = signatureString.trim().replace(/[\[\]\(\)\<\>]/g,"").replace(/\s+/g," ").split(" ");
+//			var sigDescriptions = RegExp.$1.split(':');
 			this.node  = sigDescription;
 			this.text  = (sigDescriptions[0])? sigDescriptions[0]:"";
 			this.date  = new Date(sigDescriptions[1])               ;//記録データをパースする場合のみ上書き

@@ -1493,7 +1493,7 @@ var normalizeTimeline = function normalizeTimeline(timelineTrack){
  *	1:動画|セル用標準加工 １番のみ強制丸囲み
  *	2:LO|原画用加工 １番を含む新規の確定値セルをすべて丸囲みする
  *
- *	0以外は
+ *	モード0以外は
  *	トラック既存のセル記述の装飾を参照して入力を加工
  *	または exchスイッチが立っている場合
  *	トラック既存の入力を新規入力を参照して加工
@@ -1503,7 +1503,7 @@ var normalizeTimeline = function normalizeTimeline(timelineTrack){
  *		配列渡し
  *	@params	{Object|XpsTimelineTrack} targetTrack
  *	@params {Number Int}              mode
- *		0|1|2
+ *		0(none)|1(animation)|2(keyAnimation)
  *	@params {Boolean}                 exch
  *
  *	@returns {Array}
@@ -1513,13 +1513,14 @@ var normalizeTimeline = function normalizeTimeline(timelineTrack){
  * 修飾なし、動画向け、原画向けの3つのモードがある
  *
  * 修飾なしのモードは入力した文字をそのままシートに記入
- * すべてのモードで入力時に数字とアルファベットは半角に変換
+ * すべてのモードで入力時に数字とアルファベットを半角に変換
  *
  * 動画向けの変換は1番のみ、原画向けの変換では未記入の文字にすべて丸で囲む
  * 修飾を変更するには修飾ボタンを使用
  *
  * または入力確定の際に[ctrl]+[enter]キーで修飾のない文字を入力可能
- *
+ * targetTrackがリプレースメント以外の場合は正規化以外の処理をスキップ
+ * 台詞・音響・カメラ
  */
 var iptFilter = function(cell,targetTrack,mode,exch){
     if(typeof cell == 'undefined') return cell;
@@ -1529,16 +1530,23 @@ var iptFilter = function(cell,targetTrack,mode,exch){
 	if(! exch) exch = false;
 	var excStack = [];
 	var changeStart = targetTrack.length;var changeEnd = 0;
+
 	for(var cid = 0;cid < cell.length ; cid ++){
 		cell[cid] = new nas.CellDescription(cell[cid]);
 		if(cell[cid].type != 'normal') continue;
 		cell[cid].parseContent(nas.normalizeStr(String(cell[cid].content)));//normalize
-		if ((targetTrack.option == 'timing')||(targetTrack.option == 'replacement')){
+		if ((targetTrack.option == 'cell')||(targetTrack.option == 'timing')||(targetTrack.option == 'replacement')){
 			if((cell[cid].modifier == 'none')&&(! exch)){
 				if((mode > 0)&&(cell[cid].body == '1')) cell[cid].parseContent('(1)');//１番強制丸囲み mode1-2 共通
 				if(mode > 1) cell[cid].parseContent('('+cell[cid].body+')');//強制丸囲み mode2
 			};
-		};// else if(){}
+		}else if((targetTrack.option == 'camera')){
+			if((mode >= 2)&&(! exch)){
+//原画モードのみ
+				var cam = nas.cameraworkDescriptions.get(cell[cid]);
+				
+			};
+		};
 		var pcl = targetTrack.findCell(cell[cid]);
 		if((pcl)&&(cell[cid].modifier != pcl.modifier)){
 			if(exch){
@@ -1548,6 +1556,7 @@ var iptFilter = function(cell,targetTrack,mode,exch){
 			};
 		};
 	};
+
 	if((exch)&&(excStack.length)){
 		for(exc = 0;exc < excStack.length ; exc ++){
 			for(f = 0;f < targetTrack.length ; f ++){

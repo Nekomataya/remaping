@@ -971,8 +971,10 @@ button.subControl {
 	この配下の二つのテーブルの合算を設定しておくこと
  */
 .headerArea {
-	width:1058px;
-	height:318px;
+	display  : none;
+	position : absolute;
+	width    : 1058px;
+	height   : 318px;
  }
 /*========== ページヘッダーテーブル ============
  	第一ページのみシートヘッダとなる
