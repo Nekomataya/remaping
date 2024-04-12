@@ -1213,6 +1213,15 @@ localRepository.pushEntry=function(myXps,callback,callback2){
             ja:"Floatingエントリは記録できません。"
         });
     }
+    if(
+        (myXps.update_user.handle == null)||
+        (String(myXps.update_user.handle).match(/^\s*$/))
+    ){
+        msg += '\n'+localize({
+            en:"you can't save un-signed entries.",
+            ja:"無記名のエントリは記録できません。"
+        });
+    }
     if(msg.length){
         alert(msg);
         return false;
@@ -3857,7 +3866,8 @@ serviceAgent.init= function(){
         var myServers={
             UAT: {name:'U-AT',url:'https://u-at.net'},
             Srage:{name:'Stage',url:'https://remaping-stg.u-at.net'},
-            devFront:{name:'devFront',url:'https://remaping.scivone-dev.com'}
+            devFront:{name:'devFront',url:'https://remaping.scivone-dev.com'},
+            devFront2:{name:'devFront2',url:'https://uaf-alma.scivone-dev.com'},
         };
         for(svs in myServers){
             this.servers.push(
@@ -4737,6 +4747,7 @@ serviceAgent.closeEntry=function(callback,callback2){
     XPSはそのままの状態でステータスをフロート化する
     レポジトリ上のエントリーは変更なし
     これは単純なエクスポートであり、管理情報はここで切れる
+    uuidを新規に発行するほうが良いか？
 */
 serviceAgent.floatEntry=function(callback,callback2){
     //  ドキュメントがアクティブで変更フラグが立っている場合　holdしてカレントリポジトリにプッシュ

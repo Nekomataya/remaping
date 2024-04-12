@@ -2,18 +2,100 @@
 	nas.UserSigunatureをHTMLに変換する追加メソッド
 	アプリごとにテンプレートが異なるので注意
 */
-nas.UserSignature.prototype.toHTML(){
-	var HTML_TEMPLATE = "\t<span class='signbox' id='sig_%1 '>\n\t\t<span class = signlabel>%2 </span>\n\t\t<span class = 'signature %3 '>\n\t\t%4 <br><span class=signdate>%5 </span>\n\t\t</span>\n\t</span>\n";
+nas.UserSignature.prototype.toHTML = function(stage,template){
+	if(! template) template = "\t<span class='signbox' id='sig_%1' onclick='xUI.showSignatueInfo(%1)'>\n\t\t<span class = signlabel>%2 </span>\n\t\t<span class = 'signature %3 ' title = '%6'>\n\t\t%4 <br>%7<span class=signdate>%5 </span>\n\t\t</span>\n\t</span>\n";
 
-	return (nas.localize(HTML_TEMPLATE,
-		"INDEX",this.parent
-		"STAGE",
-		"CLASS",
-		"TEXT",
-		"DATE"
-	))
-	return localize
+	var HTML_TEMPLATE = "\t<span class='signbox' id='sig_%1' onclick='xUI.showSignatueInfo(%1)'>\n\t\t<span class = signlabel>%2 </span>\n\t\t<span class = 'signature %3 ' title = '%6'>\n\t\t%4 <br>%7<span class=signdate>%5 </span>\n\t\t</span>\n\t</span>\n";
+
+	var status = this.status;
+	var stamp  = "";
+	if(this.stamp){
+		status = 'box';
+		stamp  = '<img class=sigunature-stamp src ="'+this.stamp+'">'
+	};
+	return (nas.localize(template,
+		String(xUI.XPS.signatures.members.indexOf(this)),
+		(stage)? this.node.split(':')[0]:".",
+		'signature-'+status,
+		(this.text)?(this.text.slice(0,3)):this.user.handle,
+		this.date.toNASString('mm/dd'),
+		this.toString('full'),
+		stamp
+	));//
+/* 
+	nas.localize(template,
+		%1:"INDEX" signature index Number Int,
+		%2:"STAGE" stage name|index ,
+		%3:"CLASS" className,
+		%4:"TEXT"  sigunature note (or user handle),
+		%5:"DATE"  date of sign,
+		%6:"TITLE" description (if exists),
+		%7:"STAMP" stamp image url (if exists)
+	);// */
 };
+/**
+	シグネチャコレクションをスタンプパレードに展開する
+	末尾に空白のチェックイン｜アウト+スタンプ登録UIの呼び出しを設定する
+ */
+nas.UserSignatureCollection.prototype.toHTML = function(){
+	var result       = "";
+	var currentStage = "";
+	this.members.forEach(function(e){
+		if(e.node != currentStage){
+			result += e.toHTML(true);
+			currentStage = e.node;
+		}else{
+			result += e.toHTML(false);
+		};
+	});
+	result +='\t<span class = signbox onclick=alert(123)>\n\t\t<span class = signlabel>.</span>\n\t\t<span class = signature></span>\n\t</span>';
+	return result;
+}
+
+/* シグネチャボックスの情報をモーダル表示 */
+xUI.showSignatueInfo = function showSignatueInfo(id){
+	var infoMsg = JSON.stringify(xUI.XPS.signatures.members[id],0,2);
+	var dialogTitle = localize({ja:'署名詳細',us:'Signature Details'});
+	nas.HTML.showModalDialog('alert',infoMsg,dialogTitle);
+}
+/*TEST
+var stream = `
+CT:0
+	[	2022.01.23	kiyo:kiyo@nekomataya.info]
+	(composite	2022.01.24	たぬき:tanuki@animal.example.com)
+LO:1
+	[-済-	2022.01.24	kiyo:kiyo@nekomataya.info]
+	<監督OK	2022.01.25	鮒:funa@animal.example.com>
+	<演出	2022.01.25	亀:kame@animal.example.com>
+	(演出	2022.01.25	亀:kame@animal.example.com)
+`;
+xUI.XPS.signatures.parse(stream);
+
+document.getElementById('signbox').innerHTML = xUI.XPS.signatures.toHTML();
+//xUI.showSignatueInfo(1)
+*/
+/*
+	作業チェックアウト
+ライン	0:	(本線)
+ステージ	2:	原画
+ジョブ	2:	原画演出検査
+
+
+作業終了の署名をして「原画演出検査」を終了しますか？
+
+[取消] [サイン][カスタムスタンプ]
+	┌───┐	
+	│ICN│	
+	└───┘	
+	kiyo	
+CT: 09/10	
+					」
+チェックアウト後は他のスタッフが作業を開始できるようになります
+*/
+
+
+
+
 /*
     application UI synctable
     xUI.syncTable
@@ -66,21 +148,21 @@ xUI.syncTable = {
 			(serviceAgent.currentStatus=='online-single')&&
 			(xUI.XPS.currentStatus.content.indexOf('Active')<0)
 		){
-			document.getElementById('updateSCiTarget').disabled=true;
+			document.getElementById('updateSCiTarget').disabled = true;
 			xUI.pMenu('pMimportDatas','desable');//プルダウンメニュー  
-			xUI.pMenu('pMopenFS','disable');		//ファイルオープン
-			xUI.pMenu('pMopenFSps','disable');	  //Photoshop用ファイルオープン
-			document.getElementById('ibMimportDatas').disabled=true;  //アイコンボタンインポート（オープン）
-			document.getElementById('dataLoaderGet').disabled=true;   //変換パネルの取り込みボタン
-			document.getElementById('myCurrentFile').disabled=true;   //ファイルインプット
+			xUI.pMenu('pMopenFS','disable')     ;//ファイルオープン
+			xUI.pMenu('pMopenFSps','disable')   ;//Photoshop用ファイルオープン
+			document.getElementById('ibMimportDatas').disabled = true;  //アイコンボタンインポート（オープン）
+			document.getElementById('dataLoaderGet').disabled  = true;   //変換パネルの取り込みボタン
+			document.getElementById('myCurrentFile').disabled  = true;   //ファイルインプット
 		}else{
 			document.getElementById('updateSCiTarget').disabled=false;
 			xUI.pMenu('pMimportDatas','enable');//プルダウンメニュー  
-			xUI.pMenu('pMopenFS','enable');		//ファイルオープン
-			xUI.pMenu('pMopenFSps','enable');	  //Photoshop用ファイルオープン
-			document.getElementById('ibMimportDatas').disabled=false;  //アイコンボタンインポート（オープン）
-			document.getElementById('dataLoaderGet').disabled=false;   //変換パネルの取り込みボタン
-			document.getElementById('myCurrentFile').disabled=false;   //ファイルインプット
+			xUI.pMenu('pMopenFS','enable')     ;//ファイルオープン
+			xUI.pMenu('pMopenFSps','enable')   ;//Photoshop用ファイルオープン
+			document.getElementById('ibMimportDatas').disabled = false ;  //アイコンボタンインポート（オープン）
+			document.getElementById('dataLoaderGet').disabled  = false ;   //変換パネルの取り込みボタン
+			document.getElementById('myCurrentFile').disabled  = false ;   //ファイルインプット
 		};
 	},
 	"recentUsers":function(){

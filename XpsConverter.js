@@ -124,7 +124,7 @@ xUI.importBox.read = function(targetFiles,callback){
         xUI.data_well.value +='\n'+ input.name;
         xUI.data_well.value +='\n'+ reader.result;
 
-        var myXps = convertXps(reader.result,divideExtension(reader.name)[1],xUI.importBox.overwriteProps);// 指定オプション無しで一旦変換する
+        var myXps = convertXps(reader.result,nas.File.divideExtension(reader.name)[1],xUI.importBox.overwriteProps);// 指定オプション無しで一旦変換する
         if(!myXps){alert(reader.name+' is not support format')}
         console.log (myXps);
         

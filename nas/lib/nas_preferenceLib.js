@@ -144,10 +144,7 @@ nas.writePreference = function (myPrefs) {
     }//配列に
 
     if (myPrefs.length == 0) {
-        /**
-         * @todo 試験用あとで調整
-         * @type {string[]}
-         */
+// 旧タイプ pmdb 非対応設定
         myPrefs = [
             "nas.registerMarks.bodys",
                 "nas.registerMarks.selected",

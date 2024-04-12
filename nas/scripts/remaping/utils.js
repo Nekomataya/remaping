@@ -687,6 +687,8 @@ deleteColumns=function(newNames){
 				newXPS.parseXps(xUI.XPS.toString());
 				newXPS.xpsTracks.removeTrack(removeIdx); 
 				xUI.put(newXPS);
+//				rewriteTS();//名称変更もありうるのでトラックセレクタは更新する
+//				sync("lvl");
 				sync("lbl");
 				xUI.selectCell(bkPt.join("_"));//カーソルを元位置へ復帰
 		}else{
@@ -889,20 +891,24 @@ editTrackTag=function(TimelineId) {
 inputButtonText=function(myText){
 	document.getElementById("nas_modalInput").value=myText;nas.showModalDialog("result",0);
 }
-/** リファレンスシートへのコピー
-引数:	キーワード "all"又は"timing","replacement","camerawork","sfx","dialog"
-
-デフォルトはreplacement
-*/
+/** リファレンスシートへのデータコピー
+ *      引数: なし
+ *     xUIに範囲設定があれば、その範囲を、無ければドキュメント全体を操作対象にする
+ */
 putReference=function(){
-	//xUIに範囲設定があれば、その範囲を、無ければすべてのシートを操作対象にする
+//
 	if((xUI.Selection[0]==0)&&(xUI.Selection[1]==0)){
-		documentDepot.currentReference=new Xps(xUI.XPS.xpsTracks.getTrackSpec(),xUI.XPS.duration());
-		documentDepot.currentReference.parseXps(xUI.XPS.toString());//選択範囲指定がない場合は、すべてコピー
+//選択範囲指定がない場合は、シートエリア全体を複製
+/*
+		var range = [[0,0],[xUI.XPS.xpsTracks.length -1,xUI.XPS.xpsTracks.duration -1]];
+		xUI.referenceXPS.put([0,0],xUI.getRange(range));
+		xUI.resetSheet();
+*/
+		documentDepot.currentReference = new Xps(xUI.XPS.xpsTracks.getTrackSpec(),xUI.XPS.duration());
+		documentDepot.currentReference.parseXps(xUI.XPS.toString());
 		xUI.resetSheet(undefined,documentDepot.currentReference);
 	}else{
-	//return false;
-	
+//return false;
 		var mStart=[
 			(xUI.Selection[0]>0)?xUI.Select[0]:xUI.Select[0]+xUI.Selection[0],
 			(xUI.Selection[1]>0)?xUI.Select[1]:xUI.Select[1]+xUI.Selection[1]
@@ -920,10 +926,10 @@ putReference=function(){
 				(durationUp)? mEnd[1]:xUI.referenceXPS.duration()
 			);
 		};
+//		xUI.referenceXPS.put(xUI.getRange(),[0,0]);
 		xUI.put(xUI.getRange(),[0,0],true)
 //		xUI.putReference(xUI.getRange([mStart,mEnd]));
 	}
-	//nas_Rmp_Init();
     xUI.selectionHi("hilite");
 }
 
@@ -1230,8 +1236,8 @@ interpSign=function(chr){
 		var currentColumn=xUI.Select[0];//現在のカラム
 		xUI.selectCell([currentColumn,myRange[0][1]]);
 		xUI.selection([currentColumn,myRange[1][1]]);
-//		xUI.put(nas_expdList((chr)?"/"+chr+"/":"/-/"));
-		xUI.put(nas_expdList((chr)?"/"+chr+"/":"/○/"));
+		xUI.put(nas_expdList((chr)?"/"+chr+"/":"/-/"));
+//		xUI.put(nas_expdList((chr)?"/"+chr+"/":"/○/"));
 		xUI.selectCell([currentColumn,myRange[1][1]+1]);
 	};
 }
@@ -1264,43 +1270,39 @@ interpSign=function(chr){
  *	戻り値は、変更後のストリーム？  入力したセル数？ 最終アドレス？
  */
 addCircle=function(kwd){
+console.log(kwd);
 	if(! kwd) kwd="circle";
-     if(typeof interpRegex == "undefined")
-        interpRegex = nas.CellDescription.interpRegex;
- 	 if(typeof blankRegex == "undefined")
- 		blankRegex = nas.CellDescription.blankRegex;
- 	 if(typeof ellipsisRegex == "undefined")
- 		ellipsisRegex = nas.CellDescription.ellipsisRegex;
+	if(typeof interpRegex == "undefined")
+		interpRegex = nas.CellDescription.interpRegex;
+	if(typeof blankRegex == "undefined")
+		blankRegex = nas.CellDescription.blankRegex;
+	if(typeof ellipsisRegex == "undefined")
+		ellipsisRegex = nas.CellDescription.ellipsisRegex;
 
 //コレは基礎オブジェクトに移行 …というか、総合判定メソッドが必要（ケースで判断が変わる）
 //後で置き換え
 //ターゲット記述を収集
 	var targetDescriptions = [];
-   targetDescriptions.cellIndexOf = function (description /*, fromIndex */) {
-    "use strict";
-
+//高速検索
+//   targetDescriptions.cellIndexOf = function (description /*, fromIndex */) {
+/*    "use strict";
     if (this == null) {
       throw new TypeError();
-    }
-
+    };
     var t = Object(this);
     var len = t.length >>> 0;
-
     if (len === 0) {
       return -1;
-    }
-
+    };
     var n = 0;
-
     if (arguments.length > 0) {
       n = Number(arguments[1]);//第ニ引数-検索開始インデックス
-
       if (n != n) { // shortcut for verifying if it's NaN
         n = 0;// NaNならば０開始
-      } else if (n != 0 && n != Infinity && n != -Infinity) {//ゼロ 無限大 マイナス無限大以外 すなわち実数範囲 の場合負数を全て-1 それ以外を整数化
+      }else if(n != 0 && n != Infinity && n != -Infinity) {//ゼロ 無限大 マイナス無限大以外 すなわち実数範囲 の場合負数を全て-1 それ以外を整数化
          n = (n > 0 || -1) * Math.floor(Math.abs(n));
-      }
-    }
+      };
+    };
 //要素数をオーバーしたら検索失敗
     if (n >= len) {
       return -1;
@@ -1311,30 +1313,28 @@ addCircle=function(kwd){
     for (; k < len; k++) {
       if (k in t && (t[k].compare(description) > 0)) {
         return k;
-      }
-    }
+      };
+    };
     return -1;
-  }
+  };
+// */
 //ターゲットセルの記述内容を取得
 //	var targetDescription = new nas.CellDescription(xUI.getRange([xUI.Select,xUI.Select]));
-
 	var myRange		  = xUI.actionRange();
 	var currentColumn = xUI.Select[0];//現在のカラム
-
 	xUI.selectCell([currentColumn,myRange[0][1]]);
 	xUI.selection([currentColumn,myRange[1][1]]);
 //ターゲット収集 最低数は０
 	for(var f=myRange[0][1];f<=myRange[1][1];f++){
-		var myDesc = new nas.CellDescription(xUI.XPS.xpsTracks[currentColumn][f]);
-
+		var myDesc = new nas.CellDescription(xUI.XPS.xpsTracks[currentColumn][f],xUI.XPS.xpsTracks[currentColumn].id);
+//
 //この判定はxMAP完成後に有効記述であるか否かを判定する評価関数に置きかえ予定
-
 		if(myDesc.type != "normal"){
 			continue;//cellIndexOf でもヒットはしないが、高速化のため先抜け排除
 		}else{
-			if ( targetDescriptions.cellIndexOf(myDesc)<0 ) targetDescriptions.push(myDesc);
-		}
-	}
+				if(targetDescriptions.findIndex(function(e){return (e.compare(myDesc) >= 4);}) < 0 ) targetDescriptions.push(myDesc);
+		};
+	};
 //収集後に処理対象数が０の場合は機能終了
  if(targetDescriptions.length == 0) return;
 //トラック全体をサーチして新規データをビルド
@@ -1343,7 +1343,7 @@ addCircle=function(kwd){
 	var newValue     = [];
 	var currentTrack=xUI.XPS.xpsTracks[currentColumn];
 	for(var f = 0;f<currentTrack.length;f++){
-		var currentCell=new nas.CellDescription(currentTrack[f]);
+		var currentCell=new nas.CellDescription(currentTrack[f],currentTrack.id);
 		if (currentCell.type!="normal"){
 		//チェック対象外 無条件で新規配列にプッシュ
 			newValue.push(currentCell);
@@ -1379,39 +1379,45 @@ return result;
 */
 
 /**
+ *    @params  {Function} callback
  *    @returns {Array}
- * 原画アクションシート作成
+ * 原画アクションシート作成 同期関数
  * 現在のシートをリファレンスに送って原画アクションシートを作る一連の手続
  * リファレンスデータを破棄してカレントデータを無指定でリファレンスに転送
  * シートのリプレースメント（タイミング）タイムラインをクリア
  * 引数: なし
  * 戻値: バックアップ用データ
- * 
+ * ビルド時にコールバック関数を渡す仕様に変更 2024 0329
  */
-buildActionSheet =function(){
-	var bkPos=xUI.Select.join("_");//現在のカーソルを記録
-
-    var backupPoint = xUI.activeDocument.undoBuffer.undoPt;
+buildActionSheet = function(callback){
+	var bkPos=xUI.Select.join("_");//現在のカーソル位置を記録
+//    var backupPoint = xUI.activeDocument.undoBuffer.undoPt;
     var mainXps    = new Xps(xUI.XPS.xpsTracks.getTrackSpec(),xUI.XPS.duration());
     var backupXps  = new Xps(xUI.XPS.xpsTracks.getTrackSpec(),xUI.XPS.duration());
     var backupRef  = new Xps(xUI.referenceXPS.xpsTracks.getTrackSpec(),xUI.referenceXPS.duration());
     mainXps.parseXps(xUI.XPS.toString());
     backupXps.parseXps(xUI.XPS.toString());
     backupRef.parseXps(xUI.referenceXPS.toString());
+//referenceXPSに現在の内容を転送(UNDOなし)
+	var range = [[0,0],[xUI.XPS.xpsTracks.length -1,xUI.XPS.xpsTracks.duration -1]];
+	xUI.referenceXPS.put([0,0],xUI.getRange(range));
 //UNDOシステム外で原画トラック情報を削除
     for (var tr = 0 ; tr < mainXps.xpsTracks.length ; tr++){
         if(mainXps.xpsTracks[tr].option.match( /cell|timing|replacement/ )) mainXps.put([tr,0],new Array(mainXps.xpsTracks.duration));
     };
-	if((xUI.viewOnly)||(!document.getElementById('edchg'))){
-//編集ロックされている場合はシート全体を再初期化する
-		xUI.resetSheet(mainXps,backupXps);
-
+	xUI.XPS.put([0,0],mainXps.getRange(range));
+//コールバックが存在すれば実行して終了
+	if( callback instanceof Function ){
+		return callback([backupXps,backupRef]);
+	}else if((xUI.viewOnly)||(!document.getElementById('edchg'))){
+//編集ロックされている場合は変更状態を確定するためにシートを再初期化する
+		xUI.resetSheet(mainXps,backupXps,function(){xUI.selectCell(bkPos);});
 	}else{
-//編集可能なケースでは、リファレンス転送ののち、undoシステムに組み込む
-		putReference();
-		xUI.put(mainXps);
+//編集可能なケースでは、undoシステムに組み込む
+		xUI.put(mainXps,[0,0],false,function(){
+			xUI.selectCell(bkPos);	//バックアップ位置へ復帰
+		})
 	};
-	xUI.selectCell(bkPos);	//バックアップ位置へ復帰
 	return [backupXps,backupRef];
 }
 /**
@@ -1604,7 +1610,7 @@ var iptFilter = function(cell,targetTrack,mode,exch){
 	@params   {String} mode
 	@returns  {String}
 	表示モードを変更する
-	引数は変更するモード Page|WordProp|Scroll|Compact 
+	引数は変更するモード PageImage|pageImage|WordProp|page|Compact|scroll|
 	現在の表示モード変数を戻す xUI.viewMode
  */
 changeViewMode = function chamgeViewMode(mode){
@@ -1623,6 +1629,57 @@ changeViewMode = function chamgeViewMode(mode){
 	};
 	xUI.viewMode = mode;xUI.resetSheet();sync('docImgAppearance');
 	return xUI.viewMode
+}
+/**
+	@params {String}	label
+	@params {String}	content
+	dialog|soundトラックにセリフ要素を挿入する
+	
+*/
+function insertDlg (label,content){
+
+	if(
+		(!(xUI.XPS.xpsTracks[xUI.Select[0]].option.match(/dialog/)))||
+		(Math.abs(xUI.Selection[0]) > 0)
+	)return false;
+//選択範囲がない場合は、1秒分を設定
+	if(xUI.Selection[1] == 0) xUI.selection(nas.add(xUI.Select,[0,nas.FRATE.rate-1]));
+//入力開始位置と範囲を取得
+	var startOffset = -1 ;
+	if(! label){
+		label = '';
+	}else{
+		startOffset --;
+	};
+	var start = xUI.Select[1] +startOffset;//2フレーム前方
+	if(xUI.Selection[1] < 0) start += xUI.Selection[1];
+	var len = Math.abs(xUI.Selection[1]);
+	if( len ==  0 ) len = xUI.XPS.framerate.rate;
+//選択解除＞開始フレームへ移動
+	xUI.selection();
+	xUI.selectCell([xUI.Selection[0],start]);
+	if(! content) content = 'セリフ・・・';
+	xUI.put(nas_expdList(label+'"'+content+'"'));
+}
+/*TEST
+
+insertDlg();
+insertDlg("おおかみ「がおー！」");
+insertDlg("あかずきん","きゃー！");
+
+*/
+function blankDocument(){
+	xUI.resetSheet(
+		new Xps(
+			xUI.XPS.sheetLooks,
+			xUI.XPS.sheetLooks.PageLength
+		),
+		new Xps(
+			xUI.XPS.sheetLooks.trackSpec.find(function(e){return((e[0]=='reference')||(e[0]=='replacement'))})[1],
+			xUI.XPS.sheetLooks.PageLength
+		),
+		xUI.applySheetlooks
+	);
 }
 /*
 	このファイルの関数は基本的にはxUIまたはXPSのメソッドなので

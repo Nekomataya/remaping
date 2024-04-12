@@ -53,14 +53,17 @@ nas.pmdb  は、リポジトリ切り替え毎に各リポジトリの.pmdbに�
         .workTitles[titleIndex].episodes
             .episodes[episodeIndex].works ?
 
-	nas.pmdb.products
+    nas.pmdb.products
 
-	nas.pmdb.assets
-		アセット情報コレクション
-			制作時に管理対象となるアセットの定義テーブル
+    nas.pmdb.assets
+        アセット情報コレクション
+            制作時に管理対象となるアセットの定義テーブル
     nas.pmdb.medias
-    	制作メディアコレクション
-    		制作に供されるメディア情報のトレーラー
+        制作メディアコレクション
+            制作に供されるメディア情報のトレーラー
+    nas.pmdb.docForms
+        書式コレクション
+            制作に供される書類フォーマット情報トレーラー
 
     等々 その際にparent  経由で相互の参照を行うので初期化時のパラメータ注意    
     nas オブジェクト内では以下の相互関係を持つ
@@ -94,8 +97,8 @@ nas.pmdb  は、リポジトリ切り替え毎に各リポジトリの.pmdbに�
 
 Object PmDomain
     nas.Pm.WorkTitle.pmd
-    　・
-    　・
+    ・
+    ・
 
 pmdbオブジェクトは親オブジェクトへの参照 pmdb.parent を持つ
 このプロパティは、pmdbが持つ情報の親ノードへの参照
@@ -128,93 +131,48 @@ RDBMのuniqueインデックスの付いたフィールドに同じ
  *   nas 制作管理クラス
  */
 nas.Pm = {};
-//nas.Pm.organization = new nas.Pm.Organization() 
-/** @constant   */
-nas.Pm.users        = new nas.UserInfoCollection();
-/** @constant   */
-nas.pmdb            = nas.Pm;
-
-/**
- *   PmDomain オブジェクトは、制作管理上の基礎データを保持するキャリアオブジェクト
- *   制作管理ディレクトリノード毎に保持される。
- *   基礎データを必要とするプログラムに基礎データをサービスする
- *   基本データが未登録の場合は親オブジェクトの同データを参照してサービスを行う
- *　@params {Object Repositry|Title|Episode} myParent
- *   リポジトリ（共有）、プロダクト（作品）または　エピソード（各話）
- *  @example
- *case:localRepository    
- *    localRepository.pmdb = new nas.Pm.PmDomain(localRepository);
- *case:NetworkRepository
- *    NetworkRepository.pmdb = new nas.Pm.PmDomain(NetworkRepository);
- */
-nas.Pm.PmDomain=new function(myParent){
-    this.parent=myParent;
-    this.users;         //
-    this.staff;         //
-    this.lines;         //
-    this.stages;        //
-    this.jobNames;      //
-    this.organization;  //
-    this.medias;        //
-}
-
-/**
- * @method
- * クラスメソッド
- * @desc
- * ターゲットコレクション内にkeywordに一致するプロパティを持っているメンバーがあればコレクションメンバーのキー値を返す
- * keyword がメンバーキーだった場合はそのまま返す
- * 検索に失敗したらfalse
- * オブジェクト本体が必要な場合は、Object.members[key]またはこの検索関数を間接的にコールする_getMemberメソッドを使用
- * タイトル|エピソード|メディア|アセット|ライン|ステージ　共用
- * @param {String} keyword
- * @return {property}
- * memberProp
- * キーワードは、各コレクションの共通プロパティで、検索対象となるもの
- *   id          DBアクセス用のキー値（予約）
- *   projectName 作品としてのタイトル　タイトルに所属する情報の場合に有効だが、検索キーとしてはタイトルコレクション以外では無効
- *   name        コレクションメンバーの一般名称
- *   shortName   コレクションメンバーの省略表記
- *   fullName    コレクションメンバーの正式表記
- *   code        コレクションメンバーの短縮アイテムコード
- *
- */
-nas.Pm.searchProp = function(keyword,target){
-    if(target.members[keyword]) return keyword;
-    for (var prp in target.members){
-        if( (target.members[prp].id          ==keyword)||
-            (target.members[prp].name        ==keyword)||
-            (target.members[prp].projectName ==keyword)||
-            (target.members[prp].episodeName ==keyword)||
-            (target.members[prp].mediaName   ==keyword)||
-            (target.members[prp].shortName   ==keyword)||
-            (target.members[prp].fullName    ==keyword)||
-            (target.members[prp].code        ==keyword) ) return prp;
-    }
-    return false;
-}
 /*
-    コレクションメンバーキャリアが配列の場合は以下を使用
-    使えないかも
-*/
-nas.Pm.searchPropA = function(keyword,target){
-    if(! target.unique) return false;
-    //メンバー総当たり
-    for (var mix = 0 ; mix < target.menbers.length ; mix ++){
-    //オブジェクトのプロパティ内で　unique情報のあるプロパティのみを検索
-        for (var uix = 0 ; uix < target.unique.length ; uix ++){
-            if(
-                ((target.members[mix][target.unique[uix]].sameAs)&&(target.members[mix][target.unique[uix]].sameAs(keyword))) ||
-                (target.members[mix][target.unique[uix]].toString()==keyword)
-            ) return target.members[mix]
-        }
-    }
-    return null;
-}
+    識別子フルスペック
+datanode-description//product-description//sci-description//management-status.lock.timestamp.dataIdf
+<入力データ> {省略可能}
+    product-description
+<TITLE-STRING>#<OPUS>{[<SUBTITLE>]}
 
+    sci-description
+<SCi>/<SCi>/....
+    SCi
+s<SCENE-No>-c<CUT-No>{(<TIME-CODE>{//<FRAME-RATE>})}
 
+    management-status
+[<LINE>//<STAGE>//<JOB>//<STATUS>]/[]
+    LINE(URI encoded)
+<LINE-ID>:<LINE-STRING>|<LINE-STRING>:<LINE-ID>
+    STAGE(URI encoded)
+<STAGE-ID>:<STAGE-STRING>|<STAGE-STRING>:<STAGE-ID>
+    JOB(URI encoded)
+<JOB-ID>:<JOB-STRING>|<JOB-STRING>:<JOB-ID>
+    STATUS(URI encoded)
+<STATUS-STRING>:<assign-user>:<assign-message>
 
+識別子末尾にはデータ識別フラグが追加される　　2019 5月拡張
+識別子の末尾は、データ内容に従って以下のフラグを付加する
+xMap    .xmap
+Xps     .xpst
+pmdb    .pmdb
+データ識別フラグの無い識別子は、下位互換ため.xpst扱いとなる
+ファイル保存時は、そのまま識別子を拡張子として使用可能
+識別子末尾のデータ識別フラグにタイムスタンプを拡張
 
+整数unix-timestamp値を以下の形式で付加
+    .1577676348895.xmap
+当該データの最終更新情報とする
+
+データの管理ロック情報を追加 2020.06.23
+タイムスタンプ情報の手前に管理ロックフラグを追加
+ロックが行われていない場合ここ分離記号の'.'を含めて記述が省略される
+何らかの記述（分離記号のみ=ヌルストリング を含む）が存在すればそのエントリは管理ロックされているものとする
+標準では    .locked.1577676348895.xmap のように単語を挿入
+ */
 /*
     管理ロック状態の基本的な扱い
     制作管理者が、データ管理中に現場スタッフユーザがデータを更新する危険を回避するために
@@ -314,8 +272,6 @@ nas.Pm.getUniqueStringInTable(
 "bom"
 );
 */
-
-
 /*
      管理データオブジェクトから識別子を作成するnas.Pmクラスメソッド
      管理データは、そのオブジェクトがpmuプロパティ(nas.Pm.PmUnit)を持っているか否かで判定
@@ -628,7 +584,7 @@ nas.Pm.compareManagementNode = function(tgt,dst){
 /*TEST
     nas.Pm.compareManagementNode('0.0.0','0.0.0.')
 */
-/**<pre>
+/**
  *       データ識別子をパースして無名オブジェクトで戻す
  *       データ判定を兼ねる
  *       分割要素がカット番号を含まない（データ識別子でない）場合
@@ -644,6 +600,8 @@ dataNode情報を解釈するように拡張されているので
  *      '//（二連スラッシュ）'を認識できなかったケースに限り'__（二連アンダーバー）'をセパレータとして認識するように変更
  *      兼用カット情報は、冒頭のカットナンバーを代表カットと認識する
  *      **"_(アンダーバー単独)"はセパレータ以外で使用するケースがあるため要注意
+ *          特に引数全体がひとつのアンダーバーで開始する場合は、
+ *          それがデータ識別子を含まないエントリである可能性が高いので予めフィルタすることを推奨
  *      storyboardデータのために無名のショットに対応
  *      データタイプを拡張　.xmap .xpst .pmdb .stbd
  *      dataNode情報にurlスキームが含まれる場合データセパレータがずれる可能性があるのでこれを検出・エスケープする
@@ -655,7 +613,7 @@ dataNode情報を解釈するように拡張されているので
  *    xpst		キー値から.<timestamp>を除いた値
  *   がタイトル|エピソードパートを含まない場合を判別して空情報で補う機能を増設
  *   第二引数に参照オブジェクトを渡して参照オブジェクトの情報で既存情報の上書きを行う機能を増設
- *</pre>
+ *
  *  @params {String} dataIdentifier
  *          データ
  *  @params {Object} template
@@ -698,12 +656,11 @@ console.log(dataIdentifier);
     var typeString       = ''        ;
     var managementLocked = false     ;
     var timestamp        = undefined ;
-//typeString識別
+//拡張子型typeString(4文字固定)分離
     if(dataIdentifier.match(/^(.*)\.(....)$/)){
-//拡張子型(4文字固定)分離
         typeString     = RegExp.$2;
         dataIdentifier = RegExp.$1;
-	};
+    };
 //タイムスタンプ分離
     if(dataIdentifier.match(/^(.*)\.(\d+)$/)) {
         timestamp      = parseInt(RegExp.$2);
@@ -1648,8 +1605,118 @@ nas.Pm.valuePut = function (input,content){
 
 
 
+//nas.Pm.organization = new nas.Pm.Organization() 
+/** @constant   */
+nas.Pm.users        = new nas.UserInfoCollection();
+/** @constant   */
+nas.pmdb            = nas.Pm;
+
+/**
+ *   PmDomain オブジェクトは、制作管理上の基礎データを保持するキャリアオブジェクト
+ *   制作管理ディレクトリノード毎に保持される。
+ *   基礎データを必要とするプログラムに基礎データをサービスする
+ *   基本データが未登録の場合は親オブジェクトの同データを参照してサービスを行う
+ *　@params {Object Repositry|Title|Episode} myParent
+ *   リポジトリ（共有）、プロダクト（作品）または　エピソード（各話）
+ *  @example
+ *case:localRepository    
+ *    localRepository.pmdb = new nas.Pm.PmDomain(localRepository);
+ *case:NetworkRepository
+ *    NetworkRepository.pmdb = new nas.Pm.PmDomain(NetworkRepository);
+ */
+nas.Pm.PmDomain=new function(myParent){
+    this.parent=myParent;
+    this.users;         //
+    this.staff;         //
+    this.lines;         //
+    this.stages;        //
+    this.jobNames;      //
+    this.organization;  //
+    this.medias;        //
+    this.docForms;      //
+}
 
 
+
+/**
+ * @method
+ * クラスメソッド
+ * @desc
+ * ターゲットコレクション内にkeywordに一致するプロパティを持っているメンバーがあればコレクションメンバーのキー値を返す
+ * keyword がメンバーキーだった場合はそのまま返す
+ * 検索に失敗したらfalse
+ * オブジェクト本体が必要な場合は、Object.members[key]またはこの検索関数を間接的にコールする_getMemberメソッドを使用
+ * タイトル|エピソード|メディア|アセット|ライン|ステージ　共用
+ * @param {String} keyword
+ * @return {property}
+ * memberProp
+ * キーワードは、各コレクションの共通プロパティで、検索対象となるもの
+ *   id          DBアクセス用のキー値（予約）
+ *   projectName 作品としてのタイトル　タイトルに所属する情報の場合に有効だが、検索キーとしてはタイトルコレクション以外では無効
+ *   name        コレクションメンバーの一般名称
+ *   shortName   コレクションメンバーの省略表記
+ *   fullName    コレクションメンバーの正式表記
+ *   code        コレクションメンバーの短縮アイテムコード
+ *
+ */
+nas.Pm.searchProp = function(keyword,target){
+    if(target.members[keyword]) return keyword;
+    for (var prp in target.members){
+        if( (target.members[prp].id          ==keyword)||
+            (target.members[prp].name        ==keyword)||
+            (target.members[prp].projectName ==keyword)||
+            (target.members[prp].episodeName ==keyword)||
+            (target.members[prp].mediaName   ==keyword)||
+            (target.members[prp].shortName   ==keyword)||
+            (target.members[prp].fullName    ==keyword)||
+            (target.members[prp].code        ==keyword) ) return prp;
+    };
+    return false;
+}
+/*
+    コレクションメンバーキャリアが配列の場合は以下を使用
+    使えないかも
+*/
+nas.Pm.searchPropA = function(keyword,target){
+    if(! target.unique) return false;
+    //メンバー総当たり
+    for (var mix = 0 ; mix < target.menbers.length ; mix ++){
+    //オブジェクトのプロパティ内で　unique情報のあるプロパティのみを検索
+        for (var uix = 0 ; uix < target.unique.length ; uix ++){
+            if(
+                ((target.members[mix][target.unique[uix]].sameAs)&&(target.members[mix][target.unique[uix]].sameAs(keyword))) ||
+                (target.members[mix][target.unique[uix]].toString()==keyword)
+            ) return target.members[mix]
+        };
+    };
+    return null;
+}
+/**
+ *  @method
+ *  <pre>
+ クラスメソッド　メンバー内でユニークなアルファベットのコードを生成して返す
+ 引数を代表値とみなして Collection内の先行値に重複部分が多い場合はシリーズ値としてその値に隣接した値を返す
+ メンバーの代表値が
+ 代表値にアルファベットが含まれている場合は優先的にその値を使う
+ *  </pre>
+ *  @
+ */
+nas.Pm._newCode = function(memberName,region){
+    if(! region) region = 'global';
+    if(! this.unique[region]) region = Object.keys(this.unique)[0];
+    if(this.unique[region].indexOf('code') < 0) return false;
+    var seedString = String(memberName).replace(/[^A-Z]/gi,"").slice(0,3).toUpperCase();
+    while(seedString.length < 3){
+        seedString += ("ABCDEFGHIJKLMNOPQRSTUVWXYZ").charAt(Math.floor(Math.random()*10000)%26);
+    };
+    while(!(this.entry(seedString))){
+        seedString.slice(
+            s,
+            ("ABCDEFGHIJKLMNOPQRSTUVWXYZ").charAt(Math.floor(Math.random()*10000)%26)
+        )
+    }
+    return seedString;
+}
 /**
     クラスメソッド　nas.Pm.searchPropを使ってキーを検索して対応するメンバーを返すオブジェクトメソッド
     検索に失敗したケースではnullを戻す

@@ -1,7 +1,30 @@
 ﻿{
   "FormatName": "nekomataya",
   "TemplateImage": "/remaping/documentFormat/timesheet/nekomataya.png",
-  "WorkTitleLogo": "https://twitter.com/info_nekomataya/status/1298065607275900929",
+  "WorkTitleLogo": "",
+  "HeaderMarginTop": 36,
+  "HeaderMarginLeft": 56,
+  "HeaderBoxHeight": 58.54,
+  "headerItemOrder": [
+    ["title",265,null],
+    ["ep",178,""],
+    ["sci",238,null],
+    ["time",205,null],
+    ["page",145,null],
+    ["user",61,"hide"]
+  ],
+  "HeaderSign": [
+    55,
+    106,
+    1005,
+    194
+  ],
+  "HeaderNote": [
+    56,
+    197,
+    983,
+    296.91
+  ],
   "SheetTextColor": "#111111",
   "SheetBaseColor": "#fffecd",
   "AppBaseColor": "#ffffef",

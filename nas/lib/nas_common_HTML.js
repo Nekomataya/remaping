@@ -2,29 +2,31 @@
 	nas_tools.js お道具箱汎用データ操作・サービス 関数
 イロイロ、共通でつかえる奴
 基本的にWWWブラウザに依存するので、Javascript(ECMA-262)汎用系と切り分けます。
-ただし。呼び出しの弁のため、nasオブジェクトのメソッドであることは変わらず。
+ただし。呼び出しの便宜のため、nasオブジェクトのメソッドであることは変わらず。
 このスクリプトをロードする前にnasオブジェクトの初期化は行うこと。
 
 順次 jquery + jquery-ui とリプレースするよー 2013.04.06
+
+jquery + jquery-uiもすでに古くなってきたので新規コードは なるべく最新のECMAで記述する方針に変更 2023
 
 nas.updateBk() {
 	エレメントの値をすべてバックアップ(正常な処理の最後に呼ぶ)
 nas.Push_Log(str) {Log = Log.concat([str])}
 	ログファイルへのプッシュ
-nas.sliderVALUE(chnk)
+nas.HTML.sliderVALUE(chnk)
 	マウスドラグによるインプット値の編集開始
-nas.sliderOFF()
+nas.HTML.sliderOFF()
 	マウスドラグによるインプット値の編集終了
 nas.HTML.SliderSelect(elemennt,options,direction)
 	スライドメニューUI
-nas.MVSlider_NS(event)
-nas.MVSlider_IE()
+nas.HTML.MVSlider_NS(event)
+nas.HTML.MVSlider_IE()
 	マウススライダが呼び出すメソッド
 
-nas.editTableCell(myObj,inputType,myContent,myFunction)
+nas.HTML.editTableCell(myObj,inputType,myContent,myFunction)
 	htmlテーブルの内容をダイナミックに書き換えるメソッド
 
-nas_sizeToContent()
+nas.HTML.sizeToContent()
 	ウィンドウサイズをあわせる一応汎用品(あやしい)
 
 ===================メッセージ (現在未使用）
@@ -34,21 +36,348 @@ nas_sizeToContent()
 負の値は設定できません。
 メッセージは不要かも
 フラグを付けてプリファレンスで選択させるか?
-===============================
-AIR環境ではローカルシステムサポートが発生するので
-こちらのファイルで判定や切り替えをある程度サポートするべきか?
-
-AIR環境に加えて、Photoshopの拡張パネル環境が発生したので要注意
-Fileオブジェクトが使えない。（Adobe側のFileが使える）
-要判定(未実装)
-
-このモジュールのロード前にprototype.jsのロードが必要	2013.02.10
-prototype.jsはjqueryに置き換えて不使用	2013.06.22
 */
-isAIR=false;//AdobeAIR純正環境
-isADX=0;//Adobeエクステンション環境
+'use strict';
+/*=======================================*/
+if(typeof nas == 'undefined') var nas = {};
 
+/* ***  実行環境の判定オブジェクト  ****
+appHost オブジェクト
+	appHost.Nodejs   ;Bool
+	appHost.ESTK     ;Bool
+	appHost.platform ;CEP|CSX|AIR|Chrome|Safari|Opera|MSIE|Netscape|Mozilla|unknown
+	appHost.version  ;platform-version
+	appHost.os       ;Win|Mac|Other
+*/
+/*
+ *    nas.HTMLトレーラーオブジェクト
+ */
+nas.HTML={};
+
+/** html環境下で働くコンソール・複数設定可能
+ *	console オブジェクトを設定するコンストラクタ
+ *	コンソールを初期化するにはHTMテキストエリアをコンストラクタに渡す
+ *	コマンドを実行するコールバックとコンソールプロンプトを指定可能
+ *	@params {Object}	element
+ *			HTMLHTMLTextAreaElement
+ *	@params	{Function}	callback
+ *			command eval engine
+ *	@params	{String}	prpmpt
+ *			console.promp String
+ *	
+ *	commandStore	
+ *	
+ *	
+ *	
+ *	
+ *	
+ */
+nas.HTML.Console = function(element,callback,prompt){
+		this.commandStore  = [];
+		this.commandPath   = [];
+		this.commandBackup  = {text:"",offset:0};
+		this.commandOffset = 0;
+		this.textLength    = 0;
+		this.screen        = null;
+		this.callhost      = false;
+		this.callback      = null;
+		this.prompt        = '>';
+		this.init(element,callback,prompt);
+	}
+/*
+ * コンソールの補助コマンド群
+ *	.help        簡易ヘルプ　コマンドリストを返す
+ *	.clear,_cls  コンソールのクリア
+ *	.chghost     host|app を切り替える
+ *  .list        
+ *  .reset       コンソールを初期状態にリセットする
+ */
+nas.HTML.Console.comlist = {
+	".help":{
+	    description:"show this massage.",
+	    command:function(egn){
+	        var result = "";
+	        for (var prp in nas.HTML.Console.comlist){
+	            var name = prp ; var desc = "";
+	            if(nas.HTML.Console.comlist[prp].description){
+	                desc = nas.HTML.Console.comlist[prp].description;
+	            }
+	            result+=["",name,desc].join("\t")+"\n";
+	        };
+	        egn.putResult(result);
+	    }
+	},
+	".clear":".cls",
+	".cls":{
+	    description:"clear console window.",
+	    command:function(egn){
+	        egn.clear();
+	    }
+	},
+	".chghost":{
+	    description:"change command engine host|app.",
+	    command:function(egn){ egn.changeHost(); }
+	},
+	".reset":{
+	    description:"reset console.",
+	    command:function(egn){
+	        egn.clearHistory();
+	        egn.clear();
+	    }
+	}
+};
 /**
+    コマンドバックアップの操作
+    @params {Boolean}   flush
+        クリアスイッチ
+*/
+	nas.HTML.Console.prototype.commandBackupSet=function(flush){
+		if(flush){
+		    this.commandBackup.text   = "";
+		    this.commandBackup.offset = 0 ;
+		}else{
+			this.commandBackup.text   = this.screen.value.slice(this.textLength).trim();
+			this.commandBackup.offset = this.screen.selectionStart - this.textLength;
+		}
+	}
+/**
+ *	@params {Object}	element
+ *			HTMLHTMLTextAreaElement
+ *	@params	{Function}	callback
+ *			command eval engine
+ *	@params	{String}	prpmpt
+ *			console.promp String
+ *	コンソールオブジェクトを再初期化する
+ */
+	nas.HTML.Console.prototype.init = function(element,callback,prompt){
+		if(! element instanceof HTMLTextAreaElement) return false;
+		if((console)&&(console.log)) console.log('setup :' +element.id);
+		this.screen        = element;
+		this.screen.engine = this;//エレメントにコンソール自体をアタッチする
+		if(callback instanceof Function){
+		    this.callback = callback;
+		    this.callhost = true;
+		}
+		if(prompt) this.prompt = String(prompt).trim() +'>';
+		this.clear();
+		element.addEventListener("keydown",this.cct);
+		element.addEventListener("keyup",this.blockresult);
+//		$(element).keydown(this.cct);
+//		$(element).keyup(this.blockresult);
+	}
+/*
+ *	コンソールオブジェクトのコマンドヒストリをクリアする（履歴の保存は未コーディング）
+ */
+	nas.HTML.Console.prototype.clearHistory  = function(){
+		this.commandStore  = [];
+		this.commandBackupSet(true);	
+		this.commandOffset = 0;
+	};
+/*
+ *	基礎機能・コンソールにテキストを配置するショートカット
+ */
+	nas.HTML.Console.prototype.put   = function(string){
+		this.screen.value += string;
+	};
+/*
+ *	基礎機能・コンソールまたは任意のテキストエリアにリザルトテキストを配置するショートカット
+ *  @params {String}    result
+ *      result text
+ *  @params {Object}    target
+ *      nas.HTML.Console|HTMLTextAreaElement
+ */
+	nas.HTML.Console.prototype.putResult = function(result,target){
+	    if(! target) target = this.screen;
+        if(target instanceof HTMLTextAreaElement) target = target.engine;
+		target.screen.value += '\n';
+		target.screen.value += result;
+		target.screen.value += "\n"+((target.callhost)? target.prompt:'>')+" ";//
+		target.textLength = target.screen.value.length;
+		target.screen.setSelectionRange(
+			target.textLength,
+			target.textLength
+		);
+		target.screen.scrollTop = target.screen.scrollHeight;
+	};
+/*
+ *	基礎機能・コマンドを実行するエンジンを切り替える(eval|callback)
+ */
+	nas.HTML.Console.prototype.changeHost = function(tgt){
+	    if(typeof tgt == 'undefined'){
+	       this.callhost = !(this.callhost);
+	    }else{
+	       this.callhost = (tgt)? true:false;
+	    }
+//画面上の最後のプロンプトのみを置換更新
+        this.screen.value = this.screen.value.slice(0,this.textLength).trim().replace(/.*$/,"") + ((this.callhost)? this.prompt:'>')+ ' ';
+        this.textLength = this.screen.value.length;
+        this.screen.value += this.commandBackup.text;
+    }
+/*
+ *	基礎機能・コンソール上のコマンドを指定のコールバックに渡してリザルトを配置するメソッドへのショートカット
+ *  params  {String}    cmd
+ *  params  {Object}    callback
+    callbackの仕様は 引数としてコマンドリザルトを受け取る関数を与える
+ */
+	nas.HTML.Console.prototype.doCommand   = function(cmd){
+		if(! cmd) cmd = this.screen.value.slice(this.textLength).trim();
+		if(cmd.length ){
+//プロンプト後方の編集行クリア
+			this.screen.value = this.screen.value.slice(0,this.textLength) + cmd;
+            var resultText = '';
+			try{
+				resultText = eval(cmd);
+			}catch(err){
+				resultText = err;
+			}
+            this.putResult(resultText,this);
+            return false;
+		};
+	};
+/*
+ *	基礎機能・テキストエリアのキー入力を前方に固定して既存出力の編集を抑制
+ */
+	nas.HTML.Console.prototype.blockresult   = function(eVt){
+		if(eVt.keyCode == 18){this.engine.changeHost();return false;}
+		if(this.selectionStart < this.engine.textLength){
+			this.selectionStart = this.engine.textLength;
+			return false;
+		}
+		return true;
+	};
+/*
+ *	基礎機能・テキストエリア内容をクリア
+ */
+	nas.HTML.Console.prototype.clear  = function(){
+		this.screen.value = ((this.callhost)? this.prompt:'>') + ' ';
+		this.textLength   = new Number(this.screen.value.length);
+	}
+/*
+ *	基礎機能・イベントを受け取り必要に従ってコマンドを実行してコンソールを書き換える
+ */
+	nas.HTML.Console.prototype.cct = function(eVt){
+		if((this.engine.textLength == this.value.length) && (eVt.keyCode == 8))return false;
+//console.log(eVt);
+/*コンソールにヒストリをもたせる*/
+        if(eVt.keyCode == 18){
+			this.engine.commandBackupSet();
+            this.engine.changeHost();
+            return false;
+        }
+		 if((eVt.keyCode == 38)||(eVt.keyCode == 40)){
+			if(
+				(this.engine.commandOffset == 0)&&
+				(this.value.length > this.engine.textLength)
+			){
+//オフセットなしでヒストリコールの際はバックアップに現在編集中のコマンドを一時控え
+				this.engine.commandBackupSet();
+			}
+//プロンプト後方の編集行クリア
+			this.value = this.value.slice(0,this.engine.textLength);
+//ヒストリバッファの内容をオフセットにしたがって呼び出し
+			if (this.engine.commandStore.length){
+				if (eVt.keyCode == 38){
+					this.engine.commandOffset ++;
+				}else if (eVt.keyCode == 40){
+					this.engine.commandOffset --;
+				}
+				if(this.engine.commandOffset < 0){
+					this.engine.commandOffset = 0;
+					//return false;
+				}else if(this.engine.commandOffset >= this.engine.commandStore.length){
+					this.engine.commandOffset = this.engine.commandStore.length;
+					//return false;
+				}
+				if(this.engine.commandOffset == 0){
+//console.log('オフセット==ゼロ・編集中バッファに復帰')
+					this.value += this.engine.commandBackup.text;
+					var ofst = this.engine.textLength + this.engine.commandBackup.offset
+					this.setSelectionRange(ofst,ofst);
+				} else {
+/*
+	ヒストリオフセットからヒストリ内のコマンドを呼び出し
+	[0:6,1:5,2:4,3:3,4:2,5:1]
+	length:6
+	5 - ((offset - 1) % 6)
+*/
+					var shift = (this.engine.commandStore.length - 1) - ((this.engine.commandOffset - 1) % this.engine.commandStore.length);
+					this.value += this.engine.commandStore[ shift ];
+					this.engine.commandOffset = this.engine.commandStore.length - shift;
+				}
+			}
+			return false;
+		} else if(eVt.keyCode == 13){
+			if((eVt.metaKey)||(eVt.ctrlKey)){
+				this.value += "\n";
+				return true;
+			}
+//編集行バッファ廃棄
+			this.engine.commandBackup.text  = "";
+			this.engine.commandBackup.offset= 0 ;
+//ここでコマンドを取得して実行
+			var cmd = this.value.slice(this.engine.textLength).trim().split(' ');
+			if(cmd[0].indexOf(".") == 0){
+//ドット導入の内部コマンド
+                var func;//
+                if(nas.HTML.Console.comlist[cmd[0]]){
+                    if(nas.HTML.Console.comlist[cmd[0]].command){
+                        func = nas.HTML.Console.comlist[cmd[0]].command;
+                    }else{
+                        func = nas.HTML.Console.comlist[nas.HTML.Console.comlist[cmd[0]]].command;
+                    };
+                };
+                if(func instanceof Function)(func)(this.engine);//引数にエンジン渡し
+			}else{
+				if(nas.HTML.Console.comlist[cmd[0]]){
+//登録済みコマンド
+					if(
+						(cmd[1])&&(cmd[1].indexOf('-') == 0)&&
+						(((typeof global != 'undefined')&&(global[cmd[0]][cmd[1]]))||
+						((typeof window != 'undefined')&&(window[cmd[0]][cmd[1]])))
+					){
+// help|usage
+
+//						this.engine.putResult("\t:"+global[cmd[0]][cmd[1]]);
+						this.engine.putResult("\t:"+window[cmd[0]][cmd[1]]);
+						return false;
+					}else{
+//引数展開して実行
+						cmd = (
+							[nas.HTML.Console.comlist[cmd[0]].command+'(',
+							...Array.from(cmd.slice(1),function(elm){return '"'+String(elm)+'"';}),
+							')']
+						);
+					};
+				};
+//通常エンジンにコード文字列を渡して実行する
+				this.engine.commandStore.add(cmd.join(' '));
+				this.engine.commandOffset = 0;//リセット
+                if((this.engine.callhost)&&(this.engine.callback instanceof Function)){
+				    this.engine.callback(cmd.join(' '),this.engine.putResult);
+                } else {
+		    		this.engine.doCommand(cmd.join(' '));
+			    };
+			};
+            return false;
+		}
+	}
+/*TEST
+    
+*/
+/**
+	@params {Object|String} content
+	コンソールに引数文字列を出力後入力待ち状態に遷移
+ */
+	nas.HTML.Console.prototype.log = function(content){
+//		if(content instanceof Object) content = JSON.stringify(content);
+		this.put('\n'+content);
+	}
+/**
+ *	HTML色名テーブル
+ */
+nas.HTML.ColorName = {black:"#000000",silver:"#c0c0c0",gray:"#808080",white:"#ffffff",maroon:"#800000",red:"#ff0000",purple:"#800080",fuchsia:"#ff00ff",green:"#008000",lime:"#00ff00",olive:"#808000",yellow:"#ffff00",navy:"#000080",blue:"#0000ff",teal:"#008080",aqua:"#00ffff",orange:"#ffa500",aliceblue:"#f0f8ff",antiquewhite:"#faebd7",aquamarine:"#7fffd4",azure:"#f0ffff",beige:"#f5f5dc",bisque:"#ffe4c4",blanchedalmond:"#ffebcd",blueviolet:"#8a2be2",brown:"#a52a2a",burlywood:"#deb887",cadetblue:"#5f9ea0",chartreuse:"#7fff00",chocolate:"#d2691e",coral:"#ff7f50",cornflowerblue:"#6495ed",cornsilk:"#fff8dc",crimson:"#dc143c",cyan:"#00ffff",darkblue:"#00008b",darkcyan:"#008b8b",darkgoldenrod:"#b8860b",darkgray:"#a9a9a9",darkgreen:"#006400",darkgrey:"#a9a9a9",darkkhaki:"#bdb76b",darkmagenta:"#8b008b",darkolivegreen:"#556b2f",darkorange:"#ff8c00",darkorchid:"#9932cc",darkred:"#8b0000",darksalmon:"#e9967a",darkseagreen:"#8fbc8f",darkslateblue:"#483d8b",darkslategray:"#2f4f4f",darkslategrey:"#2f4f4f",darkturquoise:"#00ced1",darkviolet:"#9400d3",deeppink:"#ff1493",deepskyblue:"#00bfff",dimgray:"#696969",dimgrey:"#696969",dodgerblue:"#1e90ff",firebrick:"#b22222",floralwhite:"#fffaf0",forestgreen:"#228b22",gainsboro:"#dcdcdc",ghostwhite:"#f8f8ff",gold:"#ffd700",goldenrod:"#daa520",greenyellow:"#adff2f",grey:"#808080",honeydew:"#f0fff0",hotpink:"#ff69b4",indianred:"#cd5c5c",indigo:"#4b0082",ivory:"#fffff0",khaki:"#f0e68c",lavender:"#e6e6fa",lavenderblush:"#fff0f5",lawngreen:"#7cfc00",lemonchiffon:"#fffacd",lightblue:"#add8e6",lightcoral:"#f08080",lightcyan:"#e0ffff",lightgoldenrodyellow:"#fafad2",lightgray:"#d3d3d3",lightgreen:"#90ee90",lightgrey:"#d3d3d3",lightpink:"#ffb6c1",lightsalmon:"#ffa07a",lightseagreen:"#20b2aa",lightskyblue:"#87cefa",lightslategray:"#778899",lightslategrey:"#778899",lightsteelblue:"#b0c4de",lightyellow:"#ffffe0",limegreen:"#32cd32",linen:"#faf0e6",magenta:"#ff00ff",mediumaquamarine:"#66cdaa",mediumblue:"#0000cd",mediumorchid:"#ba55d3",mediumpurple:"#9370db",mediumseagreen:"#3cb371",mediumslateblue:"#7b68ee",mediumspringgreen:"#00fa9a",mediumturquoise:"#48d1cc",mediumvioletred:"#c71585",midnightblue:"#191970",mintcream:"#f5fffa",mistyrose:"#ffe4e1",moccasin:"#ffe4b5",navajowhite:"#ffdead",oldlace:"#fdf5e6",olivedrab:"#6b8e23",orangered:"#ff4500",orchid:"#da70d6",palegoldenrod:"#eee8aa",palegreen:"#98fb98",paleturquoise:"#afeeee",palevioletred:"#db7093",papayawhip:"#ffefd5",peachpuff:"#ffdab9",peru:"#cd853f",pink:"#ffc0cb",plum:"#dda0dd",powderblue:"#b0e0e6",rosybrown:"#bc8f8f",royalblue:"#4169e1",saddlebrown:"#8b4513",salmon:"#fa8072",sandybrown:"#f4a460",seagreen:"#2e8b57",seashell:"#fff5ee",sienna:"#a0522d",skyblue:"#87ceeb",slateblue:"#6a5acd",slategray:"#708090",slategrey:"#708090",snow:"#fffafa",springgreen:"#00ff7f",steelblue:"#4682b4",tan:"#d2b48c",thistle:"#d8bfd8",tomato:"#ff6347",turquoise:"#40e0d0",violet:"#ee82ee",wheat:"#f5deb3",whitesmoke:"#f5f5f5",yellowgreen:"#9acd32",rebeccapurple:"#663399"};
+// ==========
+/*
  *	combobox extension
  *	要 JQuery-ui
  */
@@ -187,31 +516,12 @@ isADX=0;//Adobeエクステンション環境
       $( "#combobox" ).toggle();
     });
   } );
-
-try {
-
 //エレメントの値をすべてバックアップ(正常な処理の最後に呼ぶ)
 function updateBk() {
 	for (n = 1 ; n< BkValue.length ; n++) {
 	elName = ElementName[n];
 	BkValue[n] = document.nasExchg.elements[elName].value }
 };
-
-/**
-divideExtension(filename)
-引数:文字列　拡張子付きファイル名
-戻値:配列[拡張子,ファイル名本体]
-*/
-divideExtension = function(filename){
-    filename=String(filename);
-        var nameBody=filename;
-        var nameExtension ='';
-    if(filename.match(/^(.+)\.([^\.]*)$/)){
-        nameExtension   =RegExp.$2;
-        nameBody        =RegExp.$1;
-    }
-    return [nameExtension,nameBody];
-}
 
 /*
 	ログ関連
@@ -241,9 +551,11 @@ sliderVALUE([event,エレメント名,上限,下限,小数点桁数(,初期値,�
 formオブジェクトの参照からinputElementに変更
 コード見直しで動作可能に
 以前との互換は終了(10.09.20)
+nas.HTML配下に本体関数を移動
+旧コード互換エイリアスを作成
 */
 
-nas.sliderVALUE = function(chnk) {
+nas.HTML.sliderVALUE = function(chnk) {
 //配列で受け渡し [イベント,エレメントID,上限,下限,小数点桁数(,デフォルト値,スライド方向,step)]
 	var startX = chnk[0].screenX;
 	var startY = chnk[0].screenY;
@@ -279,9 +591,9 @@ if (isNaN(currentValue)) {
 switch (navigator.appName) {
 case "Opera":
 case "Microsoft Internet Explorer":
-	document.body.onmousemove = MVSlider_IE_;break;
+	document.body.onmousemove = nas.HTML.MVSlider_IE_;break;
 case "Netscape":
-	document.body.onmousemove = MVSlider_NS_;break;
+	document.body.onmousemove = nas.HTML.MVSlider_NS_;break;
 default:
 	return;
 }
@@ -303,17 +615,16 @@ default:
 
 }
 //
-
-
-function MVSlider_NS_(event) {
+nas.HTML.MVSlider_NS_ = function MVSlider_NS_(event) {
 	var diffValue = event.screenX - this.sliderTarget.startX;
-	if (diffValue >= 0) {Flgl = 1} else {Flgl= -1}
+	var Flgl = 1;
+	if (diffValue < 0) Flgl= -1;
 //ガンマかけて値をとる
 	var newValue = this.sliderTarget.baseValue + (Flgl * (Math.pow(diffValue/100,2)*100));
 //上限下限でおさえる
 	if (newValue > this.sliderTarget.slmax) {newValue = this.sliderTarget.slmax} {
 		if (newValue < this.sliderTarget.slmin) {newValue = this.sliderTarget.slmin}
-	}
+	};
 //sldigで小数点以下の桁だしを行い、ステップで丸める
 	var exN = Math.pow(10,this.sliderTarget.sldig);
 	newValue = Math.floor(newValue * exN)/exN;
@@ -322,14 +633,15 @@ function MVSlider_NS_(event) {
 	if(this.sliderTarget.value != newValue) {
 		this.sliderTarget.value = newValue ;
 		if(this.sliderTarget.onchanging) this.sliderTarget.onchanging();
-	}
+	};
 }
 //	nas.MVSlider_NS	=	MVSlider_NS_ ;
 
 
-function MVSlider_IE_() {
-	this.diffValue = event.screenX - this.sliderTarget.startX;;
-	if (this.diffValue >= 0) {Flgl = 1} else {Flgl= -1}
+nas.HTML.MVSlider_IE_ = function MVSlider_IE_() {
+	var diffValue = event.screenX - this.sliderTarget.startX;
+	var Flgl = 1;
+	if (diffValue < 0) Flgl= -1;
 //ガンマかけて値をとる
 	newValue = this.sliderTarget.baseValue + (Flgl * (Math.pow(this.diffValue/100,2)*100));
 //上限下限でおさえる
@@ -346,132 +658,149 @@ function MVSlider_IE_() {
 }
 //	nas.MVSlider_IE	=	MVSlider_IE_	;//
 //マウスバリスライダ関連終了
-
-/*	nas.editTableCell(セルオブジェクト[,inputType[,初期値[,変更時関数]]])
-テーブルセルに対してサイズを一致させたINPUT/TEXTAREAを作成して入力値でそのテーブルの内容を置き換える
-汎用メソッド
-
-inputTypeフラグでINPUT/TEXTAREAを切り換える
-"input" / "textarea" で指定 デフォルトは"input"
-
-同時に作成する入力コントロールはひとつ
-
-あまり複雑なテーブル内容を書き換える際(特にタグやクォートがある内容)は注意
-変更時に内容をフィルタする必要あり
-
-	nas.editTabelCell(セルオブジェクト[,初期値[,オンチェンジ関数]])
-
-指定するテーブルセルにはユニークなIDが必要である。
-IDをもたないセルは編集対象にならない。
-
-また ユニークID+"_ipt"を一時生成するInputのIDとして使用するため、
-このIDがユニークになることも期待されている。
-
-editTableCellを使用して変数等の編集をする場合は、
-使用時にeditTableCell.onChange()メソッドに使用する関数を登録すること。
-例
-
-myOnChange=function(){VAR1=this.newContent;}
-editTabelCell(document.getElementById("x0_0"),VAR1,myOnChange);
-
-この操作関数がなければこのメソッドはテーブルの内容のみを書き換える
-関数中では以下のサブプロパティが参照可能
-
-this.target=null     ;//対象セル HTMLTableCellElement
-this.inputArea=null  ;//現在ホールドしている HTMLInputElement
-this.orgContent=""   ;//変更前のプロパティ(セル)の値
-this.newContent=""   ;//変更後の値
-
-実行後はクリアされるので参照不能
-
-デフォーカス(ブラー)がかかった場合は、ステータスにfalseをセットして終了する戻り値はnullに置き換える。
-最終の値はnas.editTableCell.newContentで参照可能
-
-optionでテーブル内にキャンセルボタンを表示可能にする。ボタン動作はエスケープと同じ ヤメる ボタンは邪魔
-ただしこれを利用したダイアログボックスは作る
-*/
-nas.editTableCell=function(myObj,inputType,myContent,myFunction){
-if(!inputType) inputType="input";
-//if(!myContent) myContent="";
-
-if(!this.target)     this.target=null     ;//対象セル HTMLTableCellElement
-if(!this.status)     this.status=false    ;//データステータス＞キャンセル基本
-if(!this.inputArea)  this.inputArea=null  ;//現在ホールドしている HTMLInputElement
-if(!this.orgContent) this.orgContent=""   ;//変更前のプロパティ(セル)の値
-if(this.newContent==undefined) this.newContent=this.orgContent   ;//変更後の値
-if(!this.updCount)   this.updCount=0      ;//なぜか２回連続でイベントが発生する際のイベントカウンタ AIR用
-if(!this.onChange)   this.onChange=(myFunction)?myFunction:null;
-if(! this.init){
-	this.init=function(){this.target=null;this.status=false;this.inputArea=null;this.orgContent="";delete this.newContent};//まとめてリセット
+/*
+ * テーブルセルに対してサイズを一致させたINPUT/TEXTAREAを作成して入力値でそのテーブルの内容を置き換える
+ * 機能オブジェクト
+ * 
+ * inputTypeフラグでINPUT/TEXTAREAを切り換える
+ * "input" | "textarea" で指定 デフォルトは"input"
+ * 
+ * 同時に作成する入力コントロールはひとつのみ
+ * 切替時に先の入力は消失する
+ * 
+ * あまり複雑なテーブル内容を書き換える際(特にタグやクォートがある内容)は注意
+ * 変更時に内容をフィルタする必要あり
+ * 
+ * 	nas.HTML.editTabelCell.edit(セルオブジェクト[,初期値[,オンチェンジ関数]])
+ * 
+ * 指定するテーブルセルにはユニークなIDが必要である。
+ * IDをもたないセルは編集対象にならない。
+ * 
+ * また ユニークID+"_ipt"を一時生成するInputのIDとして使用するため、
+ * このIDがユニークになることも期待されている。
+ * 
+ * editTableCellを使用して変数等の編集をする場合は、
+ * 使用時にeditTableCell.onChange()メソッドに使用する関数を登録すること。
+ * 例
+ * 
+ * myOnChange=function(){VAR1=this.newContent;}
+ * editTabelCell(document.getElementById("x0_0"),VAR1,myOnChange);
+ * 
+ * この操作関数がなければこのメソッドはテーブルの内容のみを書き換える
+ * 関数中では以下のサブプロパティが参照可能
+ * 
+ * this.target     = null ;//対象セル HTMLTableCellElement
+ * this.inputArea  = null ;//現在ホールドしている HTMLInputElement
+ * this.orgContent = ""   ;//変更前のプロパティ(セル)の値
+ * this.newContent = ""   ;//変更後の値
+ * this.onChange   = null ;//変更時の実行関数
+ * 実行後はクリアされるので参照不能
+ * 
+ * デフォーカス(ブラー)がかかった場合は、ステータスにfalseをセットして終了する戻り値はnullに置き換える。
+ * 最終の値はnas.HTML.editTableCell.newContentで参照可能
+ * 
+ * optionでテーブル内にキャンセルボタンを表示可能にする。ボタン動作はエスケープと同じ ヤメる ボタンは邪魔
+ * ただしこれを利用したダイアログボックスは作る
+ */
+nas.HTML.editTableCell = {
+	inputType : "input",// input|textarea
+	target    : null   ,//対象セル HTMLTableCellElement
+	inputArea : null   ,//現在ホールドしている HTMLInputElement
+	status    : false  ,//データステータス＞キャンセル基本
+	orgContent: ""     ,//変更前のプロパティ(セル)の値
+	newContent: ""     ,//変更後の値
+	updCount  : 0      ,//なぜか２回連続でイベントが発生する際のイベントカウンタ AIR用
+	onChange  : null   ,//function||null
 }
-//引数オブジェクトがInput/TextAreaだった場合は、インプットの内容でセルを置き換えてonChangeを実行してから、メソッド自体をリセットする
-if((myObj==null)||(myObj instanceof HTMLInputElement)||(myObj instanceof HTMLTextAreaElement)){
-	if(this.updCount){return false;}
-	this.updCount++;
+nas.HTML.editTableCell.clear = function(){
+//まとめてクリア
+	this.target     = null;
+	this.status     = false;
+	this.inputArea  = 'input';
+	this.onChange   = null;
+	this.orgContent = "";
+	this.newContent = "";
+	this.updCount   = 0;
+}
+/**
+ *	@params {Object HTMLTABLECell} myObj
+ *	@params {String} inputType
+ *	@params {String} myContent
+ *	@params {String} myFunction
+ * nas.HTML.editTableCell.edit(セルオブジェクト[,inputType[,初期値[,変更時関数]]])
+ 
+ */
+nas.HTML.editTableCell.edit = function(myObj,inputType,myContent,myFunction){
+console.log(myObj);
+	if((myObj==null)||(myObj === this.inputArea)){
+//引数オブジェクトが編集バッファエレメントだった場合は、インプットの内容でセルを置き換えてonChangeを実行して、本体オブジェクトをリセットする
 //なぜかAIR環境の際にchangeイベントが二回連続で発生するので二度目の動作を捨てるためのトラップ(要精査 2010・0913)
-	//this.status は主にonChange内で処理する
-	if(myObj==null){
-		this.status=false;
-		this.target.innerHTML=this.orgContent;//先に書き換える、onChangeで参照可能かつ変更可能に
-	}else{
-	this.newContent=(myObj.value != undefined)? myObj.value:myObj.innerHTML;
-//	valueオブジェクトが存在する場合はオブジェクトを取得…でもテキストエリアにvalueがあるのね
-		this.status=true;
-		this.target.innerHTML=this.newContent;//先に書き換える、onChangeで参照可能かつ変更可能に
-	}
-	delete myObj;//明示的に消す
-	if(this.onChange){this.onChange(event)};
-	if(this.target.innerHTML==""){this.target.innerHTML+="<br />"};//空文字列の時 改行ひとつと置換
-	var myResult=(this.status)? this.newContent:null;
-	this.init();
-	this.onChange=null;//ファンクションクリア
-	return myResult;//
-}
+		if(this.updCount > 0) return false;
+		this.updCount++;
+//this.status は主にonChange内で処理する
+		if(myObj == null){
+			this.status = false;
+			if(this.target) this.target.innerHTML = this.orgContent;//先に書き換える、onChangeで参照可能かつ変更可能に
+		}else{
+//	valueオブジェクトが存在する場合はオブジェクトを取得
+			this.newContent = (myObj.value != undefined)? myObj.value:myObj.innerText;
+			this.status = true;
+			if(this.target) this.target.innerHTML = this.newContent;//先に書き換える、onChangeで参照可能かつ変更可能に
+		};
+		if(this.onChange instanceof Function){this.onChange(event)};
+		if(this.target.innerHTML=="") this.target.innerHTML+="<br />";//空文字列の時 改行ひとつと置換
+		var myResult = (this.status)? this.newContent:null;
+		this.clear();//クリア
+		return myResult;//
+	}else if(
+		!((myObj instanceof HTMLTableCellElement)||(myObj instanceof HTMLDivElement)||(myObj instanceof HTMLSpanElement))
+	){
 //オブジェクトなしでコールされた場合
 //現在のターゲットがなければスキップ あればターゲットをリセットクリア
-if(!(myObj instanceof HTMLTableCellElement)){
-	if(! this.target){return false};//先の入力エリアが存在するか?
-	this.target.innerHTML=this.orgContent;//復帰
-	this.init();
-}
-//セルあり
-//既存ターゲットセル
-if(this.target){
-//同じセルか
-	if(myObj==this.target){
-		return false;//スキップ
-	}else{
+		if(! this.target){console.log(this.target);return false};//先の入力エリアが存在するか?
+		this.target.innerHTML=this.orgContent;//復帰
+		this.clear();
+	}else if(this.target){
+//セルあり 既存ターゲットセルと同じセルか
+		if(myObj==this.target){
+			return false;//スキップ
+		}else{
 //違うセルなのでいったん終了
-		nas.editTableCell(this.inputArea);
+			nas.HTML.editTableCell.edit(this.inputArea);
+		};
+	};
+//機能初期化
+	if(inputType) this.inputType = inputType;
+	if(myFunction instanceof Function) this.onChange = myFunction;
+	this.target     = myObj;
+	this.updCount   = 0;
+	this.orgContent = (!(myContent==undefined))? myContent:myObj.innerText;//控える
+//ここでテーブルから取得される内容はタグを払った状態になる。タグを編集する必要がある場合はあらかじめ引数で内容を与えること
+	this.newContent = this.orgContent;
+	if(! this.inputArea) this.inputArea = null;
+	var myWidth=myObj.clientWidth;var myHeight=myObj.clientHeight;
+	if(inputType=="textarea"){
+		myObj.innerHTML="<textArea id=\""+myObj.id+"_ipt\">"+this.orgContent+"</textArea>";
+	}else{
+		myObj.innerHTML="<input type=\"text\" id=\""+myObj.id+"_ipt\" value=\""+this.orgContent+"\">";
 	}
-}
+//入力を設定
+	this.inputArea = document.getElementById(myObj.id+"_ipt");
+	this.inputArea.style.width  = myWidth+"px";
+	this.inputArea.style.height = myHeight+"px";
+	this.inputArea.parentCell   = myObj;
+	this.inputArea.onchange =function(e){nas.HTML.editTableCell.edit(this);}
+	this.inputArea.onblur   =function(e){nas.HTML.editTableCell.edit(null);};//no button
+	this.inputArea.onkeyup	=function(e){
+		if(e.keyCode==27){nas.HTML.editTableCell.edit(null);};
+		return true;
+	};
+	this.inputArea.focus();
 /*	事前処理終了
 初期化が行われたので必要なあたらしいターゲットを設定
 ターゲットと同サイズのインプットを開く
 初期値は、引数で与えられた場合はそちら、なければテーブルの内容
 */
-	this.target=myObj;
-	this.updCount=0;
-	this.orgContent=(!(myContent==undefined))? myContent:myObj.innerHTML.replace(/<.+>/g,"");//控える
-//ここでテーブルから取得される内容はタグを払った状態になる。タグを編集する必要がある場合はあらかじめ引数で内容を与えること
-	this.newContent=this.orgContent;
-	if(!this.inputArea){this.inputArea=null}
-	var myWidth=myObj.clientWidth;var myHeight=myObj.clientHeight;
-if(inputType=="textarea"){
-	myObj.innerHTML="<textArea id=\""+myObj.id+"_ipt\">"+this.orgContent+"</textArea>";
-}else{
-	myObj.innerHTML="<input type=\"text\" id=\""+myObj.id+"_ipt\" value=\""+this.orgContent+"\">";
-}
-//入力を設定
-	this.inputArea=document.getElementById(myObj.id+"_ipt");
-
-	this.inputArea.style.width=myWidth+"px";
-	this.inputArea.style.height=myHeight+"px";
-	this.inputArea.parentCell=myObj;
-	this.inputArea.onchange =function(e){nas.editTableCell(this);}
-	this.inputArea.onblur   =function(e){nas.editTableCell(null);};//no button
-	this.inputArea.onkeyup	=function(e){if(e.keyCode==27){nas.editTableCell(null);};return true;}
-	this.inputArea.focus();
 }
 /*=====================================*/
 //モーダルダイアログパネル
@@ -481,45 +810,57 @@ alert/confirm/propmpt 等の代替モーダルダイアログパネルを表示�
 AIRにはそもそも"showModalDialog"メソッドがなかったでのAIRでは不使用! とほほ
 nas.showModalDialog(type[,msg[,title[,startValue[,myFunction]]]])
 
-type	"alert","confirm","confirm2","prompt","prompt2";//サブナンバつきのタイプは選択肢が(yes/no/cancel)になる。
-	
-msg	メッセージテキスト メッセージはタグ使用可能
- msgが配列であった場合は、0番要素をプロンプトの上１番要素の内容をプロンプトの下側に表示させる
- ボタンUI等は第二メッセージに配置したほうが作業性が高い
+    @params {String}	type
+    dialog type	alert|confirm|confirm2|prompt|prompt2
+    タイプ2のconfirm|promptは選択肢が(yes/no/cancel)になる。
+    @params {String | Array of String}    msg
+    メッセージテキスト メッセージはタグ使用可能
+    msgが配列であった場合は、0番要素をプロンプトの上１番要素の内容をプロンプトの下側に表示させる
+    ボタンUI等は第二メッセージに配置したほうが作業性が高い
+    @params {String}    title
+    ウインドウタイトル
+    @params {String}    startValue
+    textプロンプト初期値
+    @params {Function}  callback
+    ネイティブなモーダルパネルではなくなるので終了関数が必要 終了関数自体は自分自身を呼び出してその中で実行している
+    prompt|prompt2 を使用するとデータ入力用テキストボックスを使用できる
+    終了関数内部で参照する一般プロパティは
 
-title	ウインドウタイトル
-startValue	プロンプト初期値
-ネイティブなモーダルパネルではなくなるので終了関数が必要 終了関数自体は自分自身を呼び出してその中で実行している
-終了関数内部で参照する一般プロパティは
-
-	this.startValue=startValue;//プロンプト初期値
 	this.status=0;//状態初期値 0:yes 1:no 2:cancel
+	this.startValue=startValue;//プロンプト初期値
 	this.value=this.startValue;//プロンプトの終了値
-	
 例：
-nas.showModalDialog("prompt",["msg",document.getElementById("TCIFTemplate").innerHTML],"TCtest","12+0",function(){alert(this.status+": "+this.value)});
+nas.HTML.showModalDialog("prompt",["msg",document.getElementById("TCIFTemplate").innerHTML],"TCtest","12+0",function(){alert(this.status+": "+this.value)});
 
 */
-nas.showModalDialog =function(type,msg,title,startValue,myFunction)
-{
-if(!(type=="result")){
-	if(! type)      {type="alert"};//"alert","confirm","confirm2","prompt","prompt2","result"
-	if(! msg)       {msg=""};
-	if(! (msg instanceof Array)){msg=[msg];msg.push("");}
-	if(! title)     {title=type};
-	if(! startValue){startValue=""};
-	if(! myFunction){myFunction=null};
+nas.HTML.showModalDialog = function(type,msg,title,startValue,callback,fullscreen){
+//    if(typeof fullscreen == 'undefined') fullscreen = [0,0] ;
+//"alert","confirm","confirm2","prompt","prompt2","result"
+	if(type !="result"){
+		if(! type)       type = "alert" ;
+		if(! msg)        msg  = ""      ;
+		if(! (msg instanceof Array)){
+			msg = [msg]      ;
+			msg.push("")     ;
+			console.log(msg) ;
+		}
+		if(! title)      title      = type;
+		if(! startValue) startValue = ""  ;
+		if(! callback){
+			callback = function(result){
+				console.log([result,this.value,this.startValue]);
+			}
+		};
+	nas.HTML.type       = type;
+	nas.HTML.msg01      = msg[0].replace(/\r?\n/g,"<br>");
+	nas.HTML.msg02      = msg[1];//UIのリターン置きかえは無し
+	nas.HTML.title      = title
+	nas.HTML.startValue = startValue;
+	nas.HTML.status     = 0;//状態初期値 0:yes 1:no 2:cancel
+	nas.HTML.value      = startValue;
+	nas.HTML.exFunction = callback;
 
-	this.type=type;
-	this.msg01=msg[0].replace(/\r?\n/g,"<br>");
-	this.msg02=msg[1];//UIのリターン置きかえは無し
-	this.title=title
-	this.startValue=startValue;
-	this.status=0;//状態初期値 0:yes 1:no 2:cancel
-	this.value=this.startValue;
-	this.exFunction=myFunction;
-
-//初回実行時にモーダルパネルオブジェクトを生成しておく
+//初回実行時にモーダルパネルオブジェクトを生成しておく(旧形式モーダルバリヤー)
 	if (!this.modalLayer){
 		var mdlPnl=document.createElement("div");
 		mdlPnl.id="nas_modalLayer";
@@ -527,49 +868,76 @@ if(!(type=="result")){
 //		mdlLyr.style.position="fixed";
 //		mdlLyr.style.left="0px";
 //		mdlLyr.style.top="0px";
-		mdlLyr.style.width="100%";
-		mdlLyr.style.height="100%";
-//		mdlLyr.style.background="#FFCCCC";
+//		mdlLyr.style.width="100%";
+//		mdlLyr.style.height="100%";
+//		mdlLyr.style.background="#222222";
 
 //var myContent="<span id='nas_modalDialog' style='padding:6px;background:#EEEEEE;position:fixed;top:192px;left:240px;border-style:double'>";
 var myContent="<div id='nas_modalDialog'>";
 myContent+="<span id='nas_modalMsg'>Message</span><br>";
 myContent+="<input id='nas_modalInput'></input><br>";
-myContent+="<div id='nas_modalUI'>1234567</div>";
+myContent+="<div id='nas_modalUI'> </div>";
 myContent+="<div style='text-align:right;'>";
-myContent+="<button id='nas_modalBt0'>OK</button>";
-myContent+="<button id='nas_modalBt1'>NO</button>";
-myContent+="<button id='nas_modalBt2'>CANCEL</button>";
+myContent+="<button id='nas_modalBt0' class='modalBt'>OK</button>";
+myContent+="<button id='nas_modalBt1' class='modalBt'>NO</button>";
+myContent+="<button id='nas_modalBt2' class='modalBt'>CANCEL</button>";
 myContent+="</div>";
 myContent+="</div>";
 mdlLyr.innerHTML=myContent;
 		document.getElementById("nas_modalInput").style.width="90%";
-		document.getElementById("nas_modalBt0").style.width="6em";
-		document.getElementById("nas_modalBt1").style.width="6em";
-		document.getElementById("nas_modalBt2").style.width="6em";
-//		document.getElementById("nas_modalInput").onchange=function(){nas.showModalDialog("result",0)};
-		document.getElementById("nas_modalBt0").onclick=function(){nas.showModalDialog("result",0)};
-		document.getElementById("nas_modalBt1").onclick=function(){nas.showModalDialog("result",1)};
-		document.getElementById("nas_modalBt2").onclick=function(){nas.showModalDialog("result",2)};
-
+//		document.getElementById("nas_modalInput").onchange=function(){nas.HTML.showModalDialog("result",0)};
+		document.getElementById("nas_modalBt0").onclick=function(){nas.HTML.showModalDialog("result",0)};
+		document.getElementById("nas_modalBt1").onclick=function(){nas.HTML.showModalDialog("result",1)};
+		document.getElementById("nas_modalBt2").onclick=function(){nas.HTML.showModalDialog("result",2)};
 		mdlLyr.style.display="none";
 		this.modalLayer=mdlLyr;
-$("#nas_modalDialog").dialog({width:400,autoOpen:false,modal:true,closeOnEscape:true})
-	}
-//パネル初期化
-$("#nas_modalDialog").dialog("option","title",this.title);
-//	document.getElementById("nas_modalTitle").innerHTML=this.title;
-	document.getElementById("nas_modalMsg").innerHTML=this.msg01;
-	document.getElementById("nas_modalUI").innerHTML =this.msg02;
-	//この部分にファンクションを置くとAIR上で実行されない セキリティの問題なので ライブラリの改修が必要06.20
-	
-	this.UIwell=document.getElementById("nas_modalUI");
-	this.UIStore=document.getElementById("ModalUIStore");
-
-	if(this.UIwell.children.length){this.UIStore.appendChild(this.UIwell.childNodes[0]);}
-	if(this.msg02 instanceof HTMLElement){this.UIwell.appendChild(this.msg02);}
-	document.getElementById("nas_modalInput").value=this.value;
-	switch(this.type){
+/*            $("#nas_modalDialog").dialog({
+                dialogClass:"wideDialog",
+                autoOpen:false,
+                modal:true,
+                closeOnEscape:true,
+                minWidth:Math.floor(0.6*document.body.clientWidth),
+                draggable:false,
+                resizable:false
+            });//*/
+            $("#nas_modalDialog").dialog({
+                dialogClass:"nasModalDialog",
+                autoOpen:false,
+                modal:true,
+                closeOnEscape:true,
+                minWidth:Math.floor(0.25*document.body.clientWidth),
+                draggable:true,
+                resizable:true
+            });
+	};// */
+//パネルサイズ初期化
+        if(fullscreen){
+        if(! (fullscreen instanceof Array)) fullscreen = [0,0];
+var w = parseInt(window.innerWidth)  - fullscreen[0];
+var h = parseInt(window.innerHeight) - fullscreen[1];
+var a = 'left top';
+var m = "left+"+fullscreen[0]+" top+"+fullscreen[1];
+//console.log([w,h,a,m]);
+            $("#nas_modalDialog").dialog({
+                width:w,
+                height:h,
+                position:{at:a,my:m}
+            });
+        }else{
+            $("#nas_modalDialog").dialog({
+                width:"auto",
+                height:"auto"
+            });
+        }
+        $("#nas_modalDialog").dialog("option","title",nas.HTML.title);
+        document.getElementById("nas_modalMsg").innerHTML=nas.HTML.msg01;
+        document.getElementById("nas_modalUI").innerHTML =nas.HTML.msg02;
+	nas.HTML.UIwell  = document.getElementById("nas_modalUI");
+	nas.HTML.UIStore = document.getElementById("ModalUIStore");
+	if(nas.HTML.UIwell.children.length) nas.HTML.UIStore.appendChild(nas.HTML.UIwell.childNodes[0]);
+	if(nas.HTML.msg02 instanceof HTMLElement) nas.HTML.UIwell.appendChild(nas.HTML.msg02);
+	document.getElementById("nas_modalInput").value = nas.HTML.value;
+	switch(nas.HTML.type){
 	case	"alert":;
 		document.getElementById("nas_modalBt0").style.display="inline";
 		document.getElementById("nas_modalBt1").style.display="none";
@@ -587,7 +955,7 @@ $("#nas_modalDialog").dialog("option","title",this.title);
 		document.getElementById("nas_modalBt1").style.display="none";
 		document.getElementById("nas_modalBt2").style.display="inline";
 	}
-	switch(this.type){
+	switch(nas.HTML.type){
 	case	"alert":;
 	case	"confirm2":;
 	case	"confirm":;
@@ -598,170 +966,197 @@ $("#nas_modalDialog").dialog("option","title",this.title);
 		document.getElementById("nas_modalInput").style.display="inline";
 	break;
 	}
-
-//	this.modalLayer.style.display="inline";
-//	document.getElementById("nas_modalInput").focus();
+//スクロールロック
+			nas.HTML.addClass(document.body,'scroll-lock');
+//パネルを開く
 	$("#nas_modalDialog").dialog("open");
-	
-}else{
+  }else{
 //	return;
-if(false){
+  if(false){
 	window.showModalDialog(
 		"./template/nasDialog.html",
 		this,
 		"dialogWidth:320px;dialogHeight:192px;center:yes;status:off"
 	);
-}
-this.status=msg;//処置前なので配列化の影響を受けない
-this.value=document.getElementById("nas_modalInput").value;
-	var myResult;//ync以外はjavaScript互換の値を返す
-	switch(this.type){
+  }
+  nas.HTML.status = msg;//処置前なので配列化の影響を受けない
+  nas.HTML.value  = document.getElementById("nas_modalInput").value;
+  var myResult;//ync以外はjavaScript互換の値を返す
+	switch(nas.HTML.type){
 	case    "alert":
 	case  "confirm":
-		myResult =(this.status==0)?true:false;
+		myResult =(nas.HTML.status==0)? true:false;
 		break;
 	case "prompt":
-		myResult =(this.status==0)?this.value:null;
+		myResult =(nas.HTML.status==0)? nas.HTML.value:null;
 		break;
 	case "prompt2":
 	case "confirm2":
-		myResult =[this.status,this.value]
+		myResult =[nas.HTML.status,nas.HTML.value]
 		break;
 
 	}
 //	========================================= alert("modlLayr : "+myResult+ " : status: "+this.status);
 //	this.modalLayer.style.display="none";
-	if(this.exFunction){this.exFunction()};//ファンクション内では各種プロパティ参照可能
-	$("#nas_modalDialog").dialog("close");
+	if(nas.HTML.exFunction) nas.HTML.exFunction(myResult);//ファンクション内では各種プロパティ参照可能
 
+	$("#nas_modalDialog").dialog("close");
+	nas.HTML.removeClass(document.body,'scroll-lock');
 //	alert(myResult);
+  }
 }
-}
-//代用別名関数 Javascript 置換用
-/*
-	NAS.showModalDialog() をラップしてJavascript（書式）互換の機能を提供します。置き換え可能なのはalertのみ
-*/
-nas.alert  =function(msg){nas.showModalDialog("alert",msg)};//代用alert
-//nas.confirm=function(msg){return nas.showModalDialog("confirm",msg)};//代用confirm
-//nas.prompt =function(msg,value){return nas.showModalDialog("prompt",msg,false,value)};//代用prompt
 
 //=====================HTMLInput汎用CT増減メソッド
-/*nas.incrFCTonHTMLInput(targetElemetn,FCT)
+/*nas.HTML.incrFCTonHTMLInput(targetElemetn,FCT)
 	HTMLInputエレメントを指定してその値をTCとして増減させるメソッド
 	引数
 	myTarget	HTMLInputElement
 	myValue	FCT
 例：
-	onclick='nas.incrFCTonHTMLInput(document.getElementById("nas_modalInput"),"-(1+0)")'
+	onclick='nas.HTML.incrFCTonHTMLInput(document.getElementById("nas_modalInput"),"-(1+0)")'
 第二引数はFCT文字列 リザルトから空白と０オリジンマーカーを取り除く処理あり
 元関数の調整が必要かも
 
-	nas.incrFCTonHTMLInput(document.getElementById("iNputbOx"),"1+0");
+	nas.HTML.incrFCTonHTMLInput(document.getElementById("iNputbOx"),"1+0");
 */
-nas.incrFCTonHTMLInput= function(myTarget,myValue){
+nas.HTML.incrFCTonHTMLInput = function(myTarget,myValue){
 	if((!myTarget)||(!(myTarget instanceof HTMLInputElement))) return false;
 	if(! myValue) return true;
 	myTarget.value=nas.Frm2FCT(nas.FCT2Frm(myTarget.value)+nas.FCT2Frm(myValue),3,0).replace(/[\s\.]/g,"");
 };
-
 //=====================ウインドウをコンテンツにフィットさせる関数、引数は特になし
 
-function nas_sizeToContent(){
-if (! MSIE){
-//	if(ckUA()[1]!='MSIE'){}
-//モジラ系の場合は、sizeToContent()を呼ぶだけ。
-	try{sizeToContent();}catch(e){return;
-	//alert(e);
-	}
-	}else{
+nas.HTML.sizeToContent = function(){
+    if (appHost.paltform == "MSIE"){
 //IE系の場合は大雑把にマッチ
-//このプロパティはinnerWidth/Height と等価だった
+//このプロパティはinnerWidth/Height と等価
 		try{
-	var WinW=document.getElementById("uiTable").clientWidth+60;
-	var WinH=document.getElementById("uiTable").clientHeight+120;
-	window.resizeTo(WinW,WinH);
+	        var WinW=document.getElementById("uiTable").clientWidth+60;
+	        var WinH=document.getElementById("uiTable").clientHeight+120;
+	        window.resizeTo(WinW,WinH);
 		}catch(e){
-	return e;
-//	alert(e);
+	        return e;
 		}
-	}
+	}else{
+//他系列の場合は、sizeToContent()を呼ぶ
+	    try{sizeToContent();}catch(e){return;};
+	};
 }
-/**
-    @params {String}  selector
-    @params {String}  property
-    @params {Number}  sheetindex
-    @returns {String|null}
 
-	nasメソッド
-	cssルールセットから値を取得する関数
-	nas.getCssRule( セレクタ, プロパティ, シートインデックス )
+var nas_sizeToContent = nas.HTML.sizeToContent;
+
+/*	cssルールセットから値を取得する関数
+		nasメソッド
+	nas.HTML.getCssRule( セレクタ, プロパティ, シートインデックス )
 selector cssのセレクタを指定　CSSに記述したままの指定が必要
 property cssプロパティ
 sheetindex	"screen"=0 "print"=1
 一致するプロパティがない場合は nullが戻る
-0番にスクリーン用スタイルシート・1番にプリント用スタイルシートを設定することが多いがシートのIDで指定のこと
 
+0番にスクリーン用スタイルシート・1番にプリント用スタイルシートを設定することが多いがシートのIDで指定のこと
+指定のない場合は、0番スタイルシートから順次検索して最初のヒットを戻す
 eg.
-nas.getCssRule('th.dialogSpan','width',0)
+nas.HTML.getCssRule('th.dialogSpan','width',0)
 
 */
-nas.getCssRule=function( selector, property, sheetindex ) {
-	selector = String(selector).toLowerCase( );
-	if( sheetindex == undefined ) sheetindex = 0;
+nas.HTML.getCssRule = function( selector, property, sheetindex ) {
+	if(arguments.length < 2) return null;
+	selector = String(selector).toLowerCase();
 	if( property.indexOf( "-" ) != -1 ) property = property.camelize( );
-	var rules = document.styleSheets[sheetindex].cssRules;//IEを除外
-    for(var i =(rules.length - 1); i >= 0; i-- ) {
-        var rule = rules[i];
-        if(
-            ((rule.selectorText)&&
-            (rule.selectorText.toLowerCase() == selector))&&
-            ((rule.style)&&(rule.style[property] != "" ))
-        ) return rule.style[ property ];
-        continue;
-    }
-  return null;
+	var target = [];
+	if( sheetindex == undefined ){
+		for (var idx = 0; idx < document.styleSheets.length;idx ++){
+			target.push(idx);
+		};
+	}else{
+		target = [sheetindex];
+	};
+	for (var ix = 0;ix < target.length ; ix++){
+		if(! document.styleSheets[target[ix]]) continue;
+		try{
+			var rules = document.styleSheets[target[ix]].cssRules;
+			for(var i =(rules.length - 1); i >= 0; i-- ) {
+				var rule = rules[i];
+				if(
+					((rule.selectorText)&&
+					(rule.selectorText.toLowerCase() == selector))&&
+					((rule.style)&&(rule.style[property] != "" ))
+				) return rule.style[ property ];
+				continue;
+			};
+		}catch(er){console.log(er);continue;};
+	};
+	return null;
 }
 /**
     cssスタイルシートセットからセレクタで指定したルールセットを検索して戻す
+    sheetindexの指定がない場合は、0から順次検索
     @params {String}  selector
     @params {String}  sheetindex
     @returns {CSSStyleRule|null}
 eg
-    nas.findCSSRule('th.dialogSpan');
+    nas.HTML.findCSSRule('th.dialogSpan');
 */
-nas.findCssRule = function(selector,sheetindex){
-	if( sheetindex == undefined ) sheetindex = 0;
-	var rules = document.styleSheets[sheetindex].cssRules;
-    for(var i =(rules.length - 1); i >= 0; i-- ) {
-        if(
-            ((rules[i].selectorText)&&
-            (rules[i].selectorText == selector))
-        ) return rules[i];
-        continue;
-    }
-  return null;
+nas.HTML.findCssRule = function(selector,sheetindex){
+	if( selector == undefined ) return null;
+	var target = [];
+	if( sheetindex == undefined ){
+		for (var idx = 0; idx < document.styleSheets.length;idx ++){
+			target.push(idx);
+		};
+	}else{
+		target = [sheetindex];
+	};
+	for (var ix = 0;ix < target.length ; ix++){
+		if(! document.styleSheets[target[ix]]) continue;
+		try{
+			var rules = document.styleSheets[target[ix]].cssRules;
+			for(var i =(rules.length - 1); i >= 0; i-- ) {
+				if(
+					((rules[i].selectorText)&&
+					(rules[i].selectorText == selector))
+				) return rules[i];
+				continue;
+			};
+		}catch(er){console.log(er);continue;};
+	};
+	return null;
 }
-
 /**
     cssスタイルシートセットからセレクタで指定したルールセットをすべて削除する
+    sheetindexの指定がない場合はアクセス可能なすべてのスタイルシートの情報を削除
     @params {String}  selector
     @params {String}  sheetindex
     @returns {CSSStyleRule|null}
 eg
-    nas.findCSSRule('th.dialogSpan');
+    nas.HTML.findCSSRule('th.dialogSpan');
 */
-nas.deleteCssRule = function(selector,sheetindex){
-    if(! selector) return ;
-    selector = String(selector).trim();
-    for (var ix = document.styleSheets[sheetindex].cssRules.length - 1 ;ix >=0; ix --){
-        if(
-            (document.styleSheets[sheetindex].cssRules[ix].selectorText)&&
-            (document.styleSheets[sheetindex].cssRules[ix].selectorText == selector)
-        ){
-            document.styleSheets[sheetindex].deleteRule(ix);
-        };
-    };
-  return ;
+nas.HTML.deleteCssRule = function(selector,sheetindex){
+	if( selector == undefined ) return null;
+	selector = String(selector).trim();
+	var target = [];
+	if( sheetindex == undefined ){
+		for (var idx = 0; idx < document.styleSheets.length;idx ++){
+			target.push(idx);
+		};
+	}else{
+		target = [sheetindex];
+	};
+	for (var itx = 0;itx < target.length ; itx++){
+		if(! document.styleSheets[target[itx]]) continue;
+		try{
+			var rules = document.styleSheets[target[itx]].cssRules;
+			for (var ix = rules.length - 1 ;ix >=0; ix --){
+				if(
+					(rules[ix].selectorText)&&
+					(rules[ix].selectorText == selector)
+				){
+					document.styleSheets[target[itx]].deleteRule(ix);
+				};
+			};
+		}catch(er){console.log(er);continue;};
+	};
+	return ;
 }
 /*
     @params {String}  selector
@@ -771,16 +1166,17 @@ nas.deleteCssRule = function(selector,sheetindex){
 
 		nasメソッド
 	cssにルールセットを追加する関数
-	nas.addCssRule( セレクタ, プロパティ, 適用範囲 )
+	nas.HTML.addCssRule( セレクタ, プロパティ, 適用範囲 )
 セレクタ	cssのセレクタを指定
 プロパティ	設定するプロパティをcssの書式で置く "{}"は補われるので不要
 適用範囲	スタイルシートID、またはその配列もしくはキーワード"screen""print"または"both"(0,1 or both)
 *** 	このメソッドは 0番にスクリーン用スタイルシート・1番にプリント用スタイルシートが
 	ロード済みであることが前提条件 注意！！ IDの方が良いかも
+	適用範囲をmedia文字列 (all|screen|tv|print...等)に変更
 eg.
-nas.addCssRule('th.dialogSpan','width:6em','both')
+nas.HTML.addCssRule('th.dialogSpan','width:6em','both')
  */
-nas.addCssRule= function( selector, property, region ) {
+nas.HTML.addCssRule= function( selector, property, region ) {
 
 	if(region instanceof Array){
 		var target = region;
@@ -868,21 +1264,22 @@ default:
 
 		nasメソッド
 	cssルール設定を上書きする関数
-	nas.setCssRule( セレクタ, プロパティ, 適用範囲 )
+	nas.HTML.setCssRule( セレクタ, プロパティ, 適用範囲 )
 セレクタ	cssのセレクタを指定
 セレクタがそのCSSに存在しない場合、新規ルールセットを追加して適用する
 
 プロパティ	設定するプロパティをJSでなくcssの書式で置く "{}"は補われるので不要
-適用範囲	"screen""print"または"both"(0,1 or both)
+適用範囲	"screen""print"または"both|all"(0,1 or both)
 *** 	このメソッドは 0番にスクリーン用・1番にプリント用、2番にnas_HTMLが
 	ロード済みであることが前提条件 注意！！ IDの方が良いかも
+	region引数をmedia文字列に変更する
 eg.
-nas.setCssRule('th.dialogSpan','width:6em','both')
-nas.setCssRule('th.dialogBox','border-width:2px;height:2cm','both')
+nas.HTML.setCssRule('th.dialogSpan','width:6em','both')
+nas.HTML.setCssRule('th.dialogBox','border-width:2px;height:2cm','both')
 //2023 追加分の関数なのでIEは完全に対象外	
  */
 
-nas.setCssRule= function( selector, property, region ) {
+nas.HTML.setCssRule= function( selector, property, region ) {
 	if(region instanceof Array){
 		var target = region;
 	}else{
@@ -891,20 +1288,20 @@ nas.setCssRule= function( selector, property, region ) {
 		case "screen":target = [0]  ;break;
 		case "print" :target = [1]  ;break;
 		case "lib"   :target = [2]  ;break;
-
 		case "both"  :target = [0,1];break;
+		case "all"   :
 		default	  :target = [0,1,2];
 		};
 	};
 	if( document.styleSheets[0].insertRule ){
 		target.forEach(function(e){
-			var targetRule = nas.findCssRule(selector,e);
+			var targetRule = nas.HTML.findCssRule(selector,e);
 			if(targetRule){
 				property.split(';').forEach(function(rv){
 					targetRule.style[(rv.split(':')[0]).camelize()] = [rv.split(':')[1]];
 				});
 			}else{
-				nas.addCssRule(selector,property,e);
+				nas.HTML.addCssRule(selector,property,e);
 			};
 		});
 		return;
@@ -914,15 +1311,15 @@ nas.setCssRule= function( selector, property, region ) {
 }
 /*
 	htmlオブジェクトのテキストの選択状態を返すメソッド
-	nas.getAreaRange(htmlObject)
+	nas.HTML.getAreaRange(htmlObject)
 	返値はオブジェクト
 	result.start	整数
 	result.end	整数
 */
-nas.getAreaRange=function(obj) {
+nas.HTML.getAreaRange = function(obj) {
 	var pos = new Object();
 
-	if (MSIE) {
+	if (appHost.platform == "MSIE") {
 		obj.focus();
 		var range = document.selection.createRange();
 		var clone = range.duplicate();
@@ -932,9 +1329,7 @@ nas.getAreaRange=function(obj) {
 
 		pos.start = clone.text.length - range.text.length;
 		pos.end = clone.text.length - range.text.length + range.text.length;
-	}
-
-	else if(window.getSelection()) {
+	} else if(window.getSelection()) {
 		pos.start = obj.selectionStart;
 		pos.end = obj.selectionEnd;
 	}
@@ -948,7 +1343,7 @@ return pos;
 //カレット位置は挿入点の後方へ
 HTMLTextAreaElement.prototype.insert=function(insertText){
 	//自分自身のカレット位置を出す
-	var myPos=nas.getAreaRange(this);
+	var myPos= nas.HTML.getAreaRange(this);
 	var range = this.value.slice(myPos.start, myPos.end);
 	var beforeNode = this.value.slice(0, myPos.start);
 	var afterNode = this.value.slice(myPos.end);
@@ -956,13 +1351,13 @@ HTMLTextAreaElement.prototype.insert=function(insertText){
 
 }
 */
-    function getTextRange(obj) {
-      // textarea の文字が選択されてない場合はフォーカスが必要
-      obj.focus();
-      return document.selection.createRange();
+nas.HTML.getTextRange = function(obj) {
+// textarea の文字が選択されてない場合はフォーカスが必要
+        obj.focus();
+        return document.selection.createRange();
     }
 
-   HTMLTextAreaElement.prototype.insert= function(myText) {
+nas.HTML.textAreaInsert = function(myText) {
       if ((window.getSelection)&&(myText)) {
         // 古いIE 以外の場合
         // 選択部分の先頭の index と長さを取得
@@ -978,10 +1373,9 @@ HTMLTextAreaElement.prototype.insert=function(insertText){
           newCaretPosition, newCaretPosition);
       }
     }
-
 /**
-    nas.timeIncrement(target,step,type)
-引数　
+    nas.HTML.timeIncrement(target,step,type)
+引数
     target  ターゲットエレメント
     step    インクリメントステップをFCTまたはミリ秒で指定　自動判定
     type  　書き戻しの際のFCTtype 指定が無い場合は　type3(秒+コマ形式)
@@ -990,7 +1384,7 @@ HTMLTextAreaElement.prototype.insert=function(insertText){
     ターゲットにonChange メソッドがあれば値変更時にコールする
     値制限は、ターゲット側で行う
 */
-nas.timeIncrement=function(target,step,type){
+nas.HTML.timeIncrement = function(target,step,type){
     if ((! target)||(target.disabled)) return false;
     if (! type)     type = 3;
     var origValue  = (target instanceof HTMLInputElement)? nas.FCT2Frm(target.value):nas.FCT2Frm(target.innerHTML);//フレームに変換
@@ -1001,37 +1395,13 @@ nas.timeIncrement=function(target,step,type){
             target.value     = nas.Frm2FCT(newValue,type);
         }else{
             target.innerHTML = nas.Frm2FCT(newValue,type);
-        }
+        };
         if(target.onchange){target.onchange(event);}
-    }
+    };
     return newValue;
-}
-/**
-nas.clipTC(myValue,max,min)
-TCで与えられた値を上限下限でクリップして返す
-上限値、下限値はフレーム数
-TCタイプは指定がない場合は入力値と同じ
-最大値の指定がない場合は無限大
-最小値の値がない場合はマイナス無限大で
-*/
-nas.clipTC=function(myValue,max,min,TCtype){
-    var f = nas.FCT2Frm(myValue,nas.FRAET,true);
-    if( typeof TCtype == 'undfined') TCtype=f.type;
-    var ostF = f.offset;
-    
-    if (f < min) f= min;
-    if (f > max) f= max;
-    return nas.Frm2FCT(f,TCtype,ostF,nas.FRATE);
-}
+};
 
 //お道具箱汎用データ操作関数群オワリ
-} catch(err){alert(err.toString());}
-
-/*
-    nas.HTMLトレーラーオブジェクト
-    順次HTML関連のコードをこちらへ移動
-*/
-nas.HTML={};
 /*
     タッチスクロール・ホイルスクロールの停止
     document.addEventListener('mousedown',nas.HTML.disableScroll,{ passive: false });
@@ -1045,8 +1415,8 @@ nas.HTML={};
 nas.HTML.disableScroll = function disableScroll(evt){ evt.preventDefault();}
 /*
     クラスリストにアイテムを追加
-    classListのない古い環境のためのコード付き
-    
+    classListのない古い環境のためのコードを含む
+ex: nas.HTML.addClass(document.body,'scroll-lock');
 */
 nas.HTML.addClass = function (element,className){
     if(element.classList){
@@ -1145,41 +1515,24 @@ nas.HTML.sendText2Clipboard = function sendText2Clipboard(contentText){
 	nas.HTML.sendText2Clipboard('ぶんぶく茶釜');
 */
 /**
-    ダウンロード
-    プログラム内で生成したデータをダウンロードする
-*/
+ *    @params {Blob}    blob
+ *    @params {String}  filename
+ *    ダウンロード
+ *    プログラム内で生成したデータをダウンロードする
+ *    ファイル名が与えられない場合はtimestampを渡す
+ */
 nas.HTML.download = function download(blob, filename) {
   const objectURL = window.URL.createObjectURL(blob),
       a = document.createElement('a'),
       e = document.createEvent('MouseEvent');
-
-  //a要素のdownload属性にファイル名を設定
-    a.setAttribute('download', filename||'noname');
+//a要素のdownload属性にファイル名を設定 ファイル名指定がない場合はtimestamp
+    a.setAttribute('download', filename||new Date().getTime());
     a.href = objectURL;
-
-  //clickイベントを着火
-  e.initEvent("click", true, true, window, 1, 0, 0, 0, 0, false, false, false, false, 0, null);
-  a.dispatchEvent(e);
-
-/*
-
-    var fileSelect = document.createElement('input');
-    fileSelect.type = 'file';
-    fileSelect.name = filename;
-fileSelect.addEventListener("change", function(evt){
-  var file = evt.target.files;
-  console.log(file[0]);
-
-
-},false);
-    
-    e = document.createEvent('MouseEvent');
+//clickイベントを着火
     e.initEvent("click", true, true, window, 1, 0, 0, 0, 0, false, false, false, false, 0, null);
-    fileSelect.dispatchEvent(e);
-*/    
+    a.dispatchEvent(e);
     return false;
 }
-
 /*TEST
 nas.HTML.download(new Blob([xUI.XPS.toString()], {type : 'application/xps'}), 'test');
 */
@@ -1357,91 +1710,14 @@ nas.HTML.miniTextEdit.sendClipboard = function(){
 	);
 */
 //------簡易テキストエディタ 2022 06 21//
-if(false){
 /**
  *	スクロールドラッガブル要素設定
  *		右クリックを通す
  *		リリースの際にフットマークを残す
  *	キャンセルフラグが立っていればスキップ
- * pointerイベントに書き換え 2023 11 24
- */
-nas.HTML.mousedragscrollable = function mousedragscrollable(element){
-    let target; // 動かす対象
-    $(element).each(function (i, e) {
-//        $(e).on('mousedown touchstart',function (event) {}
-        $(e).on('pointerdown',function (event){
-console.log(event.originalEvent.target.id);
-//console.log(event.originalEvent);
-            if(
-                (nas.HTML.mousedragscrollable.movecancel)
-            ) return true;
-            event.originalEvent.preventDefault();
-            target = $(e); // 動かす対象
-            $(e).data({
-                "down": true,
-                "move": false,
-                "x": ((event.type != 'touchstart')? event.originalEvent.clientX:event.originalEvent.touches[0].clientX),
-                "y": ((event.type != 'touchstart')? event.originalEvent.clientY:event.originalEvent.touches[0].clientY),
-                "scrollleft": $(e).scrollLeft(),
-                "scrolltop": $(e).scrollTop(),
-            });
-            $(e).css("cursor","grabbing");
-//ドラグストローク停止
-        	document.addEventListener('mouseover',nas.HTML.disableScroll,{ passive: false });
-        	document.addEventListener('mousedown',nas.HTML.disableScroll,{ passive: false });
-        	document.addEventListener('pointerdown',nas.HTML.disableScroll,{ passive: false });
-        	document.addEventListener('touchstart' ,nas.HTML.disableScroll,{ passive: false });
-
-        	$(document).on('pointermove',function(event){
-xUI.printStatus(nas.HTML.mousedragscrollable.footmark);
-    // list要素内/外でのevent
-        		if ($(target).data("down")) {
-//            		event.originalEvent.preventDefault();
-//            		event.preventDefault();
-            		let move_x = $(target).data("x") - ((event.type != 'touchstart')? event.originalEvent.clientX:event.originalEvent.touches[0].clientX);
-            		let move_y = $(target).data("y") - ((event.type != 'touchstart')? event.originalEvent.clientY:event.originalEvent.touches[0].clientY);
-            		if (Math.abs(move_x) <= 2 || Math.abs(move_y) <= 2) {
-                		$(target).data("move", true);
-            		} else { return; };
-            		$(target).scrollLeft($(target).data("scrollleft") + move_x);
-            		$(target).scrollTop($(target).data("scrolltop") + move_y);
-            		nas.HTML.mousedragscrollable.footmark = true;
-            		return false;
-        		};
-        	});
-            return ((event.originalEvent.button == 2)? true:false);
-        }).on('pointerup',function(event){
-console.log(event.type);
-        	$(e).css("cursor","");
-        	if($(target).data("move")){event.originalEvent.stopPropagation() ;event.originalEvent.preventDefault();};
-//ドラグストローク再開
-        	document.removeEventListener('mouseover',nas.HTML.disableScroll,{ passive: false });
-        	document.removeEventListener('mousedown',nas.HTML.disableScroll,{ passive: false });
-        	document.removeEventListener('pointerdown',nas.HTML.disableScroll,{ passive: false });
-        	document.removeEventListener('touchstart' ,nas.HTML.disableScroll,{ passive: false });
-//			$(document).unbind("pointermove");
-//		}).on('pointerleave',function(evt){
-//console.log(evt.type);
-//        	$(e).css("cursor","");
-			$(document).unbind("pointermove");
-		});
-    });
-}
-//移動フットマーク
-nas.HTML.mousedragscrollable.footmark  = false;
-//マウスドラグ移動キャンセルフラグ
-nas.HTML.mousedragscrollable.movecancel = false;
-
-//常用クラス設定 以下のコードはドキュメントの読込時に実行のこと
-//nas.HTML.mousedragscrollable('.mousedragscrollable');
-}
-
-/**
- *	スクロールドラッガブル要素設定
- *		右クリックを通す
- *		リリースの際にフットマークを残す
- *	キャンセルフラグが立っていればスキップ
- * Vanila/pointerイベントに書き換え 2023 11 25
+ * このメソッドは、引数で指定されたエレメントをドラグスクロール可能にする
+ * スターター要素は親要素からイベントを引き継ぐ
+ * Vanila,pointerイベントに書き換え 2023 11 25
  * mouse|touch　両イベント対応で再調整 11 30
  */
 nas.HTML.mousedragscrollable = function mousedragscrollable(elements){
@@ -1464,8 +1740,8 @@ nas.HTML.mousedragscrollable = function mousedragscrollable(elements){
 		ovl.style.height = e.scrollHeight + 'px';
 		ovl.style.width  = e.scrollWidth  + 'px';
 		e.appendChild(ovl);
-//  nas.setCssRule('.mousedragscrollable_overlay','display:none;')        ;//解除 (デフォルト)
-//  nas.setCssRule('.mousedragscrollable_overlay','display:inline-block;');//ブロック
+//  nas.HTML.setCssRule('.mousedragscrollable_overlay','display:none;')        ;//解除 (デフォルト)
+//  nas.HTML.setCssRule('.mousedragscrollable_overlay','display:inline-block;');//ブロック
 
 //		e.addEventListener('click',function(evt){console.log('click : '+evt.target.id);evt.stopImmediatePropagation();evt.stopPropagation();evt.preventDefault();return true;});
 //		e.addEventListener('mousedown' , nas.HTML.mousedragscrollable.ptHandle);
@@ -1533,6 +1809,8 @@ console.log(evt.target.type);
 }
 //移動フットマーク
 nas.HTML.mousedragscrollable.footmark  = false;
+nas.HTML.mousedragscrollable.down      = false;//ポインタダウン時に更新
+nas.HTML.mousedragscrollable.move      = false;//ポインタムーブ時に更新
 //マウスドラグ移動キャンセルフラグ
 nas.HTML.mousedragscrollable.movecancel = false;
 /*	ポインタハンドラ
@@ -1589,9 +1867,10 @@ console.log(event.target.click instanceof Function)
 			event.target.click();
 		};
 	}else{
+		nas.HTML.mousedragscrollable.move = false;
 console.log('mouseup set click cancel')
 //クリックキャンセル
-//		nas.setCssRule('.mousedragscrollable_overlay','display:inline-block;','lib');//ブロック
+//		nas.HTML.setCssRule('.mousedragscrollable_overlay','display:inline-block;','lib');//ブロック
 	};
 	if((nas.HTML.mousedragscrollable.down)||(nas.HTML.mousedragscrollable.move)){
 	};
@@ -1624,7 +1903,7 @@ console.log('remove')
 		nas.HTML.mousedragscrollable.target.style.cursor = '';
 		nas.HTML.mousedragscrollable.target = null;
 	};
-	nas.setCssRule('.mousedragscrollable_overlay','display:none;','lib')        ;//解除 (デフォルト)
+	nas.HTML.setCssRule('.mousedragscrollable_overlay','display:none;','lib')        ;//解除 (デフォルト)
 }
 //ドラグ移動ハンドラ pointermove
 nas.HTML.mousedragscrollable.slHandle = function(evt){
@@ -1638,7 +1917,7 @@ nas.HTML.mousedragscrollable.slHandle = function(evt){
 //detect move
 			nas.HTML.mousedragscrollable.move = true;
 //click block
-			nas.setCssRule('.mousedragscrollable_overlay','display:inline-block;','lib');//ブロック
+			nas.HTML.setCssRule('.mousedragscrollable_overlay','display:inline-block;','lib');//ブロック
 		}else{
 //detect non move//リリース実行
 			return;
@@ -1742,11 +2021,14 @@ nas.HTML.SliderSelect.prototype.parse = function(element,options,direction){
 nas.HTML.SliderSelect.prototype.init = function(){
 //	this.element.addEventListener('mousedown' ,nas.HTML.SliderSelect.ptHandle);
 //	this.element.addEventListener('touchstart',nas.HTML.SliderSelect.ptHandle);
+	this.element.addEventListener('wheel',nas.HTML.SliderSelect.slHandle);
 	this.element.addEventListener('pointerdown',nas.HTML.SliderSelect.ptHandle);
 	Array.from(this.element.children).forEach(function(e){
 //		e.addEventListener('mousedown' ,nas.HTML.SliderSelect.ptHandle);
 //		e.addEventListener('touchstart',nas.HTML.SliderSelect.ptHandle);
 		e.addEventListener('pointerdown',nas.HTML.SliderSelect.ptHandle);
+		e.addEventListener('pointerenter',nas.HTML.SliderSelect.ptEnter);
+		e.addEventListener('pointerout'  ,nas.HTML.SliderSelect.ptOut);
 	});
 	this.element.addEventListener('keydown',nas.HTML.SliderSelect.kbHandle);
 	this.element.addEventListener('keyup'  ,nas.HTML.SliderSelect.kbHandle);
@@ -1906,13 +2188,21 @@ console.log(evt.target);
 	};
 	return false;
 }
+nas.HTML.SliderSelect.ptEnter = function(evt){
+console.log('pointer-ENTER',evt.target.id)
+	evt.target.style.backgroundColor='green';
+}
+nas.HTML.SliderSelect.ptOut = function(evt){
+console.log('pointer-OUT',evt.target.id)
+	evt.target.style.backgroundColor='';
+}
 /*	ポインタハンドラ
 		div全体とbutton 双方に適用されるので注意
 */
 nas.HTML.SliderSelect.ptHandle = function(evt){
 console.log(evt.type);
 //マウスドラッグスクロールの停止
-	nas.HTML.mousedragscrollable.movecancel = true;
+//	nas.HTML.mousedragscrollable.movecancel = true;
 //タッチスクロール・ホイルスクロールの停止
 //	document.addEventListener('pointerdown',nas.HTML.disableScroll,{ passive: false });
 	document.addEventListener('mousedown'  ,nas.HTML.disableScroll,{ passive: false });
@@ -1964,7 +2254,7 @@ nas.HTML.SliderSelect.rvHandle = function(event){
 //ドラグ移動ハンドラ pointermove
 nas.HTML.SliderSelect.slHandle = function(evt){
 // list要素内/外でのevent
-	if (nas.HTML.SliderSelect.down){
+	if ((nas.HTML.SliderSelect.down)||(evt.type == 'wheel')){
 //		evt.preventDefault();
 //		evt.stopPropagation();
 		let move_x = nas.HTML.SliderSelect.x - ((evt.type != 'touchmove')? evt.clientX:evt.touches[0].clientX);
@@ -2150,4 +2440,30 @@ nas.HTML.mkIcon = function mkIcon(width,height,mimetype,baseImg,cash){
 }
 
 /*=======================================*/
+if((typeof window == 'undefined')&&(typeof app == 'undefined')){
+    module.exports = nas.HTML;
+}else{
+    nas.Console            = nas.HTML.Console;
+    nas.sliderVALUE        = nas.HTML.sliderVALUE;
+    nas.editTableCell      = nas.HTML.editTableCell.edit;
+    nas.showModalDialog    = nas.HTML.showModalDialog;
+    nas.incrFCTonHTMLInput = nas.HTML.incrFCTonHTMLInput;
+    nas.getCssRule         = nas.HTML.getCssRule;
+    nas.addCssRule         = nas.HTML.addCssRule;
+    nas.setCssRule         = nas.HTML.setCssRule;
+    nas.findCssRule        = nas.HTML.findCssRule;
+    nas.getAreaRange       = nas.HTML.getAreaRange;
+    var getTextRange       = nas.HTML.getTextRange
 
+    nas.timeIncrement      = nas.HTML.timeIncrement;
+
+    HTMLTextAreaElement.prototype.insert = nas.HTML.textAreaInsert;
+
+//代用別名関数 Javascript 置換用
+/*
+	NAS.showModalDialog() をラップしてJavascript（書式）互換の機能を提供します。置き換え可能なのはalertのみ
+*/
+    nas.alert  =function(msg){nas.HTML.showModalDialog("alert",msg,"",0,null,false)};//代用alert
+//  nas.confirm=function(msg){return nas.HTML.showModalDialog("confirm",msg)};//代用confirm
+//  nas.prompt =function(msg,value){return nas.HTML.showModalDialog("prompt",msg,false,value)};//代用prompt
+}

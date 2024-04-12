@@ -149,11 +149,11 @@ documentDepot.updateOpusSelector=function(myRegexp,rev){
     
     var options    = [];
     myContents += (myProducts.length)?
-    '<option value="==newTitle==" selected>（*-- no title selected --*）</option>':
-    '<option value="==newTitle==" selected>（*-- no titles --*）</option>';
+    '<option class=docStatus-NV value="==newTitle==" selected>（*-- no title selected --*）</option>':
+    '<option class=docStatus-NV value="==newTitle==" selected>（*-- no titles --*）</option>';
     options.push((myProducts.length)?
-        {value:"==newTitle==",innerText:"（*-- no title selected --*）"}:
-        {value:"==newTitle==",innerText:"（*-- no titles --*）"}
+        {value:"==newTitle==",className:"docStatus-NV",innerText:"（*-- no title selected --*）"}:
+        {value:"==newTitle==",className:"docStatus-NV",innerText:"（*-- no titles --*）"}
     );
     for( var opid = 0 ; opid < myProducts.length ; opid ++){
         var currentText  = decodeURIComponent(myProducts[opid]);
@@ -216,11 +216,11 @@ console.log(myDocuments);
     var myContents = "";
     var options    = [];
     myContents +=(myDocuments.length)? 
-    '<option value="==newDocument==" selected>（*-- no document selected--*）</option>':
-    '<option value="==newDocument==" selected>（*-- no documents --*）</option>';
+    '<option class="docStatus-NV" value="==newDocument==" selected>（*-- no document selected--*）</option>':
+    '<option class="docStatus-NV" value="==newDocument==" selected>（*-- no documents --*）</option>';
     options.push((myDocuments.length)?
-        {value:"==newDocument==",innerText:"（*-- no document selected--*）"}:
-        {value:"==newDocument==",innerText:"（*-- no documents --*）"}
+        {value:"==newDocument==",className:"docStatus-NV",innerText:"（*-- no document selected--*）"}:
+        {value:"==newDocument==",className:"docStatus-NV",innerText:"（*-- no documents --*）"}
     );
     for ( var dlid = 0 ; dlid < myDocuments.length ; dlid ++){
 //全ドキュメント走査
@@ -559,7 +559,7 @@ console.log("changeSelector")
             };
         };
     };
-    productName=String(productName);//明示的にストリング変換する
+    productName = String(productName);//明示的にストリング変換する
     var productInfo=Xps.parseProduct(productName);
         var subTitle    = productInfo.subtitle;
         var opus        = productInfo.opus;

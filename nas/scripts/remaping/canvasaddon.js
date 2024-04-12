@@ -84,6 +84,8 @@ pman.reName.items[0].setImage();
 	}
 /**
  *	上書き画像用のアイテムの描画環境を再初期化する
+ *	既存の編集データが存在する場合は、そのデータに従った画像を再構築する
+ *	ストリームの最終画像をsvgキャッシュに対して描画する
  *	現在の編集中のSVGキャッシュは廃棄されるので呼び出しに注意
  */
 	nas.NoteImage.prototype.initCanvas = function initCanvas(callback){
@@ -94,7 +96,11 @@ pman.reName.items[0].setImage();
 //		var imgsrc = ( this.img.width*this.img.height != 0)? this.img.src :'';//現在の画像のsrcを控える
 
 //オブジェクトのcanvas関連プロパティを初期化する 96ppiで初期化
-		if(!(this.svg)) this.svg = document.createElement('svg');
+//		if(!(this.svg)) this.svg = document.createElement('svg');
+		var svgcontent = String(this.svg);
+console.log(svgcontent);
+//		if(this.svg instanceof HTMLElement) ;
+		this.svg = document.createElement('svg');
 		this.svg.style.width  = this.size.x.as('px')+'px';
 		this.svg.style.height = this.size.y.as('px')+'px';
 // id: pageCanvasBuffer-1... noteCanvasBuffer-0_0... descriptionCanvasBuffer-
@@ -160,14 +166,18 @@ pman.reName.items[0].setImage();
 					"crossOrigin":null
 				}
 */
+		if(this.canvasStream.length > 0){
+			this.svg.innerHTML = svgcontent;
+			console.log(this.svg);
+		}else{
 //空配列でスタート
-		var src = {
-			"version":"5.1.0",
-			"objects":[]
+			var src = {
+				"version":"5.1.0",
+				"objects":[]
+			};
+			this.canvasStream        = [JSON.stringify(src)];
+			this.canvasUndoPt        = -1;
 		};
-		this.canvasStream        = [JSON.stringify(src)];
-		this.canvasUndoPt        = -1;
-
 		var parentId = 'memo_image';//通常のノート画像トレーラー
 		if(this.type == 'page'){
 			parentId = 'sheetImage-' + (parseInt(this.link) - 1);//タイムシート画像
@@ -1078,30 +1088,35 @@ console.log('NOHAND')
 //			if(xUI.canvasPaint.currentTool != 'hand'){};;
 				xUI.canvasPaint.toolProps.downPoint = evt.absolutePointer;
 
-			if((xUI.canvasPaint.currentTool == 'pen')&&(evt.e.shiftKey)){
-				xUI.canvasPaint.toolProps.lineDrawId = xUI.canvas._objects.length;//直線描画時にこれから描画するオブジェクトのIDでフラグを立てる
+				if((xUI.canvasPaint.currentTool == 'pen')&&(evt.e.shiftKey)){
+					xUI.canvasPaint.toolProps.lineDrawId = xUI.canvas._objects.length;//直線描画時にこれから描画するオブジェクトのIDでフラグを立てる
 			//（フラグの回収はチェンジイベント側で行う）
-			var lineOffset = xUI.canvasPaint.pencilWitdh/2;
-				xUI.canvas.add(new fabric.Line([
-					xUI.canvasPaint.toolProps.upPoint.x   - lineOffset,
-					xUI.canvasPaint.toolProps.upPoint.y   - lineOffset,
-					xUI.canvasPaint.toolProps.downPoint.x - lineOffset,
-					xUI.canvasPaint.toolProps.downPoint.y - lineOffset
-				],{
-					strokeWidth  : xUI.canvasPaint.pencilWitdh,
-					strokeLineCap: "round",
-					stroke       : xUI.canvasPaint.parseColor(xUI.canvasPaint.pencilColorF),
-					angle        : 0
-				}));
-				xUI.canvas.renderAll();
-			}else if(
-				(!(xUI.canvasPaint.toolProps.suspend))&&
-				((xUI.canvasPaint.currentTool == 'circle')||(xUI.canvasPaint.currentTool == 'rect'))
-			){
+				var lineOffset = xUI.canvasPaint.pencilWitdh/2;
+					xUI.canvas.add(new fabric.Line([
+						xUI.canvasPaint.toolProps.upPoint.x   - lineOffset,
+						xUI.canvasPaint.toolProps.upPoint.y   - lineOffset,
+						xUI.canvasPaint.toolProps.downPoint.x - lineOffset,
+						xUI.canvasPaint.toolProps.downPoint.y - lineOffset
+					],{
+						strokeWidth  : xUI.canvasPaint.pencilWitdh,
+						strokeLineCap: "round",
+						stroke       : xUI.canvasPaint.parseColor(xUI.canvasPaint.pencilColorF),
+						angle        : 0
+					}));
+					xUI.canvas.renderAll();
+				}else if(
+					(!(xUI.canvasPaint.toolProps.suspend))&&
+					((xUI.canvasPaint.currentTool == 'circle')||(xUI.canvasPaint.currentTool == 'rect'))
+				){
 	console.log('shape drawing start');
-				xUI.canvasPaint.suspend = true;
+					xUI.canvasPaint.suspend = true;
+				};
+//ハンドツールを除く全てのツールの処理
+			}else{
+//ハンドツール
+console.log('HAND');
+				
 			};
-			};//ハンドツールを除く全てのツールでの処理
 		}else if((evt.e.type == 'mouseup')||(evt.e.type == 'touchend')){
 			if(xUI.canvasPaint.currentTool != 'hand'){
 				xUI.canvasPaint.toolProps.upPoint = evt.absolutePointer;
@@ -1353,12 +1368,15 @@ console.log([window.scrollX,window.scrollY,xUI.viewScale]);
  *	
  */
 	xUI.canvasPaint.setTool = function(tl){
-		if(xUI.canvasPaint.active == false) return;
-		if(xUI.canvasPaint.currentTool == tl) return;
+
+console.log([tl,xUI.canvasPaint.currentTool,xUI.canvasPaint.previousTool]);
+
+		if(xUI.canvasPaint.active == false)   return;//inactive
+		if(xUI.canvasPaint.currentTool == tl) return;//same
 		if((tl.match(/canvas(Move|Resize)/))&&(xUI.viewMode != 'Compact')) return;
 
 		if(tl == 'reset') tl = xUI.canvasPaint.currentTool;
-		if(xUI.canvasPaint.previousTool != tl) xUI.canvasPaint.previousTool = xUI.canvasPaint.currentTool;
+		if(xUI.canvasPaint.currentTool != tl) xUI.canvasPaint.previousTool = xUI.canvasPaint.currentTool;
 		xUI.canvasPaint.currentTool = tl;
 		if(!(tl.match(/addText|stamp/))){
 			document.getElementById(xUI.canvasPaint.previousTool).disabled = false;
@@ -1755,7 +1773,7 @@ console.log(select,range);
 	var result = xUI.XPS.noteImages.getByLinkAddress('cell:'+select.join('_'));
 	if(result) return result;//既存ならそれを戻す
 console.log(result);
-	var trackType = XpsAreaOptions[xUI.XPS.xpsTracks[select[0]].option];
+	var trackType = Xps.AreaOptions[xUI.XPS.xpsTracks[select[0]].option];
 	var area = xUI.XPS.xpsTracks.areaOrder.find(function(e){return (e.members.indexOf(xUI.XPS.xpsTracks[select[0]])>=0)});
 	var trackWidth  = range[0] + 1;//
 	var frameHeight = range[1] + 1;

@@ -152,6 +152,7 @@ table {
 	border-width:0px 1px 0 0;
 	border-style:solid;
 	table-layout:fixed;
+	overflow:visible;
 	max-height:100%;
 }
 table.UItable{
@@ -177,6 +178,7 @@ table.sheet	{
 transform: {matrix(1, 0, 0, 1, 0, 0)};
 }
 table.toolbox {	
+	display:inline-block;
 	margin:0 0 0 0;
 	padding:0 0 0 0
 }
@@ -206,11 +208,10 @@ td#edchg         { display:none}
 th.headerLabel   {color:gray;border-color:#bbbbbb;text-align:left;border-width:0 0 4px 0;}
 .opusHeader     { width:106px;}
 .titleHeader    { width:348px;}
-.scenecutHeader { width:151px;}
-.subtitleHeader { width:302px;}
-.timeHeader     { width:189px;}
-.nameHeader     { width:132px;}
-.pageHeader     { width:132px;}
+.scenecutHeader { width:166px;}
+.timeHeader     { width:166px;}
+.nameHeader     { width:128px;}
+.pageHeader     { width:128px;}
 
 /*
 	シート本体のビュー設定
@@ -240,7 +241,6 @@ xMap Design-TEST
 	タイムラインヘッダー
 */
 .trackLabel{
-	color:blue;
 	height:20px;
 }
 .trackLabel-tall{
@@ -395,7 +395,7 @@ th.framenotelabel {
 	ページ印刷用トレーラー
 */
 div.printPage {
-	page-break-inside:avoid;
+	break-inside:avoid;
 	transform:translate(0px,0px);
 }
 /*
@@ -404,8 +404,23 @@ div.printPage {
 .top_comment {
 	font-size:8pt;
 }
+.signArea {
+	position : absolute;
+	top      : 26mm;
+	left     : 14mm;
+	width    : 270mm;
+	height   : 15mm;
+}
+.noteArea {
+	position : absolute;
+	top      : 42mm;
+	left     : 14mm;
+	width    : 270mm;
+	height   : 30mm;
+}
 /*
 	タイムシート記述終了マーカー
+<span id=endMarker class=endMarker> :: end ::</span>
 */
 .endMarker {
 	display:inline-block;
@@ -418,6 +433,37 @@ div.printPage {
 	border-width:4px 0 0 0;
 	z-index:3;
 	margin-top:8px;
+}
+/*
+	マージンフレーム境界マーカー
+<span id=headMarker class=marginMarker></span>
+<span id=tailMarker class=marginMarker></span>
+*/
+.marginMarker {
+	display:inline-block;
+	position:absolute;
+	top:-2px;
+	width:240px;
+	margin:0;
+	height:8px;
+	border-top-style:solid;
+	border-top-color:red;
+	border-width:1px 0 0 0;
+	z-index:3;
+}
+/*
+	トランジションシンボル
+*/
+.testSymbol {
+	display:inline-block;
+	position:absolute;
+	mix-blend-mode:darken;
+	opacity:.5;
+	top:-2px;
+	margin:0;
+	border-style:none;
+	z-index:3;
+	pointer-events:none;
 }
 
 /*		テーブルデータ基本
@@ -1169,6 +1215,18 @@ button.spinCtl-right {
 .timeControl {
 	margin: 2px 62px 2px 0;
 }
+.timeButton {
+	width : 1.5in;
+	height: 0.5in;
+	font-size: large;
+	background-image:url(images/ui/timeButton.png);
+   /* 角丸 */
+    -moz-border-radius: 6px;
+    -webkit-border-radius: 6px;
+    border-radius: 6px;
+	background-color : #dddddd;
+	color: #222222;
+}
 button.subControl {
 	margin: 0;
     font-size:6px;
@@ -1243,9 +1301,43 @@ button.subControl {
 	width    : 1058px;
 	height   : 318px;
 	padding-left:16px;
-	margin-top  : 13mm;
-	margin-left : 4mm;
+	margin-top  : 0;
+	margin-left : 0;
+	transform   : translate(0px,0px)
  }
+ /*========== ページヘッダー領域 ============*/
+div.sheetHeader {
+	position : absolute;
+	top  :24px;
+	left :48px;
+	width:1018px;
+	height:68px;
+	margin:0;
+	border-style:solid;
+	border-width:1px 1px 1px 1px;
+	border-color:#bbbbbb;
+	overflow:visible;
+	white-space:nowrap;
+}
+.pgHeader {
+	display:table-cell;
+	text-align:center;
+	vertical-align:middle;
+	height:68px;
+	margin:0;
+	border-width:0;
+	border-style:none;
+	font-size:16pt;
+}
+.pgHeader-label {
+	display:table-cell;
+	text-align:left;
+	vertical-align:bottom;
+	height:64px;
+	margin:0;
+	border-style:none;
+	font-size:9pt;
+}
  /*========== ページヘッダーテーブル ============*/
 table.pageHeader,.sheetHeader {
 	width:1058px;
@@ -1256,7 +1348,7 @@ table.pageHeader,.sheetHeader {
 	border-color:#bbbbbb;
 }
 td.pgHeader {
-	vertical-align:bottom;
+	vertical-align:middle;
 	height:38px;
 	margin:0;
 	border-width:0;
@@ -1267,7 +1359,18 @@ td.pgHeader {
 	メモ領域をとるマージン
 	２ページめ以降はダミー
 */
-table.sheetHeaderMargin {
+div.sheetHeaderContent {
+	display:inline-block;
+	position:absolute;
+	top: 96px;
+	left: 48px;
+	width:1056px;
+	margin:0;
+	border-style:none;
+	border-width:0;
+}
+div.pageHeaderMargin {
+	display:inline-block;
 	width:1056px;
 	height:256px;
 	margin:0;
@@ -1292,7 +1395,7 @@ td.memoSpace {
 	vertical-align:top;
 	line-height:1.5;
 }
-div.memoSpace {
+div.memoSpace ,.noteSpace {
 	width:1056px;
 	min-height:128px;
 	border-width:0px;
@@ -1343,21 +1446,24 @@ input.toolTip	{
 
  */
 td.Sep {
+	padding-right:2px;
+	border-bottom-color:transparent;
 	color:gray;
 }
 /*	タイムセパレータライン
 	time-separator-left
 	time-separator
 	time-separator-dialog
+
+	text-align:right;
+	border-style:solid;
+	vertical-align:bottom;
  */
 /*		左端
 	height 固定16px は廃止
 */
 td.ltSep,td.ltSep_Blank {
-	text-align:right;
-	border-style:solid;
-	vertical-align:bottom;
-	border-bottom-width:4px;
+		border-bottom-width:4px;
 }
 /*		通常データ*/
 td.ntSep,td.ntSep_Blank {
@@ -1375,11 +1481,11 @@ td.dtSep,td.dtSep_Blank {
  */
 /*		左端
 	height 固定16px は廃止
- */
-td.lsSep,td.lsSep_Blank {
 	text-align:right;
 	border-style:solid;
 	vertical-align:bottom;
+ */
+td.lsSep,td.lsSep_Blank {
 	border-bottom-width:3px;
 	border-bottom-color:transparent;
 }
@@ -1400,20 +1506,19 @@ td.dsSep,td.dsSep_Blank {
 /*		左端
 	height:16px;
 */
-.lnSep,.lnSep_Blank {
-	text-align:right;
+td.lnSep,td.lnSep_Blank {
 	border-style:solid;
-	vertical-align:bottom;
-	border-width:0 1px 1px 0px;
-	border-bottom-color:transparent;
+	vertical-align:middle;
 }
 /*		参照データ
 未使用？
 		height:16px;
 */
+/*
 td.ref {
 	color:gray;
 }
+*/
 td.rnSep,.rnSep_Blank {
 		border-bottom-width:1px;
 }
@@ -1452,6 +1557,15 @@ td.soundbody{
 td.soundbody-join{
         border-right-width:0;
 }
+td.tcbody{
+    font-weight:bold;
+    white-space:nowrap;
+    direction:rtl;
+    text-align:right;
+	overflow: visible;
+	white-space: nowrap;
+}
+
 /*
     display:inline-block;
 	writing-mode: vertical-lr;
@@ -1467,6 +1581,7 @@ td.sheetbody {
 	height:9px;
 	overflow:visible;
 	white-space:nowrap;
+
 }
 /*	カラムセパレータ	*/
 td.colSep {
@@ -1501,7 +1616,23 @@ td.deSep,td.deSep_Blank {
 		border-bottom-width:4px;
 }
 /*	時間表示	*/
+.timecode {
+	
+}
 .timeguide {
+	font-size:10px;
+	vertical-align:top;
+	overflow: visible;
+	white-space: nowrap;
+}
+/*	フレーム表示	*/
+.frameguide {
+	font-size:9px;
+	text-align:right;
+}
+/*	ft表示	*/
+.feetguide {
+	font-size:10px;
 	text-align:left;
 }
 /*======================================================
@@ -1738,17 +1869,32 @@ a.close img{
 	background-color:#666666;
 }
 
-/* 書類フォーマット編集パネル */
-#optionPanelDocFormat{
-	width:128px;
-	bottom:152px;
+/* 書類フォーマット編集パネル
+	width:480px;
+ */
+.optionPanelDocFormat {
+	top:152px;
 	right:16px;
 }
+.optionPanelDocFormat-mobile {
+	left:0px;
+	bottom:0px;
+	width:100%;
+}
+#docFormatDetail{
+	overflow-y:scroll;
+	height:280px;
+}
 /* ドキュメント画像調整 */
-#optionPanelImgAdjust{
+.optionPanelImgAdjust{
 	width:152px;
-	bottom:240px;
+	top:240px;
 	right:100px;
+}
+.optionPanelImgAdjust-mobile{
+	width:100%;
+	bottom:240px;
+	left:0px;
 }
 /*シーン情報*/
 #optionPanleScn {
@@ -1763,20 +1909,26 @@ a.close img{
 }
 /*ログインパネル*/
 #optionPanelLogin{
-	width:100%;
     display:none;
+	width:100%;
+	height:36px;
 }
 /*ソフトウェアキーボード*/
 .optionPanelTbx {
     display:none;
-    bottom:128px;
+	top:192px;
+    bottom:auto;
     right:48px;
     width:620px;
     height:256px;
 	font-weight:bold;
+	text-align:center;
 }
 .optionPanelTbx-mobile {
-    width:700px;
+	top:auto;
+	left:0;
+	bottom:24px
+    width:100%;
     height:350px;
 }
 .tBSelector {
@@ -1808,10 +1960,15 @@ a.close img{
     -webkit-border-radius: 18px;
     border-radius: 18px;
 }
+.skb_key:hover {
+	border-color:red;
+	border-width:2px;
+}
+
 .skb_key-mobile {
     height:52px;
     width:52px;
-	font-size:16px;
+	font-size:20px;
 	margin-left:8px;
   /* 角丸 */
     -moz-border-radius: 26px ;
@@ -1830,7 +1987,7 @@ a.close img{
 }
 /*音響フローティングパネル*/
 .optionPanelSnd {
-    bottom:32px;
+    top:32px;
     left:0px;
     width:660px;
     height:248px;
@@ -1846,9 +2003,24 @@ a.close img{
     border-style:none;
 }
 
+/*メモ欄フローティングパネル*/
+.optionPanelMemo {
+    top:32px;
+    left:0px;
+    width:896px;
+    height:384px;
+}
+.optionPanelMemo-mobile {
+    width:740px;
+    height:400px;
+}
+#formMemo {
+	padding-left:12px;
+}
+
 /*カメラワークパネル*/
-#optionPanelCam {
-    bottom:128px;
+.optionPanelCam {
+    top:128px;
     right:32px;
     width:256px;
     height:256px;
@@ -1857,8 +2029,8 @@ a.close img{
 	padding-left:12px;
 }
 /*ステージワークパネル*/
-#optionPanelStg {
-    bottom:96px;
+.optionPanelStg {
+    top:96px;
     right:64px;
     width:640px;
     height:480px;
@@ -1867,8 +2039,8 @@ a.close img{
 	padding-left:12px;
 }
 /*コンポジットワークパネル*/
-#optionPanelSfx {
-    bottom:64px;
+.optionPanelSfx {
+    top:64px;
     right:96px;
     width:640px;
     height:480px;
@@ -1878,14 +2050,16 @@ a.close img{
 }
 /*手描きメモパネル*/
 .optionPanelPaint {
-    bottom:72px;
-    right:150px;
-    width:132px;
-    height:500px;
+    top    : 72px;
+    right  : 150px;
+    width  : 144px;
+    height : 440px;
 }
 .optionPanelPaint-mobile{
-    width:228px;
-    height:560px;
+	top    : auto;
+	bottom : 0px;
+    width  : 100%;
+    height : 256px;
     background-color:#b0b0b0;
 }
 #formPaint {
@@ -1893,7 +2067,7 @@ a.close img{
     resize:horizontal;
 }
 /*画像編集テキストフローティングパネル*/
-#optionPanelText {
+.optionPanelText {
     display:none;
     position:absolute;
     bottom:100px;
@@ -1917,28 +2091,28 @@ a.close img{
 	font-size:24px;
 }
 /*画像編集スタンプフローティングパネル*/
-#optionPanelStamp {
-    display:none;
-    position:absolute;
-    bottom:100px;
-    left:320px;
-    min-width:240px;
-    padding:0;
-    border-style:solid;
-    border-width:1px;
-    border-color:#808080;
-    z-index:7;
-    overflow:hidden;
+.optionPanelStamp {
+    display   :none;
+    position  :absolute;
+    top       :240px;
+    left      :320px;
+    min-width :240px;
+    padding   :0;
+    border-style :solid;
+    border-width :1px;
+    border-color :#808080;
+    z-index      :7;
+    overflow     :hidden;
     /* 角丸*/
     -moz-border-radius: 4px ;
     -webkit-border-radius: 4px;
     border-radius: 4px;
 }
 /*画像フローティングパネル*/
-#optionPanelRef {
+.optionPanelRef {
     display:none;
     position:absolute;
-    bottom:64px;
+    top:64px;
     left:120px;
 	width:640px;
     padding:0;
@@ -1958,12 +2132,17 @@ a.close img{
 div#underlay {
 	opacity:.125;
 	float:right;
-	right:0px;
-	bottom:0px;
+	right:8px;
 	background-blend-mode: normal; 
 	overflow:hidden;
 	position:fixed;
 	pointer-events: none;	
+}
+.underlay{
+	bottom:8px;
+}
+.underlay-mobile{
+	top:8px;
 }
 /*
 	画像ドキュメント
@@ -2007,6 +2186,16 @@ div#underlay {
 }
 /*	ドキュメント画像表示バッファ*/
 .overlayDocmentImage{
+	position       : absolute;
+	display        : inline-block;
+	top            : 0;
+	left           : 0;
+	z-index        : 3;
+	pointer-events : none;
+	mix-blend-mode : darken;
+}
+/*	ドキュメント画像*/
+img.pageDocumentImage{
 	position       : absolute;
 	display        : inline-block;
 	top            : 0;
@@ -2090,12 +2279,21 @@ div.imageOverlay {
     right:8px;
     top:1px;
 }
+#optionPanelRef a.down {
+    position:absolute;
+    right:8px;
+    top:1px;
+}
 #optionPanelRef a.minimize img{
     border:none;
 }
 #optionPanelRef a.close img{
     border:none;
 }
+#optionPanelRef a.down img{
+    border:none;
+}
+
 #optionPanelRef dl dt{
     height:25px;
     line-height:25px;
@@ -2302,6 +2500,10 @@ hr.dialog_border {
   z-index:8;
   display:none;
   margin:0;
+  height:16px   
+}
+.pMenu-mobile {
+	height 32px;
 }
 
 #pMenu li {
@@ -2428,7 +2630,7 @@ transform-origin: 0 0;transform:scale(1,1);
 		position: absolute;
 		z-index: 3;
 		pointer-events: none;
-		brend-mode: multiply;
+		mix-blend-mode: multiply;
 		opacity:0.4;
 	}
 /**
@@ -2478,6 +2680,12 @@ div.documentStatusOverlay {
 /* document selector status*/
 
 .docStatus	{
+	background-color:#dedede;
+	border-style:solid;
+	border-width:0px;
+}
+.docStatus-NV	{
+	color:#8e8e8e;
 	background-color:#dedede;
 	border-style:solid;
 	border-width:0px;
@@ -2563,10 +2771,12 @@ div.documentStatusOverlay {
 .floating-right {
 	position:relative;
 	float:right;
-	right:16px;	
+	right:16px;
+	top:4px;
 }
 /*
 	CONTEXT-MENU
+	コンテキストメニューを　nas_HTML側に移行したほうが良い
  */
 #contextMenu {
     display:none;
@@ -2626,6 +2836,7 @@ div.documentStatusOverlay {
 }
 
 .cM {
+	font-size:16px;
     color: #666;
 }
 .cM:hover {
@@ -2643,7 +2854,7 @@ div.documentStatusOverlay {
 #optionPanelTimer {
 	color:#22dd22;
 	background-color:#444444;
-	height:32px;
+	height:48px;
     min-width:240px;
 	vertical-align:middle;
 }
@@ -2651,7 +2862,7 @@ div.documentStatusOverlay {
     color:#22dd22;
     background-color:#444444;
     font-family: Consolas, "Liberation Mono", Menlo, Courier, monospace;
-    font-size:18px;
+    font-size:32px;
     min-width : 12em;
     border-style:solid;
     border-width:1px;
@@ -2680,7 +2891,7 @@ div.documentStatusOverlay {
 /*
 	署名欄
 */
-.signbox {
+.signbox{
 	display:flex;
 	align-items: flex-end;
 	text-align:left;
@@ -2698,19 +2909,37 @@ div.documentStatusOverlay {
 }
 .signature {
 	font-size:18px;
+	min-width:48px;
 	white-space:nowrap;
 	color:#444;
 	margin-left:8px;
-/*stamp Image */
+/*stamp Image default*/
 	background-image: url(images/ui/stamp.png);
-/**/
-}
-.signature-blank    { background-position:    0px 8px; }
-.signature-work     { background-position:  -72px 8px; }
-.signature-check-ok { background-position: -144px 8px; }
-.signature-check-ng { background-position: -216px 8px; }
-.signature-finished { background-position: -288px 8px; }
+	transform:scale(1,1);
 
+/*
+	box	空白ユーザイメージ用
+	up	作業あがりUPサイン　プライマリ・リワーク兼用
+	ok	チェックOK
+	ng	チェックNG
+	sc	ステージ終了(stage-checkout|compleat|closed)
+*/
+}
+.signature-box { background-position:    0px 8px; }
+.signature-up  { background-position:  -72px 8px; }
+.signature-ok  { background-position: -144px 8px; }
+.signature-ng  { background-position: -216px 8px; }
+.signature-sc  { background-position: -288px 8px; }
+
+img.sigunature-stamp {
+	position :absolute;
+	left  :0;
+	top   :0;
+	width :48px;
+	height:48px;
+	mix-blend-mode:darken;
+	opacity:0.35;
+}
 
 .signdate {
 	font-size:11px;
@@ -2894,10 +3123,15 @@ div.documentStatusOverlay {
 		text-align:right;
 		width:96px;
 		border-style:none;
+		margin-top : 4px;
+	}
+	.doc_form_label-mobile {
+		margin-top : 16px;
 	}
 	.order_prop_list{
 		display : block;
 		border-style :solid;
+		vertical-align:middle;
 		border-width :1px;
 		background-color : #eeeeee ;
 	}
@@ -2923,6 +3157,13 @@ div.documentStatusOverlay {
 	.guide-tracknote   { border-color:gray;}
 	.guide-timecode    { border-color:gray;}
 	.guide-reference   { border-color:cyan;}
+/*ページヘッダアイテム*/
+	.guide-ep          { border-color:red;}
+	.guide-title       { border-color:green;}
+	.guide-s-c         { border-color:blue;}
+	.guide-time        { border-color:cyan;}
+	.guide-name        { border-color:magenta;}
+	.guide-page        { border-color:yellow;}
 
 	.orderbox{
 		display      : inline-block;
@@ -2942,6 +3183,15 @@ div.documentStatusOverlay {
 	}
 	.orderbox-fixed{
 		background-color :#444;
+	}
+	.orderbox-layout{
+		position  : absolute;
+		display      : none;
+		border-width : 1px;
+		border-style : solid;
+		border-color : gray;
+		overflow     : visible;
+		white-space  : nowrap;
 	}
 	.track_orderbox{
 		position  : absolute;
@@ -2966,13 +3216,14 @@ div.documentStatusOverlay {
 		border-width:2px;
 		border-color:gray;
 		border-width :0 1 1 0;
-		font-size:16px;
+		font-size:14px;
+		min-width:96px;
 	}
 	.track_item:hover{
 		background-color:gray;
 	}
 
-	.iteminfo{
+	.iteminfo,.header_item {
 		display : inline-block;
 		white-space:nowrap;
 		padding      :4px;
@@ -2980,11 +3231,11 @@ div.documentStatusOverlay {
 		border-style :solid;
 		border-width :0 1 1 0;
 	}
-	.iteminfo_dragover{
+	.iteminfo_dragover,.header_item_dragover {
 		margin-left:8px;
 		border-left-color:snow;
 	}
-	.iteminfo:hover{
+	.iteminfo:hover,.header_item:hover {
 		background-color:gray;
 	}
 	.formatEdit {

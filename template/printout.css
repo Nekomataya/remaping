@@ -43,7 +43,7 @@ a:focus		{color:#880000;background-color:snow}
 /*		固定ヘッダ
 	ウインドウ全体をUIに割り付け、UIのマージン等を取得するエレメント
 */
-#fixedHeader {
+.fixedHeader {
 	display:none;
 }
 /* スクロール領域*/
@@ -66,7 +66,7 @@ a:focus		{color:#880000;background-color:snow}
 div.server-info {
   display:none;
 }
-div #toolbarHeader{
+div.toolbarHeader{
 	display:none;
 }
 /* 隠蔽クラス*/
@@ -108,6 +108,11 @@ div#UIheader {
 div.fixedHeadline {
 	position:absolute;
 }
+
+div.fixedHeadlineLeft {
+	position:absolute;
+}
+
 iframe.UIhidden {
 	visibility:none;
 }
@@ -120,6 +125,7 @@ table {
 	border-width:0;
 	border-style:none;
 	table-layout:fixed;
+	overflow:visible;
 	max-height:100%;
 }
 table.UItable{
@@ -144,6 +150,7 @@ table.sheet	{
 	transform: {matrix(1, 0, 0, 1, 0, 0)};
 }
 table.toolbox {	
+	display:inline-block;
 	margin:0 0 0 0;
 	padding:0 0 0 0
 }
@@ -162,20 +169,28 @@ th {
 	シートヘッダビュー設定
 	合計280mm=1058px
 */
-td#edchg {display:none}
-th.headerLabel{color:gray;border-color:#bbbbbb;text-align:left;border-width:0 0 4px 0;}
-.opusHeader  { width:106px;}
-.titleHeader { width:348px;}
-.scenecutHeader { width:151px;}
-.subtitleHeader { width:302px;}
-.timeHeader { width:189px;}
-.nameHeader { width:132px;}
-.pageHeader { width:132px;}
+th.opusLabel     { width:4em;}
+th.titleLabel    { width:18em;}
+/*th.scenecutLabel{}*/
+th.subtitleLabel { width:8em;}
+th.timeLabel     { width:18em;}
+th.nameLabel     { width:12em;}
+th.pageLabel     { width:8em;}
+
+td#edchg         { display:none}
+th.headerLabel   {color:gray;border-color:#bbbbbb;text-align:left;border-width:0 0 4px 0;}
+.opusHeader     { width:106px;}
+.titleHeader    { width:348px;}
+.scenecutHeader { width:166px;}
+.timeHeader     { width:166px;}
+.nameHeader     { width:128px;}
+.pageHeader     { width:128px;}
 
 /*
 	シート本体のビュー設定
 	時間スケール(トラック左端)
 	display:none;
+	.tlhead    .timeline-header
 */
 .tlhead {
 	overflow:visible;
@@ -187,14 +202,33 @@ th.headerLabel{color:gray;border-color:#bbbbbb;text-align:left;border-width:0 0 
 /*
 
 */
+.mapButton {width:96px;}
+.note {color:#d0d0d0;}
+.thumbnail {width:320px;}
+.thumbnailS {width:128px;}
+
+.xmap {display:none;}
+/*
+	タイムシートドキュメント
+	タイムラインヘッダー
+*/
+.trackLabel{
+	color:blue;
+	height:20px;
+}
+.trackLabel-tall{
+	min-height:40px;
+}
+.headerInfoLabel{
+	color:green;
+}
 th.tcSpan {
 	width:3em;
 }
 th.tclabel{
-	color:gray;
 	text-align:center;
 	border-style:solid;
-	border-width:2px 1px 3px 1px;
+	border-width:0 1px 3px 0;
 	}
 /*
 	参照欄(アクション・参考欄)
@@ -407,7 +441,7 @@ button.iconButton {
 	height:27px;
 	background-color:#666666;
 	border-width:1px;
-
+	vertical-align:top;
    /* 角丸 */
     -moz-border-radius: 3px;
     -webkit-border-radius: 3px;
@@ -417,46 +451,64 @@ button.iconButton {
 
 background-image: url(images/ui/nas-ui-icons432x432px.png);
 }
-
+button.buttonSelector {
+	float:left;
+}
+button.iconButton-mobile {
+	margin:12px;
+	border-style:none;
+}
 button.iconButton:hover {
 	background-color:#464646;
 }
 
 button.iconButton:disabled {
 	background-color:#b0b0b0;
+	opacity:0.5;
+}
+button.iconButton-selected {
+	background-color:#202020;
+	opacity:1.0;
+	border-width:2px;
+	border-color:#808080;
 }
 
-/*	icon offset positioning 27x27*/
+button.iconButton-wide2 { width:54px;}
+button.iconButton-wide3 { width:81px;}
+button.iconButton-wide4 { width:108px;}
 
-.iconButton-blank { background-position: 27px 27px; }
+button.iconButton-headbar {
+	margin:10px;
+}
+/*    icon offset positioning 27x27*/
+/*1*/
+.iconButton-blank         { background-position: 27px 27px; }
 
-.iconButton-selectBox { background-position: 0 0; }
-.iconButton-selectCircle { background-position: -27px 0; }
-.iconButton-cut { background-position: -54px 0; }
-.iconButton-cut_d { background-position: -81px 0; }
-.iconButton-copy { background-position: -108px 0; }
-.iconButton-copy_d { background-position: -135px 0; }
-.iconButton-paste { background-position: -162px 0; }
-.iconButton-paste_d { background-position: -189px 0; }
-.iconButton-undo { background-position: -216px 0; }
-.iconButton-undo_d { background-position: -243px 0; }
-.iconButton-redo { background-position: -270px 0; }
-.iconButton-redo_d { background-position: -297px 0; }
-.iconButton-gia { height:18px ;background-position: -324px 0; }
-.iconButton-gia_d { height:18px ;background-position: -351px 0; }
-/*
-.iconButton- { background-position: -378px 0; }
-.iconButton- { background-position: -405px 0; }
-*/
-
-.iconButton-toReference { background-position: 0 -27px; }
+.iconButton-noItemDefault { background-position: 0 0; }
+.iconButton-selectBox     { background-position: -27px 0; }
+.iconButton-cut           { background-position: -54px 0; }
+.iconButton-cut_d         { background-position: -81px 0; }
+.iconButton-copy          { background-position: -108px 0; }
+.iconButton-copy_d        { background-position: -135px 0; }
+.iconButton-paste         { background-position: -162px 0; }
+.iconButton-paste_d       { background-position: -189px 0; }
+.iconButton-undo          { background-position: -216px 0; }
+.iconButton-undo_d        { background-position: -243px 0; }
+.iconButton-redo          { background-position: -270px 0; }
+.iconButton-redo_d        { background-position: -297px 0; }
+.iconButton-gia           { height:18px ;background-position: -324px 0; }
+.iconButton-gia_d         { height:18px ;background-position: -351px 0; }
+.iconButton-axeVoid       { background-position: -378px 0; }
+.iconButton-selectCircle  { background-position: -405px 0; }
+/*2*/
+.iconButton-toReference   { background-position: 0 -27px; }
 .iconButton-fromReference { background-position: -27px -27px; }
-.iconButton-toRight { background-position: -54px -27px; }
-.iconButton-toLeft { background-position: -81px -27px; }
-.iconButton-reload { background-position: -108px -27px; }
-.iconButton-set { background-position: -135px -27px; }
-.iconButton-get { background-position: -162px -27px; }
-.iconButton-openX { background-position: -189px -27px; }
+.iconButton-toRight       { background-position: -54px -27px; }
+.iconButton-toLeft        { background-position: -81px -27px; }
+.iconButton-reload        { background-position: -108px -27px; }
+.iconButton-set           { background-position: -135px -27px; }
+.iconButton-get           { background-position: -162px -27px; }
+.iconButton-openX         { background-position: -189px -27px; }
 .iconButton-storeX { background-position: -216px -27px; }
 .iconButton-cgiStore { background-position: -243px -27px; }
 .iconButton-storeAs { background-position: -270px -27px; }
@@ -465,7 +517,7 @@ button.iconButton:disabled {
 .iconButton-push { background-position: -351px -27px; }
 .iconButton-pull { background-position: -378px -27px; }
 .iconButton-close { background-position: -405px -27px; }
-
+/*3*/
 .iconButton-document { background-position: 0 -54px; }
 .iconButton-timesheet { background-position: -27px -54px; }
 .iconButton-layerName { background-position: -54px -54px; }
@@ -482,7 +534,7 @@ button.iconButton:disabled {
 .iconButton-eraser { background-position: -351px -54px; }
 .iconButton-zoom { background-position: -378px -54px; }
 .iconButton-search { background-position: -405px -54px; }
-
+/*4*/
 .iconButton-section { background-position: 0 -81px; }
 .iconButton-reformat { background-position: -27px -81px; }
 .iconButton-clearFS { background-position: -54px -81px; }
@@ -500,7 +552,7 @@ button.iconButton:disabled {
 .iconButton-notice { background-position: -378px -81px; }
 /*.iconButton-dialog { background-position: -405px -81px; }*/
 .iconButton-dialog { height:18px ;background-position: -405px -86px; }
-
+/*5*/
 .iconButton-clearTL { background-position: 0 -108px; }
 .iconButton-FO { background-position: -27px -108px; }
 .iconButton-FI { background-position: -54px -108px; }
@@ -517,8 +569,7 @@ button.iconButton:disabled {
 .iconButton-addAngles { background-position: -351px -108px; }
 .iconButton-incr { background-position: -378px -108px; }
 .iconButton-decr { background-position: -405px -108px; }
-/*
-*/
+/*6*/
 .iconButton-util { background-position: 0 -135px; }
 .iconButton-util_d { background-position: -27px -135px; }
 .iconButton-skb { background-position: -54px -135px; }
@@ -528,7 +579,7 @@ button.iconButton:disabled {
 .iconButton-xps { background-position: -162px -135px; }
 .iconButton-documents { background-position: -189px -135px; }
 .iconButton-trace { background-position: -216px -135px; }
-/* .iconButton-debug { background-position: -243px -135px; } */
+/* .iconButton-debug { background-position: -243px -135px; }*/
 .iconButton-debug { height:18px ;background-position: -243px -139px; }
 .iconButton-renumber { background-position: -270px -135px; }
 .iconButton-makeLayerset { background-position: -297px -135px; }
@@ -536,8 +587,7 @@ button.iconButton:disabled {
 .iconButton-gatherLayers { background-position: -351px -135px; }
 .iconButton-addRegister { background-position: -378px -135px; }
 .iconButton-duplicateRegister { background-position: -405px -135px; }
-/*
-*/
+/*7*/
 .iconButton-switchTF { background-position: 0 -162px; }
 .iconButton-timelineAnimation { background-position: -27px -162px; }
 .iconButton-frameAnimation { background-position: -54px -162px; }
@@ -554,9 +604,8 @@ button.iconButton:disabled {
 .iconButton-info { background-position: -324px -162px; }
 .iconButton-DBentry { background-position: -351px -162px; }
 .iconButton-management { background-position: -378px -162px; }
-/*
-.iconButton- { background-position: -405px -162px; }
-*/
+.iconButton-home { background-position: -405px -162px; }
+/*8*/
 .iconButton-shiftLayerB { background-position: 0 -189px; }
 .iconButton-shiftLayerU { background-position: -27px -189px; }
 .iconButton-swapLayers { background-position: -54px -189px; }
@@ -573,8 +622,7 @@ button.iconButton:disabled {
 .iconButton-resetTrsfm { background-position: -351px -189px; }
 .iconButton-layerSetting { background-position: -378px -189px; }
 .iconButton-layerRotation { background-position: -405px -189px; }
-/*
-*/
+/*9*/
 .iconButton-addStillTL { background-position: 0 -216px; }
 .iconButton-addReplacementTL { background-position: -27px -216px; }
 .iconButton-addStageworkTL { background-position: -54px -216px; }
@@ -591,8 +639,7 @@ button.iconButton:disabled {
 .iconButton-editText { background-position: -351px -216px; }
 .iconButton-addPlus { background-position: -378px -216px; }
 .iconButton-removePlus { background-position: -405px -216px; }
-/*
-*/
+/*10*/
 .iconButton-selectAllAF { background-position: 0 -243px; }
 .iconButton-initAF { background-position: -27px -243px; }
 .iconButton-duplicateAF { background-position: -54px -243px; }
@@ -609,8 +656,7 @@ button.iconButton:disabled {
 .iconButton-flagCircle { background-position: -351px -243px; }
 .iconButton-flagCross { background-position: -378px -243px; }
 .iconButton-flagTriangle { background-position: -405px -243px; }
-/*
-*/
+/*11*/
 .iconButton-goWorkAreaHead { background-position: 0 -270px; }
 .iconButton-goWorkAreaTail { background-position: -27px -270px; }
 .iconButton-setWorkAreaHead { background-position: -54px -270px; }
@@ -626,10 +672,9 @@ button.iconButton:disabled {
 .iconButton-removeKey { background-position: -324px -270px; }
 .iconButton-shiftKey { background-position: -351px -270px; }
 .iconButton-goToTime { background-position: -378px -270px; }
-/*
-.iconButton- { background-position: -405px -270px; }
-*/
-.iconButton-goBWD { background-position: 0 -297px; }
+.iconButton-bigMinus { background-position: -405px -270px; }
+/*12*/
+    .iconButton-goBWD { background-position: 0 -297px; }
 .iconButton-goFWD { background-position: -27px -297px; }
 .iconButton-pause { background-position: -54px -297px; }
 .iconButton-goFFWD { background-position: -81px -297px; }
@@ -639,33 +684,31 @@ button.iconButton:disabled {
 .iconButton-stop { background-position: -189px -297px; }
 .iconButton-eject { background-position: -216px -297px; }
 .iconButton-OPEN { background-position: -243px -297px; }
-.iconButton-READ { background-position: -270px -297px; }
-.iconButton-FIX { background-position: -297px -297px; }
-.iconButton-CLOSE { background-position: -324px -297px; }
-.iconButton-HOLD { background-position: -351px -297px; }
-/*
-.iconButton- { background-position: -378px -297px; }
-.iconButton- { background-position: -405px -297px; }
-*/
-.iconButton-buildXPS { background-position: 0 -324px; }
+.iconButton-OPENFS { background-position: -270px -297px; }
+.iconButton-OPENNF { background-position: -297px -297px; }
+.iconButton-removeItem { background-position: -324px -297px; }
+.iconButton-eliminate { background-position: -351px -297px; }
+.iconButton-markON { background-position: -378px -297px; }
+.iconButton-mark { background-position: -405px -297px; }
+/*13*/
+    .iconButton-buildXPS { background-position: 0 -324px; }
 .iconButton-editXPS { background-position: -27px -324px; }
 .iconButton-linkXPS { background-position: -54px -324px; }
 .iconButton-FPS { background-position: -81px -324px; }
 .iconButton-movieFrame { background-position: -108px -324px; }
 .iconButton-moieFrameSetting { background-position: -135px -324px; }
-/*
-.iconButton- { background-position: -162px -324px; }
-.iconButton- { background-position: -189px -324px; }
-.iconButton- { background-position: -216px -324px; }
-.iconButton- { background-position: -243px -324px; }
-.iconButton- { background-position: -270px -324px; }
-.iconButton- { background-position: -297px -324px; }
-.iconButton- { background-position: -324px -324px; }
-.iconButton- { background-position: -351px -324px; }
-.iconButton- { background-position: -378px -324px; }
-.iconButton- { background-position: -405px -324px; }
-*/
-.iconButton-ONS { background-position: 0 -351px; }
+.iconButton-hamberger { background-position: -162px -324px; }
+.iconButton-doner { background-position: -189px -324px; }
+.iconButton-kebab { background-position: -216px -324px; }
+.iconButton-meatball { background-position: -243px -324px; }
+.iconButton-bento { background-position: -270px -324px; }
+.iconButton-gostop { background-position: -297px -324px; }
+.iconButton-goloop { background-position: -324px -324px; }
+.iconButton-noReader { background-position: -351px -324px; }
+.iconButton-countReader { background-position: -378px -324px; }
+.iconButton-markOFF { background-position: -405px -324px; }
+/*14*/
+    .iconButton-ONS { background-position: 0 -351px; }
 .iconButton-ONSsetting { background-position: -27px -351px; }
 .iconButton-ONS_0 { background-position: -54px -351px; }
 .iconButton-ONS_1 { background-position: -81px -351px; }
@@ -732,13 +775,12 @@ button.iconButton:disabled {
 .iconButton-eye         { background-position: -270px -432px; }
 .iconButton-camera      { background-position: -297px -432px; }
 .iconButton-move        { background-position: -324px -432px; }
-/*
-.iconButton- { background-position: -351px -432px; }
-*/
+.iconButton-resize      { background-position: -351px -432px; }
 .iconButton-ungroup     { background-position: -378px -432px; }
 .iconButton-group       { background-position: -405px -432px; }
-/*18
-.iconButton-    { background-position: 0 -459px; }
+/*18 */
+.iconButton-space    { background-position: 0 -459px; }
+/*
 .iconButton-    { background-position: -27px -459px; }
 .iconButton-    { background-position: -54px -459px; }
 .iconButton-    { background-position: -81px -459px; }
@@ -1726,6 +1768,12 @@ div.documentStatusOverlay {
 	border-style:solid;
 	border-width:0px;
 }
+.docStatus-NV	{
+	color:#8e8e8e;
+	background-color:#dedede;
+	border-style:solid;
+	border-width:0px;
+}
 
 .docStatus-Startup	{
 	color:#aaaaaa;
@@ -1835,11 +1883,100 @@ div.documentStatusOverlay {
 	display:none;
 }
 /*
-	ストップウオッチバー
+    ストップウオッチ UI
 */
 #optionPanelTimer {
 	color:#22dd22;
-	background-color:#222222;
+	background-color:#444444;
+	height:48px;
+    min-width:240px;
+	vertical-align:middle;
+}
+#timerDisplay {
+    color:#22dd22;
+    background-color:#444444;
+    font-family: Consolas, "Liberation Mono", Menlo, Courier, monospace;
+    font-size:32px;
+    min-width : 12em;
+    border-style:solid;
+    border-width:1px;
+    border-color:#228822;
+    padding:2px;
+    margin:2px;
+}
+.timerButton {
+	color :#222222;
+	background-color:#888888;
+	border-style:solid;
+	border-width:0;
+	height:27px;
+  /* 角丸 */
+    -moz-border-radius: 3px ;
+    -webkit-border-radius: 3px;
+    border-radius: 3px;
+}
+.timerButton-sq {
+	height:16px;
+	width:16px;
+}
+.timerButton-wide {
+	width:27px;
+}
+/*
+	署名欄
+*/
+.signbox{
+	display:flex;
+	align-items: flex-end;
+	text-align:left;
+	overflow: visible;
+	width :72px;
+	height:48px;
+	border-width:0;
+	border-style:none;
+}
+.signbox:hover {
+	background-color:gray;
+}
+.siglabel {
+	font-size:11px;
+}
+.signature {
+	font-size:18px;
+	min-width:48px;
+	white-space:nowrap;
+	color:#444;
+	margin-left:8px;
+/*stamp Image default*/
+	background-image: url(images/ui/stamp.png);
+	transform:scale(1,1);
+
+/*
+	box	空白ユーザイメージ用
+	up	作業あがりUPサイン　プライマリ・リワーク兼用
+	ok	チェックOK
+	ng	チェックNG
+	sc	ステージ終了(stage-checkout|compleat|closed)
+*/
+}
+.signature-box { background-position:    0px 8px; }
+.signature-up  { background-position:  -72px 8px; }
+.signature-ok  { background-position: -144px 8px; }
+.signature-ng  { background-position: -216px 8px; }
+.signature-sc  { background-position: -288px 8px; }
+
+img.sigunature-stamp {
+	position :absolute;
+	left  :0;
+	top   :0;
+	width :48px;
+	height:48px;
+	mix-blend-mode:darken;
+	opacity:0.35;
+}
+
+.signdate {
+	font-size:11px;
 }
 
 /*
@@ -1859,6 +1996,7 @@ div.documentStatusOverlay {
 	position:relative;
 	z-index:4;
  	border-style:solid;
+  	border-color:black;
   	border-width:0px 1px 0px 0px;
   	margin:0;
 }
@@ -1878,12 +2016,14 @@ div.documentStatusOverlay {
 	height:110px;
 }
 .overlayLabel{
+  	background-color:#efefef;
   	border-style:solid;
   	border-width:1px;
   	border-color:#d0d0d0;
   	padding:4px 2px 4px 2px;
   	height:24px;
   	white-space:nowrap;
+	color:black;
   /* 角丸 */
     -moz-border-radius: 3px ;
     -webkit-border-radius: 3px;

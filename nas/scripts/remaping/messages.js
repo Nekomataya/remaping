@@ -1084,3 +1084,4 @@ nas.uiMsg.jobCheckin    = {en:"checkin",ja:"作業開始"};
 nas.uiMsg.jobInUse      = {en:"in use",ja:"作業中"};
 
 
+console.log('MASSAGES-JS');

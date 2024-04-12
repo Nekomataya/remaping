@@ -1,7 +1,30 @@
 ﻿{
-  "FormatName": "remaping",
+  "FormatName": "UAT",
   "TemplateImage": "/remaping/template/timeSheet_default.png",
   "WorkTitleLogo": "",
+  "HeaderMarginTop": 33,
+  "HeaderMarginLeft": 57,
+  "HeaderBoxHeight": 58.54,
+  "headerItemOrder": [
+    ["title",268,null],
+    ["ep",178,""],
+    ["sci",230,null],
+    ["time",205,null],
+    ["page",145,null],
+    ["user",61,"hide"]
+  ],
+  "HeaderSign": [
+    55,
+    106,
+    1005,
+    194.34
+  ],
+  "HeaderNote": [
+    56,
+    197,
+    983,
+    297
+  ],
   "SheetTextColor": "#111111",
   "SheetBaseColor": "#faf2f2",
   "AppBaseColor": "#ffffef",
@@ -19,10 +42,10 @@
   "FrameRate": "24fps(24)",
   "SheetColumn": 2,
   "CellWidthUnit": "px",
-  "SheetHeadMargin": 345,
-  "SheetLeftMargin": 56,
-  "SheetCellHeight": 15.51,
-  "SheetColHeight": 1204.01,
+  "SheetHeadMargin": 346,
+  "SheetLeftMargin": 57,
+  "SheetCellHeight": 15.61,
+  "SheetColHeight": 1211.69,
   "TimeGuideWidth": 17,
   "ActionWidth": 16,
   "DialogWidth": 36,

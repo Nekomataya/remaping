@@ -38,10 +38,16 @@ div.optionPanel{
 	color:#333;
 	background-color:#efefef;
 }
-@media (prefers-color-scheme: dark) {
+div.optionPanel a{
+	color:#334;
+}
+@media (prefers-color-scheme:dark) {
 	div.optionPanel {
 		color:#efefef;
 		background-color:#333;
+	}
+	div.optionPanel a{
+		color:#efefff;
 	}
 }
 div.optionPanelModal {
@@ -78,11 +84,11 @@ div.optionPanelFloat{
 	}
 }
 div.optionPanelFloat-mobile{
-	position:absolute;
-	left    :0px;
-	bottom  :24px;
+	display   :none;
+	position  :relative;
+	left      :0px;
 	background-color:#668866;
-	width   :100%;
+	width     :100%;
 }
 
 a.minimize{
@@ -99,6 +105,14 @@ a.close{
     top:1px;
 }
 a.close img{
+    border:none;
+}
+a.down{
+    position:absolute;
+    right:8px;
+    top:1px;
+}
+a.down img{
     border:none;
 }
 .optionPanelFloat dl dt {
@@ -181,12 +195,13 @@ a.close img{
 	display : none;
 	top     : 0px;
 	left    : 0px;
-	background-color:rgba(1,1,1,0.1);
+	background-color:transparent;
 }
 .mousedragscrollable_select {
-	background-color:red;
+	background-color:blue;
 }
 .centeringForm {
+	vertical-align: middle;
 	text-align:center;
 	padding:4px;
 }
@@ -319,6 +334,11 @@ div.circle       {
 	background-color:black;
 	border-style:none;
 }
+/*
+div.circle-diameter-1 {width:10px;height:10px;}
+div.circle-diameter-2 {width:20px;height:20px;}
+div.circle-diameter-3 {width:30px;height:30px;}
+*/
 div.circle-diameter-1 {width:2px;height:2px;}
 div.circle-diameter-2 {width:4px;height:4px;}
 div.circle-diameter-3 {width:6px;height:6px;}

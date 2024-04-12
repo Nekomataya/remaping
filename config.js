@@ -45,8 +45,8 @@
  *		ただし開始メッセージが抑制されている場合は表示されません。
  */
 
-	var welcomeMsg="画像編集機能開発版- 20231107";
-	var windowTitle="ver. 1.9.2";//WindowTitleとしての役割は終了 統合バージョンです
+	var welcomeMsg="画像編集機能開発版- 20231219";
+	var windowTitle="ver. 1.9.3";//WindowTitleとしての役割は終了 統合バージョンです
 
 /**************************************************************************
  *	ロゴ等
@@ -147,7 +147,7 @@
 	SfxCellWidth	    =46; //効果指定欄の幅
 	CameraCellWidth     =72; //カメラワーク指定欄の幅
 	CommentWidth        =120;//コメント欄の幅
-	ColumnSeparatorWidth=4;　//カラムセパレータの幅
+	ColumnSeparatorWidth=4;  //カラムセパレータの幅
 */
 // ルック設定のオブジェクト化中
 // 後からルックを変更する手続は　xUI.setSheetLook(SheetLooks);xUI.footstampPaint();
@@ -155,6 +155,21 @@
 SheetLooks = {
   "FormatName"           : "remaping-old",
   "TemplateImage"        : "/remaping/documentFormat/timesheet/default.png",
+  "ExportResolution"     : "200ppi",
+  "DocumentSize"         : "A3",
+  "HeaderMarginTop"    : 36,
+  "HeaderMarginLeft"   : 50,
+  "HeaderBoxHeight"    : 65,
+  "headerItemOrder" :[
+        ["title" , 350],
+        ["ep"    , 110],
+        ["sci"   , 160],
+        ["time"  , 160],
+        ["user"  , 130],
+        ["page"  , 120]
+  ],
+  "HeaderSign"         : [28,100,1000,140],
+  "HeaderNote"         : [28,140,1000,256],
   "WorkTitleLogo"        : "",
   "SheetTextColor"       : "#111111",
   "SheetBaseColor"       : "#faf2f2",
@@ -200,20 +215,22 @@ SheetLooks = {
 };
 //メモ編集時の単語一覧
 
-//使用したい単語を1列分ずつ配列で登録してください。
-//数値は文字列として扱われます。
-
+//使用したい単語を1列分ずつ配列で登録
+//数値は文字列として扱われます
+//一列八段までを推奨
 var myWords	=[
     ["↖","←","↙","⇄",""],
     ["↑","◯","↓","⇅",""],
     ["↗","→","↘","〜",""],
 	["◎","＊","○","●","□","■","◇","◆"],
 	["△","▲","▽","▼","☆","★"],
+	["パン ","チルト ","トラック ","クレーン ","アップ ","ダウン ","イン ","アウト "],
 	["PAN ","Follow ","Slide ","mm/k","]X[","ゴンドラ","ブレ","画面動"],
-	["つけPAN","T.U.","T.B.","中O.L.","F.I.","F.O.","ZOOM IN","ZOOM OUT"],
+	["つけPAN","TU","TB","中OL","FI","FO","ZOOM-IN","ZOOM-OUT"],
 	["[A]","[B]","[C]","[D]","[E]","[F]","[G]","[]"],
 	["(1)","(2)","(3)","(4)","(5)","(6)","(7)","()"],
 	["兼用","透過光"," / ","回転","ローリング","特効","BOOK","BG"],
+	["3D-CGI","撮影処理","ステージ","台","露出","パラ","",""],
 	["%stage%:[%user% %date%]","[%user% %date%]","(%user% %date%)","<%user% %date%>","---<済 %user% %date%>---"]
 ];
 

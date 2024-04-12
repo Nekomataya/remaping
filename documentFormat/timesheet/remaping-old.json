@@ -1,7 +1,30 @@
 ﻿{
   "FormatName": "remaping-old",
-  "TemplateImage": "/remaping/documentFormat/timesheet/remaping-old.png",
+  "TemplateImage": "/remaping/documentFormat/timesheet/default.png",
   "WorkTitleLogo": "",
+  "HeaderMarginTop": 47,
+  "HeaderMarginLeft": 27,
+  "HeaderBoxHeight": 66.03,
+  "headerItemOrder": [
+    ["ep",110,null],
+    ["title",350,null],
+    ["sci",160,null],
+    ["time",160,null],
+    ["user",145,null],
+    ["page",150,null]
+  ],
+  "HeaderSign": [
+    79,
+    118,
+    1051,
+    158
+  ],
+  "HeaderNote": [
+    29,
+    172,
+    1090.25,
+    288
+  ],
   "SheetTextColor": "#111111",
   "SheetBaseColor": "#faf2f2",
   "AppBaseColor": "#ffffef",
@@ -19,10 +42,10 @@
   "FrameRate": "24fps(24)",
   "SheetColumn": 2,
   "CellWidthUnit": "px",
-  "SheetHeadMargin": 383,
+  "SheetHeadMargin": 384,
   "SheetLeftMargin": 30,
-  "SheetCellHeight": 14.04,
-  "SheetColHeight": 1095.64,
+  "SheetCellHeight": 13.85,
+  "SheetColHeight": 1096.27,
   "TimeGuideWidth": 55,
   "ActionWidth": 19.8,
   "DialogWidth": 43,
