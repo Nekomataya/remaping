@@ -24,7 +24,7 @@ nas.Image = function Image(width,height){
     this.height = height;
     this.src    = "";
 }
-nas.Image.allowImgExtensions = new RegExp("\.(jpg|jpeg|jfif|pjpeg|pje|png|svg|gif|tga|targa|psd|psb|webp)$",'i');
+nas.Image.allowImgExtensions = new RegExp("\.(jpg|jpeg|jfif|pjpeg|pje|png|svg|gif|tga|targa|tiff?|psd|psb|webp)$",'i');
 /**
  *	@params    {Object HTMLImageElement|Object HTMLCanvsElement} img 変換する画像エレメント
  *	@params    {String} type 
@@ -414,6 +414,36 @@ console.log('load TGA form URL :' + img);
 //標準の読出失敗画像を設定してここで設定したほうがユーザにわかりやすい
 					};
 				}else if(
+					(Tiff)&&(img.match(/\.(tiff?)$/i))
+				){
+console.log('load TIFF form URL :' + img);
+					var itm = this;
+					itm.content = String(img);
+					itm.name = itm.content;
+
+					var xhr = new XMLHttpRequest();
+					xhr.responseType = 'arraybuffer';
+					xhr.open('GET', img.replace(/\#/g,'%23'));
+					xhr.onload = function (e) {
+						var tiff = new Tiff({buffer: xhr.response});
+						itm.img.src  = tiff.toDataURL('image/png');
+						itm.name = img;
+						itm.img.addEventListener('load',function(){ itm.content = itm.img.src;itm.guessDocumentResolution();if(callback instanceof Function) callback(itm);},{once:true});//set blob
+					};
+					xhr.send();
+/*
+					try{
+					var tiff = new Tiff()
+						tga.load(img);
+						itm.img.src = tiff.toDataURL({});
+						itm.name    = img;
+						itm.img.addEventListener('load',function(){ itm.content = itm.img.src;itm.guessDocumentResolution();if(callback instanceof Function) callback(itm);},{once:true});//set blob
+					}catch (err){
+						console.log(err);
+//標準の読出失敗画像を設定してここで設定したほうがユーザにわかりやすい
+					};
+*/
+				}else if(
 					(PSD)&&(img.match(/\.(psd|psb)$/i))
 				){
 console.log('load PSD from URL : ' +img)
@@ -498,10 +528,18 @@ console.log('detect File Photoshop');
 					console.log(err);
 				}).catch(function(err){
 					console.log(err);
-				});		}else if(img.name.match(/\.(tiff|tif)$/i)){
+				});
+		}else if(img.name.match(/\.(tiff|tif)$/i)){
 console.log('detect TIFF');
-			if(appHost.platform != 'Electron')
-console.log('but TIFF not suported');
+			var itm = this;
+			itm.name = img.name;
+			img.arrayBuffer().then(function(result){
+				var tiff = new Tiff({buffer:new Uint8Array(result)});
+				itm.img.src = tiff.toDataURL('image/png');
+			itm.img.addEventListener('load',function(){itm.content = itm.img.src;itm.guessDocumentResolution(); if(callback instanceof Function) callback(itm);},{once:true});
+				}).catch(function(err){
+					console.log(err);
+				});
 		};
 	}else if((typeof HTMLImageElement == 'function')&&(img instanceof HTMLImageElement)){
 //画像を設定

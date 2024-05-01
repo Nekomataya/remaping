@@ -1,62 +1,14 @@
-﻿/*
-	nas.UserSigunatureをHTMLに変換する追加メソッド
-	アプリごとにテンプレートが異なるので注意
-*/
-nas.UserSignature.prototype.toHTML = function(stage,template){
-	if(! template) template = "\t<span class='signbox' id='sig_%1' onclick='xUI.showSignatueInfo(%1)'>\n\t\t<span class = signlabel>%2 </span>\n\t\t<span class = 'signature %3 ' title = '%6'>\n\t\t%4 <br>%7<span class=signdate>%5 </span>\n\t\t</span>\n\t</span>\n";
-
-	var HTML_TEMPLATE = "\t<span class='signbox' id='sig_%1' onclick='xUI.showSignatueInfo(%1)'>\n\t\t<span class = signlabel>%2 </span>\n\t\t<span class = 'signature %3 ' title = '%6'>\n\t\t%4 <br>%7<span class=signdate>%5 </span>\n\t\t</span>\n\t</span>\n";
-
-	var status = this.status;
-	var stamp  = "";
-	if(this.stamp){
-		status = 'box';
-		stamp  = '<img class=sigunature-stamp src ="'+this.stamp+'">'
-	};
-	return (nas.localize(template,
-		String(xUI.XPS.signatures.members.indexOf(this)),
-		(stage)? this.node.split(':')[0]:".",
-		'signature-'+status,
-		(this.text)?(this.text.slice(0,3)):this.user.handle,
-		this.date.toNASString('mm/dd'),
-		this.toString('full'),
-		stamp
-	));//
-/* 
-	nas.localize(template,
-		%1:"INDEX" signature index Number Int,
-		%2:"STAGE" stage name|index ,
-		%3:"CLASS" className,
-		%4:"TEXT"  sigunature note (or user handle),
-		%5:"DATE"  date of sign,
-		%6:"TITLE" description (if exists),
-		%7:"STAMP" stamp image url (if exists)
-	);// */
-};
+﻿
 /**
-	シグネチャコレクションをスタンプパレードに展開する
-	末尾に空白のチェックイン｜アウト+スタンプ登録UIの呼び出しを設定する
+	@params {Number} id
+ シグネチャボックスの情報をモーダル表示
  */
-nas.UserSignatureCollection.prototype.toHTML = function(){
-	var result       = "";
-	var currentStage = "";
-	this.members.forEach(function(e){
-		if(e.node != currentStage){
-			result += e.toHTML(true);
-			currentStage = e.node;
-		}else{
-			result += e.toHTML(false);
-		};
-	});
-	result +='\t<span class = signbox onclick=alert(123)>\n\t\t<span class = signlabel>.</span>\n\t\t<span class = signature></span>\n\t</span>';
-	return result;
-}
-
-/* シグネチャボックスの情報をモーダル表示 */
-xUI.showSignatueInfo = function showSignatueInfo(id){
-	var infoMsg = JSON.stringify(xUI.XPS.signatures.members[id],0,2);
-	var dialogTitle = localize({ja:'署名詳細',us:'Signature Details'});
-	nas.HTML.showModalDialog('alert',infoMsg,dialogTitle);
+nas.UserSignature.prototype.showSignatueInfo = function showSignatueInfo(id){
+	if(this.parent){
+		var infoMsg = JSON.stringify(this,0,2);
+		var dialogTitle = localize({ja:'署名詳細',us:'Signature Details'});
+		nas.HTML.showModalDialog('alert',infoMsg,dialogTitle);
+	}
 }
 /*TEST
 var stream = `
@@ -391,13 +343,13 @@ xUI.syncTable = {
 				titleStyle += 10;
 			};
 			switch(titleStyle){
-			11:	;//画像ありリンクあり
+			case 11:	;//画像ありリンクあり
 				var titleString="<a href=\""+linkURL+"\" title=\""+titleText+"\"  target=_new><img src=\""+imgSrc+"\" ALT=\""+ALTText+"\" border=0></a>";
 			break;
-			10:	;//画像のみ
+			case 10:	;//画像のみ
 				var titleString="<img src=\""+imgSrc+"\" ALT=\""+ALTText+"\" border=0>";
 			break;
-			1:		;//画像なしリンクあり
+			case 1:		;//画像なしリンクあり
 				var titleString="<a href=\""+linkURL+"\" title=\""+titleText+"\" target=_new>"+XPS["title"]+" </a>";
 			break;
 			default:
@@ -497,7 +449,7 @@ xUI.syncTable = {
 			};
 		};
 	},
-	"trin":function(){xUI.sync('trout');};
+	"trin":function(){xUI.sync('trout');},
 	"trout":function(){
 		var timestr=nas.Frm2FCT(XPS[prop][0],3,0,XPS.framerate);
 		var transit=XPS[prop][1];
@@ -683,3 +635,42 @@ console.log([prop,status]);
 		document.title = xUI.app;
 	};
 }
+/**
+ * 	@params {String} noteText
+ *	引数文字列でUI上のメモ欄を同期する
+ *  引数を与える場合は、一時変更となる
+ */
+xUI.syncNoteText = function(noteText){
+//ここをnoteTextparserで置き換える予定
+//	var noteContent = document.getElementById('rEsult').value.toString().replace(/(\r)?\n/g,"<br>");
+//	var noteContent = md.render(document.getElementById('rEsult').value);
+	if(typeof noteText =='undefined') noteText = xUI.XPS.xpsTracks.noteText;
+//入力編集欄
+	if( document.getElementById('rEsult').value != noteContent) document.getElementById('rEsult').value = noteContent;
+	var noteContent = md.render(noteText);
+//screen画面表示
+	if(document.getElementById("memo")) document.getElementById("memo").innerHTML = noteContent;
+//printout表示
+	if(document.getElementById("memo_prt")) document.getElementById("memo_prt").innerHTML = noteContent;
+}
+/*TEST
+	xUI.syncNoteText();
+	xUI.syncNoteText("text\n\ntext");
+	xUI.syncNoteText(document.getElementById('rEsult').value);
+ */
+if(markdownit) var md = markdownit({
+	html       : true,
+	linkify    : true,
+	breaks     : true,
+	typographer: true
+});
+
+/**
+ * 	@params {Object nas.NoteImage|HTMLElement} noteImage
+ *	UI上のメモ欄画像を同期する
+ *  引数を与える場合は、一時変更となる
+ */
+xUI.syncNoteImage = function(noteImage){
+
+}
+

@@ -1576,6 +1576,7 @@ console.log(E);
  */
 nas.UserSignature = function UserSignature(sigDescription,signatureString,additionalProperty){
     this.id     = nas.uuid()       ;//unique id
+    this.parent = null             ;//prent collection
     this.node   = ''               ;//String nodeDescription|name of stage
     this.text   = ''               ;//signature text
     this.date   = new Date()       ;//date of shign
@@ -1718,6 +1719,44 @@ nas.UserSignature.prototype.toString = function(opt){
         	].join("\t")+postfix[this.status];
     };
 };
+/**
+ *  @params {String} stage
+ *  @params {String} template
+ *  @returns {String}
+ *	nas.UserSigunatureをHTMLに変換する追加メソッド
+ *	標準外のテンプレートを使用する場合は、文字列引数として渡す
+ */
+nas.UserSignature.prototype.toHTML = function(stage,template){
+	if(! template) template = "\t<span class='signbox' id='sig_%1' onclick='xUI.showSignatueInfo(%1)'>\n\t\t<span class = signlabel>%2 </span>\n\t\t<span class = 'signature %3 ' title = '%6'>\n\t\t%4 <br>%7<span class=signdate>%5 </span>\n\t\t</span>\n\t</span>\n";
+
+	var HTML_TEMPLATE = "\t<span class='signbox' id='sig_%1' onclick='xUI.showSignatueInfo(%1)'>\n\t\t<span class = signlabel>%2 </span>\n\t\t<span class = 'signature %3 ' title = '%6'>\n\t\t%4 <br>%7<span class=signdate>%5 </span>\n\t\t</span>\n\t</span>\n";
+
+	var status = this.status;
+	var stamp  = "";
+	if(this.stamp){
+		status = 'box';
+		stamp  = '<img class=sigunature-stamp src ="'+this.stamp+'">'
+	};
+	return (nas.localize(template,
+		(this.parent)? String(this.parent.members.indexOf(this)):this.id,
+		(stage)? this.node.split(':')[0]:".",
+		'signature-'+status,
+		(this.text)?(this.text.slice(0,3)):this.user.handle,
+		this.date.toNASString('mm/dd'),
+		this.toString('full'),
+		stamp
+	));//
+/* 
+	nas.localize(template,
+		%1:"INDEX" signature index Number Int,
+		%2:"STAGE" stage name|index ,
+		%3:"CLASS" className,
+		%4:"TEXT"  sigunature note (or user handle),
+		%5:"DATE"  date of sign,
+		%6:"TITLE" description (if exists),
+		%7:"STAMP" stamp image url (if exists)
+	);// */
+};
 /*test
     var A = new nas.UserSignature("123:[OK	2022.01.01	kiyo@nekomataya.info]");
     var B = new nas.UserSignature("123","[OK	2022.01.01	kiyo@nekomataya.info]");
@@ -1754,7 +1793,8 @@ nas.UserSignatureCollection = function (signature,parent){
     }
 
     /**
-     *   コレクションにメンバーを追加する。既存のメンバーは追加されない。戻り値はメンバーのインデックス
+     *   コレクション最後尾にメンバーを追加する。既存のメンバーは追加されない。戻り値はメンバーのインデックス
+        追加の際にparentプロパティを更新する
      *   配列引数渡しNG
      *   nas.UserSignature以外の不正メンバーは追加されない。その場合の戻り値は -1
      *  @params {Object nas.UserSignature|String} newMember
@@ -1765,6 +1805,7 @@ nas.UserSignatureCollection = function (signature,parent){
         };
         if (! newMember) return -1;
         this.members.push(newMember);
+        newMember.parent = this;
         return this.members.length - 1;
     }
     /**
@@ -1851,7 +1892,27 @@ console.log(currentStage.toString(),tempData[ix].trim());
             };
         };
     }
-
+/**
+	シグネチャコレクションをスタンプパレードに展開する
+	末尾に空白のチェックイン｜アウト+スタンプ登録UIの呼び出しを設定する
+ */
+nas.UserSignatureCollection.prototype.toHTML = function(){
+	var result       = "";
+	var currentStage = "";
+	this.members.forEach(function(e){
+		if(e.node != currentStage){
+			result += e.toHTML(true);
+			currentStage = e.node;
+		}else{
+			result += e.toHTML(false);
+		};
+	});
+/*スタンプパレード最後尾のエントリは,
+    作業の開始｜中断｜終了 いずれかの操作に展開される
+ */
+	result +='\t<span class = signbox onclick=alert(123)>\n\t\t<span class = signlabel>.</span>\n\t\t<span class = signature></span>\n\t</span>';
+	return result;
+}
 /*test
 コレクションメソッド
 remove

@@ -1142,6 +1142,46 @@ Xps.prototype.deleteTL = function (args) {
     };// */
 };
 /**
+ *	@params {String} direction
+ *		head|from|tail|to|both
+ *	@params {String} length
+ *	シートデータにマージンを設定する
+ *	方向性にbothを指定した場合両方のパラメータが同一になる
+ *	マージン設定の際にショットトランジションが存在した場合
+ *	トランジションに必要なマージン以下には設定できない
+ *	マージンの変更値を計算して
+ 	lengthに許される値は 0以上のFCT文字列
+ 	0の場合は、マージンを削除
+	現在のマージンに対する変更値を計算する
+	加算分は空白セルを作成して挿入 減算分は削除する
+
+ */
+Xps.prototype.setMargin = function setMargin(direction,length){
+	var target = [];
+	length = nas.FCT2Frm(length);//フレーム数に変換
+	if(length == false) return false;
+	if(direction == 'head'){
+		target.push('headMargin');
+	}else if(direction == 'tail'){
+		target.push('tailMargin');
+	}else if(direction == 'both'){
+		target=['tailMargin','headMargin'];
+	}else{
+		return false;
+	};
+	for(var ix = 0 ; ix < target.length ; ix ++ ){
+		var prp  = target[ix];
+		var current = this[prp];//現在の値 整数
+		var keep = (prp == 'headMargin')? trin / 2:trout / 2;//
+		var change = (keep >= length)? keep:length - current;// 12にたいして1+0を設定する場合 +12
+		
+		this[prp] = length;
+	};
+}
+/**
+    @params {Number Int} myDuration
+    @returns {Number}
+    
      Xpsの継続時間を変更する
      引数：int フレーム数
      現在の値と同じ場合は何もしない
@@ -2487,8 +2527,9 @@ XpsJob.prototype.reset = function(myString){
 /*
     JobStatus
     Jobの状況（＝カットの作業状態）
-    content:作業状態を示すキーワードStartup/Active/Hold/Fixed/Aborted//Floating
-初期値は"Startup" > 'Floating' 初期値変更
+    content:作業状態を示すキーワードStartup/Active/Hold/Fixed/Aborted/Compleated/
+初期値は"Startup(未着手)"
+Floatingはドキュメントプロパティとして存在するがJobStatusとしては廃止
     assign:アクティブまたは中断状態でない作業が持つ次作業者の指名UIDまたは文字列（特にチェックはない）
 初期値は長さ0の文字列
     アサインメント情報として予約値'stageCompleted'を持つことができる。これは当該ステージの終了フラグとして機能する
@@ -2514,14 +2555,12 @@ Active,Hold はサーバからエクスポートされた
 /**
  *  @constractor
  *   @params {Arry|String} statusArg
+    初期値は "Startup"から"Floating"に変更Startupステータスはリポジトリ登録成功時に割り当てら  れるステータスとする
+    暫定的なスタータスとしてのFloatingは消滅　元来のStartupへ戻る
+    Floatingはジョブのステータスでなく　ドキュメントのdataNodeプロパティを参照対象に変更する
  */
 function JobStatus (statusArg){
-    this.content = "Floating";
-//初期値は "Startup"から"Floating"に変更Startupステータスはリポジトリ登録成功時に割り当てられるステータスとする
-//暫定的なスタータスとしてのFloatingは消滅　元来のStartupへ戻る
-//Floatingはジョブのステータスでなく　ドキュメントのdataNodeプロパティを参照対象に変更する
     this.content = "Startup";
-//    this.content = "Floating";
     this.assign  = "";
     this.message = "";
     if(statusArg) this.parse(statusArg);

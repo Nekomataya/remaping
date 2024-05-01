@@ -356,11 +356,11 @@ console.log(targetQueue);
                     xUI.put(myXps.getRange());
                 }else{
                     if((xUI.uiMode != 'floating')&&(xUI.importBox.importTarget===xUI.XPS)){
-                        xUI.resetSheet(myXps,undefined,importBox.callback);
+                        xUI.resetSheet(myXps,undefined,xUI.importBox.callback);
                         xUI.setUImode('floating');
                     }else{
                         xUI.importBox.importTarget.parseXps(myXps.toString(false));
-                        xUI.resetSheet(undefined,undefined,importBox.callback);
+                        xUI.resetSheet(undefined,undefined,xUI.importBox.callback);
                     };
                 };
             }, true);
@@ -9847,7 +9847,7 @@ console.log([files,items]);
 //タイムシートデータと画像をふるい分け
 //  note
 //    xUI.importBox.allowExtensions    = new RegExp("\.(txt|csv|xps|xpst|ard|ardj|tsh|xdts|tdts|sts)$",'i');
-//    xUI.importBox.allowImgExtensions = new RegExp("\.(jpg|jpeg|jfif|png|gif|tga|targa|psd|psb)$",'i');
+//    xUI.importBox.allowImgExtensions = new RegExp("\.(jpg|jpeg|jfif|png|gif|tga|targa|tiff?|psd|psb)$",'i');
 
         var imgItems  = [];
         var xpstItems = [];

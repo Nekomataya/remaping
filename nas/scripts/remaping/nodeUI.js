@@ -26,6 +26,7 @@ if(
 	var execSync      = false;
 if(typeof TgaLoader == 'undefined')
 	var TgaLoader     = false;
+if(typeof Tiff == 'undefined')
 	var Tiff          = false;
 	var sharp         = false;
 	var PSD           = (typeof require == 'undefined')? false : require('psd');
@@ -50,8 +51,9 @@ if(typeof TgaLoader == 'undefined')
 
 if(typeof TgaLoader == undefined)
 	var	TgaLoader = require('tga-js');
-	var sharp     = require('sharp');
-	var Tiff      = require('tiff');
+	var sharp     = false ;//require('sharp');//削除予定
+if(typeof Tiff == undefined)
+	var Tiff      = require('tiff.js');
 	var PSD       = require('psd');
 
 	var sysEnv = JSON.parse(JSON.stringify(process.env));
@@ -70,6 +72,7 @@ console.log('setup for Node.js for electron main process');
 	var execSync      = false;
 if(typeof TgaLoader == 'undefined')
 	var TgaLoader     = false;
+if(typeof Tiff == 'undefined')
 	var Tiff          = false;
 	var sharp         = false;
 	var PSD           = (typeof require == 'undefined')? false : require('psd');
