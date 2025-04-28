@@ -1569,7 +1569,7 @@ var iptFilter = function(cell,targetTrack,mode,exch){
 				if(excStack[exc].compare(targetTrack[f])>0){
 					if(changeStart > f) changeStart = f;
 					if(changeEnd < f)   changeEnd   = f;
-				}
+				};
 			};
 		};
 		var pclContent = targetTrack.xParent.parentXps.getRange([

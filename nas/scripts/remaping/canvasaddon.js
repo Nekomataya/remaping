@@ -16,8 +16,8 @@
  */
 	
 /*
-	 * fabricライブラリ・カスタマイズ for nas.cavas_addon 
-	 */
+ * fabricライブラリ・カスタマイズ for nas.canvas_addon 
+ */
 	fabric.Object.prototype.set({
 		  borderColor        : "rgb(178,204,0)",      //選択枠の色
 		  borderScaleFactor  : 2,                     //選択枠の太さ
@@ -333,9 +333,9 @@ xUI.getTargetImageAddress = function(){
 		yankBuffer  :[]
 	}
 /**
-	 *	@params	{Object FabricEvenet} evt
-	 * オブジェクト追加イベントハンドラ
-	 */
+ *	@params	{Object FabricEvenet} evt
+ * オブジェクト追加イベントハンドラ
+ */
 	xUI.canvasPaint.addedHandler = function(evt){
 //	主にpencilToolの直線描画の際の終了点削除(lineDrawId >= 0)
 		if(
@@ -349,18 +349,18 @@ xUI.getTargetImageAddress = function(){
 		};
 	}
 /**
-	 *	@params	{Object FabricEvenet} evt
-	 * オブジェクト変更イベントハンドラ
-	 */
+ *	@params	{Object FabricEvenet} evt
+ * オブジェクト変更イベントハンドラ
+ */
 	xUI.canvasPaint.modifiedHandler = function(evt){
 	console.log('modifiedHandler');
 		xUI.canvasPaint.historyHandler(evt);
 	}
 /**
-	 *	@params	{Object FabricEvenet} evt
-	 * 操作historyハンドラ
-	 * 他のイベントハンドラから呼ばれる
-	 */
+ *	@params	{Object FabricEvenet} evt
+ * 操作historyハンドラ
+ * 他のイベントハンドラから呼ばれる
+ */
 	xUI.canvasPaint.historyHandler = function(evt){
 		if(!(xUI.canvasPaint.suspend)){
 			xUI.canvas.undoPt ++ ;
@@ -371,9 +371,9 @@ xUI.getTargetImageAddress = function(){
 		};
 	}
 /**
-	 *	@params	{Object FabricEvenet} evt
-	 * オブジェクト選択イベントハンドラ
-	 */
+ *	@params	{Object FabricEvenet} evt
+ * オブジェクト選択イベントハンドラ
+ */
 	xUI.canvasPaint.seletedHandler = function(){
 	console.log(xUI.canvas.getActiveObjects().length);
 		if(
@@ -395,8 +395,8 @@ xUI.getTargetImageAddress = function(){
 		xUI.canvasPaint.syncCommand();
 	}
 /*
-	 *
-	 */
+ *
+ */
 	xUI.canvasPaint.undo = function(){
 		if(xUI.canvas.undoPt > 0){
 			xUI.canvasPaint.suspend = true;
@@ -615,11 +615,12 @@ console.log(itm);
 // nas.NoteImageの持っている画像を背景イメージとして設定する持っていない場合(null)
 // 設定不要に
 			if(tgtItm.img){
-//復帰時に必要となるのでフラグ兼任のオブジェクトプロパティとして設定する
-				xUI.canvasPaint.backdropImage     = document.createElement('img');
-				xUI.canvasPaint.backdropImage.src = tgtItm.img.src;
+//復帰時に必要となるのでフラグ兼任のオブジェクトプロパティとして設定する 
+				xUI.canvasPaint.backdropImage     = true;
+//				xUI.canvasPaint.backdropImage     = document.createElement('img');
+//				xUI.canvasPaint.backdropImage.src = tgtItm.img.src;
 			}else{
-				xUI.canvasPaint.backdropImage     = null;
+				xUI.canvasPaint.backdropImage     = false;
 			};
 //編集ロック
 		xUI.onCanvasedit = true               ;//編集モードセット
@@ -831,7 +832,7 @@ console.log(linkElement);
 	console.log(itm);
 	}
 /*canvas編集中のキーボードイベントハンドラ トラップした際にはfalseを戻す
-	 */
+ */
 	xUI.canvasPaint.kbHandle = function(evt){
 		if(xUI.canvasPaint.active == false) return;
 		if(evt.target.id == 'textToolEditBox') return true;
@@ -1065,7 +1066,7 @@ canvas編集中のマウス・タッチイベントハンドラ トラップし�
 			"rect":ptHandle,
 			"circle":ptHandle
 		],
-	 */
+ */
 	xUI.canvasPaint.ptHandler = function(evt){
 		if(xUI.canvasPaint.active == false){xUI.canvasPaint.suspend = true; return false;}
 
@@ -1254,9 +1255,9 @@ console.log([window.scrollX,window.scrollY,xUI.viewScale]);
 	}
 	
 /*
-	 *	全画面クリア
-	 * 対象が-asset-|-xpst-の場合はバックドロップアイテムを保護する
-	 */
+ *	全画面クリア
+ * 対象が-asset-|-xpst-の場合はバックドロップアイテムを保護する
+ */
 	xUI.canvasPaint.clearContent = function(){
 		xUI.canvas.loadFromJSON(xUI.canvas.undoStack[0]).renderAll();
 /*
@@ -1271,8 +1272,8 @@ console.log([window.scrollX,window.scrollY,xUI.viewScale]);
 		xUI.canvas.renderAll();//*/
 	}
 /*
-	 *	選択範囲をグループ化する
-	 */
+ *	選択範囲をグループ化する
+ */
 	xUI.canvasPaint.groupingSelection = function(){
 		if(! xUI.canvas.getActiveObject()) {
 			  return;
@@ -1284,8 +1285,8 @@ console.log([window.scrollX,window.scrollY,xUI.viewScale]);
 			xUI.canvas.requestRenderAll();
 	}
 /*
-	 *	選択グループを解除する
-	 */
+ *	選択グループを解除する
+ */
 	xUI.canvasPaint.ungroupingSelection = function(){
 		if(! xUI.canvas.getActiveObject()) {
 			  return;
@@ -1297,16 +1298,16 @@ console.log([window.scrollX,window.scrollY,xUI.viewScale]);
 			xUI.canvas.requestRenderAll();
 	}
 /*
-	 *	ヤンクバッファへオブジェクト化した選択内容を格納
-	 */
+ *	ヤンクバッファへオブジェクト化した選択内容を格納
+ */
 	xUI.canvasPaint.yank = function(){
 		xUI.canvasPaint.yankBuffer = Array.from(xUI.canvas.getActiveObjects(),e => e.toObject());//toDatalessObject ?
 		xUI.canvasPaint.syncCommand();
 	}
 	xUI.canvasPaint.copy = xUI.canvasPaint.yank;//コピーは現在yankと等価
 /*
-	 *	選択範囲をヤンクバッファにコピーして削除
-	 */
+ *	選択範囲をヤンクバッファにコピーして削除
+ */
 	xUI.canvasPaint.cut = function(){
 		xUI.canvasPaint.yank();
 		if(xUI.canvasPaint.yankBuffer.length)
@@ -1314,8 +1315,8 @@ console.log([window.scrollX,window.scrollY,xUI.viewScale]);
 		xUI.canvasPaint.syncCommand();
 	}
 /*
-	 *	ヤンクバッファの内容をペースト
-	 */
+ *	ヤンクバッファの内容をペースト
+ */
 	xUI.canvasPaint.paste = function(){
 		if(xUI.canvasPaint.yankBuffer.length){
 			var insertObjects = [];
@@ -1331,9 +1332,9 @@ console.log([window.scrollX,window.scrollY,xUI.viewScale]);
 		xUI.canvasPaint.syncCommand();
 	}
 /*
-	 *	引数オブジェクトを選択・引数が空または文字列の場合は全部のすべてのオブジェクトを選択
-	 *	対象アイテムが -asset-|-xpst-の場合最背面のオブジェクトは対象外
-	 */
+ *	引数オブジェクトを選択・引数が空または文字列の場合は全部のすべてのオブジェクトを選択
+ *	対象アイテムが -asset-|-xpst-の場合最背面のオブジェクトは対象外
+ */
 	xUI.canvasPaint.selectObject = function(objects){
 		if((! objects)||(objects == 'all')) objects = xUI.canvas.getObjects();
 		if(xUI.canvasPaint.targetItem.type.match(/-asset-|-xpst-/))
@@ -1354,8 +1355,8 @@ console.log([window.scrollX,window.scrollY,xUI.viewScale]);
 //xUI.canvasPaint.selectObject();
 //
 /*
-	 *	選択範囲のオブジェクトを削除
-	 */
+ *	選択範囲のオブジェクトを削除
+ */
 	xUI.canvasPaint.removeSelection = function(){
 		var member = xUI.canvas.getActiveObjects();
 		if(member.length) member.forEach(e => xUI.canvas.remove(e));
@@ -1399,11 +1400,11 @@ console.log([tl,xUI.canvasPaint.currentTool,xUI.canvasPaint.previousTool]);
 		};
 	}
 /**
-	 *	@params	{Number|String}	wdth
-	 *	ペンのサイズを設定する
-	 *	値はpixelで範囲外の値は 1,2,3に正規化
-	 *	またはキーワード thin|bold
-	 */
+ *	@params	{Number|String}	wdth
+ *	ペンのサイズを設定する
+ *	値はpixelで範囲外の値は 1,2,3に正規化
+ *	またはキーワード thin|bold
+ */
 	xUI.canvasPaint.setPenWidth = function(wdth){
 		if(typeof wdth == 'undefined') wdth = xUI.canvasPaint.pencilWitdh;
 		let min = 1 ;let max = 3 ;
@@ -1418,10 +1419,10 @@ console.log([tl,xUI.canvasPaint.currentTool,xUI.canvasPaint.previousTool]);
 		xUI.sync('paintTool');//syncに委ねる
 	}
 /**
-	 *	@params	{Object|String}	col
-	 *	ペンのカラーを設定
-	 *	値は規定文字列またはcssに設定可能な文字列
-	 */
+ *	@params	{Object|String}	col
+ *	ペンのカラーを設定
+ *	値は規定文字列またはcssに設定可能な文字列
+ */
 	
 	xUI.canvasPaint.setColor = function(col){
 		if(col == 'backdrop') col = xUI.canvasPaint.backdropColor;
@@ -1429,8 +1430,8 @@ console.log([tl,xUI.canvasPaint.currentTool,xUI.canvasPaint.previousTool]);
 		xUI.sync('paintColor');//syncに委ねる
 	}
 /*
-	 *	前景色と予備色を交換
-	 */
+ *	前景色と予備色を交換
+ */
 	xUI.canvasPaint.swapColor = function(){
 		let col = xUI.canvasPaint.pencilColorF;
 		xUI.canvasPaint.pencilColorF = xUI.canvasPaint.pencilColorB;
@@ -1438,16 +1439,16 @@ console.log([tl,xUI.canvasPaint.currentTool,xUI.canvasPaint.previousTool]);
 		xUI.sync('paintColor');//syncに委ねる
 	}
 /*
-	 *	前景色と予備色を初期値にリセット
-	 */
+ *	前景色と予備色を初期値にリセット
+ */
 	xUI.canvasPaint.resetColor = function(){
 		xUI.canvasPaint.setColor('red');
 		xUI.canvasPaint.pencilColorB = xUI.canvasPaint.backdropColor;
 		xUI.sync('paintColor');//syncに委ねる
 	}
 /*
-	 *	キーワードの色指定をhex文字列にパース
-	 */
+ *	キーワードの色指定をhex文字列にパース
+ */
 	xUI.canvasPaint.parseColor = function(col){
 		if(xUI.canvasPaint.colors[col]){
 			col = nas.colorAry2Str(xUI.canvasPaint.colors[col]);
@@ -1605,9 +1606,9 @@ if(dbg) console.log(hasItem);
 //zoom|アピアランスコントロール 不要
 	}
 /**
-	 *	@params	{Boolean}	asOvl
-	 *	推測名をオブジェクトに加えてダイアログを更新する（更新のみ）
-	 */
+ *	@params	{Boolean}	asOvl
+ *	推測名をオブジェクトに加えてダイアログを更新する（更新のみ）
+ */
 	xUI.canvasPaint.guessItemName = function(asOvl){
 		if(typeof asOvl == 'undefined') asOvl = xUI.canvasPaint.currentReference.asOvl;
 		xUI.canvasPaint.currentReference.item = pmanreName.selection[0];
@@ -1630,7 +1631,7 @@ if(dbg) console.log(hasItem);
 		必要ならば個人情報として保存可能にする（予定）
 		この関数内でのデータ操作は禁止
 		ハンドリング用のオブジェクト管理のみをここで行う
-	 */
+ */
 	xUI.canvasPaint.syncItemDlg = function(itemName,backdropCol,asOvl){
 		if(! itemName           ) itemName    = xUI.canvasPaint.currentReference.name;
 		if(! backdropCol        ) backdropCol = xUI.canvasPaint.currentReference.backdropColor;

@@ -748,7 +748,7 @@ console.log(myObj);
 			if(this.target) this.target.innerHTML = this.newContent;//先に書き換える、onChangeで参照可能かつ変更可能に
 		};
 		if(this.onChange instanceof Function){this.onChange(event)};
-		if(this.target.innerHTML=="") this.target.innerHTML+="<br />";//空文字列の時 改行ひとつと置換
+		if((this.target)&&(this.target.innerHTML == "")) this.target.innerHTML+="<br />";//空文字列の時 改行ひとつと置換
 		var myResult = (this.status)? this.newContent:null;
 		this.clear();//クリア
 		return myResult;//

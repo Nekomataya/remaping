@@ -130,7 +130,9 @@ RDBMのuniqueインデックスの付いたフィールドに同じ
  * @class
  *   nas 制作管理クラス
  */
-nas.Pm = {};
+nas.Pm = {
+    IdentifierStyle : "strict"
+};
 /*
     識別子フルスペック
 datanode-description//product-description//sci-description//management-status.lock.timestamp.dataIdf
@@ -416,6 +418,16 @@ nas.Pm.getIdentifier = function(entryData,opt,index){
 //識別子をネットワークリポジトリに送信後正常に追加・更新ができた場合は（コールバックで）ローカルリストの更新を行うこと
     return myIdentifier.slice(0,order).join("//")+((locked)?'.locked':'')+((timestamp>0)?('.'+timestamp):'')+((opt=='xps')?'':('.'+dataType));
 }
+/**
+ *   データ識別子をフランクな形状へ加工する
+ *   @params {String} idf
+ *   @returns {String}
+ */
+nas.Pm.simplifyIdf = function(idf){
+	return String(idf).replace(/[#\[\]_]+/g,'_').replace(/s-c/ig,'').replace(/s([^s-]+)-c/ig,"$1-");
+}
+//TEST nas.Pm.simplifyIdf("ABC#123__s01-c234_s23-c245");//ABC_123_01-234_23-245
+
 /**
  *  管理情報をパースして無名オブジェクトで返す
  *  IDと名前の分離は行わない　単純なデータチャンクで戻す

@@ -1188,6 +1188,8 @@ Xps.prototype.setMargin = function setMargin(direction,length){
      継続時間が減少する場合はシート後方から削除
      増加の場合は""で初期化
      0は処理失敗
+     トランジション・マージンの値は操作しないので
+     それらに変更がある場合は別途変更処理が必要
 */
 Xps.prototype.setDuration =function(myDuration){
     if(! myDuration) return false;

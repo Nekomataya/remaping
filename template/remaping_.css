@@ -1217,7 +1217,7 @@ button.spinCtl-right {
 }
 .timeButton {
 	width : 1.5in;
-	height: 0.5in;
+	height: 0.3in;
 	font-size: large;
 	background-image:url(images/ui/timeButton.png);
    /* 角丸 */
@@ -1226,6 +1226,9 @@ button.spinCtl-right {
     border-radius: 6px;
 	background-color : #dddddd;
 	color: #222222;
+}
+.timeButton:disabled{
+	opacity:0.5;
 }
 button.subControl {
 	margin: 0;

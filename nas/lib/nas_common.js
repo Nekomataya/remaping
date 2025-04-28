@@ -531,21 +531,47 @@ Date.prototype.toNASString = function (form) {
 /**
  * @params {String} nasString
  * @returns {Date}
+    NAS形式の時刻表現をオブジェクトに設定する
+    yy/mm/dd h:m:s
+    yy/mm/dd
+    mm/dd
+    dd
+    一部が省略された入力を受けた場合、一定のポリシーで現在の値で補完する
+    未来の時間を設定することが管理上ふさわしくないのでその場合固定で１年間巻き戻る
+    補完の値はメソッドを呼び出した時刻
  */
 Date.prototype.setNASString = function (nasString) {
-    var yy = nasString.split("\ ")[0].split("/")[0];
-    var mm = nasString.split("\ ")[0].split("/")[1] - 1;
-    var dd = nasString.split("\ ")[0].split("/")[2];
-    var h = nasString.split("\ ")[1].split(":")[0];
-    var m = nasString.split("\ ")[1].split(":")[1];
-    var s = nasString.split("\ ")[1].split(":")[2];
-    this.setYear(yy);
+    var input = String(nasString).split("\ ");
+    var day   = input[0].split("/");
+    var current = new Date();
+    if(day.length == 1){
+//年と月が欠落
+        day = [current.getFullYear(),current.getMonth(),day[0]];
+    }else if(day.length == 2){
+//年が欠落
+        day = [current.getFullYear(),day[0],day[1]];
+    }else{
+        day = [day[0],day[1],day[2]];
+    };
+//time記述は部分欠落は許されない ALL || NOT
+//不足時は、関数を呼び出した時刻で補われる
+    var time = (input.length > 1)? input[1].split(":"):[];
+    if (time.length != 3) time = [current.getHours(),current.getMinutes(),current.getSeconds()];
+//不足の時間は現在時で補う
+    var yy = day[0];
+    var mm = day[1] - 1;
+    var dd = day[2];
+    var h = time[0];
+    var m = time[1];
+    var s = time[2];
+    this.setFullYear(yy);
     this.setMonth(mm);
     this.setDate(dd);
     this.setHours(h);
     this.setMinutes(m);
     this.setSeconds(s);
-
+//未来の時間を設定した場合は固定で１年間巻き戻る
+    if (this.getTime() > (current.getTime()+1000)) this.setFullYear(yy-1);
     return this;
 };
 
@@ -587,8 +613,9 @@ function AppHost(){
 }
 
 AppHost.prototype.init=function(){
-//Node.js環境判定()
-    this.Nodejs = (typeof process == "undefined")? false:true;
+//Node.js環境判定
+    this.Nodejs = ((typeof process != "undefined")&&( process.versions.node))? true:false;
+//    if(! (this.Nodejs))this.Nodejs = (typeof electronIpc != 'undefined')? true:false;
 //AdobeESTK判定
     this.ESTK   = (typeof app == "undefined")? false:true;
 //globalのappオブジェクトを確認してAdobeScript環境を判定
@@ -614,7 +641,9 @@ AppHost.prototype.init=function(){
             if(typeof process == 'undefined'){
                 this.Electron = 'browser';
             }else{
-                this.Electron = (process.sandboxed)? 'sandbox':'renderer';
+//Electron sandbox内部では nas library自体ロード不能になったのでこの判定は無意味
+//                this.Electron = (process.sandboxed)? 'sandbox':'renderer';
+                this.Electron = 'renderer';
             };
         }else if(window.__adobe_cep__){
 //windowオブジェクトも存在する
@@ -819,6 +848,7 @@ AppHost.prototype.checkUserlibrary=function(){
                 callback:"console.log(arguments[0]);"
             });
         }else if(typeof electronIpc != 'undefined'){
+console.log(electronIpc);
             this.userLibrary = electronIpc.checkUserlibrary();//
         };
     }else if((this.Nodejs)||((this.Electron)&&(this.Electron != 'browser'))){
@@ -935,7 +965,10 @@ if((appHost.platform == 'UXP')){
 	var fs            = require('uxp').storage.localFileSystem;
 	var app           = require('photoshop').app;
 	var action        = require('photoshop').action;
-}else if((! appHost.Nodejs)){
+}else if(
+	(! appHost.Nodejs)||
+	((appHost.platform=='Electron')&&(appHost.Electron=='browser'))
+){
 	var fs            = false;
 	var path          = false;
 	var child_process = false;
@@ -1793,8 +1826,9 @@ nas.UserSignatureCollection = function (signature,parent){
     }
 
     /**
-     *   コレクション最後尾にメンバーを追加する。既存のメンバーは追加されない。戻り値はメンバーのインデックス
-        追加の際にparentプロパティを更新する
+     *   コレクション最後尾にメンバーを追加する
+     *   既存のメンバーは追加されない 戻り値はメンバーのインデックス
+     *   追加の際にparentプロパティを設定
      *   配列引数渡しNG
      *   nas.UserSignature以外の不正メンバーは追加されない。その場合の戻り値は -1
      *  @params {Object nas.UserSignature|String} newMember
@@ -2303,17 +2337,17 @@ nas.UnitResolution.convert("単位文字列")	指定された単位文字列に�
 
 */
 nas.UnitResolution=function(numberString,unitString){
-    this.value ;
-    this.type  ;
+    this.value = 96    ;//Number Float
+    this.type  = 'ppi' ;//String dpi|dpc|lpi|lpc|ppi|ppc
 //
-    this.setValue(numberString,unitString);
+    if(arguments.length) this.setValue(numberString,unitString);
 };
 nas.UnitResolution.prototype.setValue = function(myNumberString,myUnitString){
 	if(myNumberString instanceof nas.UnitResolution) myNumberString = myNumberString.toString();
 	var myNumberUnit='';
 	if((myNumberString)&&(String(myNumberString).match(/([dpl]p[ci])/i))){
 		myNumberUnit=RegExp.$1;
-	}
+	};
 	if((myUnitString)&&(String(myUnitString).match(/([dpl]p[ci])/i))){
 	    myUnitString = RegExp.$1;
 	}else{
@@ -2326,11 +2360,18 @@ nas.UnitResolution.prototype.setValue = function(myNumberString,myUnitString){
 	this.type  = myUnitString;
 	this.value = (myUnitString==myNumberUnit)?
 	    parseFloat(myNumberString):(	    
-	    (myUnitString.indexOf('pc')<0)?
+	    (myUnitString.indexOf('pc')< 0)?
 	        parseFloat(myNumberString)*2.540:
 	        parseFloat(myNumberString)/2.540
 	    );
-	if((isNaN(this.value))||(this.value<=0)){this.value=(myUnitString.indexOf('pc')<0)?nas.RESOLUTION*2.540:nas.RESOLUTION;};
+	if((isNaN(this.value))||(this.value<=0)){
+//	    this.value=(myUnitString.indexOf('pc')<0)?nas.RESOLUTION.as()*2.540:nas.RESOLUTION;
+        if((nas.RESOLUTION)&&(nas.RESOLUTION instanceof nas.UnitResolution)){
+	        this.value = nas.RESOLUTION.as(myUnitString);
+	    }else{
+	        this.value = (myUnitString.indexOf('pc')< 0)? 96 :96/2.540;
+	    };
+	};
 }
 nas.UnitResolution.prototype.parse      = nas.UnitResolution.prototype.setValue;
 nas.UnitResolution.prototype.as         = nas.RESOLUTIONAs;
@@ -3209,7 +3250,7 @@ nas.Framerate.prototype.setValue = function(rateString,rate){
 	    this.rate = parseFloat(RegExp.$2);
 	  } else if(arguments.length>1){
 	//引数が2つ設定されている
-	    this.name = rateString;
+	    this.name = String(rateString);
 	    this.rate = parseFloat(rate);
 	  }else if(String(rateString).length){
 	//引数が一つのみ
@@ -3348,10 +3389,12 @@ nas.ShotTransition.prototype.setValue = function(trDescription){
         this.direction  = trDescription.direction;//{string} in|out
     }else{
         if(trDescription.indexOf(',') >= 0){
+// time前置 120,wipe
             var dataArray = trDescription.split(',');
             this.name = dataArray[1].trim();
             this.time = (dataArray[0])? dataArray[0].trim():'0';
         }else{
+//パーレン型 wipe(1+12)
             var timeGet = trDescription.match(/^([^\(]*)(\(([^\)]+)\))?/);
             this.name = timeGet[1].trim();
             this.time = (timeGet[2])? timeGet[3]:'0';
@@ -6347,6 +6390,96 @@ nas.stringifyName = function(num,lt){
 nas.parseName("ABSDE","ABCDEFGHIJELMNOPQRSTUVWXYZ");
 nas.stringifyName(parseName("ABSDa"));
 */
+/*
+    バージョン管理のためのプラスルール
+    LO LO修 LO修修 LO修修修 ...
+    LO LO演 LO演監 LO演監作 LO演監作総 ...
+    LO LO+ LO++ LO+++ ...
+    上記のように、文字列末尾に連続するキー文字をおいて、その数で状況（バージョン）を識別する手法
+    LO LO+ LO+2 LO+3 LO+4 ...
+    文字列全体を短縮するために最後尾に数字を置いて加算されたバージョン数を代用することができる
+    バージョン表示のためのキー文字は、複数の任意の文字を指定可能だが、統一化とデータ交換のために
+    標準では "+(プラス)"を利用するものとする
+ */
+/**
+ *	@params {String} str
+ *	@params {String} keychar
+ *	文字列のプラスルールをパースして無名オブジェクトで返す
+ */
+nas.plParse = function parsePlusRule(str,keychar){
+	if(typeof str == 'undefined') return null;
+	if(typeof keychar == 'undefined') keychar = '+';
+	var count = 0;
+	var name  = str;
+	var prefix = ((/[\^\$\\\/\?\*\+\[\]\(\)\{\}]/).test(keychar))? "\\":"";
+	if( String(str).match(new RegExp("(.*?)(["+keychar.replace(/[\^\$\&\\\/\?\*\+\[\]\(\)\{\}]/g , "\\$&")+"]+)(\\d*)$"))){
+//	if( String(str).match(new RegExp("(.*?)("+prefix+keychar+"+)(\\d*)$"))){}
+		name  = RegExp.$1;
+		count = RegExp.$2.length;
+		if(RegExp.$3) count += (parseInt(RegExp.$3) - 1);
+	}
+	return {"name":name,"key":keychar,"count":count};
+}
+/*TEST
+ *  nas.plParse("LO+")   ;//{name:"LO",key:"+",count:1}
+ *  nas.plParse("原画修修修3"."修")   ;//{name:"原画",key:"修",count:5}
+*/
+/**
+ *	@params {String} str
+ *	@params {Number} count
+ *	@params {String} keychar
+ *	文字列のプラスルールに従ってエンコードした文字列を返す
+ *  負の数は受け入れず０として扱う
+ */
+nas.plEncode = function encodePlusRule(str,count,keychar){
+    if((! count)||(count < 0)) count = 0;
+	if(typeof str == 'undefined') return '';
+	if(typeof keychar == 'undefined') keychar = '+';
+    return str+((count > 0)?keychar+((count>1)?count:""):"");
+}
+/**
+ *	@params {String} str
+ *	@params {String} keychar
+ *	文字列プラスルールのカウント数のみを返す
+ *  plCount("LO+")   ;// 1
+ *  plCount("原画")   ;// 0
+ */
+nas.plCount = function countPlusRule(str,keychar){
+	var result = nas.plParse(str,keychar);
+	if(result) return result.count;
+	return result;
+}
+/*TEST
+console.log(nas.plCount('LO+++'));
+console.log(nas.plCount('LO+2','+'));
+console.log(nas.plCount('LO修2','修'));
+console.log(nas.plCount('LO修修3','修'));
+*/
+/**
+ *	@params {String} str
+ *	@params {Number} count
+ *	@params {String} keychar
+ *	文字列後尾のプラスルール部分を増減する
+ *  戻しのkeycharは一文字に限定で引数のさいごの文字を使用
+    オリジン 0
+ ABCDE+
+ 123456
+ *  nas.plIncr("LO+",1)        ;//LO+2
+ *  nas.plIncr("原画+2",-1)     ;//原画+
+ *  nas.plIncr("原画+2",1,"修") ;//原画+
+ */
+nas.plIncr = function plusIncrement(str,count,keychar){
+	var pl = nas.plParse(str,keychar);
+	if(! pl) return str;
+	var result = pl.name;
+	return nas.plEncode(pl.name,pl.count+count,keychar);
+}
+/*TEST
+console.log(nas.plIncr('LO+++',-2));
+console.log(nas.plIncr('LO+2',1,'+'));
+console.log(nas.plIncr('LO修2',1,'修'));
+console.log(nas.plIncr('LO修修3',-4,'修'));
+*/
 /**
  *	@params {String} string
  *		操作対象文字列
@@ -6576,7 +6709,7 @@ nas.normalizeStr = function(str,zeroCount){
 
 /*test
 console.log (nas.normalizeStr("安全ｶｸﾆﾝＢＡＮＤ（12３④５）"));
-console.log (nas.normalizeStr("安全ｶｸﾆﾝＢＡＮＤ（12３④５）",5));
+console.log (nas.normalizeStr("安全ｶｸﾆﾝＢＡＮＤ（12３④５）",7));
 */
 
 /**
@@ -6649,7 +6782,7 @@ console.log(nas.compareCellIdf("A0012","A-(12)"));
  * 狭義のセル（動画セル）を記述するオブジェクト
  * セル記述を与えて初期化するか、または必要な情報を配列で与えて初期化する。
  * 
- * myDescription      主記述・シートに記述する基本的なテキスト
+ * cellDescription      主記述・シートに記述する基本的なテキスト
  *     プレフィックス、ポストフィックス、モデファイヤを含んでいても良い
  *     特殊記述は内容で判別
  * 
@@ -6665,7 +6798,7 @@ console.log(nas.compareCellIdf("A0012","A-(12)"));
  *         値を持たない場合は省略記述と同様に直前のセルの値を継承する
  *         
  * cellPrefix    プレフィックス部
- *     通常はタイムライントラックラベル
+ *     通常はタイムライントラックラベル(セルグループラベル)
  *     主記述に指定のある場合はそちらを優先する
  * cellPostfix
  *     以下の文字列によるオーバレイまたはアンダーレイの指定を一種のみ
@@ -6677,7 +6810,7 @@ console.log(nas.compareCellIdf("A0012","A-(12)"));
  *     ポストフィックスが与えられた場合、特殊記述でなく一般記述となる
  * cellModifier
  *     丸囲い、三角囲い、四角囲い等の記述修飾を与える  
- *     "none","circle","trangle","brackets","red"
+ *     "none","circle","triangle","brackets","red"
  *     主記述に指定のある場合はそちらを優先する
  *     特殊記述にはモデファイヤが付かない
  * cellType
@@ -6689,11 +6822,11 @@ console.log(nas.compareCellIdf("A0012","A-(12)"));
  *     マップの状況により同じ記述が必ずしも同じタイプとはならない
  *</pre>
  */
-nas.CellDescription=function(cellDescription,cellPrefix){
-    this.prefix   = "";
-    this.body     = "";
-    this.postfix  = "";
-    this.modifier = "none";
+nas.CellDescription = function(cellDescription,cellPrefix){
+    this.prefix   = "";//セルグループラベル
+    this.body     = "";//セル記述 通常は番号 副番号記述を認める
+    this.postfix  = "";//セルの後置記述　修正、注釈等
+    this.modifier = "none";//記述修飾子
     this.content  = null;//nullで初期化  ここに値があればtoStringで返す  キャッシュ扱い
     this.type     = "inherit";
   if(cellDescription instanceof Array){
@@ -6749,7 +6882,8 @@ nas.CellDescription.modifiedRegex = new RegExp( "^\\(.+\\)$|^\\[.+\\]$|^\\<.+\\>
 
 /* TEST
 console.log(new nas.CellDescription())     ;//
-console.log(new nas.CellDescription(["A","12","修","triangle"]))     ;//triangle|修 |A|12
+console.log(new nas.CellDescription(["A","12","修","triangle"]))   ;//triangle|修 |A|12
+console.log(new nas.CellDescription(["A","12-1","修","triangle"])) ;//triangle|修 |A|12-1
 console.log(new nas.CellDescription("(1)"))     ;//circle|""|""|1
 console.log(new nas.CellDescription("2"))     ;//none|""|""|2
 console.log(new nas.CellDescription("<A12>修"))     ;//triangle|修 |A|12
@@ -6795,8 +6929,10 @@ nas.CellDescription.prototype.setType=function(myType){
  *<pre>
  *     "origin" ユーザ記述のままを返す    content
  *         contentに値がない場合は"normal"の値をcontentに設定して返す デフォルト
- *     "normal" 正規化済の文字列で返す    [body,postfix].join("")
- *     "complete|full" 完全な修飾子付きで返す  [prefix,body,postfix].join("-")
+ *     "body"             bodyのみを文字列化して返す String(body)
+ *     "normal"           正規化済の文字列で返す    [body,postfix].join("")
+ *     "complete|full"    完全な修飾子付きで返す  [prefix,body,postfix].join("-")
+ *     "asset|asset-body" アセット名として番号修飾を廃した文字列を返す 桁合わせはサポート外 A-1+
  * </pre>
  *  @returns {String}
  */
@@ -6807,30 +6943,35 @@ nas.CellDescription.prototype.toString=function(type){
     var brackets=([["",""],["(",")"],["<",">"],["[","]"]])[["none","circle","triangle","brackets"].indexOf(this.modifier)];
     switch(type){
     case "body":
-        myResult =[brackets[0],this.body,brackets[1]].join("");
+//本体のみを文字列で返す //1
+        myResult =String(this.body);
     break;
     case "complete":
     case "full":
+//完全修飾状態の記述を返す //A-(1)-修 || A-(1)+ プラスルールではセパレータ省略
         myResult = [];
           if(this.prefix) myResult.push(this.prefix);
           myResult.push([brackets[0],this.body,brackets[1]].join(""));
-          if(this.postfix) myResult.push(this.postfix);
         myResult = myResult.join("-");
+          if(this.postfix) myResult += (this.postfix.indexOf("+") == 0)?"":"-" + this.postfix;
     break;
     case "asset":
     case "asset-body":
+//アセット名として番号修飾を廃した文字列を返す 桁合わせはサポート外なのでリザルトを加工する必要あり
         myResult = [];
         if(this.prefix) myResult.push(this.prefix);
         myResult.push(this.body);
-        if((type=='asset')&&(this.postfix)) myResult.push(this.postfix);
         myResult = myResult.join("-");
+        if((type=='asset')&&(this.postfix))  myResult += (this.postfix.indexOf("+") == 0)?"":"-" + this.postfix;
     break;
+    case "origin":
+        if(this.content) return this.content;
+    case "normal":
     default:
+//前置・後置無しのXPS記述を返す //(1)
         myResult = [brackets[0],this.body,brackets[1],this.postfix].join("");
-
-//        if(type == "origin")&&(! this.content) this.content = myResult;
-
-    }
+        if((type == "origin")&&(! this.content)) this.content = myResult;
+    };
     return myResult;
 }
 /* test
@@ -6926,7 +7067,7 @@ console.log(A.toString("origin"));
  * パーサに値が与えられなかった場合、既存のプロパティからdescription-contentの更新を行う
  * 丸数字は失われ標準表記の(丸括弧)に置換される  
  *
- * ファイル名を評価する際は、あらかじめファイル拡張子を除いておく     </pre>
+ * ファイル名を評価する際は、あらかじめファイル拡張子を除いておく必要がある     </pre>
  */
 nas.CellDescription.prototype.parseContent=function(description,prefixStr){
 //第一引数事前処理
@@ -6935,16 +7076,27 @@ nas.CellDescription.prototype.parseContent=function(description,prefixStr){
           this.content = this.toString(true);
           return;
         }else{
-          description="";
+          description = "";
         };
     };
     description  = String(description).trim();
 //最低限のクリンアップで内容を保全する
     this.content = description;
+//限定条件で アルファベット一文字+数字のみで構成された文字列の場合セパレータを補う
+//A1end A下1-3end これらも解釈したい
+    if(description.match(/^[A-Z]\d+$/i)) description = description.replace(/^([A-Z])(\d+)$/,"$1-$2");
 //第二引数事前処理
-    if (typeof prefixStr == "undefined") prefixStr = "";
+    if(typeof prefixStr == "undefined") prefixStr = "";
     prefixStr = String(prefixStr).trim();
-
+//プレフィックスが存在してかつ指定のプレフィックスと引数が一致している場合はプレフィックスを設定
+    if((prefixStr.length > 0)&&(description.indexOf(prefixStr) == 0)){
+        this.prefix = prefixStr;
+//引数とプレフィックスが完全に一致する場合、番号1の記述として返す
+        if(description == prefixStr){
+            this.body   = String(1);
+            return;
+        };
+    };
 //丸数字を一つだけ（）で囲む（正規化前に行う）
     description = description.replace(/[①-⑳㉑㉒-㉛㉜-㉟㊱-㊿]/,"($&)");
 //正規化  丸数字は通常の数字に展開されて失われる
@@ -6962,17 +7114,41 @@ nas.CellDescription.prototype.parseContent=function(description,prefixStr){
     }else{
         this.modifier = "none";
     };
-//ポストフィックスを判定して消去 推奨表記は"+"
-    if(description.match(/([\-_\s]?((\+|修正?|カブセ|o|overlay|u|under|上|下)+(\d*)))$/)) {
-        this.postfix = RegExp.$2;//暫定的に全部（あとで置きかえ）
-        description   = description.slice(0,-RegExp.$1.length);
+//ポストフィックスを判定して消去 推奨表記は"+" ここはユーザ設定可能に変更予定
+    if(description.match(/([\-_\s]?(\++\d*)$)/)){
+//プラスルール分離 ポストフィックスのうちセパレータを必要としないケースをここで処理
+        this.postfix  = RegExp.$2;
+        description   = description.slice(0,-(RegExp.$1.length));
+    }else if(description.match(/([\-_\s]?((\+|修正?|カブセ|o|overlay|u|under|上|下)+(\d*)))$/)){
+//別途指定される文字列が後置される場合それをポストフィックスとみなして分離
+        this.postfix  = RegExp.$2;
+        description   = description.slice(0,-(RegExp.$1.length));
+    }else if(description.replace(/[\-_\s]/g,"_").split('_').length > 2){
+//上記を抜けたコンテンツはセパレーターが必ず存在するものとして処理
+        var arrayContent = description.replace(/[\-_\s]/g,"_").split('_');
+        //["A","123","修正","大阪"]
+//末尾要素が、ポストフィックス条件にマッチしていた場合に限りポストフィックスを設定する
+/*
+    ポストフィックス条件
+    プラスルールを含む予約文字列
+    A-1-3-カブセ-修ノ修ノ修
+*/
+        var pidx = arrayContent[0].length+arrayContent[1].length + 1;
+        this.postfix = description.slice(pidx + 1);//第三要素以降の文字列
+        description = description.slice(0,pidx);//第一、第二要素の文字列を抽出
 	} else {
         this.postfix = "";
 	};
 //前置部分を分離
-    if(description.match(new RegExp("^("+prefixStr+"|([A-Z].?[\\-_\\s]))(.+)$","i"))){
-        this.prefix  = ((RegExp.$2).length)? RegExp.$2:prefixStr;
-        this.body    = nas.normalizeStr(RegExp.$3);
+    if(description.match(new RegExp(/^([A-Z][^\-_\s]*)[\-_\s]?(.+)$/i))){
+        this.prefix  = ((RegExp.$1).length)? RegExp.$1:prefixStr;
+        this.body    = nas.normalizeStr(RegExp.$2);
+    }else if(
+        (prefixStr != "")&&
+        (description.match(new RegExp("^("+prefixStr+")[\\-_\\s]?(.+)$","i")))
+    ){
+        this.prefix  = ((RegExp.$1).length)? RegExp.$1:prefixStr;
+        this.body    = nas.normalizeStr(RegExp.$);
     }else{
         this.prefix  = prefixStr;
         this.body    = nas.normalizeStr(description);
@@ -6984,10 +7160,13 @@ nas.CellDescription.prototype.parseContent=function(description,prefixStr){
     this.type = nas.CellDescription.type(this.body);
 }
 /*test
-A= new nas.CellDescription("");
+var A = new nas.CellDescription("");
 A.parseContent("A-(12)-修");
 A.parseContent("A[12]修");
 console.log(A);
+
+new nas.CellDescription("B","B").toString() ;//B-1
+new nas.CellDescription("").toString();//""
 */
 /**   nas.CellDescription.prototype.compare(description,lbl)
 オブジェクトメソッド
@@ -7027,7 +7206,7 @@ nas.CellDescription.prototype.compare=function(desc,lbl){
         ((this.postfix.length == 0)&&(desc.postfix.length == 0))||
         (this.postfix == desc.postfix)
     ) { myResult += 4 }else{ return myResult };
-//プラスルースをここで実装のこと
+//プラスルールをここで実装のこと
     if (
         (this.modifier!='none') && (this.modifier == desc.modifier)
     ){ myResult += 8 }else{ return myResult };
@@ -7128,6 +7307,153 @@ nas.CellDescription.parsePostfix=function(str){
 	nas.CellDescription.parsePostfix('A-1-修2') ;//A-1-修修
 	nas.CellDescription.parsePostfix('A-1+4')   ;// A-1++++
 */
+/**
+ *	@params  {String} nameText
+ *	@params  {String} prefix
+ *	@returns {Array of nas.CellDescription}
+ *	複合アセット名を合成要素名（CellDescription）のcollection配列として返す
+ *	先行要素のプレフィックスを引き継ぐので A-1,A-3等の記述を A-1,3と省略できる
+
+A-1-修_B-1-修
+
+これは手書きの場合は
+
+A-1_B-1-修
+
+と省略するのが普通なのでそのように解釈する
+補助記述が一つだけ最後についているケースは
+そのグループ全体に同じ記述（ポストフィックス）を与える
+
+表記はどちらでも良い
+
+修 演 監 作 などの日本語でも解釈するが海外発注や転送を考慮するとアルファベット一文字またはプラスルールを推奨
+
+A_B-1
+
+A_B-1-修
+
+これも許す
+body,postfixが省略された場合　後置のアイテムの値を代入するようにする
+
+
+A-1.5 これは副番号として A-1-5 と解釈する
+この場合の第三要素の 5は副番号であり、ポストフィックスはない
+番号 1-5 と解釈する
+A-1-a-3 などの副番号の多重化を認める
+1単位のエントリに２つ以上の要素がある場合は、以前は第三要素以降を連結してポストフィックスに解釈していたが、これを改める
+最終エントリを判定してポストフィックスとして認められた場合のみポストフィックスの登録を行い、それ以外は番号部分に繰り込む
+ポストフィックス判定ルーチンが必要10/31
+
+"a1b1c1d1"等のセパレータ欠落型の記述を解釈するためのフィルタを実装
+if(match(/([a-z]\d+){2,}/i))  replace(/(\d)([a-z])/ig,"$1_$2")
+
+ */
+nas.parseAssetIdf = function(assetName,prefix){
+	var result = [];
+	if(typeof prefix == 'undefined') prefix = nas.guessAssetPrefix(assetName);
+	if(String(assetName).match(/([a-z]\d+){2,}/i)){
+		assetName = String(assetName).replace(/(\d)([a-z])/ig,"$1,$2");
+	};//
+	(assetName.replace(/[\s\_\,\/]/g,',').split(',')).forEach(function(e){
+		var cd = (nas.CellDescription.parse(e,prefix));
+		result.push(cd);
+		prefix = cd.prefix;
+	});
+	if(result[result.length-1].postfix){
+		var postfix = result[result.length-1].postfix;
+		result.forEach(function(e){
+			e.postfix = postfix;
+			e.content = e.toString('asset-body') +'-'+ postfix;
+		});// 末尾アセットにポストフィックスがあれば"A-1-x_B-1-x"の様に統一される
+	};
+	return result;
+}
+/* TEST
+	
+ */
+/**
+ *	@params  {String} nameText
+ *	@returns {String}
+ *	アイテム名からグループプレフィックスを推測する
+ *	複合アイテム名の場合は最初のセパレータの前方文字列が返されるのでこれを第一要素のプレフィックスとみなす
+ *	例外処理：得られたプレフィックスが、一文字アルファベットを"_|/"で接続したものである場合は、セパレータで分離して最初の値を返す
+ *  例外処理：引数に数値・セパレータが含まれない場合　引数全体をprefixとみなす
+ *  シーケンス命名規則的なものを分離して別処理
+ */
+nas.guessAssetPrefix = function guessAssetPrefix(nameText){
+	if(nameText.match(/^[^\d\-_\s]+$/)) return nameText.trim();
+	if(nameText.match(/^([^\d_\-\s]+)[_\-\s]?\d+$/)) return RegExp.$1;
+	if(nameText.match(/^([A-Z])([\_\/\s][A-Z])+.*/)) return RegExp.$1;
+	if(nameText.match(/^[\_\-]?\d+$/)) return "";// 0001,_0012,-1234...
+	if(nameText.match(/(^\_|^\d+)(.+)/)) return pman.guessAssetPrefix(RegExp.$2);//_BG _layout
+	return nameText.trim().replace(/\s|\-|__|\//g,',').split(",")[0];
+}
+/*TEST
+    nas.guessAssetPrefix("A-1"); // A
+    nas.guessAssetPrefix("A-0001")
+    nas.guessAssetPrefix("A0001+")
+    nas.guessAssetPrefix("_BG");//BG
+
+*/
+/**
+	@params {String}	name
+	@params {String}	template
+
+	ラフ原画・原画番号を正規化
+
+	a_0001_b-12 > A-1_B-12
+	等の表記揺れを統一する関数
+
+	セパレーターは、UAF方式に固定
+	ラベルセパレータ   "-"
+	アセットセパレータ "_"
+	テンプレート記述は "A0001"のような文字列で与えるが通常は不要
+	第一文字目を判別してupper|lower
+	含まれる数字の桁数を取得して正規化の桁数とする
+*/
+nas.assetIdfNormalize = function(name,template){
+	var stringCase  = 'igunore';//'upper'|'lower'
+	var nameDigits  = 0;
+	var resultPrefix = '';
+	if(template){
+//テンプレート第一文字めが小文字|大文字範囲に該当する場合そのケースで統一とする
+// 65-90 97-122
+		var cCode = nas.normalizeStr(template).charCodeAt(0);
+		if((cCode >= 65)&&(cCode <= 90)){
+			stringCase = 'upper';
+		}else if((cCode >= 97)&&(cCode <= 122)){
+			stringCase = 'lower';
+		};
+//テンプレートの数字部分の桁数を取得する
+		if(String(template).match(/(\d+)/)){
+			nameDigits = RegExp.$1.length;
+		};
+	};
+//入力の第一文字がセパレータであった場合は削除する
+	name = name.replace(/^[\-_\s]+/,'');
+//入力の第一要素が[A-Z]一文字以外であった場合はprefixを設定
+	if(name.match(/^[a-z][a-z]/i)) resultPrefix = '_';//
+	var names = nas.parseAssetIdf(name,'');
+	var result = [];
+	names.forEach (function(e){result.push(nas.RZf(e.toString('asset'),nameDigits));} )
+	if(stringCase == 'upper'){
+		return resultPrefix + result.join('_').toUpperCase();
+	}else if(stringCase == 'lower'){
+		return resultPrefix + result.join('_').toLowerCase();
+	}else{
+		return resultPrefix + result.join('_');
+	};
+}
+/* TEST
+nas.assetIdfNormalize('a1');//a-1
+nas.assetIdfNormalize('a1 b1');//a-1_b-1
+
+nas.assetIdfNormalize('a1 b1',"B");//A-1_B-1
+nas.assetIdfNormalize('a1',"B-0000");//A-0001
+nas.assetIdfNormalize('a1_b1_c3',"B");//A-1_B-1_C-3
+*/
+
+
 /*
 このシステムでは、キーフレームの概念を使用しない
 
@@ -7147,9 +7473,6 @@ nas.CellDescription.parsePostfix=function(str){
 
 有値セクションの継続長が１フレームだけの場合、一般的なコンポジットソフトで実装されるキーフレームと同様のふるまいをするので相互の変換は可能である
 */
-
-
-
 
 /*  
     中間値補完セクション開始記述
@@ -7483,7 +7806,7 @@ JSON.Stringify(nas.cameraworkDescriptions.members);
  */
 /** @class 
  *	nas.File
- *	Fileハンドリング用オブジェクト
+ *	File|URLハンドリング用オブジェクト
  *	パスを配列で持つ
  *	標準的にはURI形式で返す
  *	各種形式変換メソッドあり
@@ -7491,13 +7814,20 @@ JSON.Stringify(nas.cameraworkDescriptions.members);
  *	
  *	[0-9a-z\-\+]+://
  *	MS-DOS形式のパスを扱う際は他のファイルシステムで空白となるルートエントリにドライブレターを置くように変更
- *  ファイルスキームとドライブレターの混用を避ける
+ *  ファイルスキームとドライブレターの扱いに注意
  */
 nas.File = function(myURI,baseURI,blob,stat){
     this.scheme      = "file:";
+    this.user        = "";
+    this.password    = "";
+    this.hostname    = "";
+    this.port        = "";
+    this.search      = "";
+    this.hash        = "";
+
 	this.baseURI     = "";
 	this.currentDir  = "";//指定のない場合は "" ディレクトリ時に末尾のセパレータは付けない
-	this.body        = [];
+	this.body        = [];//
 	this.fullName    = "";//this.currentDir+this.body.join("/");
 	this.fsName      = "";//(appHost.os=="Win")? this.fullName.replace(/\//g,"\\"):this.fullName;
 	this.name        = "";
@@ -7509,34 +7839,115 @@ nas.File = function(myURI,baseURI,blob,stat){
         this.parse(arguments[0],arguments[1],arguments[2],arguments[3]);
 };
 /*
+    bodyのアイテム数が１ ファイル名だけで初期化された場合
     
 */
 nas.File.prototype.parse = function(uri,baseUri,blob,stat){
-    if(typeof baseUri == 'undefined') baseUri = "";
-    this.baseURI = baseUri;
-	if((! uri)||(typeof uri == 'undefined')) uri="/";
-//uri形式のスキーム部分を分離する 
-    if(uri.match(/^([a-z]+\:)\/\/(.+)$/i)){
-        this.scheme = RegExp.$1;
-        uri         = RegExp.$2;
-    }else{
-        this.scheme  = "file:";
-    }
-	if(uri.match(/\\/)){
-	    uri = uri.replace(/\\/g,'/');//windowsパスでも初期化可能に
-	    this.pathtype = 'win';
-	};
-	this.body        = uri.trim().split('/');
-	if((this.pathtype=='win')&&(this.body[1].match(/^[a-zA-Z]\:/))) this.body = this.body.slice(1);
-//	if(this.body[0]=="") this.body = this.body.slice(1);
-	this.fullName    = String(this.currentDir).split('/').slice(1).concat(this.body).join('/');//内部的にはunixタイプデリミタで保持
-	this.fsName      = (this.pathtype == "win")? this.fullName.replace(/\//g ,"\\"):this.fullName;
-	this.name        = this.body[this.body.length-1] ;
+    if(uri instanceof nas.File){
+//第一引数がinstanceならばデッドコピーする
+		this.scheme     = uri.scheme;
+		this.user       = uri.user;
+		this.password   = uri.password;
+		this.hostname   = uri.hostname;
+		this.port       = uri.port;
+		this.search     = uri.search;
+		this.hash       = uri.hash;
+		this.baseURI    = uri.baseURI;
+		this.currentDir = uri.currentDir;
+		this.body       = Array.from(uri.body);
+		this.fullName   = uri.fullName;
+		this.fsName     = uri.fsName;
+		this.name       = uri.name;
+		this.blob       = uri.blob;
+		this.stat       = uri.stat;
+		this.pathtype   = uri.pathtype;
+	}else{
+        if(typeof baseUri == 'undefined') baseUri = "";
+        this.baseURI = baseUri;
+        if((! uri)||(typeof uri == 'undefined')) uri="/";
+//uri形式のスキーム部分を分離する file|http|https|ftp|sftp だけを扱う
+        if(uri.match(/^(file\:|https?\:|s?ftp\:)\/\/(.+)$/i)){
+            this.scheme = RegExp.$1;
+            uri         = RegExp.$2;
+//URL(http://|https://)形式の末尾の search,hashを分離する
+            if((this.scheme == "http:")||(this.scheme == "https:")){
+                if(uri.match(/(\#(.+))$/)){
+                    this.hash = RegExp.$2;
+                    uri = uri.slice(0,-RegExp.$1.length);
+                };
+                if(uri.match(/(\?(.+))$/)){
+                    this.search = RegExp.$2;
+                    uri = uri.slice(0,-RegExp.$1.length);
+                };
+                if(uri.match(/\%[0-9A-F][0-9A-F]/)){
+                    uri = decodeComoponent(uri);
+                };
+            };
+            var domainString = uri.split('/')[0];
+            uri = uri.slice(domainString.length);
+            if(domainString.match(/^((([^\:]+)\:)?([^\@\:]+)\@)?([^\#\?\:]+)(\:([0-9]*))?/)){
+                this.password = RegExp.$3;
+                this.username = RegExp.$4;
+                this.hostname = RegExp.$5;
+                this.port     = RegExp.$7;
+            }else{
+                this.hostname = domainString;
+            };
+        }else{
+            this.scheme  = "file:";
+        };
+//ユーザ・パスワード・ドメイン・ポートの分離は未処理（boby第一要素に入る）
+        if(uri.match(/\\/)){
+            uri = uri.replace(/\\/g,'/');//windowsパスでも初期化可能に
+            this.pathtype = 'win';
+        };
+        this.body        = Array.from(uri.trim().split('/'));
+        if((this.pathtype=='win')&&(this.body[1].match(/^[a-zA-Z]\:/))) this.body = this.body.slice(1);
+//      if(this.body[0]=="") this.body = this.body.slice(1);
+        this.fullName    = String(this.currentDir).split('/').slice(1).concat(this.body).join('/');//内部的にはunixタイプデリミタで保持
+        this.fsName      = (this.pathtype == "win")? this.fullName.replace(/\//g ,"\\"):this.fullName;
+        this.name        = this.body[this.body.length-1] ;
+    };
 };
+/*TEST
+[
+    "http://ABC.example.com/index.html",
+    "ftp://pass:kiyo@ABC.example.com/users/BBB.123.jpg",
+    "https://ABC.example.com:1234/WWW/test.png",
+    "sftp://pass:kiyo@ABC.example.com:8000/12/nop.txt",
+    "http://kiyo@ABC.example.com/root/branch/leaf.file",
+    "https://kiyo@ABC.example.com:8600/ABC/CDE.f",
+    "/folder/file.ext",
+    "C:\\FOLDER\\FILE.ext",
+    ""
+].forEach(e=> console.log(new nas.File(e)));
+*/
+
+/*
+    URLを組み直して返す
+    nas.Fileで扱うものは　file,http,https,ftp.sftpに限定する
+*/
+nas.File.prototype.getURL = function(type){
+    var result = this.scheme + '//';
+    if(this.scheme != 'file:'){
+        if(this.username) result += this.username +((this.password)? (':'+this.password):"") + "@"
+        if(this.hostname) result += this.hostname;
+        if(this.port)     result += ":" +this.port;
+        result += '/';
+    }
+    if(this.pathtype == 'win'){
+        result += '/'+encodeURI(this.fullName);
+    }else{
+        result += Array.from(this.body,function(e){return encodeURIComponent(e)}).join('/');
+    };
+    if(this.search) result += "\?"+this.search;
+    if(this.hash)   result += "\#"+this.hash;
+    return result;
+}
 /*
     mimeType DB
  */
-nas.File.mimeTypes = JSON.parse('[["3G2","video/3gpp2"],["3GP","video/3gpp"],["AAC","audio/x-aac"],["AEP","application/vnd.adobe.aftereffects"],["AFM","application/x-font-type1"],["AI","application/postscript"],["AIFF","audio/x-aiff"],["AVI","video/x-msvideo"],["BMP","image/bmp"],["CSS","text/css"],["DOC","application/msword"],["EPS","application/postscript"],["EPS","application/eps"],["EPS","application/x-eps"],["EPS","image/eps"],["EPS","image/x-eps"],["F4V","video/x-f4v"],["FLA","application/x-shockwave-flash"],["FLV","video/x-flv"],["FPX","image/vnd.fpx"],["GIF","image/gif"],["ICC","application/vnd.iccprofile"],["ICM","application/vnd.iccprofile"],["INDD","application/x-indesign"],["JSON","application/json"],["JPEG","image/jpeg"],["JPG","image/jpeg"],["JFIF","image/jpeg"],["J2C","image/jp2"],["J2K","image/jp2"],["JP2","image/jp2"],["JPC","image/jp2"],["JPF","image/jp2"],["JPX","image/jp2"],["PJPEG","image/jpeg"],["PJE","image/jpeg"],["M2V","video/mpeg"],["M4V","video/x-m4v"],["MOV","video/quicktime"],["MP3","audio/mpeg"],["MP4","video/mp4"],["MPEG","video/mpeg"],["MPG","video/mpeg"],["MTS","model/vnd.mts"],["OGV","video/ogg"],["OTF","application/x-font-otf"],["PDF","application/pdf","pdfprocess=Rasterize&resolution=150"],["PFB","application/x-font-type1"],["PFM","application/x-font-type1"],["PICT","image/x-pict"],["PNG","image/png"],["PPT","application/vnd.ms-powerpoint"],["PS","application/postscript","psprocess=Rasterize&psresolution=150"],["PSD","image/vnd.adobe.photoshop","process=None&layerNaming=Layername"],["RTF","application/rtf"],["SVG","image/svg+xml"],["SVGZ","image/svg+xml"],["SWF","application/x-shockwave-flash"],["TAR","application/x-tar"],["TGA","image/x-tga"],["TXT","text/plain"],["TEXT","text/plain"],["TIF","image/tiff"],["TIFF","image/tiff"],["TTC","application/x-font-ttf"],["TTF","application/x-font-ttf"],["VOB","video/dvd"],["VTT","text/vtt"],["WAV","audio/x-wav"],["WEBM","video/webm"],["WMA","audio/x-ms-wma"],["WMV","video/x-ms-wmv"],["APNG","image/vnd.mozilla.apng"],["AVIF","image/avif"],["XLS","application/vnd.ms-excel"],["ZIP","application/zip"],["CLIP","image/clip"],["TVPP","image/tvpp"],["XPS","text/xpst"],["XPST","text/xpst"],["XMAP","text/xmap"],["STBD","text/stbd"],["PMDB","text/pmdb"],["STS","application/sts"],["TSH","application/tsh"],["ARD","application/ard"],["ARDJ","application/ardj"],["TDTS","application/tdts"],["XDTS","application/xdts"],["GDOC","application/vnd.google-apps.document"],["GDRAW","application/vnd.google-apps.drawing"],["GFORM","application/vnd.google-apps.form"],["GJAM","application/vnd.google-apps.jam"],["GMAP","application/vnd.google-apps.map"],["GSLIDE","application/vnd.google-apps.presentation"],["GSCRIPT","application/vnd.google-apps.script"],["GSITE","application/vnd.google-apps.site"],["GSHEET","application/vnd.google-apps.spreadsheet"],["ODT","application/vnd.oasis.opendocument.text"],["ODS","application/vnd.oasis.opendocument.spreadsheet"],["ODP","application/vnd.oasis.opendocument.presentation"],["ODG","application/vnd.oasis.opendocument.graphics"],["ODB","application/vnd.oasis.opendocument.database"],["ODF","application/vnd.oasis.opendocument.formula"]]');
+nas.File.mimeTypes = JSON.parse('[["3G2","video/3gpp2"],["3GP","video/3gpp"],["AAC","audio/x-aac"],["AEP","application/vnd.adobe.aftereffects"],["AFM","application/x-font-type1"],["AI","application/postscript"],["AIFF","audio/x-aiff"],["AVI","video/x-msvideo"],["BMP","image/bmp"],["CSS","text/css"],["DOC","application/msword"],["EPS","application/postscript"],["EPS","application/eps"],["EPS","application/x-eps"],["EPS","image/eps"],["EPS","image/x-eps"],["F4V","video/x-f4v"],["FLA","application/x-shockwave-flash"],["FLV","video/x-flv"],["FPX","image/vnd.fpx"],["GIF","image/gif"],["ICC","application/vnd.iccprofile"],["ICM","application/vnd.iccprofile"],["INDD","application/x-indesign"],["JSON","application/json"],["JPEG","image/jpeg"],["JPG","image/jpeg"],["JFIF","image/jpeg"],["J2C","image/jp2"],["J2K","image/jp2"],["JP2","image/jp2"],["JPC","image/jp2"],["JPF","image/jp2"],["JPX","image/jp2"],["PJPEG","image/jpeg"],["PJE","image/jpeg"],["M2V","video/mpeg"],["M4V","video/x-m4v"],["MOV","video/quicktime"],["MP3","audio/mpeg"],["MP4","video/mp4"],["MPEG","video/mpeg"],["MPG","video/mpeg"],["MTS","model/vnd.mts"],["OGV","video/ogg"],["OTF","application/x-font-otf"],["PDF","application/pdf","pdfprocess=Rasterize&resolution=150"],["PFB","application/x-font-type1"],["PFM","application/x-font-type1"],["PICT","image/x-pict"],["PNG","image/png"],["PPT","application/vnd.ms-powerpoint"],["PS","application/postscript","psprocess=Rasterize&psresolution=150"],["PSD","image/vnd.adobe.photoshop","process=None&layerNaming=Layername"],["RTF","application/rtf"],["SVG","image/svg+xml"],["SVGZ","image/svg+xml"],["SWF","application/x-shockwave-flash"],["TAR","application/x-tar"],["TGA","image/x-tga"],["TXT","text/plain"],["TEXT","text/plain"],["TIF","image/tiff"],["TIFF","image/tiff"],["TTC","application/x-font-ttf"],["TTF","application/x-font-ttf"],["VOB","video/dvd"],["VTT","text/vtt"],["WAV","audio/x-wav"],["WEBM","video/webm"],["WMA","audio/x-ms-wma"],["WMV","video/x-ms-wmv"],["APNG","image/vnd.mozilla.apng"],["AVIF","image/avif"],["XLS","application/vnd.ms-excel"],["ZIP","application/zip"],["CLIP","image/clip"],["TVPP","image/tvpp"],["XPS","text/xpst"],["XPST","text/xpst"],["XMAP","text/xmap"],["STBD","text/stbd"],["PMDB","text/pmdb"],["STS","application/sts"],["TSH","application/tsh"],["ARD","application/ard"],["ARDJ","application/ardj"],["TDTS","application/tdts"],["XDTS","application/xdts"],["GDOC","application/vnd.google-apps.document"],["GDRAW","application/vnd.google-apps.drawing"],["GFORM","application/vnd.google-apps.form"],["GJAM","application/vnd.google-apps.jam"],["GMAP","application/vnd.google-apps.map"],["GSLIDES","application/vnd.google-apps.presentation"],["GSCRIPT","application/vnd.google-apps.script"],["GSITE","application/vnd.google-apps.site"],["GSHEET","application/vnd.google-apps.spreadsheet"],["ODT","application/vnd.oasis.opendocument.text"],["ODS","application/vnd.oasis.opendocument.spreadsheet"],["ODP","application/vnd.oasis.opendocument.presentation"],["ODG","application/vnd.oasis.opendocument.graphics"],["ODB","application/vnd.oasis.opendocument.database"],["ODF","application/vnd.oasis.opendocument.formula"]]');
 /*
 nas.File.mimeTypes = csvSimple.parse(`3G2,video/3gpp2
 3GP,video/3gpp
@@ -7632,7 +8043,7 @@ GDRAW,application/vnd.google-apps.drawing
 GFORM,application/vnd.google-apps.form
 GJAM,application/vnd.google-apps.jam
 GMAP,application/vnd.google-apps.map
-GSLIDE,application/vnd.google-apps.presentation
+GSLIDES,application/vnd.google-apps.presentation
 GSCRIPT,application/vnd.google-apps.script
 GSITE,application/vnd.google-apps.site
 SGEET,application/vnd.google-apps.spreadsheet
@@ -7654,7 +8065,7 @@ GFORM	application/vnd.google-apps.form	Google Forms
 GJAM	application/vnd.google-apps.jam	Google Jamboard
 GMAP	application/vnd.google-apps.map	Google My Maps
 		application/vnd.google-apps.photo	
-GSLIDE	application/vnd.google-apps.presentation	Google Slides
+GSLIDES	application/vnd.google-apps.presentation	Google Slides
 GSCRIPT	application/vnd.google-apps.script	Google Apps Scripts
     	application/vnd.google-apps.shortcut	Shortcut
 GSITE	application/vnd.google-apps.site	Google Sites
@@ -7740,7 +8151,7 @@ nas.File.dirname = function(filename){
  */
 nas.File.relative = function(from,to){
     if((typeof path != 'undefined')&&(path.relative instanceof Function)) return path.relative(from,to);
-    from = new nas.File(nas.File.resolve(from)).fullName.split('/');
+    from = new nas.File(nas.File.resolve(from)).fullName.replace(/(\/|\\)$/,'').split('/');
     var toFile = new nas.File(nas.File.resolve(to));
     to = toFile.fullName.split('/');
     var sep = (toFile.pathtype != 'win')? '/':'\\';
@@ -7764,17 +8175,34 @@ nas.File.relative = function(from,to){
  * nas.File.resolve(...args)
  *  @params  {String} arg
  *  @returns {Stirng}
- *      引数から連結されたパス
+ *
+ *      引数を連結したパスを返す
+ *  ルートを含まないパスのみを指定すると可能な限り現在のパスで補う
+ *  現在のパスが得られない環境では現在のパスをルートとして扱う
+ *  空文字列のみ及びパスとして利用できない文字を含む引数は、無視
+\	　円記号
+/	　スラッシュ
+
+:	　コロン
+*	　アスタリスク
+?	　クエスチョンマーク、疑問符
+"	　ダブルクォーテーション
+<>	　不等号
+|	　縦棒
+(/\\|\/|\*|\?|\"|\<|\>|\:|\|/)
  */
 nas.File.resolve = function(){
     if((typeof path != 'undefined')&&(path.resolv instanceof Function)) return path.resolve.apply(this,arguments);
-    var result = (typeof Folder == 'function')? Folder.current.fullName.split('/'):[""];
+    var result = (typeof Folder == 'function')? Folder.current.fullName.split('/'):[""];//
     var sep = '/';
     for (var i = 0;i < arguments.length; i++){
-        var elm  = new nas.File(arguments[i]);
+        var arg = String(arguments[i]);
+        if ((arg.length == 0)||(arg.match(/(\*|\?|\"|\<|\>|\:|\|)/))) continue;
+        if (arg.match(/^(\\|\/)+$/)){result = [""]; continue;};
+        var elm  = new nas.File(arg);
         if(elm.pathtype == 'win') sep = '\\';
         var tgt  = elm.fullName.split('/');
-        if(tgt[0] == ""){
+        if((tgt.length >= 2)&&(tgt[0] == "")){
 //パスがルートからの記載なので入れ替え
             result = tgt;
             continue;
@@ -7783,15 +8211,25 @@ nas.File.resolve = function(){
             if(tgt[n] == '..'){
                 result.splice(-1,1);
                 continue;
-            } if((tgt[n] == '.')||(tgt[n] == '')){
+            }else if((tgt[n] == '.')||(tgt[n] == '')){
                 continue;
             }else{
                 result.push(tgt[n]);
             };
         };
     };
+    if(result.length == 1) result.push("");
     return result.join(sep);
 }
+/* test
+    console.log(nas.File.resolve());                    // '/'
+    console.log(nas.File.resolve('///','/abc'));        // '/abc'
+    console.log(nas.File.resolve('/','/ab?c','abc'));   // '/abc'
+    console.log(nas.File.resolve('/','abc')) ;          // '/abc'
+    console.log(nas.File.resolve('','abc'))  ;          // '/abc'
+    console.log(nas.File.resolve('/','/abc','/bcd'));   // '/bcd'
+    console.log(nas.File.resolve('abc','bcd'));         // '/abc/bcd'
+*/
 /** ユーティリティー関数
  * nas.File.contentType(path)
  *  @params {String} arg

@@ -4,9 +4,13 @@
 		高さ、幅等の数値は nas.UnitValue にコンバートする Unitは'mm'
  */
 var documentFormat = {
+//active {Boolean}	書式データ編集中のフラグ
 	active       : false,
+//backup {String Xpst}	書式編集開始前データ
 	backup       : "",
+//bkupSelection {Array Xpst.selection}	書式編集開始選択状態データ
 	bkupSelection: [],
+//backupRef {String Xpst}	書式編集開始前参照データ
 	backupRef    : "",
 	modeBackup   : "",
 

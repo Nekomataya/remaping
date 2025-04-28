@@ -3267,8 +3267,16 @@ onclick='nas.incrFCTonHTMLInput(document.getElementById("editTC"),"-(1)")'
 				<td nowrap >
 					<span>head margin</span>
 					<datalist id="scnTransitionList">
+						<option value=trin>前カットからトランジション</option>
+						<option value=trout>後方カットへトランジション</option>
 						<option value=OL>オーバーラップディソルブ</option>
 						<option value=WIPE>ワイプトランジション</option>
+					</datalist>
+					<datalist id="scnMarginList">
+						<option value="0+00"> 0+00 </option>
+						<option value="1+00"> 1+00 </option>
+						<option value="2+00"> 2+00 </option>
+						<option value="3+00"> 3+00 </option>
 					</datalist>
 				</td>
 				<td>
@@ -3276,6 +3284,8 @@ onclick='nas.incrFCTonHTMLInput(document.getElementById("editTC"),"-(1)")'
 						id=scnHeadMargin
 						type=text
 						value='00+00'
+						autoComplete= "on"
+						list ="scnMarginList"
 					>
 				</td>
 				</tr>
@@ -3342,6 +3352,8 @@ onclick='nas.incrFCTonHTMLInput(document.getElementById("editTC"),"-(1)")'
 						id=scnTailMargin
 						type=text
 						value='00+00'
+						autoComplete= "on"
+						list ="scnMarginList"
 					>
 				</td>
 				</tr>
@@ -3349,18 +3361,21 @@ onclick='nas.incrFCTonHTMLInput(document.getElementById("editTC"),"-(1)")'
 <td colspan=3>
 		<button
 			class=timeButton
+			id=incrBt_L
 			style='background-color:#888888;font-size:12px;'
-			onclick='console.log(this.innerHTML)'> 秒.
+			onclick='myScenePref.incrFocusTarget(event);'> 
 		</button> 
 		<button
 			class=timeButton
+			id=incrBt_M
 			style='background-color:#aaaaaa;font-size:12px;'
-			onclick='console.log(this.innerHTML)'> 6k.
+			onclick='myScenePref.incrFocusTarget(event);'> 
 		</button> 
 		<button
 			class=timeButton
+			id=incrBt_R
 			style='font-size:12px;'
-			onclick='console.log(this.innerHTML)'> k.
+			onclick='myScenePref.incrFocusTarget(event);'> 
 		</button> 
 <!--
 		<button
@@ -3411,11 +3426,10 @@ onclick='nas.incrFCTonHTMLInput(document.getElementById("editTC"),"-(1)")'
 				<td colspan=2 nowrap>
 					<select
 						id=scnFormatList
-						value=''
 						style ='text-align:center;width:95%;'
 						onChange="myScenePref.chgProp(this.id)"
 						title = 'プリセットからフォーマットを選択してください'
-					><select>
+					></select>
 				</td>
 				</tr>
 				<tr>
@@ -4997,8 +5011,7 @@ duration :
     class=timerButton
 	onChange='xUI.player.markSwap=(this.checked)?true:false;document.getElementById("timerSwitchPrm").title=(this.checked)?"START/Mark":"START/STOP";document.getElementById("timerSwitchSub").title=(this.checked)?"STOP/Reset":"Mark/Reset";'
 	title='change butonn function assignment'
->key assign</label>
-<!-- input
+ <!-- input
 	id=timerStandbyPositionStart
 	type=checkbox
     class=timerButton
@@ -5346,6 +5359,7 @@ id='imgAdjustDetail'
   </div>
 </div></div>
 <!-- 書類画像調整パネル optionPanelImgAdjust-->
+
 <!-- //Canvas編集メニュー -->
 <div id=optionPanelPaint class='optionPanelFloat optionPanelPaint' >
 <dl><dt class="floatPanelHeader">note menu
@@ -5353,6 +5367,7 @@ id='imgAdjustDetail'
 	<a href="" class=close ><img src=/remaping/images/ui/close.png alt="×"></a>
 	<a href="" class=down ><img src=/remaping/images/ui/down.png alt="▼"></a>
 </dt></dl>
+
 	<div id=formPaint class='centeringForm'>
 	<div class='centeringForm blockMenu'>
          <button id='select' class='paintTool iconButton iconButton-plus' onclick='xUI.canvasPaint.setTool(this.id)' title='select(v)'>
