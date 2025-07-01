@@ -35,6 +35,7 @@
  *      2020/10/03  ラピッドキーに "a,s}を追加(add,sub) exitコマンドを追加して"q"にマップ
  *                  エスケープキーでモード解除
  *      2022/09/29  UI設定機能を新機能に更新
+ *      2025/06/02  XPSフォーマット改訂画像サポート正式版（ベータ）
  * $Id: config.js,v2.0 2022/09/29  $
  */
 	var dbg=false	;	//デバッグモード
@@ -45,8 +46,8 @@
  *		ただし開始メッセージが抑制されている場合は表示されません。
  */
 
-	var welcomeMsg="画像編集機能開発版- 20231219";
-	var windowTitle="ver. 1.9.3";//WindowTitleとしての役割は終了 統合バージョンです
+	var welcomeMsg="画像編集機能調整版- 20250603";
+	var windowTitle="ver. 1.9.4";//WindowTitleとしての役割は終了 統合バージョンです
 
 /**************************************************************************
  *	ロゴ等
@@ -190,6 +191,7 @@ SheetLooks = {
   "CellWidthUnit"        : "px",
   "SheetHeadMargin"      : 383,
   "SheetLeftMargin"      : 30,
+  "SheetLabelHeight"    : 16,
   "SheetCellHeight"      : 14.04,
   "SheetColHeight"       : 1095.64,
   "TimeGuideWidth"       : 55,

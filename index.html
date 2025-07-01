@@ -323,7 +323,7 @@ serviceAgent.pushEntry(xUI.XPS,function(){xUI.setStored("current");sync();
 >ラインマージ</A></li>
     </ul>
 <!-- ファイルメニュー 範囲外（常時）-->
-    <ul class='cMonHeadline'>
+    <ul class='cMonHeadline cMonSheetHeader'>
 <li id=cMcgi><span id=cMimportDatas-d class='cM cM-alt'>Open</span><A id=cMimportDatas
 	class = cM
 	href="javascript:void(0);"
@@ -384,7 +384,7 @@ serviceAgent.pushEntry(xUI.XPS,function(){xUI.setStored("current");sync();
 	onclick="xUI.sWitchPanel('Data');return false;"
 	title="読み込み書き出しパネルを開く"
 >Import/Export</a></li>
-<li><span id=cMdocInfo-d class='cM cM-alt'>DocumentInfo</span><A	id=cMdocInfo
+<li class='cMSheetHeader'><span id=cMdocInfo-d class='cM cM-alt'>DocumentInfo</span><A	id=cMdocInfo
 	href='javascript:void(0)'
 	onclick='myScenePref.open("edit");return false;'
 	title="シート情報"
@@ -481,7 +481,7 @@ serviceAgent.pushEntry(xUI.XPS,function(){xUI.setStored("current");sync();
 >[ 管理モード ]</A></li>
 <li><span id=cMeditMode-d class='cM cM-alt'>[ 編集モード ]</span><A	id=cMeditMode
 	HREF='javascript:void(0);'
-	onclick='xUI.viewMode=(xUI.viewMode=="Compact")?"WordProp":"Compact";xUI.resetSheet();return false'
+	onclick='xUI.setDocumentMode("switch");return false;'
 	title="表示モード切り替え"
 >[ 編集モード ]</A></li>
 <li><span id=cMcolumns-d class='cM cM-alt'>[ 段組 ]</span><A	id=cMcolumns
@@ -847,6 +847,16 @@ serviceAgent.pushEntry(xUI.XPS,function(){xUI.setStored("current");sync();
 	title="バックアップをクリア"
 >clearBackup</A></li>
     </ul>
+<!--
+   <ul class='cMSheetHeader'>
+<li class='cMSheetHeader'><span id=cMdocInfo-d class='cM cM-alt'>DocumentInfo</span><A	id=cMdocInfo
+	href='javascript:void(0)'
+	onclick='myScenePref.open("edit");return false;'
+	title="シート情報"
+>DocumentInfo</A></li>
+	</ul>
+
+-->
 
    <ul class='cMouter'>
 <li><span id=cMstw-d class='cM cM-alt'></span><A	id=cMstw
@@ -1390,7 +1400,7 @@ serviceAgent.pushEntry(xUI.XPS,function(){xUI.setStored("current");sync();
 >[ 管理モード ]</A></li>
 <li><span id=pMeditMode-d class='pM pM-alt'>[ 編集モード ]</span><A	id=pMeditMode
 	HREF='javascript:void(0);'
-	onclick='xUI.viewMode=(xUI.viewMode=="Compact")?"WordProp":"Compact";xUI.resetSheet();return false'
+	onclick='xUI.viewMode=(xUI.viewMode=="Scroll")?"PageImage":"Scroll";xUI.resetSheet(undefined,undefined,xUI.setAppearance);return false;'
 	title="表示モードページ｜スクロール切り替え"
 >[ 編集モード ]</A></li>
 <li><span id=pMcolumns-d class='pM pM-alt'>[ 段組 ]</span><A	id=pMcolumns
@@ -2574,33 +2584,33 @@ disabled
 </div>
 <!-- ドキュメント ステータス　オーバレイ　-->
 
-<!-- シートヘッダテーブル　編集機能あり縮小UIの際は非表示または縮小表示に -->
+<!-- ドキュメントシートヘッダUIテーブル　編集機能あり ページモードでは最小の表現に縮小 制限UIの際は非表示または縮小表示 -->
 <div id=sheetHeaderTable>
 <!-- コンパクトビューの時は　インジケータ　カット番号　時間　を残して非表示
      <td id=edchg>
 	編集中
      </td>
 -->
-<div id     = headerInfo
-     class  = "headerInfo"
-><hr>
+	<div id     = headerInfo
+		class  = "headerInfo"
+	><hr>
     <span
-        id=documentIdf
-    ></span>//<span
-        id=headerInfoWritable
-    ></span>
-</div>
-<div
-    id = headerInfoAlt
-    class  = "headerInfo headerInfoAlt"
-><hr>
-<A
-    id=XpsIdentifier
-    onClick='if((event.metaKey)||(event.ctrlKey)){xUI.importDocument()}else{xUI.openDocument()}'
->
+        	id=documentIdf
+    	></span>//<span
+        	id=headerInfoWritable
+    	></span>
+	</div>
+	<div
+    	id = headerInfoAlt
+    	class  = "headerInfo headerInfoAlt"
+	><hr>
+	<A
+    	id=XpsIdentifier
+    	onClick='if((event.metaKey)||(event.ctrlKey)){xUI.importDocument()}else{xUI.openDocument()}'
+	>
 <!-- <span id=title>title-string</span>#<span id=opus>opus</span>[<span id=subtitle>subtitle</span>]-->
-</A>//<span id=pmcui_line class=pmcui_>0:(本線)
-</span>//<span id=pmcui_stage class=pmcui_>2:原画
+	</A>//<span id=pmcui_line class=pmcui_>0:(本線)
+	</span>//<span id=pmcui_stage class=pmcui_>2:原画
 
 <!-- // <select
     id=pmcui_stage
@@ -2609,14 +2619,14 @@ disabled
 >
 					<option>----</option>
 </select> -->
-</span>//<select
-    id=jobSelector
-    class=historySelect
-    name=jobSelector 
-    onChange='if(xUI.XPS.currentStatus.content=="Active"){serviceAgent.getEntry(this.value,true)}else{serviceAgent.getEntry(this.value)};' 
->
+	</span>//<select
+    	id=jobSelector
+    	class=historySelect
+    	name=jobSelector 
+    	onChange='if(xUI.XPS.currentStatus.content=="Active"){serviceAgent.getEntry(this.value,true)}else{serviceAgent.getEntry(this.value)};' 
+	>
 					<option>----</option>
-</select>//<span id=pmcui_documentWritable class=pmcui_>[保存不可]</span>
+	</select>//<span id=pmcui_documentWritable class=pmcui_>[保存不可]</span>
 
 
 <!--
@@ -2630,7 +2640,7 @@ disabled
 					<option>----</option>
 				</datalist>
 -->
-</div><table class=info border=0 >
+</div><div id=documentHdUI ><table id="xpsInfoTable" class="info" border=0 >
 <tr>
 <!--     <th class='opusLabel headerInfoLabel' id="opusL">
 	No
@@ -2658,7 +2668,7 @@ Jobセレクタの動作をもうすこしインテリジェントに変更
 	TITLE-TEXT
 </td><td id=subtitle lock="yes" >
 	subTITLE
-</td>--><td id=scene_cut lock="yes">
+</td>--><td id=scene_cut>
 	S-C
 </td><td id=time >
 	(00+00)
@@ -2671,8 +2681,8 @@ Jobセレクタの動作をもうすこしインテリジェントに変更
 </td></tr>
 
 </table>
-</div>
-<!-- 固定ヘッダ ここまで 以下は表示切り換えのパネル群 -->
+
+<!-- 固定ヘッダ ここまで 以下は表示切り換えのパネル群 --</div>>
 <!-- //拡張署名欄 -->
 <div id=extSig >
   <div id=extSig_minimise style='display:none;'>
@@ -2681,7 +2691,6 @@ Jobセレクタの動作をもうすこしインテリジェントに変更
 		title='show signaturebox area'
 	><span>[□] sig.</a></span>
   </div>
-
 <div id=extSig_expand style='display:flex;height:48px;'>
 	<span style='vertilcal-align:bottom;white-space:nowrap;'>
 		<a href="javascript:void(0);"
@@ -2693,7 +2702,7 @@ Jobセレクタの動作をもうすこしインテリジェントに変更
 		style='vertilcal-align:bottom'> sig.</a>
 -->
 	</span>
-	<div id=signbox style='display:flex;'>
+    <div id=signbox style='display:flex;'>
 <!--
 	<span class = signbox id="sig_0">
 		<span class = signlabel>CT</span>
@@ -2758,14 +2767,14 @@ Jobセレクタの動作をもうすこしインテリジェントに変更
 		<span class = signature></span>
 	</span>
 -->
-	</div>
+    </div>
   </div>
 <hr>
 </div>
 <!-- 拡張署名欄// -->
-
 <!-- メモ編集エリア　画面表示のみ　印刷時はシートヘッダ上に別表示-->
 <div id=memoArea class=memoArea >
+
   <div id=memoArea_minimise style='display:none;'>
 	<a href="javascript:void(0);"
 		onclick='xUI.eXpandPanel("memoArea","expand");'
@@ -2775,24 +2784,24 @@ Jobセレクタの動作をもうすこしインテリジェントに変更
 		onclick='xUI.eXpandPanel("memoArea","expand");return false;'
 	>MEMO : </a></span>
   </div>
+
   <div id=memoArea_expand>
-   <div id=memo_header>
-   <a href="javascript:void(0);"
-    onclick='xUI.eXpandPanel("memoArea","minimise");'
-    title='hide note text'
-   ><span>[━]</span></a>
-   <a href="javascript:void(0);"
+    <div id=memo_header>
+    <a href="javascript:void(0);"
+     onclick='xUI.eXpandPanel("memoArea","minimise");'
+      title='hide note text'
+    ><span>[━]</span></a>
+    <a href="javascript:void(0);"
 		onclick='xUI.sWitchPanel("Memo");return false;'
 >MEMO : </a> <span id="transit_data"></span>
-  </div>
-  <div id=memo_image class=overlayNoteImage></div>
+    </div>
+    <div id=memo_image class=overlayNoteImage></div>
 <!-- メモ表示欄     -->
-  <div id=memo class=memoSpace></div>
+    <div id=memo class=memoSpace></div>
   </div>
 <hr>
-</div>
-<!-- メモ表示欄 -->
-
+</div><!-- メモ表示欄 --></div></div>
+<!-- ドキュメントシートヘッダUIテーブル   >
 <!--	ユーティリティーパネル	-->
 <!--    トラックラベルセレクタ  -->
 <div class=optionPanel id=optionPanelTrackLabel >
@@ -3437,7 +3446,8 @@ onclick='nas.incrFCTonHTMLInput(document.getElementById("editTC"),"-(1)")'
 					<img id=scnFormPreview src=/remaping/documentFormat/timesheet/default.png width=256px>
 				<td>
 				</tr>
-				<tr>
+
+				<tr style='display:none;''>
 				<th>	tracks
 				</th>
 				<td colspan=2 nowrap>
@@ -4009,21 +4019,22 @@ onclick='documentDepot.updateDocumentSelector(new RegExp("3[0-9][0-9][^0-9]*$"))
 		<hr>
 		</td>
 	</tr>
-	<tr>
+	<tr style='display:none;'>
 		<td id=prefLbMode colspan=2 class=toolbarR>画面モード<br />
 		<input type="radio" name="viewMode" id=vMPageImage value="PageImage" onClick='myPref.chgVM(this.value)' >
 		<a id=prefModeWP href="javascript:" onClick='return myPref.chgVM("PageImage")'>ページ画像</a>　/
-		<input type="radio" name="viewMode" id=vMWordProp value="WordProp" onClick='myPref.chgVM(this.value)' >
-		<a id=prefModeWP href="javascript:" onClick='return myPref.chgVM("WordProp")'>タイムシートワープロ</a>　/
-		<input type="radio" name="viewMode" id=vMCompact value="Compact" onClick='myPref.chgVM(this.value)'>
-		<a id=prefModeCP href="javascript:" onClick='return myPref.chgVM("Compact")'>コンパクトエディタ</a>
+		<input type="radio" name="viewMode" id=vMWordProp value="PageImage" onClick='myPref.chgVM(this.value)' >
+		<a id=prefModeWP href="javascript:" onClick='return myPref.chgVM("PageImage")'>タイムシートワープロ</a>　/
+		<input type="radio" name="viewMode" id=vMCompact value="Scroll" onClick='myPref.chgVM(this.value)'>
+		<a id=prefModeCP href="javascript:" onClick='return myPref.chgVM("Scroll")'>コンパクトエディタ</a>
 		<hr>
 		</td>
 	</tr>
 	<tr>
 		<td id=prefLbAE colspan=2 class=toolbarR >AE キーデータオプション<br />
-		<a id=prefLbOpnAEKpnl href="javascript:" onClick='return myPref.chg("opnAEKpnl")'>open panel</a>:<INPUT
+		<a id=prefLbOpnAEKpnl href="javascript:" onClick='return myPref.chg("opnAEKpnl")'>キーデータ書き出しの際に詳細設定パネルを開く </a>:<INPUT
 			TYPE=CheckBox NAME=opnAEKpnl id=opnAEKpnl><br />
+<span  style='display:none;'>
 		blank method. <SELECT NAME=blmtd id=prefBlmtd onChange="myPref.chgblk(this.id)">
 			<OPTION VALUE=0>ファイル
 			<OPTION VALUE=1>不透明度
@@ -4083,7 +4094,7 @@ id=prefDfY VALUE="---" onChange="myPref.chgdfSIZE(this.id)">:<input type=text
 			<OPTION VALUE=9>HD720(1280x720,1.0)
 			<OPTION VALUE=10>HDTV(1980x1080,1.0)
 			<OPTION VALUE=11>HDV(1440x1080,1.333)
-		</SELECT></td>
+		</SELECT></span></td>
 	</tr>
 	<tr>
 		<td colspan=2 align=right>
@@ -4092,9 +4103,11 @@ id=prefDfY VALUE="---" onChange="myPref.chgdfSIZE(this.id)">:<input type=text
 
 				<TD VALIGN=top NOWRAP ALIGN=right></TD>
 				<TD VALIGN=top NOWRAP ALIGN=right><span id=prefLbSheetInfo >シート情報</span><br />
+<span  style='display:none;'>
 				<span id=prefLbSheetLength>1枚の秒数</span><INPUT TYPE=TEXT NAME=SheetLength id=prefSheetLength VALUE=6 SIZE=2><span id=prefLbSec>秒</span><br />
 				<a id=prefLbColums href="javascript:" onClick='return myPref.chg("prefPageCol")'>1ページ2列</a>:<INPUT
 					TYPE=CheckBox NAME=PageCol id=prefPageCol checked><br />
+</span>
 				<a id=prefLbDiff href="javascript:" onClick='return myPref.chg("prefFootMark")'> 差分表示機能</a>:<INPUT
 					TYPE=CheckBox NAME=	Mark id=prefFootMark checked><br />
 
@@ -4152,15 +4165,19 @@ id=prefDfY VALUE="---" onChange="myPref.chgdfSIZE(this.id)">:<input type=text
 	</tr>
 	<tr>
 		<td  class=toolbarR >
-			<span id=prefLbExportopt>eps export option<span> <br>
+<span  style='display:none;'>
+
+			<span id=prefLbExportopt>eps export option</span> <br>
 		export size. <SELECT NAME=expSize id=prefEpsS onChange="myPref.chgSize(this.id)">
 			<OPTION VALUE=0>A4
 			<OPTION VALUE=1 selected=true>A3
 			<OPTION VALUE=2>B4(ISO)
 			<OPTION VALUE=3>B4(JIS)
 		</SELECT><br />
+</span>
 		</td>
 		<td>
+<span  style='display:none;'>
 		BGcolor<br>
 		<input id=prefBGColor type=text list=bgColorList autoComplete="on" onChange="myPref.chgColor(this.id)" />
 		<input id=prefColorpick type=color onChange="myPref.chgColor(this.id)" /><br>
@@ -4169,6 +4186,7 @@ id=prefDfY VALUE="---" onChange="myPref.chgdfSIZE(this.id)">:<input type=text
 		<button class=colorSelect id="bgColorList01" onClick="myPref.chgColor(this.id)" value="#ffffee" title="y" style="background-color:#ffffee"> </button>
 		</span>
 <!--		<option value="#"> -->
+</span>
 		</td>
 	</tr>
 </table>

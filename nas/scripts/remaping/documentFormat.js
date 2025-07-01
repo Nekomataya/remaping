@@ -161,6 +161,7 @@ var documentFormat = {
 	CellWidthUnit       :"px",
 	SheetHeadMargin     :344,
 	SheetLeftMargin     :57,
+	SheetLabelHeight    :16,
 	SheetCellHeight     :17,
 	SheetColHeight      :1224,
 	TimeGuideWidth	    :15,
@@ -171,7 +172,7 @@ var documentFormat = {
 	SheetCellNarrow	    :2,
 	StillCellWidth	    :12,
 	GeometryCellWidth   :52,
-	SfxCellWidth	    :46,
+	SfxCellWidth	        :46,
 	CameraCellWidth     :30,
 	CommentWidth        :30,
 	TrackNoteWidth      :30,
@@ -707,8 +708,8 @@ alert(newData.sheetLooks.FormatName);
 			newData.parseXps(xUI.XPS.toString(false));
 			newData.parseSheetLooks(documentFormat.toJSON());
 			xUI.put(newData);
-			xUI.applySheetlooks(newData.sheetLooks);
-			xUI.resetSheet();
+//			xUI.applySheetlooks(newData.sheetLooks);
+//			xUI.resetSheet();
 		}else{
 			xUI.resetSheet()
 		}
@@ -2077,8 +2078,9 @@ console.log(documentFormat.TemplateImage);
 /*
 	
 	現在編集中のドキュメントのトラック情報を書式に一致させる
-	不足するトラックは追加
-	スペックを超過したトラックは削除されるので注意
+	 不足トラックは追加
+	 超過トラックは削除
+	使用時は注意
 	
 	xUI.refereceXPS,xUI.XPSの双方を処理
 	XPSに対してはputメソッドを使用してUNDOを有効化させる
@@ -2092,7 +2094,7 @@ documentFormat.adjustTrack = function(){
 	if(
 		(documentFormat.active)||(xUI.viewOnly)
 	){
-//書式エディタ実行中||書き込み禁止時
+//書式エディタ実行中||書き込み禁止時は、強制動作
 		xUI.XPS.xpsTracks.setTrackSpec();
 		xUI.XPS.xpsTracks.initAreaOrder();
 		xUI.XPS.xpsTracks.assignAreaOrderMember();

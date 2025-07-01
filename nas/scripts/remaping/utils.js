@@ -1609,14 +1609,16 @@ var iptFilter = function(cell,targetTrack,mode,exch){
 /**
 	@params   {String} mode
 	@returns  {String}
-	表示モードを変更する
-	引数は変更するモード PageImage|pageImage|WordProp|page|Compact|scroll|
+	ページ|スクロール モード変更
+	引数は変更するモードキーワード PageImage | pageImage | WordProp | page | Compact | Scroll | scroll
 	現在の表示モード変数を戻す xUI.viewMode
  */
 changeViewMode = function chamgeViewMode(mode){
-	if(String(mode).match(/scroll|compact/i)){mode = 'Compact';}else{mode = 'wordProp';};
+
+	if(String(mode).match(/scroll|compact/i)){mode = 'Scroll';}else{mode = 'PageImage';};
 	if(xUI.viewMode == mode) return xUI.viewMode;
-	if((mode == 'Compact')&&(xUI.setAppearance() > 0)){
+
+	if((mode == 'Scroll')&&(xUI.setAppearance() > 0)){
 		xUI.setAppearance(0,false);
 //設定UIをロック
         document.getElementById('ImgAppearance').disabled = true;
@@ -1627,7 +1629,15 @@ changeViewMode = function chamgeViewMode(mode){
         document.getElementById('ImgAppearance').disabled = false;
         document.getElementById('ImgAppearanceSlider').disabled = false;
 	};
-	xUI.viewMode = mode;xUI.resetSheet();sync('docImgAppearance');
+	xUI.viewMode = mode;
+	xUI.XPS.documentMode = {"Scroll":"scroll","PageImage":"pageImage"}[xUI.viewMode];//切替同期
+//UI設定
+//	if(mode == 'Scroll') xUI.applySheetMargin();
+
+	if(mode == 'Scroll') xUI.applySheetlooks();
+
+	xUI.resetSheet();
+	sync('docImgAppearance');
 	return xUI.viewMode
 }
 /**
@@ -1637,7 +1647,6 @@ changeViewMode = function chamgeViewMode(mode){
 	
 */
 function insertDlg (label,content){
-
 	if(
 		(!(xUI.XPS.xpsTracks[xUI.Select[0]].option.match(/dialog/)))||
 		(Math.abs(xUI.Selection[0]) > 0)

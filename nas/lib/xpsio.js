@@ -1025,7 +1025,8 @@ Xps.prototype.stringifySheetLooks = function () {
  *  必要ならば、画面の書き換えは別に呼び出す
  */
 Xps.prototype.parseSheetLooks = function (sheetLooks){
-console.log(sheetLooks)
+console.log(sheetLooks);
+console.log(this);
     if ((typeof sheetLooks == 'string')&&(sheetLooks.match(/(\{[\s\S]*?\})/))){
 //引数が文字列ならばオブジェクト化しておく
         sheetLooks = JSON.parse(RegExp.$1);
@@ -2818,7 +2819,7 @@ function XpsTrackCollection (parent,index,duration,scope){
         var trackSpec = [];
         this.areaOrder.forEach(function(e){
             if((e.timecode == 'both')||(e.timecode == 'head')) trackSpec.push(["timecode",1,(e.fix)?"fix":""]);
-            trackSpec.push([e.type,e.tracks,(e.hide )?"hide":((e.fix)?"fix":"")]);
+                trackSpec.push([e.type,e.tracks,(e.hide )?"hide":((e.fix)?"fix":"")]);
             if((e.timecode == 'both')||(e.timecode == 'tail')) trackSpec.push(["timecode",1,(e.fix)?"fix":""]);
         });
         return trackSpec;

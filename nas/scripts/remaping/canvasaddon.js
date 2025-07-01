@@ -271,7 +271,7 @@ xUI.getTargetImageAddress = function(){
 	if(xUI.noteFocus){
 //noteText on focus
 		var targetAddress = 'description:';
-	}else if(xUI.viewMode == 'Compact'){
+	}else if(xUI.viewMode == 'Scroll'){
 //noteText off focus mode scroll (compatible TDTS)
 		var targetAddress = 'cell:'+xUI.Select.join('_');
 	}else{
@@ -1374,7 +1374,7 @@ console.log([tl,xUI.canvasPaint.currentTool,xUI.canvasPaint.previousTool]);
 
 		if(xUI.canvasPaint.active == false)   return;//inactive
 		if(xUI.canvasPaint.currentTool == tl) return;//same
-		if((tl.match(/canvas(Move|Resize)/))&&(xUI.viewMode != 'Compact')) return;
+		if((tl.match(/canvas(Move|Resize)/))&&(xUI.viewMode == 'PageImage')) return;
 
 		if(tl == 'reset') tl = xUI.canvasPaint.currentTool;
 		if(xUI.canvasPaint.currentTool != tl) xUI.canvasPaint.previousTool = xUI.canvasPaint.currentTool;
@@ -1486,7 +1486,7 @@ console.log([tl,xUI.canvasPaint.currentTool,xUI.canvasPaint.previousTool]);
 				xUI.canvasPaint.setTool(xUI.canvasPaint.currentTool);
 				xUI.canvas.freeDrawingBrush.width = xUI.canvasPaint.pencilWitdh;
 				Array.from(document.getElementsByClassName('paintTool')).forEach(function(e){
-					if((xUI.viewMode != 'Compact')&&(e.id.match(/canvas(Move|Resize)/))){
+					if((xUI.viewMode == 'PageImage')&&(e.id.match(/canvas(Move|Resize)/))){
 						e.disabled = true;
 						nas.HTML.removeClass(e,'iconButton-selected');
 					}else if(xUI.canvasPaint.currentTool == e.id){
@@ -1538,7 +1538,7 @@ if(dbg) console.log(hasItem);
 			document.getElementById('note_switch').innerHTML = 'EDIT';
 		};
 //編集開始｜アイテム追加ボタンのアイコン
-		if((xUI.viewMode == 'Compact')){
+		if((xUI.viewMode == 'Scroll')){
 			if(hasItem){
 //				nas.HTML.removeClass(document.getElementById('note_edit'),'iconButton-addItem');
 //				nas.HTML.addClass(document.getElementById('note_edit'),'iconButton-editItem');
@@ -1730,7 +1730,7 @@ xUI.appendDescriptionImage = function(){
  */
 
 xUI.appendPageImage = function(pgNo){
-	if(xUI.viewMode == 'Compact') return false;
+	if(xUI.viewMode == 'Scrolle') return false;
 	if(typeof pgNo == 'undefined') pgNo = Math.ceil(xUI.Select[1]/xUI.PageLength);
 	pgNo = nas.parseNumber(pgNo)
 	if(((! pgNo))||(pgNo < 0)||(pgNo > Math.ceil(xUI.XPS.duration/xUI.PageLength)))return false;
@@ -1759,7 +1759,7 @@ xUI.appendPageImage = function(pgNo){
  * フレームレンジはカメラワークでなく他のトラックに準ずる
  */
 xUI.appendCellImage = function(select,range){
-	if(xUI.viewMode != 'Compact') return false;
+	if(xUI.viewMode == 'PageImage') return false;
 	if(! select) select = Array.from(xUI.Select);
 	if(! range)  range  = Array.from(xUI.Selection);
 	if((typeof select == 'string')&&(select.indexOf('cell:')==0)){
